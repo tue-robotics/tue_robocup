@@ -5,7 +5,6 @@
 
 # TODO:
 # - initial pose estimate
-# - get command from speech recognition
 # - Also allow object types (e.g., table, chair, etc) to be parsed. If I try that now, the parser raises and exception
 #   for some reason
 # - Implement all actions (grab, place, bring, look at, etc)
@@ -23,175 +22,206 @@ import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 from robocup_knowledge import load_knowledge
+from command_recognizer import CommandRecognizer
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 
-entity_ids = []
-entity_type_to_id = {}
-object_to_location = {}
-
 # ------------------------------------------------------------------------------------------------------------------------
 
-def navigate(robot, parameters):
-    entity_descr = parameters["entity"]
+class GPSR:
 
-    robot.speech.speak("I am going to the %s" % entity_descr)
+    def __init__(self):
+        self.entity_ids = []
+        self.entity_type_to_id = {}
+        self.object_to_location = {}
 
-    if entity_descr in challenge_knowledge.rooms:
-        nwc =  NavigateToSymbolic(robot, 
-                                        { EntityByIdDesignator(robot, id=entity_descr) : "in" }, 
-                                          EntityByIdDesignator(robot, id="dinnertable"))
-    else:
-        nwc = NavigateToObserve(robot,
-                             entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=entity_descr),
-                             radius=.5)
+        self.last_entity_id = None
 
-    nwc.execute()
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-def answer_question(robot, parameters):
-    answer = parameters["answer"]
-    robot.speech.speak("My answer to the question is: %s" % answer)
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-def pick_up(robot, parameters):
-    entity_descr = parameters["entity"]
-
-    location = object_to_location[entity_descr]
-
-    robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_descr))
-
-
-    # Move to the location
-    nwc = NavigateToObserve(robot,
-                     entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=location),
-                     radius=.5)
-    nwc.execute()
-
-    robot.speech.speak("I should grab a %s, but that is not implemented yet" % entity_descr)
-
-# ------------------------------------------------------------------------------------------------------------------------
-# TODO
-# ------------------------------------------------------------------------------------------------------------------------
-
-def find(robot, parameters):
-    entity_descr = parameters["entity"]
-
-    robot.speech.speak("I should find a %s, but that is not implemented yet" % entity_descr)
-
-# ------------------------------------------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------------------------------
-
-def execute_command(sentence, parser, action_functions, robot):
-    semantics_str = parser.parse("T", sentence)
-
-    if not semantics_str:
-        print "Cannot parse sentence"
-        return 1
-
-    semantics = yaml.load(semantics_str)
-
-    actions = []
-    if "action1" in semantics:
-        actions += [semantics["action1"]]
-    if "action2" in semantics:
-        actions += [semantics["action2"]]
-    if "action3" in semantics:
-        actions += [semantics["action3"]]
-
-    for a in actions:
-        action_type = a["action"]
-
-        if action_type in action_functions:
-            action_functions[action_type](robot, a)
-        else:
-            print "Unknown action type: '%s'" % action_type
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-def main():
-    rospy.init_node("gpsr")
-
-    if len(sys.argv) < 2:
-        print "Please specify a robot name 'amigo / sergio'"
-        return 1
-
-    robot_name = sys.argv[1]
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    else:
-        print "unknown robot"
-        return 1
-
-    robot = Robot()
-
-    if len(sys.argv) < 3:
-        print "Please provide a command"
-        return 1
-
-    sentence = sys.argv[2:]
-
-    # Remove commas
-    for i in range(0, len(sentence)):
-        sentence[i] = sentence[i].replace(",","")
-
-    parser = cfgparser.CFGParser.fromfile(os.path.dirname(sys.argv[0]) + "/grammar.fcfg")
-
-    global entity_ids
-    global entity_type_to_id
-    global object_to_location
-
-    # Query world model for entities
-    entities = robot.ed.get_entities(parse=False)
-    for e in entities:
-        entity_ids += [e.id]
-
-        parser.add_rule("NP[\"%s\"] -> %s" % (e.id, e.id))
-        parser.add_rule("NP[\"%s\"] -> the %s" % (e.id, e.id))
-        parser.add_rule("NP[\"%s\"] -> a %s" % (e.id, e.id))  
-
-        for t in e.types:
-            if not t in entity_type_to_id:
-                entity_type_to_id[t] = [e.id]
+    def resolve_entity_id(self, description):
+        if isinstance(description, str):
+            if description == "it":
+                return self.last_entity_id
+            elif description == "operator":
+                return "initial_pose"             
             else:
-                entity_type_to_id[t] += [e.id]
+                return description
 
-    #for type in entity_type_to_id.keys():
-    #    if type not in entity_ids:
-    #        parser.add_rule("NP[\"%s\"] -> %s" % (type, type))
-    #        parser.add_rule("NP[\"%s\"] -> the %s" % (type, type))
-    #        parser.add_rule("NP[\"%s\"] -> a %s" % (type, type)) 
+    # ------------------------------------------------------------------------------------------------------------------------
 
-    for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
-        for obj in objects:
-            object_to_location[obj] = furniture
-            parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
-            parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
-            parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))
+    def navigate(self, robot, parameters):
+        entity_id = self.resolve_entity_id(parameters["entity"])
+        self.last_entity_id = entity_id
 
-    for rooms in challenge_knowledge.rooms:
-        parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
-        parser.add_rule("ROOM[\"%s\"] -> the %s" % (rooms, rooms))
+        robot.speech.speak("I am going to the %s" % entity_id, block=False)
 
-    for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
-            parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
-            parser.add_rule("NP[\"%s\"] -> the %s" % (obj, alias))
-            parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))        
+        if entity_id in challenge_knowledge.rooms:
+            nwc =  NavigateToSymbolic(robot, 
+                                            { EntityByIdDesignator(robot, id=entity_id) : "in" }, 
+                                              EntityByIdDesignator(robot, id="dinnertable"))
+        else:
+            nwc = NavigateToObserve(robot,
+                                 entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=entity_id),
+                                 radius=.5)
+
+        nwc.execute()
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def answer_question(self, robot, parameters):
+        answer = parameters["answer"]
+        robot.speech.speak("My answer to the question is: %s" % answer)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def pick_up(self, robot, parameters):
+        entity_id = self.resolve_entity_id(parameters["entity"])
+        self.last_entity_id = entity_id
+
+        if "from" in parameters:
+            location = self.resolve_entity_id(parameters["from"])
+        else:
+            location = self.object_to_location[entity_id]
+
+        robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
 
-    action_functions = {}
-    action_functions["navigate"] = navigate
-    action_functions["find"] = find
-    action_functions["answer-question"] = answer_question
-    action_functions["pick-up"] = pick_up
+        # Move to the location
+        nwc = NavigateToObserve(robot,
+                         entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=location),
+                         radius=.5)
+        nwc.execute()
 
-    execute_command(sentence, parser, action_functions, robot)
+        robot.speech.speak("I should grab a %s, but that is not yet implemented" % entity_id, block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def bring(self, robot, parameters):
+
+        if parameters["entity"] != "it":
+            self.pick_up(robot, parameters)
+
+        to_id = self.resolve_entity_id(parameters["to"])
+
+        # Move to the location
+        nwc = NavigateToObserve(robot,
+                         entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=to_id),
+                         radius=.5)
+        nwc.execute()
+
+    # ------------------------------------------------------------------------------------------------------------------------
+    # TODO
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def find(self, robot, parameters):
+        entity_id = self.resolve_entity_id(parameters["entity"])
+
+        robot.speech.speak("I should find a %s, but that is not yet implemented" % entity_id)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
+
+        if sentence:
+            res = command_recognizer.parse(sentence)        
+        else:
+            res = command_recognizer.recognize(robot)
+            print res
+
+        if not res:
+            robot.speech.speak("Sorry, I could not understand")
+            return False
+
+        (sentence, semantics_str) = res
+        print "Sentence: %s" % sentence
+        print "Semantics: %s" % semantics_str
+
+        # TODO: re-state the command
+
+        robot.speech.speak("Alright!", block=False)
+
+        semantics = yaml.load(semantics_str)
+
+        actions = []
+        if "action1" in semantics:
+            actions += [semantics["action1"]]
+        if "action2" in semantics:
+            actions += [semantics["action2"]]
+        if "action3" in semantics:
+            actions += [semantics["action3"]]
+
+        for a in actions:
+            action_type = a["action"]
+
+            if action_type in action_functions:
+                action_functions[action_type](robot, a)
+            else:
+                print "Unknown action type: '%s'" % action_type
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def run(self):
+        rospy.init_node("gpsr")
+
+        if len(sys.argv) < 2:
+            print "Please specify a robot name 'amigo / sergio'"
+            return 1
+
+        robot_name = sys.argv[1]
+        if robot_name == 'amigo':
+            from robot_skills.amigo import Amigo as Robot
+        elif robot_name == 'sergio':
+            from robot_skills.sergio import Sergio as Robot
+        else:
+            print "unknown robot"
+            return 1
+
+        robot = Robot()
+
+        command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        # Query world model for entities
+        entities = robot.ed.get_entities(parse=False)
+        for e in entities:
+            self.entity_ids += [e.id]
+
+            for t in e.types:
+                if not t in self.entity_type_to_id:
+                    self.entity_type_to_id[t] = [e.id]
+                else:
+                    self.entity_type_to_id[t] += [e.id]
+
+
+        for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
+            for obj in objects:
+                self.object_to_location[obj] = furniture
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        action_functions = {}
+        action_functions["navigate"] = self.navigate
+        action_functions["find"] = self.find
+        action_functions["answer-question"] = self.answer_question
+        action_functions["pick-up"] = self.pick_up
+        action_functions["bring"] = self.bring
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
+
+        if sentence:
+            self.execute_command(robot, command_recognizer, action_functions, sentence)
+        else:
+            robot.head.look_at_standing_person()
+
+            robot.speech.speak("What can I do for you?")
+
+            self.execute_command(robot, command_recognizer, action_functions)
+
+# ------------------------------------------------------------------------------------------------------------------------
     
 if __name__ == "__main__":
-    sys.exit(main())
+    gpsr = GPSR()
+    sys.exit(gpsr.run())

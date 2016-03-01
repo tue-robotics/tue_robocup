@@ -13,4 +13,5 @@ inspection_places = [
      "segment_areas": ["on_top_of"]},
 ]
 
-known_types = ["coke", "fanta", "mentos", "bifrutas"]
+known_types = ["coke", "fanta", "mentos", "bifrutas", "beer", "coffee_pads", "deodorant", "ice_tea", "sprite", "tea", "water", "xylit24_spearmint", "xylit24_white"]
+
