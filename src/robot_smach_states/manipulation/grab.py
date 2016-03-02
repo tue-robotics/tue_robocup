@@ -112,8 +112,19 @@ class PickUp(smach.State):
         # look_at_point function finishes
         rospy.sleep(rospy.Duration(0.5))
 
-        # Inspect the entity
+        # Update the entity (position)
         segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
+
+        # Resolve the entity again because we want the latest pose
+        updated_grab_entity = self.grab_entity_designator.resolve()
+
+        if not updated_grab_entity:
+            rospy.logerr("Could not resolve the updated grab_entity, this should not happen [CHECK WHY THIS IS HAPPENING]")
+        else:
+            rospy.loginfo("Updated pose of entity (x, y, z) : (%f, %f, %f) --> (%f, %f, %f)" % 
+                    (grab_entity.pose.position.x, grab_entity.pose.position.y, grab_entity.pose.position.z,
+                     updated_grab_entity.pose.position.x, updated_grab_entity.pose.position.y, updated_grab_entity.pose.position.z))
+            grab_entity = updated_grab_entity
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
@@ -285,6 +296,9 @@ class SjoerdsGrab(smach.State):
 
         # Inspect the entity
         segm_res = self._robot.ed.update_kinect("%s" % entity.id)
+
+        # Resolve the entity again
+        entity = self.item_des.resolve()
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
