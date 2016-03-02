@@ -293,7 +293,7 @@ class ED:
         """ 
         Update ED based on kinect (depth) images
 
-        :param area_description An entity id or area description, e.g. "cabinet-11" or "on_top_of cabinet-11"
+        :param area_description An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
         :param background_padding The maximum distance to which kinect data points are associated to existing objects (in meters).
                Or, in other words: the padding that is added to existing objects before they are removed from the point cloud
         :returns Update result
