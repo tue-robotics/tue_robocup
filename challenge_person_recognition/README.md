@@ -28,10 +28,7 @@ During the challenge:
     - After he sees someone in front, the robot will ask the person's name and learn his/her face
     - When the learning is complete the robot will ask the Operator to go to the living room and mix with the crowd, so go....
     - The robot will navigate between waypoints in the living room trying to find a crowd or at least a person
-    - When he found enough people (setting in tue_knowledge), he will move to the people found one by one to recognize them
     - when he finishes visiting every person he will choose the most likely to be the operator and point at him
     - Finally the robot has to describe the crowd, saying how many males and females are present as well as their pose
 
 #TODO
-- Look at standing person when learning faces
-- Wait for speaking to finish when talking to a human to be less confusing. Block=True is Say-states

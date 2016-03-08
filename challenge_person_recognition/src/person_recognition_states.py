@@ -376,6 +376,7 @@ class AskPersonName(smach.State):
 
     def execute(self, userdata):
         printOk("AskPersonName")
+        self.robot.head.look_at_standing_person()
 
         self.robot.speech.speak("What is your name?", block=True)
 
@@ -424,7 +425,7 @@ class ConfirmPersonName(smach.State):
 
         self.operatorNameDes.write(name)
 
-        self.robot.speech.speak("I heard " + name + ", is that correct?", block=False)
+        self.robot.speech.speak("I heard " + name + ", is that correct?", block=True)
 
 
         spec = Designator("answer")
