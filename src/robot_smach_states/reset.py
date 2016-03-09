@@ -55,9 +55,9 @@ class ResetArms(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        self.robot.leftArm.reset()
+        self.robot.leftArm.reset(timeout=self.timeout)
         self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
-        self.robot.rightArm.reset()
+        self.robot.rightArm.reset(timeout=self.timeout)
         self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
         return "done"
 
