@@ -86,8 +86,7 @@ class Arm(object):
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
-            visualization_msgs.msg.Marker, queue_size=10
-        )
+            visualization_msgs.msg.Marker, queue_size=10)
 
     def load_param(self, param_name):
         '''
@@ -269,21 +268,20 @@ class Arm(object):
         else:
             rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
             return False
-
+            
         self._ac_gripper.send_goal(goal)
-        if timeout == 0.0 or timeout is None:
-            if state == 'open':
-                self.occupied_by = None
-            return True
-        else:
-            self._ac_gripper.wait_for_result(rospy.Duration(timeout))
-            if self._ac_gripper.get_state() == GoalStatus.SUCCEEDED:
-                if state == 'open':
-                    self.occupied_by = None
-                return True
-            else:
-                return False
+        
+        if state == 'open':
+            if self.occupied_by is not None:
+                rospy.logerr("send_gripper_goal open is called but there is still an entity with id '%s' occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
+            self.occupied_by = None
 
+        goal_status = GoalStatus.SUCCEEDED
+        if timeout != 0.0:
+            self._ac_gripper.wait_for_result(rospy.Duration(timeout))
+            goal_status = self._ac_gripper.get_state()
+        
+        return goal_status == GoalStatus.SUCCEEDED
 
     def handover_to_human(self, timeout=10):
         '''
