@@ -31,6 +31,8 @@ class Ears:
 
         try:
             answer = self._get_speech_client_service(req)
+            rospy.loginfo("Robot heard \x1b[1;42m'{}'\x1b[0m".format(answer.result)) #The funny characters color the background
+
             if answer:
                 answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
         except rospy.ServiceException as e:

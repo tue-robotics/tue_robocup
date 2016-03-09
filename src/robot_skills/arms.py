@@ -238,11 +238,11 @@ class Arm(object):
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
 
-    def reset(self):
+    def reset(self, timeout=0.0):
         '''
         Put the arm into the 'reset' pose
         '''
-        return self.send_joint_goal('reset', timeout=0.0)
+        return self.send_joint_goal('reset', timeout=timeout)
 
     @property
     def occupied_by(self):
