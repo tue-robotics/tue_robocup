@@ -118,6 +118,7 @@ class PickUp(smach.State):
         # Resolve the entity again because we want the latest pose
         updated_grab_entity = self.grab_entity_designator.resolve()
 
+        rospy.loginfo("ID to update: {0}".format(grab_entity.id))
         if not updated_grab_entity:
             rospy.logerr("Could not resolve the updated grab_entity, this should not happen [CHECK WHY THIS IS HAPPENING]")
         else:
@@ -136,21 +137,20 @@ class PickUp(smach.State):
         goal_map = msgs.Point(0, 0, 0)
 
         # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, "/amigo/base_link", tf_listener=self.robot.tf_listener)
+        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
         if goal_bl == None:
             return 'failed'
 
-        # Pre-grasp
+        # Pre-grasp --> this is only necessary when using visual servoing
         # rospy.loginfo('Starting Pre-grasp')
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-                             frame_id='/'+self.robot.robot_name+'/base_link',
-                             timeout=20, pre_grasp=True, first_joint_pos_only=True
-                             ):
-            rospy.logerr('Pre-grasp failed:')
-
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=None)
-            return 'failed'
+        #if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+        #                     frame_id='/'+self.robot.robot_name+'/base_link',
+        #                     timeout=20, pre_grasp=True, first_joint_pos_only=True
+        #                     ):
+        #    rospy.logerr('Pre-grasp failed:')
+        #    arm.reset()
+        #    arm.send_gripper_goal('close', timeout=None)
+        #    return 'failed'
 
         # Grasp
         # rospy.loginfo('Start grasping')
@@ -169,7 +169,7 @@ class PickUp(smach.State):
         arm.send_gripper_goal('close')
 
         arm.occupied_by = grab_entity
-
+        
         # Lift
         # rospy.loginfo('Start lifting')
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.0, 0.0, 0.0,
@@ -310,12 +310,12 @@ class SjoerdsGrab(smach.State):
         goal_map = msgs.Point(0, 0, 0)
 
         # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, entity.id, "/amigo/base_link", tf_listener=self._robot.tf_listener)
+        goal_bl = transformations.tf_transform(goal_map, entity.id, self.robot.robot_name + "/base_link", tf_listener=self._robot.tf_listener)
         if goal_bl == None:
             return 'failed'
 
         # Pre-grasp
-        #if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
+        #if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id= self.robot.robot_name + "/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
         #    print "Pre-grasp failed (x: {0}, y: {1}, z: {2}".format(goal_bl.x, goal_bl.y, goal_bl.z)
         #    arm.reset()
         #    arm.send_gripper_goal('close', timeout=0.01)
@@ -325,7 +325,7 @@ class SjoerdsGrab(smach.State):
         arm.wait_for_motion_done()
 
         # Grasp
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=120, pre_grasp = True):
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id=self.robot.robot_name + "/base_link", timeout=120, pre_grasp = True):
             self._robot.speech.speak("I am sorry but I cannot move my arm to the object position", block=False)
             print "Grasp failed"
 
@@ -343,11 +343,11 @@ class SjoerdsGrab(smach.State):
         arm.send_gripper_goal('close', timeout=5)
 
         # Lift
-        if not arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/amigo/base_link"):
+        if not arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id=self.robot.robot_name + "/base_link"):
             print "Failed lift"
 
         # Retract
-        if not arm.send_goal(max(0.18, goal_bl.x - 0.25), goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/amigo/base_link"):
+        if not arm.send_goal(max(0.18, goal_bl.x - 0.25), goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id=self.robot.robot_name + "/base_link"):
             print "Failed retract"
 
         # Carrying pose
