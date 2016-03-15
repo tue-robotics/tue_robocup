@@ -1,13 +1,5 @@
-locations:
-  one:
-    x: 0
-    y: 0
-    phi: 0.5
-  two:
-    x: 1
-    y: 0
-    phi: 1
-  three:
-    x: 0
-    y: 1
-    phi: 1.5
+- - locations:
+      one: {phi: 0.5, x: 0, y: 0}
+      three: {phi: 1.5, x: 2, y: -2}
+      two: {phi: 3.14, x: -1.9, y: 0}
+  - /

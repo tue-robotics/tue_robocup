@@ -178,7 +178,7 @@ def load_waypoints(robot, filename="/param/locations.yaml"):
         rp = rospkg.rospack.RosPack()
         restaurant_package = rp.get_path("challenge_restaurant")
         locations = rosparam.load_file(restaurant_package+filename)
-        rospy.set_param("~", locations)
+        rospy.set_param("/restaurant_locations/", locations)
 
         for tablename in tables.values():
             location = locations[0][0]['locations'][tablename]
@@ -231,8 +231,8 @@ class StoreWaypoint(smach.State):
                     base_pose.pose.orientation = transformations.euler_z_to_quaternion(
                         transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
 
-
-                rospy.set_param("~/locations/{name}".format(location), base_pose)
+                loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
+                rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
                 self.visualize_location(base_pose, location)
                 self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
 
@@ -558,3 +558,5 @@ if __name__ == '__main__':
     rospy.init_node('restaurant_exec')
 
     startup(setup_statemachine, challenge_name="restaurant")
+
+    print "If you want to save the learned locations, do '$ rosparam dump $(rospack find challenge_restaurant)/param/locations.yaml /restaurant_locations/'"
