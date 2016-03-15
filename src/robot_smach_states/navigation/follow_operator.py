@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+# /usr/bin/env python
 
 import smach, rospy, sys
 from robot_smach_states.util.startup import startup
@@ -32,6 +32,8 @@ class FollowOperator(smach.State):
         self._ask_follow = ask_follow
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
+
+        self._operator_pub = rospy.Publisher('~operator_position', geometry_msgs.msg.PointStamped, queue_size=10)
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -87,6 +89,14 @@ class FollowOperator(smach.State):
         p = PositionConstraint()
         p.constraint = "x^2 + y^2 < %f^2"%self._operator_radius
         p.frame = operator.id
+
+        operator_pos = geometry_msgs.msg.PointStamped()
+        operator_pos.header.stamp = rospy.get_rostime()
+        operator_pos.header.frame_id = operator.id
+        operator_pos.point.x = 0.0;
+        operator_pos.point.y = 0.0;
+        operator_pos.point.z = 0.0;
+        self._operator_pub.publish(operator_pos)
 
         # We are going to do this dependent on distance to operator
 

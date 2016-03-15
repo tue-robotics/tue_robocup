@@ -2,7 +2,7 @@
 State machine startup
 
 Usage:
-  challenge_{challenge_name}.py {robot} [--initial=<init>] [--no_execute]
+  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--no_execute]
 
 Options:
   -h --help     Show this screen.
