@@ -12,6 +12,8 @@ In short:
 """
 
 import rospy
+import rosparam
+import rospkg
 import smach
 import sys
 import math
@@ -132,11 +134,64 @@ class StoreBeverageSide(smach.State):
         self._robot.ed.update_entity(id="beverages", posestamped=base_pose, type="waypoint")
         return "done"
 
+def visualize_location(base_pose, location):
+    '''
+    Visualize a marker on the base_pose with the text 'location' and rotated to the correct side.
+    :param base_pose: PoseStamped of where the robot is at that moment
+    :param location: The name of the location as a label
+    :return:
+    '''
+
+    pub = rospy.Publisher("/restaurant_waypoints", Marker, queue_size=10)
+    m = Marker()
+    if location == "one":
+        m.id = 1
+        m.color.r = 1
+    if location == "two":
+        m.id = 2
+        m.color.g = 1
+    if location == "three":
+        m.id = 3
+        m.color.b = 1
+    m.color.a = 1
+    m.pose = base_pose.pose
+    m.header = base_pose.header
+    m.type = 0  # Arrow
+    m.scale.x = 1.0
+    m.scale.y = 0.2
+    m.scale.z = 0.2
+    m.action = 0
+    m.ns = "arrow"
+    pub.publish(m)
+    m.type = 9
+    m.text = location
+    m.ns = "text"
+    m.pose.position.z = 0.5
+    pub.publish(m)
+    # Store waypoint in world model
+    print "Asserting waypoint %s to world model" % location
+    print "\n\n\n\nCURRENT BASE POSE:\n\n\n"
+    print base_pose
+    print "\n\n\n"
+
+def load_waypoints(robot, filename="/param/locations.yaml"):
+        rp = rospkg.rospack.RosPack()
+        restaurant_package = rp.get_path("challenge_restaurant")
+        locations = rosparam.load_file(restaurant_package+filename)
+        rospy.set_param("~", locations)
+
+        for tablename in tables.values():
+            location = locations[0][0]['locations'][tablename]
+            base_pose = msg_constructors.PoseStamped(location['x'], location['y'], z=0)
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(location['phi'])
+
+            visualize_location(base_pose, tablename)
+            robot.ed.update_entity(id=tablename, posestamped=base_pose, type="waypoint")
+
 class StoreWaypoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "continue"])
         self._robot = robot
-        self._pub = rospy.Publisher("/restaurant_waypoints", Marker, queue_size=10)
 
     def execute(self, userdata):
         # Stop the base
@@ -170,46 +225,21 @@ class StoreWaypoint(smach.State):
                 self._robot.head.cancel_goal()
 
                 if side == "left":
-                    base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+                    base_pose.pose.orientation = transformations.euler_z_to_quaternion(
+                        transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
                 elif side == "right":
-                    base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+                    base_pose.pose.orientation = transformations.euler_z_to_quaternion(
+                        transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
 
-                m = Marker()
-                if location == "one":
-                    m.id = 1
-                    m.color.r = 1
-                if location == "two":
-                    m.id = 2
-                    m.color.g = 1
-                if location == "three":
-                    m.id = 3
-                    m.color.b = 1
-                m.color.a = 1
-                m.pose = base_pose.pose
-                m.header = base_pose.header
-                m.type = 0 #Arrow
-                m.scale.x = 1.0
-                m.scale.y = 0.2
-                m.scale.z = 0.2
-                m.action = 0
-                m.ns = "arrow"
-                self._pub.publish(m)
-                m.type = 9
-                m.text = location
-                m.ns = "text"
-                m.pose.position.z = 0.5
-                self._pub.publish(m)
 
-                # Store waypoint in world model
-                print "Asserting waypoint %s to world model"%location
-                print "\n\n\n\nCURRENT BASE POSE:\n\n\n"
-                print base_pose
-                print "\n\n\n"
+                rospy.set_param("~/locations/{name}".format(location), base_pose)
+                self.visualize_location(base_pose, location)
                 self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
 
                 return "done"
 
         return "continue"
+
 
 class CheckKnowledge(smach.State):
     def __init__(self, robot):
@@ -377,6 +407,7 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                     transitions={   'spoken'            :'succeeded'})
 
 def setup_statemachine(robot):
+    load_waypoints(robot)
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
 

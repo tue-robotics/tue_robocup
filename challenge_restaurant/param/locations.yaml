@@ -1,0 +1,13 @@
+locations:
+  one:
+    x: 0
+    y: 0
+    phi: 0.5
+  two:
+    x: 1
+    y: 0
+    phi: 1
+  three:
+    x: 0
+    y: 1
+    phi: 1.5
