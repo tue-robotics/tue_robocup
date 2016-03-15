@@ -83,8 +83,10 @@ class FollowOperator(smach.State):
 
         return operator
 
-    def _update_navigation(self, operator):
+    def _update_navigation(self, breadcrumbs):
         self._robot.head.cancel_goal()
+
+        operator = breadcrumbs[-1]
 
         p = PositionConstraint()
         p.constraint = "x^2 + y^2 < %f^2"%self._operator_radius
@@ -102,7 +104,7 @@ class FollowOperator(smach.State):
 
         # Get the point of the operator and the robot in map frame
         r_point = self._robot.base.get_location().pose.position
-        o_point = operator.pose.position
+        o_point = breadcrumbs[0].pose.position
 
         # Get the distance
         dx = o_point.x - r_point.x
@@ -183,13 +185,19 @@ class FollowOperator(smach.State):
         self._time_started = rospy.Time.now()
 
         old_operator = None
+        breadcrumbs = []
 
         while not rospy.is_shutdown():
 
             # Check if operator present still present
             operator = self._get_operator(self._operator_id)
+            breadcrumbs.append(operator)
 
             if not operator:
+                self._robot.speech.speak("I lost the operator, but I still have some breadcrumbs to go after before I stop.", block=False)
+
+            if not breadcrumbs and not operator:
+                self._robot.speech.speak("I'm out of breadcrumbs. Where is that operator?", block=False)
                 lost_time = rospy.Time.now()
                 recovered_operator = None
                 while rospy.Time.now() - lost_time < rospy.Duration(self._lost_timeout):
@@ -213,9 +221,11 @@ class FollowOperator(smach.State):
             old_operator = operator
 
             # Update the navigation and check if we are already there
-            if self._update_navigation(operator):
+            if self._update_navigation(breadcrumbs):
                 self._robot.base.local_planner.cancelCurrentPlan()
-                return "stopped"
+                breadcrumbs.pop(0)
+                if not breadcrumbs:
+                    return "stopped"
 
             rospy.sleep(1) # Loop at 1Hz
 
