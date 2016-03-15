@@ -96,7 +96,7 @@ class Head():
 
     # -- Functionality --
 
-    def look_at_point(self, point_stamped, end_time=0, pan_vel=0.2, tilt_vel=0.2, timeout=0):
+    def look_at_point(self, point_stamped, end_time=0, pan_vel=1.0, tilt_vel=1.0, timeout=0):
         self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
 
     def cancel_goal(self):
