@@ -354,7 +354,6 @@ class LookAtPersonInFront(smach.State):
         self.lookDown = lookDown
 
     def execute(self, userdata=None):
-
         # initialize variables
         foundFace = False
         result = None

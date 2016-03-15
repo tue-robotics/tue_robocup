@@ -104,11 +104,6 @@ class Put(smach.State):
         self._robot.torso.wait_for_motion_done()
         arm.wait_for_motion_done()
 
-        # if arm == robot.arms["left"]:
-        #     goal_y = 0.2
-        # else:
-        #     goal_y = -0.2
-
         try:
             height = place_pose_bl.z
         except KeyError:
@@ -127,24 +122,19 @@ class Put(smach.State):
         # Place
         if not arm.send_goal(place_pose_bl.x, place_pose_bl.y, height+0.15, 0.0, 0.0, 0.0,
                              timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(self._robot.robot_name)):
-            rospy.logwarn("Cannot place the object")
-
-        # dx = 0.6
-        #
-        # x = 0.2
-        # while x <= dx:
-        #     if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
-        #         print "Failed pre-drop"
-        #         #return 'failed'
-        #     x += 0.05
-        #
-        # if not arm.send_goal(dx, goal_y, height + 0.15, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
-        #     print "drop failed"
-        #     #return 'failed'
+            rospy.logwarn("Cannot place the object, dropping it...")
+            
+        place_entity = arm.occupied_by
+        if not place_entity:
+            rospy.logerr("Arm not holding an entity to place. This should never happen")
+        else:
+            self._robot.ed.update_entity(place_entity.id, posestamped=placement_pose)
+            arm.occupied_by = None
 
         # Open gripper
-        arm.send_gripper_goal('open')
-
+        # Since we cannot reliably wait for the gripper, just set this timeout
+        arm.send_gripper_goal('open', timeout=2.0)
+        
         arm.occupied_by = None
 
         # Retract
@@ -153,17 +143,6 @@ class Put(smach.State):
                              timeout=0.0)
 
         self._robot.base.force_drive(-0.125, 0, 0, 1)
-
-        # x = dx
-        # while x > 0.3:
-        #     if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
-        #         print "Failed pre-drop"
-        #         #return 'failed'
-        #     x -= 0.1
-        #
-        # if not arm.send_goal(0.2, goal_y, height + 0.05, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
-        #     print "Failed after-drop"
-        #     #return 'failed'
 
         if not arm.wait_for_motion_done(timeout=5.0):
             rospy.logwarn('Retraction failed')
