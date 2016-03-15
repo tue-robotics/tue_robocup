@@ -89,7 +89,7 @@ class EnterArena(smach.StateMachine):
         with self:
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, "I will start my task now", block=False),
+                                    human_interaction.Say(robot, ["I will start my task now", "Let's rock and roll!", "Let's kick some ass!"], block=False),
                                     transitions={   "spoken":"FORCE_DRIVE_THROUGH_DOOR"})
 
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
