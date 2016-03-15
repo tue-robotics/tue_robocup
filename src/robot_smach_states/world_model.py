@@ -74,22 +74,26 @@ class SegmentObjects(smach.State):
         entity = self.entityDes.resolve()
         objIDs = []
 
+        look_at_point_z = 0.7
+
+        # Make sure the head looks at the entity
+        pos = entity.pose.position
+        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
+
+        # Check if we have areas
+        if "areas" in entity.data:
+            d = entity.data
+            search_area = next((x for x in d["areas"] if x["name"] == self.searchArea), None)
+
+            # check if search area
+            if search_area:
+                try:
+                    look_at_point_z = a["shape"][0]["box"]["min"]["z"]
+                except:
+                    pass
+
         # Make sure the spindle is at the appropriate height if we are AMIGO
         if self.robot.robot_name == "amigo":
-            d = entity.data
-
-            look_at_point_z = 0.7
-
-            # Check if we have areas
-            if "areas" in entity.data:
-                search_area = next((x for x in d["areas"] if x["name"] == self.searchArea), None)
-
-                # check if search area
-                if search_area:
-                    try:
-                        look_at_point_z = a["shape"][0]["box"]["min"]["z"]
-                    except:
-                        pass
 
             # Send spindle goal to bring head to a suitable location
             # Correction for standard height: with a table heigt of 0.76 a spindle position
@@ -97,15 +101,13 @@ class SegmentObjects(smach.State):
             # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
             spindle_target = max(0.15, min(look_at_point_z - 0.41, self.robot.torso.upper_limit[0]))
 
-            self.robot.torso._send_goal([spindle_target], timeout=10.0)
+            self.robot.torso._send_goal([spindle_target], timeout=0)
+            self.robot.torso.wait_for_motion_done()
 
-
-        # Make sure the head looks at the entity
-        pos = entity.pose.position
-        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, 0.8, "/map"), timeout=10)
+        self.robot.head.wait_for_motion_done()
 
         # This is needed because the head is not entirely still when the look_at_point function finishes
-        time.sleep(1)
+        time.sleep(0.5)
 
         # Inspect 'on top of' the entity
         res = self.robot.ed.update_kinect("{} {}".format(self.searchArea, entity.id))
