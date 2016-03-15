@@ -181,7 +181,7 @@ def load_waypoints(robot, filename="/param/locations.yaml"):
         rospy.set_param("/restaurant_locations/", locations)
 
         for tablename in tables.values():
-            location = locations[0][0]['locations'][tablename]
+            location = locations[0][0][0][0]['locations'][tablename] #Don't ask why there's so many subindices to use...
             base_pose = msg_constructors.PoseStamped(location['x'], location['y'], z=0)
             base_pose.pose.orientation = transformations.euler_z_to_quaternion(location['phi'])
 
@@ -407,6 +407,7 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                     transitions={   'spoken'            :'succeeded'})
 
 def setup_statemachine(robot):
+    import ipdb; ipdb.set_trace()
     load_waypoints(robot)
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
