@@ -87,7 +87,7 @@ class getPlan(smach.State):
         # Constraints and plan seem to be valid, so set the plan
         self.robot.base.local_planner.setPlan(plan, pc, oc)
 
-        self.robot.speech.speak(choice(["I'm on my way!","Getting there!","I will go there right away!"]), block=False)
+        self.robot.speech.speak(choice(["Affirmative!","I'm on my way!","Getting there!","I will be there in a sec!", "I'm coming!"]), block=False)
 
         return "goal_ok"
 
