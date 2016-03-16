@@ -407,7 +407,6 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                     transitions={   'spoken'            :'succeeded'})
 
 def setup_statemachine(robot):
-    import ipdb; ipdb.set_trace()
     load_waypoints(robot)
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
