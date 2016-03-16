@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 
 import smach, rospy, sys
 from robot_smach_states.util.startup import startup
@@ -8,6 +8,7 @@ import threading
 import time
 
 import math
+from visualization_msgs.msg import Marker
 
 from cb_planner_msgs_srvs.msg import *
 
@@ -34,6 +35,7 @@ class FollowOperator(smach.State):
         self._lost_distance = lost_distance
 
         self._operator_pub = rospy.Publisher('~operator_position', geometry_msgs.msg.PointStamped, queue_size=10)
+        self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -78,10 +80,39 @@ class FollowOperator(smach.State):
     def _get_operator(self, operator_id):
         if self._operator_id:
             operator = self._robot.ed.get_entity(id=operator_id)
+	    
+	    if operator:
+	        operator_pos = geometry_msgs.msg.PointStamped()
+                operator_pos.header.stamp = rospy.get_rostime()
+                operator_pos.header.frame_id = operator.id
+                operator_pos.point.x = 0.0;
+                operator_pos.point.y = 0.0;
+                operator_pos.point.z = 0.0;
+                self._operator_pub.publish(operator_pos)
+
         else:
             operator = None
 
         return operator
+
+    def _visualize_path(self, path):
+        line_strip = Marker()
+        line_strip.type = Marker.LINE_STRIP 
+        line_strip.scale.x = 0.05
+        line_strip.header.frame_id = "/map"
+        line_strip.header.stamp = rospy.Time.now()
+        line_strip.color.a = 1
+        line_strip.color.r = 0
+        line_strip.color.g = 1
+        line_strip.color.b = 1
+        line_strip.id = 0
+        line_strip.action = Marker.ADD
+        
+        # Push back all pnts
+        for pose_stamped in path:
+            line_strip.points.append(pose_stamped.pose.position)
+        
+        self._plan_marker_pub.publish(line_strip)
 
     def _update_navigation(self, breadcrumbs):
         self._robot.head.cancel_goal()
@@ -91,14 +122,6 @@ class FollowOperator(smach.State):
         p = PositionConstraint()
         p.constraint = "x^2 + y^2 < %f^2"%self._operator_radius
         p.frame = operator.id
-
-        operator_pos = geometry_msgs.msg.PointStamped()
-        operator_pos.header.stamp = rospy.get_rostime()
-        operator_pos.header.frame_id = operator.id
-        operator_pos.point.x = 0.0;
-        operator_pos.point.y = 0.0;
-        operator_pos.point.z = 0.0;
-        self._operator_pub.publish(operator_pos)
 
         # We are going to do this dependent on distance to operator
 
@@ -110,6 +133,8 @@ class FollowOperator(smach.State):
         dx = o_point.x - r_point.x
         dy = o_point.y - r_point.y
         length = math.hypot(dx, dy)
+        print "Breadcrumb distance: "
+        print length
 
         # Store pose if changed and check timeout
         current_pose_stamped = self._robot.base.get_location()
@@ -156,7 +181,7 @@ class FollowOperator(smach.State):
 
             # TODO: Proper fix for this (maybe a path of only 1m before the operator?)
             if end > 20:
-                start = 18
+                start = 10
 
             for i in range(start, end):
                 x = r_point.x + i * dx_norm * res
@@ -169,6 +194,7 @@ class FollowOperator(smach.State):
             # Communicate to local planner
             o = OrientationConstraint()
             o.frame = operator.id
+            self._visualize_path(plan)
             self._robot.base.local_planner.setPlan(plan, p, o)
 
         return False # We are not there
