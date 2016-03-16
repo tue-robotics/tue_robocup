@@ -34,8 +34,9 @@ class FollowOperator(smach.State):
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
 
-        self._operator_pub = rospy.Publisher('~operator_position', geometry_msgs.msg.PointStamped, queue_size=10)
+        self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name, geometry_msgs.msg.PointStamped, queue_size=10)
         self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
+        self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -80,20 +81,40 @@ class FollowOperator(smach.State):
     def _get_operator(self, operator_id):
         if self._operator_id:
             operator = self._robot.ed.get_entity(id=operator_id)
-	    
-	    if operator:
-	        operator_pos = geometry_msgs.msg.PointStamped()
-                operator_pos.header.stamp = rospy.get_rostime()
-                operator_pos.header.frame_id = operator.id
-                operator_pos.point.x = 0.0;
-                operator_pos.point.y = 0.0;
-                operator_pos.point.z = 0.0;
-                self._operator_pub.publish(operator_pos)
-
         else:
             operator = None
+        
+        if operator:
+            operator_pos = geometry_msgs.msg.PointStamped()
+            operator_pos.header.stamp = rospy.get_rostime()
+            operator_pos.header.frame_id = operator.id
+            operator_pos.point.x = 0.0;
+            operator_pos.point.y = 0.0;
+            operator_pos.point.z = 0.0;
+            self._operator_pub.publish(operator_pos)
+            print "Published operator position"
 
         return operator
+
+    def _visualize_breadcrumbs(self, breadcrumbs):
+        breadcrumbs_msg = Marker()
+        breadcrumbs_msg.type = Marker.POINTS
+        breadcrumbs_msg.scale.x = 0.05
+        breadcrumbs_msg.header.stamp = rospy.get_rostime()
+        breadcrumbs_msg.header.frame_id = "/map"
+        breadcrumbs_msg.color.a = 1
+        breadcrumbs_msg.color.r = 0
+        breadcrumbs_msg.color.g = 1
+        breadcrumbs_msg.color.b = 1
+        breadcrumbs_msg.lifetime = rospy.Time(1.0)
+        breadcrumbs_msg.id = 0
+        breadcrumbs_msg.action = Marker.ADD
+
+        for crumb in breadcrumbs:
+            breadcrumbs_msg.points.append(crumb.pose.position)
+
+        self._breadcrumb_pub.publish(breadcrumbs_msg)
+        print "Published breadcrumb positions"
 
     def _visualize_path(self, path):
         line_strip = Marker()
@@ -117,24 +138,20 @@ class FollowOperator(smach.State):
     def _update_navigation(self, breadcrumbs):
         self._robot.head.cancel_goal()
 
-        operator = breadcrumbs[-1]
-
-        p = PositionConstraint()
-        p.constraint = "x^2 + y^2 < %f^2"%self._operator_radius
-        p.frame = operator.id
-
-        # We are going to do this dependent on distance to operator
+        breadcrumb = breadcrumbs[0]
 
         # Get the point of the operator and the robot in map frame
         r_point = self._robot.base.get_location().pose.position
-        o_point = breadcrumbs[0].pose.position
+        o_point = breadcrumb.pose.position
+
+        p = PositionConstraint()
+        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (o_point.x, o_point.y, self._operator_radius)
+        p.frame = "/map"
 
         # Get the distance
         dx = o_point.x - r_point.x
         dy = o_point.y - r_point.y
         length = math.hypot(dx, dy)
-        print "Breadcrumb distance: "
-        print length
 
         # Store pose if changed and check timeout
         current_pose_stamped = self._robot.base.get_location()
@@ -177,26 +194,34 @@ class FollowOperator(smach.State):
             plan = []
 
             start = 0
-            end = int( (length - self._operator_radius) / res)
+            end = int( (length - 0.5) / res)
 
             # TODO: Proper fix for this (maybe a path of only 1m before the operator?)
             if end > 20:
-                start = 10
+                start = 18
 
             for i in range(start, end):
                 x = r_point.x + i * dx_norm * res
                 y = r_point.y + i * dy_norm * res
                 plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
 
-            # TODO: Visualization marker for path
-
         if plan:
             # Communicate to local planner
             o = OrientationConstraint()
-            o.frame = operator.id
-            self._visualize_path(plan)
-            self._robot.base.local_planner.setPlan(plan, p, o)
+            o.look_at.x = 1e9 # TODO: hack to make the robot look in the right direction...
+            
+            if len(breadcrumbs) > 1:
+                dx_next = breadcrumbs[1].pose.position.x - o_point.x
+                dy_next = breadcrumbs[1].pose.position.y - o_point.y
+                o.angle_offset = math.atan2(dy_next, dx_next)
+            else:
+                o.angle_offset = math.atan2(dy, dx)
 
+            self._visualize_path(plan)
+            # self._robot.base.local_planner.setPlan(plan, p, o)
+            self._robot.base.global_planner.setPlan(plan, p, o)
+
+        print "Not there yet...\n"
         return False # We are not there
 
     def execute(self, userdata):
@@ -217,10 +242,11 @@ class FollowOperator(smach.State):
 
             # Check if operator present still present
             operator = self._get_operator(self._operator_id)
-            breadcrumbs.append(operator)
 
             if not operator:
-                self._robot.speech.speak("I lost the operator, but I still have some breadcrumbs to go after before I stop.", block=False)
+                self._robot.speech.speak("I lost the operator", block=True)
+                if breadcrumbs:
+                	self._robot.speech.speak("Following the last few breadcrumbs", block=True)
 
             if not breadcrumbs and not operator:
                 self._robot.speech.speak("I'm out of breadcrumbs. Where is that operator?", block=False)
@@ -246,13 +272,23 @@ class FollowOperator(smach.State):
 
             old_operator = operator
 
-            # Update the navigation and check if we are already there
-            if self._update_navigation(breadcrumbs):
-                self._robot.base.local_planner.cancelCurrentPlan()
-                breadcrumbs.pop(0)
-                if not breadcrumbs:
-                    return "stopped"
+            if operator:
+                if breadcrumbs:
+                    # If the operator moved more than .5 meters, lay down a new breadcrumb
+                    if math.hypot(operator.pose.position.x - breadcrumbs[-1].pose.position.x, operator.pose.position.y - breadcrumbs[-1].pose.position.y) > 0.5:
+                        breadcrumbs.append(operator)
+                else:
+                    breadcrumbs.append(operator)
+                self._visualize_breadcrumbs(breadcrumbs)
 
+            # Update the navigation and check if we are already there
+            if breadcrumbs:
+                if self._update_navigation(breadcrumbs):
+                    self._robot.base.local_planner.cancelCurrentPlan()
+                    breadcrumbs.pop(0)
+                    self._visualize_breadcrumbs(breadcrumbs)
+                    if not breadcrumbs:
+                        return "stopped"    
             rospy.sleep(1) # Loop at 1Hz
 
 def setup_statemachine(robot):
