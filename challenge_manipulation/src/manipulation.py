@@ -91,37 +91,24 @@ def max_width(entity):
 # ----------------------------------------------------------------------------------------------------
 
 
-class FormattedSentenceDesignator(ds.Designator):
-    """docstring for FormattedSentenceDesignator"""
-    def __init__(self, fmt, **kwargs):
-        super(FormattedSentenceDesignator, self).__init__(resolve_type=str)
-        self.fmt = fmt
-        self.kwargs = kwargs
-
-    def _resolve(self):
-        kwargs_resolved = {key: value.resolve() for key, value in self.kwargs.iteritems()}
-        return self.fmt.format(**kwargs_resolved)
-
-# ----------------------------------------------------------------------------------------------------
-
-
 class EntityDescriptionDesignator(ds.Designator):
     """EntityDescriptionDesignator"""
-    def __init__(self, formats, entity_designator, name=None):
+    def __init__(self, entity_designator, name=None):
         super(EntityDescriptionDesignator, self).__init__(resolve_type=str, name=name)
         self.entity_designator = entity_designator
-        self.formats = formats
+        self.known_formats = "I'm trying to grab the {type}"
+        self.unknown_formats = "I'm trying to grab this thing"
 
     def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
-            return None
+            return self.unknown_formats
         short_id = entity.id[:5]
         typ = entity.type
-        fmt = self.formats
-        if not isinstance(fmt, str) and isinstance(fmt, list):
-            fmt = random.choice(fmt)
-        sentence = fmt.format(type=typ, id=short_id)
+        if typ:
+            sentence = self.known_formats.format(type=typ)
+        else:
+            sentence = self.unknown_formats
         return sentence
 
 # ----------------------------------------------------------------------------------------------------
@@ -294,7 +281,9 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'locked':'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add( "ANNOUNCE_ITEM",
-                                    states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", self.current_item, name="current_item_desc"), block=False),
+                                    states.Say(robot, EntityDescriptionDesignator(self.current_item,
+                                                                                  name="current_item_desc"),
+                                               block=False),
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
@@ -331,11 +320,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add('STORE_ITEM',
                                    smach.CBState(store_as_manipulated),
-                                   transitions={'stored':'ANNOUNCE_CLASS'})
-
-            smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item), block=False),
-                                    transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
+                                   transitions={'stored':'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
                                      states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
