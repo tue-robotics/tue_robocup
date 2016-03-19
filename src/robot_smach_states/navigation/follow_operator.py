@@ -218,8 +218,7 @@ class FollowOperator(smach.State):
                 o.angle_offset = math.atan2(dy, dx)
 
             self._visualize_path(plan)
-            # self._robot.base.local_planner.setPlan(plan, p, o)
-            self._robot.base.global_planner.setPlan(plan, p, o)
+            self._robot.base.local_planner.setPlan(plan, p, o)
 
         print "Not there yet...\n"
         return False # We are not there
