@@ -1,44 +1,115 @@
-# Open Challenge
+--------------------------------------------------------------------------------------------
+    PREPARATION
+--------------------------------------------------------------------------------------------
 
-Responsible: Ramon & Sjoerd
+  [0:00]
 
-## Setup
+  # Make sure the RoboEarth router is correctly positioned
+  - Disconnect the big switch on the table to make sure that no computers are consuming bandwidth
+  - Max and Janno put AMIGO and SERGIO side-by-side in the furthest living room corner
+    near the hall, 1.5 meter apart in Y (SERGIO nearer to the bar)
+  # AMIGO has torso down, looking down, lights off # ToDo: make direct function
+  - Rein has computer with visualization connected to beamer:
+    - One desktop with OpenCV GUI
+    - One desktop with our custom visualization
+  - Rokus and Luis start re-positioning the objects in the kitchen
+    - ALSO already put grasp items on the table. # ToDo: which object, where?
+  - Ramon sits with the jury with the GUI on the iPad
 
-amigo1/sergio1:
+  - While setting up, Sjoerd starts pitch
 
-    astart/sstart # (if not already running)
+  - Luis goes to the bedroom, and stays there
 
-amigo2/sergio1:
+--------------------------------------------------------------------------------------------
+    SCENARIO
+--------------------------------------------------------------------------------------------
 
-    ahardware/shardware: base, spindle, arms (left-arm is used) head
+  [0:30] SERGIO stores AMIGO's initial pose in the world model
 
-amigo1/sergio1:
+  [0:30] Using the GUI Ramon maps the room with SERGIO in the order:
+         - bar
+         - dinner_table
+         - ... other objects in livingroom ...
+         - bed
+         - ... continue to hallway
 
-    amiddle/smiddle
+  [?:??] As soon as SERGIO maps the bar, AMIGO is requested to go to the person nearest to the bar.
+         AMIGO's queries his initial pose from the world model and sets it.
 
-tablet:
+         TODO:
+             how do we give this command? With the GUI?
 
-    http://amigo1:8000/challenge_open/dist/
-    http://sergio1:8000/challenge_open/dist/
+         SERGIO keeps on exploring the room
 
-external pc:
+  [?:??] AMIGO asks: "what can I do for you?".
+         OPERATOR: "Luis needs your help"
+         AMIGO: "Where can I find Luis?"
+         OPERATOR: "near the bed"
 
-    Sjoerd's visualization stuff???
+  [?:??] AMIGO drives to the person near the bed (Luis). He asks Luis: "What can I do for you?"
+         Luis: "Bring me the object on the dinner_table"
 
-## Start
+  [?:??] AMIGO drives to the dinner_table, grasps the object, and bring it back Luis (again the person nearest to the bed)
 
-    rosrun challenge_open challenge_open.py 
+  [?:??] AMIGO asks Luis: "what can I do for you?".
+         Luis: "Go back to the operator"
 
-## In case you ONLY want to test grasping
+  [?:??] AMIGO drives back to the person nearest to the bar (Sjoerd)
+         AMIGO asks Sjoerd: "what can I do for you?".
+         Sjoerd: "How much time do we still have?"
 
-	rosrun challenge_open challenge_open.py '<type>'
+         Rokus' time node is queried. This returns a string that can be directly given to 'speak'
+       
+  [?:??] From this point on, let AMIGO keep on asking "What can I do for you?". The possibilities are:
 
-	where you put a type that has been assigned. Note that the 
-	object to be grasped might need to be updated.
+         "Get me the object from X"
 
-## Story
+  [?:??] When SERGIO is done exploring, Ramon clicks a button on the GUI and SERGIO drives back to the jury
 
-- The robot drives around autonomously and maps objects
-- The gui can be used to label those snapshots
-- You can *call* the robot for ... ???
-- When the challenge ends, send a *exit* command via the gui
+         TODO: maybe it's nice to have the option "drive to X" in the GUI. THIS IS A NICE TO HAVE!
+
+
+--------------------------------------------------------------------------------------------
+    TODO PER PERSON
+--------------------------------------------------------------------------------------------
+
+  - Ramon: get bandwith check tool to work, responsible for GUI
+
+  - Max: testing
+  #    - Make sure we have external audio on SERGIO (ask Janno)
+      - Check if we can have a mic for Sjoerd and also one to point at each Robot so that the jury can listen to the orders and responses 
+          (3 mics, or 2 if Sergio does not communicate much)
+
+  - Rokus: 
+      - time query node 
+      - testing
+
+  - Luis: testing
+
+  - Erik: AMIGO executive
+      - When started, AMIGO automatically goes down, head down, (lights off)
+      - Can be triggered by topic (received from GUI)
+
+  - Janno: SERGIO executive
+  #    - SERGIO should always keep it's head straight, slightly looking down
+  o    - Must be able to cancel nav goals -> need snappy behavior
+
+  - Rein:
+      - robot-robot communication
+      - Make sure laptop visualization works with beamer
+
+  - Sjoerd: visualization
+  #   - Navigation
+      - Localization AMIGO
+      - OpenCV GUI mimic
+      - RViz-like visualization
+
+--------------------------------------------------------------------------------------------
+    NICE TO HAVES (DON'T FOCUS ON THIS, UNLESS ALL OF THE ABOVE IS DONE!)
+--------------------------------------------------------------------------------------------
+
+  - dynamic updates of objects. TODO's:
+    - Test and debug dynamic update (Sjoerd)
+    - Map filter (Sjoerd)
+  - following a person and fitting objects instead of GUI (?)
+  - paramaterized models (Sjoerd)
