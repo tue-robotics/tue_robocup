@@ -23,6 +23,9 @@ import rospy
 import smach
 import random
 
+# ED
+from ed_gui_server.msg import EntityInfo
+
 # Robot Smach States
 import robot_smach_states.util.designators as ds
 import robot_smach_states as states
@@ -432,7 +435,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, list, name="placed_items"))
+            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [EntityInfo], name="placed_items"))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM',
                                                 single_item,
