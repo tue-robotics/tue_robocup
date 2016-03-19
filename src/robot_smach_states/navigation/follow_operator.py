@@ -85,7 +85,7 @@ class FollowOperator(smach.State):
             operator = self._robot.ed.get_entity(id=operator_id)
         else:
             operator = None
-        
+
         if operator:
             self._operator_position = operator.pose.position
             operator_pos = geometry_msgs.msg.PointStamped()
@@ -119,7 +119,7 @@ class FollowOperator(smach.State):
 
     def _visualize_plan(self, path):
         line_strip = Marker()
-        line_strip.type = Marker.LINE_STRIP 
+        line_strip.type = Marker.LINE_STRIP
         line_strip.scale.x = 0.05
         line_strip.header.frame_id = "/map"
         line_strip.header.stamp = rospy.Time.now()
@@ -129,11 +129,11 @@ class FollowOperator(smach.State):
         line_strip.color.b = 1
         line_strip.id = 0
         line_strip.action = Marker.ADD
-        
+
         # Push back all pnts
         for pose_stamped in path:
             line_strip.points.append(pose_stamped.pose.position)
-        
+
         self._plan_marker_pub.publish(line_strip)
 
 
@@ -182,32 +182,31 @@ class FollowOperator(smach.State):
 
         # Generate a plan through all breadcrumbs
         plan = None
-        if length > self._distance_threshold:
-            print "Too far from operator, asking global planner for plan"
-            plan = self._robot.base.global_planner.getPlan(p)
-        else:
-            res = 0.05
-            plan = []
-            previous_point = breadcrumbs[0].pose.position
+        res = 0.05
+        plan = []
+        previous_point = breadcrumbs[0].pose.position
 
-            for crumb in itertools.islice( breadcrumbs , 1, None ):
-                dx = crumb.pose.position.x - previous_point.x
-                dy = crumb.pose.position.y - previous_point.y
-                length = math.hypot(dx, dy)
-            
-                dx_norm = dx / length
-                dy_norm = dy / length
-                yaw = math.atan2(dy, dx)
+        for crumb in itertools.islice( breadcrumbs , 1, None ):
+            dx = crumb.pose.position.x - previous_point.x
+            dy = crumb.pose.position.y - previous_point.y
+            length = math.hypot(dx, dy)
 
-                start = 0
-                end = int( length / res)
+            dx_norm = dx / length
+            dy_norm = dy / length
+            yaw = math.atan2(dy, dx)
 
-                for i in range(start, end):
-                    x = previous_point.x + i * dx_norm * res
-                    y = previous_point.y + i * dy_norm * res
-                    plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
+            start = 0
+            end = int( length / res)
 
-                previous_point = crumb.pose.position
+            if end > 20:
+                end -= 20
+
+            for i in range(start, end):
+                x = previous_point.x + i * dx_norm * res
+                y = previous_point.y + i * dy_norm * res
+                plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
+
+            previous_point = crumb.pose.position
 
         if plan:
             # Communicate to local planner
@@ -215,7 +214,7 @@ class FollowOperator(smach.State):
             o.frame = "map"
             o.look_at = self._operator_position
 
-            
+
             self._visualize_plan(plan)
             self._robot.base.local_planner.setPlan(plan, p, o)
 
@@ -287,7 +286,7 @@ class FollowOperator(smach.State):
                     breadcrumbs = []
                     self._visualize_breadcrumbs(breadcrumbs)
                     if not breadcrumbs:
-                        return "stopped"    
+                        return "stopped"
             rospy.sleep(1) # Loop at 1Hz
 
 def setup_statemachine(robot):
