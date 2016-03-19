@@ -1,0 +1,463 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /ED1
+      Splitter Ratio: 0.678571
+    Tree Height: 698
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+      - /Publish Point1
+    Name: Tool Properties
+    Splitter Ratio: 0.588679
+  - Class: rviz/Views
+    Expanded:
+      - /Current View1
+      - /TopDownOrtho1
+      - /MaxObsVel21
+    Name: Views
+    Splitter Ratio: 0.5
+  - Class: rviz/Time
+    Experimental: false
+    Name: Time
+    SyncMode: 0
+    SyncSource: ""
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_laser:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_lasertop:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_torso_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        elbow_link4_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        elbow_link4_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_phalanx_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_phalanx_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_tip_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_tip_phalanx_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_tip_phalanx_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger1_tip_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_phalanx_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_phalanx_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_tip_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_tip_phalanx_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_tip_phalanx_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        finger2_tip_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fore_arm_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fore_arm_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        grippoint_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        grippoint_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        hand_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        hand_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        laser_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        lower_rear_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        neck_pan:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        neck_tilt:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_link1_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_link1_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_link2_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_link2_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_mount_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        shoulder_mount_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        sidepot_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        sidepot_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        top_kinect/openni_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        top_kinect/openni_depth_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        top_kinect/openni_depth_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        top_kinect/openni_rgb_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        top_kinect/openni_rgb_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        torso_laser:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        torso_laser_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        torso_lasertop:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        torso_mounting_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        trunk:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        upper_arm_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        upper_arm_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        upper_leg:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_link6_left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wrist_link6_right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: sergio/robot_description
+      TF Prefix: sergio
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 0.5
+      Cell Size: 0.01
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 1000
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sergio/world_model
+      Name: ED
+      Namespaces:
+        entities: true
+      Queue Size: 1
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 0; 0; 0
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+    - Class: rviz/SetInitialPose
+      Topic: /amigo/initialpose
+    - Class: rviz/SetGoal
+      Topic: /move_base_simple/goal
+    - Class: rviz/PublishPoint
+      Single click: true
+      Topic: /clicked_point
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 10.1697
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.06
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: -0.526882
+        Y: -2.19205
+        Z: 0.208152
+      Name: Current View
+      Near Clip Distance: 0.01
+      Pitch: 0.699801
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 4.14002
+    Saved:
+      - Angle: 0
+        Class: rviz/TopDownOrtho
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.06
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Name: TopDownOrtho
+        Near Clip Distance: 0.01
+        Scale: 164.283
+        Target Frame: <Fixed Frame>
+        Value: TopDownOrtho (rviz)
+        X: 14.3441
+        Y: 6.43784
+      - Angle: 0
+        Class: rviz/TopDownOrtho
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.06
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Name: MaxObsVel
+        Near Clip Distance: 0.01
+        Scale: 259.092
+        Target Frame: <Fixed Frame>
+        Value: TopDownOrtho (rviz)
+        X: -9.53399
+        Y: -6.18402
+      - Angle: 0
+        Class: rviz/TopDownOrtho
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.06
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Name: MaxObsVel2
+        Near Clip Distance: 0.01
+        Scale: 259.092
+        Target Frame: <Fixed Frame>
+        Value: TopDownOrtho (rviz)
+        X: -9.50697
+        Y: -5.95244
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 1004
+  Hide Left Dock: false
+  Hide Right Dock: true
+  QMainWindow State: 000000ff00000000fd00000004000000000000019d00000349fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004100000349000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001c00430061006d0020002d002000480065006100640020005200470042020000028200000111000002e900000273fb0000002000430061006d0020002d0020004800650061006400200044006500700074006802000001cc000000ce0000032900000276fb0000002c005700690072006500320020002d0020004b0069006e00650063007400200055006e006b006e006f0077006e0000000255000000800000000000000000000000010000010f00000294fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004100000294000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000005dd0000034900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  Time:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
+  Views:
+    collapsed: true
+  Width: 1920
+  X: 0
+  Y: 24
