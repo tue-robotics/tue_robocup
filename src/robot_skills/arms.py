@@ -94,6 +94,12 @@ class Arm(object):
         '''
         return rospy.get_param('/' + self.robot_name + '/' + param_name)
 
+    def cancel_goals(self):
+        """ Cancels the currently active grasp-precompute and joint-trajectory-action goals
+        """
+        self._ac_grasp_precompute.cancel_all_goals()
+        self._ac_joint_traj.cancel_all_goals()
+
     def close(self):
         try:
             rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
@@ -268,9 +274,9 @@ class Arm(object):
         else:
             rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
             return False
-            
+
         self._ac_gripper.send_goal(goal)
-        
+
         if state == 'open':
             if self.occupied_by is not None:
                 rospy.logerr("send_gripper_goal open is called but there is still an entity with id '%s' occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
@@ -280,7 +286,7 @@ class Arm(object):
         if timeout != 0.0:
             self._ac_gripper.wait_for_result(rospy.Duration(timeout))
             goal_status = self._ac_gripper.get_state()
-        
+
         return goal_status == GoalStatus.SUCCEEDED
 
     def handover_to_human(self, timeout=10):
