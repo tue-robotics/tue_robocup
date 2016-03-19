@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+
+################################################
+# Creator: Luis Ferreira (luisfferreira@outlook.com)
+# Date: October 2015
+################################################
+
 import roslib;
 import rospy
 import smach
@@ -15,12 +21,11 @@ from collections import namedtuple
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
-from robot_smach_states.manipulation import SjoerdsGrab
+from robot_smach_states import Grab
 from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
 from robot_skills.arms import Arm
 
-# ClassificationResult = namedtuple("ClassificationResult", "id type probability") #Generates a class with id, type and probability.
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -149,7 +154,8 @@ class PickUpRandomObj(smach.State):
             armDes = UnoccupiedArmDesignator(self.robot.arms, self.robot.arms['right'])
             entityDes = EdEntityDesignator(self.robot, id=selectedObj.id)
 
-            grabState = SjoerdsGrab(self.robot, entityDes, armDes)
+            # Grab(robot, self.current_item, self.empty_arm_designator),
+            grabState = Grab(self.robot, entityDes, armDes)
             result = grabState.execute()
 
             if result == 'done':
@@ -188,7 +194,10 @@ class RecognizePeople(smach.State):
             for det in detections:
                 printOk("Name: {} \tAge:{} \tGender:{} Pose:{}".format(det.name, det.age, det.gender, det.pose))
 
-                self.robot.speech.speak("Hello {0}!".format(det.name), block=True)
+                if det.name:
+                    self.robot.speech.speak("Hello {}!".format(det.name), block=True)
+                else:
+                    self.robot.speech.speak("Hello stranger!".format(det.name), block=True)
 
         return 'succeeded'
 
@@ -196,16 +205,42 @@ class RecognizePeople(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
-class SelectNextTest(smach.State):
+class SelectNextContainer(smach.State):
     """
         Select a new test to be executed, either by a certain order, random or on repeat
     """
-    def __init__(self, robot, random = False, repeat = 0):
-        smach.State.__init__(   self, outcomes=['goto1', 'goto2', 'goto3'])
+    def __init__(self, robot, containerResultDes):
+        smach.State.__init__(   self, outcomes=['go_to_enter_room', 
+                                                'go_to_wait_person', 
+                                                'go_to_pick_up',
+                                                'go_to_recognize_people',
+                                                'go_to_search_people'])
 
+        self.containerResultDes = containerResultDes
         self.robot = robot
-        self.random = random
+        self.nextContainer = ""
+        self.statusLog = {stateName:[0, 0] for stateName in self.get_registered_outcomes()}
 
     def execute(self, userdata):
-        printOk("SelectNextTest")
+        printOk("SelectNextContainer")
+
+        # skip if there is no nextContainer (first run) 
+        if self.nextContainer:
+            # update total number of runs
+            self.statusLog[self.nextContainer][1] += 1
+            # updatenumber of successfull runs
+            if self.containerResultDes.resolve() == 0:
+                self.statusLog[self.nextContainer][0] += 1
+
+        print ""
+        # print results
+        for name, stateInfo in self.statusLog.iteritems():
+            printOk("Container '{}': \tsucceeded {}/{}".format(name, stateInfo[0], stateInfo[1]))
+        print ""
+
+        # import ipdb; ipdb.set_trace()
+        self.nextContainer = random.choice(self.get_registered_outcomes())
+        
+        printOk("Jumping to next container: '{}'".format(self.nextContainer))
+        return self.nextContainer
 

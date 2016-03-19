@@ -338,7 +338,7 @@ class SearchPeopleContainer(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_UNFINSHED',
                                     states.Say(robot,"This part is not finished yet.", block=False),
-                                    transitions={'spoken':'container_success'})
+                                    transitions={'spoken':'container_failed'})
 
 
 
@@ -403,6 +403,37 @@ class ChallengeTest(smach.StateMachine):
             robot.speech.speak( "Hello " + personNameDes.resolve() + "!", block=False)
             return 'spoken'
 
+        @smach.cb_interface(outcomes=['done'])
+        def setOutcomeStatusCB(userdata, resultDes=None, succeeded=None):
+            printOk("setOutcomeStatusCB")
+
+            if True == succeeded:
+                printOk("Container finished successfully")
+                resultDes.write(0)
+            else:
+                printWarning("Container finished unsuccessfully")
+                resultDes.write(1)
+
+            return 'done'
+
+
+
+
+# def my_cb(ud, x=0, y, z):
+#     ud.xyz = ud.q + x + y + z
+#     return 'foo'
+# ...
+
+
+# with sm:
+#     ...
+#     StateMachine.add('MY_CB', CBState(my_cb,
+#                                       cb_args=[10],
+#                                       cb_kwargs={'z':2,'y':3}),
+#                               {'foo':'OTHER_STATE'})
+
+
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         with self:
@@ -414,22 +445,30 @@ class ChallengeTest(smach.StateMachine):
 
             smach.StateMachine.add( "INIT_WM",
                                     states.InitializeWorldModel(robot), 
-                                    transitions={   'done':'ENTER_ROOM_CONTAINER'})
+                                    transitions={   'done':'SELECT_NEXT_CONTAINER'})
 
-            # smach.StateMachine.add( 'SELECT_NEXT_CONTAINER',
-            #                         test_states.SelectNextContainer(robot, containerResultDes),
-            #                         transitions={   'go_to_enter_room':'ENTER_ROOM_CONTAINER',
-            #                                         'go_to_wait_person':'WAIT_PERSON_CONTAINER',
-            #                                         'go_to_pick_up':'PICK_UP_CONTAINER',
-            #                                         'go_to_recognize_people':'RECOGNIZE_PEOPLE_CONTAINER',
-            #                                         'go_to_search_people':'SEARCH_PEOPLE_CONTAINER',
-            #                                         'go_to_end_challenge':'END_CHALLENGE'})
+            smach.StateMachine.add( 'SELECT_NEXT_CONTAINER',
+                                    test_states.SelectNextContainer(robot, containerResultDes),
+                                    transitions={   'go_to_enter_room':'ENTER_ROOM_CONTAINER',
+                                                    'go_to_wait_person':'WAIT_PERSON_CONTAINER',
+                                                    'go_to_pick_up':'PICK_UP_CONTAINER',
+                                                    'go_to_recognize_people':'RECOGNIZE_PEOPLE_CONTAINER',
+                                                    'go_to_search_people':'SEARCH_PEOPLE_CONTAINER'})
+                                                    # 'go_to_end_challenge':'END_CHALLENGE'
+
+            smach.StateMachine.add( 'SET_OUTCOME_STATUS_SUCCEEDED',
+                                    smach.CBState(setOutcomeStatusCB, cb_kwargs={'resultDes':containerResultDes.writeable, 'succeeded':True}),
+                                    transitions={   'done':'SELECT_NEXT_CONTAINER'})
+
+            smach.StateMachine.add( 'SET_OUTCOME_STATUS_FAILED',
+                                    smach.CBState(setOutcomeStatusCB, cb_kwargs={'resultDes':containerResultDes.writeable, 'succeeded':False}),
+                                    transitions={   'done':'SELECT_NEXT_CONTAINER'})
             
             # Navigation test
             smach.StateMachine.add( 'ENTER_ROOM_CONTAINER',
                                     EnterRoomContainer(robot),
-                                    transitions={   'container_success':'WAIT_PERSON_CONTAINER',
-                                                    'container_failed': 'WAIT_PERSON_CONTAINER'})
+                                    transitions={   'container_success':'SET_OUTCOME_STATUS_SUCCEEDED',
+                                                    'container_failed': 'SET_OUTCOME_STATUS_FAILED'})
 
             # Human Interaction Test
             smach.StateMachine.add( 'WAIT_PERSON_CONTAINER',
@@ -440,36 +479,32 @@ class ChallengeTest(smach.StateMachine):
             # Speech Test
             smach.StateMachine.add( 'LEARN_NAME_CONTAINER',
                                     LearnNameContainer(robot, personNameDes),
-                                    transitions={   'container_failed':'SAY_HELLO',
-                                                    'container_success':'SAY_HELLO'})
-
-            smach.StateMachine.add( 'SAY_HELLO',
-                                    smach.CBState(sayHelloCB),
-                                    transitions={   'spoken':'LEARN_FACE_CONTAINER'})
+                                    transitions={   'container_failed':'SET_OUTCOME_STATUS_FAILED',
+                                                    'container_success':'SET_OUTCOME_STATUS_SUCCEEDED'})
 
             # Face Learning Test
             smach.StateMachine.add( 'LEARN_FACE_CONTAINER',
                                     LearnFaceContainer(robot, personNameDes),
-                                    transitions={   'container_success':'RECOGNIZE_PEOPLE_CONTAINER',
-                                                    'container_failed': 'RECOGNIZE_PEOPLE_CONTAINER'})
+                                    transitions={   'container_success':'SET_OUTCOME_STATUS_SUCCEEDED',
+                                                    'container_failed': 'SET_OUTCOME_STATUS_FAILED'})
 
             # Face Recognition Test
             smach.StateMachine.add( 'RECOGNIZE_PEOPLE_CONTAINER',
                                     RecognizePeopleContainer(robot),
-                                    transitions={   'container_success':'PICK_UP_CONTAINER',
-                                                    'container_failed': 'PICK_UP_CONTAINER'})
+                                    transitions={   'container_success':'SET_OUTCOME_STATUS_SUCCEEDED',
+                                                    'container_failed': 'SET_OUTCOME_STATUS_FAILED'})
 
             # Manipulation Test
             smach.StateMachine.add( 'PICK_UP_CONTAINER',
                                     PickUpContainer(robot, objectsIDsDes),
-                                    transitions={   'container_success':'SEARCH_PEOPLE_CONTAINER',
-                                                    'container_failed': 'SEARCH_PEOPLE_CONTAINER'})
+                                    transitions={   'container_success':'SET_OUTCOME_STATUS_SUCCEEDED',
+                                                    'container_failed': 'SET_OUTCOME_STATUS_FAILED'})
 
             # Face Recogniton Test
             smach.StateMachine.add( 'SEARCH_PEOPLE_CONTAINER',
                                     SearchPeopleContainer(robot, personNameDes),
-                                    transitions={   'container_success':'END_CHALLENGE',
-                                                    'container_failed': 'END_CHALLENGE'})
+                                    transitions={   'container_success':'SET_OUTCOME_STATUS_SUCCEEDED',
+                                                    'container_failed': 'SET_OUTCOME_STATUS_FAILED',})
 
             smach.StateMachine.add( 'END_CHALLENGE',
                                     states.Say(robot,"My work here is done, goodbye!"),
