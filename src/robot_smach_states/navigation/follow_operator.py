@@ -214,6 +214,7 @@ class FollowOperator(smach.State):
         if standing_still and plan:
             # Check if plan is blocked
             if not self._robot.base.global_planner.checkPlan(plan):
+                print "Breadcrumb plan is blocked"
                 # Go through plan from operator to robot and pick the first unoccupied point as goal point
                 for point in reversed(plan):
                     point_plan = [point]
@@ -221,12 +222,19 @@ class FollowOperator(smach.State):
                         end_dist_to_operator_x = point.pose.position.x - r_point.x
                         end_dist_to_operator_y = point.pose.position.y - r_point.y
                         end_dist_to_operator = math.hypot(end_dist_to_operator_x, end_dist_to_operator_y)
+                        print "Found an unoccupied point on the path %f m from the operator"%end_dist_to_operator
                         # If end point inside the local costmap
                         if end_dist_to_operator < 2.5:
+                            plan_found = True
                             plan = point_plan
                             break
                         else:
-                            plan = self._robot.base.global_planner.getPlan(p)
+                            print "outside the local costmap"
+
+                if not plan_found:
+                    print "No valid points found. Using the global planner"
+                    plan = self._robot.base.global_planner.getPlan(p)
+                    break
 
         if plan:
             # Communicate to local planner
