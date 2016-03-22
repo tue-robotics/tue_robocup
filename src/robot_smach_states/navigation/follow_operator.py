@@ -170,18 +170,18 @@ class FollowOperator(smach.State):
             else:
                 print "We are standing still :/"
 
-            print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
-            print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
-            # Check whether we passe the timeout
-            if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > self._timeout:
-                print "We are standing still long enough"
-                # Only return True if we exceeded the start timeout
-                standing_still = True
-                if (current_pose_stamped.header.stamp - self._time_started).to_sec() > self._start_timeout:
-                    print "We passed start timeout"
-                    if length < self._operator_radius:
-                        print "Distance to goal < 1.0 : %f" % length
-                        return True
+                print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+                print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
+                # Check whether we passed the timeout
+                if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > self._timeout:
+                    print "We are standing still long enough"
+                    # Only return True if we exceeded the start timeout
+                    standing_still = True
+                    if (current_pose_stamped.header.stamp - self._time_started).to_sec() > self._start_timeout:
+                        print "We passed start timeout"
+                        if length < self._operator_radius:
+                            print "Distance to goal < 1.0 : %f" % length
+                            return True
 
         # Generate a plan through all breadcrumbs
         plan = None
