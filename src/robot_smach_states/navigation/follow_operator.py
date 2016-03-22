@@ -210,12 +210,17 @@ class FollowOperator(smach.State):
                 plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
 
             previous_point = crumb.pose.position
+
+        if not plan:
+            yaw = math.atan2(dy, dx)
+            plan.append(msg_constructors.PoseStamped(x = o_point.x, y = o_point.y, z = 0, yaw = yaw ))
         
         if standing_still and plan:
             # Check if plan is blocked
             if not self._robot.base.global_planner.checkPlan(plan):
                 print "Breadcrumb plan is blocked"
                 # Go through plan from operator to robot and pick the first unoccupied point as goal point
+                plan_found = False
                 for point in reversed(plan):
                     point_plan = [point]
                     if self._robot.base.global_planner.checkPlan(point_plan):
