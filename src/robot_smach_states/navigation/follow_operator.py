@@ -234,7 +234,6 @@ class FollowOperator(smach.State):
                 if not plan_found:
                     print "No valid points found. Using the global planner"
                     plan = self._robot.base.global_planner.getPlan(p)
-                    break
 
         if plan:
             # Communicate to local planner
