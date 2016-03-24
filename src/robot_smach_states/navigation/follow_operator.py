@@ -84,7 +84,7 @@ class FollowOperator(smach.State):
         return True
 
     def _update_breadcrumb_path(self):
-        ''' If the last breadcrumb is less than a threshold away, replace 
+        ''' If the last breadcrumb is less than a threshold away, replace
         the last breadcrumb with the latest operator position; otherwise
         just add it. '''
         dx = self._breadcrumbs[-1].pose.position.x - self._operator.pose.position.x
@@ -196,8 +196,9 @@ class FollowOperator(smach.State):
         length = math.hypot(dx, dy)
 
         # TODO: Only return True if we exceeded the standstill timeout?
-        if length < self._operator_radius and (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
-            return True
+        if length < self._operator_radius:
+            if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
+                return True
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -319,7 +320,7 @@ class FollowOperator(smach.State):
     #     if not plan:
     #         yaw = math.atan2(dy, dx)
     #         plan.append(msg_constructors.PoseStamped(x = o_point.x, y = o_point.y, z = 0, yaw = yaw ))
-        
+
     #     if standing_still and plan:
     #         # Check if plan is blocked
     #         if not self._robot.base.global_planner.checkPlan(plan):
@@ -407,7 +408,7 @@ class FollowOperator(smach.State):
 
             rospy.sleep(1) # Loop at 1Hz
 
-        
+
 
 
     # def execute(self, userdata):
