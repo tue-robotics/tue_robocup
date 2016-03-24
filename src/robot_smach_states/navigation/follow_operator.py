@@ -28,6 +28,7 @@ class FollowOperator(smach.State):
         self._start_timeout = start_timeout
         self._breadcrumbs = []
         self._breadcrumb_distance = 0.1 # meters between dropped breadcrumbs
+        self._lost_time = None
 
         self._at_location = False
         self._first_time_at_location = None
@@ -135,6 +136,7 @@ class FollowOperator(smach.State):
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
                 self._operator_id = None
+                self._lost_time = rospy.Time.now()
                 self._robot.speech.speak("Not so fast!", block=False)
             return False
 
