@@ -87,10 +87,13 @@ class FollowOperator(smach.State):
         ''' If the last breadcrumb is less than a threshold away, replace
         the last breadcrumb with the latest operator position; otherwise
         just add it. '''
-        dx = self._breadcrumbs[-1].pose.position.x - self._operator.pose.position.x
-        dy = self._breadcrumbs[-1].pose.position.y - self._operator.pose.position.y
-        if math.hypot(dx,dy) < self._breadcrumb_distance :
-            self._breadcrumbs[-1] = self._operator
+        if self._breadcrumbs:
+            dx = self._breadcrumbs[-1].pose.position.x - self._operator.pose.position.x
+            dy = self._breadcrumbs[-1].pose.position.y - self._operator.pose.position.y
+            if math.hypot(dx,dy) < self._breadcrumb_distance :
+                self._breadcrumbs[-1] = self._operator
+            else:
+                self._breadcrumbs.append(self._operator)
         else:
             self._breadcrumbs.append(self._operator)
 
