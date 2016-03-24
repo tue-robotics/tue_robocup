@@ -403,8 +403,9 @@ class FollowOperator(smach.State):
                     if not self._recover_operator():
                         return "lost_operator"
                 else:
-                    print "Out of breadcrumbs and I still have an operator, I must be there!"
-                    return "stopped"
+                    if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout:
+                        print "Out of breadcrumbs and I still have an operator, I must be there!"
+                        return "stopped"
 
             rospy.sleep(1) # Loop at 1Hz
 
