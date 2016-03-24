@@ -59,7 +59,7 @@ class FollowOperator(smach.State):
 
                 if answer:
                     if answer.result == "yes":
-                        operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                        operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
                     elif answer.result == "no":
