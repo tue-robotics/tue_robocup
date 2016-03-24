@@ -136,7 +136,7 @@ class FollowOperator(smach.State):
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
                 self._operator_id = None
-                self._lost_time = rospy.Time.now()
+                #self._lost_time = rospy.Time.now()
                 self._robot.speech.speak("Not so fast!", block=False)
             return False
 
@@ -406,6 +406,7 @@ class FollowOperator(smach.State):
             else:
                 # If operator is lost, try to recover, if that doesn't work, return lost operator
                 if not self._operator:
+                    self._lost_time = rospy.Time.now()
                     if not self._recover_operator():
                         return "lost_operator"
                 else:
