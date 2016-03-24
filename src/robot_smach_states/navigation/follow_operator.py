@@ -389,7 +389,7 @@ class FollowOperator(smach.State):
         while not rospy.is_shutdown():
 
             # Track operator
-            self._track_operator():
+            self._track_operator()
             self._update_breadcrumb_path()
 
             if self._breadcrumbs:
