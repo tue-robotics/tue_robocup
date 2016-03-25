@@ -528,7 +528,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_2', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
                                 transitions={'arrived': 'SAY_DONE_WITH_CHALLENGE', 'unreachable':'SAY_DONE_WITH_CHALLENGE', 'goal_not_defined':'SAY_DONE_WITH_CHALLENGE'})
 
-        smach.StateMachine.add('SAY_DONE_WITH_CHALLENGE', states.Say(robot, "I'm done with this challenge and you're a banana!"), transitions={ 'spoken' :'done'})
+        smach.StateMachine.add('SAY_DONE_WITH_CHALLENGE', states.Say(robot, "I'm done with this challenge and you are the banana king!"), transitions={ 'spoken' :'done'})
 
     analyse_designators(sm, "restaurant")
     return sm
