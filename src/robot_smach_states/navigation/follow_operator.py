@@ -2,6 +2,7 @@
 
 import smach, rospy, sys
 from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import VariableDesignator
 import robot_smach_states as states
 
 import threading
@@ -17,7 +18,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=5, lost_distance=1.5, operator_id_des=None):
+    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=5, lost_distance=1.5, operator_id_des=VariableDesignator(resolve_type=str)):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._time_started = None
