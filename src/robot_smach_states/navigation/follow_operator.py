@@ -17,7 +17,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 4.0, lost_timeout = 5, lost_distance = 1.5):
+    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 4.0, lost_timeout = 5, lost_distance = 1.5, clear = True):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._time_started = None
@@ -29,6 +29,7 @@ class FollowOperator(smach.State):
         self._breadcrumbs = []
         self._breadcrumb_distance = 0.1 # meters between dropped breadcrumbs
         self._lost_time = None
+        self._clear = clear
 
         self._at_location = False
         self._first_time_at_location = None
@@ -48,6 +49,10 @@ class FollowOperator(smach.State):
 
         self._robot.head.look_at_standing_person()
 
+        if not self._clear and self._operator_id and self._robot.ed.get_entity( id=self._operator_id ):
+            return True
+            
+
         operator = None
         while not operator:
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
@@ -59,7 +64,7 @@ class FollowOperator(smach.State):
 
                 if answer:
                     if answer.result == "yes":
-                        operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                        operator = self._robot.ed.get_closest_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
                     elif answer.result == "no":
