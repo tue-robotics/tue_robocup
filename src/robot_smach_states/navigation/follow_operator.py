@@ -170,18 +170,18 @@ class FollowOperator(smach.State):
             else:
                 print "We are standing still :/"
 
-            print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
-            print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
-            # Check whether we passe the timeout
-            if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > self._timeout:
-                print "We are standing still long enough"
-                # Only return True if we exceeded the start timeout
-                standing_still = True
-                if (current_pose_stamped.header.stamp - self._time_started).to_sec() > self._start_timeout:
-                    print "We passed start timeout"
-                    if length < self._operator_radius:
-                        print "Distance to goal < 1.0 : %f" % length
-                        return True
+                print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+                print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
+                # Check whether we passed the timeout
+                if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > self._timeout:
+                    print "We are standing still long enough"
+                    # Only return True if we exceeded the start timeout
+                    standing_still = True
+                    if (current_pose_stamped.header.stamp - self._time_started).to_sec() > self._start_timeout:
+                        print "We passed start timeout"
+                        if length < self._operator_radius:
+                            print "Distance to goal < 1.0 : %f" % length
+                            return True
 
         # Generate a plan through all breadcrumbs
         plan = None
@@ -210,23 +210,35 @@ class FollowOperator(smach.State):
                 plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
 
             previous_point = crumb.pose.position
+
+        if not plan:
+            yaw = math.atan2(dy, dx)
+            plan.append(msg_constructors.PoseStamped(x = o_point.x, y = o_point.y, z = 0, yaw = yaw ))
         
         if standing_still and plan:
             # Check if plan is blocked
             if not self._robot.base.global_planner.checkPlan(plan):
+                print "Breadcrumb plan is blocked"
                 # Go through plan from operator to robot and pick the first unoccupied point as goal point
+                plan_found = False
                 for point in reversed(plan):
                     point_plan = [point]
                     if self._robot.base.global_planner.checkPlan(point_plan):
                         end_dist_to_operator_x = point.pose.position.x - r_point.x
                         end_dist_to_operator_y = point.pose.position.y - r_point.y
                         end_dist_to_operator = math.hypot(end_dist_to_operator_x, end_dist_to_operator_y)
+                        print "Found an unoccupied point on the path %f m from the operator"%end_dist_to_operator
                         # If end point inside the local costmap
                         if end_dist_to_operator < 2.5:
+                            plan_found = True
                             plan = point_plan
                             break
                         else:
-                            plan = self._robot.base.global_planner.getPlan(p)
+                            print "outside the local costmap"
+
+                if not plan_found:
+                    print "No valid points found. Using the global planner"
+                    plan = self._robot.base.global_planner.getPlan(p)
 
         if plan:
             # Communicate to local planner
