@@ -24,7 +24,7 @@ from visualization_msgs.msg import Marker
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, analyse_designators
+from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
 from robot_skills.util import transformations, msg_constructors
 
 from robocup_knowledge import load_knowledge
