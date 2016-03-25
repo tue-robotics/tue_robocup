@@ -168,7 +168,7 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
     dot.subgraph(make_legend())
 
     if save_dot:
-        dot.save(statemachine_name + '_designators.dot')
-    dot.render(statemachine_name + '_designators')
+        dot.save("/tmp/" + statemachine_name + '_designators.dot')
+    dot.render("/tmp/" + statemachine_name + '_designators')
 
-    os.remove(statemachine_name + '_designators')
+    os.remove("/tmp/" + statemachine_name + '_designators')
