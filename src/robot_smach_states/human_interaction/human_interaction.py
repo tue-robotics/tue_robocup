@@ -38,7 +38,7 @@ class Say(smach.State):
     >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
-    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True):
+    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True, look_at_standing_person=False):
         smach.State.__init__(self, outcomes=["spoken"])
         ds.check_type(sentence, str, list)
         #ds.check_type(language, str)
@@ -54,6 +54,7 @@ class Say(smach.State):
         self.voice = voice
         self.mood = mood
         self.block = block
+        self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
         #robot.head.look_at_standing_person()
@@ -67,6 +68,8 @@ class Say(smach.State):
 
         sentence = str(self.sentence.resolve() if hasattr(self.sentence, "resolve") else self.sentence)
 
+        if self.look_at_standing_person:
+            self.robot.head.look_at_standing_person()
         self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
 
         #robot.head.cancel_goal()
@@ -306,11 +309,11 @@ class WaitForPersonInFront(WaitForDesignator):
 
 class LearnPerson(smach.State):
     """
-        
+
     """
     def __init__(self, robot, person_name = "", name_designator = None, n_samples = 10):
         smach.State.__init__(self, outcomes=['succeeded_learning', 'failed_learning', 'timeout_learning'])
-        
+
         self.robot = robot
         self.person_name = person_name
         if name_designator:
@@ -345,7 +348,7 @@ class LearnPerson(smach.State):
 class LookAtPersonInFront(smach.State):
     """
         Look at the face of the person in front of the Robot. If no person is found just look forward.
-        Robot will look front and search for a face. Using the lookDown argument you can also 
+        Robot will look front and search for a face. Using the lookDown argument you can also
             look down, to search for example of shorter or sitting down people
     """
     def __init__(self, robot, lookDown = False):
@@ -411,10 +414,10 @@ class LookAtPersonInFront(smach.State):
                 print "[LookAtPersonInFront] " + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
                 self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
-                foundFace == True            
+                foundFace == True
             else:
                 print "[LookAtPersonInFront] " + "Found a human but no faces."
-                foundFace == False 
+                foundFace == False
 
         if foundFace == True:
             return 'succeeded'
@@ -531,7 +534,7 @@ def learn_person_procedure(robot, person_name = "", n_samples = 10, timeout = 5.
         if robot.ed.learn_person(person_name):
             # reset timer
             start_time = time.time()
-           
+
             count = count + 1
 
             if count == n_samples/2:
@@ -541,7 +544,7 @@ def learn_person_procedure(robot, person_name = "", n_samples = 10, timeout = 5.
             elapsed_time = time.time() - start_time
             if elapsed_time > timeout:
                 print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
-                return count            
+                return count
 
         print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
 
