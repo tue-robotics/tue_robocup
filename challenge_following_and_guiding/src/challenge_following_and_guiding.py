@@ -81,14 +81,14 @@ def setup_statemachine(robot):
         smach.StateMachine.add('STORE_ROBOCUP_ARENA', StoreRobocupArena(robot), transitions={   'done':'HEAD_STRAIGHT'})
         smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
 
-        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Guide me out of the arena please."), transitions={ 'spoken' :'FOLLOW_INITIAL'})
+        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Guide me out of the arena please.", look_at_standing_person=True), transitions={ 'spoken' :'FOLLOW_INITIAL'})
 
         smach.StateMachine.add('FOLLOW_INITIAL', states.FollowOperator(robot, operator_timeout=30), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
 
         smach.StateMachine.add('FOLLOW', states.FollowOperator(robot, operator_timeout=30, ask_follow=False), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
         smach.StateMachine.add('WAIT_FOR_OPERATOR_COMMAND', WaitForOperatorCommand(robot), transitions={ 'follow':'FOLLOW', 'command':'SAY_GUIDE' })
 
-        smach.StateMachine.add('SAY_GUIDE', states.Say(robot, "I will guide you back to the robocup arena!"), transitions={ 'spoken' :'GUIDE_TO_ROBOCUP_ARENA'})
+        smach.StateMachine.add('SAY_GUIDE', states.Say(robot, "I will guide you back to the robocup arena!", look_at_standing_person=True), transitions={ 'spoken' :'GUIDE_TO_ROBOCUP_ARENA'})
 
         smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="robocup_arena"), radius = knowledge.back_radius),
                                 transitions={'arrived': 'SAY_BACK', 'unreachable':'GUIDE_TO_ROBOCUP_ARENA_BACKUP', 'goal_not_defined':'GUIDE_TO_ROBOCUP_ARENA_BACKUP'})
@@ -96,7 +96,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA_BACKUP', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="robocup_arena"), radius = knowledge.back_radius+0.1),
                                 transitions={'arrived': 'SAY_BACK', 'unreachable':'SAY_BACK', 'goal_not_defined':'SAY_BACK'})
 
-        smach.StateMachine.add('SAY_BACK', states.Say(robot, "We are back in the robocup arena!"), transitions={ 'spoken' :'done'})
+        smach.StateMachine.add('SAY_BACK', states.Say(robot, "We are back in the robocup arena!", look_at_standing_person=True), transitions={ 'spoken' :'done'})
 
         return sm
 
