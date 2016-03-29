@@ -329,14 +329,26 @@ class EmptySpotDesignator(Designator):
 
             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
-            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
             if plan_to_poi:
                 distance = len(plan_to_poi)
-            print "Distance: %s"%distance
+                print "Distance: %s"%distance
+            else:
+                distance = None
             return distance
+            
+        # List with tuples containing both the POI and the distance the
+        # robot needs to travel in order to place there
+        open_POIs_dist = [(poi, distance_to_poi_area(poi)) for poi in open_POIs]
+        
+        # Feasible POIS: discard
+        feasible_POIs = []
+        for tup in open_POIs_dist:
+            if tup[1]:
+                 feasible_POIs.append(tup)
 
-        if any(open_POIs):
-            best_poi = min(open_POIs, key=distance_to_poi_area)
+        if any(feasible_POIs):
+            feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
+            best_poi = feasible_POIs[0][0] # Get the POI of the best match
             placement = msg_constructors.PoseStamped(pointstamped=best_poi)
             # rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
