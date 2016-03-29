@@ -203,7 +203,10 @@ class FollowOperator(smach.State):
         # TODO: Only return True if we exceeded the standstill timeout?
         if length < self._operator_radius:
             if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
-                return True
+                if self._operator_id:
+                    return True
+                else:
+                    return False
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -229,7 +232,7 @@ class FollowOperator(smach.State):
 
             previous_point = crumb.pose.position
 
-        # Delete the elements from the plan within the operator radius
+        # Delete the elements from the plan within the operator radius from the robot
         cutoff = int(self._operator_radius/(2.0*res))
         if len(plan) > cutoff:
             del plan[-cutoff:]
@@ -240,8 +243,6 @@ class FollowOperator(smach.State):
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             plan_found = False
             plan = [point for point in plan if self._robot.base.global_planner.checkPlan([point])]
-
-
 
         self._visualize_plan(plan)
         self._robot.base.local_planner.setPlan(plan, p, o)
@@ -286,7 +287,7 @@ class FollowOperator(smach.State):
             self._update_breadcrumb_path()
 
             if self._breadcrumbs:
-                # If there are still breadcrumbs on the path, keep following the path (Make sure to remove breadcrumbs when reached!)
+                # If there are still breadcrumbs on the path, keep following the path
                 if self._update_navigation():
                     self._robot.base.local_planner.cancelCurrentPlan()
                     self._visualize_breadcrumbs()
