@@ -193,14 +193,13 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = self._last_operator.pose.position  # TODO point where operator was last seen? Or maybe just last tangent of breadcrumb path?
+            o.look_at = self._last_operator.pose.position
 
         ''' Determine if the goal has been reached. If it has, return True '''
         dx = operator_position.x - robot_position.x
         dy = operator_position.y - robot_position.y
         length = math.hypot(dx, dy)
 
-        # TODO: Only return True if we exceeded the standstill timeout?
         if length < self._operator_radius:
             if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
                 if self._operator_id:
@@ -295,6 +294,7 @@ class FollowOperator(smach.State):
                     print "Arrived!"
                     return "stopped"
                 else:
+                    # TODO: Check movement. If standing still for too long, assume operator is lost and tell him!
                     print "Not there yet..."
             else:
                 # If operator is lost, try to recover, if that doesn't work, return lost operator
