@@ -1,16 +1,15 @@
 # categories for the list of locations (in locations.txt)
-seating
-table
-utensil
-table
-table
-shelf
 appliance
-seating
+appliance
+bin
+bin
+seat
+seat
+seat
 shelf
 shelf
 shelf
 shelf
-shelf
+table
 table
 table

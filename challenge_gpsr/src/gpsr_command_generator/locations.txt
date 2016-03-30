@@ -1,16 +1,15 @@
 # list of locations
-bench
-hallway table
-bar
-sidetable
-kitchen table
-kitchen counter
-stove
+fridge
+sink
+hallway_trashbin
+kitchen_trashbin
 bed
-dresser
+couch
+dinnerchairs
+bookcase
+closet
 sideboard
-bookshelf
-pantry
-cabinet
-dinner table
-couch table
+tv_stand
+dinnertable
+kitchencounter
+nightstand
