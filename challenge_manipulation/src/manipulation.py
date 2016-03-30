@@ -189,6 +189,7 @@ class InspectShelves(smach.State):
             import os; do_wait = os.environ.get('ROBOT_REAL')
             if do_wait == 'true':
                 rospy.sleep(3.0) # ToDo: remove???
+                rospy.logwarn("Do we have to wait this long???")
 
             if DEBUG:
                 rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
