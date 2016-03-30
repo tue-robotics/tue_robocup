@@ -1,0 +1,24 @@
+# categories for the items/objects (in items.txt)
+Cleaning stuff
+Cleaning stuff
+Cleaning stuff
+Cleaning stuff
+Cleaning stuff
+Drink
+Drink
+Drink
+Drink
+Drink
+Drink
+Drink
+Drink
+Food
+Food
+Food
+Food
+Food
+Food
+Snack
+Snack
+Snack
+Snack

@@ -1,0 +1,16 @@
+# list of locations
+bench
+hallway table
+bar
+sidetable
+kitchen table
+kitchen counter
+stove
+bed
+dresser
+sideboard
+bookshelf
+pantry
+cabinet
+dinner table
+couch table
