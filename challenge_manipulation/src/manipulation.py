@@ -52,6 +52,8 @@ PLACE_SHELF = challenge_knowledge.place_shelf
 ROOM = challenge_knowledge.room
 OBJECT_TYPES = challenge_knowledge.object_types
 MAX_NUM_ENTITIES_IN_PDF = 10
+MIN_GRASP_HEIGHT = challenge_knowledge.min_grasp_height
+MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
 
@@ -72,7 +74,6 @@ PLACE_HEIGHT = 1.0
 not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
 size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
 has_type = lambda entity: entity.type != ""
-min_height = lambda entity: entity.min_z > 0.3
 min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
 
 def max_width(entity):
@@ -264,7 +265,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         self.cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
-        self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
+        # self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
@@ -278,11 +279,16 @@ class ManipRecogSingleItem(smach.StateMachine):
                     return True
             return False
 
-        def on_top(entity):
-            # container_entity = self.pick_shelf.resolve()
-            # return onTopOff(entity, container_entity)
-            rospy.logwarn("Not checking ontopoff")
-            return True
+        def entity_z_pos(entity):
+            """ Checks if the entity is between the minimum and maximum grasp height
+            :param entity:
+            :return:
+            """
+            if not entity.has_pose:
+                return False
+            return MIN_GRASP_HEIGHT < entity.pose.position.z < MAX_GRASP_HEIGHT
+
+
 
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
@@ -291,10 +297,10 @@ class ManipRecogSingleItem(smach.StateMachine):
             return p.x*p.x
 
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, detected, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
+            criteriafuncs=[not_ignored, size, not_manipulated, detected, min_entity_height, entity_z_pos, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
-        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_shelf, name="placement"), name="place_position")
+        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
 
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
         self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
@@ -373,7 +379,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'stored':'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
-                                     states.LookAtEntity(robot, self.place_shelf, keep_following=True),
+                                     states.LookAtArea(robot, self.cabinet, area=PLACE_SHELF),
                                      transitions={  'succeeded'         :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",

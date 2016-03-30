@@ -11,10 +11,14 @@ object_shelves =["shelf5", "shelf4", "shelf3", "shelf1"]
 grasp_shelf = "shelf3"
 
 ''' Shelf where we will actually place stuff '''
-place_shelf = cabinet + "/shelf5"
+place_shelf = "shelf2"
 
 ''' Room where everything will take place '''
 room = "livingroom"
 
 '''Object types that can be recognized'''
 object_types = [o["name"] for o in common.objects if o["category"] != "container"]
+
+# ToDo: make nice
+min_grasp_height = 0.77
+max_grasp_height = 1.02
