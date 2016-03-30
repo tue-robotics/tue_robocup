@@ -4,6 +4,8 @@ import inspect
 import pprint
 import math
 
+import PyKDL as kdl
+
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from ed.msg import EntityInfo
 from ed.srv import SimpleQuery, SimpleQueryRequest
@@ -19,6 +21,7 @@ from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsg
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors
+
 
 __author__ = 'loy'
 
@@ -289,12 +292,13 @@ class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
     It does this by queying ED for entities that occupy some space.
         If the result is no entities, then we found an open spot."""
-    def __init__(self, robot, place_location_designator, name=None):
+    def __init__(self, robot, place_location_designator, name=None, area=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param name: name for introspection purposes
+        :param area: (optional) area where the item should be placed
         """
         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped, name=name)
         self.robot = robot
@@ -302,15 +306,19 @@ class EmptySpotDesignator(Designator):
         self.place_location_designator = place_location_designator
         self._edge_distance = 0.1                   # Distance to table edge
         self._spacing = 0.15
+        self._area = area
 
-        self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
+        self.marker_pub = rospy.Publisher('/empty_spots', MarkerArray, queue_size=1)
         self.marker_array = MarkerArray()
 
     def _resolve(self):
         place_location = self.place_location_designator.resolve()
 
         # points_of_interest = []
-        points_of_interest = self.determinePointsOfInterest(place_location)
+        if self._area:
+            points_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+        else:
+            points_of_interest = self.determinePointsOfInterest(place_location)
 
         def is_poi_occupied(poi):
             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
@@ -335,11 +343,11 @@ class EmptySpotDesignator(Designator):
             else:
                 distance = None
             return distance
-            
+
         # List with tuples containing both the POI and the distance the
         # robot needs to travel in order to place there
         open_POIs_dist = [(poi, distance_to_poi_area(poi)) for poi in open_POIs]
-        
+
         # Feasible POIS: discard
         feasible_POIs = []
         for tup in open_POIs_dist:
@@ -375,6 +383,53 @@ class EmptySpotDesignator(Designator):
         marker.lifetime = rospy.Duration(10.0)
         return marker
 
+    def determine_points_of_interest_with_area(self, e, area):
+        """ Determines the points of interest using an area
+        :param e:
+        :param area:
+        :return:
+        """
+        # Just to be sure, copy e
+        e = self.robot.ed.get_entity(id=e.id, parse=True)
+
+        # We want to give it a convex hull using the designated area
+        for testarea in e.data['areas']:
+            ''' See if the area is in the list of inspection areas '''
+            if testarea['name'] == area:
+                ''' Check if we have a shape '''
+                if 'shape' not in testarea:
+                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
+                    continue
+                ''' Check if length of shape equals one '''
+                if not len(testarea['shape']) == 1:
+                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
+                    continue
+                ''' Check if the first entry is a box '''
+                if not 'box' in testarea['shape'][0]:
+                    rospy.logwarn("No box in {0}".format(testarea['name']))
+                    continue
+                box = testarea['shape'][0]['box']
+                if 'min' not in box or 'max' not in box:
+                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
+                    continue
+                # Now we're sure to have the correct bounding box
+                e.convex_hull = []
+                e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
+                e.convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
+                e.convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
+                e.convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
+                # e.convex_hull.append(gm.Point(-0.15, box['min']['y'], box['min']['z']))  # 1
+                # e.convex_hull.append(gm.Point(0.15, box['min']['y'], box['min']['z']))  # 2
+                # e.convex_hull.append(gm.Point(0.15, box['max']['y'], box['min']['z']))  # 3
+                # e.convex_hull.append(gm.Point(-0.15, box['max']['y'], box['min']['z']))  # 4
+
+                # Make sure we overwrite the e.z_max
+                e.z_max = box['min']['z'] - 0.04  # 0.04 is the usual offset
+                return self.determinePointsOfInterest(e)
+
+        return []
+
+
     def determinePointsOfInterest(self, e):
 
         points = []
@@ -393,11 +448,12 @@ class EmptySpotDesignator(Designator):
             p = pointMsgToKdlVector(point)
             # p = center_pose * p
             # p = p * center_pose
-            import PyKDL as kdl
             pf = kdl.Frame(kdl.Rotation(), p)
-            pf = pf * center_pose
+            # pf = pf * center_pose  # Original
+            pf = center_pose * pf  # Test
             p = pf.p
             ch.append(p)
+        import ipdb;ipdb.set_trace()
 
         ''' Loop over hulls '''
         self.marker_array.markers = []
