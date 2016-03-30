@@ -38,20 +38,20 @@ object_names = list(set([o["name"] for o in objects]))
 object_categories = list(set([o["category"] for o in objects]))
 
 locations = [
-    {"name": "closet", "location_category": "shelf", "manipulation" : "yes"},
-    {"name": "nightstand", "location_category": "table", "manipulation" : "yes"},
-    {"name": "bed", "location_category": "seat", "manipulation" : "yes"},
-    {"name": "fridge", "location_category": "appliance", "manipulation" : "no"},
-    {"name": "kitchen_trashbin", "location_category": "bin", "manipulation" : "only_putting"},
-    {"name": "kitchencounter", "location_category": "table", "manipulation" : "yes"},
-    {"name": "sink", "location_category": "appliance", "manipulation" : "only_putting"},
-    {"name": "hallway_trashbin", "location_category": "bin", "manipulation" : "only_putting"},
-    {"name": "sideboard", "location_category": "shelf", "manipulation" : "yes"},
-    {"name": "dinnerchairs", "location_category": "seat", "manipulation" : "yes"},
-    {"name": "dinnertable", "location_category": "table", "manipulation" : "yes"},
-    {"name": "bookcase", "location_category": "shelf", "manipulation" : "yes"},
-    {"name": "couch", "location_category": "seat", "manipulation" : "yes"},
-    {"name": "tv_stand", "location_category": "shelf", "manipulation" : "yes"}
+    {"name": "closet",           "room": "bedroom",    "location_category": "shelf",     "manipulation": "yes"},
+    {"name": "nightstand",       "room": "bedroom",    "location_category": "table",     "manipulation": "yes"},
+    {"name": "bed",              "room": "bedroom",    "location_category": "seat",      "manipulation": "yes"},
+    {"name": "fridge",           "room": "kitchen",    "location_category": "appliance", "manipulation": "no"},
+    {"name": "kitchen_trashbin", "room": "kitchen",    "location_category": "bin",       "manipulation": "only_putting"},
+    {"name": "kitchencounter",   "room": "kitchen",    "location_category": "table",     "manipulation": "yes"},
+    {"name": "sink",             "room": "kitchen",    "location_category": "appliance", "manipulation": "only_putting"},
+    {"name": "hallway_trashbin", "room": "hall",       "location_category": "bin",       "manipulation": "only_putting"},
+    {"name": "sideboard",        "room": "livingroom", "location_category": "shelf",     "manipulation": "yes"},
+    {"name": "dinnerchairs",     "room": "livingroom", "location_category": "seat",      "manipulation": "yes"},
+    {"name": "dinnertable",      "room": "livingroom", "location_category": "table",     "manipulation": "yes"},
+    {"name": "bookcase",         "room": "livingroom", "location_category": "shelf",     "manipulation": "yes"},
+    {"name": "couch",            "room": "livingroom", "location_category": "seat",      "manipulation": "yes"},
+    {"name": "tv_stand",         "room": "livingroom", "location_category": "shelf",     "manipulation": "yes"}
 ]
 
 grab_locations = list(set([o["name"] for o in locations if o["manipulation"] == "yes"]))
