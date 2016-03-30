@@ -12,7 +12,7 @@ from robocup_knowledge import load_knowledge
 class CommandGenerator:
 
     def __init__(self, gpsr_category=1):
-        sentence_data_file = os.path.dirname(sys.argv[0]) + ("/sentences/sentences_cat_{}.txt".format(gpsr_category))
+        sentence_data_file = os.path.dirname(sys.argv[0]) + ("/../test/sentences/sentences_cat_{}.txt".format(gpsr_category))
 
         self.example_commands = []
         with open(sentence_data_file) as f:
