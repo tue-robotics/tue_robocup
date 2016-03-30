@@ -150,7 +150,8 @@ class InspectShelves(smach.State):
                 box = area['shape'][0]['box']
                 if 'min' not in box or 'max' not in box:
                     rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
-                    continuex = 0.5 * (box['min']['x'] + box['max']['x'])
+                    continue
+
                 x = 0.5 * (box['min']['x'] + box['max']['x'])
                 y = 0.5 * (box['min']['y'] + box['max']['y'])
                 z = 0.5 * (box['min']['z'] + box['max']['z'])
@@ -158,7 +159,7 @@ class InspectShelves(smach.State):
             else:
                 rospy.loginfo("{0} not in object shelves".format(area['name']))
 
-        rospy.loginfo("Inspection points: {0}".format(shelves))
+        # rospy.loginfo("Inspection points: {0}".format(shelves))
         # ''' Loop over shelves '''
         # for shelf in self.object_shelves:
         for shelf in shelves:
@@ -262,14 +263,26 @@ class ManipRecogSingleItem(smach.StateMachine):
         self.manipulated_items = manipulated_items
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        self.pick_shelf = ds.EntityByIdDesignator(robot, id=PICK_SHELF, name="pick_shelf")
+        self.cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
         self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
+        def detected(entity):
+            """ Checks if the entity is in the (global) list of detected objects
+            :param entity:
+            :return:
+            """
+            for tup in DETECTED_OBJECTS_WITH_PROBS:
+                if tup[0].id == entity.id:
+                    return True
+            return False
+
         def on_top(entity):
-            container_entity = self.pick_shelf.resolve()
-            return onTopOff(entity, container_entity)
+            # container_entity = self.pick_shelf.resolve()
+            # return onTopOff(entity, container_entity)
+            rospy.logwarn("Not checking ontopoff")
+            return True
 
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
@@ -278,7 +291,7 @@ class ManipRecogSingleItem(smach.StateMachine):
             return p.x*p.x
 
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
+            criteriafuncs=[not_ignored, size, not_manipulated, detected, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_shelf, name="placement"), name="place_position")
@@ -302,7 +315,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             ''' Look at pick shelf '''
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
-                                     states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
+                                     states.LookAtArea(robot, self.cabinet, area=PICK_SHELF),
                                      transitions={  'succeeded'         :'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
@@ -360,7 +373,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'stored':'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
-                                     states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
+                                     states.LookAtEntity(robot, self.place_shelf, keep_following=True),
                                      transitions={  'succeeded'         :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
