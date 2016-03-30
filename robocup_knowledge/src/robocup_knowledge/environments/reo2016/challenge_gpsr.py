@@ -1,5 +1,8 @@
 # TODO: update this from the common knowledge
 
+from robocup_knowledge import knowledge_loader
+common = knowledge_loader.load_knowledge("common")
+
 rooms = ["kitchen", "bedroom", "living_room"]
 
 object_aliases = {"dinner table" : "dinnertable"}
