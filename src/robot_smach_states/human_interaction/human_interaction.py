@@ -332,7 +332,7 @@ class LearnPerson(smach.State):
                 print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
                 return
 
-        samples_completed = learn_person_procedure(self.robot, person_name = self.person_name, n_samples = self.n_samples)
+        samples_completed = learn_person_procedure(self.robot, person_name = person_name, n_samples = self.n_samples)
 
         if samples_completed == 0:
             return 'failed_learning'
