@@ -54,6 +54,7 @@ locations = [
     {"name": "tv_stand",         "room": "livingroom", "location_category": "shelf",     "manipulation": "yes"}
 ]
 
+rooms = list(set([o["room"] for o in locations]))
 grab_locations = list(set([o["name"] for o in locations if o["manipulation"] == "yes"]))
 put_locations = list(set([o["name"] for o in locations if o["manipulation"] != "no"]))
 
