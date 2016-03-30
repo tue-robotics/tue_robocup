@@ -24,7 +24,9 @@ from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDe
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
 
+
 challenge_knowledge = load_knowledge('challenge_gpsr')
+speech_data = load_knowledge('challenge_speech_recognition')
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -68,8 +70,21 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def answer_question(self, robot, parameters):
-        answer = parameters["answer"]
-        robot.speech.speak("My answer to the question is: %s" % answer)
+        robot.head.look_at_ground_in_front_of_robot(100)
+
+        res = robot.ears.recognize(spec=speech_data.spec,
+                                   choices=speech_data.choices,
+                                   time_out=rospy.Duration(15))
+
+        if not res:
+            robot.speech.speak("My ears are not working properly, can i get a restart?.")
+
+        if res:
+            if "question" in res.choices:
+                rospy.loginfo("Question was: '%s'?"%res.result)
+                robot.speech.speak("The answer is %s"%speech_data.choice_answer_mapping[res.choices['question']])
+            else:
+                robot.speech.speak("Sorry, I do not understand your question")
 
     # ------------------------------------------------------------------------------------------------------------------------
 
