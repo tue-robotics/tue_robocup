@@ -32,4 +32,12 @@ if __name__ == "__main__":
         W.add_object("coke13", "sim-coke", 1.15, -8.33, 0.75)
         W.add_object("coke14", "sim-coke", 1.15, -8.7,  0.75)
 
+    if env == "reo2016":
+
+        # Bookcase
+        W.add_object("coke11", "sim-coke", 0.892, -4.440, 0.15)
+        W.add_object("coke12", "sim-coke", 0.952, -4.660, 0.8)
+        W.add_object("coke13", "sim-coke", 0.892, -4.440, 0.8)
+        W.add_object("coke14", "sim-coke", 0.752, -4.220, 0.8)
+
 
