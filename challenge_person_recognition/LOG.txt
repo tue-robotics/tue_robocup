@@ -1,0 +1,8 @@
+run challenge_person_recognition person_recognition.py sergio
+Traceback (most recent call last):
+  File "/home/amigo/ros/indigo/system/src/challenge_person_recognition/src/person_recognition.py", line 8, in <module>
+    import person_recognition_states as PersonRecStates
+  File "/home/amigo/ros/indigo/repos/https:/github.com/tue-robotics/tue_robocup.git/challenge_person_recognition/src/person_recognition_states.py", line 24, in <module>
+    OBJECT_TYPES = challenge_knowledge.object_types
+AttributeError: 'module' object has no attribute 'object_types'
+
