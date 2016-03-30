@@ -494,7 +494,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         'succeeded':'FIND_CROWD_ITERATOR'})
 
             smach.StateMachine.add( 'SAY_NO_CONTINUE',
-                                    states.Say(robot, "I didn't hear continue, but I will move on.", block=True),
+                                    states.Say(robot, "Ready or not, here I come!", block=True),
                                     transitions={   'spoken':'FIND_CROWD_ITERATOR'})
 
 

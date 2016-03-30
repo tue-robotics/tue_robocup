@@ -556,7 +556,8 @@ class SelectOperator(smach.State):
         operator_candidates = [candidate for candidate in detected_persons if candidate.name==operator_name]
 
         if operator_candidates:
-            self.OperatorPersonDes.write(operator_candidates[0])
+            operator = max(operator_candidates, key=lambda cand: cand.name_score)
+            self.OperatorPersonDes.write(operator)
             return 'succeeded'
         else:
             return "failed"
