@@ -35,9 +35,9 @@ if __name__ == "__main__":
     if env == "reo2016":
 
         # Bookcase
-        W.add_object("coke11", "sim-coke", 0.692, -3.940, 0.15)
-        W.add_object("coke12", "sim-coke", 0.752, -3.960, 0.8)
-        W.add_object("coke13", "sim-coke", 0.692, -3.940, 0.8)
-        W.add_object("coke14", "sim-coke", 0.652, -3.920, 0.8)
+        W.add_object("coke11", "sim-coke", 0.892, -4.440, 0.15)
+        W.add_object("coke12", "sim-coke", 0.952, -4.660, 0.8)
+        W.add_object("coke13", "sim-coke", 0.892, -4.440, 0.8)
+        W.add_object("coke14", "sim-coke", 0.752, -4.220, 0.8)
 
 
