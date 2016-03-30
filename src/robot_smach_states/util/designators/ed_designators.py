@@ -453,7 +453,6 @@ class EmptySpotDesignator(Designator):
             pf = center_pose * pf  # Test
             p = pf.p
             ch.append(p)
-        import ipdb;ipdb.set_trace()
 
         ''' Loop over hulls '''
         self.marker_array.markers = []
