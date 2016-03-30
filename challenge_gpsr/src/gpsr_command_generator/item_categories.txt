@@ -1,0 +1,27 @@
+# categories for the items/objects (in items.txt)
+Candy
+Candy
+Candy
+Candy
+Candy
+Candy
+Cleaning stuff
+Cleaning stuff
+Cleaning stuff
+Cleaning stuff
+Cleaning stuff
+Container
+Container
+Container
+Drink
+Drink
+Drink
+Drink
+Drink
+Food
+Food
+Food
+Food
+Food
+Food
+Food

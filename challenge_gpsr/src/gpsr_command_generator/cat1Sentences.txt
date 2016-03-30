@@ -1,0 +1,11 @@
+# Category 1: action sequences
+# USAGE: do not use tabs in this file
+# the character '#' at the beginning of a line is used for comments
+
+Move to the LOCATION, move to the LOCATION, and move to the LOCATION.
+Move to the LOCATION, move to the LOCATION and leave the apartment.
+Move to the LOCATION, grasp the ITEM, and bring it to me.
+Move to the LOCATION, grasp the ITEM, and bring it to the LOCATION.
+Move to the LOCATION, grasp the ITEM, and put it in the trash bin.
+Move to the LOCATION, find a person, and introduce yourself.
+Move to the LOCATION, find a person, and guide it to the exit.

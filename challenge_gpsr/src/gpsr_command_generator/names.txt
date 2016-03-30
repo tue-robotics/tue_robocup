@@ -1,0 +1,21 @@
+# list of person names
+Abigail
+Alexander
+Ava
+Charlotte
+Daniel
+Emily
+Emma
+Ethan
+Isabella
+Jacob
+James
+Liam
+Madison
+Mason
+Mia
+Michael
+Noah
+Olivia
+Sophia
+William

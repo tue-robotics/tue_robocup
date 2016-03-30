@@ -1,0 +1,15 @@
+# list of locations
+fridge
+sink
+hallway_trashbin
+kitchen_trashbin
+bed
+couch
+dinnerchairs
+bookcase
+closet
+sideboard
+tv_stand
+dinnertable
+kitchencounter
+nightstand
