@@ -60,7 +60,7 @@ VP["action": "answer-question"] -> answer her question
 # Say
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "say", "sentence": "my name is amigo"] -> tell your name
+VP["action": "say", "sentence": "NAME"] -> tell your name
 VP["action": "say", "sentence": "TIME"] -> tell the time
 VP["action": "say", "sentence": "TIME"] -> tell what time it is
 VP["action": "say", "sentence": "my team is tech united"] -> tell the name of your team

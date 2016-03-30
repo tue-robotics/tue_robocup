@@ -23,6 +23,7 @@ from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint,
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
+from datetime import datetime
 
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
@@ -85,6 +86,21 @@ class GPSR:
                 robot.speech.speak("The answer is %s"%speech_data.choice_answer_mapping[res.choices['question']])
             else:
                 robot.speech.speak("Sorry, I do not understand your question")
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def say(self, robot, parameters):
+        sentence = parameters["sentence"]
+        rospy.loginfo('Answering %s', sentence)
+
+        if sentence == 'TIME':
+            line = datetime.now().strftime('The time is %H %M')
+        elif sentence == "NAME":
+            line = 'My name is %s' % robot.robot_name
+        else:
+            line = sentence
+
+        robot.speech.speak(line)
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -221,6 +237,7 @@ class GPSR:
         action_functions["answer-question"] = self.answer_question
         action_functions["pick-up"] = self.pick_up
         action_functions["bring"] = self.bring
+        action_functions["say"] =  self.say
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
