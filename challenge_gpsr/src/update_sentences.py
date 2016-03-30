@@ -28,7 +28,7 @@ with openfile('items.txt') as itemsf, openfile('item_categories.txt') as item_ca
     print('# list of items/objects', file=itemsf)
     print('# categories for the items/objects (in items.txt)', file=item_categoriesf)
     for item in sorted(sorted(items, key=lambda k: k['name']), key=lambda k: k['category']):
-        print(item['name'].capitalize(), file=itemsf)
+        print(item['name'].capitalize().replace('_', ' '), file=itemsf)
         print(item['category'].capitalize().replace('_', ' '), file=item_categoriesf)
 
 logger.info('writing locations')
