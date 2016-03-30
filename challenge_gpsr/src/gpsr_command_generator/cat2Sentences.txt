@@ -1,0 +1,8 @@
+# Category 2: missing information, underspecified commands
+# USAGE: do not use tabs in this file
+# the character '#' at the beginning of a line is used for comments
+
+Bring me some ITEM_CATEGORY from a LOCATION_CATEGORY.
+
+
+
