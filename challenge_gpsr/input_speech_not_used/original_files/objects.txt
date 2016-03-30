@@ -1,5 +1,0 @@
-// Objects
-<drink> = coke | sevenup | lemontea | pepsi | mineralwater | gatorade | orangejuice | applejuice
-<snack> = crackers | wafer | candy | cookies
-<food> = chili | dough | tomatosauce | soysauce | tofu | teabox
-<bathroomstuff> = cotton | disinfactant | hairgel | soap | toothpaste | toiletpaper | shampoo | pad
