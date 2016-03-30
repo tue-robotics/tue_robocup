@@ -1,0 +1,131 @@
+look for a person in the ROOM and answer a question
+find a person in the ROOM and answer a question
+grasp the OBJ from the FURNITURE and bring it to me
+get the OBJ from the FURNITURE and deliver it to NAME at the ROOM
+get into the ROOM and find the OBJ
+take the OBJ from the SPECIFIC_LOC and take it to the FURNITURE
+find a person in the ROOM and tell the day of the week
+find a person in the ROOM and say the date
+take the OBJ from the FURNITURE and bring it to the FURNITURE
+grasp the OBJ from the SPECIFIC_LOC and bring it to the FURNITURE
+navigate to the ROOM and find the OBJ
+get the OBJ from the FURNITURE and deliver it to me
+take the OBJ from the SPECIFIC_LOC and bring it to me
+grasp the OBJ from the SPECIFIC_LOC and bring it to me
+take the OBJ from the FURNITURE and carry it to the FURNITURE
+grasp the OBJ from the SPECIFIC_LOC and deliver it to the SPECIFIC_LOC
+look for a person in the ROOM and speak what day is tomorrow
+find a person in the ROOM and answer a question
+look for a person in the ROOM and tell what time is it
+grasp the OBJ from the SPECIFIC_LOC and deliver it to the FURNITURE
+look for a person in the ROOM and say the day of the month
+look for a person in the ROOM and answer a question
+look for a person in the ROOM and tell your name
+look for a person in the ROOM and tell your name
+reach the ROOM and find the OBJ
+reach the ROOM and look for the OBJ
+reach the ROOM and find the OBJ
+reach the ROOM and look for the OBJ
+get the OBJ from the SPECIFIC_LOC and deliver it to NAME at the ROOM
+reach the ROOM and look for the OBJ
+reach the ROOM and look for the OBJ
+get into the ROOM and look for the OBJ
+grasp the OBJ from the SPECIFIC_LOC and take it to me
+take the OBJ from the SPECIFIC_LOC and deliver it to me
+look for a person in the ROOM and speak the day of the week
+get into the ROOM and look for the OBJ
+find a person in the ROOM and speak your name
+find a person in the ROOM and tell the time
+reach the ROOM and find the OBJ
+look for a person in the ROOM and say the date
+look for a person in the ROOM and answer a question
+look for a person in the ROOM and speak the name of your team
+navigate to the ROOM and look for the OBJ
+go to the ROOM and look for the OBJ
+get the OBJ from the SPECIFIC_LOC and carry it to the SPECIFIC_LOC
+navigate to the ROOM and look for the OBJ
+find a person in the ROOM and answer a question
+look for a person in the ROOM and answer a question
+navigate to the ROOM and find the OBJ
+look for a person in the ROOM and answer a question
+get into the ROOM and look for the OBJ
+look for a person in the ROOM and speak what time is it
+find a person in the ROOM and answer a question
+find a person in the ROOM and answer a question
+find a person in the ROOM and say what time is it
+reach the ROOM and find the OBJ
+look for a person in the ROOM and answer a question
+look for a person in the ROOM and say what time is it
+look for a person in the ROOM and speak your name
+go to the ROOM and find the OBJ
+get the OBJ from the SPECIFIC_LOC and deliver it to the SPECIFIC_LOC
+grasp the OBJ from the SPECIFIC_LOC and deliver it to NAME at the ROOM
+find a person in the ROOM and speak what day is tomorrow
+get into the ROOM and look for the OBJ
+get the OBJ from the SPECIFIC_LOC and bring it to the FURNITURE
+look for a person in the ROOM and answer a question
+look for a person in the ROOM and answer a question
+take the OBJ from the SPECIFIC_LOC and deliver it to the FURNITURE
+grasp the OBJ from the FURNITURE and carry it to me
+look for a person in the ROOM and say the name of your team
+get into the ROOM and look for the OBJ
+find a person in the ROOM and answer a question
+navigate to the ROOM and look for the OBJ
+reach the ROOM and find the OBJ
+navigate to the ROOM and look for the OBJ
+take the OBJ from the SPECIFIC_LOC and deliver it to the SPECIFIC_LOC
+navigate to the ROOM and look for the OBJ
+take the OBJ from the SPECIFIC_LOC and bring it to the FURNITURE
+look for a person in the ROOM and answer a question
+grasp the OBJ from the FURNITURE and deliver it to the FURNITURE
+go to the ROOM and find the OBJ
+go to the ROOM and find the OBJ
+grasp the OBJ from the FURNITURE and deliver it to NAME at the ROOM
+reach the ROOM and find the OBJ
+get into the ROOM and look for the OBJ
+find a person in the ROOM and say the name of your team
+find a person in the ROOM and tell the date
+get into the ROOM and find the OBJ
+grasp the OBJ from the SPECIFIC_LOC and deliver it to NAME which is in the ROOM
+look for a person in the ROOM and say your name
+find a person in the ROOM and answer a question
+grasp the OBJ from the FURNITURE and take it to me
+get into the ROOM and look for the OBJ
+grasp the OBJ from the SPECIFIC_LOC and bring it to the FURNITURE
+look for a person in the ROOM and tell the time
+get the OBJ from the FURNITURE and deliver it to NAME in the ROOM
+go to the ROOM and find the OBJ
+get the OBJ from the SPECIFIC_LOC and take it to the FURNITURE
+get into the ROOM and find the OBJ
+find a person in the ROOM and say the name of your team
+find a person in the ROOM and answer a question
+go to the ROOM and look for the OBJ
+take the OBJ from the SPECIFIC_LOC and bring it to me
+go to the ROOM and find the OBJ
+navigate to the ROOM and look for the OBJ
+get the OBJ from the FURNITURE and deliver it to NAME in the ROOM
+get into the ROOM and look for the OBJ
+look for a person in the ROOM and answer a question
+get the OBJ from the FURNITURE and bring it to NAME which is in the ROOM
+grasp the OBJ from the SPECIFIC_LOC and carry it to NAME at the ROOM
+get the OBJ from the FURNITURE and carry it to NAME which is in the ROOM
+navigate to the ROOM and find the OBJ
+grasp the OBJ from the FURNITURE and bring it to the FURNITURE
+get the OBJ from the FURNITURE and take it to NAME which is in the ROOM
+get into the ROOM and look for the OBJ
+get the OBJ from the SPECIFIC_LOC and deliver it to me
+find a person in the ROOM and speak what time is it
+take the OBJ from the FURNITURE and carry it to me
+take the OBJ from the SPECIFIC_LOC and bring it to NAME at the ROOM
+grasp the OBJ from the SPECIFIC_LOC and take it to me
+look for a person in the ROOM and speak the name of your team
+find a person in the ROOM and tell your name
+grasp the OBJ from the FURNITURE and carry it to the SPECIFIC_LOC
+find a person in the ROOM and answer a question
+find a person in the ROOM and answer a question
+get the OBJ from the FURNITURE and deliver it to me
+navigate to the ROOM and find the OBJ
+look for a person in the ROOM and answer a question
+look for a person in the ROOM and say what day is today
+get into the ROOM and find the OBJ
+
