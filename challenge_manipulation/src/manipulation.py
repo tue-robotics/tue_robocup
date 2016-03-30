@@ -45,6 +45,7 @@ from robocup_knowledge import load_knowledge
 import pdf
 
 challenge_knowledge = load_knowledge('challenge_manipulation')
+CABINET = challenge_knowledge.cabinet
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
@@ -59,9 +60,9 @@ DEBUG = False
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
-if PICK_SHELF not in OBJECT_SHELVES:
-    rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
-    OBJECT_SHELVES.append(PICK_SHELF)
+# if PICK_SHELF not in OBJECT_SHELVES:
+#     rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
+#     OBJECT_SHELVES.append(PICK_SHELF)
 
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor', 'room']
@@ -126,62 +127,97 @@ class InspectShelves(smach.State):
 
         global DETECTED_OBJECTS_WITH_PROBS
 
-        ''' Loop over shelves '''
-        for shelf in self.object_shelves:
+        ''' Get cabinet entity '''
+        cabinet_entity = self.robot.ed.get_entity(id=CABINET, parse=True)
 
-            rospy.loginfo("Shelf: {0}".format(shelf))
-
-            ''' Get entities '''
-            shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
-
-            if shelf_entity:
-
-                ''' Extract center point '''
-                cp = shelf_entity.pose.position
-
-                ''' Look at target '''
-                self.robot.head.look_at_point(geom.PointStamped(cp.x, cp.y, cp.z, "/map"))
-
-                ''' Move spindle
-                    Implemented only for AMIGO (hence the hardcoding)
-                    Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
-                # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
-                # ToDo: do head and torso simultaneously
-                height = min(0.4, max(0.1, cp.z-0.55))
-                self.robot.torso._send_goal([height], timeout=5.0)
-
-                ''' Sleep for 1 second '''
-                import os; do_wait = os.environ.get('ROBOT_REAL')
-                if do_wait == 'true':
-                    rospy.sleep(3.0) # ToDo: remove???
-
-                if DEBUG:
-                    rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
-                    import ipdb;ipdb.set_trace()
+        ''' Get the pose of all shelves '''
+        shelves = []
+        for area in cabinet_entity.data['areas']:
+            ''' See if the area is in the list of inspection areas '''
+            if area['name'] in OBJECT_SHELVES:
+                ''' Check if we have a shape '''
+                if 'shape' not in area:
+                    rospy.logwarn("No shape in area {0}".format(area['name']))
                     continue
+                ''' Check if length of shape equals one '''
+                if not len(area['shape']) == 1:
+                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(area['name']))
+                    continue
+                ''' Check if the first entry is a box '''
+                if not 'box' in area['shape'][0]:
+                    rospy.logwarn("No box in {0}".format(area['name']))
+                    continue
+                box = area['shape'][0]['box']
+                if 'min' not in box or 'max' not in box:
+                    rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
+                    continuex = 0.5 * (box['min']['x'] + box['max']['x'])
+                x = 0.5 * (box['min']['x'] + box['max']['x'])
+                y = 0.5 * (box['min']['y'] + box['max']['y'])
+                z = 0.5 * (box['min']['z'] + box['max']['z'])
+                shelves.append({'ps': geom.PointStamped(x, y, z, cabinet_entity.id), 'name': area['name']})
+            else:
+                rospy.loginfo("{0} not in object shelves".format(area['name']))
 
-                ''' Enable kinect segmentation plugin (only one image frame) '''
-                # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
-                segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
+        rospy.loginfo("Inspection points: {0}".format(shelves))
+        # ''' Loop over shelves '''
+        # for shelf in self.object_shelves:
+        for shelf in shelves:
 
-                entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+            ps = shelf['ps']
+            cp = ps.point
 
-                # Recite entities
-                for etp in entity_types_and_probs:
-                    self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+            # ''' Get entities '''
+            # shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
 
-                # Lock entities
-                self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+            # if shelf_entity:
 
-                # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
-                # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
-                for e in entity_types_and_probs:
-                    entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
-                    DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+            # ''' Extract center point '''
+            # cp = shelf_entity.pose.position
 
-                # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
-                DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
-                # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            ''' Look at target '''
+            self.robot.head.look_at_point(ps)
+
+            ''' Move spindle
+                Implemented only for AMIGO (hence the hardcoding)
+                Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
+            # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
+            # ToDo: do head and torso simultaneously
+            height = min(0.4, max(0.1, cp.z-0.55))
+            self.robot.torso._send_goal([height], timeout=5.0)
+
+            ''' Sleep for 1 second '''
+            import os; do_wait = os.environ.get('ROBOT_REAL')
+            if do_wait == 'true':
+                rospy.sleep(3.0) # ToDo: remove???
+
+            if DEBUG:
+                rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
+                import ipdb;ipdb.set_trace()
+                continue
+
+            ''' Enable kinect segmentation plugin (only one image frame) '''
+            # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
+            # segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
+            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
+
+            entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+
+            # Recite entities
+            for etp in entity_types_and_probs:
+                self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+
+            # Lock entities
+            self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+
+            # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
+            # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
+            for e in entity_types_and_probs:
+                entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
+                DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+
+            # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
+            # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
 
         if not DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
@@ -378,12 +414,12 @@ def setup_statemachine(robot):
                                transitions={'continue'                  :'NAV_TO_START',
                                             'no_response'               :'AWAIT_START'})
 
-        pick_shelf = ds.EntityByIdDesignator(robot, id=PICK_SHELF)
+        cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
         room = ds.EntityByIdDesignator(robot, id=ROOM)
         smach.StateMachine.add( "NAV_TO_START",
                                 states.NavigateToSymbolic(robot,
-                                                          {pick_shelf:"in_front_of", room:"in"},
-                                                          pick_shelf),
+                                                          {cabinet:"in_front_of", room:"in"},
+                                                          cabinet),
                                 transitions={   'arrived'           :'RESET_ED',
                                                 'unreachable'       :'RESET_ED',
                                                 'goal_not_defined'  :'RESET_ED'})
