@@ -45,15 +45,21 @@ class CommandRecognizer:
     def __init__(self, grammar_file, challenge_knowledge):
         self.parser = cfgparser.CFGParser.fromfile(grammar_file)
 
-        for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
-            #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))
-            self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (furniture, furniture))
-            self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (furniture, furniture))
+        for obj in challenge_knowledge.common.object_names:
+            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
+            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))  
 
-            for obj in objects:
-                #parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
-                self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
-                self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))
+        location_names = list(set([o["name"] for o in challenge_knowledge.common.locations]))          
+
+        for loc in location_names:
+            #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))
+            self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (loc, loc))
+            self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (loc, loc))
+
+            # for obj in objects:
+            #     #parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
+            #     self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
+            #     self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))
 
         for rooms in challenge_knowledge.rooms:
             #parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))

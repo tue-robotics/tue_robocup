@@ -13,7 +13,7 @@ VP[A, "from": Y] -> VP_GRASP[A] from LOC[Y]
 
 VP_GRASP["action": A, "entity": X] -> V_GRASP[A] SMALL_OBJECT[X]
 
-V_GRASP["pick-up"] -> grab | grasp | pick up
+V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Bringing
@@ -30,7 +30,7 @@ VP["action" : "bring", "entity" : X, "from" : Y, "to" : Z] -> bring SMALL_OBJECT
 # VP["action": A, "entity": X, "loc": Y] -> V_BRING[A] NP[X] to NP[Y]
 # V_BRING["transport"] -> bring | transport
 
-V_BRING_ME -> give | bring | hand
+V_BRING_ME -> give | bring | hand | deliver | take | carry
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Moving
@@ -38,14 +38,19 @@ V_BRING_ME -> give | bring | hand
 
 VP["action": A, "entity": X] -> V_MOVE[A] NP[X]
 
-V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to | find | come to | come back to
+V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to | find | come to | come back to | get into | reach
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
-# Inspecting
+# Find
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-#VP["action": A, "entity": X] -> V_INSPECT[A] FURNITURE[X]
-#V_INSPECT["inspect"] -> inspect
+VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
+VP["action": A, "entity": X, "loc": R] -> V_FIND[A] OBJ_FIND[X] in ROOM[R]
+
+V_FIND["find"] -> find | look for
+
+OBJ_FIND[X] -> SMALL_OBJECT[X] | FURNITURE[X]
+OBJ_FIND["person"] -> a person | the person | NAME
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions
@@ -60,10 +65,14 @@ VP["action": "answer-question"] -> answer her question
 # Say
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "say", "sentence": "NAME"] -> tell your name
-VP["action": "say", "sentence": "TIME"] -> tell the time
-VP["action": "say", "sentence": "TIME"] -> tell what time it is
-VP["action": "say", "sentence": "my team is tech united"] -> tell the name of your team
+VP["action": "say", "sentence": "NAME"] -> V_SAY your name
+VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY the date | V_SAY what time is it
+VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
+
+VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
+VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
+
+V_SAY -> tell | say | speak
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
