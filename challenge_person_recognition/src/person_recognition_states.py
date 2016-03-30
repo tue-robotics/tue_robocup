@@ -492,7 +492,7 @@ class ChooseOperator(smach.State):
                     self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, 
                                                                                                 y=face.point_stamped.point.y, 
                                                                                                 z=face.point_stamped.point.z, 
-                                                                                                frame_id="/map"))
+                                                                                                frame_id=face.point_stamped.header.frame_id))
                     chosenOperator = True
 
             ''' if for some reason the operator could not be choosen, just select the first one in the list ''' 
@@ -502,7 +502,7 @@ class ChooseOperator(smach.State):
                 self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=faceList[operatorIdx].point_stamped.point.x, 
                                                                                             y=faceList[operatorIdx].point_stamped.point.y, 
                                                                                             z=faceList[operatorIdx].point_stamped.point.z, 
-                                                                                            frame_id="/map"))
+                                                                                            frame_id=faceList[operatorIdx].point_stamped.header.frame_id))
 
                 
                 # rand_op_idx = random.randint(0, len(faceList)-1)
