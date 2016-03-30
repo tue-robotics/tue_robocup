@@ -8,7 +8,7 @@ cabinet = "bookcase"
 object_shelves =["shelf5", "shelf4", "shelf3", "shelf1"]
 
 ''' Shelf where we will actually try to grasp '''
-grasp_shelf = cabinet + "/shelf6"
+grasp_shelf = "shelf3"
 
 ''' Shelf where we will actually place stuff '''
 place_shelf = cabinet + "/shelf5"
