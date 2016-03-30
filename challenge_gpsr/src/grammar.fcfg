@@ -51,9 +51,19 @@ V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to | find | c
 # Questions
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "answer-question", "answer" : ANSWER] -> Q[ANSWER]
+VP["action": "answer-question"] -> answer a question
+VP["action": "answer-question"] -> answer the question
+VP["action": "answer-question"] -> answer his question
+VP["action": "answer-question"] -> answer her question
 
-Q["time"] -> tell the time
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Say
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "say", "sentence": "my name is amigo"] -> tell your name
+VP["action": "say", "sentence": "TIME"] -> tell the time
+VP["action": "say", "sentence": "TIME"] -> tell what time it is
+VP["action": "say", "sentence": "my team is tech united"] -> tell the name of your team
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
