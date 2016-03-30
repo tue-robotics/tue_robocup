@@ -17,13 +17,13 @@ from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_speech_recognition')
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(10)):
-        smach.State.__init__(self, outcomes=["answered","not_answered"])
+    def __init__(self, robot, time_out=rospy.Duration(15)):
+        smach.State.__init__(self, outcomes=["answered", "not_answered"])
         self.robot = robot
         self.time_out = time_out
 
     def execute(self, userdata):
-        self.robot.head.look_at_standing_person()
+        self.robot.head.look_at_ground_in_front_of_robot(100)
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
@@ -94,31 +94,31 @@ def setup_statemachine(robot):
                                                 "abort"            :   "Aborted"})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
-        smach.StateMachine.add('QUESTION_1', HearQuestion(robot), transitions={ 'answered' :'SAY_2', 'not_answered': 'TURN_1'})
+        smach.StateMachine.add('QUESTION_1', HearQuestion(robot), transitions={ 'answered' :'SAY_2', 'not_answered': 'SAY_2'})
         smach.StateMachine.add('TURN_1', Turn(robot), transitions={ 'turned' :'SAY_1A'})
         smach.StateMachine.add('SAY_1A', states.Say(robot, "Please repeat your question"), transitions={ 'spoken' :'QUESTION_1A'})
         smach.StateMachine.add('QUESTION_1A', HearQuestion(robot), transitions={ 'answered' :'SAY_2', 'not_answered': 'SAY_2'})
 
         smach.StateMachine.add('SAY_2', states.Say(robot, "Please ask me question two"), transitions={ 'spoken' :'QUESTION_2'})
-        smach.StateMachine.add('QUESTION_2', HearQuestion(robot), transitions={ 'answered' :'SAY_3', 'not_answered': 'TURN_2'})
+        smach.StateMachine.add('QUESTION_2', HearQuestion(robot), transitions={ 'answered' :'SAY_3', 'not_answered': 'SAY_3'})
         smach.StateMachine.add('TURN_2', Turn(robot), transitions={ 'turned' :'SAY_2A'})
         smach.StateMachine.add('SAY_2A', states.Say(robot, "Please repeat your question"), transitions={ 'spoken' :'QUESTION_2A'})
         smach.StateMachine.add('QUESTION_2A', HearQuestion(robot), transitions={ 'answered' :'SAY_3', 'not_answered': 'SAY_3'})
 
         smach.StateMachine.add('SAY_3', states.Say(robot, "Please ask me question three"), transitions={ 'spoken' :'QUESTION_3'})
-        smach.StateMachine.add('QUESTION_3', HearQuestion(robot), transitions={ 'answered' :'SAY_4', 'not_answered': 'TURN_3'})
+        smach.StateMachine.add('QUESTION_3', HearQuestion(robot), transitions={ 'answered' :'SAY_4', 'not_answered': 'SAY_4'})
         smach.StateMachine.add('TURN_3', Turn(robot), transitions={ 'turned' :'SAY_3A'})
         smach.StateMachine.add('SAY_3A', states.Say(robot, "Please repeat your question"), transitions={ 'spoken' :'QUESTION_3A'})
         smach.StateMachine.add('QUESTION_3A', HearQuestion(robot), transitions={ 'answered' :'SAY_4', 'not_answered': 'SAY_4'})
 
         smach.StateMachine.add('SAY_4', states.Say(robot, "Please ask me question four"), transitions={ 'spoken' :'QUESTION_4'})
-        smach.StateMachine.add('QUESTION_4', HearQuestion(robot), transitions={ 'answered' :'SAY_5', 'not_answered': 'TURN_4'})
+        smach.StateMachine.add('QUESTION_4', HearQuestion(robot), transitions={ 'answered' :'SAY_5', 'not_answered': 'SAY_5'})
         smach.StateMachine.add('TURN_4', Turn(robot), transitions={ 'turned' :'SAY_4A'})
         smach.StateMachine.add('SAY_4A', states.Say(robot, "Please repeat your question"), transitions={ 'spoken' :'QUESTION_4A'})
         smach.StateMachine.add('QUESTION_4A', HearQuestion(robot), transitions={ 'answered' :'SAY_5', 'not_answered': 'SAY_5'})
 
         smach.StateMachine.add('SAY_5', states.Say(robot, "Please ask me question five"), transitions={ 'spoken' :'QUESTION_5'})
-        smach.StateMachine.add('QUESTION_5', HearQuestion(robot), transitions={ 'answered' :'AT_END', 'not_answered': 'TURN_5'})
+        smach.StateMachine.add('QUESTION_5', HearQuestion(robot), transitions={ 'answered' :'AT_END', 'not_answered': 'AT_END'})
         smach.StateMachine.add('TURN_5', Turn(robot), transitions={ 'turned' :'SAY_5A'})
         smach.StateMachine.add('SAY_5A', states.Say(robot, "Please repeat your question"), transitions={ 'spoken' :'QUESTION_5A'})
         smach.StateMachine.add('QUESTION_5A', HearQuestion(robot), transitions={ 'answered' :'AT_END', 'not_answered': 'AT_END'})
