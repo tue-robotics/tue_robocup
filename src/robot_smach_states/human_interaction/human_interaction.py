@@ -357,69 +357,24 @@ class LookAtPersonInFront(smach.State):
         self.lookDown = lookDown
 
     def execute(self, userdata=None):
-        # initialize variables
-        foundFace = False
-        result = None
-        entityData = None
-        faces_front = None
-        desgnResult = None
+        self.robot.head.look_at_standing_person()
+        self.robot.head.wait_for_motion_done()
 
-        self.robot.head.cancel_goal()
-
-        # look front, 2 meters high
-        self.robot.head.look_at_point(point_stamped=gm.PointStamped(3, 0, 1.5,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
-        rospy.sleep(1)  # give time for the percetion algorithms to add the entity
-
-        desgnResult = scanForHuman(self.robot)
-        if not desgnResult:
+        human_in_front = detect_human_in_front(self.robot)
+        if not human_in_front:
             print "[LookAtPersonInFront] " + "Could not find a human while looking up"
 
-        # if no person was seen at 2 meters high, look down, because the person might be sitting
-        if not desgnResult and self.lookDown == True:
-            # look front, 2 meters high
-            self.robot.head.look_at_point(point_stamped=gm.PointStamped(3, 0, 0,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
+        # if no standing person was seen, look down, because the person might be sitting
+        if not human_in_front and self.lookDown:
+            # look front, 0 meters high
+            self.robot.head.look_at_ground_in_front_of_robot(distance=3.0)
 
-            # try to resolve the designator
-            desgnResult = scanForHuman(self.robot)
-            if not desgnResult:
+            human_in_front = detect_human_in_front(self.robot)
+            if not human_in_front:
                 print "[LookAtPersonInFront] " + "Could not find a human while looking down"
                 pass
 
-        # if there is a person in front, try to look at the face
-        if desgnResult:
-            print "[LookAtPersonInFront] " + "Designator resolved a Human!"
-
-            # extract information from data
-            faces_front = None
-            try:
-                #import ipdb; ipdb.set_trace()
-                # get information on the first face found (cant guarantee its the closest in case there are many)
-                faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
-            except KeyError, ke:
-                print "[LookAtPersonInFront] " + "KeyError faces_front: " + str(ke)
-                pass
-            except IndexError, ke:
-                print "[LookAtPersonInFront] " + "IndexError faces_front: " + str(ke)
-                pass
-            except TypeError, ke:
-                print "[LookAtPersonInFront] " + "TypeError faces_front: " + str(ke)
-                pass
-            except AttributeError, ke:
-                print "[LookAtPersonInFront]     " + "AttributeError faces_front: " + str(ke)
-                pass
-
-            if faces_front:
-                headGoal = gm.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map")
-
-                print "[LookAtPersonInFront] " + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
-                self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
-
-                foundFace == True
-            else:
-                print "[LookAtPersonInFront] " + "Found a human but no faces."
-                foundFace == False
-
-        if foundFace == True:
+        if human_in_front:
             return 'succeeded'
         else:
             print "[LookAtPersonInFront] " + "Could not find a face in front of the robot"
@@ -442,13 +397,13 @@ class WaitForPersonEntity(smach.State):
 
     def execute(self, userdata=None):
         counter = 0
-        desgnResult = None
+        detected_humans = None
 
         while counter < self.attempts:
             print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
 
-            desgnResult = scanForHuman(self.robot)
-            if desgnResult:
+            detected_humans = detect_human_in_front(self.robot)
+            if detected_humans:
                 print "[WaitForPerson] " + "Found a human!"
                 return 'succeeded'
 
@@ -456,6 +411,7 @@ class WaitForPersonEntity(smach.State):
             rospy.sleep(self.sleep_interval)
 
         return 'failed'
+
 
 class WaitForPersonDetection(smach.State):
     """
@@ -488,27 +444,22 @@ class WaitForPersonDetection(smach.State):
 ##########################################################################################################################################
 
 
-def scanForHuman(robot, background_padding = 0.3):
+def detect_human_in_front(robot):
     """
-        Scan for a human in the robots field of view. Return human entities
+        Scan for humans in the robots field of view. Return person detections if any
     """
 
-    human_entities = []
-    entity_list = []
+    result = robot.ed.detect_persons()
 
-    res_segm = robot.ed.update_kinect(background_padding = background_padding)
-    entity_list = res_segm.new_ids + res_segm.updated_ids
+    if not result:
+        return False
 
-    # Try to determine the types of the entities just segmented
-    res_classify = robot.ed.classify(entity_list)
-
-    # Get the ids of all humans
-    human_entities = [e for e in res_classify if e.type == "human"]
-
-    print "[scanForHuman] " + "Found {0} person(s) ({1} entities)".format(len(human_entities), len(entity_list))
-
-    return human_entities
-
+    for detection in result:
+        pose_base_link = robot.tf_listener.transformPose(target_frame=robot.robot_name+'/base_link', point=detection.pose)
+        x = pose_base_link.position.x
+        y = pose_base_link.position.y
+        if 0.0 < x < 2.0 and -1.0 < y < 1.0:
+            return True
 
 ##########################################################################################################################################
 
