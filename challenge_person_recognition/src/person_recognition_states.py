@@ -50,13 +50,13 @@ class Location(object):
 
 class FaceAnalysed(object):
     """ class to store characteristics of a face """
-    def __init__(   self, 
-                    point_stamped, 
-                    name, 
-                    score, 
-                    pose = challenge_knowledge.Pose.Standing, 
-                    gender = challenge_knowledge.Gender.Male, 
-                    inMainCrowd = True, 
+    def __init__(   self,
+                    point_stamped,
+                    name,
+                    score,
+                    pose = challenge_knowledge.Pose.Standing,
+                    gender = challenge_knowledge.Gender.Male,
+                    inMainCrowd = True,
                     orderedPosition = "",
                     operator = False):
         self.point_stamped = point_stamped
@@ -157,7 +157,7 @@ class FindCrowd(smach.State):
         # find human entities while turning the head
         for head_point in head_points_stamped:
             self.robot.head.look_at_point(point_stamped=head_point, end_time=0, timeout=8)
-            
+
             ''' sleep to prevent head movement while scanning for humans'''
             rospy.sleep(1)
 
@@ -226,7 +226,7 @@ class FindCrowd(smach.State):
             if len(self.locations.current) >= challenge_knowledge.min_faces_found:
                 return 'succeeded'
             else:
-                return 'failed'                
+                return 'failed'
 
         else:
             printWarning("Could not find anyone in the room.")
@@ -246,7 +246,8 @@ class RecognizePersons(smach.State):
         self.detectedPersonsDes = detectedPersonsDes
 
     def execute(self, userdata=None):
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,1, self.robot.robot_name + "/base_link"), end_time=0, timeout=8)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(100.0, 0.0, 1.0, self.robot.robot_name +
+                                                                      "/base_link"), end_time=0, timeout=8)
 
         detections = self.robot.ed.detect_persons()
         if not detections:
@@ -366,7 +367,7 @@ class PointAtOperator(smach.State):
 # Ask the person's name
 class AskPersonName(smach.State):
     def __init__(self, robot, operatorNameDes):
-        smach.State.__init__(   self, 
+        smach.State.__init__(   self,
                                 outcomes=['succeeded', 'failed'])
 
         self.robot = robot
@@ -415,7 +416,7 @@ class AskPersonName(smach.State):
 # Confirm person's name
 class ConfirmPersonName(smach.State):
     def __init__(self, robot, operatorNameDes):
-        smach.State.__init__(   self, 
+        smach.State.__init__(   self,
                                 outcomes=['correct', 'incorrect'])
 
         self.robot = robot
@@ -454,7 +455,7 @@ class ConfirmPersonName(smach.State):
 
 class ChooseOperator(smach.State):
     def __init__(self, robot, facesAnalysedDes, operatorNameDes, operatorLocationDes):
-        smach.State.__init__(   self, 
+        smach.State.__init__(   self,
                                 output_keys=['operatorIdx_out'],
                                 outcomes=['succeeded', 'failed'])
 
@@ -477,7 +478,7 @@ class ChooseOperator(smach.State):
 
         # import ipdb; ipdb.set_trace()
 
-        if not faceList == None:            
+        if not faceList == None:
             ''' iterate through all the faces recognized and choose the best one as operator '''
             for idx, face in enumerate(faceList):
                 printOk("\tName: {0}, Score: {1}, Location: ({2},{3},{4})".format(
@@ -489,22 +490,22 @@ class ChooseOperator(smach.State):
                 if face.score > 0 and face.score < lowest_score and self.operatorNameDes.resolve() == face.name:
                     lowest_score = face.score
                     operatorIdx = idx
-                    self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, 
-                                                                                                y=face.point_stamped.point.y, 
-                                                                                                z=face.point_stamped.point.z, 
+                    self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x,
+                                                                                                y=face.point_stamped.point.y,
+                                                                                                z=face.point_stamped.point.z,
                                                                                                 frame_id=face.point_stamped.header.frame_id))
                     chosenOperator = True
 
-            ''' if for some reason the operator could not be choosen, just select the first one in the list ''' 
+            ''' if for some reason the operator could not be choosen, just select the first one in the list '''
             if not chosenOperator:
                 printWarning("Could not choose an operator, i was looking for " + self.operatorNameDes.resolve() + ". Selecting the first one in the list!")
                 operatorIdx = 0
-                self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=faceList[operatorIdx].point_stamped.point.x, 
-                                                                                            y=faceList[operatorIdx].point_stamped.point.y, 
-                                                                                            z=faceList[operatorIdx].point_stamped.point.z, 
+                self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=faceList[operatorIdx].point_stamped.point.x,
+                                                                                            y=faceList[operatorIdx].point_stamped.point.y,
+                                                                                            z=faceList[operatorIdx].point_stamped.point.z,
                                                                                             frame_id=faceList[operatorIdx].point_stamped.header.frame_id))
 
-                
+
                 # rand_op_idx = random.randint(0, len(faceList)-1)
                 # printWarning("Could not choose an operator! Selecting random index: " + str(rand_op_idx))
                 # If no operator was choosen, select a random one
@@ -587,7 +588,7 @@ class AnalysePerson(smach.State):
         #     printOk("Could not resolve humanDesgnResult.")
         #     pass
 
-        
+
         humanDesignatorRes = scanForHuman(self.robot)
         if humanDesignatorRes:
             printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
@@ -628,7 +629,7 @@ class AnalysePerson(smach.State):
 
                         for face in self.facesAnalysedDes.current:
                             p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
-                            
+
                             # just for testing
                             if points_distance(p1=p1, p2=p2) < shortest:
                                 shortest = points_distance(p1=p1, p2=p2)
@@ -654,7 +655,7 @@ class AnalysePerson(smach.State):
 
                             # TODO: match against the name list fiven by the knowledge
                             #  "predict" gender, in a hacky way. Names finished with A are female
-                            
+
                             personGender = random.randint(0, 1)
                             # if recognition_label[-1:] == 'a':
                             #     personGender = challenge_knowledge.Gender.Female
@@ -668,7 +669,7 @@ class AnalysePerson(smach.State):
                                 face_loc["map_x"], face_loc["map_y"], face_loc["map_z"]))
 
                             self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
-                                                                            name = recognition_label, 
+                                                                            name = recognition_label,
                                                                             score = recognition_score,
                                                                             pose = pose,
                                                                             gender = personGender))]
@@ -745,13 +746,13 @@ class ResetSearch(smach.State):
 
         self.robot = robot
         self.locations = locations
-        
+
     def execute(self, userdata):
         printOk("ResetSearch")
 
         # Reset locations to visit
         self.locations.write([])
-        
+
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------

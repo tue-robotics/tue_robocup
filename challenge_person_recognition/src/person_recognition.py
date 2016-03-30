@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import roslib; 
+import roslib;
 import rospy
 import sys
 import smach
@@ -30,7 +30,7 @@ class EntityOfPersonDetection(ds.Designator):
         """
         super(EntityOfPersonDetection, self).__init__(resolve_type=EntityInfo, name=name)
 
-	self.robot = robot
+        self.robot = robot
         self.persondetectionDes = persondetection_designator
 
     def _resolve(self):
@@ -47,7 +47,7 @@ def printOk(sentence):
 
 def printError(sentence):
     challenge_knowledge.printError(sentence)
-    
+
 def printWarning(sentence):
     challenge_knowledge.printWarning(sentence)
 
@@ -92,17 +92,16 @@ class LearnOperatorName(smach.StateMachine):
             return 'spoken'
 
         with self:
+                smach.StateMachine.add('LOOK_AT_OPERATOR',
+                                        states.LookAtPersonInFront(robot, lookDown=False),
+                                        transitions={   'succeeded':'WAIT_FOR_OPERATOR',
+                                                        'failed':'LOOK_AT_OPERATOR'})
+
                 smach.StateMachine.add("SAY_WAITING_OPERATOR",
                                         states.Say(robot,[  "I'm waiting for the operator to stand in front of me.",
                                                             "Would the operator please come forward.",
                                                             "I need an operator, please stand in front of me."], block=False),
-                                        transitions={   'spoken':'LOOK_AT_OPERATOR'})
-
-                smach.StateMachine.add('LOOK_AT_OPERATOR',
-                                        states.LookAtPersonInFront(robot, lookDown=False),
-                                        transitions={   'succeeded':'WAIT_FOR_OPERATOR',
-                                                        'failed':'WAIT_FOR_OPERATOR'})
-
+                                        transitions={   'spoken':'WAIT_FOR_OPERATOR'})
 
                 smach.StateMachine.add("WAIT_FOR_OPERATOR",
                                         states.WaitForPersonDetection(robot, attempts=8, sleep_interval=1),
@@ -183,14 +182,14 @@ class LearnOperatorFace(smach.StateMachine):
         self.operatorNameDes = operatorNameDes
 
         with self:
-            smach.StateMachine.add( 'SAY_LOOK_AT_ME',
-                                    states.Say(robot,"Please stand one meter in front of me and look at me while I learn your face.", block=True),
-                                    transitions={    'spoken':'LOOK_AT_OPERATOR'})
-
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
                                     states.LookAtPersonInFront(robot, lookDown=False),
-                                    transitions={   'succeeded':'LEARN_PERSON',
-                                                    'failed':'LEARN_PERSON'})
+                                    transitions={   'succeeded':'SAY_LOOK_AT_ME',
+                                                    'failed':'SAY_LOOK_AT_ME'})
+
+            smach.StateMachine.add( 'SAY_LOOK_AT_ME',
+                                    states.Say(robot,"Please stand one meter in front of me and look at me while I learn to recognize your face.", block=True),
+                                    transitions={    'spoken':'LEARN_PERSON'})
 
             smach.StateMachine.add('LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator=operatorNameDes),
@@ -574,5 +573,5 @@ class ChallengePersonRecognition(smach.StateMachine):
 
 if __name__ == "__main__":
     rospy.init_node('person_recognition_exec')
-    
+
     startup(ChallengePersonRecognition, challenge_name="person_recognition")
