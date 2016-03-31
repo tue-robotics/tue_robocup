@@ -32,6 +32,11 @@ No you can cycle through the images using the arrow keys. Note that the segmenta
 
 Go through all the images and annotate the supporting entity.
 
+By default, the area that is used for segmentation is `on_top_of`. You can however specify another area. If you want this:
+
+  * Type `area:<name-of-area>`, for example `area:shelf1` and press enter
+  * click anywhere on the image. You should see the area name change in the upper status bar
+
 Once an image has the supporting entity annotated, segmentation should improve. Now you can annotate the rest objects in the images, using the same process:
 
   * Type the name of the object an press enter
@@ -70,7 +75,7 @@ So in our case:
 
     rosrun ed_perception train-perception `rospack find ed_perception_models`/models/$ROBOT_ENV/parameters.yaml /path/to/images
 
-## Test the perception models  
+## Test the perception models
 
     rosrun ed_perception test-perception `rospack find ed_perception_models`/models/$ROBOT_ENV/parameters.yaml /path/to/images
 
