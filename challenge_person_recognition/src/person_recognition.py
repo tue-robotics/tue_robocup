@@ -92,22 +92,12 @@ class LearnOperatorName(smach.StateMachine):
             return 'spoken'
 
         with self:
+                smach.StateMachine.add("SAY_WAITING_OPERATOR", states.Say(robot,[  "I'm waiting for the operator to stand in front of me.","I need an operator, please stand in front of me."], block=False), transitions={   'spoken':'LOOK_AT_OPERATOR'})
+
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
                                         states.LookAtPersonInFront(robot, lookDown=False),
-                                        transitions={   'succeeded':'WAIT_FOR_OPERATOR',
-                                                        'failed':'LOOK_AT_OPERATOR'})
-
-                smach.StateMachine.add("SAY_WAITING_OPERATOR",
-                                        states.Say(robot,[  "I'm waiting for the operator to stand in front of me.",
-                                                            "Would the operator please come forward.",
-                                                            "I need an operator, please stand in front of me."], block=False),
-                                        transitions={   'spoken':'WAIT_FOR_OPERATOR'})
-
-                smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                                        states.WaitForPersonDetection(robot, attempts=8, sleep_interval=1),
                                         transitions={   'succeeded':'LEARN_NAME_ITERATOR',
-                                                        'failed':'SAY_WAITING_OPERATOR'})
-
+                                                        'failed':'LOOK_AT_OPERATOR'})
 
                 learnNameIterator = smach.Iterator( outcomes=['container_success', 'container_failed'],
                                                     it = lambda:range(0, 3),

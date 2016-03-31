@@ -249,7 +249,13 @@ class RecognizePersons(smach.State):
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(100.0, 0.0, 1.0, self.robot.robot_name +
                                                                       "/base_link"), end_time=0, timeout=8)
 
-        detections = self.robot.ed.detect_persons()
+        detections = None
+        i = 0
+        while not detections and i < 5:
+            detections = self.robot.ed.detect_persons()
+            print "Detections attempt %d: %s" % (i, detections)
+            i += 1
+
         if not detections:
             return 'failed'
 
