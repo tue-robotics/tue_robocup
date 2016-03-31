@@ -5,7 +5,7 @@ common = knowledge_loader.load_knowledge("common")
 cabinet = "bookcase"
 
 ''' Shelves where objects might be '''
-object_shelves =["shelf5", "shelf4", "shelf3", "shelf1"]
+object_shelves =["shelf6", "shelf5", "shelf4", "shelf3", "shelf1"]
 
 ''' Shelf where we will actually try to grasp '''
 grasp_shelf = "shelf3"
