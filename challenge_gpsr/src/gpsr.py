@@ -11,6 +11,7 @@
 # - define in_front_of's, etc
 # - also use the nav area for navigation
 # - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
+# - Fix constraint outside arena (quick fix: seal exit in heightmap)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
