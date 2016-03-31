@@ -17,19 +17,44 @@ import sys
 import yaml
 import cfgparser
 import rospy
+import random
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import SegmentObjects
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_smach_states import SegmentObjects, Grab
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
+
+
+def search_for_object(robot, location, entity_type):
+    # classify step
+    classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
+    seg = SegmentObjects(robot,
+        objectIDsDes=classifications_des.writeable,
+        entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
+    seg.execute()
+    results = classifications_des.resolve()
+
+    # select the result
+    if not len(results):
+        robot.speech.speak("I could not find the object")
+        return False
+
+    for obj in results:
+        print obj
+        if obj.type == entity_type:
+            return obj
+
+    # TODO: remove this random for testing
+    robot.speech.speak("I'm grabbing a random object")
+    return random.choice(results)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -99,6 +124,10 @@ class GPSR:
             line = datetime.now().strftime('The time is %H %M')
         elif sentence == "NAME":
             line = 'My name is %s' % robot.robot_name
+        elif sentence == 'TODAY':
+            line = datetime.today().strftime('Today is a %A')
+        elif sentence == 'TOMORROW':
+            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is a %A')
         elif sentence == 'DAY_OF_MONTH':
             line = datetime.now().strftime('It is day %d of the month')
         elif sentence == 'DAY_OF_WEEK':
@@ -122,7 +151,6 @@ class GPSR:
 
         robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
-
         # Move to the location
         nwc = NavigateToObserve(robot,
                          entity_designator=EdEntityDesignator(robot, id=location),
@@ -130,14 +158,18 @@ class GPSR:
         nwc.execute()
 
         robot.speech.speak("Looking")
-        classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
-        seg = SegmentObjects(robot,
-            objectIDsDes=classifications_des.writeable,
-            entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
-        seg.execute()
-        results = classifications_des.resolve()
-        rospy.loginfo('Segmentation results: %s', str(results))
+        obj = search_for_object(robot, location=location, type=entity_id)
 
+        # grab it
+        grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
+             UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
+        result = grab.execute()
+
+        if result == 'done':
+            robot.speech.speak("That went well")
+        else:
+            robot.speech.speak("Sorry, I failed")
+        
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
@@ -153,8 +185,8 @@ class GPSR:
                          radius=.5)
         nwc.execute()
 
-    # ------------------------------------------------------------------------------------------------------------------------
-    # TODO
+        # TODO: handover
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     def find(self, robot, parameters):
@@ -173,16 +205,34 @@ class GPSR:
 
         for location in locations:
             robot.speech.speak("I'm going to search the %s" % location)
+            # drive
             nav = NavigateToSymbolic(robot, {
                     EdEntityDesignator(robot, id=room) : "in",
                     EdEntityDesignator(robot, id=location) : "in_front_of"
                 }, EdEntityDesignator(robot, id=location))
             nav.execute()
 
+            # segment
             robot.speech.speak("Is the %s here?" % entity_id)
-            # TODO: inspection logic
+            obj = search_for_object(robot, location, entity_id)
+            if obj:
+                break
 
-        robot.speech.speak("I could not find the %s" % entity_id)
+        if not obj:
+            robot.speech.speak("I could not find the %s" % entity_id)
+            return
+
+        robot.speech.speak("I found the %s, lets grab it" % entity_id)
+
+        # grab it
+        grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
+             UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
+        result = grab.execute()
+
+        if result == 'done':
+            robot.speech.speak("That went well")
+        else:
+            robot.speech.speak("Sorry, I failed")
 
     # ------------------------------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------------------------------

@@ -58,6 +58,8 @@ MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
 SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
 
+PREFERED_ARM="left"  # Must be "left" or "right"
+
 DEBUG = False
 
 ''' Sanity check '''
@@ -309,7 +311,15 @@ class ManipRecogSingleItem(smach.StateMachine):
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
 
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
+        if PREFERED_ARM == "left":
+            prefered_arm = robot.leftArm
+        elif PREFERED_ARM == "right":
+            prefered_arm = robot.rightArm
+        else:
+            rospy.logwarn("Impossible preferred arm: {0}, defaulting to left".format(PREFERED_ARM))
+            prefered_arm = robot.leftArm
+
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, prefered_arm, name="empty_arm_designator")
         self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
 
         # print "{0} = pick_shelf".format(self.pick_shelf)

@@ -19,18 +19,26 @@ V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "entity" : "it", "to" : Y ] -> V_BRING_ME it to LOC[Y]
-VP["action" : "bring", "entity" : "it", "to" : "operator" ] -> V_BRING_ME it to me
+VP["action" : "bring", "entity" : "it", "to" : Y ] -> V_BRING it to TO_LOC[Y]
 
-VP["action" : "bring", "entity" : X, "to" : Y ] -> bring SMALL_OBJECT[X] to LOC[Y]
-VP["action" : "bring", "entity" : X, "to" : "operator" ] -> V_BRING_ME me SMALL_OBJECT[X]
-VP["action" : "bring", "entity" : X, "from" : Y, "to" : "operator" ] -> V_BRING_ME me SMALL_OBJECT[X] from LOC[Y]
-VP["action" : "bring", "entity" : X, "from" : Y, "to" : Z] -> bring SMALL_OBJECT[X] from LOC[Y] to LOC[Z]
+VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT[X] to TO_LOC[Y]
+VP["action" : "bring", "entity" : X, "to" : "operator" ] -> V_BRING me SMALL_OBJECT[X]
+VP["action" : "bring", "entity" : X, "from" : Y, "to" : "operator" ] -> V_BRING me SMALL_OBJECT[X] from LOC[Y]
+VP["action" : "bring", "entity" : X, "from" : Y, "to" : Z] -> V_BRING SMALL_OBJECT[X] from LOC[Y] to TO_LOC[Z]
+
+TO_LOC[X] -> LOC[X]
+TO_LOC["person"] -> PERSON
+TO_LOC["person", "room": R] -> PERSON in ROOM[R]
+TO_LOC["person", "room": R] -> PERSON at ROOM[R]
+TO_LOC["person", "room": R] -> PERSON which is in ROOM[R]
+TO_LOC["operator"] -> me
+
+PERSON -> a person | the person | NAME
 
 # VP["action": A, "entity": X, "loc": Y] -> V_BRING[A] NP[X] to NP[Y]
 # V_BRING["transport"] -> bring | transport
 
-V_BRING_ME -> give | bring | hand | deliver | take | carry
+V_BRING -> give | bring | hand | deliver | take | carry
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Moving
@@ -38,7 +46,7 @@ V_BRING_ME -> give | bring | hand | deliver | take | carry
 
 VP["action": A, "entity": X] -> V_MOVE[A] NP[X]
 
-V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to | come to | come back to | get into | reach
+V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Find
@@ -65,12 +73,14 @@ VP["action": "answer-question"] -> answer her question
 # Say
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "say", "sentence": "NAME"] -> V_SAY your name
+VP["action": "say", "sentence": "my name is amigo"] -> V_SAY your name
 VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY the date | V_SAY what time is it
 VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
 
 VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
 VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
+VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today
+VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 V_SAY -> tell | say | speak
 
