@@ -188,8 +188,8 @@ class planBlocked(smach.State):
             rospy.sleep(0.5)
 
             # Look at the entity
-            ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
-            self.robot.head.look_at_point(ps)
+            #ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
+            #self.robot.head.look_at_point(ps)
 
 
             if not self.robot.base.local_planner.getStatus() == "blocked":
