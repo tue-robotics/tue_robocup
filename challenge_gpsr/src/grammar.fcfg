@@ -38,7 +38,7 @@ V_BRING_ME -> give | bring | hand | deliver | take | carry
 
 VP["action": A, "entity": X] -> V_MOVE[A] NP[X]
 
-V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to | find | come to | come back to | get into | reach
+V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to | come to | come back to | get into | reach
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Find

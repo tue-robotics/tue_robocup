@@ -150,20 +150,30 @@ class GPSR:
 
     def find(self, robot, parameters):
         entity_id = self.resolve_entity_id(parameters["entity"])
-        room = 'bedroom' # TODO: somehow get room from the previous action
+
+        room = self.last_entity_id
+        if not room:
+            robot.speech.speak("I don't know where to start looking")
+            return
+        if room not in challenge_knowledge.rooms:
+            robot.speech.speech("I don't understand the location")
+            return
 
         locations = challenge_knowledge.room_to_grab_locations[room]
-        rospy.loginfo("I'm going to look at these locations: %s", str(locations))
+        rospy.loginfo("Location search list: %s", str(locations))
 
         for location in locations:
-            robot.speech.speak("I'm going to look at the %s" % location)
-            nav = NavigateToSymbolic(robot, 
-                {
+            robot.speech.speak("I'm going to search the %s" % location)
+            nav = NavigateToSymbolic(robot, {
                     EdEntityDesignator(robot, id=room) : "in",
                     EdEntityDesignator(robot, id=location) : "in_front_of"
-                }, 
-                EdEntityDesignator(robot, id=location))
+                }, EdEntityDesignator(robot, id=location))
             nav.execute()
+
+            robot.speech.speak("Is the %s here?" % entity_id)
+            # TODO: inspection logic
+
+        robot.speech.speak("I could not find the %s" % entity_id)
 
     # ------------------------------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------------------------------
