@@ -106,6 +106,8 @@ class GPSR:
     def answer_question(self, robot, parameters):
         robot.head.look_at_ground_in_front_of_robot(100)
 
+        robot.speech.speak("What is your question?")
+
         res = robot.ears.recognize(spec=speech_data.spec,
                                    choices=speech_data.choices,
                                    time_out=rospy.Duration(15))
@@ -277,7 +279,7 @@ class GPSR:
         print "Sentence: %s" % sentence
         print "Semantics: %s" % semantics_str
 
-        robot.speech.speak("You want me to %s" % sentence, block=True)
+        robot.speech.speak("You want me to %s" % sentence.replace("your", "my"), block=True)
 
         # TODO: ask for confirmation?
 
