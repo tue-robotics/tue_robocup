@@ -72,3 +72,29 @@ inspect_areas = {
     "dinnertable" : ["on_top_of"],
     "kitchencounter" : ["left_of_sink", "right_of_sink"]
 }
+
+inspect_positions = {
+    "kitchencounter" :
+    {
+        "left_of_sink"  : "in_front_of",
+        "right_of_sink" : "in_front_of"
+    }
+}
+
+def get_room(location):
+    for loc in locations:
+        if loc["name"] == location:
+            return loc["room"]
+    return None
+
+def get_inspect_areas(location):
+    if location in inspect_areas:
+        return inspect_areas[location]
+    else:
+        return ["on_top_of"]
+
+def get_inspect_position(location, area):
+    if location in inspect_positions and area in inspect_positions[location]:
+        return inspect_positions[location][area]
+    else:
+        return "in_front_of"

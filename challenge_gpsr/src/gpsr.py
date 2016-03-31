@@ -34,6 +34,7 @@ from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
 from datetime import datetime, timedelta
+import robot_smach_states.util.designators as ds
 
 from robot_smach_states import LookAtArea
 
@@ -178,12 +179,7 @@ class GPSR:
 
             locations_with_areas = []
             for location in locations:
-                if location in challenge_knowledge.common.inspect_areas:
-                    area_names = challenge_knowledge.common.inspect_areas[location]
-                else:
-                    area_names = ["on_top_of"]
-
-                locations_with_areas += [(location, area_names)]
+                locations_with_areas += [(location, challenge_knowledge.common.get_inspect_areas(location))]
         else:
             obj_cat = None
             for obj in challenge_knowledge.common.objects:
@@ -209,15 +205,26 @@ class GPSR:
 
             robot.speech.speak("Going to the %s" % location, block=False)
 
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-            # Move to the location
-
-            nwc = NavigateToObserve(robot,
-                             entity_designator=EdEntityDesignator(robot, id=location),
-                             radius=.5)
-            nwc.execute()
+            last_nav_area = None
 
             for area_name in area_names:
+
+                nav_area = challenge_knowledge.common.get_inspect_position(location, area_name)
+
+                if nav_area != last_nav_area:
+
+                    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                    # Move to the location
+
+                    location_des = ds.EntityByIdDesignator(robot, id=location)
+                    room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(location))
+
+                    nwc = NavigateToSymbolic( robot,
+                                              {location_des : nav_area, room_des : "in"},
+                                              location_des)
+                    nwc.execute()
+
+                    last_nav_area = nav_area
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
                 # Look at the area
