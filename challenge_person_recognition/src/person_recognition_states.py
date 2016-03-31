@@ -10,7 +10,7 @@ import robot_skills.util.msg_constructors as msgs
 import math
 from smach_ros import SimpleActionState
 import robot_smach_states.util.designators as ds
-from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra, scanForHuman
+from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra, detect_human_in_front
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robocup_knowledge import load_knowledge
@@ -590,7 +590,7 @@ class AnalysePerson(smach.State):
         #     pass
 
 
-        humanDesignatorRes = scanForHuman(self.robot)
+        humanDesignatorRes = detect_human_in_front(self.robot)
         if humanDesignatorRes:
             printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
 
