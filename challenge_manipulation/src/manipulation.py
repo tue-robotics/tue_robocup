@@ -56,6 +56,7 @@ MIN_GRASP_HEIGHT = challenge_knowledge.min_grasp_height
 MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
+SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
 
 DEBUG = False
 
@@ -126,6 +127,7 @@ class InspectShelves(smach.State):
 
     def execute(self, userdata):
 
+        global SEGMENTED_ENTITIES
         global DETECTED_OBJECTS_WITH_PROBS
 
         ''' Get cabinet entity '''
@@ -203,6 +205,10 @@ class InspectShelves(smach.State):
             # segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
             segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
 
+            for id_ in segmented_entities.new_ids:
+                entity = self.robot.ed.get_entity(id=id_, parse=False)  # In simulation, the entity type is not yet updated...
+                SEGMENTED_ENTITIES.append((entity, id_))
+
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
 
             # Recite entities
@@ -274,7 +280,8 @@ class ManipRecogSingleItem(smach.StateMachine):
             :param entity:
             :return:
             """
-            for tup in DETECTED_OBJECTS_WITH_PROBS:
+            # for tup in DETECTED_OBJECTS_WITH_PROBS:
+            for tup in SEGMENTED_ENTITIES:
                 if tup[0].id == entity.id:
                     return True
             return False
