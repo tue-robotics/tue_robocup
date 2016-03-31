@@ -42,6 +42,7 @@ def generator_mode(command_recognizer):
     try:
         while True:
             command = cmd_gen.generate_command()
+            command = command.replace(",", "")
             if not command_recognizer.parse(command):
                 print "Could not parse '{}'".format(command)
     except KeyboardInterrupt:

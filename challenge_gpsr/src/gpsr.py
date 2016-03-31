@@ -141,7 +141,9 @@ class GPSR:
         rospy.loginfo('Answering %s', sentence)
 
         if sentence == 'TIME':
-            line = datetime.now().strftime('The time is %I %M')
+            hours = datetime.now().hour
+            minutes = datetime.now().minute
+            line = "The time is {} {}".format(hours, minutes)
         elif sentence == "ROBOT_NAME":
             line = 'My name is %s' % robot.robot_name
         elif sentence == 'TODAY':
