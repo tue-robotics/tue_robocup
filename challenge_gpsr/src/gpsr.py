@@ -195,16 +195,34 @@ class GPSR:
 
         for location in locations:
             robot.speech.speak("I'm going to search the %s" % location)
+            # drive
             nav = NavigateToSymbolic(robot, {
                     EdEntityDesignator(robot, id=room) : "in",
                     EdEntityDesignator(robot, id=location) : "in_front_of"
                 }, EdEntityDesignator(robot, id=location))
             nav.execute()
 
+            # segment
             robot.speech.speak("Is the %s here?" % entity_id)
-            # TODO: inspection logic
+            obj = search_for_object(robot, location, entity_id)
+            if obj:
+                break
 
-        robot.speech.speak("I could not find the %s" % entity_id)
+        if not obj:
+            robot.speech.speak("I could not find the %s" % entity_id)
+            return
+
+        robot.speech.speak("I found the %s, lets grab it" % entity_id)
+
+        # grab it
+        grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
+             UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
+        result = grab.execute()
+
+        if result == 'done':
+            robot.speech.speak("That went well")
+        else:
+            robot.speech.speak("Sorry, I failed")
 
     # ------------------------------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------------------------------
