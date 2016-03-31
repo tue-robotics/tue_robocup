@@ -309,7 +309,7 @@ class GPSR:
         print "Sentence: %s" % sentence
         print "Semantics: %s" % semantics_str
 
-        robot.speech.speak("You want me to %s" % sentence.replace("your", "my").replace("me", "you"), block=True)
+        robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
 
         # TODO: ask for confirmation?
 
@@ -383,12 +383,17 @@ class GPSR:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
+        run_forever = False
+        sentence = None
+        if len(sys.argv) > 2 and sys.argv[2] == "--forever":
+            run_forever = True
+        else:
+            sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
         done = False
         while not done:
             self.execute_command(robot, command_recognizer, action_functions, sentence)
-            if sentence or len(sys.argv) <= 2 or sys.argv[2] != "--forever":
+            if not run_forever:
                 done = True
 
 # ------------------------------------------------------------------------------------------------------------------------
