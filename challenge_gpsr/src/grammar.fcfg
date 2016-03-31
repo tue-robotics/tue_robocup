@@ -74,7 +74,7 @@ VP["action": "answer-question"] -> answer her question
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
-VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
+VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it | what time is it
 VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
 
 VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
