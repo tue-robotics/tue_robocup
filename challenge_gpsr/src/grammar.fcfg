@@ -42,6 +42,13 @@ PERSON -> a person | the person | NAME
 V_BRING -> give | bring | hand | deliver | take | carry
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
+# Placing
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action" : "place", "to" : X] -> V_PLACE it on LOC[X]
+V_PLACE -> put | place
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # Moving
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
