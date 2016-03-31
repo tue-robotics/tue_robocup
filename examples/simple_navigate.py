@@ -28,10 +28,10 @@ if __name__ == "__main__":
     #nav_state = NavigateToPose(robot, 1, 0, 0)
     #nav_state.execute()
 
-    nav_state = NavigateToObserve(robot, ds.EntityByIdDesignator(robot=robot, id="dinnertable"))
-    nav_state.execute()
+    #nav_state = NavigateToObserve(robot, ds.EntityByIdDesignator(robot=robot, id="dinnertable"))
+    #nav_state.execute()
 
-    # nav_state = NavigateToSymbolic(robot, {ds.EntityByIdDesignator(robot, id="dinner_table"):"near",
-    #                                         ds.EntityByIdDesignator(robot, id="room_living_room"):"in"},
-    #                                         ds.EntityByIdDesignator(robot, id="dinner_table"))
-    # nav_state.execute()
+    nav_state = NavigateToSymbolic(robot, {
+                                            ds.EntityByIdDesignator(robot, id="kitchen"):"in"},
+                                            ds.EntityByIdDesignator(robot, id="dinnertable"))
+    nav_state.execute()

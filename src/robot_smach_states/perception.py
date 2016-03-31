@@ -41,7 +41,14 @@ class LookAtEntity(State):
 class LookAtArea(State):
     """ Class to look at the center point of a specific area of an entity
     """
-    def __init__(self, robot, entity, area, waittime=0.0):
+    def __init__(self, robot, entity, area, waittime=2.0):
+        """ Constructor
+        :param robot: robot object
+        :param entity: EdEntityDesignator with the area to look at
+        :param area: string with the area to look at
+        :param waittime: (optional) waittime (in seconds) between giving a head target and returning
+        :return:
+        """
         ds.check_type(entity, EntityInfo)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
