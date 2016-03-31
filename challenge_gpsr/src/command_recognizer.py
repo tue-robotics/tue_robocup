@@ -56,6 +56,9 @@ class CommandRecognizer:
             self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (loc, loc))
             self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (loc, loc))
 
+        for name in challenge_knowledge.common.names:
+            self.parser.add_rule("NAME -> %s" % name.lower())
+
             # for obj in objects:
             #     #parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
             #     self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
@@ -73,7 +76,7 @@ class CommandRecognizer:
         self.grammar_string = unwrap_grammar("T", self.parser)
 
     def parse(self, sentence):
-        semantics = self.parser.parse("T", sentence.strip().split(" "))
+        semantics = self.parser.parse("T", sentence.lower().strip().split(" "))
 
         if not semantics:
             return None
