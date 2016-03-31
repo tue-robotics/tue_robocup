@@ -32,6 +32,24 @@ from datetime import datetime
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
 
+
+def search_for_object(robot, location, type):
+    # classify step
+    classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
+    seg = SegmentObjects(robot,
+        objectIDsDes=classifications_des.writeable,
+        entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
+    seg.execute()
+    results = classifications_des.resolve()
+
+    # select the result
+    if not len(results):
+        robot.speech.speak("I could not find the object")
+        return False
+
+    # TODO: filter the correct type
+    return random.choice(results)
+
 # ------------------------------------------------------------------------------------------------------------------------
 
 class GPSR:
@@ -129,24 +147,10 @@ class GPSR:
                          radius=.5)
         nwc.execute()
 
-        # classify step
         robot.speech.speak("Looking")
-        classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
-        seg = SegmentObjects(robot,
-            objectIDsDes=classifications_des.writeable,
-            entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
-        seg.execute()
-        results = classifications_des.resolve()
-
-        # select the result
-        if not len(results):
-            robot.speech.speak("I could not find the object")
-            return
-
-        # TODO: filter the correct type
+        obj = search_for_object(robot, location=location, type=entity_id)
 
         # grab it
-        obj = random.choice(results)
         grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
              UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
         result = grab.execute()
@@ -171,8 +175,8 @@ class GPSR:
                          radius=.5)
         nwc.execute()
 
-    # ------------------------------------------------------------------------------------------------------------------------
-    # TODO
+        # TODO: handover
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     def find(self, robot, parameters):
