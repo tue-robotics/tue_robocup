@@ -7,6 +7,7 @@ import random
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
+from geometry_msgs.msg import PointStamped
 
 import direct_speech_recognition
 import indirect_speech_recognition
@@ -23,7 +24,7 @@ def setup_statemachine(robot):
                                 transitions={   'initialized'      :   "SAY_INTRO",
                                                 "abort"            :   "Aborted"})
 
-        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and wait for the ping! I am ready!"), transitions={ 'spoken' :'SAY_1'})
+        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and, very important, wait for the ping!"), transitions={ 'spoken' :'SAY_1'})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'SAY_2'})

@@ -5,11 +5,8 @@
 
 # TODO:
 # - initial pose estimate
-# - Also allow object types (e.g., table, chair, etc) to be parsed. If I try that now, the parser raises and exception
-#   for some reason
-# - Implement all actions (grab, place, bring, look at, etc)
-# - Derive object locations from their type (the TC will announce where e.g. a coke can be found)
-
+# - "bring X from Y to Z who is in L"
+# - ... left of the sink ... etc
 # ------------------------------------------------------------------------------------------------------------------------
 
 import os
@@ -32,6 +29,14 @@ from datetime import datetime, timedelta
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
 
+# ------------------------------------------------------------------------------------------------------------------------
+
+def not_implemented(robot, parameters):
+    rospy.logerr("This was not implemented, show this to Sjoerd: {}".format(parameters))
+    robot.speech.speak("Not implemented! Warn Sjoerd", block=False)
+    return
+
+# ------------------------------------------------------------------------------------------------------------------------
 
 def search_for_object(robot, location, entity_type):
     # classify step
@@ -52,7 +57,9 @@ def search_for_object(robot, location, entity_type):
         if obj.type == entity_type:
             return obj
 
-    # TODO: remove this random for testing
+    if os.environ.get('ROBOT_REAL') == 'true':
+        return False
+
     robot.speech.speak("I'm grabbing a random object")
     return random.choice(results)
 
@@ -72,7 +79,7 @@ class GPSR:
             if description == "it":
                 return self.last_entity_id
             elif description == "operator":
-                return "initial_pose"             
+                return "initial_pose"
             else:
                 return description
 
@@ -85,9 +92,9 @@ class GPSR:
         robot.speech.speak("I am going to the %s" % entity_id, block=False)
 
         if entity_id in challenge_knowledge.rooms:
-            nwc =  NavigateToSymbolic(robot, 
-                                            { EntityByIdDesignator(robot, id=entity_id) : "in" }, 
-                                              EntityByIdDesignator(robot, id="dinnertable"))
+            nwc =  NavigateToSymbolic(robot,
+                                            { EntityByIdDesignator(robot, id=entity_id) : "in" },
+                                              EntityByIdDesignator(robot, id=entity_id))
         else:
             nwc = NavigateToObserve(robot,
                                  entity_designator=EdEntityDesignator(robot, id=entity_id),
@@ -100,17 +107,19 @@ class GPSR:
     def answer_question(self, robot, parameters):
         robot.head.look_at_ground_in_front_of_robot(100)
 
+        robot.speech.speak("What is your question?")
+
         res = robot.ears.recognize(spec=speech_data.spec,
                                    choices=speech_data.choices,
                                    time_out=rospy.Duration(15))
 
         if not res:
-            robot.speech.speak("My ears are not working properly, can i get a restart?.")
+            robot.speech.speak("My ears are not working properly, sorry!")
 
         if res:
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
-                robot.speech.speak("The answer is %s"%speech_data.choice_answer_mapping[res.choices['question']])
+                robot.speech.speak("The answer is %s" % speech_data.choice_answer_mapping[res.choices['question']])
             else:
                 robot.speech.speak("Sorry, I do not understand your question")
 
@@ -122,17 +131,16 @@ class GPSR:
 
         if sentence == 'TIME':
             line = datetime.now().strftime('The time is %H %M')
-        elif sentence == "NAME":
+        elif sentence == "ROBOT_NAME":
             line = 'My name is %s' % robot.robot_name
         elif sentence == 'TODAY':
-            line = datetime.today().strftime('Today is a %A')
+            line = datetime.today().strftime('Today is %A %B %d')
         elif sentence == 'TOMORROW':
-            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is a %A')
+            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is %A %B %d')
         elif sentence == 'DAY_OF_MONTH':
             line = datetime.now().strftime('It is day %d of the month')
         elif sentence == 'DAY_OF_WEEK':
-            day = datetime.today().weekday() + 1 # weekday() monday is 0
-            line = 'It is day %d of the week' % day
+            line = datetime.today().strftime('Today is a %A')
         else:
             line = sentence
 
@@ -147,7 +155,18 @@ class GPSR:
         if "from" in parameters:
             location = self.resolve_entity_id(parameters["from"])
         else:
-            location = self.object_to_location[entity_id]
+            obj_cat = None
+            for obj in challenge_knowledge.common.objects:
+                if obj["name"] == entity_id:
+                    obj_cat = obj["category"]
+
+            location = challenge_knowledge.common.category_locations[obj_cat].keys()[0]
+
+            robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_id, obj_cat, location), block=False)
+
+        if location in challenge_knowledge.rooms:
+            not_implemented(robot, parameters)
+            return
 
         robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
@@ -169,7 +188,7 @@ class GPSR:
             robot.speech.speak("That went well")
         else:
             robot.speech.speak("Sorry, I failed")
-        
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
@@ -239,23 +258,37 @@ class GPSR:
 
     def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
 
-        if sentence:
-            res = command_recognizer.parse(sentence)        
-        else:
-            res = command_recognizer.recognize(robot)
-            print res
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # If sentence is given on command-line
 
-        if not res:
-            robot.speech.speak("Sorry, I could not understand")
-            return False
+        if sentence:
+            res = command_recognizer.parse(sentence)
+            if not res:
+                robot.speech.speak("Sorry, could not parse the given command")
+                return False
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # When using text-to-speech
+
+        else:
+            robot.head.look_at_standing_person()
+
+            res = None
+            while not res:
+                robot.speech.speak("Give your command after the ping", block=True)
+                res = command_recognizer.recognize(robot)
+                if not res:
+                    robot.speech.speak("Sorry, I could not understand", block=True)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -                    
 
         (sentence, semantics_str) = res
         print "Sentence: %s" % sentence
         print "Semantics: %s" % semantics_str
 
-        # TODO: re-state the command
+        robot.speech.speak("You want me to %s" % sentence.replace("your", "my"), block=True)
 
-        robot.speech.speak("Alright!", block=False)
+        # TODO: ask for confirmation?
 
         semantics = yaml.load(semantics_str)
 
@@ -297,25 +330,25 @@ class GPSR:
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        # Query world model for entities
-        entities = robot.ed.get_entities(parse=False)
-        for e in entities:
-            self.entity_ids += [e.id]
+        # # Query world model for entities
+        # entities = robot.ed.get_entities(parse=False)
+        # for e in entities:
+        #     self.entity_ids += [e.id]
 
-            for t in e.types:
-                if not t in self.entity_type_to_id:
-                    self.entity_type_to_id[t] = [e.id]
-                else:
-                    self.entity_type_to_id[t] += [e.id]
+        #     for t in e.types:
+        #         if not t in self.entity_type_to_id:
+        #             self.entity_type_to_id[t] = [e.id]
+        #         else:
+        #             self.entity_type_to_id[t] += [e.id]
 
 
-        for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
-            for obj in objects:
-                self.object_to_location[obj] = furniture
+        # for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
+        #     for obj in objects:
+        #         self.object_to_location[obj] = furniture
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         action_functions = {}
         action_functions["navigate"] = self.navigate
@@ -325,21 +358,14 @@ class GPSR:
         action_functions["bring"] = self.bring
         action_functions["say"] =  self.say
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
-        if sentence:
-            self.execute_command(robot, command_recognizer, action_functions, sentence)
-        else:
-            robot.head.look_at_standing_person()
-
-            robot.speech.speak("What can I do for you?")
-
-            self.execute_command(robot, command_recognizer, action_functions)
+        self.execute_command(robot, command_recognizer, action_functions, sentence)
 
 # ------------------------------------------------------------------------------------------------------------------------
-    
+
 if __name__ == "__main__":
     gpsr = GPSR()
     sys.exit(gpsr.run())

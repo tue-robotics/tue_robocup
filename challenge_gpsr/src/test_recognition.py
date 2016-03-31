@@ -77,7 +77,12 @@ def speech_mode(command_recognizer, robot_name):
         robot.speech.speak("What can I do for you?")
         print "---------------------------------------------------------------"
 
-        print_result(command_recognizer.recognize(robot))
+        res = command_recognizer.recognize(robot)
+        print_result(res)
+
+        if res:
+            (sentence, semantics) = res
+            robot.speech.speak("You want me to %s" % sentence, block=True)
 
 # ----------------------------------------------------------------------------------------------------
 
