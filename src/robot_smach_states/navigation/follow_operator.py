@@ -64,6 +64,7 @@ class FollowOperator(smach.State):
                 # Check whether we passed the timeout
                 if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > timeout:
                     self._robot.speech.speak("Standing still long enough ... I think I lost you ...")
+                    self._last_pose_stamped = None
                     return True
         return False
 
