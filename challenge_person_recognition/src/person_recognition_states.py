@@ -572,6 +572,8 @@ class SelectOperator(smach.State):
 
         operator_candidates = [candidate for candidate in detected_persons if candidate.name==operator_name]
 
+        rospy.loginfo(operator_candidates)
+
         if operator_candidates:
             operator = max(operator_candidates, key=lambda cand: cand.name_score)
             self.OperatorPersonDes.write(operator)
