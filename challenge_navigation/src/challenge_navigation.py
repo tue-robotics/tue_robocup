@@ -35,7 +35,7 @@ class Turn(smach.State):
 class DetermineObject(smach.State):
     def __init__(self, robot, entity_id):
         smach.State.__init__(self, outcomes=["done", "timeout"])
-        self.robot = robot
+        self._robot = robot
 
         try:
             pose = robot.ed.get_entity(id=entity_id).pose
@@ -47,40 +47,46 @@ class DetermineObject(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("Waypoint 2 is occupied, what do we have here", block=False)
+        self._robot.speech.speak("Waypoint 2 is occupied, what do we have here", block=False)
 
         # Make sure you look where you would expect the person to stand
-        self.robot.head.look_at_standing_person()
-        self.robot.head.wait_for_motion_done()
+        self._robot.head.look_at_standing_person()
+        self._robot.head.wait_for_motion_done()
+        time.sleep(1)
 
-        res_segm = self.robot.ed.update_kinect(background_padding = 0.3)
-        ids = res_segm.new_ids + res_segm.updated_ids
+        # Check if there is a human blocking the path
+        persons = self._robot.ed.detect_persons()
 
-        # Try to determine the types of the entities just segmented
-        res_classify = self.robot.ed.classify(ids)
+        rospy.loginfo("Person detection result: %s" % persons)
 
-	rospy.loginfo("Classification result: %s" % res_classify)
+        block_is_person = False
+        for person in persons:
+            pose_base_link = self._robot.tf_listener.transformPose(target_frame=self._robot.robot_name+'/base_link',
+                                                                   pose=person.pose)
 
-        # Get the ids of all humans
-        human_ids = [e.id for e in res_classify if e.type == "human"]
+            x = pose_base_link.pose.position.x
+            y = pose_base_link.pose.position.y
+
+            r = challenge_knowledge.target2_radius1 # This is the distance from the robot's base link in the x-direction
+            if (x - r)*(x - r) + y*y < r*r:
+                block_is_person = True
+                break
 
         # Stop looking at person
-        self.robot.head.cancel_goal()
+        self._robot.head.cancel_goal()
 
-        if human_ids:
-            self.robot.speech.speak("Hi there Human, please step aside")
+        if block_is_person:
+            self._robot.speech.speak("Hi there Human, please step aside")
         else:
-            self.robot.speech.speak("Can somebody please remove the object that is blocking waypoint 2?")
-
-        self.robot.ed.reset()
+            self._robot.speech.speak("Can somebody please remove the object that is blocking waypoint 2?")
 
         start_time = time.time()
-        while not self.robot.base.global_planner.getPlan(self.pc):
+        while not self._robot.base.global_planner.getPlan(self.pc):
             if time.time() - start_time > 30:
                 return "timeout"
             time.sleep(1)
 
-        self.robot.speech.speak("Thank you")
+        self._robot.speech.speak("Thank you")
 
         time.sleep(3)
 
