@@ -19,6 +19,8 @@
 
 # Placen!!!
 # Find person
+# bring the lemon from the dinnertable to james who is in the kitchen 
+#    "from" is overwritten!
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -76,6 +78,11 @@ class GPSR:
 
     def navigate(self, robot, parameters):
         entity_id = self.resolve_entity_id(parameters["entity"])
+
+        if entity_id == "person":
+            robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
+            return
+
         self.last_location_id = entity_id
 
         robot.speech.speak("I am going to the %s" % entity_id, block=False)
@@ -144,6 +151,10 @@ class GPSR:
     def find_and_pick_up(self, robot, parameters, pick_up=True):
         entity_type = self.resolve_entity_id(parameters["entity"])
         self.last_entity_id = entity_type
+
+        if entity_type == "person":
+            robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
+            return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -307,7 +318,7 @@ class GPSR:
 
             res = None
             while not res:
-                robot.speech.speak("Give your command after the ping", block=True)
+                robot.speech.speak("Give your command after the ping", block=False)
                 res = command_recognizer.recognize(robot)
                 if not res:
                     robot.speech.speak("Sorry, I could not understand", block=True)
