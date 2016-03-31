@@ -17,6 +17,9 @@
         # bookcase
         #      Locate at least three objects there.
 
+# Placen!!!
+# Find person
+
 # ------------------------------------------------------------------------------------------------------------------------
 
 import os
@@ -50,33 +53,6 @@ def not_implemented(robot, parameters):
 
 # ------------------------------------------------------------------------------------------------------------------------
 
-def search_for_object(robot, location, entity_type):
-    # classify step
-    classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
-    seg = SegmentObjects(robot,
-        objectIDsDes=classifications_des.writeable,
-        entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
-    seg.execute()
-    results = classifications_des.resolve()
-
-    # select the result
-    if not len(results):
-        robot.speech.speak("I could not find the object")
-        return False
-
-    for obj in results:
-        print obj
-        if obj.type == entity_type:
-            return obj
-
-    if os.environ.get('ROBOT_REAL') == 'true':
-        return False
-
-    robot.speech.speak("I'm grabbing a random object")
-    return random.choice(results)
-
-# ------------------------------------------------------------------------------------------------------------------------
-
 class GPSR:
 
     def __init__(self):
@@ -84,6 +60,7 @@ class GPSR:
         self.entity_type_to_id = {}
         self.object_to_location = {}
 
+        self.last_location_id = None
         self.last_entity_id = None
 
     def resolve_entity_id(self, description):
@@ -99,7 +76,7 @@ class GPSR:
 
     def navigate(self, robot, parameters):
         entity_id = self.resolve_entity_id(parameters["entity"])
-        self.last_entity_id = entity_id
+        self.last_location_id = entity_id
 
         robot.speech.speak("I am going to the %s" % entity_id, block=False)
 
@@ -164,14 +141,17 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def pick_up(self, robot, parameters):
+    def find_and_pick_up(self, robot, parameters, pick_up=True):
         entity_type = self.resolve_entity_id(parameters["entity"])
         self.last_entity_id = entity_type
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if "from" in parameters:
-            room_or_location = self.resolve_entity_id(parameters["from"])
+        if "from" in parameters or self.last_location_id:
+            if "from" in parameters:
+                room_or_location = self.resolve_entity_id(parameters["from"])
+            else:
+                room_or_location = self.last_location_id            
 
             if room_or_location in challenge_knowledge.rooms:
                 locations = [loc["name"] for loc in challenge_knowledge.common.locations
@@ -270,21 +250,21 @@ class GPSR:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if entity_id:
+        if pick_up and entity_id:
 
             robot.speech.speak("Going to grab the {}".format(entity_type))
 
             # grab it
             grab = Grab(robot, EdEntityDesignator(robot, id=entity_id),
                  UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
-            result = grab.execute()            
+            result = grab.execute()    
 
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
 
         if parameters["entity"] != "it":
-            self.pick_up(robot, parameters)
+            self.find_and_pick_up(robot, parameters)
 
         to_id = self.resolve_entity_id(parameters["to"])
 
@@ -294,54 +274,13 @@ class GPSR:
                          radius=.5)
         nwc.execute()
 
-        # TODO: handover
+        self.last_location_id = None
+        self.last_entity_id = None
 
     # ------------------------------------------------------------------------------------------------------------------------
 
     def find(self, robot, parameters):
-        entity_id = self.resolve_entity_id(parameters["entity"])
-
-        room = self.last_entity_id
-        if not room:
-            robot.speech.speak("I don't know where to start looking")
-            return
-        if room not in challenge_knowledge.rooms:
-            robot.speech.speech("I don't understand the location")
-            return
-
-        locations = challenge_knowledge.room_to_grab_locations[room]
-        rospy.loginfo("Location search list: %s", str(locations))
-
-        for location in locations:
-            robot.speech.speak("I'm going to search the %s" % location)
-            # drive
-            nav = NavigateToSymbolic(robot, {
-                    EdEntityDesignator(robot, id=room) : "in",
-                    EdEntityDesignator(robot, id=location) : "in_front_of"
-                }, EdEntityDesignator(robot, id=location))
-            nav.execute()
-
-            # segment
-            robot.speech.speak("Is the %s here?" % entity_id)
-            obj = search_for_object(robot, location, entity_id)
-            if obj:
-                break
-
-        if not obj:
-            robot.speech.speak("I could not find the %s" % entity_id)
-            return
-
-        robot.speech.speak("I found the %s, lets grab it" % entity_id)
-
-        # grab it
-        grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
-             UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
-        result = grab.execute()
-
-        if result == 'done':
-            robot.speech.speak("That went well")
-        else:
-            robot.speech.speak("Sorry, I failed")
+        self.find_and_pick_up(robot, parameters, pick_up=False)
 
     # ------------------------------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------------------------------
@@ -447,7 +386,7 @@ class GPSR:
         action_functions["navigate"] = self.navigate
         action_functions["find"] = self.find
         action_functions["answer-question"] = self.answer_question
-        action_functions["pick-up"] = self.pick_up
+        action_functions["pick-up"] = self.find_and_pick_up
         action_functions["bring"] = self.bring
         action_functions["say"] =  self.say
 
