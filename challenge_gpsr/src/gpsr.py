@@ -272,6 +272,26 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
+    def place(self, robot, parameters):
+        to_id = self.resolve_entity_id(parameters["to"])
+
+        # Move to the location
+        location_des = ds.EntityByIdDesignator(robot, id=to_id)
+        room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(to_id))
+
+        nwc = NavigateToSymbolic( robot,
+                                  {location_des: 'in_front_of', room_des: "in"},
+                                  location_des)
+        nwc.execute()
+
+        # place
+        
+
+        self.last_location_id = None
+        self.last_entity_id = None
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
     def bring(self, robot, parameters):
 
         if parameters["entity"] != "it":
@@ -399,6 +419,7 @@ class GPSR:
         action_functions["answer-question"] = self.answer_question
         action_functions["pick-up"] = self.find_and_pick_up
         action_functions["bring"] = self.bring
+        action_functions["place"] = self.place
         action_functions["say"] =  self.say
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
