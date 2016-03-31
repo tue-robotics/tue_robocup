@@ -17,7 +17,7 @@ class HearQuestion(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
-        self.robot.head.look_at_ground_in_front_of_robot(100)
+        self.robot.head.look_at_ground_in_front_of_robot(1)
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
