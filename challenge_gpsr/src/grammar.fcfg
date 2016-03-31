@@ -74,12 +74,12 @@ VP["action": "answer-question"] -> answer her question
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
-VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY the date | V_SAY what time is it
+VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
 VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
 
 VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
 VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
-VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me what day it is
+VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me what day it is | V_SAY the date
 VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 V_SAY -> tell | say | speak
