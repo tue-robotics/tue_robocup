@@ -18,7 +18,9 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=5, lost_distance=1.5, operator_id_des=VariableDesignator(resolve_type=str)):
+    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout=20,
+                 distance_threshold=None, lost_timeout=5, lost_distance=1.5,
+                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._time_started = None
@@ -33,12 +35,36 @@ class FollowOperator(smach.State):
         self._ask_follow = ask_follow
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
+        self._standing_still_timeout = standing_still_timeout
 
         self._operator_id_des = operator_id_des
 
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name, geometry_msgs.msg.PointStamped, queue_size=10)
         self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+
+        self._last_pose_stamped = None
+
+    def _standing_still_for_x_seconds(self, timeout):
+        current_pose_stamped = self._robot.base.get_location()
+
+        if not self._last_pose_stamped:
+            self._last_pose_stamped = current_pose_stamped
+        else:
+            # Compare the pose with the last pose and update if difference is larger than x
+            if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.x, current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.05:
+                # Update the last pose
+                print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
+                self._last_pose_stamped = current_pose_stamped
+            else:
+                print "We are standing still :/"
+
+                print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+                print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
+                # Check whether we passed the timeout
+                if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > timeout:
+                    return True
+        return False
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -295,7 +321,8 @@ class FollowOperator(smach.State):
                     print "Arrived!"
                     return "stopped"
                 else:
-                    # TODO: Check movement. If standing still for too long, assume operator is lost and tell him!
+                    if self._standing_still_for_x_seconds(self._standing_still_timeout):
+                        return "lost_operator"
                     print "Not there yet..."
             else:
                 # If operator is lost, try to recover, if that doesn't work, return lost operator
