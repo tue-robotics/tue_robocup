@@ -28,9 +28,10 @@ VP["action" : "bring", "entity" : X, "from" : Y, "to" : Z] -> V_BRING SMALL_OBJE
 
 TO_LOC[X] -> LOC[X]
 TO_LOC["person"] -> PERSON
-TO_LOC["person", "room": R] -> PERSON in ROOM[R]
-TO_LOC["person", "room": R] -> PERSON at ROOM[R]
-TO_LOC["person", "room": R] -> PERSON which is in ROOM[R]
+TO_LOC["person", "from": R] -> PERSON in ROOM[R]
+TO_LOC["person", "from": R] -> PERSON at ROOM[R]
+TO_LOC["person", "from": R] -> PERSON which is in ROOM[R]
+TO_LOC["person", "from": R] -> PERSON who is in ROOM[R]
 TO_LOC["operator"] -> me
 
 PERSON -> a person | the person | NAME
@@ -44,7 +45,10 @@ V_BRING -> give | bring | hand | deliver | take | carry
 # Moving
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": A, "entity": X] -> V_MOVE[A] NP[X]
+VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
+
+NAV_LOC[X] -> TO_LOC[X]
+NAV_LOC[X] -> ROOM[X]
 
 V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
