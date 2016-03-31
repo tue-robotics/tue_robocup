@@ -113,7 +113,7 @@ class DetermineObject(smach.State):
         if block_is_person:
             self._robot.speech.speak("Hi there Human, please step aside")
         else:
-            self._robot.speech.speak("Can somebody please remove the object that is blocking waypoint 2?")
+            self._robot.speech.speak("Can somebody please remove the non-human object that is blocking waypoint 2?")
 
         start_time = time.time()
         while not self._robot.base.global_planner.getPlan(self.pc):
