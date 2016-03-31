@@ -456,9 +456,13 @@ def detect_human_in_front(robot):
         return False
 
     for detection in result:
-        pose_base_link = robot.tf_listener.transformPose(target_frame=robot.robot_name+'/base_link', point=detection.pose)
-        x = pose_base_link.position.x
-        y = pose_base_link.position.y
+        pose_base_link = robot.tf_listener.transformPose(target_frame=robot.robot_name+'/base_link', pose=detection.pose)
+
+        x = pose_base_link.pose.position.x
+        y = pose_base_link.pose.position.y
+
+        print "Detection (x,y) in base link: (%f,%f)" % (x,y)
+
         if 0.0 < x < 2.0 and -1.0 < y < 1.0:
             return True
 
