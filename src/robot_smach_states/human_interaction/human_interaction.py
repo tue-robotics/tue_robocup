@@ -357,6 +357,7 @@ class LookAtPersonInFront(smach.State):
         self.lookDown = lookDown
 
     def execute(self, userdata=None):
+	time.sleep(1.0) # infinite loop hack
         self.robot.head.look_at_standing_person()
         self.robot.head.wait_for_motion_done()
 
