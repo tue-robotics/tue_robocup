@@ -13,6 +13,7 @@ from ed.msg import EntityInfo
 
 # Executive stuff
 import robot_smach_states.util.designators as ds
+import robot_smach_states as states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToSymbolic
 from robot_smach_states.util import geometry_helpers
 
@@ -106,15 +107,69 @@ class FindPerson(smach.StateMachine):
         with self:
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
                                    NavigateToSymbolic(robot, {room_designator:"in"}, room_designator),
-                                   transitions={'arrived': 'succeeded',
-                                                'goal_not_defined': 'failed',
-                                                'unreachable': 'failed'})
+                                   transitions={'arrived': 'NAVIGATE_TO_PERSON',
+                                                'goal_not_defined': 'ROOM_NOT_DEFINED',
+                                                'unreachable': 'SAY_CANNOT_REACH_ROOM'})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
                                    NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
                                    transitions={'arrived': 'succeeded',
-                                                'goal_not_defined': 'failed',
-                                                'unreachable': 'failed'})
+                                                'goal_not_defined': 'SAY_NO_PERSON_YET',
+                                                'unreachable': 'SAY_CANNOT_REACH_PERSON'})
+
+            smach.StateMachine.add("SAY_NO_PERSON_YET",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot find you, can you please stand up", block=False),
+                                   transitions={'spoken': 'WAIT_NO_PERSON_YET'})
+
+            smach.StateMachine.add("WAIT_NO_PERSON_YET",
+                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   transitions={'waited': 'NAVIGATE_TO_PERSON_NOT_FOUND',
+                                                'preempted': 'NAVIGATE_TO_PERSON_NOT_FOUND'})
+
+            smach.StateMachine.add("NAVIGATE_TO_PERSON_NOT_FOUND",
+                                   NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+                                   transitions={'arrived': 'succeeded',
+                                                'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
+                                                'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
+
+            smach.StateMachine.add("SAY_CANNOT_REACH_PERSON",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot reach you, can you please move to an open space", block=False),
+                                   transitions={'spoken': 'WAIT_CANNOT_REACH_PERSON'})
+
+            smach.StateMachine.add("WAIT_CANNOT_REACH_PERSON",
+                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   transitions={'waited': 'NAVIGATE_TO_PERSON_UNREACHABLE',
+                                                'preempted': 'NAVIGATE_TO_PERSON_UNREACHABLE'})
+
+            smach.StateMachine.add("NAVIGATE_TO_PERSON_UNREACHABLE",
+                                   NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+                                   transitions={'arrived': 'succeeded',
+                                                'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
+                                                'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
+
+            smach.StateMachine.add("ROOM_NOT_DEFINED",
+                                   states.Say(robot=robot,
+                                              sentence="The room is not well specified, I cannot go there", block=False),
+                                   transitions={'spoken': 'failed'})
+
+            smach.StateMachine.add("SAY_CANNOT_REACH_ROOM",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot reach the room", block=False),
+                                   transitions={'spoken': 'failed'})
+
+            smach.StateMachine.add("SAY_CANNOT_FIND_PERSON",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot find you, I am so sorry", block=True),
+                                   transitions={'spoken': 'failed'})
+
+            smach.StateMachine.add("SAY_CANNOT_REACH_PERSON2",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot reach you, I am so sorry", block=True),
+                                   transitions={'spoken': 'failed'})
+
+
 
 
 
