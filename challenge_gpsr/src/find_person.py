@@ -61,14 +61,13 @@ class PersonDesignator(ds.Designator):
                     rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
                     continue
                 # Now we're sure to have the correct bounding box
-                roompose = kdl.Frame(kdl.Rotation.Quaterion(room_entity.pose.orientation.x,
+                roompose = kdl.Frame(kdl.Rotation.Quaternion(room_entity.pose.orientation.x,
                                                             room_entity.pose.orientation.y,
                                                             room_entity.pose.orientation.z,
                                                             room_entity.pose.orientation.w),
                                      kdl.Vector(room_entity.pose.position.x,
-                                                room_entity.pose.position.w,
-                                                room_entity.pose.position.z,
-                                                room_entity.pose.position.w))
+                                                room_entity.pose.position.y,
+                                                room_entity.pose.position.z))
                 hpose = roompose * kdl.Frame(kdl.Rotation(),
                                              kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))
                 convex_hull.append(hpose.p)
@@ -95,7 +94,6 @@ class PersonDesignator(ds.Designator):
             if 'possible_human' in e.flags:
                 possible_humans.append(e)
 
-        import ipdb;ipdb.set_trace()
         if not possible_humans:
             rospy.logwarn("No possible humans found")
             return None
@@ -107,7 +105,6 @@ class PersonDesignator(ds.Designator):
             #if geometry_helpers.isPointInsideHull(ph.pose.position, convex_hull):
             if geometry_helpers.isPointInsideHull(phposition, convex_hull):
                 persons_in_room.append(ph)
-        ipdb.set_trace()
         if not persons_in_room:
             rospy.logwarn("None of the found possible humans was in the room")
             return None
@@ -116,7 +113,6 @@ class PersonDesignator(ds.Designator):
         persons_in_room = sorted(persons_in_room,
                                  key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
                                                            ph.pose.position.y - room_entity.pose.position.y))
-        ipdb.set_trace()
 
         # Return the best one
         return persons_in_room[0]
@@ -145,13 +141,18 @@ class FindPerson(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
                                    NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
-                                   transitions={'arrived': 'succeeded',
+                                   transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_NO_PERSON_YET',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON'})
 
+            smach.StateMachine.add("SAY_FOUND",
+                                   states.Say(robot=robot,
+                                              sentence="I found you", block=True),
+                                   transitions={'spoken': 'succeeded'})
+            
             smach.StateMachine.add("SAY_NO_PERSON_YET",
                                    states.Say(robot=robot,
-                                              sentence="I cannot find you, can you please stand up", block=False),
+                                              sentence="I cannot find you, can you please stand up", block=True),
                                    transitions={'spoken': 'WAIT_NO_PERSON_YET'})
 
             smach.StateMachine.add("WAIT_NO_PERSON_YET",
@@ -161,13 +162,13 @@ class FindPerson(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_NOT_FOUND",
                                    NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
-                                   transitions={'arrived': 'succeeded',
+                                   transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
 
             smach.StateMachine.add("SAY_CANNOT_REACH_PERSON",
                                    states.Say(robot=robot,
-                                              sentence="I cannot reach you, can you please move to an open space", block=False),
+                                              sentence="I cannot reach you, can you please move to an open space", block=True),
                                    transitions={'spoken': 'WAIT_CANNOT_REACH_PERSON'})
 
             smach.StateMachine.add("WAIT_CANNOT_REACH_PERSON",
@@ -177,18 +178,18 @@ class FindPerson(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_UNREACHABLE",
                                    NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
-                                   transitions={'arrived': 'succeeded',
+                                   transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
 
             smach.StateMachine.add("ROOM_NOT_DEFINED",
                                    states.Say(robot=robot,
-                                              sentence="The room is not well specified, I cannot go there", block=False),
+                                              sentence="The room is not well specified, I cannot go there", block=True),
                                    transitions={'spoken': 'failed'})
 
             smach.StateMachine.add("SAY_CANNOT_REACH_ROOM",
                                    states.Say(robot=robot,
-                                              sentence="I cannot reach the room", block=False),
+                                              sentence="I cannot reach the room", block=True),
                                    transitions={'spoken': 'failed'})
 
             smach.StateMachine.add("SAY_CANNOT_FIND_PERSON",
