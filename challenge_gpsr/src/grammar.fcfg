@@ -46,6 +46,7 @@ V_BRING -> give | bring | hand | deliver | take | carry
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action" : "place", "to" : X] -> V_PLACE it on LOC[X]
+VP["action" : "place", "to" : X] -> V_PLACE it in LOC[X]
 V_PLACE -> put | place
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
