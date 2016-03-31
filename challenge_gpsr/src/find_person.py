@@ -60,15 +60,26 @@ class PersonDesignator(ds.Designator):
                     rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
                     continue
                 # Now we're sure to have the correct bounding box
-                convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
-                convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
+                import PyKDL as kdl
+                convex_hull.append(kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
+                convex_hull.append(kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
+                convex_hull.append(kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
+                convex_hull.append(kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
+                #convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
+                #convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
+                #convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
+                #convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
 
         # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
         # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
 
-        possible_humans = self._robot.get_entities(type="possible_human")
+        entities = self._robot.ed.get_entities(parse=True)
+        possible_humans = []
+        for e in entities:
+            if 'possible_human' in e.flags:
+                possible_humans.append(e)
+
+        import ipdb;ipdb.set_trace()
         if not possible_humans:
             rospy.logwarn("No possible humans found")
             return None
@@ -76,15 +87,20 @@ class PersonDesignator(ds.Designator):
         # Check which entities are in the room
         persons_in_room = []
         for ph in possible_humans:
-            if geometry_helpers.isPointInsideHull(ph.pose.point, convex_hull):
+            phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
+            #if geometry_helpers.isPointInsideHull(ph.pose.position, convex_hull):
+            if geometry_helpers.isPointInsideHull(phposition, convex_hull):
                 persons_in_room.append(ph)
+        ipdb.set_trace()
         if not persons_in_room:
             rospy.logwarn("None of the found possible humans was in the room")
+            return None
 
         # Sort according to distance to center pose
         persons_in_room = sorted(persons_in_room,
-                                 key=lambda ph: math.hypot(ph.pose.point.x - room_entity.pose.point.x,
-                                                           ph.pose.point.y - room_entity.pose.point.y))
+                                 key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
+                                                           ph.pose.position.y - room_entity.pose.position.y))
+        ipdb.set_trace()
 
         # Return the best one
         return persons_in_room[0]
@@ -208,7 +224,7 @@ if __name__ == "__main__":
 
     robot = Robot()
 
-    room_designator = ds.EdEntityDesignator(robot, id="livingroom")
+    room_designator = ds.EdEntityDesignator(robot, id="kitchen")
 
     sm = FindPerson(robot, room_designator)
     sm.execute()
