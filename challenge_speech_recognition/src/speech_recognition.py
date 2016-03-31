@@ -24,17 +24,10 @@ def setup_statemachine(robot):
                                 transitions={   'initialized'      :   "SAY_INTRO",
                                                 "abort"            :   "Aborted"})
 
-        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and, very important, wait for the ping! I am ready!"), transitions={ 'spoken' :'SAY_INTRO2'})
+        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and, very important, wait for the ping!"), transitions={ 'spoken' :'SAY_INTRO2'})
         smach.StateMachine.add('SAY_INTRO2', states.Say(robot,
-                                                       "In the first round, I may look down, but this is just to hear you better."),
+                                                       "In the first round, I may look down, but this is just to hear you better. I am ready!"),
                                transitions={'spoken': 'SAY_1'})
-
-        # @smach.cb_interface(outcomes=['done'])
-        # def look_down(userdata):
-        #     robot.head.look_down()
-        #     return 'done'
-        #
-        # smach.StateMachine.add('LOOK_DOWN', smach.CBState(look_down), transitions={'done': 'SAY_1'})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'SAY_2'})
