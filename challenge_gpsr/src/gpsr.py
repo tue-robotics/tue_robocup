@@ -17,11 +17,12 @@ import sys
 import yaml
 import cfgparser
 import rospy
+import random
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import SegmentObjects
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_smach_states import SegmentObjects, Grab
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
@@ -122,13 +123,13 @@ class GPSR:
 
         robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
-
         # Move to the location
         nwc = NavigateToObserve(robot,
                          entity_designator=EdEntityDesignator(robot, id=location),
                          radius=.5)
         nwc.execute()
 
+        # classify step
         robot.speech.speak("Looking")
         classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
         seg = SegmentObjects(robot,
@@ -136,8 +137,25 @@ class GPSR:
             entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
         seg.execute()
         results = classifications_des.resolve()
-        rospy.loginfo('Segmentation results: %s', str(results))
 
+        # select the result
+        if not len(results):
+            robot.speech.speak("I could not find the object")
+            return
+
+        # TODO: filter the correct type
+
+        # grab it
+        obj = random.choice(results)
+        grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
+             UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
+        result = grab.execute()
+
+        if result == 'done':
+            robot.speech.speak("That went well")
+        else:
+            robot.speech.speak("Sorry, I failed")
+        
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
