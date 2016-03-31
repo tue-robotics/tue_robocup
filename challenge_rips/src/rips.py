@@ -32,19 +32,19 @@ def setup_statemachine(robot):
                                                     "Failed":"GO_TO_INTERMEDIATE_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1), radius=0.7),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1), radius=0.5),
                                     transitions={   'arrived':'ASK_CONTINUE',
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1'})
-        
+
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_2), radius=0.7),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_2), radius=0.5),
                                     transitions={   'arrived':'ASK_CONTINUE',
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2'})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
-                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_3), radius=0.7),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_3), radius=0.5),
                                     transitions={   'arrived':'ASK_CONTINUE',
                                                     'unreachable':'ASK_CONTINUE',
                                                     'goal_not_defined':'ASK_CONTINUE'})
