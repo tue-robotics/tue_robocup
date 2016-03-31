@@ -6,6 +6,7 @@
 # TODO:
 # - initial pose estimate
 # - "bring X from Y to Z who is in L"
+# - ... left of the sink ... etc
 # ------------------------------------------------------------------------------------------------------------------------
 
 import os
@@ -133,9 +134,9 @@ class GPSR:
         elif sentence == "ROBOT_NAME":
             line = 'My name is %s' % robot.robot_name
         elif sentence == 'TODAY':
-            line = datetime.today().strftime('Today is %B %d')
+            line = datetime.today().strftime('Today is %A %B %d')
         elif sentence == 'TOMORROW':
-            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is a %A')
+            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is %A %B %d')
         elif sentence == 'DAY_OF_MONTH':
             line = datetime.now().strftime('It is day %d of the month')
         elif sentence == 'DAY_OF_WEEK':
@@ -154,7 +155,14 @@ class GPSR:
         if "from" in parameters:
             location = self.resolve_entity_id(parameters["from"])
         else:
-            location = self.object_to_location[entity_id]
+            obj_cat = None
+            for obj in challenge_knowledge.common.objects:
+                if obj["name"] == entity_id:
+                    obj_cat = obj["category"]
+
+            location = challenge_knowledge.common.category_locations[obj_cat].keys()[0]
+
+            robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_id, obj_cat, location), block=False)
 
         if location in challenge_knowledge.rooms:
             not_implemented(robot, parameters)
@@ -324,21 +332,21 @@ class GPSR:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        # Query world model for entities
-        entities = robot.ed.get_entities(parse=False)
-        for e in entities:
-            self.entity_ids += [e.id]
+        # # Query world model for entities
+        # entities = robot.ed.get_entities(parse=False)
+        # for e in entities:
+        #     self.entity_ids += [e.id]
 
-            for t in e.types:
-                if not t in self.entity_type_to_id:
-                    self.entity_type_to_id[t] = [e.id]
-                else:
-                    self.entity_type_to_id[t] += [e.id]
+        #     for t in e.types:
+        #         if not t in self.entity_type_to_id:
+        #             self.entity_type_to_id[t] = [e.id]
+        #         else:
+        #             self.entity_type_to_id[t] += [e.id]
 
 
-        for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
-            for obj in objects:
-                self.object_to_location[obj] = furniture
+        # for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
+        #     for obj in objects:
+        #         self.object_to_location[obj] = furniture
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
