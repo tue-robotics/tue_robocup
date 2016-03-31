@@ -153,8 +153,25 @@ class GPSR:
         entity_id = self.resolve_entity_id(parameters["entity"])
         self.last_entity_id = entity_id
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         if "from" in parameters:
-            location = self.resolve_entity_id(parameters["from"])
+            room_or_location = self.resolve_entity_id(parameters["from"])
+
+            if room_or_location in challenge_knowledge.rooms:
+                locations = [loc["name"] for loc in challenge_knowledge.common.locations
+                             if loc["room"] == room_or_location and loc["manipulation"] == "yes"]
+            else:
+                locations = [room_or_location]
+
+            locations_with_areas = []
+            for location in locations:
+                if location in challenge_knowledge.common.inspect_areas:
+                    area_names = challenge_knowledge.common.inspect_areas[location]
+                else:
+                    area_names = ["on_top_of"]
+
+                locations_with_areas += [(location, area_names)]
         else:
             obj_cat = None
             for obj in challenge_knowledge.common.objects:
@@ -162,55 +179,87 @@ class GPSR:
                     obj_cat = obj["category"]
 
             location = challenge_knowledge.common.category_locations[obj_cat].keys()[0]
+            area_name = challenge_knowledge.common.category_locations[obj_cat].values()[0]
+
+            locations_with_areas = [(location, [area_name])]
 
             robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_id, obj_cat, location), block=False)
 
-        if location in challenge_knowledge.rooms:
-            not_implemented(robot, parameters)
-            return
-
-        robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        # Move to the location
-
-        nwc = NavigateToObserve(robot,
-                         entity_designator=EdEntityDesignator(robot, id=location),
-                         radius=.5)
-        nwc.execute()
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        # Look at the area
-
-        area_name = "on_top_of"
-
-        look_sm = LookAtArea(robot,
-                             EdEntityDesignator(robot, id=location),
-                             area_name)
-        look_sm.execute()
-
-        import time
-        time.sleep(1)
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        # Segment
-
-        segmented_entities = robot.ed.update_kinect("{} {}".format(area_name, location))
+        location_defined = (len(locations_with_areas) == 1)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        robot.speech.speak("Looking")
-        obj = search_for_object(robot, location=location, type=entity_id)
+        for loc_and_areas in locations_with_areas:
 
-        # grab it
-        grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
-             UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
-        result = grab.execute()
+            (location, area_names) = loc_and_areas
 
-        if result == 'done':
-            robot.speech.speak("That went well")
-        else:
-            robot.speech.speak("Sorry, I failed")
+            robot.speech.speak("Going to the %s" % location, block=False)
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+            # Move to the location
+
+            nwc = NavigateToObserve(robot,
+                             entity_designator=EdEntityDesignator(robot, id=location),
+                             radius=.5)
+            nwc.execute()
+
+            for area_name in area_names:
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                # Look at the area
+
+                look_sm = LookAtArea(robot,
+                                     EdEntityDesignator(robot, id=location),
+                                     area_name)
+                look_sm.execute()
+
+                import time
+                time.sleep(1)
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                # Segment
+
+                segmented_entities = robot.ed.update_kinect("{} {}".format(area_name, location))
+
+                found_entity_ids = segmented_entities.new_ids + segmented_entities.updated_ids
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                # Classify
+
+                entity_types_and_probs = robot.ed.classify(ids=found_entity_ids,
+                                                           types=challenge_knowledge.common.objects)
+
+                best_prob = 0
+                best_id = None
+
+                for det in entity_types_and_probs:
+                    if det.type == entity_id and det.probability > best_prob:
+                        best_id = det.id
+                        best_prob = det.probability
+
+                if not best_id:
+                    if location_defined:
+                        robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_id))
+                        # TODO: get the entity with highest prob!
+                    else:
+                        robot.speech.speak("Nope, the {} is not here. Moving on!".format(entity_id))
+                else:
+                        robot.speech.speak("Found the {}!".format(entity_id))
+
+        # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        # robot.speech.speak("Looking")
+        # obj = search_for_object(robot, location=location, type=entity_id)
+
+        # # grab it
+        # grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
+        #      UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
+        # result = grab.execute()
+
+        # if result == 'done':
+        #     robot.speech.speak("That went well")
+        # else:
+        #     robot.speech.speak("Sorry, I failed")
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -294,7 +343,10 @@ class GPSR:
         # When using text-to-speech
 
         else:
+            import time
+            time.sleep(1)
             robot.head.look_at_standing_person()
+            robot.head.wait_for_motion_done()
 
             res = None
             while not res:
