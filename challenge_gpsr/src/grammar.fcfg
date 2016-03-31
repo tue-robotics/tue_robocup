@@ -92,4 +92,3 @@ NP[M] -> SMALL_OBJECT[M]
 NP[M] -> LOC[M]
 
 LOC[X] -> ROOM[X] | FURNITURE[X]
-LOC["operator"] -> me

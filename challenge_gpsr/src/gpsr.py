@@ -170,11 +170,21 @@ class GPSR:
 
         robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         # Move to the location
         nwc = NavigateToObserve(robot,
                          entity_designator=EdEntityDesignator(robot, id=location),
                          radius=.5)
         nwc.execute()
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         robot.speech.speak("Looking")
         obj = search_for_object(robot, location=location, type=entity_id)
@@ -286,7 +296,7 @@ class GPSR:
         print "Sentence: %s" % sentence
         print "Semantics: %s" % semantics_str
 
-        robot.speech.speak("You want me to %s" % sentence.replace("your", "my"), block=True)
+        robot.speech.speak("You want me to %s" % sentence.replace("your", "my").replace("me", "you"), block=True)
 
         # TODO: ask for confirmation?
 
