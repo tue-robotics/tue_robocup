@@ -26,7 +26,7 @@ from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDe
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
@@ -124,6 +124,10 @@ class GPSR:
             line = datetime.now().strftime('The time is %H %M')
         elif sentence == "NAME":
             line = 'My name is %s' % robot.robot_name
+        elif sentence == 'TODAY':
+            line = datetime.today().strftime('Today is a %A')
+        elif sentence == 'TOMORROW':
+            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is a %A')
         elif sentence == 'DAY_OF_MONTH':
             line = datetime.now().strftime('It is day %d of the month')
         elif sentence == 'DAY_OF_WEEK':

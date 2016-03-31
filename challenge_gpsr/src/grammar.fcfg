@@ -80,7 +80,7 @@ VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of y
 VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
 VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
 VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today
-VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is tomorrow
+VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 V_SAY -> tell | say | speak
 
