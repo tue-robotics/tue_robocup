@@ -291,6 +291,7 @@ class FollowOperator(smach.State):
                     self._robot.base.local_planner.cancelCurrentPlan()
                     self._visualize_breadcrumbs()
                     self._operator_id_des.writeable.write(self._operator_id)
+                    self._robot.base.local_planner.cancelCurrentPlan()
                     print "Arrived!"
                     return "stopped"
                 else:
