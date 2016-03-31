@@ -576,6 +576,22 @@ class SelectOperator(smach.State):
 
         if operator_candidates:
             operator = max(operator_candidates, key=lambda cand: cand.name_score)
+
+            if operator.gender == 1:
+                gender = "male"
+            else:
+                gender = "female"
+
+            z = operator.pose.pose.position.z
+            pose_str = "standing"
+            if z < 1.4:
+                pose_str = "sitting"
+            if z < 0.6:
+                pose_str = "lying"
+
+            self.robot.speech.speak("The operator is a %s" % gender)
+            self.robot.speech.speak("The operator is %s" % pose_str)
+
             self.OperatorPersonDes.write(operator)
             return 'succeeded'
         else:
