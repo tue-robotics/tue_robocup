@@ -17,7 +17,9 @@ class CommandGenerator:
         self.example_commands = []
         with open(sentence_data_file) as f:
             for line in f:
-                self.example_commands += [line.strip()]
+                line = line.strip()
+                if line:
+                    self.example_commands += [line]
 
         # Seed random
         random.seed(datetime.now())
