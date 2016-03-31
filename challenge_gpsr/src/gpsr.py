@@ -20,7 +20,9 @@ import rospy
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
+from robot_smach_states import SegmentObjects
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
 from datetime import datetime
@@ -63,7 +65,7 @@ class GPSR:
                                               EntityByIdDesignator(robot, id="dinnertable"))
         else:
             nwc = NavigateToObserve(robot,
-                                 entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=entity_id),
+                                 entity_designator=EdEntityDesignator(robot, id=entity_id),
                                  radius=.5)
 
         nwc.execute()
@@ -123,11 +125,18 @@ class GPSR:
 
         # Move to the location
         nwc = NavigateToObserve(robot,
-                         entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=location),
+                         entity_designator=EdEntityDesignator(robot, id=location),
                          radius=.5)
         nwc.execute()
 
-        robot.speech.speak("I should grab a %s, but that is not yet implemented" % entity_id, block=False)
+        robot.speech.speak("Looking")
+        classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
+        seg = SegmentObjects(robot,
+            objectIDsDes=classifications_des.writeable,
+            entityDes=EdEntityDesignator(robot, id=location), searchArea="on_top_of")
+        seg.execute()
+        results = classifications_des.resolve()
+        rospy.loginfo('Segmentation results: %s', str(results))
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -140,7 +149,7 @@ class GPSR:
 
         # Move to the location
         nwc = NavigateToObserve(robot,
-                         entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=to_id),
+                         entity_designator=EdEntityDesignator(robot, id=to_id),
                          radius=.5)
         nwc.execute()
 
