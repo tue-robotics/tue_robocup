@@ -311,7 +311,7 @@ class LearnPerson(smach.State):
     """
 
     """
-    def __init__(self, robot, person_name = "", name_designator = None, n_samples = 10):
+    def __init__(self, robot, person_name="", name_designator=None, n_samples=5):
         smach.State.__init__(self, outcomes=['succeeded_learning', 'failed_learning', 'timeout_learning'])
 
         self.robot = robot
@@ -332,7 +332,7 @@ class LearnPerson(smach.State):
                 print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
                 return
 
-        samples_completed = learn_person_procedure(self.robot, person_name = person_name, n_samples = self.n_samples)
+        samples_completed = learn_person_procedure(self.robot, person_name=person_name, n_samples=self.n_samples)
 
         if samples_completed == 0:
             return 'failed_learning'
@@ -469,7 +469,7 @@ def detect_human_in_front(robot):
 ##########################################################################################################################################
 
 
-def learn_person_procedure(robot, person_name = "", n_samples = 10, timeout = 5.0):
+def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
     """
     Starts the learning process that will save n_samples of the closest person's face.
     It ends when the number of snapshots is reached or when a timeout occurs
@@ -483,15 +483,13 @@ def learn_person_procedure(robot, person_name = "", n_samples = 10, timeout = 5.
         return
 
     count = 0
-    timedout = False
     start_time = time.time()
-    while (count < n_samples):
-
+    while count < n_samples:
         if robot.ed.learn_person(person_name):
             # reset timer
             start_time = time.time()
 
-            count = count + 1
+            count += 1
 
             if count == n_samples/2:
                 robot.speech.speak("Almost done, keep looking.", block=False)
