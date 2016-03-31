@@ -16,6 +16,7 @@ from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
 from ed_perception.msg import PersonDetection
+import time
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -235,6 +236,20 @@ class FindCrowd(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+class Slaap(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded'])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.speech.speak("I will wait for 10 seconds for you to join the crowd", block=False)
+        time.sleep(10)
+
+        return 'succeeded'
+
+# ----------------------------------------------------------------------------------------------------
+
 class RecognizePersons(smach.State):
     def __init__(self, robot, detectedPersonsDes):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -249,13 +264,7 @@ class RecognizePersons(smach.State):
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(100.0, 0.0, 1.0, self.robot.robot_name +
                                                                       "/base_link"), end_time=0, timeout=8)
 
-        detections = None
-        i = 0
-        while not detections and i < 5:
-            detections = self.robot.ed.detect_persons()
-            print "Detections attempt %d: %s" % (i, detections)
-            i += 1
-
+        detections = self.robot.ed.detect_persons()
         if not detections:
             return 'failed'
 
@@ -363,6 +372,8 @@ class PointAtOperator(smach.State):
 
         # Get information about the operator and point at the location
         self.robot.rightArm.send_goal(0.5, -0.2, 0.9, 0, 0, 0, 60)
+
+        self.robot.head.look_at_ground_in_front_of_robot(distance=100)
 
         return 'succeeded'
 
@@ -560,6 +571,8 @@ class SelectOperator(smach.State):
         operator_name = self.operatorNameDes.resolve()
 
         operator_candidates = [candidate for candidate in detected_persons if candidate.name==operator_name]
+
+        rospy.loginfo(operator_candidates)
 
         if operator_candidates:
             operator = max(operator_candidates, key=lambda cand: cand.name_score)

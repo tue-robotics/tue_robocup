@@ -8,6 +8,7 @@ import person_recognition_states as PersonRecStates
 from person_recognition import LearnOperatorName, LearnOperatorFace
 from ed_perception.msg import PersonDetection
 import robot_smach_states.util.designators as ds
+import robot_smach_states as states
 
 challenge_knowledge = load_knowledge("challenge_person_recognition")
 
@@ -32,8 +33,10 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add( 'LEARN_OPERATOR_FACE',
                                     LearnOperatorFace(robot, operatorNameDes),
-                                    transitions={    'succeeded' :'FIND_CROWD',
-                                                     'failed'    :'FIND_CROWD'})
+                                    transitions={    'succeeded' :'SAY_FIND',
+                                                     'failed'    :'SAY_FIND'})
+
+            smach.StateMachine.add("SAY_FIND", states.Say(robot,["Please let the crowd stand in front of me!"], block=True), transitions={'spoken':'FIND_CROWD'})
 
             smach.StateMachine.add( 'FIND_CROWD',
                                     PersonRecStates.RecognizePersons(robot, detectedPersonsListDes.writeable),
