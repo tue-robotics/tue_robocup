@@ -5,8 +5,18 @@
 
 # TODO:
 # - initial pose estimate
+# - bring it to me
 # - "bring X from Y to Z who is in L"
 # - ... left of the sink ... etc
+
+# Cannot deal with:
+#    look for a person in the entrance and answer a question
+
+        # go to the bookcase, find a person, and say your name
+
+        # bookcase
+        #      Locate at least three objects there.
+
 # ------------------------------------------------------------------------------------------------------------------------
 
 import os
@@ -131,7 +141,7 @@ class GPSR:
         rospy.loginfo('Answering %s', sentence)
 
         if sentence == 'TIME':
-            line = datetime.now().strftime('The time is %H %M')
+            line = datetime.now().strftime('The time is %I %M')
         elif sentence == "ROBOT_NAME":
             line = 'My name is %s' % robot.robot_name
         elif sentence == 'TODAY':
@@ -150,8 +160,8 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def pick_up(self, robot, parameters):
-        entity_id = self.resolve_entity_id(parameters["entity"])
-        self.last_entity_id = entity_id
+        entity_type = self.resolve_entity_id(parameters["entity"])
+        self.last_entity_id = entity_type
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -175,7 +185,7 @@ class GPSR:
         else:
             obj_cat = None
             for obj in challenge_knowledge.common.objects:
-                if obj["name"] == entity_id:
+                if obj["name"] == entity_type:
                     obj_cat = obj["category"]
 
             location = challenge_knowledge.common.category_locations[obj_cat].keys()[0]
@@ -183,11 +193,13 @@ class GPSR:
 
             locations_with_areas = [(location, [area_name])]
 
-            robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_id, obj_cat, location), block=False)
+            robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_type, obj_cat, location), block=False)
 
         location_defined = (len(locations_with_areas) == 1)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        entity_id = None
 
         for loc_and_areas in locations_with_areas:
 
@@ -230,36 +242,31 @@ class GPSR:
                                                            types=challenge_knowledge.common.objects)
 
                 best_prob = 0
-                best_id = None
-
                 for det in entity_types_and_probs:
-                    if det.type == entity_id and det.probability > best_prob:
-                        best_id = det.id
+                    if det.type == entity_type and det.probability > best_prob:
+                        entity_id = det.id
                         best_prob = det.probability
 
-                if not best_id:
+                if not entity_id:
                     if location_defined:
-                        robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_id))
+                        robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_type), block=False)
                         # TODO: get the entity with highest prob!
                     else:
-                        robot.speech.speak("Nope, the {} is not here. Moving on!".format(entity_id))
+                        robot.speech.speak("Nope, the {} is not here.!".format(entity_type), block=False)
                 else:
-                        robot.speech.speak("Found the {}!".format(entity_id))
+                        robot.speech.speak("Found the {}!".format(entity_type), block=False)
+                        object_found = True
 
-        # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        # robot.speech.speak("Looking")
-        # obj = search_for_object(robot, location=location, type=entity_id)
+        if entity_id:
 
-        # # grab it
-        # grab = Grab(robot, EdEntityDesignator(robot, id=obj.id),
-        #      UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
-        # result = grab.execute()
+            robot.speech.speak("Going to grab the {}".format(entity_type))
 
-        # if result == 'done':
-        #     robot.speech.speak("That went well")
-        # else:
-        #     robot.speech.speak("Sorry, I failed")
+            # grab it
+            grab = Grab(robot, EdEntityDesignator(robot, id=entity_id),
+                 UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
+            result = grab.execute()            
 
     # ------------------------------------------------------------------------------------------------------------------------
 
