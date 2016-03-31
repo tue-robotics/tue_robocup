@@ -47,7 +47,7 @@ locations = [
     {"name": "sink",             "room": "kitchen",    "location_category": "appliance", "manipulation": "only_putting"},
     {"name": "hallway_trashbin", "room": "hall",       "location_category": "bin",       "manipulation": "only_putting"},
     {"name": "sideboard",        "room": "livingroom", "location_category": "shelf",     "manipulation": "yes"},
-    {"name": "dinnerchairs",     "room": "livingroom", "location_category": "seat",      "manipulation": "yes"},
+    {"name": "dinnerchairs",     "room": "livingroom", "location_category": "seat",      "manipulation": "no"},
     {"name": "dinnertable",      "room": "livingroom", "location_category": "table",     "manipulation": "yes"},
     {"name": "bookcase",         "room": "livingroom", "location_category": "shelf",     "manipulation": "yes"},
     {"name": "couch",            "room": "livingroom", "location_category": "seat",      "manipulation": "yes"},
