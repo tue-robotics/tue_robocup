@@ -52,7 +52,9 @@ def search_for_object(robot, location, entity_type):
         if obj.type == entity_type:
             return obj
 
-    # TODO: remove this random for testing
+    if os.environ.get('ROBOT_REAL') == 'true':
+        return False
+
     robot.speech.speak("I'm grabbing a random object")
     return random.choice(results)
 
@@ -72,7 +74,7 @@ class GPSR:
             if description == "it":
                 return self.last_entity_id
             elif description == "operator":
-                return "initial_pose"             
+                return "initial_pose"
             else:
                 return description
 
@@ -85,8 +87,8 @@ class GPSR:
         robot.speech.speak("I am going to the %s" % entity_id, block=False)
 
         if entity_id in challenge_knowledge.rooms:
-            nwc =  NavigateToSymbolic(robot, 
-                                            { EntityByIdDesignator(robot, id=entity_id) : "in" }, 
+            nwc =  NavigateToSymbolic(robot,
+                                            { EntityByIdDesignator(robot, id=entity_id) : "in" },
                                               EntityByIdDesignator(robot, id="dinnertable"))
         else:
             nwc = NavigateToObserve(robot,
@@ -169,7 +171,7 @@ class GPSR:
             robot.speech.speak("That went well")
         else:
             robot.speech.speak("Sorry, I failed")
-        
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
@@ -240,7 +242,7 @@ class GPSR:
     def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
 
         if sentence:
-            res = command_recognizer.parse(sentence)        
+            res = command_recognizer.parse(sentence)
         else:
             res = command_recognizer.recognize(robot)
             print res
@@ -297,7 +299,7 @@ class GPSR:
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         # Query world model for entities
         entities = robot.ed.get_entities(parse=False)
@@ -315,7 +317,7 @@ class GPSR:
             for obj in objects:
                 self.object_to_location[obj] = furniture
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         action_functions = {}
         action_functions["navigate"] = self.navigate
@@ -325,7 +327,7 @@ class GPSR:
         action_functions["bring"] = self.bring
         action_functions["say"] =  self.say
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
@@ -339,7 +341,7 @@ class GPSR:
             self.execute_command(robot, command_recognizer, action_functions)
 
 # ------------------------------------------------------------------------------------------------------------------------
-    
+
 if __name__ == "__main__":
     gpsr = GPSR()
     sys.exit(gpsr.run())

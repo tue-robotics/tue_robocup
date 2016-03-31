@@ -7,6 +7,7 @@ import random
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
+from geometry_msgs.msg import PointStamped
 
 import direct_speech_recognition
 import indirect_speech_recognition
@@ -23,7 +24,10 @@ def setup_statemachine(robot):
                                 transitions={   'initialized'      :   "SAY_INTRO",
                                                 "abort"            :   "Aborted"})
 
-        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and wait for the ping! I am ready!"), transitions={ 'spoken' :'SAY_1'})
+        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and, very important, wait for the ping!"), transitions={ 'spoken' :'SAY_INTRO2'})
+        smach.StateMachine.add('SAY_INTRO2', states.Say(robot,
+                                                       "In the first round, I may look down, but this is just to hear you better. I am ready!"),
+                               transitions={'spoken': 'SAY_1'})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'SAY_2'})
@@ -34,9 +38,32 @@ def setup_statemachine(robot):
         smach.StateMachine.add('SAY_4', states.Say(robot, "Please ask me question four"), transitions={ 'spoken' :'QUESTION_4'})
         smach.StateMachine.add('QUESTION_4', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'SAY_5'})
         smach.StateMachine.add('SAY_5', states.Say(robot, "Please ask me question five"), transitions={ 'spoken' :'QUESTION_5'})
-        smach.StateMachine.add('QUESTION_5', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'TRANSITION'})
+        smach.StateMachine.add('QUESTION_5', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'LOOK_UP'})
 
-        smach.StateMachine.add('TRANSITION', states.Say(robot, "Let's proceed to round two! yeah!"), transitions={ 'spoken' :'2SAY_1'})
+        @smach.cb_interface(outcomes=['done'])
+        def look_up(userdata):
+            robot.head.look_at_standing_person()
+
+            return 'done'
+
+        smach.StateMachine.add('LOOK_UP', smach.CBState(look_up), transitions={'done': 'TRANSITION'})
+
+        smach.StateMachine.add('TRANSITION', states.Say(robot, "Let's proceed to round two! yeah!"), transitions={ 'spoken' :'LOOK_STRAIGHT'})
+
+        @smach.cb_interface(outcomes=['done'])
+        def look_straight(userdata):
+            goal = PointStamped()
+            goal.header.stamp = rospy.Time.now()
+            goal.header.frame_id = "/" + robot.robot_name + "/base_link"
+            goal.point.x = 20.0
+            goal.point.y = 0.0
+            goal.point.z = 1.6
+
+            robot.head.look_at_point(goal)
+
+            return 'done'
+
+        smach.StateMachine.add('LOOK_STRAIGHT', smach.CBState(look_straight), transitions={'done': '2SAY_1'})
 
         smach.StateMachine.add('2SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'2QUESTION_1'})
         smach.StateMachine.add('2QUESTION_1', indirect_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'2SAY_2', 'not_answered': '2SAY_2'})
