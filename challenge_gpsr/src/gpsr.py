@@ -5,9 +5,14 @@
 
 # TODO:
 # - initial pose estimate
-# - bring it to me
-# - "bring X from Y to Z who is in L"
-# - ... left of the sink ... etc
+# - Find person
+# - handover
+# - placen
+# - define in_front_of's, etc
+# - also use the nav area for navigation
+# - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
+
+# ------------------------------------------------------------------------------------------------------------------------
 
 # Cannot deal with:
 #    look for a person in the entrance and answer a question
@@ -16,11 +21,6 @@
 
         # bookcase
         #      Locate at least three objects there.
-
-# Placen!!!
-# Find person
-# bring the lemon from the dinnertable to james who is in the kitchen 
-#    "from" is overwritten!
 
 # ------------------------------------------------------------------------------------------------------------------------
 
