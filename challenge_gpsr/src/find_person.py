@@ -2,6 +2,7 @@
 
 #
 import math
+import PyKDL as kdl
 
 # ROS
 import rospy
@@ -60,15 +61,30 @@ class PersonDesignator(ds.Designator):
                     rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
                     continue
                 # Now we're sure to have the correct bounding box
-                import PyKDL as kdl
-                convex_hull.append(kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
-                convex_hull.append(kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                convex_hull.append(kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                convex_hull.append(kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
-                #convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
-                #convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                #convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                #convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
+                roompose = kdl.Frame(kdl.Rotation.Quaterion(room_entity.pose.orientation.x,
+                                                            room_entity.pose.orientation.y,
+                                                            room_entity.pose.orientation.z,
+                                                            room_entity.pose.orientation.w),
+                                     kdl.Vector(room_entity.pose.position.x,
+                                                room_entity.pose.position.w,
+                                                room_entity.pose.position.z,
+                                                room_entity.pose.position.w))
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                # convex_hull.append(kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
+                # convex_hull.append(kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
+                # convex_hull.append(kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
+                # convex_hull.append(kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
 
         # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
         # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
