@@ -91,13 +91,17 @@ class LearnOperatorName(smach.StateMachine):
             robot.speech.speak( "Hello " + operatorNameDes.resolve() + "!", block=False)
             return 'spoken'
 
+        @smach.cb_interface(outcomes=['done'])
+        def lookAtStandingPerson(userdata):
+            robot.head.look_at_standing_person()
+            return 'done'
+
         with self:
                 smach.StateMachine.add("SAY_WAITING_OPERATOR", states.Say(robot,[  "I'm waiting for the operator to stand in front of me.","I need an operator, please stand in front of me."], block=False), transitions={   'spoken':'LOOK_AT_OPERATOR'})
 
-                smach.StateMachine.add('LOOK_AT_OPERATOR',
-                                        states.LookAtPersonInFront(robot, lookDown=False),
-                                        transitions={   'succeeded':'LEARN_NAME_ITERATOR',
-                                                        'failed':'LOOK_AT_OPERATOR'})
+                smach.StateMachine.add( 'LOOK_AT_OPERATOR',
+                                        smach.CBState(lookAtStandingPerson),
+                                        transitions={    'done':'LEARN_NAME_ITERATOR'})
 
                 learnNameIterator = smach.Iterator( outcomes=['container_success', 'container_failed'],
                                                     it = lambda:range(0, 3),
@@ -171,11 +175,15 @@ class LearnOperatorFace(smach.StateMachine):
         ds.check_resolve_type(operatorNameDes, str)
         self.operatorNameDes = operatorNameDes
 
+        @smach.cb_interface(outcomes=['done'])
+        def lookAtStandingPerson(userdata):
+            robot.head.look_at_standing_person()
+            return 'done'
+
         with self:
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
-                                    states.LookAtPersonInFront(robot, lookDown=False),
-                                    transitions={   'succeeded':'SAY_LOOK_AT_ME',
-                                                    'failed':'SAY_LOOK_AT_ME'})
+                                    smach.CBState(lookAtStandingPerson),
+                                    transitions={    'done':'SAY_LOOK_AT_ME'})
 
             smach.StateMachine.add( 'SAY_LOOK_AT_ME',
                                     states.Say(robot,"Please stand one meter in front of me and look at me while I learn to recognize your face.", block=True),
