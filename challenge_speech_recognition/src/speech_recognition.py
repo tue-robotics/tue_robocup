@@ -35,15 +35,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('SAY_4', states.Say(robot, "Please ask me question four"), transitions={ 'spoken' :'QUESTION_4'})
         smach.StateMachine.add('QUESTION_4', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'SAY_5'})
         smach.StateMachine.add('SAY_5', states.Say(robot, "Please ask me question five"), transitions={ 'spoken' :'QUESTION_5'})
-        smach.StateMachine.add('QUESTION_5', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'LOOK_UP'})
-
-        @smach.cb_interface(outcomes=['done'])
-        def look_up(userdata):
-            robot.head.look_at_standing_person()
-
-            return 'done'
-
-        smach.StateMachine.add('LOOK_UP', smach.CBState(look_up), transitions={'done': 'TRANSITION'})
+        smach.StateMachine.add('QUESTION_5', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'TRANSITION'})
 
         smach.StateMachine.add('TRANSITION', states.Say(robot, "Let's proceed to round two! yeah!"), transitions={ 'spoken' :'2SAY_1'})
 
