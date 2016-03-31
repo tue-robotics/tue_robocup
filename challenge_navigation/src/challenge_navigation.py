@@ -32,7 +32,7 @@ class checkTimeOut(smach.State):
     def execute(self, userdata):
         current_seconds = rospy.Time.now().to_sec()
 
-        radians = 0.3
+        radians = 0.15
         vth = 0.5
         if self.start is None:
             self.robot.base.force_drive(0, 0, vth, radians / vth)
@@ -44,7 +44,7 @@ class checkTimeOut(smach.State):
             return "time_out"
 
         if self.last_say is None or current_seconds - self.last_say > 10:
-            self.robot.speech.speak("Trying for another %d seconds .." % int(self.time_out_seconds - dt), block=False)
+            self.robot.speech.speak("Trying for another %d seconds .. wiggle wiggle" % int(self.time_out_seconds - dt), block=False)
             self.last_say = current_seconds
 
         self.robot.base.force_drive(0, 0, self.turn * vth, (2 * radians) / vth)
