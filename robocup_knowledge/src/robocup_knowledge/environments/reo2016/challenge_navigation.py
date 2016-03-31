@@ -1,19 +1,19 @@
 target1 = "navigation_waypoint_1"
 target1_radius1 = 0.1
-target1_radius2 = 0.7
+target1_radius2 = 0.3
 
 target2 = "navigation_waypoint_2"
 target2_radius1 = 1.2
 target2_radius2 = 0.1
-target2_radius3 = 0.7
+target2_radius3 = 0.3
 
 target3 = "navigation_waypoint_3"
 target3_radius1 = 0.1
-target3_radius2 = 0.7
+target3_radius2 = 0.3
 
 target4 = "entry_point_B"
 target4_radius1 = 0.1
-target4_radius2 = 0.7
+target4_radius2 = 0.3
 
 exit1 = "exit_door_B1"
 exit2 = "exit_door_B2"
