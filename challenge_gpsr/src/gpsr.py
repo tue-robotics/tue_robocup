@@ -5,11 +5,7 @@
 
 # TODO:
 # - initial pose estimate
-# - Also allow object types (e.g., table, chair, etc) to be parsed. If I try that now, the parser raises and exception
-#   for some reason
-# - Implement all actions (grab, place, bring, look at, etc)
-# - Derive object locations from their type (the TC will announce where e.g. a coke can be found)
-
+# - "bring X from Y to Z who is in L"
 # ------------------------------------------------------------------------------------------------------------------------
 
 import os
@@ -32,6 +28,14 @@ from datetime import datetime, timedelta
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
 
+# ------------------------------------------------------------------------------------------------------------------------
+
+def not_implemented(robot, parameters):
+    rospy.logerr("This was not implemented, show this to Sjoerd: {}".format(parameters))
+    robot.speech.speak("Not implemented! Warn Sjoerd", block=False)
+    return
+
+# ------------------------------------------------------------------------------------------------------------------------
 
 def search_for_object(robot, location, entity_type):
     # classify step
@@ -89,7 +93,7 @@ class GPSR:
         if entity_id in challenge_knowledge.rooms:
             nwc =  NavigateToSymbolic(robot,
                                             { EntityByIdDesignator(robot, id=entity_id) : "in" },
-                                              EntityByIdDesignator(robot, id="dinnertable"))
+                                              EntityByIdDesignator(robot, id=entity_id))
         else:
             nwc = NavigateToObserve(robot,
                                  entity_designator=EdEntityDesignator(robot, id=entity_id),
@@ -107,12 +111,12 @@ class GPSR:
                                    time_out=rospy.Duration(15))
 
         if not res:
-            robot.speech.speak("My ears are not working properly, can i get a restart?.")
+            robot.speech.speak("My ears are not working properly, sorry!")
 
         if res:
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
-                robot.speech.speak("The answer is %s"%speech_data.choice_answer_mapping[res.choices['question']])
+                robot.speech.speak("The answer is %s" % speech_data.choice_answer_mapping[res.choices['question']])
             else:
                 robot.speech.speak("Sorry, I do not understand your question")
 
@@ -150,6 +154,10 @@ class GPSR:
             location = self.resolve_entity_id(parameters["from"])
         else:
             location = self.object_to_location[entity_id]
+
+        if location in challenge_knowledge.rooms:
+            not_implemented(robot, parameters)
+            return
 
         robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
@@ -241,23 +249,37 @@ class GPSR:
 
     def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # If sentence is given on command-line
+
         if sentence:
             res = command_recognizer.parse(sentence)
-        else:
-            res = command_recognizer.recognize(robot)
-            print res
+            if not res:
+                robot.speech.speak("Sorry, could not parse the given command")
+                return False
 
-        if not res:
-            robot.speech.speak("Sorry, I could not understand")
-            return False
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # When using text-to-speech
+
+        else:
+            robot.head.look_at_standing_person()
+
+            res = None
+            while not res:
+                robot.speech.speak("Give your command after the ping", block=True)
+                res = command_recognizer.recognize(robot)
+                if not res:
+                    robot.speech.speak("Sorry, I could not understand", block=True)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -                    
 
         (sentence, semantics_str) = res
         print "Sentence: %s" % sentence
         print "Semantics: %s" % semantics_str
 
-        # TODO: re-state the command
+        robot.speech.speak("You want me to %s" % sentence, block=True)
 
-        robot.speech.speak("Alright!", block=False)
+        # TODO: ask for confirmation?
 
         semantics = yaml.load(semantics_str)
 
@@ -331,14 +353,7 @@ class GPSR:
 
         sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
-        if sentence:
-            self.execute_command(robot, command_recognizer, action_functions, sentence)
-        else:
-            robot.head.look_at_standing_person()
-
-            robot.speech.speak("What can I do for you?")
-
-            self.execute_command(robot, command_recognizer, action_functions)
+        self.execute_command(robot, command_recognizer, action_functions, sentence)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
