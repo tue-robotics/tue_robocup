@@ -22,3 +22,5 @@ exit4 = "entry_point_B"
 
 starting_point = "initial_pose_door_A"
 rotation = 0
+
+time_out_seconds = 40.0

@@ -17,6 +17,41 @@ print "=============================================="
 print "==           CHALLENGE NAVIGATION           =="
 print "=============================================="
 
+
+class checkTimeOut(smach.State):
+    def __init__(self, robot, time_out_seconds):
+        smach.State.__init__(self, outcomes=["not_yet", "time_out"])
+        self.robot = robot
+        self.time_out_seconds = time_out_seconds
+
+        self.start = None
+        self.last_say = None
+
+        self.turn = -1
+
+    def execute(self, userdata):
+        current_seconds = rospy.Time.now().to_sec()
+
+        radians = 0.3
+        vth = 0.5
+        if self.start is None:
+            self.robot.base.force_drive(0, 0, vth, radians / vth)
+            self.start = current_seconds
+
+        dt = current_seconds - self.start
+
+        if dt > self.time_out_seconds:
+            return "time_out"
+
+        if self.last_say is None or current_seconds - self.last_say > 10:
+            self.robot.speech.speak("Trying for another %d seconds .." % int(dt), block=False)
+            self.last_say = current_seconds
+
+        self.robot.base.force_drive(0, 0, vth, (2 * self.turn * radians) / vth)
+        self.turn = -self.turn
+
+        return "not_yet"
+
 class Turn(smach.State):
     def __init__(self, robot, radians):
         smach.State.__init__(self, outcomes=["turned"])
@@ -137,8 +172,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GOTO_TARGET1_BACKUP',
                                 states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target1), challenge_knowledge.target1_radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET1_REACHED',
-                                                'unreachable'       :   'SAY_TARGET1_FAILED',
-                                                'goal_not_defined'  :   'SAY_TARGET1_FAILED'})
+                                                'unreachable'       :   'TIMEOUT1',
+                                                'goal_not_defined'  :   'TIMEOUT1'})
+
+        smach.StateMachine.add( 'TIMEOUT1',
+                                checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                                transitions={'not_yet':'GOTO_TARGET1', 'time_out':'SAY_TARGET1_FAILED'})
 
         # Should we mention that we failed???
         smach.StateMachine.add( 'SAY_TARGET1_FAILED',
@@ -196,8 +235,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GOTO_TARGET2_BACKUP',
                                 states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target2), challenge_knowledge.target2_radius3),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
-                                                'unreachable'       :   'SAY_TARGET2_FAILED',
-                                                'goal_not_defined'  :   'SAY_TARGET2_FAILED'})
+                                                'unreachable'       :   'TIMEOUT2',
+                                                'goal_not_defined'  :   'TIMEOUT2'})
+
+        smach.StateMachine.add( 'TIMEOUT2',
+                                checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                                transitions={'not_yet':'GOTO_TARGET2_PRE', 'time_out':'SAY_TARGET2_FAILED'})
 
         smach.StateMachine.add( 'SAY_TARGET2_FAILED',
                                 states.Say(robot, ["I am unable to reach target 2",
@@ -238,8 +281,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GOTO_TARGET3_BACKUP',
                                 states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target3), challenge_knowledge.target3_radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET3_REACHED',
-                                                'unreachable'       :   'SAY_TARGET3_FAILED',
-                                                'goal_not_defined'  :   'SAY_TARGET3_FAILED'})
+                                                'unreachable'       :   'TIMEOUT3',
+                                                'goal_not_defined'  :   'TIMEOUT3'})
+
+        smach.StateMachine.add( 'TIMEOUT3',
+                                checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                                transitions={'not_yet':'GOTO_TARGET3', 'time_out':'SAY_TARGET3_FAILED'})
 
         # Should we mention that we failed???
         smach.StateMachine.add( 'SAY_TARGET3_FAILED',
@@ -295,8 +342,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GOTO_RETURN_TARGET3_BACKUP',
                                 states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target4), challenge_knowledge.target4_radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET3_RETURN_REACHED',
-                                                'unreachable'       :   'SAY_RETURN_TARGET3_FAILED',
-                                                'goal_not_defined'  :   'SAY_RETURN_TARGET3_FAILED'})
+                                                'unreachable'       :   'TIMEOUT3_RETURN',
+                                                'goal_not_defined'  :   'TIMEOUT3_RETURN'})
+
+        smach.StateMachine.add( 'TIMEOUT3_RETURN',
+                                checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                                transitions={'not_yet':'RETURN_TARGET3', 'time_out':'SAY_RETURN_TARGET3_FAILED'})
 
         # Should we mention that we failed???
         smach.StateMachine.add( 'SAY_RETURN_TARGET3_FAILED',
