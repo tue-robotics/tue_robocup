@@ -33,7 +33,7 @@ challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
 
 
-def search_for_object(robot, location, type):
+def search_for_object(robot, location, entity_type):
     # classify step
     classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
     seg = SegmentObjects(robot,
@@ -47,7 +47,13 @@ def search_for_object(robot, location, type):
         robot.speech.speak("I could not find the object")
         return False
 
-    # TODO: filter the correct type
+    for obj in results:
+        print obj
+        if obj.type == entity_type:
+            return obj
+
+    # TODO: remove this random for testing
+    robot.speech.speak("I'm grabbing a random object")
     return random.choice(results)
 
 # ------------------------------------------------------------------------------------------------------------------------
