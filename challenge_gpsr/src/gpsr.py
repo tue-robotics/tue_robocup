@@ -97,6 +97,11 @@ class GPSR:
             line = datetime.now().strftime('The time is %H %M')
         elif sentence == "NAME":
             line = 'My name is %s' % robot.robot_name
+        elif sentence == 'DAY_OF_MONTH':
+            line = datetime.now().strftime('It is day %d of the month')
+        elif sentence == 'DAY_OF_WEEK':
+            day = datetime.today().weekday() + 1 # weekday() monday is 0
+            line = 'It is day %d of the week' % day
         else:
             line = sentence
 
