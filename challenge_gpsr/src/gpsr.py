@@ -26,14 +26,14 @@ from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDe
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
 
 
-def search_for_object(robot, location, type):
+def search_for_object(robot, location, entity_type):
     # classify step
     classifications_des = VariableDesignator([], resolve_type=[ClassificationResult])
     seg = SegmentObjects(robot,
@@ -47,7 +47,13 @@ def search_for_object(robot, location, type):
         robot.speech.speak("I could not find the object")
         return False
 
-    # TODO: filter the correct type
+    for obj in results:
+        print obj
+        if obj.type == entity_type:
+            return obj
+
+    # TODO: remove this random for testing
+    robot.speech.speak("I'm grabbing a random object")
     return random.choice(results)
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -118,6 +124,10 @@ class GPSR:
             line = datetime.now().strftime('The time is %H %M')
         elif sentence == "NAME":
             line = 'My name is %s' % robot.robot_name
+        elif sentence == 'TODAY':
+            line = datetime.today().strftime('Today is a %A')
+        elif sentence == 'TOMORROW':
+            line = (datetime.today() + timedelta(days=1)).strftime('Tomorrow is a %A')
         elif sentence == 'DAY_OF_MONTH':
             line = datetime.now().strftime('It is day %d of the month')
         elif sentence == 'DAY_OF_WEEK':
