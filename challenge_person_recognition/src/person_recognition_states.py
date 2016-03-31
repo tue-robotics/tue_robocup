@@ -364,6 +364,8 @@ class PointAtOperator(smach.State):
         # Get information about the operator and point at the location
         self.robot.rightArm.send_goal(0.5, -0.2, 0.9, 0, 0, 0, 60)
 
+        self.robot.head.look_at_ground_in_front_of_robot(distance=100)
+
         return 'succeeded'
 
 
