@@ -25,6 +25,7 @@ from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
 from datetime import datetime, timedelta
 
+from robot_smach_states import LookAtArea
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
@@ -171,18 +172,30 @@ class GPSR:
         robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_id), block=False)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
         # Move to the location
+
         nwc = NavigateToObserve(robot,
                          entity_designator=EdEntityDesignator(robot, id=location),
                          radius=.5)
         nwc.execute()
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Look at the area
 
+        area_name = "on_top_of"
 
+        look_sm = LookAtArea(robot,
+                             EdEntityDesignator(robot, id=location),
+                             area_name)
+        look_sm.execute()
 
+        import time
+        time.sleep(1)
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Segment
+
+        segmented_entities = robot.ed.update_kinect("{} {}".format(area_name, location))
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -372,7 +385,11 @@ class GPSR:
 
         sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
-        self.execute_command(robot, command_recognizer, action_functions, sentence)
+        done = False
+        while not done:
+            self.execute_command(robot, command_recognizer, action_functions, sentence)
+            if sentence or len(sys.argv) <= 2 or sys.argv[2] != "--forever":
+                done = True
 
 # ------------------------------------------------------------------------------------------------------------------------
 
