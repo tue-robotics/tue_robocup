@@ -525,33 +525,17 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add( 'RESET_ED_2',
                         PersonRecStates.ResetEd(robot),
-                        transitions={   'done':  'FIND_OPERATOR'})
-
-            #add container to the main state machine
-            smach.StateMachine.add( 'FIND_OPERATOR',
-                                    FindOperatorFromADistance(robot, operatorNameDes, detectedPersonsListDes, operator_person_des.writeable),
-                                    transitions={   'succeeded':'SAY_GOING_TO_CROWD',
-                                                    'failed':'SAY_GOING_TO_CROWD'})
-
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                             DESCRIBE CROWD AND OPERATOR
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-            smach.StateMachine.add('SAY_GOING_TO_CROWD',
-                                   states.Say(robot,"Lets take a look at the crowd", block=False),
-                                   transitions={    'spoken':'GOTO_FRONT_OF_CROWD'})
-
-            smach.StateMachine.add( 'GOTO_FRONT_OF_CROWD',
-                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
-                                    transitions={   'arrived'           : 'DESCRIBE_PEOPLE',
-                                                    'unreachable'       : 'DESCRIBE_PEOPLE',
-                                                    'goal_not_defined'  : 'DESCRIBE_PEOPLE'})
+                        transitions={   'done':  'DESCRIBE_PEOPLE'})
 
             smach.StateMachine.add( 'DESCRIBE_PEOPLE',
                                     PersonRecStates.DescribePeople(robot, detectedPersonsListDes, operator_person_des),
-                                    transitions={   'succeeded' :'END_CHALLENGE',
-                                                    'failed'    :'END_CHALLENGE'})
-
+                                    transitions={   'succeeded' :'FIND_OPERATOR',
+                                                    'failed'    :'FIND_OPERATOR'})
+            #add container to the main state machine
+            smach.StateMachine.add( 'FIND_OPERATOR',
+                                    FindOperatorFromADistance(robot, operatorNameDes, detectedPersonsListDes, operator_person_des.writeable),
+                                    transitions={   'succeeded':'END_CHALLENGE',
+                                                    'failed':'END_CHALLENGE'})
 
             smach.StateMachine.add('END_CHALLENGE',
                                    states.Say(robot,"My work here is done, goodbye!"),
