@@ -477,16 +477,9 @@ class ChallengePersonRecognition(smach.StateMachine):
                                     transitions={    'succeeded' :'WAIT_CONTINUE_ITERATOR',
                                                      'failed'    :'WAIT_CONTINUE_ITERATOR'})
 
-            # add the lookoutIterator to the main state machine
-            smach.StateMachine.add( 'WAIT_CONTINUE_ITERATOR',
-                                    WaitForStart(robot),
-                                    {   'failed':'SAY_NO_CONTINUE',
-                                        'succeeded':'FIND_CROWD_ITERATOR'})
-
-            smach.StateMachine.add( 'SAY_NO_CONTINUE',
-                                    states.Say(robot, "Ready or not, here I come!", block=True),
-                                    transitions={   'spoken':'FIND_CROWD_ITERATOR'})
-
+            smach.StateMachine.add('WAIT_CONTINUE_ITERATOR',
+                                   PersonRecStates.Slaap(robot),
+                                   transitions={ 'succeeded':'FIND_CROWD_ITERATOR'})
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                                   FIND_CROWD_CONTAINER
