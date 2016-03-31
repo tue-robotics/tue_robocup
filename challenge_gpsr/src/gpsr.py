@@ -117,8 +117,10 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def answer_question(self, robot, parameters):
-        robot.head.look_at_ground_in_front_of_robot(100)
 
+        robot.head.look_at_standing_person()
+        robot.head.wait_for_motion_done()
+    
         robot.speech.speak("What is your question?")
 
         res = robot.ears.recognize(spec=speech_data.spec,
