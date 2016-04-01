@@ -4,7 +4,6 @@
 # By Sjoerd van den Dries, 2016
 
 # TODO:
-# - initial pose estimate
 # - Add entrance and exit
 # - Enter arena
 # - handover

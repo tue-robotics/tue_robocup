@@ -6,7 +6,7 @@ common = knowledge_loader.load_knowledge("common")
 starting_point = "initial_pose_door_A"
 exit_waypoint = "exit_door_B1"
 
-rooms = common.rooms
+rooms = common.rooms + ["entrance", "exit"]
 
 #object_aliases = {"dinner table" : "dinnertable"}
 
