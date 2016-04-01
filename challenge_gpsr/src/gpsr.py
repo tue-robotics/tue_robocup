@@ -49,7 +49,6 @@ from robot_smach_states import LookAtArea, StartChallengeRobust
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
-starting_point = challenge_knowledge.starting_point
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -86,7 +85,7 @@ class GPSR:
             if special =="it":
                 descr = self.last_entity
             elif special == "operator":
-                descr.id = "initial_pose"
+                descr.id = "gpsr_starting_pose"
         else:
             if "id" in parameters:
                 descr.id = parameters["id"]
@@ -345,7 +344,7 @@ class GPSR:
 
         to_descr = self.resolve_entity_description(parameters["to"])
 
-        if to_descr.type == "person":
+        if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
             self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location)
 
             # TODO: handover
@@ -379,7 +378,7 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def start_challenge(self, robot):
-        s = StartChallengeRobust(robot, starting_point)
+        s = StartChallengeRobust(robot, challenge_knowledge.starting_point)
         s.execute()
 
     # ------------------------------------------------------------------------------------------------------------------------
@@ -471,25 +470,11 @@ class GPSR:
         if not skip_init:
             self.start_challenge(robot)
 
+            # Move to the start location
+            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
+            nwc.execute()
+
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        # # Query world model for entities
-        # entities = robot.ed.get_entities(parse=False)
-        # for e in entities:
-        #     self.entity_ids += [e.id]
-
-        #     for t in e.types:
-        #         if not t in self.entity_type_to_id:
-        #             self.entity_type_to_id[t] = [e.id]
-        #         else:
-        #             self.entity_type_to_id[t] += [e.id]
-
-
-        # for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
-        #     for obj in objects:
-        #         self.object_to_location[obj] = furniture
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -508,6 +493,9 @@ class GPSR:
             self.execute_command(robot, command_recognizer, action_functions, sentence)
             if not run_forever:
                 done = True
+
+        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
+        nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
 

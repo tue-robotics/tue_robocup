@@ -2,7 +2,9 @@ from itertools import groupby
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
-starting_point = "initial_pose_door_B"
+# initial pose
+starting_point = "initial_pose_door_A"
+exit_waypoint = "exit_door_B1"
 
 rooms = common.rooms
 
