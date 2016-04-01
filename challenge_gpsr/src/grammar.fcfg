@@ -48,8 +48,8 @@ V_BRING -> give | bring | hand | deliver | take | carry | transport
 # Placing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "place", "to" : X] -> V_PLACE it on LOC[X]
-VP["action" : "place", "to" : X] -> V_PLACE it in LOC[X]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on LOC[L]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in LOC[L]
 V_PLACE -> put | place
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
