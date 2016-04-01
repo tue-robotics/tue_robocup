@@ -167,7 +167,7 @@ class GPSR:
 
         robot.head.look_at_standing_person()
         robot.head.wait_for_motion_done()
-    
+
         robot.speech.speak("What is your question?")
 
         res = robot.ears.recognize(spec=speech_data.spec,
@@ -217,7 +217,7 @@ class GPSR:
         if not entity_descr.location:
             entity_descr.location = self.last_location
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -           
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         if entity_descr.type == "person":
 
@@ -234,7 +234,7 @@ class GPSR:
         self.last_entity = entity_descr
 
         if entity_descr.location:
-            room_or_location = entity_descr.location.id            
+            room_or_location = entity_descr.location.id
 
             if room_or_location in challenge_knowledge.rooms:
                 locations = [loc["name"] for loc in challenge_knowledge.common.locations
@@ -260,7 +260,7 @@ class GPSR:
 
         location_defined = (len(locations_with_areas) == 1)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         for loc_and_areas in locations_with_areas:
 
@@ -276,13 +276,13 @@ class GPSR:
 
                 if nav_area != last_nav_area:
 
-                    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                     # Move to the location
 
                     self.move_robot(robot, id=location, nav_area=nav_area)
                     last_nav_area = nav_area
 
-                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # Look at the area
 
                 look_sm = LookAtArea(robot,
@@ -293,14 +293,14 @@ class GPSR:
                 import time
                 time.sleep(1)
 
-                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # Segment
 
                 segmented_entities = robot.ed.update_kinect("{} {}".format(area_name, location))
 
                 found_entity_ids = segmented_entities.new_ids + segmented_entities.updated_ids
 
-                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # Classify
 
                 entity_types_and_probs = robot.ed.classify(ids=found_entity_ids,
@@ -327,7 +327,7 @@ class GPSR:
             if entity_descr.id:
                 break
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         if pick_up and entity_descr.id:
 
@@ -336,13 +336,13 @@ class GPSR:
             # grab it
             grab = Grab(robot, EdEntityDesignator(robot, id=entity_descr.id),
                  UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
-            result = grab.execute()    
+            result = grab.execute()
 
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Check if need to grab an entity and if so, do so
 
         if "entity" in parameters:
@@ -351,7 +351,7 @@ class GPSR:
             if not self.last_entity or entity_descr.type != self.last_entity.type:
                 self.find_and_pick_up(robot, parameters)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Deliver it
 
         to_descr = self.resolve_entity_description(parameters["to"])
@@ -372,7 +372,7 @@ class GPSR:
 
             # place
             arm = OccupiedArmDesignator(robot.arms, robot.leftArm)
-            
+
             if not arm.resolve():
                 robot.speech.speak("I don't have anything to place")
             else:
@@ -403,7 +403,7 @@ class GPSR:
 
     def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # If sentence is given on command-line
 
         if sentence:
@@ -412,7 +412,7 @@ class GPSR:
                 robot.speech.speak("Sorry, could not parse the given command")
                 return False
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # When using text-to-speech
 
         else:
@@ -428,7 +428,7 @@ class GPSR:
                 if not res:
                     robot.speech.speak("Sorry, I could not understand", block=True)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -                    
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         (sentence, semantics_str) = res
         print "Sentence: %s" % sentence
