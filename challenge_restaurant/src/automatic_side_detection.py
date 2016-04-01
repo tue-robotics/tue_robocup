@@ -29,18 +29,20 @@ class WaitSay(smach.State):
         return "done"
 
 class AutomaticSideDetection(smach.State):
-    def __init__(self, robot, background_padding=0.3, look_x = .2, look_y = 1.5, max_radius = 2.0, min_area = 0.3):
+    def __init__(self, robot, background_padding=0.3, look_x = .2, look_y = 1.5, max_radius = 1.5, min_area = 0.3):
         self._sides = {
             "left": {
                 "x": look_x,
                 "y": look_y,
+                "score": {},
+                "entities": []
             },
             "right": {
                 "x": look_x,
                 "y": -look_y,
+                "score": {},
+                "entities": []
             },
-            "score": {},
-            "entities": []
         }
         smach.State.__init__(self, outcomes=self._sides.keys())
         self._robot = robot
@@ -60,7 +62,8 @@ class AutomaticSideDetection(smach.State):
         for side, spec in self._sides.iteritems():
             # Look at the side
             rospy.loginfo("looking at side %s" % side)
-            self._robot.head.look_at_point(self._get_head_goal(spec))
+            goal = self._get_head_goal(spec)
+            self._robot.head.look_at_point(goal)
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
@@ -85,7 +88,18 @@ class AutomaticSideDetection(smach.State):
             self._sides[side]["score"]["area_sum"] = sum([ self._score_area(e) for e in self._sides[side]["entities"] ])
             self._sides[side]["score"]["min_distance"] = self._score_closest_point(base_position, self._sides[side]["entities"])
 
-            self._sides[side]["score"]["face_found"] = len(self._robot.ed.detect_persons()) > 0
+            goal.point.z = 0.8
+            self._robot.head.look_at_point(goal)
+            self._robot.head.wait_for_motion_done()
+            rospy.sleep(0.2)
+
+            persons = self._robot.ed.detect_persons()
+            self._sides[side]["score"]["face_found"] = False
+            if persons:
+                for person in persons:
+                    p = person.pose.pose.position
+                    if math.hypot(p.x - base_position.x, p.y - base_position.y) < self._max_radius:
+                        self._sides[side]["score"]["face_found"] = True
 
     def _subset_selection(self, base_position, e):
         distance = math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y)
