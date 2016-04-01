@@ -336,6 +336,8 @@ class GPSR:
                 closest_distance = None
                 for entity_id in possible_entities:
                     entity = robot.ed.get_entity(id=entity_id, parse=False)
+                    if not entity:
+                        continue
 
                     p = transformations.tf_transform(entity.pose.position, "/map",
                                                  robot.robot_name+"/base_link",
