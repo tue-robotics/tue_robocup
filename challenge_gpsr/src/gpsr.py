@@ -363,28 +363,27 @@ class GPSR:
 
             if not arm_des.resolve():
                 robot.speech.speak("I don't have anything to give to you")
-                return
-
-            h = HandoverToHuman(robot, arm_des)
-            result = h.execute()
+            else:
+                h = HandoverToHuman(robot, arm_des)
+                result = h.execute()
         else:
             # Move to the location
             self.move_robot(robot, id=to_descr.id, nav_area="in_front_of")
 
             # place
             arm = OccupiedArmDesignator(robot.arms, robot.leftArm)
+            
             if not arm.resolve():
                 robot.speech.speak("I don't have anything to place")
-                return
+            else:
+                current_item = EdEntityDesignator(robot)
+                location_des = EntityByIdDesignator(robot, id=to_descr.id)
+                place_position = EmptySpotDesignator(robot, location_des, area='on_top_of')
+                p = Place(robot, current_item, place_position, arm)
+                result = p.execute()
 
-            current_item = EdEntityDesignator(robot)
-            location_des = EntityByIdDesignator(robot, id=to_descr.id)
-            place_position = EmptySpotDesignator(robot, location_des, area='on_top_of')
-            p = Place(robot, current_item, place_position, arm)
-            result = p.execute()
-
-            if result != 'done':
-                robot.speech.speak("Sorry, my fault")
+                if result != 'done':
+                    robot.speech.speak("Sorry, my fault")
 
         self.last_location = None
         self.last_entity = None
