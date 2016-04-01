@@ -87,7 +87,6 @@ class GPSR:
                 descr = self.last_entity
             elif special == "operator":
                 descr.id = "initial_pose"
-                descr.type = "person"
         else:
             if "id" in parameters:
                 descr.id = parameters["id"]
@@ -100,16 +99,34 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def move_robot(self, robot, id, type=None, nav_area=None):
+    def move_robot(self, robot, id=None, type=None, nav_area=None, room=None):
+
         if id in challenge_knowledge.rooms:
+            # Driving to a room
+
             nwc =  NavigateToSymbolic(robot,
                                             { EntityByIdDesignator(robot, id=id) : "in" },
                                               EntityByIdDesignator(robot, id=id))
+            nwc.execute()
         elif type == "person":
-            nwc =  NavigateToSymbolic(robot,
-                                            { EntityByIdDesignator(robot, id=id) : "in" },
-                                              EntityByIdDesignator(robot, id=id))
-        else:
+            # Driving to a person
+
+            if id:
+                nwc =  NavigateToSymbolic(robot,
+                                                { EntityByIdDesignator(robot, id=id) : "in" },
+                                                  EntityByIdDesignator(robot, id=id))
+            elif room:
+                room_des = EdEntityDesignator(robot, id=room)
+                f = FindPerson(robot, room_des)
+                result = f.execute()
+                if result == 'succeeded':
+                    robot.speech.speak("I found you!")
+            else:
+                robot.speech.speak("I don't know where I can find the person")
+
+        elif challenge_knowledge.is_location(id):
+            # Driving to a location
+
             if not nav_area:
                 nav_area = challenge_knowledge.common.get_inspect_position(id)
 
@@ -120,6 +137,10 @@ class GPSR:
                   {location_des : nav_area, room_des : "in"},
                   location_des)
             nwc.execute()
+        else:
+            # Driving to anything else (e.g. a waypoint)
+            nwc = NavigateToObserve(robot, EntityByIdDesignator(robot, id=id))
+            nwc.execute()
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -127,11 +148,7 @@ class GPSR:
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
         if entity_descr.type == "person":
-            # TODO:
-            # 1) move to the specified location (entity_descr.location)
-            # 2) find the person
-            # 3) move to the person
-            robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location)
 
         elif not entity_descr.id:
             not_implemented(robot, parameters)
