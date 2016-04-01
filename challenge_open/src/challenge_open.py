@@ -85,6 +85,8 @@ class GPSR:
 
         self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
 
+        self.robot = robot
+
     def _trigger_callback(self, msg):
         """ Callback function for the trigger topic. Sets self._action_requested to True if the msg is 'gpsr'
         :param msg:
@@ -111,6 +113,11 @@ class GPSR:
                 descr.type = parameters["type"]
             if "loc" in parameters:
                 descr.location = self.resolve_entity_description(parameters["loc"])
+
+        print descr.id
+        if not self.robot.ed.get_entity(id=descr.id, parse=False):
+            self.robot.speech.speak("I do not know where the {} is".format(descr.id))
+            return None
 
         return descr
 
@@ -163,6 +170,9 @@ class GPSR:
 
     def navigate(self, robot, parameters):
         entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr:
+            return
 
         if not entity_descr.location:
             entity_descr.location = self.last_location
@@ -230,6 +240,9 @@ class GPSR:
 
     def find_and_pick_up(self, robot, parameters, pick_up=True):
         entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr:
+            return
 
         if not entity_descr.location:
             entity_descr.location = self.last_location
@@ -393,6 +406,9 @@ class GPSR:
         # Deliver it
 
         to_descr = self.resolve_entity_description(parameters["to"])
+
+        if not to_descr:
+            return        
 
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
             if to_descr.location:
