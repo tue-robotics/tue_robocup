@@ -31,6 +31,7 @@ import yaml
 import cfgparser
 import rospy
 import random
+import argparse
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
@@ -422,11 +423,19 @@ class GPSR:
     def run(self):
         rospy.init_node("gpsr")
 
-        if len(sys.argv) < 2:
-            print "Please specify a robot name 'amigo / sergio'"
-            return 1
+        parser = argparse.ArgumentParser()
+        parser.add_argument('robot', help='Robot name')
+        parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
+        parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
+        parser.add_argument('sentence', nargs='*', help='Optional sentence')
+        args = parser.parse_args()
+        rospy.loginfo('args: %s', args)
 
-        robot_name = sys.argv[1]
+        robot_name = args.robot
+        run_forever = args.forever
+        skip_init = args.skip
+        sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+
         if robot_name == 'amigo':
             from robot_skills.amigo import Amigo as Robot
         elif robot_name == 'sergio':
@@ -468,13 +477,6 @@ class GPSR:
         action_functions["say"] =  self.say
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        run_forever = False
-        sentence = None
-        if len(sys.argv) > 2 and sys.argv[2] == "--forever":
-            run_forever = True
-        else:
-            sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
         done = False
         while not done:
