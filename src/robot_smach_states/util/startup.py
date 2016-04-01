@@ -35,7 +35,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     available_robots = ['amigo', 'sergio', 'mockbot']
     arguments = docopt(__doc__.format(robot='|'.join(available_robots),
                                       challenge_name=challenge_name if challenge_name else "xxx"),
-                       argv=argv,
+                                      argv=argv[1:],
                        version='robot_smach_states startup 2.0')
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
