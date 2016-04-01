@@ -7,6 +7,14 @@ import numpy as np
 
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import PointStamped
+import robot_smach_states as states
+from robot_skills.util import transformations, msg_constructors
+
+from robocup_knowledge import load_knowledge
+knowledge = load_knowledge("challenge_restaurant")
+
+from challenge_restaurant import visualize_location
+
 
 def _get_area(convex_hull):
     pts = [ [c.x, c.y] for c in convex_hull ]
@@ -34,13 +42,15 @@ class AutomaticSideDetection(smach.State):
             "left": {
                 "x": look_x,
                 "y": look_y,
+                "score": {},
+                "entities": []
             },
             "right": {
                 "x": look_x,
                 "y": -look_y,
+                "score": {},
+                "entities": []
             },
-            "score": {},
-            "entities": []
         }
         smach.State.__init__(self, outcomes=self._sides.keys())
         self._robot = robot
@@ -87,6 +97,9 @@ class AutomaticSideDetection(smach.State):
 
             self._sides[side]["score"]["face_found"] = len(self._robot.ed.detect_persons()) > 0
 
+            if self._sides[side]["score"]["face_found"]:
+                self._robot.speech.speak("hi there")
+
     def _subset_selection(self, base_position, e):
         distance = math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y)
         return distance < self._max_radius
@@ -118,8 +131,71 @@ class AutomaticSideDetection(smach.State):
 
         best_side = self._get_best_side()
 
-        self._robot.speech.speak(best_side)
         return best_side
+
+
+class StoreWaypoint(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done", "continue"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        # Stop the base
+        self._robot.base.local_planner.cancelCurrentPlan()
+
+        self._robot.head.look_at_standing_person()
+        self._robot.speech.speak("Are we at a table?")
+
+        result = self._robot.ears.recognize("(yes|no)",{})
+        if not result or result.result == "" or result.result == "no":
+            self._robot.head.cancel_goal()
+            return "continue"
+
+
+        # Store current base position
+        base_pose = self._robot.base.get_location()
+
+        # Create automatic side detection state and execute
+        self._robot.speech.speak("I am now going to look for the table", block=False)
+        automatic_side_detection = AutomaticSideDetection(self._robot)
+        side = automatic_side_detection.execute({})
+
+        self._robot.speech.speak("The table is to my %s" % side)
+
+        location = None
+        for i in range(0, 3):
+            self._robot.speech.speak("Which table number is this?")
+            result = self._robot.ears.recognize(knowledge.professional_guiding_spec, knowledge.professional_guiding_choices,
+                                                time_out = rospy.Duration(5)) # Wait 100 secs
+
+            if result and "location" in result.choices:
+                location = result.choices["location"]
+                break
+
+            self._robot.speech.speak("Sorry, I did not understand")
+
+        self._robot.head.cancel_goal()
+
+        if not location:
+            return "continue"
+
+        self._robot.speech.speak("Table %s, it is!" % location)
+
+        if side == "left":
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(
+                transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+        elif side == "right":
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(
+                transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+
+        # Add to param server
+        loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
+        rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
+
+        visualize_location(base_pose, location)
+        self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
+
+        return "done"
 
 def setup_statemachine(robot):
 
@@ -127,8 +203,8 @@ def setup_statemachine(robot):
     robot.ed.reset()
 
     with sm:
-        smach.StateMachine.add('WAIT_SAY', WaitSay(robot), transitions={ 'done' :'AUTOMATIC_SIDE_DETECTION'})
-        smach.StateMachine.add('AUTOMATIC_SIDE_DETECTION', AutomaticSideDetection(robot), transitions={ 'left' :'WAIT_SAY', 'right' : 'WAIT_SAY'})
+        smach.StateMachine.add('WAIT_SAY', WaitSay(robot), transitions={ 'done' :'STORE_WAYPOINT'})
+        smach.StateMachine.add('STORE_WAYPOINT', StoreWaypoint(robot), transitions={ 'done' :'WAIT_SAY', 'continue' : 'WAIT_SAY'})
 
     return sm
 
