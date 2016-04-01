@@ -19,11 +19,11 @@ from docopt import docopt
 import os
 
 
-def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None):
+def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
     '''
     :param statemachine_creator: a function that outputs a statemachine.
         The function should take a robot as input.
-    :param initial_state the state to start the state machine in. 
+    :param initial_state the state to start the state machine in.
         Can be supplied as command line argument
     :param robot_name name of the robot to pass to the state machine'''
 
@@ -35,6 +35,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     available_robots = ['amigo', 'sergio', 'mockbot']
     arguments = docopt(__doc__.format(robot='|'.join(available_robots),
                                       challenge_name=challenge_name if challenge_name else "xxx"),
+                       argv=argv,
                        version='robot_smach_states startup 2.0')
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
