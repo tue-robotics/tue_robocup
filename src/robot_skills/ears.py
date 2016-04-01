@@ -69,6 +69,9 @@ class Ears:
         if hasattr(self._post_hook, '__call__'):
             self._post_hook()
 
+        if answer.result == "":
+            answer = None
+
         return answer
 
 if __name__ == "__main__":
