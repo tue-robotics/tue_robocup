@@ -82,8 +82,8 @@ inspect_areas = {
 inspect_positions = {
     "kitchencounter" :
     {
-        "left_of_sink"  : "in_front_of",
-        "right_of_sink" : "in_front_of"
+        "left_of_sink"  : "in_front_of_left_sink",
+        "right_of_sink" : "in_front_of_right_sink"
     }
 }
 

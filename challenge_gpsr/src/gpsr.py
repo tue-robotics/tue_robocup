@@ -234,7 +234,7 @@ class GPSR:
         self.last_entity = entity_descr
 
         if entity_descr.location:
-            room_or_location = self.last_location.id            
+            room_or_location = entity_descr.location.id            
 
             if room_or_location in challenge_knowledge.rooms:
                 locations = [loc["name"] for loc in challenge_knowledge.common.locations
