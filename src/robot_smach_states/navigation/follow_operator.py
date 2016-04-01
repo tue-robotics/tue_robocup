@@ -314,12 +314,15 @@ class FollowOperator(smach.State):
         return False
 
     def _recover_operator(self):
-        while rospy.Time.now() - self._lost_time < rospy.Duration(self._lost_timeout):
-            # Try to catch up with a close entity
+        if self._breadcrumbs:
             recovered_operator = self._robot.ed.get_closest_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
-            if recovered_operator:
-                break
-            rospy.sleep(0.2)
+        else:
+            while rospy.Time.now() - self._lost_time < rospy.Duration(self._lost_timeout):
+                # Try to catch up with a close entity
+                recovered_operator = self._robot.ed.get_closest_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
+                if recovered_operator:
+                    break
+                rospy.sleep(0.2)
 
         if recovered_operator:
             self._operator_id = recovered_operator.id
@@ -386,6 +389,7 @@ class FollowOperator(smach.State):
                         self._robot.base.local_planner.cancelCurrentPlan()
                         self._robot.speech.speak("Tried to recover but didn't find anything, I lost you")
                         return "lost_operator"
+                    self._robot.speech.speak("Recovered operator")
                 else:
                     print "I still have an operator. Checking if standstill timeout is reached"
                     if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
