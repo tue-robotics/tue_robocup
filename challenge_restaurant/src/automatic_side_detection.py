@@ -110,7 +110,10 @@ class AutomaticSideDetection(smach.State):
 
     def _score_closest_point(self, base_position, entities):
         distances = [ math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y) for e in entities ]
-        min_distance = min(distances)
+        if distances:
+            min_distance = min(distances)
+        else:
+            min_distance = self._max_radius
 
         return (self._max_radius - min_distance) / self._max_radius
 
