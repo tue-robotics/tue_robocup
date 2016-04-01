@@ -102,7 +102,7 @@ class DetermineObject(smach.State):
             x = pose_base_link.pose.position.x
             y = pose_base_link.pose.position.y
 
-            r = challenge_knowledge.target2_radius1 # This is the distance from the robot's base link in the x-direction
+            r = challenge_knowledge.target2_obstacle_radius  # Distance from the robot's base link in the x-direction
             if (x - r)*(x - r) + y*y < r*r:
                 block_is_person = True
                 break
