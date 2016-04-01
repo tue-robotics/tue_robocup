@@ -349,14 +349,14 @@ class GPSR:
 
     def bring(self, robot, parameters):
 
-        # # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # # Check if need to grab an entity and if so, do so
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Check if need to grab an entity and if so, do so
 
-        # if "entity" in parameters:
-        #     entity_descr = self.resolve_entity_description(parameters["entity"])
+        if "entity" in parameters:
+            entity_descr = self.resolve_entity_description(parameters["entity"])
 
-        #     if not self.last_entity or entity_descr.type != self.last_entity.type:
-        #         self.find_and_pick_up(robot, parameters)
+            if not self.last_entity or entity_descr.type != self.last_entity.type:
+                self.find_and_pick_up(robot, parameters)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Deliver it
