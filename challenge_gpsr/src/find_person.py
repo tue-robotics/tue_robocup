@@ -80,10 +80,6 @@ class PersonDesignator(ds.Designator):
                 hpose = roompose * kdl.Frame(kdl.Rotation(),
                                              kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
                 convex_hull.append(hpose.p)
-                # convex_hull.append(kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
-                # convex_hull.append(kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                # convex_hull.append(kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                # convex_hull.append(kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
 
         # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
         # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
@@ -102,7 +98,6 @@ class PersonDesignator(ds.Designator):
         persons_in_room = []
         for ph in possible_humans:
             phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
-            #if geometry_helpers.isPointInsideHull(ph.pose.position, convex_hull):
             if geometry_helpers.isPointInsideHull(phposition, convex_hull):
                 persons_in_room.append(ph)
         if not persons_in_room:
@@ -139,12 +134,6 @@ class FindPerson(smach.StateMachine):
                                                 'goal_not_defined': 'ROOM_NOT_DEFINED',
                                                 'unreachable': 'SAY_CANNOT_REACH_ROOM'})
 
-            # smach.StateMachine.add("NAVIGATE_TO_PERSON",
-            #                        NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
-            #                        transitions={'arrived': 'SAY_FOUND',
-            #                                     'goal_not_defined': 'SAY_NO_PERSON_YET',
-            #                                     'unreachable': 'SAY_CANNOT_REACH_PERSON'})
-
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
                                    NavigateToSymbolic(robot=robot,
                                                       entity_designator_area_name_map={person_designator: "near",
@@ -169,12 +158,6 @@ class FindPerson(smach.StateMachine):
                                    transitions={'waited': 'NAVIGATE_TO_PERSON_NOT_FOUND',
                                                 'preempted': 'NAVIGATE_TO_PERSON_NOT_FOUND'})
 
-            # smach.StateMachine.add("NAVIGATE_TO_PERSON_NOT_FOUND",
-            #                        NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
-            #                        transitions={'arrived': 'SAY_FOUND',
-            #                                     'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
-            #                                     'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
-
             smach.StateMachine.add("NAVIGATE_TO_PERSON_NOT_FOUND",
                                    NavigateToSymbolic(robot=robot,
                                                       entity_designator_area_name_map={person_designator: "near",
@@ -193,12 +176,6 @@ class FindPerson(smach.StateMachine):
                                    states.WaitTime(robot=robot, waittime=5.0),
                                    transitions={'waited': 'NAVIGATE_TO_PERSON_UNREACHABLE',
                                                 'preempted': 'NAVIGATE_TO_PERSON_UNREACHABLE'})
-
-            # smach.StateMachine.add("NAVIGATE_TO_PERSON_UNREACHABLE",
-            #                        NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
-            #                        transitions={'arrived': 'SAY_FOUND',
-            #                                     'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
-            #                                     'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_UNREACHABLE",
                                    NavigateToSymbolic(robot=robot,
@@ -244,9 +221,14 @@ if __name__ == "__main__":
         print "unknown robot"
         sys.exit()
 
+    if len(sys.argv) > 2:
+        room = sys.argv[2]
+    else:
+        room = "kitchen"
+
     robot = Robot()
 
-    room_designator = ds.EdEntityDesignator(robot, id="kitchen")
+    room_designator = ds.EdEntityDesignator(robot, id=room)
 
     sm = FindPerson(robot, room_designator)
     sm.execute()
