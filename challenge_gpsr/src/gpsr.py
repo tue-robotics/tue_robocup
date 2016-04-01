@@ -360,6 +360,7 @@ class GPSR:
                 return
 
             current_item = EdEntityDesignator(robot)
+            location_des = EntityByIdDesignator(robot, id=to_descr.id)
             place_position = EmptySpotDesignator(robot, location_des, area='on_top_of')
             p = Place(robot, current_item, place_position, arm)
             result = p.execute()
