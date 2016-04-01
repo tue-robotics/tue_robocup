@@ -380,7 +380,10 @@ class GPSR:
         to_descr = self.resolve_entity_description(parameters["to"])
 
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
-            self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
+            if to_descr.location:
+                self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
+            else:
+                self.move_robot(robot, id=to_descr.id, type=to_descr.type)
 
             arm_des = OccupiedArmDesignator(robot.arms, robot.leftArm)
 
