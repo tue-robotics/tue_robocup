@@ -62,8 +62,14 @@ class AutomaticSideDetection(smach.State):
         distance = math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y)
         return distance < self._max_radius
 
-    def _score(self, e):
+    def _score_area(self, e):
         return _get_area(e.convex_hull)
+
+    def _score_closest_point(self, base_position, entities):
+        distances = [ math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y) for e in entities ]
+        min_distance = min(distances)
+
+        return (self._max_radius - min_distance) / self._max_radius
 
     def _get_best_side(self):
         # Get base position
@@ -75,7 +81,8 @@ class AutomaticSideDetection(smach.State):
             self._sides[side]["entities"] = [ e for e in self._sides[side]["entities"] if self._subset_selection(base_position, e) ]
 
             # Optimization
-            self._sides[side]["score"] = sum([ self._score(e) for e in self._sides[side]["entities"] ])
+            self._sides[side]["score"] = sum([ self._score_area(e) for e in self._sides[side]["entities"] ])
+            self._sides[side]["score"] += self._score_closest_point(base_position, self._sides[side]["entities"])
 
             rospy.loginfo("Side %s: %d entities with total score of %f" % (side, len(self._sides[side]["entities"]), self._sides[side]["score"]))
 
