@@ -76,7 +76,9 @@ inspect_areas = {
     "closet" : ["on_top_of"],
     "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4"],
     "dinnertable" : ["on_top_of"],
-    "kitchencounter" : ["right_of_sink", "left_of_sink"]
+    "kitchencounter" : ["right_of_sink", "left_of_sink"],
+    "sideboard" : ["on_top_of_left", "on_top_of_right"],
+    "tv_stand" : ["on_top_of_left", "on_top_of_right"]
 }
 
 inspect_positions = {

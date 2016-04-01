@@ -270,6 +270,8 @@ class GPSR:
 
             last_nav_area = None
 
+            possible_entities = []
+
             for area_name in area_names:
 
                 nav_area = challenge_knowledge.common.get_inspect_position(location, area_name)
@@ -313,18 +315,9 @@ class GPSR:
                         best_prob = det.probability
 
                 if not entity_descr.id:
-                    if area_name == area_names[-1] and loc_and_areas == locations_with_areas[-1]:
-                        if not found_entity_ids:
-                            robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_descr.type), block=False)
-                        else:
-                            # The object MUST be here, so randomly select one of the segments
-                            robot.speech.speak("Sort of found the {}!".format(entity_descr.type), block=False)
-                            import random
-                            entity_descr.id = random.choice(found_entity_ids)
-                    else:
-                        robot.speech.speak("Nope, the {} is not here.!".format(entity_descr.type), block=False)
+                    possible_entities += found_entity_ids
                 else:
-                        robot.speech.speak("Found the {}!".format(entity_descr.type), block=False)
+                    robot.speech.speak("Found the {}!".format(entity_descr.type), block=False)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -333,6 +326,13 @@ class GPSR:
 
             if entity_descr.id:
                 break
+
+        if not entity_descr.id:
+            if not possible_entities:
+                robot.speech.speak("I really can't find the {}!".format(entity_descr.type), block=False)
+            else:
+                import random
+                entity_descr.id = random.choice(possible_entities)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
