@@ -39,6 +39,7 @@ import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import SegmentObjects, Grab, Place, HandoverToHuman
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator, EmptySpotDesignator, OccupiedArmDesignator
+from robot_skills.util import transformations
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
@@ -331,8 +332,21 @@ class GPSR:
             if not possible_entities:
                 robot.speech.speak("I really can't find the {}!".format(entity_descr.type), block=False)
             else:
-                import random
-                entity_descr.id = random.choice(possible_entities)
+                closest_entity_id = None
+                closest_distance = None
+                for entity_id in possible_entities:
+                    entity = robot.ed.get_entity(id=entity_id, parse=False)
+
+                    p = transformations.tf_transform(entity.pose.position, "/map",
+                                                 robot.robot_name+"/base_link",
+                                                 robot.tf_listener)
+                    distance = p.x*p.x + p.y*p.y
+
+                    if not closest_entity_id or distance < closest_distance:
+                        closest_entity_id = entity_id
+                        closest_distance = distance
+
+                entity_descr.id = closest_entity_id
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
