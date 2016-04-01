@@ -21,7 +21,6 @@ FROM_PP -> from | on | which is on
 AT_PP -> in | at | who is in
 
 TO_LOC[X] -> LOC[X]
-TO_LOC[{"type" : "person"}] -> PERSON
 TO_LOC[{"type" : "person", "loc" : R}] -> PERSON AT_PP ROOM[R]
 TO_LOC[{"special" : "operator"}] -> me
 

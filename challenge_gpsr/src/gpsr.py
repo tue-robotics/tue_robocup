@@ -119,8 +119,8 @@ class GPSR:
                 room_des = EdEntityDesignator(robot, id=room)
                 f = FindPerson(robot, room_des)
                 result = f.execute()
-                if result == 'succeeded':
-                    robot.speech.speak("I found you!")
+                # if result == 'succeeded':
+                #     robot.speech.speak("I found you!")
             else:
                 robot.speech.speak("I don't know where I can find the person")
 
@@ -212,13 +212,7 @@ class GPSR:
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
         if entity_descr.type == "person":
-            room_des = EdEntityDesignator(robot, id=entity_descr.loc)
-            f = FindPerson(robot, room_des)
-            result = f.execute()
-            if result != 'succeeded':
-                return
-
-            robot.speech.speak("I found you!")
+            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=entity_descr.location)
             return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -337,21 +331,22 @@ class GPSR:
 
     def bring(self, robot, parameters):
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Check if need to grab an entity and if so, do so
+
         if "entity" in parameters:
             entity_descr = self.resolve_entity_description(parameters["entity"])
 
             if not self.last_entity or entity_descr.type != self.last_entity.type:
                 self.find_and_pick_up(robot, parameters)
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Deliver it
+
         to_descr = self.resolve_entity_description(parameters["to"])
 
         if to_descr.type == "person":
-
-            if to_descr.id:
-                self.move_robot(robot, id=to_descr.id)
-            else:
-                not_implemented(robot, parameters)
-                return
+            self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location)
 
             # TODO: handover
 
