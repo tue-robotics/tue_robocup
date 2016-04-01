@@ -495,7 +495,7 @@ class GPSR:
             if not run_forever:
                 done = True
 
-        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
+        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="exit_waypoint"), radius = 0.3)
         nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------

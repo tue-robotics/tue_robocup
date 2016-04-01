@@ -28,12 +28,12 @@ class CommandGenerator:
 
     def generate_command(self):
         command = random.choice(self.example_commands)
-        command = command.replace("OBJ", random.choice(self.knowledge.common.object_names))
-        command = command.replace("OBJ_CAT", random.choice(self.knowledge.common.object_categories))
-        command = command.replace("NAME", random.choice(self.knowledge.common.names))
-        command = command.replace("ROOM", random.choice(self.knowledge.rooms))
-        command = command.replace("SPECIFIC_LOC", random.choice(self.knowledge.grab_locations))
-        command = command.replace("FURNITURE", random.choice(self.knowledge.grab_locations))
+        # command = command.replace("OBJ", random.choice(self.knowledge.common.object_names))
+        # command = command.replace("OBJ_CAT", random.choice(self.knowledge.common.object_categories))
+        # command = command.replace("NAME", random.choice(self.knowledge.common.names))
+        # command = command.replace("ROOM", random.choice(self.knowledge.rooms))
+        # command = command.replace("SPECIFIC_LOC", random.choice(self.knowledge.grab_locations))
+        # command = command.replace("FURNITURE", random.choice(self.knowledge.grab_locations))
 
         return command
 

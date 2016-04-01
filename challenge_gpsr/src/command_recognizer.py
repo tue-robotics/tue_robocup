@@ -68,10 +68,10 @@ class CommandRecognizer:
             #parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
             self.parser.add_rule("ROOM[\"%s\"] -> the %s" % (rooms, rooms))
 
-        for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
-            #parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
-            self.parser.add_rule("NP[\"%s\"] -> the %s" % (obj, alias))
-            self.parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))
+        # for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
+        #     #parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
+        #     self.parser.add_rule("NP[\"%s\"] -> the %s" % (obj, alias))
+        #     self.parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))
 
         self.grammar_string = unwrap_grammar("T", self.parser)
 
