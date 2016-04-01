@@ -14,6 +14,20 @@ def _get_area(convex_hull):
     area = 0.5*abs(sum(x1*y2-x2*y1 for x1,y1,x2,y2 in lines))
     return area
 
+class WaitSay(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
+        answer = None
+        while not answer or answer.result != "side detection":
+            answer = self._robot.ears.recognize("side detection")
+        self._robot.head.cancel_goal()
+
+        return "done"
+
 class AutomaticSideDetection(smach.State):
     def __init__(self, robot, background_padding=0.3, look_x = .2, look_y = 1.5, max_radius = 2.0, min_area = 0.3):
         self._sides = {
@@ -92,9 +106,7 @@ class AutomaticSideDetection(smach.State):
         return best_side
 
     def execute(self, userdata):
-        rospy.sleep(1.0)
-        self._robot.ed.reset()
-
+        rospy.sleep(0.2)
         self._inspect_sides()
 
         best_side = self._get_best_side()
@@ -105,9 +117,11 @@ class AutomaticSideDetection(smach.State):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
+    robot.ed.reset()
 
     with sm:
-        smach.StateMachine.add('AUTOMATIC_SIDE_DETECTION', AutomaticSideDetection(robot), transitions={ 'left' :'done', 'right' : 'done'})
+        smach.StateMachine.add('WAIT_SAY', WaitSay(robot), transitions={ 'done' :'AUTOMATIC_SIDE_DETECTION'})
+        smach.StateMachine.add('AUTOMATIC_SIDE_DETECTION', AutomaticSideDetection(robot), transitions={ 'left' :'WAIT_SAY', 'right' : 'WAIT_SAY'})
 
     return sm
 

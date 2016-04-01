@@ -139,8 +139,17 @@ class FindPerson(smach.StateMachine):
                                                 'goal_not_defined': 'ROOM_NOT_DEFINED',
                                                 'unreachable': 'SAY_CANNOT_REACH_ROOM'})
 
+            # smach.StateMachine.add("NAVIGATE_TO_PERSON",
+            #                        NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+            #                        transitions={'arrived': 'SAY_FOUND',
+            #                                     'goal_not_defined': 'SAY_NO_PERSON_YET',
+            #                                     'unreachable': 'SAY_CANNOT_REACH_PERSON'})
+
             smach.StateMachine.add("NAVIGATE_TO_PERSON",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near",
+                                                                                       room_designator: "in"},
+                                                      entity_lookat_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_NO_PERSON_YET',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON'})
@@ -149,7 +158,7 @@ class FindPerson(smach.StateMachine):
                                    states.Say(robot=robot,
                                               sentence="I found you", block=True),
                                    transitions={'spoken': 'succeeded'})
-            
+
             smach.StateMachine.add("SAY_NO_PERSON_YET",
                                    states.Say(robot=robot,
                                               sentence="I cannot find you, can you please stand up", block=True),
@@ -160,8 +169,17 @@ class FindPerson(smach.StateMachine):
                                    transitions={'waited': 'NAVIGATE_TO_PERSON_NOT_FOUND',
                                                 'preempted': 'NAVIGATE_TO_PERSON_NOT_FOUND'})
 
+            # smach.StateMachine.add("NAVIGATE_TO_PERSON_NOT_FOUND",
+            #                        NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+            #                        transitions={'arrived': 'SAY_FOUND',
+            #                                     'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
+            #                                     'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
+
             smach.StateMachine.add("NAVIGATE_TO_PERSON_NOT_FOUND",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near",
+                                                                                       room_designator: "in"},
+                                                      entity_lookat_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
@@ -176,8 +194,17 @@ class FindPerson(smach.StateMachine):
                                    transitions={'waited': 'NAVIGATE_TO_PERSON_UNREACHABLE',
                                                 'preempted': 'NAVIGATE_TO_PERSON_UNREACHABLE'})
 
+            # smach.StateMachine.add("NAVIGATE_TO_PERSON_UNREACHABLE",
+            #                        NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+            #                        transitions={'arrived': 'SAY_FOUND',
+            #                                     'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
+            #                                     'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
+
             smach.StateMachine.add("NAVIGATE_TO_PERSON_UNREACHABLE",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator, radius=0.7),
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near",
+                                                                                       room_designator: "in"},
+                                                      entity_lookat_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON2'})
@@ -202,28 +229,6 @@ class FindPerson(smach.StateMachine):
                                               sentence="I cannot reach you, I am so sorry", block=True),
                                    transitions={'spoken': 'failed'})
 
-
-
-
-
-    #
-    #     # Check types or designator resolve types
-    #     check_type(item, ed.msg.EntityInfo)
-    #     check_type(arm, Arm)
-    #
-    #     with self:
-    #         smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
-    #                                transitions={ 'succeeded'    : 'NAVIGATE_TO_GRAB',
-    #                                              'failed'       : 'failed'})
-    #
-    #         smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
-    #                                transitions={'unreachable':      'failed',
-    #                                             'goal_not_defined': 'failed',
-    #                                             'arrived':          'GRAB'})
-    #
-    #         smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
-    #                                transitions={'succeeded': 'done',
-    #                                             'failed':    'failed'})
 
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')

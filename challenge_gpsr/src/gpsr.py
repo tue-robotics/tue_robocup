@@ -34,8 +34,8 @@ import random
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import SegmentObjects, Grab
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator
+from robot_smach_states import SegmentObjects, Grab, Place
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator, EmptySpotDesignator, OccupiedArmDesignator
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
@@ -46,6 +46,14 @@ from robot_smach_states import LookAtArea
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
+
+# ------------------------------------------------------------------------------------------------------------------------
+
+class EntityDescription(object):
+    def __init__(self, id=None, type=None, location=None):
+        self.id = id
+        self.type = type
+        self.location = location
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -63,38 +71,44 @@ class GPSR:
         self.entity_type_to_id = {}
         self.object_to_location = {}
 
-        self.last_location_id = None
-        self.last_entity_id = None
+        self.last_location = None
+        self.last_entity = None
 
-    def resolve_entity_id(self, description):
-        if isinstance(description, str):
-            if description == "it":
-                return self.last_entity_id
-            elif description == "operator":
-                return "initial_pose"
-            else:
-                return description
+    def resolve_entity_description(self, parameters):
+        descr = EntityDescription()
+
+        if "special" in parameters:
+            special = parameters["special"]
+            if special =="it":
+                descr = self.last_entity
+            elif special == "operator":
+                descr.id = "initial_pose"
+        else:
+            for (key, value) in parameters.iteritems():
+                setattr(descr, key, value)
+        return descr
 
     # ------------------------------------------------------------------------------------------------------------------------
 
     def navigate(self, robot, parameters):
-        entity_id = self.resolve_entity_id(parameters["entity"])
+        entity_descr = self.resolve_entity_id(parameters["entity"])
 
-        if entity_id == "person":
+        if entity_descr.type == "person":
             robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
             return
 
-        self.last_location_id = entity_id
+        self.last_location = entity_descr
 
-        robot.speech.speak("I am going to the %s" % entity_id, block=False)
+        robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
 
-        if entity_id in challenge_knowledge.rooms:
+        if entity_descr.type in challenge_knowledge.rooms:
             nwc =  NavigateToSymbolic(robot,
-                                            { EntityByIdDesignator(robot, id=entity_id) : "in" },
-                                              EntityByIdDesignator(robot, id=entity_id))
+                                            { EntityByIdDesignator(robot, id=entity_descr.id) : "in" },
+                                              EntityByIdDesignator(robot, id=entity_descr.id))
         else:
+            # TODO
             nwc = NavigateToObserve(robot,
-                                 entity_designator=EdEntityDesignator(robot, id=entity_id),
+                                 entity_designator=EdEntityDesignator(robot, id=entity_descr.id),
                                  radius=.5)
 
         nwc.execute()
@@ -150,20 +164,21 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def find_and_pick_up(self, robot, parameters, pick_up=True):
-        entity_type = self.resolve_entity_id(parameters["entity"])
-        self.last_entity_id = entity_type
+        entity_descr = self.resolve_entity_description(parameters["entity"])
 
-        if entity_type == "person":
+        if entity_descr.type == "person":
             robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
             return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if "from" in parameters or self.last_location_id:
-            if "from" in parameters:
-                room_or_location = self.resolve_entity_id(parameters["from"])
+        self.last_entity = entity_descr
+
+        if entity_descr.location or self.last_location:
+            if entity_descr.location:
+                room_or_location = entity_descr.location.id
             else:
-                room_or_location = self.last_location_id            
+                room_or_location = self.last_location.id            
 
             if room_or_location in challenge_knowledge.rooms:
                 locations = [loc["name"] for loc in challenge_knowledge.common.locations
@@ -177,7 +192,7 @@ class GPSR:
         else:
             obj_cat = None
             for obj in challenge_knowledge.common.objects:
-                if obj["name"] == entity_type:
+                if obj["name"] == entity_descr.type:
                     obj_cat = obj["category"]
 
             location = challenge_knowledge.common.category_locations[obj_cat].keys()[0]
@@ -185,13 +200,11 @@ class GPSR:
 
             locations_with_areas = [(location, [area_name])]
 
-            robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_type, obj_cat, location), block=False)
+            robot.speech.speak("The {} is a {}, which is stored on the {}".format(entity_descr.type, obj_cat, location), block=False)
 
         location_defined = (len(locations_with_areas) == 1)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-        entity_id = None
 
         for loc_and_areas in locations_with_areas:
 
@@ -246,39 +259,39 @@ class GPSR:
 
                 best_prob = 0
                 for det in entity_types_and_probs:
-                    if det.type == entity_type and det.probability > best_prob:
-                        entity_id = det.id
+                    if det.type == entity_descr.type and det.probability > best_prob:
+                        entity_descr.id = det.id
                         best_prob = det.probability
 
-                if not entity_id:
+                if not entity_descr.id:
                     if location_defined:
-                        robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_type), block=False)
+                        robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_descr.type), block=False)
                         # TODO: get the entity with highest prob!
                     else:
-                        robot.speech.speak("Nope, the {} is not here.!".format(entity_type), block=False)
+                        robot.speech.speak("Nope, the {} is not here.!".format(entity_descr.type), block=False)
                 else:
-                        robot.speech.speak("Found the {}!".format(entity_type), block=False)
+                        robot.speech.speak("Found the {}!".format(entity_descr.type), block=False)
                         object_found = True
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if pick_up and entity_id:
+        if pick_up and entity_descr.id:
 
-            robot.speech.speak("Going to grab the {}".format(entity_type))
+            robot.speech.speak("Going to grab the {}".format(entity_descr.type))
 
             # grab it
-            grab = Grab(robot, EdEntityDesignator(robot, id=entity_id),
+            grab = Grab(robot, EdEntityDesignator(robot, id=entity_descr.id),
                  UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
             result = grab.execute()    
 
     # ------------------------------------------------------------------------------------------------------------------------
 
     def place(self, robot, parameters):
-        to_id = self.resolve_entity_id(parameters["to"])
+        to_descr = self.resolve_entity_description(parameters["to"])
 
         # Move to the location
-        location_des = ds.EntityByIdDesignator(robot, id=to_id)
-        room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(to_id))
+        location_des = ds.EntityByIdDesignator(robot, id=to_descr.id)
+        room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(to_descr.id))
 
         nwc = NavigateToSymbolic( robot,
                                   {location_des: 'in_front_of', room_des: "in"},
@@ -286,28 +299,42 @@ class GPSR:
         nwc.execute()
 
         # place
-        
+        arm = OccupiedArmDesignator(robot.arms, robot.leftArm)
+        if not arm.resolve():
+            robot.speech.speak("I don't have anything to place")
+            return
 
-        self.last_location_id = None
-        self.last_entity_id = None
+        current_item = EdEntityDesignator(robot)
+        place_position = EmptySpotDesignator(robot, location_des, area='on_top_of')
+        p = Place(robot, current_item, place_position, arm)
+        result = p.execute()
+
+        if result != 'done':
+            robot.speech.speak("Sorry, my fault")
+
+        self.last_location = None
+        self.last_entity = None
 
     # ------------------------------------------------------------------------------------------------------------------------
 
     def bring(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
 
-        if parameters["entity"] != "it":
+        if not self.last_entity or entity_descr.type != self.last_entity.type:
             self.find_and_pick_up(robot, parameters)
 
-        to_id = self.resolve_entity_id(parameters["to"])
+        to_descr = self.resolve_entity_description(parameters["to"])
 
         # Move to the location
         nwc = NavigateToObserve(robot,
-                         entity_designator=EdEntityDesignator(robot, id=to_id),
+                         entity_designator=EdEntityDesignator(robot, id=to_descr.id),
                          radius=.5)
         nwc.execute()
 
-        self.last_location_id = None
-        self.last_entity_id = None
+        # TODO: handover or place
+
+        self.last_location = None
+        self.last_entity = None
 
     # ------------------------------------------------------------------------------------------------------------------------
 

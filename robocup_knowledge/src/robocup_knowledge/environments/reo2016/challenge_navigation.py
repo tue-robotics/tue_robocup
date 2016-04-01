@@ -6,6 +6,7 @@ target2 = "navigation_waypoint_2"
 target2_radius1 = 1.2
 target2_radius2 = 0.1
 target2_radius3 = 0.3
+target2_obstacle_radius = 0.6
 
 target3 = "navigation_waypoint_3"
 target3_radius1 = 0.1
