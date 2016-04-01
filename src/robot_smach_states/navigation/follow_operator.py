@@ -77,14 +77,20 @@ class FollowOperator(smach.State):
         if not self._last_pose_stamped:
             self._last_pose_stamped = current_pose_stamped
         else:
+            current_yaw = transformations.euler_z_from_quaternion(current_pose_stamped.pose.orientation)
+            last_yaw = transformations.euler_z_from_quaternion(self._last_pose_stamped.pose.orientation)
+
             # Compare the pose with the last pose and update if difference is larger than x
-            if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.x, current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.05:
+            if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.x,
+                          current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.05 or abs(current_yaw - last_yaw) > 0.3:
                 # Update the last pose
                 print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
                 self._last_pose_stamped = current_pose_stamped
             else:
-                print "We are standing still for %f seconds" % (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
-                print "Seconds since start: %f" % (current_pose_stamped.header.stamp - self._time_started).to_sec()
+                print "Robot is standing still :/"
+
+                print "Robot dit not move for x seconds: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+
                 # Check whether we passed the timeout
                 if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > timeout:
                     self._robot.speech.speak("Standing still long enough ... I think I lost you ...")
