@@ -57,10 +57,8 @@ class FollowOperator(smach.State):
                 print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
                 self._last_pose_stamped = current_pose_stamped
             else:
-                print "We are standing still :/"
-
-                print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
-                print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
+                print "We are standing still for %f seconds" % (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+                print "Seconds since start: %f" % (current_pose_stamped.header.stamp - self._time_started).to_sec()
                 # Check whether we passed the timeout
                 if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > timeout:
                     self._robot.speech.speak("Standing still long enough ... I think I lost you ...")
@@ -234,6 +232,12 @@ class FollowOperator(smach.State):
                     return True
                 else:
                     return False
+            else:
+                yaw = math.atan2(dy, dx)
+                plan = [msg_constructors.PoseStamped(x=robot_position.x, y=robot_position.y, z=0, yaw=yaw)]
+
+                self._robot.base.local_planner.setPlan(plan, p, o)
+                return False
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -243,19 +247,21 @@ class FollowOperator(smach.State):
         for crumb in self._breadcrumbs:
             dx = crumb.pose.position.x - previous_point.x
             dy = crumb.pose.position.y - previous_point.y
+
             length = math.hypot(dx, dy)
 
-            dx_norm = dx / length
-            dy_norm = dy / length
-            yaw = math.atan2(dy, dx)
+            if length != 0:
+                dx_norm = dx / length
+                dy_norm = dy / length
+                yaw = math.atan2(dy, dx)
 
-            start = 0
-            end = int(length / res)
+                start = 0
+                end = int(length / res)
 
-            for i in range(start, end):
-                x = previous_point.x + i * dx_norm * res
-                y = previous_point.y + i * dy_norm * res
-                plan.append(msg_constructors.PoseStamped(x=x, y=y, z=0, yaw=yaw))
+                for i in range(start, end):
+                    x = previous_point.x + i * dx_norm * res
+                    y = previous_point.y + i * dy_norm * res
+                    plan.append(msg_constructors.PoseStamped(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = crumb.pose.position
 
@@ -325,6 +331,7 @@ class FollowOperator(smach.State):
                 else:
                     if self._standing_still_for_x_seconds(self._standing_still_timeout):
                         self._robot.base.local_planner.cancelCurrentPlan()
+
                         return "lost_operator"
                     print "Not there yet..."
             else:
