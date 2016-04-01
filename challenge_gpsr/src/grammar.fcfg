@@ -71,7 +71,7 @@ VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
 V_FIND["find"] -> find | look for
 
 OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
-OBJ_FIND["person"] -> a person | the person | NAME
+OBJ_FIND[{"type" : "person"}] -> a person | the person | NAME
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions

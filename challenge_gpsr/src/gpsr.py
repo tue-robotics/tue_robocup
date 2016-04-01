@@ -80,7 +80,10 @@ class GPSR:
     def resolve_entity_description(self, parameters):
         descr = EntityDescription()
 
-        if "special" in parameters:
+        if isinstance(parameters, str):
+            descr.id = parameters
+
+        elif "special" in parameters:
             special = parameters["special"]
             if special =="it":
                 descr = self.last_entity
@@ -92,7 +95,7 @@ class GPSR:
             if "type" in parameters:
                 descr.type = parameters["type"]
             if "loc" in parameters:
-                descr.location = parameters["loc"]
+                descr.location = self.resolve_entity_description(parameters["loc"])
 
         return descr
 
@@ -210,19 +213,19 @@ class GPSR:
     def find_and_pick_up(self, robot, parameters, pick_up=True):
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
         if entity_descr.type == "person":
-            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=entity_descr.location)
+            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=entity_descr.location.id)
             return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         self.last_entity = entity_descr
 
-        if entity_descr.location or self.last_location:
-            if entity_descr.location:
-                room_or_location = entity_descr.location["id"]
-            else:
-                room_or_location = self.last_location.id            
+        if entity_descr.location:
+            room_or_location = self.last_location.id            
 
             if room_or_location in challenge_knowledge.rooms:
                 locations = [loc["name"] for loc in challenge_knowledge.common.locations
@@ -495,8 +498,9 @@ class GPSR:
             if not run_forever:
                 done = True
 
-        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="exit_waypoint"), radius = 0.3)
-        nwc.execute()
+        if not skip_init:
+            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint), radius = 0.3)
+            nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
 
