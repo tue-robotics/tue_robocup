@@ -92,7 +92,16 @@ class LookAtArea(State):
                 rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
                 point_stamped = PointStamped(point=center_point,
                                              header=Header(frame_id=frame_id))
-                robot.head.look_at_point(point_stamped)
+
+                # This is awefully hardcoded for AMIGO!!! (TODO)
+                height = min(0.4, max(0.1, center_point.z-0.55))
+                robot.torso._send_goal([height], timeout=0)
+
+                robot.head.look_at_point(point_stamped, timeout=0)
+
+                robot.head.wait_for_motion_done(timeout=5)
+                robot.torso.wait_for_motion_done(timeout=5)
+
                 rospy.sleep(rospy.Duration(waittime))
                 return "succeeded"
 
