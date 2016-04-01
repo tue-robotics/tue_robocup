@@ -151,8 +151,11 @@ class GPSR:
     def navigate(self, robot, parameters):
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
         if entity_descr.type == "person":
-            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location)
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
 
         elif not entity_descr.id:
             not_implemented(robot, parameters)
