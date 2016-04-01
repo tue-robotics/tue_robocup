@@ -104,11 +104,16 @@ class Head():
         self._goal = None
         self._at_setpoint = False
 
-    def wait_for_motion_done(self):
+    def wait_for_motion_done(self, timeout=10):
         self._at_setpoint = False
+        starttime = rospy.Time.now()
         if self._goal:
-            while not self._at_setpoint:
-                rospy.sleep(0.1)
+            while (rospy.Time.now() - starttime).to_sec() < timeout:
+                if self._at_setpoint:
+                    return True
+                else:
+                    rospy.sleep(0.1)
+        return False
 
     # ---- INTERFACING THE NODE ---
 
