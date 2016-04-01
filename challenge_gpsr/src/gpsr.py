@@ -4,14 +4,16 @@
 # By Sjoerd van den Dries, 2016
 
 # TODO:
+# - handover
+# - define in_front_of's, etc
+# - Fix constraint outside arena (quick fix: seal exit in heightmap)
+
+# DONE:
 # - Add entrance and exit
 # - Enter arena
-# - handover
 # - Find person in different states
-# - define in_front_of's, etc
 # - also use the nav area for navigation
 # - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
-# - Fix constraint outside arena (quick fix: seal exit in heightmap)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
