@@ -40,21 +40,29 @@ def unwrap_grammar(lname, parser):
 
 # ----------------------------------------------------------------------------------------------------
 
+def resolve_name(name, challenge_knowledge):
+    if name in challenge_knowledge.translations:
+        return challenge_knowledge.translations[name]
+    else:
+        return name
+
+# ----------------------------------------------------------------------------------------------------
+
 class CommandRecognizer:
 
     def __init__(self, grammar_file, challenge_knowledge):
         self.parser = cfgparser.CFGParser.fromfile(grammar_file)
 
         for obj in challenge_knowledge.common.object_names:
-            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
-            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))  
+            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, resolve_name(obj, challenge_knowledge)))
+            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, resolve_name(obj, challenge_knowledge)))  
 
         location_names = list(set([o["name"] for o in challenge_knowledge.common.locations]))          
 
         for loc in location_names:
             #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))
-            self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (loc, loc))
-            self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (loc, loc))
+            self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (loc, resolve_name(loc, challenge_knowledge)))
+            self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (loc, resolve_name(loc, challenge_knowledge)))
 
         for name in challenge_knowledge.common.names:
             self.parser.add_rule("NAME -> %s" % name.lower())
@@ -64,9 +72,9 @@ class CommandRecognizer:
             #     self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
             #     self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))
 
-        for rooms in challenge_knowledge.rooms:
+        for room in challenge_knowledge.rooms:
             #parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
-            self.parser.add_rule("ROOM[\"%s\"] -> the %s" % (rooms, rooms))
+            self.parser.add_rule("ROOM[\"%s\"] -> the %s" % (room, resolve_name(room, challenge_knowledge)))
 
         # for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
         #     #parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))

@@ -8,6 +8,8 @@ exit_waypoint = "exit_door_B1"
 
 rooms = common.rooms + ["entrance", "exit"]
 
+translations = { "bookcase" : "book case" }
+
 #object_aliases = {"dinner table" : "dinnertable"}
 
 #_grab_locations = [o for o in common.locations if o["manipulation"] == "yes"]
