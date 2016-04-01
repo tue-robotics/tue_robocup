@@ -20,7 +20,7 @@ from robot_skills.util import transformations, msg_constructors
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout=20,
                  distance_threshold=None, lost_timeout=5, lost_distance=1.5,
-                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20):
+                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._time_started = None
@@ -36,6 +36,7 @@ class FollowOperator(smach.State):
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
         self._standing_still_timeout = standing_still_timeout
+        self._operator_standing_still_timeout = operator_standing_still_timeout
 
         self._operator_id_des = operator_id_des
 
@@ -44,6 +45,31 @@ class FollowOperator(smach.State):
         self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
 
         self._last_pose_stamped = None
+        self._last_operator_pose_stamped = None
+
+    def _operator_standing_still_for_x_seconds(self, timeout):
+        if not self._operator:
+            return False
+
+        operator_current_pose = self._operator.pose
+        operator_current_pose_stamped = msg_constructors.PoseStamped(x=operator_current_pose.position.x, y=operator_current_pose.position.y)
+        print "Operator position: %s" % self._operator.pose.position
+
+        if not self._last_operator_pose_stamped_:
+            self._last_operator_pose_stamped_ = operator_current_pose_stamped
+        else:
+            # Compare the pose with the last pose and update if difference is larger than x
+            if math.hypot(operator_current_pose_stamped.pose.position.x - self._last_operator_pose_stamped_.pose.position.x, operator_current_pose_stamped.pose.position.y - self._last_operator_pose_stamped_.pose.position.y) > 0.05:
+                # Update the last pose
+                print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped_.pose.position.x, self._last_operator_pose_stamped_.pose.position.y, self._last_operator_pose_stamped_.header.stamp.secs)
+                self._last_operator_pose_stamped_ = operator_current_pose_stamped
+            else:
+                print "Operator is standing still for %f seconds" % (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped_.header.stamp).to_sec()
+                # Check whether we passed the timeout
+                if (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped_.header.stamp).to_sec() > timeout:
+                    self._robot.speech.speak("Operator is standing still long enough  ...")
+                    return True
+        return False
 
     def _standing_still_for_x_seconds(self, timeout):
         current_pose_stamped = self._robot.base.get_location()
@@ -62,7 +88,6 @@ class FollowOperator(smach.State):
                 # Check whether we passed the timeout
                 if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > timeout:
                     self._robot.speech.speak("Standing still long enough ... I think I lost you ...")
-                    self._last_pose_stamped = None
                     return True
         return False
 
@@ -228,7 +253,7 @@ class FollowOperator(smach.State):
 
         if length < self._operator_radius:
             if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
-                if self._operator_id:
+                if self._operator_id and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
                     return True
                 else:
                     return False
@@ -297,6 +322,10 @@ class FollowOperator(smach.State):
         return False
 
     def execute(self, userdata):
+        # Reset robot and operator last pose
+        self._last_pose_stamped = None
+        self._last_operator_pose_stamped_ = None
+
         if self._operator_id_des:
             operator_id = self._operator_id_des.resolve()
             if operator_id:
@@ -327,25 +356,30 @@ class FollowOperator(smach.State):
                     self._operator_id_des.writeable.write(self._operator_id)
                     self._robot.base.local_planner.cancelCurrentPlan()
                     print "Arrived!"
+                    self._robot.speech.speak("stopped")
                     return "stopped"
                 else:
                     if self._standing_still_for_x_seconds(self._standing_still_timeout):
                         self._robot.base.local_planner.cancelCurrentPlan()
+                        self._robot.speech.speak("robot standing still for x seconds, lost")
 
                         return "lost_operator"
                     print "Not there yet..."
             else:
                 # If operator is lost, try to recover, if that doesn't work, return lost operator
                 if not self._operator:
+                    self._robot.speech.speak("Lost operator, trying the recover")
                     self._lost_time = rospy.Time.now()
                     if not self._recover_operator():
                         self._robot.base.local_planner.cancelCurrentPlan()
+                        self._robot.speech.speak("not recovered, lost")
                         return "lost_operator"
                 else:
-                    if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout:
+                    if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
                         self._operator_id_des.writeable.write(self._operator_id)
                         print "Out of breadcrumbs and I still have an operator, I must be there!"
                         self._robot.base.local_planner.cancelCurrentPlan()
+                        self._robot.speech.speak("Out of breadcrumbs and I still have an operator, I must be there!")
                         return "stopped"
 
             rospy.sleep(1) # Loop at 1Hz
