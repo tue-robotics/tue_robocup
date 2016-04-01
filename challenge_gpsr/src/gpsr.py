@@ -5,9 +5,9 @@
 
 # TODO:
 # - initial pose estimate
-# - Find person
+# - Enter arena
 # - handover
-# - placen
+# - Find person in different states
 # - define in_front_of's, etc
 # - also use the nav area for navigation
 # - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
