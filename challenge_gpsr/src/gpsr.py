@@ -430,7 +430,7 @@ class GPSR:
 
             res = None
             while not res:
-                robot.speech.speak("Give your command after the ping", block=False)
+                robot.speech.speak("Welcome to the GPSR. You can ask anything you want. Give your command after the ping", block=False)
                 res = command_recognizer.recognize(robot)
                 if not res:
                     robot.speech.speak("Sorry, I could not understand", block=True)
