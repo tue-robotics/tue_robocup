@@ -104,7 +104,7 @@ class Head():
         self._goal = None
         self._at_setpoint = False
 
-    def wait_for_motion_done(self, timeout=10):
+    def wait_for_motion_done(self, timeout=5.0):
         self._at_setpoint = False
         starttime = rospy.Time.now()
         if self._goal:
