@@ -287,11 +287,11 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def place(self, robot, parameters):
-        to_id = self.resolve_entity_id(parameters["to"])
+        to_descr = self.resolve_entity_description(parameters["to"])
 
         # Move to the location
-        location_des = ds.EntityByIdDesignator(robot, id=to_id)
-        room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(to_id))
+        location_des = ds.EntityByIdDesignator(robot, id=to_descr.id)
+        room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(to_descr.id))
 
         nwc = NavigateToSymbolic( robot,
                                   {location_des: 'in_front_of', room_des: "in"},
@@ -312,8 +312,8 @@ class GPSR:
         if result != 'done':
             robot.speech.speak("Sorry, my fault")
 
-        self.last_location_id = None
-        self.last_entity_id = None
+        self.last_location = None
+        self.last_entity = None
 
     # ------------------------------------------------------------------------------------------------------------------------
 
