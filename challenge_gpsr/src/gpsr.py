@@ -266,6 +266,8 @@ class GPSR:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        possible_entities = []
+
         for loc_and_areas in locations_with_areas:
 
             (location, area_names) = loc_and_areas
@@ -273,8 +275,6 @@ class GPSR:
             robot.speech.speak("Going to the %s" % location, block=False)
 
             last_nav_area = None
-
-            possible_entities = []
 
             for area_name in area_names:
 
