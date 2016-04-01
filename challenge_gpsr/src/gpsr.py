@@ -39,6 +39,7 @@ from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDe
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
+from find_person import FindPerson
 from datetime import datetime, timedelta
 import robot_smach_states.util.designators as ds
 
@@ -167,10 +168,16 @@ class GPSR:
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
         if entity_descr.type == "person":
-            robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
+            room_des = EdEntityDesignator(robot, id=entity_descr.loc)
+            f = FindPerson(robot, room_des)
+            result = f.execute()
+            if result != 'succeeded':
+                return
+
+            robot.speech.speak("I found you!")
             return
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         self.last_entity = entity_descr
 
