@@ -324,6 +324,7 @@ class FollowOperator(smach.State):
                     return "stopped"
                 else:
                     if self._standing_still_for_x_seconds(self._standing_still_timeout):
+                        self._robot.base.local_planner.cancelCurrentPlan()
                         return "lost_operator"
                     print "Not there yet..."
             else:
@@ -331,11 +332,13 @@ class FollowOperator(smach.State):
                 if not self._operator:
                     self._lost_time = rospy.Time.now()
                     if not self._recover_operator():
+                        self._robot.base.local_planner.cancelCurrentPlan()
                         return "lost_operator"
                 else:
                     if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout:
                         self._operator_id_des.writeable.write(self._operator_id)
                         print "Out of breadcrumbs and I still have an operator, I must be there!"
+                        self._robot.base.local_planner.cancelCurrentPlan()
                         return "stopped"
 
             rospy.sleep(1) # Loop at 1Hz
