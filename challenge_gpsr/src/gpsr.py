@@ -217,8 +217,16 @@ class GPSR:
         if not entity_descr.location:
             entity_descr.location = self.last_location
 
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -           
+
         if entity_descr.type == "person":
-            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=entity_descr.location.id)
+
+            if self.last_location.id in challenge_knowledge.rooms:
+                room = self.last_location.id
+            else:
+                room = challenge_knowledge.common.get_room(self.last_location.id)
+
+            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=room)
             return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
