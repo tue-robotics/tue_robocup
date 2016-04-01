@@ -188,57 +188,61 @@ def load_waypoints(robot, filename="/param/locations.yaml"):
             visualize_location(base_pose, tablename)
             robot.ed.update_entity(id=tablename, posestamped=base_pose, type="waypoint")
 
-class StoreWaypoint(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done", "continue"])
-        self._robot = robot
+if "--professional" in sys.argv:
+    from automatic_side_detection import StoreWaypoint
+else:
+    class StoreWaypoint(smach.State):
+        def __init__(self, robot):
+            smach.State.__init__(self, outcomes=["done", "continue"])
+            self._robot = robot
+            self._robot.robot.speech.speak("Using a custom waiter")
 
-    def execute(self, userdata):
-        # Stop the base
-        self._robot.base.local_planner.cancelCurrentPlan()
+        def execute(self, userdata):
+            # Stop the base
+            self._robot.base.local_planner.cancelCurrentPlan()
 
-        base_pose = self._robot.base.get_location()
+            base_pose = self._robot.base.get_location()
 
-        choices = knowledge.guiding_choices
+            choices = knowledge.guiding_choices
 
-        self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("Location and side?")
-        result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
-        self._robot.head.cancel_goal()
+            self._robot.head.look_at_standing_person()
+            self._robot.speech.speak("Location and side?")
+            result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
+            self._robot.head.cancel_goal()
 
-        if result:
-            if "continue" in result.choices:
-                return "continue"
-            if "side" in result.choices and "location" in result.choices:
-                side = result.choices["side"]
-                location = result.choices["location"]
+            if result:
+                if "continue" in result.choices:
+                    return "continue"
+                if "side" in result.choices and "location" in result.choices:
+                    side = result.choices["side"]
+                    location = result.choices["location"]
 
-                self._robot.head.look_at_standing_person()
-               # self._robot.speech.speak("%s %s?"%(location, side))
-               # result = self._robot.ears.recognize("(yes|no)",{})
-               # self._robot.head.cancel_goal()
-               # if not result or result.result == "no":
-               #     self._robot.speech.speak("Sorry", block=False)
-               #     return "continue"
+                    self._robot.head.look_at_standing_person()
+                   # self._robot.speech.speak("%s %s?"%(location, side))
+                   # result = self._robot.ears.recognize("(yes|no)",{})
+                   # self._robot.head.cancel_goal()
+                   # if not result or result.result == "no":
+                   #     self._robot.speech.speak("Sorry", block=False)
+                   #     return "continue"
 
-                self._robot.speech.speak("%s %s, it is!"%(location, side))
-                self._robot.head.cancel_goal()
+                    self._robot.speech.speak("%s %s, it is!"%(location, side))
+                    self._robot.head.cancel_goal()
 
-                if side == "left":
-                    base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                        transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
-                elif side == "right":
-                    base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                        transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+                    if side == "left":
+                        base_pose.pose.orientation = transformations.euler_z_to_quaternion(
+                            transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+                    elif side == "right":
+                        base_pose.pose.orientation = transformations.euler_z_to_quaternion(
+                            transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
 
-                loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
-                rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
-                visualize_location(base_pose, location)
-                self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
+                    loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
+                    rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
+                    visualize_location(base_pose, location)
+                    self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
 
-                return "done"
+                    return "done"
 
-        return "continue"
+            return "continue"
 
 
 class CheckKnowledge(smach.State):
@@ -287,6 +291,17 @@ class AskOrder(smach.State):
         self._robot = robot
         self._location = location
 
+    def _confirm(self, tries=3):
+        for i in range(0, tries):
+            result = self._robot.ears.recognize("(yes|no)",{})
+            if result and result.result != "":
+                answer = result.result
+                return answer == "yes"
+
+            if i != tries - 1:
+                self._robot.speech.speak("Please say yes or no")
+        return False
+
     def execute(self, userdata):
         self._robot.head.look_at_ground_in_front_of_robot(3)
         self._robot.speech.speak("Which combo or beverage do you want?")
@@ -295,6 +310,11 @@ class AskOrder(smach.State):
         while not order:
             result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
             if result:
+
+                self._robot.speech.speak("I heard %s, is this correct?" % result.result)
+                if not self._confirm():
+                    continue
+
                 if "beverage" in result.choices:
                     order = result.choices["beverage"]
                     ORDERS["beverage"] = { "location" : self._location, "name" : order }

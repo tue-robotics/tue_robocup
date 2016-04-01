@@ -153,6 +153,7 @@ class StoreWaypoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "continue"])
         self._robot = robot
+        self._robot.robot.speech.speak("Using a professional waiter")
 
     def _confirm(self, tries=3):
         for i in range(0, tries):
