@@ -5,9 +5,9 @@
 
 # TODO:
 # - initial pose estimate
-# - Find person
+# - Enter arena
 # - handover
-# - placen
+# - Find person in different states
 # - define in_front_of's, etc
 # - also use the nav area for navigation
 # - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
@@ -278,7 +278,7 @@ class GPSR:
                         best_prob = det.probability
 
                 if not entity_descr.id:
-                    if location_defined:
+                    if len(locations_with_areas) == 1 and len(area_names) == 1:
                         robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_descr.type), block=False)
                         # TODO: get the entity with highest prob!
                     else:
