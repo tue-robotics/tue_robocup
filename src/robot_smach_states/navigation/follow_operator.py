@@ -333,7 +333,7 @@ class FollowOperator(smach.State):
     def execute(self, userdata):
         # Reset robot and operator last pose
         self._last_pose_stamped = None
-        self._last_operator_pose_stamped_ = None
+        self._last_operator_pose_stamped = None
 
         if self._operator_id_des:
             operator_id = self._operator_id_des.resolve()
@@ -358,6 +358,10 @@ class FollowOperator(smach.State):
             self._update_breadcrumb_path()
 
             if self._breadcrumbs:
+
+                if not self._operator:
+                    self._recover_operator()
+
                 # If there are still breadcrumbs on the path, keep following the path
                 print "I have breadcrumbs, let's update navigation"
 
