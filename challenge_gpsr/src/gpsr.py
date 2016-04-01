@@ -44,10 +44,11 @@ from find_person import FindPerson
 from datetime import datetime, timedelta
 import robot_smach_states.util.designators as ds
 
-from robot_smach_states import LookAtArea
+from robot_smach_states import LookAtArea, StartChallengeRobust
 
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
+starting_point = challenge_knowledge.starting_point
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -361,6 +362,11 @@ class GPSR:
         self.find_and_pick_up(robot, parameters, pick_up=False)
 
     # ------------------------------------------------------------------------------------------------------------------------
+
+    def start_challenge(self, robot):
+        s = StartChallengeRobust(robot, starting_point)
+        s.execute()
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
@@ -445,6 +451,10 @@ class GPSR:
             return 1
 
         robot = Robot()
+
+        # wait for door etc.
+        if not skip_init:
+            self.start_challenge(robot)
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
