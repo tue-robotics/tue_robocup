@@ -34,8 +34,8 @@ import random
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import SegmentObjects, Grab
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator
+from robot_smach_states import SegmentObjects, Grab, Place
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator, EmptySpotDesignator, OccupiedArmDesignator
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from command_recognizer import CommandRecognizer
@@ -286,7 +286,18 @@ class GPSR:
         nwc.execute()
 
         # place
-        
+        arm = OccupiedArmDesignator(robot.arms, robot.leftArm)
+        if not arm.resolve():
+            robot.speech.speak("I don't have anything to place")
+            return
+
+        current_item = EdEntityDesignator(robot)
+        place_position = EmptySpotDesignator(robot, location_des, area='on_top_of')
+        p = Place(robot, current_item, place_position, arm)
+        result = p.execute()
+
+        if result != 'done':
+            robot.speech.speak("Sorry, my fault")
 
         self.last_location_id = None
         self.last_entity_id = None
