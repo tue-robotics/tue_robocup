@@ -350,15 +350,20 @@ class FollowOperator(smach.State):
 
             if self._breadcrumbs:
                 # If there are still breadcrumbs on the path, keep following the path
+                print "I have breadcrumbs, let's update navigation"
+
                 if self._update_navigation():
+                    print "Update navigation succeeded. Arrived!"
                     self._robot.base.local_planner.cancelCurrentPlan()
                     self._visualize_breadcrumbs()
                     self._operator_id_des.writeable.write(self._operator_id)
                     self._robot.base.local_planner.cancelCurrentPlan()
-                    print "Arrived!"
+
                     self._robot.speech.speak("stopped")
+
                     return "stopped"
                 else:
+                    print "Update navigation returned False, checking if standing still long enough..."
                     if self._standing_still_for_x_seconds(self._standing_still_timeout):
                         self._robot.base.local_planner.cancelCurrentPlan()
                         self._robot.speech.speak("robot standing still for x seconds, lost")
@@ -366,18 +371,19 @@ class FollowOperator(smach.State):
                         return "lost_operator"
                     print "Not there yet..."
             else:
+                print "No more breadcrumbs. Checking if I still have an operator..."
                 # If operator is lost, try to recover, if that doesn't work, return lost operator
                 if not self._operator:
-                    self._robot.speech.speak("Lost operator, trying the recover")
+                    print "Lost operator, trying the recover"
                     self._lost_time = rospy.Time.now()
                     if not self._recover_operator():
                         self._robot.base.local_planner.cancelCurrentPlan()
-                        self._robot.speech.speak("not recovered, lost")
+                        self._robot.speech.speak("Tried to recover but didn't find anything, I lost you")
                         return "lost_operator"
                 else:
+                    print "I still have an operator. Checking if standstill timeout is reached"
                     if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
                         self._operator_id_des.writeable.write(self._operator_id)
-                        print "Out of breadcrumbs and I still have an operator, I must be there!"
                         self._robot.base.local_planner.cancelCurrentPlan()
                         self._robot.speech.speak("Out of breadcrumbs and I still have an operator, I must be there!")
                         return "stopped"
