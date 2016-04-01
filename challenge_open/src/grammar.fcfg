@@ -1,30 +1,35 @@
 T[{action1: A1}] -> C[A1]
 T[{action1: A1, action2: A2}] -> C[A1] and C[A2]
-T[{action1: A1, action2: A2, action3: A3}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> VP[A]
+
+# Go to the X
+# Go to the X and look for objects
+# Grab the X from the Y and bring it to me
+# Bring me the X from the Y
+# Find the person near the X
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-NP[M] -> SMALL_OBJECT[M]
-NP[M] -> LOC[M]
-
-LOC[{"id" : X}] -> ROOM[X] | FURNITURE[X]
+LOC[{"id" : X}] -> FURNITURE[X]
 
 SMALL_OBJECT_SPEC[{ "special" : "it" }] -> it
-SMALL_OBJECT_SPEC[{ "type" : X }] -> SMALL_OBJECT[X]
-SMALL_OBJECT_SPEC[{ "type" : X, "loc" : Y }] -> SMALL_OBJECT[X] FROM_PP LOC[Y]
+SMALL_OBJECT_SPEC[{ "type" : X }] -> OBJ[X]
+SMALL_OBJECT_SPEC[{ "type" : X, "loc" : Y }] -> OBJ[X] FROM_PP LOC[Y]
+
+OBJ["any"] -> the object
+OBJ["any"] -> objects
 
 FROM_PP -> from | on | which is on
-AT_PP -> in | at | who is in
+NEAR_PP -> near | at | who is near
 
 TO_LOC[X] -> LOC[X]
-TO_LOC[{"type" : "person", "loc" : R}] -> PERSON AT_PP ROOM[R]
+TO_LOC[{"type" : "person", "loc" : {"id" : X}}] -> PERSON NEAR_PP FURNITURE[X]
 TO_LOC[{"special" : "operator"}] -> me
 
-PERSON -> a person | the person | NAME
+PERSON -> a person | the person
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Grasping
@@ -38,18 +43,10 @@ V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
+# VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
 VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Placing
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on LOC[L]
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in LOC[L]
-V_PLACE -> put | place
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Moving
@@ -58,9 +55,8 @@ V_PLACE -> put | place
 VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
 
 NAV_LOC[X] -> TO_LOC[X]
-NAV_LOC[X] -> ROOM[X]
 
-V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
+V_MOVE["navigate"] -> move to | go to | drive to | navigate to | get into | reach
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Find
@@ -71,16 +67,12 @@ VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
 V_FIND["find"] -> find | look for
 
 OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
-OBJ_FIND[{"type" : "person"}] -> a person | the person | NAME
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action": "answer-question"] -> answer a question
-VP["action": "answer-question"] -> answer the question
-VP["action": "answer-question"] -> answer his question
-VP["action": "answer-question"] -> answer her question
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Say
