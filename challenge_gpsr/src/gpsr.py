@@ -5,6 +5,7 @@
 
 # TODO:
 # - initial pose estimate
+# - Add entrance and exit
 # - Enter arena
 # - handover
 # - Find person in different states
@@ -99,28 +100,46 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
+    def move_robot(self, robot, id, type=None, nav_area=None):
+        if id in challenge_knowledge.rooms:
+            nwc =  NavigateToSymbolic(robot,
+                                            { EntityByIdDesignator(robot, id=id) : "in" },
+                                              EntityByIdDesignator(robot, id=id))
+        elif type == "person":
+            nwc =  NavigateToSymbolic(robot,
+                                            { EntityByIdDesignator(robot, id=id) : "in" },
+                                              EntityByIdDesignator(robot, id=id))
+        else:
+            if not nav_area:
+                nav_area = challenge_knowledge.common.get_inspect_position(id)
+
+            location_des = ds.EntityByIdDesignator(robot, id=id)
+            room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(id))
+
+            nwc = NavigateToSymbolic( robot,
+                  {location_des : nav_area, room_des : "in"},
+                  location_des)
+            nwc.execute()
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
     def navigate(self, robot, parameters):
-        entity_descr = self.resolve_entity_id(parameters["entity"])
+        entity_descr = self.resolve_entity_description(parameters["entity"])
 
         if entity_descr.type == "person":
+            # TODO:
+            # 1) move to the specified location (entity_descr.location)
+            # 2) find the person
+            # 3) move to the person
             robot.speech.speak("I cannot find people yet! Ask Janno to hurry up!")
-            return
 
-        self.last_location = entity_descr
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
 
-        robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
-
-        if entity_descr.type in challenge_knowledge.rooms:
-            nwc =  NavigateToSymbolic(robot,
-                                            { EntityByIdDesignator(robot, id=entity_descr.id) : "in" },
-                                              EntityByIdDesignator(robot, id=entity_descr.id))
         else:
-            # TODO
-            nwc = NavigateToObserve(robot,
-                                 entity_designator=EdEntityDesignator(robot, id=entity_descr.id),
-                                 radius=.5)
-
-        nwc.execute()
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -238,14 +257,7 @@ class GPSR:
                     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
                     # Move to the location
 
-                    location_des = ds.EntityByIdDesignator(robot, id=location)
-                    room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(location))
-
-                    nwc = NavigateToSymbolic( robot,
-                                              {location_des : nav_area, room_des : "in"},
-                                              location_des)
-                    nwc.execute()
-
+                    self.move_robot(robot, id=location, nav_area=nav_area)
                     last_nav_area = nav_area
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -319,10 +331,7 @@ class GPSR:
         if to_descr.type == "person":
 
             if to_descr.id:
-                # Move to the location
-                nwc = NavigateToObserve(robot,
-                             entity_designator=EdEntityDesignator(robot, id=to_descr.id),
-                             radius=.5)
+                self.move_robot(robot, id=to_descr.id)
             else:
                 not_implemented(robot, parameters)
                 return
@@ -331,13 +340,7 @@ class GPSR:
 
         else:
             # Move to the location
-            location_des = ds.EntityByIdDesignator(robot, id=to_descr.id)
-            room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(to_descr.id))
-
-            nwc = NavigateToSymbolic( robot,
-                                      {location_des: 'in_front_of', room_des: "in"},
-                                      location_des)
-            nwc.execute()
+            self.move_robot(robot, id=to_descr.id, nav_area="in_front_of")
 
             # place
             arm = OccupiedArmDesignator(robot.arms, robot.leftArm)
