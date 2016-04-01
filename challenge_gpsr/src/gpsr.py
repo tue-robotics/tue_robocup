@@ -151,8 +151,11 @@ class GPSR:
     def navigate(self, robot, parameters):
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
         if entity_descr.type == "person":
-            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location)
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
 
         elif not entity_descr.id:
             not_implemented(robot, parameters)
@@ -380,7 +383,10 @@ class GPSR:
         to_descr = self.resolve_entity_description(parameters["to"])
 
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
-            self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
+            if to_descr.location:
+                self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
+            else:
+                self.move_robot(robot, id=to_descr.id, type=to_descr.type)
 
             arm_des = OccupiedArmDesignator(robot.arms, robot.leftArm)
 
