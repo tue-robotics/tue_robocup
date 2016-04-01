@@ -13,7 +13,7 @@ from robot_skills.util import transformations, msg_constructors
 from robocup_knowledge import load_knowledge
 knowledge = load_knowledge("challenge_restaurant")
 
-from challenge_restaurant import visualize_location
+from visualize import visualize_location
 
 
 def _get_area(convex_hull):
@@ -153,7 +153,7 @@ class StoreWaypoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "continue"])
         self._robot = robot
-        self._robot.robot.speech.speak("Using a professional waiter")
+        self._robot.speech.speak("Using a professional waiter")
 
     def _confirm(self, tries=3):
         for i in range(0, tries):
