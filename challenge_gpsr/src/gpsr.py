@@ -313,13 +313,20 @@ class GPSR:
                         best_prob = det.probability
 
                 if not entity_descr.id:
-                    if len(locations_with_areas) == 1 and len(area_names) == 1:
-                        robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_descr.type), block=False)
-                        # TODO: get the entity with highest prob!
+                    if area_name == area_names[-1] and loc_and_areas == locations_with_areas[-1]:
+                        if not found_entity_ids:
+                            robot.speech.speak("Oh no! The {} should be here, but I can't find it.".format(entity_descr.type), block=False)
+                        else:
+                            # The object MUST be here, so randomly select one of the segments
+                            robot.speech.speak("Sort of found the {}!".format(entity_descr.type), block=False)
+                            import random
+                            entity_descr.id = random.choice(found_entity_ids)
                     else:
                         robot.speech.speak("Nope, the {} is not here.!".format(entity_descr.type), block=False)
                 else:
                         robot.speech.speak("Found the {}!".format(entity_descr.type), block=False)
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
                 if entity_descr.id:
                     break
