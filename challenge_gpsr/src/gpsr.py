@@ -37,7 +37,7 @@ import argparse
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import SegmentObjects, Grab, Place
+from robot_smach_states import SegmentObjects, Grab, Place, HandoverToHuman
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator, EmptySpotDesignator, OccupiedArmDesignator
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
@@ -359,8 +359,14 @@ class GPSR:
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
             self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location)
 
-            # TODO: handover
+            arm_des = OccupiedArmDesignator(robot.arms, robot.leftArm)
 
+            if not arm_des.resolve():
+                robot.speech.speak("I don't have anything to give to you")
+                return
+
+            h = HandoverToHuman(robot, arm_des)
+            result = h.execute()
         else:
             # Move to the location
             self.move_robot(robot, id=to_descr.id, nav_area="in_front_of")
