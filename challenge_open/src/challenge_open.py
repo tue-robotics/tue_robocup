@@ -30,9 +30,11 @@
 import os
 import sys
 import yaml
+import time
 import cfgparser
 import rospy
 import random
+import std_msgs
 import argparse
 
 import robot_smach_states
@@ -78,6 +80,17 @@ class GPSR:
 
         self.last_location = None
         self.last_entity = None
+
+        self._action_requested = False
+
+        self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
+
+    def _trigger_callback(self, msg):
+        """ Callback function for the trigger topic. Sets self._action_requested to True if the msg is 'gpsr'
+        :param msg:
+        """
+        if msg.data == "gpsr":
+            self._action_requested = True
 
     def resolve_entity_description(self, parameters):
         descr = EntityDescription()
@@ -266,6 +279,8 @@ class GPSR:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        possible_entities = []
+
         for loc_and_areas in locations_with_areas:
 
             (location, area_names) = loc_and_areas
@@ -273,8 +288,6 @@ class GPSR:
             robot.speech.speak("Going to the %s" % location, block=False)
 
             last_nav_area = None
-
-            possible_entities = []
 
             for area_name in area_names:
 
@@ -296,7 +309,6 @@ class GPSR:
                                      area_name)
                 look_sm.execute()
 
-                import time
                 time.sleep(1)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -445,8 +457,6 @@ class GPSR:
         # When using text-to-speech
 
         else:
-            import time
-            time.sleep(1)
             robot.head.look_at_standing_person()
             robot.head.wait_for_motion_done()
 
@@ -511,15 +521,18 @@ class GPSR:
             print "unknown robot"
             return 1
 
+        # Sleep for 1 second to make sure everything is connected
+        time.sleep(1)
+
         robot = Robot()
 
-        # wait for door etc.
-        if not skip_init:
-            self.start_challenge(robot)
-
-            # Move to the start location
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
-            nwc.execute()
+        # # wait for door etc.
+        # if not skip_init:
+        #     self.start_challenge(robot)
+        #
+        #     # Move to the start location
+        #     nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
+        #     nwc.execute()
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
@@ -536,14 +549,19 @@ class GPSR:
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         done = False
-        while not done:
-            self.execute_command(robot, command_recognizer, action_functions, sentence)
-            if not run_forever:
-                done = True
+        while not done and not rospy.is_shutdown():
+            # Wait for trigger to become True
+            while not self._action_requested and not rospy.is_shutdown():
+                time.sleep(0.1)
 
-        if not skip_init:
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint), radius = 0.3)
-            nwc.execute()
+            self._action_requested = False
+            self.execute_command(robot, command_recognizer, action_functions, sentence)
+            # if not run_forever:
+            #     done = True
+
+        # if not skip_init:
+        #     nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint), radius = 0.3)
+        #     nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
 
