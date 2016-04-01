@@ -4,11 +4,11 @@
 # By Sjoerd van den Dries, 2016
 
 # TODO:
-# - handover
-# - define in_front_of's, etc
-# - Fix constraint outside arena (quick fix: seal exit in heightmap)
 
 # DONE:
+# - Fix constraint outside arena (quick fix: seal exit in heightmap)
+# - define in_front_of's, etc
+# - handover
 # - Add entrance and exit
 # - Enter arena
 # - Find person in different states
