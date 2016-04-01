@@ -8,7 +8,7 @@ exit_waypoint = "exit_door_B1"
 
 rooms = common.rooms + ["entrance", "exit"]
 
-translations = { "bookcase" : "book case" }
+translations = { "bookcase" : "bocase" }
 
 #object_aliases = {"dinner table" : "dinnertable"}
 
