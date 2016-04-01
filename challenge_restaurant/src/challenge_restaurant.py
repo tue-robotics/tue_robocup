@@ -188,14 +188,14 @@ def load_waypoints(robot, filename="/param/locations.yaml"):
             visualize_location(base_pose, tablename)
             robot.ed.update_entity(id=tablename, posestamped=base_pose, type="waypoint")
 
-if "--professional" in sys.argv:
+if "--custom" not in sys.argv:
     from automatic_side_detection import StoreWaypoint
 else:
     class StoreWaypoint(smach.State):
         def __init__(self, robot):
             smach.State.__init__(self, outcomes=["done", "continue"])
             self._robot = robot
-            self._robot.robot.speech.speak("Using a custom waiter")
+            self._robot.speech.speak("Using a custom waiter")
 
         def execute(self, userdata):
             # Stop the base
@@ -579,6 +579,6 @@ def test_delivery(robot):
 if __name__ == '__main__':
     rospy.init_node('restaurant_exec')
 
-    startup(setup_statemachine, challenge_name="restaurant")
+    startup(setup_statemachine, challenge_name="restaurant", argv=[ e for e in sys.argv if e != "--custom" ])
 
     print "If you want to save the learned locations, do '$ rosparam dump $(rospack find challenge_restaurant)/param/locations.yaml /restaurant_locations/'"
