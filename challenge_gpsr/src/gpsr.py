@@ -349,14 +349,14 @@ class GPSR:
 
     def bring(self, robot, parameters):
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Check if need to grab an entity and if so, do so
+        # # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # # Check if need to grab an entity and if so, do so
 
-        if "entity" in parameters:
-            entity_descr = self.resolve_entity_description(parameters["entity"])
+        # if "entity" in parameters:
+        #     entity_descr = self.resolve_entity_description(parameters["entity"])
 
-            if not self.last_entity or entity_descr.type != self.last_entity.type:
-                self.find_and_pick_up(robot, parameters)
+        #     if not self.last_entity or entity_descr.type != self.last_entity.type:
+        #         self.find_and_pick_up(robot, parameters)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Deliver it
@@ -364,7 +364,7 @@ class GPSR:
         to_descr = self.resolve_entity_description(parameters["to"])
 
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
-            self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location)
+            self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
 
             arm_des = OccupiedArmDesignator(robot.arms, robot.leftArm)
 
