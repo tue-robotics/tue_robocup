@@ -3,7 +3,7 @@ target1_radius1 = 0.1
 target1_radius2 = 0.3
 
 target2 = "navigation_waypoint_2"
-target2_radius1 = 1.2
+target2_radius1 = 0.3
 target2_radius2 = 0.1
 target2_radius3 = 0.3
 target2_obstacle_radius = 0.6
@@ -24,4 +24,4 @@ exit4 = "entry_point_B"
 starting_point = "initial_pose_door_A"
 rotation = 0
 
-time_out_seconds = 30.0
+time_out_seconds = 60.0

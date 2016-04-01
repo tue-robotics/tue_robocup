@@ -66,18 +66,26 @@ category_locations = {
     "containers": {"dinnertable": "on_top_of"}
 }
 
+def is_location(loc_name):
+    for loc in locations:
+        if loc["name"] == loc_name:
+            return True
+    return False
+
 inspect_areas = {
     "closet" : ["on_top_of"],
     "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4"],
     "dinnertable" : ["on_top_of"],
-    "kitchencounter" : ["left_of_sink", "right_of_sink"]
+    "kitchencounter" : ["right_of_sink", "left_of_sink"],
+    "sideboard" : ["on_top_of_left", "on_top_of_right"],
+    "tv_stand" : ["on_top_of_left", "on_top_of_right"]
 }
 
 inspect_positions = {
     "kitchencounter" :
     {
-        "left_of_sink"  : "in_front_of",
-        "right_of_sink" : "in_front_of"
+        "right_of_sink" : "in_front_of_right_sink",
+        "left_of_sink"  : "in_front_of_left_sink"
     }
 }
 
@@ -93,7 +101,7 @@ def get_inspect_areas(location):
     else:
         return ["on_top_of"]
 
-def get_inspect_position(location, area):
+def get_inspect_position(location, area=""):
     if location in inspect_positions and area in inspect_positions[location]:
         return inspect_positions[location][area]
     else:

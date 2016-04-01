@@ -21,7 +21,6 @@ FROM_PP -> from | on | which is on
 AT_PP -> in | at | who is in
 
 TO_LOC[X] -> LOC[X]
-TO_LOC[{"type" : "person"}] -> PERSON
 TO_LOC[{"type" : "person", "loc" : R}] -> PERSON AT_PP ROOM[R]
 TO_LOC[{"special" : "operator"}] -> me
 
@@ -72,7 +71,7 @@ VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
 V_FIND["find"] -> find | look for
 
 OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
-OBJ_FIND["person"] -> a person | the person | NAME
+OBJ_FIND[{"type" : "person"}] -> a person | the person | NAME
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions

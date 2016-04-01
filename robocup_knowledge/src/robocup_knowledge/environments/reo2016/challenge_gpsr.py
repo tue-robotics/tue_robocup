@@ -2,34 +2,16 @@ from itertools import groupby
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
-rooms = common.rooms
+# initial pose
+starting_point = "initial_pose_door_A"
+exit_waypoint = "exit_door_B1"
 
-object_aliases = {"dinner table" : "dinnertable"}
+rooms = common.rooms + ["entrance", "exit"]
 
-# mapping from furniture to small objects that are on top of them (and can be grabbed)
-furniture_to_objects = {
-    "cabinet": [
-        "beer",
-        "bifrutas",
-        "coffee_pads",
-        "coke",
-        "deodorant"
-    ],
+translations = { "bookcase" : "bocase" }
 
-    "dinnertable": [
-        "fanta",
-        "ice_tea",
-        "mentos",
-        "sprite",
-        "tea",
-        "teddy_bear",
-        "water",
-        "xylit24_spearmint",
-        "xylit24_white"],
+#object_aliases = {"dinner table" : "dinnertable"}
 
-    "bed": []
-}
-
-_grab_locations = [o for o in common.locations if o["manipulation"] == "yes"]
-room_to_grab_locations = groupby(_grab_locations, lambda l: l['room'])
-room_to_grab_locations = {k: [l['name'] for l in g] for (k, g) in room_to_grab_locations}
+#_grab_locations = [o for o in common.locations if o["manipulation"] == "yes"]
+# room_to_grab_locations = groupby(_grab_locations, lambda l: l['room'])
+# room_to_grab_locations = {k: [l['name'] for l in g] for (k, g) in room_to_grab_locations}
