@@ -497,7 +497,7 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def run(self, robot):
+    def run(self, robot, sentence):
         
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
@@ -554,7 +554,7 @@ def main():
     time.sleep(1)
 
     gpsr = GPSR(robot)
-    gpsr.run(robot)
+    gpsr.run(robot, sentence)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
