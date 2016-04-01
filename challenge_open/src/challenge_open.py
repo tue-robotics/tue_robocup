@@ -73,7 +73,7 @@ def not_implemented(robot, parameters):
 
 class GPSR:
 
-    def __init__(self):
+    def __init__(self, robot):
         self.entity_ids = []
         self.entity_type_to_id = {}
         self.object_to_location = {}
@@ -497,43 +497,8 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def run(self):
-        rospy.init_node("gpsr")
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument('robot', help='Robot name')
-        parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
-        parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
-        parser.add_argument('sentence', nargs='*', help='Optional sentence')
-        args = parser.parse_args()
-        rospy.loginfo('args: %s', args)
-
-        robot_name = args.robot
-        run_forever = args.forever
-        skip_init = args.skip
-        sentence = " ".join([word for word in args.sentence if word[0] != '_'])
-
-        if robot_name == 'amigo':
-            from robot_skills.amigo import Amigo as Robot
-        elif robot_name == 'sergio':
-            from robot_skills.sergio import Sergio as Robot
-        else:
-            print "unknown robot"
-            return 1
-
-        # Sleep for 1 second to make sure everything is connected
-        time.sleep(1)
-
-        robot = Robot()
-
-        # # wait for door etc.
-        # if not skip_init:
-        #     self.start_challenge(robot)
-        #
-        #     # Move to the start location
-        #     nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
-        #     nwc.execute()
-
+    def run(self, robot):
+        
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -556,15 +521,42 @@ class GPSR:
 
             self._action_requested = False
             self.execute_command(robot, command_recognizer, action_functions, sentence)
-            # if not run_forever:
-            #     done = True
 
-        # if not skip_init:
-        #     nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint), radius = 0.3)
-        #     nwc.execute()
+# ------------------------------------------------------------------------------------------------------------------------
+
+def main():
+    rospy.init_node("gpsr")
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('robot', help='Robot name')
+    parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
+    parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
+    parser.add_argument('sentence', nargs='*', help='Optional sentence')
+    args = parser.parse_args()
+    rospy.loginfo('args: %s', args)
+
+    robot_name = args.robot
+    run_forever = args.forever
+    skip_init = args.skip
+    sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+
+    if robot_name == 'amigo':
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == 'sergio':
+        from robot_skills.sergio import Sergio as Robot
+    else:
+        print "unknown robot"
+        return 1
+
+    robot = Robot()
+
+    # Sleep for 1 second to make sure everything is connected
+    time.sleep(1)
+
+    gpsr = GPSR(robot)
+    gpsr.run(robot)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    gpsr = GPSR()
-    sys.exit(gpsr.run())
+    sys.exit(main())
