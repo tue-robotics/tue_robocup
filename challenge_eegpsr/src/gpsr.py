@@ -170,6 +170,31 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
+    def count_objects_on(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
+        if entity_descr.type == "person":
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
+
+        else:
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
+
+        follow_operator_state = FollowOperator(robot)
+        ret = follow_operator_state.execute({})
+
+        if ret == "stopped":
+            robot.speech.speak("I succesfully followed you", block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
     def follow(self, robot, parameters):
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
@@ -192,6 +217,23 @@ class GPSR:
 
         if ret == "stopped":
             robot.speech.speak("I succesfully followed you", block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def hey_robot(self, robot):
+
+        robot.head.look_at_standing_person()
+        robot.head.wait_for_motion_done()
+
+        spec = "hey %s" % robot.robot_name
+
+        res = robot.ears.recognize(spec=spec, time_out=rospy.Duration(60))
+
+        if not res:
+            robot.speech.speak("My ears are not working properly, sorry!")
+            return False
+
+        return res.result == spec
 
     # ------------------------------------------------------------------------------------------------------------------------
 
