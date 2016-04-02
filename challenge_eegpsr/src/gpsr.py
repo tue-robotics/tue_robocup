@@ -50,7 +50,10 @@ import robot_smach_states.util.designators as ds
 
 from robot_smach_states import LookAtArea, StartChallengeRobust
 
-challenge_knowledge = load_knowledge('challenge_gpsr')
+from robot_smach_states import FollowOperator
+
+challenge_knowledge = load_knowledge('challenge_eegpsr')
+
 speech_data = load_knowledge('challenge_speech_recognition')
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -165,6 +168,73 @@ class GPSR:
             robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
             self.move_robot(robot, entity_descr.id, entity_descr.type)
             self.last_location = entity_descr
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def count_objects_on(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
+        if entity_descr.type == "person":
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
+
+        else:
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
+
+        follow_operator_state = FollowOperator(robot)
+        ret = follow_operator_state.execute({})
+
+        if ret == "stopped":
+            robot.speech.speak("I succesfully followed you", block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def follow(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
+        if entity_descr.type == "person":
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
+
+        else:
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
+
+        follow_operator_state = FollowOperator(robot)
+        ret = follow_operator_state.execute({})
+
+        if ret == "stopped":
+            robot.speech.speak("I succesfully followed you", block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def hey_robot(self, robot):
+
+        robot.head.look_at_standing_person()
+        robot.head.wait_for_motion_done()
+
+        spec = "hey %s" % robot.robot_name
+
+        res = robot.ears.recognize(spec=spec, time_out=rospy.Duration(60))
+
+        if not res:
+            robot.speech.speak("My ears are not working properly, sorry!")
+            return False
+
+        return res.result == spec
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -426,7 +496,7 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def start_challenge(self, robot):
-        s = StartChallengeRobust(robot, challenge_knowledge.starting_point)
+        s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
         s.execute()
 
     # ------------------------------------------------------------------------------------------------------------------------
@@ -525,7 +595,9 @@ class GPSR:
             self.start_challenge(robot)
 
             # Move to the start location
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id='gpsr_starting_pose'), radius = 0.3)
+            nwc = NavigateToWaypoint(robot,
+                                     EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose),
+                                     radius=0.3)
             nwc.execute()
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
