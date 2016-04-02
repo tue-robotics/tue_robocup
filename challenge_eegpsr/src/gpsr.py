@@ -541,7 +541,7 @@ class GPSR:
                 print "Semantics: %s" % res[1]
                 return res
 
-            def ask_confirm(self, tries=3):
+            def ask_confirm(tries=3):
                 for i in range(0, tries):
                     result = robot.ears.recognize("(yes|no)",{})
                     if result and result.result != "":
