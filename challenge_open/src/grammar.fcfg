@@ -56,7 +56,7 @@ VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
 
 NAV_LOC[X] -> TO_LOC[X]
 
-V_MOVE["navigate"] -> move to | go to | drive to | navigate to | get into | reach
+V_MOVE["navigate"] -> move to | go to | drive to | navigate to
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Find
