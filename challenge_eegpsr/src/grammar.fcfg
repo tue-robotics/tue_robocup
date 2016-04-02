@@ -11,20 +11,60 @@ C[{A}] -> VP[A]
 NP[M] -> SMALL_OBJECT[M]
 NP[M] -> LOC[M]
 
+DET -> the | a
+
 LOC[{"id" : X}] -> ROOM[X] | FURNITURE[X]
 
 SMALL_OBJECT_SPEC[{ "special" : "it" }] -> it
-SMALL_OBJECT_SPEC[{ "type" : X }] -> SMALL_OBJECT[X]
-SMALL_OBJECT_SPEC[{ "type" : X, "loc" : Y }] -> SMALL_OBJECT[X] FROM_PP LOC[Y]
+SMALL_OBJECT_SPEC[{ "type" : X }] -> DET SMALL_OBJECT[X]
+SMALL_OBJECT_SPEC[{ "type" : X, "loc" : Y }] -> DET SMALL_OBJECT[X] FROM_PP the LOC[Y]
+SMALL_OBJECT_SPEC[{ "cat" : C }] -> DET OBJ_CAT[C]
+SMALL_OBJECT_SPEC[{ "cat" : C, "loc" : Y }] -> DET OBJ_CAT[C] FROM_PP the LOC[Y]
 
 FROM_PP -> from | on | which is on
 AT_PP -> in | at | who is in
 
+ADJ_PERSON["waving"] -> waving
+ADJ_PERSON["calling"] -> calling
+
+LOC_DET[R] -> in the ROOM[R]
+
 TO_LOC[X] -> LOC[X]
-TO_LOC[{"type" : "person", "loc" : R}] -> PERSON AT_PP ROOM[R]
+TO_LOC[{P}] -> PERSON[P]
 TO_LOC[{"special" : "operator"}] -> me
 
-PERSON -> a person | the person | NAME
+PERSON["type" : "person"] -> DET person
+PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
+PERSON["type" : "person", "loc" : L] -> DET person LOC_DET[L]
+PERSON["type" : "person", "adj" : A, "loc" : L] -> DET ADJ_PERSON[A] person LOC_DET[L]
+PERSON["type" : "person", "id" : N] -> NAME[N]
+PERSON["type" : "person", "id" : N, "loc" : L] -> NAME[N] LOC_DET[L]
+PERSON["special" : "it"] -> him | her | them
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Follow
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "follow", "entity" : {X}] -> follow PERSON[X]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Find
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": {X}] -> V_FIND[A] OBJ_FIND[X]
+
+V_FIND["find"] -> find | look for
+
+OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
+OBJ_FIND[P] -> PERSON[P]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Say
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many OBJ_CAT[C] are at the LOC[L]
+
+V_SAY -> tell | say | speak
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Grasping
@@ -35,6 +75,24 @@ VP["action": A, "entity": X] -> V_GRASP[A] SMALL_OBJECT_SPEC[X]
 V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
+# Placing
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on LOC[L]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in LOC[L]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER_SPEC[L]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER[L] at the LOC[L]
+V_PLACE -> put | place
+
+CONTAINER_SPEC[{"type" : X}] -> CONTAINER[X]
+CONTAINER_SPEC[{"type" : X, "loc" : L}] -> CONTAINER[X] at the LOC[L]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -43,13 +101,7 @@ VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRIN
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
 
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Placing
-# - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on LOC[L]
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in LOC[L]
-V_PLACE -> put | place
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Moving
@@ -62,16 +114,7 @@ NAV_LOC[X] -> ROOM[X]
 
 V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Find
-# - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
-
-V_FIND["find"] -> find | look for
-
-OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
-OBJ_FIND[{"type" : "person"}] -> a person | the person | NAME
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions

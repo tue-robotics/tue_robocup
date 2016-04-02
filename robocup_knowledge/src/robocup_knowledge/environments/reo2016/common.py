@@ -37,6 +37,12 @@ objects = [
 object_names = list(set([o["name"] for o in objects]))
 object_categories = list(set([o["category"] for o in objects]))
 
+def get_object_names(category=None):
+    if category:
+        return list(set([o["name"] for o in objects if o["category"] == category]))
+    else:
+        return []
+
 locations = [
     {"name": "closet",           "room": "bedroom",    "location_category": "shelf",     "manipulation": "yes"},
     {"name": "nightstand",       "room": "bedroom",    "location_category": "table",     "manipulation": "yes"},
