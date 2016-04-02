@@ -51,6 +51,17 @@ class WaitForOperatorCommand(smach.State):
         smach.State.__init__(self, outcomes=["follow", "command"])
         self._robot = robot
 
+    def _confirm(self, tries=3):
+        for i in range(0, tries):
+            result = self._robot.ears.recognize("(yes|no)",{})
+            if result and result.result != "":
+                answer = result.result
+                return answer == "yes"
+
+            if i != tries - 1:
+                self._robot.speech.speak("Please say yes or no")
+        return False
+
     def execute(self, userdata):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
@@ -58,18 +69,13 @@ class WaitForOperatorCommand(smach.State):
         base_pose = self._robot.base.get_location()
 
         self._robot.head.look_at_standing_person()
-        result = self._robot.ears.recognize(knowledge.guiding_spec, knowledge.guiding_choices, time_out = rospy.Duration(5)) # Wait 5 secs
 
-        if result:
-            self._robot.speech.speak("Should I guide you back?")
-            result = self._robot.ears.recognize("(yes|no)", {} , time_out = rospy.Duration(10)) # Wait 5 secs
-            if result:
-                if result.result == "yes":
-                    self._robot.head.cancel_goal()
-                    return "command"
+        self._robot.speech.speak("Should I guide you back?")
+        if self._confirm():
+            self._robot.head.cancel_goal()
+            return "command"
 
         self._robot.head.cancel_goal()
-
         return "follow"
 
 def setup_statemachine(robot):
