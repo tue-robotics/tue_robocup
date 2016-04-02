@@ -54,18 +54,16 @@ class CommandRecognizer:
         self.parser = cfgparser.CFGParser.fromfile(grammar_file)
 
         for obj in challenge_knowledge.common.object_names:
-            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, resolve_name(obj, challenge_knowledge)))
-            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, resolve_name(obj, challenge_knowledge)))  
+            self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, resolve_name(obj, challenge_knowledge)))
 
         location_names = list(set([o["name"] for o in challenge_knowledge.common.locations]))          
 
         for loc in location_names:
             #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))
-            self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (loc, resolve_name(loc, challenge_knowledge)))
-            self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (loc, resolve_name(loc, challenge_knowledge)))
+            self.parser.add_rule("FURNITURE[\"%s\"] -> %s" % (loc, resolve_name(loc, challenge_knowledge)))
 
         for name in challenge_knowledge.common.names:
-            self.parser.add_rule("NAME -> %s" % name.lower())
+            self.parser.add_rule("NAME[\"%s\"] -> %s" % (name.lower(), name.lower()))
 
             # for obj in objects:
             #     #parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
@@ -74,7 +72,13 @@ class CommandRecognizer:
 
         for room in challenge_knowledge.rooms:
             #parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
-            self.parser.add_rule("ROOM[\"%s\"] -> the %s" % (room, resolve_name(room, challenge_knowledge)))
+            self.parser.add_rule("ROOM[\"%s\"] -> %s" % (room, resolve_name(room, challenge_knowledge)))
+
+        for obj_cat in challenge_knowledge.common.object_categories:
+            self.parser.add_rule("OBJ_CAT[\"%s\"] -> %s" % (obj_cat, obj_cat)) 
+
+        for container in challenge_knowledge.common.get_object_names(category="container"):
+            self.parser.add_rule("CONTAINER[\"%s\"] -> %s" % (container, container))            
 
         # for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
         #     #parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
@@ -82,6 +86,8 @@ class CommandRecognizer:
         #     self.parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))
 
         self.grammar_string = unwrap_grammar("T", self.parser)
+
+        print len(self.grammar_string)
 
     def parse(self, sentence):
         semantics = self.parser.parse("T", sentence.lower().strip().split(" "))
