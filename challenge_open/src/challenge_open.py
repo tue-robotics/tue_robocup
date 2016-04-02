@@ -127,7 +127,7 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def move_robot(self, robot, id=None, type=None, nav_area=None, room=None):
+    def move_robot(self, robot, id=None, type=None, nav_area=None, loc=None):
 
         if id in challenge_knowledge.rooms:
             # Driving to a room
@@ -143,12 +143,18 @@ class GPSR:
                 nwc =  NavigateToSymbolic(robot,
                                                 { EntityByIdDesignator(robot, id=id) : "in" },
                                                   EntityByIdDesignator(robot, id=id))
-            elif room:
-                room_des = EdEntityDesignator(robot, id=room)
-                f = FindPerson(robot, room_des)
-                result = f.execute()
-                # if result == 'succeeded':
-                #     robot.speech.speak("I found you!")
+            elif loc:
+
+                if loc in challenge_knowledge.rooms:
+                    room_des = EdEntityDesignator(robot, id=loc)
+                    f = FindPerson(robot, room_des)
+                    result = f.execute()
+                else:
+                    # TODO
+                    self.move_robot(robot, id=loc)
+                    robot.base.force_drive(0, 0, 3.1415 / 4, 4)
+                    robot.speech.speak("I need to find a person near this location, but can't do this yet! Ask Janno!")
+
             else:
                 robot.speech.speak("I don't know where I can find the person")
 
@@ -182,7 +188,11 @@ class GPSR:
             entity_descr.location = self.last_location
 
         if entity_descr.type == "person":
-            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+            if not entity_descr.location:
+                robot.speech.speak("Person location undefined")
+                return
+
+            self.move_robot(robot, entity_descr.id, entity_descr.type, loc=entity_descr.location.id)
 
         elif not entity_descr.id:
             not_implemented(robot, parameters)
@@ -256,12 +266,11 @@ class GPSR:
 
         if entity_descr.type == "person":
 
-            if entity_descr.location.id in challenge_knowledge.rooms:
-                room = entity_descr.location.id
-            else:
-                room = challenge_knowledge.common.get_room(entity_descr.location.id)
+            if not entity_descr.location:
+                robot.speech.speak("Person location undefined")
+                return
 
-            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=room)
+            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, loc=entity_descr.location.id)
             return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -417,7 +426,7 @@ class GPSR:
 
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
             if to_descr.location:
-                self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
+                self.move_robot(robot, id=to_descr.id, type=to_descr.type, loc=to_descr.location.id)
             else:
                 self.move_robot(robot, id=to_descr.id, type=to_descr.type)
 
