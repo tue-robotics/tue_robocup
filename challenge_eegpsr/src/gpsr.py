@@ -621,7 +621,7 @@ class GPSR:
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         while True:
-            self.hey_robot_wait_forever()
+            self.hey_robot_wait_forever(robot)
             self.execute_command(robot, command_recognizer, action_functions, mock_sentence)
 
             if not run_forever:
