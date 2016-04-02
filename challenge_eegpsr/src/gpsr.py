@@ -513,7 +513,7 @@ class GPSR:
         # If sentence is given on command-line
 
         if mock_sentence:
-            res = command_recognizer.parse(mock_sentence)
+            res = command_recognizer.parse(mock_sentence, robot)
             if not res:
                 robot.speech.speak("Sorry, could not parse the given command")
                 return False
