@@ -628,6 +628,9 @@ class GPSR:
 
             try:
                 self.execute_command(robot, command_recognizer, action_functions, mock_sentence)
+            except KeyboardInterrupt as e:
+                rospy.warn('keyboard interupt')
+                return 0
             except Exception as e:
                 rospy.logerr("execute_command failed: %s", str(e))
 
