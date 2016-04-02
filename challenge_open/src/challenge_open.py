@@ -549,6 +549,9 @@ class GPSR:
 
         done = False
         while not done and not rospy.is_shutdown():
+            
+            robot.head.reset()
+            
             # Wait for trigger to become True
             while not self._action_requested and not rospy.is_shutdown():
                 time.sleep(0.1)
