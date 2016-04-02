@@ -355,7 +355,7 @@ class FollowOperator(smach.State):
                 return "lost_operator"
 
         # Check are standing still long
-        if self._standing_still_for_x_seconds(self._standing_still_timeout) and self._operator_standing_still_for_x_seconds(self._standing_still_timeout):
+        if self._standing_still_for_x_seconds(self._standing_still_timeout):
             self._robot.base.local_planner.cancelCurrentPlan()
             return "lost_operator"
 
