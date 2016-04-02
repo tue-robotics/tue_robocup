@@ -136,7 +136,6 @@ class FindPerson(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
 
-
         if not room_designator:
             room_designator = ds.EdEntityDesignator(robot)
             person_designator = PersonDesignator(robot=robot,
@@ -237,12 +236,12 @@ class FindPerson(smach.StateMachine):
             smach.StateMachine.add("SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM",
                                    states.Say(robot=robot,
                                               sentence="I cannot reach you, can you please move to an open space", block=True),
-                                   transitions={'spoken': 'WAIT_CANNOT_REACH_PERSON'})
+                                   transitions={'spoken': 'WAIT_WITHOUT_ROOM'})
 
             smach.StateMachine.add("SAY_NO_PERSON_YET_WITHOUT_ROOM",
                                    states.Say(robot=robot,
                                               sentence="I cannot find you, can you please stand up", block=True),
-                                   transitions={'spoken': 'WAIT_NO_PERSON_YET'})
+                                   transitions={'spoken': 'WAIT_WITHOUT_ROOM'})
 
             smach.StateMachine.add("WAIT_WITHOUT_ROOM",
                                    states.WaitTime(robot=robot, waittime=5.0),
