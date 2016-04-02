@@ -158,19 +158,19 @@ class GPSR:
             else:
                 robot.speech.speak("I don't know where I can find the person")
 
-        elif challenge_knowledge.is_location(id):
-            # Driving to a location
+        # elif challenge_knowledge.is_location(id):
+        #     # Driving to a location
 
-            if not nav_area:
-                nav_area = challenge_knowledge.common.get_inspect_position(id)
+        #     if not nav_area:
+        #         nav_area = challenge_knowledge.common.get_inspect_position(id)
 
-            location_des = ds.EntityByIdDesignator(robot, id=id)
+        #     location_des = ds.EntityByIdDesignator(robot, id=id)
 
-            nwc = NavigateToSymbolic( robot,
-                  {location_des : nav_area},
-                  location_des)
+        #     nwc = NavigateToSymbolic( robot,
+        #           {location_des : nav_area},
+        #           location_des)
 
-            nwc.execute()
+        #     nwc.execute()
         else:
             # Driving to anything else (e.g. a waypoint)
             nwc = NavigateToObserve(robot, EntityByIdDesignator(robot, id=id))
