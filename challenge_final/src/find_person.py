@@ -135,7 +135,6 @@ class FindPerson(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-
         if not room_designator:
             room_designator = ds.EdEntityDesignator(robot)
             person_designator = PersonDesignator(robot=robot,
@@ -226,7 +225,9 @@ class FindPerson(smach.StateMachine):
                                    transitions={'spoken': 'failed'})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator),
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near"},
+                                                      entity_lookat_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_NO_PERSON_YET_WITHOUT_ROOM',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM'})
@@ -247,7 +248,9 @@ class FindPerson(smach.StateMachine):
                                                 'preempted': 'NAVIGATE_TO_PERSON_WITHOUT_ROOM2'})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM2",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator),
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near"},
+                                                      entity_lookat_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON'})
