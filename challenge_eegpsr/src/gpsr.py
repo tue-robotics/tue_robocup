@@ -238,6 +238,12 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
+    def hey_robot_wait_forever(self, robot):
+        while not self.hey_robot(robot):
+            pass
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
     def answer_question(self, robot, parameters):
 
         robot.head.look_at_standing_person()
