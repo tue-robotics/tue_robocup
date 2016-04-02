@@ -202,9 +202,7 @@ class CommandRecognizer:
 
         # print len(self.grammar_string)
 
-    def parse(self, sentence, robot):
-        semantics_str = self.parser.parse("T", sentence.lower().strip().split(" "))
-
+    def resolve(semantics_str, robot):
         if not semantics_str:
             return None
 
@@ -236,7 +234,15 @@ class CommandRecognizer:
                 last_location = ll
                 last_entity = le
                
-        return (sentence, yaml.dump(semantics))        
+        return yaml.dump(semantics)
+
+    def parse(self, sentence, robot):
+        semantics_str = self.parser.parse("T", sentence.lower().strip().split(" "))               
+
+        if not semantics_str:
+            return None
+
+        return (sentence, semantics_str)
 
     def recognize(self, robot):
         sentence = robot.ears.recognize(self.grammar_string).result

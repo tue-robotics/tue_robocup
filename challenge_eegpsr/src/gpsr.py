@@ -539,6 +539,7 @@ class GPSR:
 
                 print "Sentence: %s" % res[0]
                 print "Semantics: %s" % res[1]
+
                 return res
 
             def ask_confirm(tries=3):
@@ -563,6 +564,8 @@ class GPSR:
                     # we heared the wrong thing twice
                     robot.speech.speak("Sorry")
                     return
+
+        semantics_str = command_recognizer.resolve(semantics_str)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
