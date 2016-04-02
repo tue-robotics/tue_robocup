@@ -50,6 +50,8 @@ import robot_smach_states.util.designators as ds
 
 from robot_smach_states import LookAtArea, StartChallengeRobust
 
+from robot_smach_states.src.robot_smach_states import FollowOperator
+
 challenge_knowledge = load_knowledge('challenge_gpsr')
 speech_data = load_knowledge('challenge_speech_recognition')
 
@@ -165,6 +167,31 @@ class GPSR:
             robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
             self.move_robot(robot, entity_descr.id, entity_descr.type)
             self.last_location = entity_descr
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def follow(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
+        if entity_descr.type == "person":
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
+
+        else:
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
+
+        follow_operator_state = FollowOperator(robot)
+        ret = follow_operator_state.execute({})
+
+        if ret == "stopped":
+            robot.speech.speak("I succesfully followed you", block=False)
 
     # ------------------------------------------------------------------------------------------------------------------------
 
