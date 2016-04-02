@@ -65,7 +65,7 @@ class GPSR:
 
         if robot.robot_name == "amigo":
             self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
-        elif robot.robot_name == "sergio"
+        elif robot.robot_name == "sergio":
             self._trigger_sub = rospy.Subscriber("/sergio/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
             self.pub_trigger = rospy.Publisher('/amigo/trigger', std_msgs.msg.String)
 
@@ -573,11 +573,13 @@ class GPSR:
             while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
 
-            # TODO:
-            #   - Wait for door
-            #   - Force drive, etc
+            from robot_smach_states import WaitForDoorOpen
+            wait_state = WaitForDoorOpen(robot=robot)
+            wait_state.run(robot=robot, timeout=None)
 
             robot.base.set_initial_pose(-1, 0, 0)
+
+            robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
 
             # s = StartChallengeRobust(robot, challenge_knowledge.starting_point)
             # s.execute()
@@ -586,9 +588,9 @@ class GPSR:
 
         done = False
         while not done and not rospy.is_shutdown():
-            
+
             robot.head.reset()
-            
+
             # Wait for trigger to become True
             while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
