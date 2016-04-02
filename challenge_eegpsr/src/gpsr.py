@@ -629,7 +629,7 @@ class GPSR:
             try:
                 self.execute_command(robot, command_recognizer, action_functions, mock_sentence)
             except Exception as e:
-                rospy.logerr("execute_command failed:", e)
+                rospy.logerr("execute_command failed:", str(e))
 
             if not run_forever:
                 break
