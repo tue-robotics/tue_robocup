@@ -41,6 +41,7 @@ import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import SegmentObjects, Grab, Place, HandoverToHuman
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator, EmptySpotDesignator, OccupiedArmDesignator
+from robot_smach_states.utility import Initialize
 from robot_skills.util import transformations
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
@@ -478,7 +479,7 @@ class GPSR:
 
             res = None
             while not res:
-                robot.speech.speak("What can I do for you?", block=False)
+                robot.speech.speak("What can I do for you?", block=True)
                 res = command_recognizer.recognize(robot)
                 if not res:
                     robot.speech.speak("Sorry, I could not understand", block=True)
@@ -526,6 +527,19 @@ class GPSR:
         action_functions["pick-up"] = self.find_and_pick_up
         action_functions["bring"] = self.bring
         action_functions["say"] =  self.say
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Initialize
+
+        robot.lights.set_color(0, 0, 1)  #be sure lights are blue
+    
+        robot.leftArm.reset()
+        robot.leftArm.send_gripper_goal('close',0.0)
+        robot.rightArm.reset()
+        robot.rightArm.send_gripper_goal('close',0.0)
+        robot.ed.reset()
+        robot.torso.reset()
+        robot.head.reset()
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
