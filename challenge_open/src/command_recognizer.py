@@ -59,7 +59,7 @@ class CommandRecognizer:
 
         # location_names = list(set([o["name"] for o in challenge_knowledge.common.locations]))          
 
-        for loc in challenge_knowledge.locations:
+        for loc in challenge_knowledge.location_names:
             #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))
             self.parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (loc, resolve_name(loc, challenge_knowledge)))
             self.parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (loc, resolve_name(loc, challenge_knowledge)))

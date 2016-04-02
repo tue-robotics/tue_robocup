@@ -8,7 +8,7 @@ exit_waypoint = "exit_door_B1"
 
 rooms = common.rooms + ["entrance", "exit"]
 
-locations = ["sideboard", "bookcase", "tv_stand", "couch", "dinnertable", "suitecase", "hallway_trashbin"]
+location_names = ["sideboard", "bookcase", "tv_stand", "couch", "dinnertable", "suitecase", "hallway_trashbin"]
 
 translations = { "bookcase" : "bocase",
                  "hallway_trashbin" : "trashbin" }
