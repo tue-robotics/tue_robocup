@@ -98,7 +98,7 @@ class PersonDesignator(ds.Designator):
 
         # If we have a room designator, we try to pick a person in the room, as close to the center point as possible
         if room_designator:
-            # Check which entities are in the room  
+            # Check which entities are in the room
             persons_in_room = []
             for ph in possible_humans:
                 phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
@@ -140,7 +140,7 @@ class FindPerson(smach.StateMachine):
 
         # If the room is not specified, the robot can't go there so will start looking at its current location
         if not room_designator:
-            self.set_initial_state("NAVIGATE_TO_PERSON")
+            self.set_initial_state("NAVIGATE_TO_PERSON_WITHOUT_ROOM")
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
@@ -220,6 +220,37 @@ class FindPerson(smach.StateMachine):
                                    states.Say(robot=robot,
                                               sentence="I cannot reach you, I am so sorry", block=True),
                                    transitions={'spoken': 'failed'})
+
+            smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM",
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near"},
+                                                      entity_lookat_designator=person_designator),
+                                   transitions={'arrived': 'SAY_FOUND',
+                                                'goal_not_defined': 'SAY_NO_PERSON_YET_WITHOUT_ROOM',
+                                                'unreachable': 'SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM'})
+
+            smach.StateMachine.add("SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot reach you, can you please move to an open space", block=True),
+                                   transitions={'spoken': 'WAIT_CANNOT_REACH_PERSON'})
+
+            smach.StateMachine.add("SAY_NO_PERSON_YET_WITHOUT_ROOM",
+                                   states.Say(robot=robot,
+                                              sentence="I cannot find you, can you please stand up", block=True),
+                                   transitions={'spoken': 'WAIT_NO_PERSON_YET'})
+
+            smach.StateMachine.add("WAIT_WITHOUT_ROOM",
+                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   transitions={'waited': 'NAVIGATE_TO_PERSON_WITHOUT_ROOM2',
+                                                'preempted': 'NAVIGATE_TO_PERSON_WITHOUT_ROOM2'})
+
+            smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM2",
+                                   NavigateToSymbolic(robot=robot,
+                                                      entity_designator_area_name_map={person_designator: "near"    },
+                                                      entity_lookat_designator=person_designator),
+                                   transitions={'arrived': 'SAY_FOUND',
+                                                'goal_not_defined': 'SAY_NO_PERSON_YET',
+                                                'unreachable': 'SAY_CANNOT_REACH_PERSON'})
 
 
 if __name__ == "__main__":
