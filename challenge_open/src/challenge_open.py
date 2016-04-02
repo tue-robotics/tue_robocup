@@ -532,7 +532,7 @@ class GPSR:
         # Initialize
 
         robot.lights.set_color(0, 0, 1)  #be sure lights are blue
-    
+
         robot.leftArm.reset()
         robot.leftArm.send_gripper_goal('close',0.0)
         robot.rightArm.reset()
@@ -555,7 +555,8 @@ class GPSR:
             self._action_requested = False
             try:
                 self.execute_command(robot, command_recognizer, action_functions, sentence)
-            except:
+            except Exception as e:
+                rospy.logerr("{0}".format(e.message))
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
 
 # ------------------------------------------------------------------------------------------------------------------------
