@@ -18,7 +18,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout=20,
+    def __init__(self, robot, ask_follow=True, operator_radius=1, lookat_radius=1.5, timeout=1.0, start_timeout=10, operator_timeout=20,
                  distance_threshold=None, lost_timeout=5, lost_distance=1.5,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
@@ -27,6 +27,7 @@ class FollowOperator(smach.State):
         self._operator = None
         self._operator_id = None
         self._operator_radius = operator_radius
+        self._lookat_radius = lookat_radius
         self._start_timeout = start_timeout
         self._breadcrumbs = []
         self._breadcrumb_distance = 0.1  # meters between dropped breadcrumbs
@@ -55,18 +56,18 @@ class FollowOperator(smach.State):
         operator_current_pose_stamped = msg_constructors.PoseStamped(x=operator_current_pose.position.x, y=operator_current_pose.position.y)
         print "Operator position: %s" % self._operator.pose.position
 
-        if not self._last_operator_pose_stamped_:
-            self._last_operator_pose_stamped_ = operator_current_pose_stamped
+        if not self._last_operator_pose_stamped:
+            self._last_operator_pose_stamped = operator_current_pose_stamped
         else:
             # Compare the pose with the last pose and update if difference is larger than x
-            if math.hypot(operator_current_pose_stamped.pose.position.x - self._last_operator_pose_stamped_.pose.position.x, operator_current_pose_stamped.pose.position.y - self._last_operator_pose_stamped_.pose.position.y) > 0.05:
+            if math.hypot(operator_current_pose_stamped.pose.position.x - self._last_operator_pose_stamped.pose.position.x, operator_current_pose_stamped.pose.position.y - self._last_operator_pose_stamped.pose.position.y) > 0.05:
                 # Update the last pose
-                print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped_.pose.position.x, self._last_operator_pose_stamped_.pose.position.y, self._last_operator_pose_stamped_.header.stamp.secs)
-                self._last_operator_pose_stamped_ = operator_current_pose_stamped
+                print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped.pose.position.x, self._last_operator_pose_stamped.pose.position.y, self._last_operator_pose_stamped.header.stamp.secs)
+                self._last_operator_pose_stamped = operator_current_pose_stamped
             else:
-                print "Operator is standing still for %f seconds" % (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped_.header.stamp).to_sec()
+                print "Operator is standing still for %f seconds" % (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped.header.stamp).to_sec()
                 # Check whether we passed the timeout
-                if (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped_.header.stamp).to_sec() > timeout:
+                if (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped.header.stamp).to_sec() > timeout:
                     self._robot.speech.speak("Operator is standing still long enough  ...")
                     return True
         return False
@@ -259,16 +260,17 @@ class FollowOperator(smach.State):
 
         if length < self._operator_radius:
             if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
-                if self._operator_id and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
+                if self._operator_id:
                     return True
                 else:
                     return False
-            else:
-                yaw = math.atan2(dy, dx)
-                plan = [msg_constructors.PoseStamped(x=robot_position.x, y=robot_position.y, z=0, yaw=yaw)]
 
-                self._robot.base.local_planner.setPlan(plan, p, o)
-                return False
+        if length < self._lookat_radius and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
+            yaw = math.atan2(dy, dx)
+            plan = [msg_constructors.PoseStamped(x=robot_position.x, y=robot_position.y, z=0, yaw=yaw)]
+
+            self._robot.base.local_planner.setPlan(plan, p, o)
+            return False
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -326,6 +328,7 @@ class FollowOperator(smach.State):
 
         if recovered_operator:
             self._operator_id = recovered_operator.id
+            self._robot.speech.speak("Recovered operator at position (%.1f, %.1f)" % (recovered_operator.pose.position.x, recovered_operator.pose.position.y))
             return True
 
         return False
@@ -393,7 +396,6 @@ class FollowOperator(smach.State):
                         self._robot.base.local_planner.cancelCurrentPlan()
                         self._robot.speech.speak("Tried to recover but didn't find anything, I lost you")
                         return "lost_operator"
-                    self._robot.speech.speak("Recovered operator")
                 else:
                     print "I still have an operator. Checking if standstill timeout is reached"
                     if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
