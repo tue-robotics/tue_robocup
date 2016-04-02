@@ -532,7 +532,7 @@ class GPSR:
 
                 res = None
                 while not res:
-                    robot.speech.speak("What can I do for you?", block=True)
+                    robot.speech.speak("Welkome to the Double E G P S R. . What can I do for you?", block=False)
                     res = command_recognizer.recognize(robot)
                     if not res:
                         robot.speech.speak("Sorry, I could not understand", block=True)
