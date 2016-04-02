@@ -70,8 +70,18 @@ def text_mode(command_recognizer, sentence):
 def speech_mode(command_recognizer, robot_name):
     rospy.init_node("gpsr_test_recognition")
 
+    if robot_name == 'amigo':
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == 'sergio':
+        from robot_skills.sergio import Sergio as Robot
+    else:
+        print "unknown robot"
+        return 1
+
     robot = Robot()
 
+    import time
+    time.sleep(1)
     robot.head.look_at_standing_person()
 
     while not rospy.is_shutdown():
@@ -110,16 +120,7 @@ def main():
         return
 
     else:
-
         robot_name = sys.argv[1]
-        if robot_name == 'amigo':
-            from robot_skills.amigo import Amigo as Robot
-        elif robot_name == 'sergio':
-            from robot_skills.sergio import Sergio as Robot
-        else:
-            print "unknown robot"
-            return 1
-
         speech_mode(command_recognizer, robot_name)       
 
 # ----------------------------------------------------------------------------------------------------
