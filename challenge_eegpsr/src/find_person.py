@@ -34,57 +34,55 @@ class PersonDesignator(ds.Designator):
 
     def _resolve(self):
 
-        # If a room designator is specified, get it from ED
-        if self._room_designator:
-            room_entity = self._room_designator.resolve()
-            if not room_entity:
-                rospy.logwarn('Cannot find room entity')
-                return None
+        room_entity = self._room_designator.resolve()
+        if not room_entity:
+            rospy.logwarn('Cannot find room entity')
+            return None
 
-            # Get the bounding box of the room
-            convex_hull = []
-            for testarea in room_entity.data['areas']:
-                ''' See if the area is in the list of inspection areas '''
-                if testarea['name'] == 'in':
-                    ''' Check if we have a shape '''
-                    if 'shape' not in testarea:
-                        rospy.logwarn("No shape in area {0}".format(testarea['name']))
-                        continue
-                    ''' Check if length of shape equals one '''
-                    if not len(testarea['shape']) == 1:
-                        rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
-                        continue
-                    ''' Check if the first entry is a box '''
-                    if not 'box' in testarea['shape'][0]:
-                        rospy.logwarn("No box in {0}".format(testarea['name']))
-                        continue
-                    box = testarea['shape'][0]['box']
-                    if 'min' not in box or 'max' not in box:
-                        rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
-                        continue
-                    # Now we're sure to have the correct bounding box
-                    roompose = kdl.Frame(kdl.Rotation.Quaternion(room_entity.pose.orientation.x,
-                                                                room_entity.pose.orientation.y,
-                                                                room_entity.pose.orientation.z,
-                                                                room_entity.pose.orientation.w),
-                                         kdl.Vector(room_entity.pose.position.x,
-                                                    room_entity.pose.position.y,
-                                                    room_entity.pose.position.z))
-                    hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                                 kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))
-                    convex_hull.append(hpose.p)
-                    hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                                 kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))
-                    convex_hull.append(hpose.p)
-                    hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                                 kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))
-                    convex_hull.append(hpose.p)
-                    hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                                 kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
-                    convex_hull.append(hpose.p)
+        # Get the bounding box of the room
+        convex_hull = []
+        for testarea in room_entity.data['areas']:
+            ''' See if the area is in the list of inspection areas '''
+            if testarea['name'] == 'in':
+                ''' Check if we have a shape '''
+                if 'shape' not in testarea:
+                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
+                    continue
+                ''' Check if length of shape equals one '''
+                if not len(testarea['shape']) == 1:
+                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
+                    continue
+                ''' Check if the first entry is a box '''
+                if not 'box' in testarea['shape'][0]:
+                    rospy.logwarn("No box in {0}".format(testarea['name']))
+                    continue
+                box = testarea['shape'][0]['box']
+                if 'min' not in box or 'max' not in box:
+                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
+                    continue
+                # Now we're sure to have the correct bounding box
+                roompose = kdl.Frame(kdl.Rotation.Quaternion(room_entity.pose.orientation.x,
+                                                            room_entity.pose.orientation.y,
+                                                            room_entity.pose.orientation.z,
+                                                            room_entity.pose.orientation.w),
+                                     kdl.Vector(room_entity.pose.position.x,
+                                                room_entity.pose.position.y,
+                                                room_entity.pose.position.z))
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
+                hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                             kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
+                convex_hull.append(hpose.p)
 
-            # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
-            # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
+        # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
+        # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
 
         entities = self._robot.ed.get_entities(parse=True)
         possible_humans = []
@@ -96,38 +94,29 @@ class PersonDesignator(ds.Designator):
             rospy.logwarn("No possible humans found")
             return None
 
-        # If we have a room designator, we try to pick a person in the room, as close to the center point as possible
-        if self._room_designator:
-            # Check which entities are in the room
-            persons_in_room = []
-            for ph in possible_humans:
-                phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
-                if geometry_helpers.isPointInsideHull(phposition, convex_hull):
-                    persons_in_room.append(ph)
-            if not persons_in_room:
-                rospy.logwarn("None of the found possible humans was in the room")
-                return None
+        # Check which entities are in the room
+        persons_in_room = []
+        for ph in possible_humans:
+            phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
+            if geometry_helpers.isPointInsideHull(phposition, convex_hull):
+                persons_in_room.append(ph)
+        if not persons_in_room:
+            rospy.logwarn("None of the found possible humans was in the room")
+            return None
 
-            # Sort according to distance to center pose
-            persons_in_room = sorted(persons_in_room,
-                                     key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
-                                                               ph.pose.position.y - room_entity.pose.position.y))
+        # Sort according to distance to center pose
+        persons_in_room = sorted(persons_in_room,
+                                 key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
+                                                           ph.pose.position.y - room_entity.pose.position.y))
 
-            # Return the best one
-            return persons_in_room[0]
-        else:
-            # We just pick the person closest to the robot
-            bp = self._robot.base.get_location()
-            possible_humans = sorted(possible_humans,
-                                     key=lambda ph: math.hypot(ph.pose.position.x - bp.pose.position.x,
-                                                               ph.pose.position.y - bp.pose.position.y))
-            return possible_humans[0]
+        # Return the best one
+        return persons_in_room[0]
 
 
 class FindPerson(smach.StateMachine):
     """ Class to find ANY person within a certain room. It does NOT look for a particular person by trying to recognize
     people. To find anyone, a laser rangefinder will be used """
-    def __init__(self, robot, room_designator=None):
+    def __init__(self, robot, room_designator):
         """ Constructor
         :param robot: robot object
         :param room_designator: EdEntityDesignator for the room in which to look for a person
@@ -135,16 +124,8 @@ class FindPerson(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-
-        if not room_designator:
-            room_designator = ds.EdEntityDesignator(robot)
-            person_designator = PersonDesignator(robot=robot,
-                                                 room_designator=None)
-            use_room = False
-        else:
-            use_room = True
-            person_designator = PersonDesignator(robot=robot,
-                                                 room_designator=room_designator)
+        person_designator = PersonDesignator(robot=robot,
+                                             room_designator=room_designator)
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
@@ -225,37 +206,6 @@ class FindPerson(smach.StateMachine):
                                               sentence="I cannot reach you, I am so sorry", block=True),
                                    transitions={'spoken': 'failed'})
 
-            smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator),
-                                   transitions={'arrived': 'SAY_FOUND',
-                                                'goal_not_defined': 'SAY_NO_PERSON_YET_WITHOUT_ROOM',
-                                                'unreachable': 'SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM'})
-
-            smach.StateMachine.add("SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM",
-                                   states.Say(robot=robot,
-                                              sentence="I cannot reach you, can you please move to an open space", block=True),
-                                   transitions={'spoken': 'WAIT_WITHOUT_ROOM'})
-
-            smach.StateMachine.add("SAY_NO_PERSON_YET_WITHOUT_ROOM",
-                                   states.Say(robot=robot,
-                                              sentence="I cannot find you, can you please stand up", block=True),
-                                   transitions={'spoken': 'WAIT_WITHOUT_ROOM'})
-
-            smach.StateMachine.add("WAIT_WITHOUT_ROOM",
-                                   states.WaitTime(robot=robot, waittime=5.0),
-                                   transitions={'waited': 'NAVIGATE_TO_PERSON_WITHOUT_ROOM2',
-                                                'preempted': 'NAVIGATE_TO_PERSON_WITHOUT_ROOM2'})
-
-            smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM2",
-                                   NavigateToObserve(robot=robot, entity_designator=person_designator),
-                                   transitions={'arrived': 'SAY_FOUND',
-                                                'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
-                                                'unreachable': 'SAY_CANNOT_REACH_PERSON'})
-
-        # If the room is not specified, the robot can't go there so will start looking at its current location
-        if not use_room:
-            self.set_initial_state(["NAVIGATE_TO_PERSON_WITHOUT_ROOM"])
-
 
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')
@@ -281,5 +231,4 @@ if __name__ == "__main__":
     room_designator = ds.EdEntityDesignator(robot, id=room)
 
     sm = FindPerson(robot, room_designator)
-    sm = FindPerson(robot, None)
     sm.execute()

@@ -25,6 +25,7 @@
   <run_depend>challenge_speech_recognition</run_depend>
   <run_depend>challenge_test</run_depend>
   <run_depend>challenge_wakemeup</run_depend>
+  <run_depend>challenge_eegpsr</run_depend>
   <run_depend>test_tools</run_depend>
 
   <export>

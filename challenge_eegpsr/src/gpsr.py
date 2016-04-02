@@ -30,18 +30,16 @@
 import os
 import sys
 import yaml
-import time
 import cfgparser
 import rospy
 import random
-import std_msgs
 import argparse
+import time
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import SegmentObjects, Grab, Place, HandoverToHuman
 from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators, UnoccupiedArmDesignator, EmptySpotDesignator, OccupiedArmDesignator
-from robot_smach_states.utility import Initialize
 from robot_skills.util import transformations
 from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
@@ -52,7 +50,10 @@ import robot_smach_states.util.designators as ds
 
 from robot_smach_states import LookAtArea, StartChallengeRobust
 
-challenge_knowledge = load_knowledge('challenge_open')
+from robot_smach_states import FollowOperator
+
+challenge_knowledge = load_knowledge('challenge_eegpsr')
+
 speech_data = load_knowledge('challenge_speech_recognition')
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -62,9 +63,6 @@ class EntityDescription(object):
         self.id = id
         self.type = type
         self.location = location
-
-    def __repr__(self):
-        return "(id={}, type={}, location={})".format(self.id, self.type, self.location)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -77,26 +75,13 @@ def not_implemented(robot, parameters):
 
 class GPSR:
 
-    def __init__(self, robot):
+    def __init__(self):
         self.entity_ids = []
         self.entity_type_to_id = {}
         self.object_to_location = {}
 
         self.last_location = None
         self.last_entity = None
-
-        self._action_requested = False
-
-        self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
-
-        self.robot = robot
-
-    def _trigger_callback(self, msg):
-        """ Callback function for the trigger topic. Sets self._action_requested to True if the msg is 'gpsr'
-        :param msg:
-        """
-        if msg.data == "gpsr":
-            self._action_requested = True
 
     def resolve_entity_description(self, parameters):
         descr = EntityDescription()
@@ -118,16 +103,11 @@ class GPSR:
             if "loc" in parameters:
                 descr.location = self.resolve_entity_description(parameters["loc"])
 
-        print descr.id
-        if not self.robot.ed.get_entity(id=descr.id, parse=False):
-            self.robot.speech.speak("I do not know where the {} is".format(descr.id))
-            return None
-
         return descr
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def move_robot(self, robot, id=None, type=None, nav_area=None, loc=None):
+    def move_robot(self, robot, id=None, type=None, nav_area=None, room=None):
 
         if id in challenge_knowledge.rooms:
             # Driving to a room
@@ -143,36 +123,28 @@ class GPSR:
                 nwc =  NavigateToSymbolic(robot,
                                                 { EntityByIdDesignator(robot, id=id) : "in" },
                                                   EntityByIdDesignator(robot, id=id))
-            elif loc:
-
-                if loc in challenge_knowledge.rooms:
-                    room_des = EdEntityDesignator(robot, id=loc)
-                    f = FindPerson(robot, room_des)
-                    result = f.execute()
-                else:
-                    # TODO
-                    self.move_robot(robot, id=loc)
-                    robot.base.force_drive(0, 0, 3.1415 / 4, 4)
-                    # robot.speech.speak("I need to find a person near this location, but can't do this yet! Ask Janno!")
-                    f = FindPerson(robot, None)
-                    result = f.execute()
-
+            elif room:
+                room_des = EdEntityDesignator(robot, id=room)
+                f = FindPerson(robot, room_des)
+                result = f.execute()
+                # if result == 'succeeded':
+                #     robot.speech.speak("I found you!")
             else:
                 robot.speech.speak("I don't know where I can find the person")
 
-        # elif challenge_knowledge.is_location(id):
-        #     # Driving to a location
+        elif challenge_knowledge.is_location(id):
+            # Driving to a location
 
-        #     if not nav_area:
-        #         nav_area = challenge_knowledge.common.get_inspect_position(id)
+            if not nav_area:
+                nav_area = challenge_knowledge.common.get_inspect_position(id)
 
-        #     location_des = ds.EntityByIdDesignator(robot, id=id)
+            location_des = ds.EntityByIdDesignator(robot, id=id)
+            room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(id))
 
-        #     nwc = NavigateToSymbolic( robot,
-        #           {location_des : nav_area},
-        #           location_des)
-
-        #     nwc.execute()
+            nwc = NavigateToSymbolic( robot,
+                  {location_des : nav_area, room_des : "in"},
+                  location_des)
+            nwc.execute()
         else:
             # Driving to anything else (e.g. a waypoint)
             nwc = NavigateToObserve(robot, EntityByIdDesignator(robot, id=id))
@@ -183,27 +155,92 @@ class GPSR:
     def navigate(self, robot, parameters):
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
-        if not entity_descr:
-            return
-
         if not entity_descr.location:
             entity_descr.location = self.last_location
 
         if entity_descr.type == "person":
-            if not entity_descr.location:
-                robot.speech.speak("Person location undefined")
-                return
-
-            self.move_robot(robot, entity_descr.id, entity_descr.type, loc=entity_descr.location.id)
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
 
         elif not entity_descr.id:
             not_implemented(robot, parameters)
 
         else:
             robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
-            print entity_descr
             self.move_robot(robot, entity_descr.id, entity_descr.type)
             self.last_location = entity_descr
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def count_objects_on(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
+        if entity_descr.type == "person":
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
+
+        else:
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
+
+        follow_operator_state = FollowOperator(robot)
+        ret = follow_operator_state.execute({})
+
+        if ret == "stopped":
+            robot.speech.speak("I succesfully followed you", block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def follow(self, robot, parameters):
+        entity_descr = self.resolve_entity_description(parameters["entity"])
+
+        if not entity_descr.location:
+            entity_descr.location = self.last_location
+
+        if entity_descr.type == "person":
+            self.move_robot(robot, entity_descr.id, entity_descr.type, room=entity_descr.location.id)
+
+        elif not entity_descr.id:
+            not_implemented(robot, parameters)
+
+        else:
+            robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            self.move_robot(robot, entity_descr.id, entity_descr.type)
+            self.last_location = entity_descr
+
+        follow_operator_state = FollowOperator(robot)
+        ret = follow_operator_state.execute({})
+
+        if ret == "stopped":
+            robot.speech.speak("I succesfully followed you", block=False)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def hey_robot(self, robot):
+
+        robot.head.look_at_standing_person()
+        robot.head.wait_for_motion_done()
+
+        spec = "hey %s" % robot.robot_name
+
+        res = robot.ears.recognize(spec=spec, time_out=rospy.Duration(60))
+
+        if not res:
+            robot.speech.speak("My ears are not working properly, sorry!")
+            return False
+
+        return res.result == spec
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def hey_robot_wait_forever(self, robot):
+        while not self.hey_robot(robot):
+            pass
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -258,9 +295,6 @@ class GPSR:
     def find_and_pick_up(self, robot, parameters, pick_up=True):
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
-        if not entity_descr:
-            return
-
         if not entity_descr.location:
             entity_descr.location = self.last_location
 
@@ -268,11 +302,12 @@ class GPSR:
 
         if entity_descr.type == "person":
 
-            if not entity_descr.location:
-                robot.speech.speak("Person location undefined")
-                return
+            if entity_descr.location.id in challenge_knowledge.rooms:
+                room = entity_descr.location.id
+            else:
+                room = challenge_knowledge.common.get_room(entity_descr.location.id)
 
-            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, loc=entity_descr.location.id)
+            self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, room=room)
             return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -338,6 +373,7 @@ class GPSR:
                                      area_name)
                 look_sm.execute()
 
+                import time
                 time.sleep(1)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -423,12 +459,9 @@ class GPSR:
 
         to_descr = self.resolve_entity_description(parameters["to"])
 
-        if not to_descr:
-            return
-
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
             if to_descr.location:
-                self.move_robot(robot, id=to_descr.id, type=to_descr.type, loc=to_descr.location.id)
+                self.move_robot(robot, id=to_descr.id, type=to_descr.type, room=to_descr.location.id)
             else:
                 self.move_robot(robot, id=to_descr.id, type=to_descr.type)
 
@@ -469,7 +502,7 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def start_challenge(self, robot):
-        s = StartChallengeRobust(robot, challenge_knowledge.starting_point)
+        s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
         s.execute()
 
     # ------------------------------------------------------------------------------------------------------------------------
@@ -480,7 +513,7 @@ class GPSR:
         # If sentence is given on command-line
 
         if mock_sentence:
-            res = command_recognizer.parse(mock_sentence)
+            res = command_recognizer.parse(mock_sentence, robot)
             if not res:
                 robot.speech.speak("Sorry, could not parse the given command")
                 return False
@@ -499,22 +532,27 @@ class GPSR:
 
                 res = None
                 while not res:
-                    robot.speech.speak("What can I do for you?", block=True)
+                    robot.speech.speak("Welkome to the Double E G P S R. . What can I do for you?", block=False)
                     res = command_recognizer.recognize(robot)
                     if not res:
                         robot.speech.speak("Sorry, I could not understand", block=True)
 
                 print "Sentence: %s" % res[0]
                 print "Semantics: %s" % res[1]
+
                 return res
 
-            def ask_confirm():
+            def ask_confirm(tries=3):
                 robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
-                answer = robot.ears.recognize("(yes|no)", {})
-                if not answer or answer.result != "yes":
-                    return False
-                else:
-                    return True
+                for i in range(0, tries):
+                    result = robot.ears.recognize("(yes|no)",{})
+                    if result and result.result != "":
+                        answer = result.result
+                        return answer == "yes"
+
+                    if i != tries - 1:
+                        robot.speech.speak("Please say yes or no")
+                return False
 
             (sentence, semantics_str) = prompt_once()
 
@@ -527,6 +565,8 @@ class GPSR:
                     # we heared the wrong thing twice
                     robot.speech.speak("Sorry")
                     return
+
+        semantics_str = command_recognizer.resolve(semantics_str, robot)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -550,7 +590,28 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def run(self, robot, sentence):
+    def run(self, robot_name, skip_init, run_forever, mock_sentence):
+
+        if robot_name == 'amigo':
+            from robot_skills.amigo import Amigo as Robot
+        elif robot_name == 'sergio':
+            from robot_skills.sergio import Sergio as Robot
+        else:
+            raise ValueError('unknown robot')
+
+        robot = Robot()
+        # Sleep for 1 second to make sure everything is connected
+        time.sleep(1)
+
+        # wait for door etc.
+        if not skip_init:
+            self.start_challenge(robot)
+
+            # Move to the start location
+            nwc = NavigateToWaypoint(robot,
+                                     EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose),
+                                     radius=0.3)
+            nwc.execute()
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
@@ -559,80 +620,51 @@ class GPSR:
         action_functions = {}
         action_functions["navigate"] = self.navigate
         action_functions["find"] = self.find
+        action_functions["follow"] = self.follow
         action_functions["answer-question"] = self.answer_question
         action_functions["pick-up"] = self.find_and_pick_up
         action_functions["bring"] = self.bring
         action_functions["say"] =  self.say
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # Initialize
 
-        robot.lights.set_color(0, 0, 1)  #be sure lights are blue
+        while True:
+            self.hey_robot_wait_forever(robot)
 
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close',0.0)
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close',0.0)
-        robot.ed.reset()
-        robot.torso.reset()
-        robot.head.reset()
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        done = False
-        while not done and not rospy.is_shutdown():
-            
-            robot.head.reset()
-            
-            # Wait for trigger to become True
-            while not self._action_requested and not rospy.is_shutdown():
-                time.sleep(0.1)
-
-            if rospy.is_shutdown():
-                return
-
-            self._action_requested = False
             try:
-                self.execute_command(robot, command_recognizer, action_functions, sentence)
+                self.execute_command(robot, command_recognizer, action_functions, mock_sentence)
+            except KeyboardInterrupt as e:
+                rospy.logwarn('keyboard interupt')
+                return 0
             except Exception as e:
-                rospy.logerr("{0}".format(e.message))
-                robot.speech.speak("I am truly sorry, but I messed up this assignment")
+                rospy.logerr("execute_command failed: %s", str(e))
+
+            if not run_forever:
+                break
+
+            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
+            nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
 
 def main():
-    rospy.init_node("gpsr")
+    rospy.init_node("eegpsr")
 
     parser = argparse.ArgumentParser()
     parser.add_argument('robot', help='Robot name')
-    parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
+    parser.add_argument('--once', action='store_true', help='Turn on infinite loop')
     parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
     parser.add_argument('sentence', nargs='*', help='Optional sentence')
     args = parser.parse_args()
     rospy.loginfo('args: %s', args)
 
-    robot_name = args.robot
-    run_forever = args.forever
-    skip_init = args.skip
-    sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+    mock_sentence = " ".join([word for word in args.sentence if word[0] != '_'])
 
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    else:
-        print "unknown robot"
-        return 1
-
-    robot = Robot()
-
-    # Sleep for 1 second to make sure everything is connected
-    time.sleep(1)
-
-    gpsr = GPSR(robot)
-    gpsr.run(robot, sentence)
+    gpsr = GPSR()
+    gpsr.run(robot_name=args.robot, skip_init=args.skip, run_forever=not args.once, mock_sentence=mock_sentence)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    gpsr = GPSR()
     sys.exit(main())
