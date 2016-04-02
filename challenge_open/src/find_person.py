@@ -34,55 +34,57 @@ class PersonDesignator(ds.Designator):
 
     def _resolve(self):
 
-        room_entity = self._room_designator.resolve()
-        if not room_entity:
-            rospy.logwarn('Cannot find room entity')
-            return None
+        # If a room designator is specified, get it from ED
+        if room_designator:
+            room_entity = self._room_designator.resolve()
+            if not room_entity:
+                rospy.logwarn('Cannot find room entity')
+                return None
 
-        # Get the bounding box of the room
-        convex_hull = []
-        for testarea in room_entity.data['areas']:
-            ''' See if the area is in the list of inspection areas '''
-            if testarea['name'] == 'in':
-                ''' Check if we have a shape '''
-                if 'shape' not in testarea:
-                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(testarea['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in testarea['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(testarea['name']))
-                    continue
-                box = testarea['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
-                    continue
-                # Now we're sure to have the correct bounding box
-                roompose = kdl.Frame(kdl.Rotation.Quaternion(room_entity.pose.orientation.x,
-                                                            room_entity.pose.orientation.y,
-                                                            room_entity.pose.orientation.z,
-                                                            room_entity.pose.orientation.w),
-                                     kdl.Vector(room_entity.pose.position.x,
-                                                room_entity.pose.position.y,
-                                                room_entity.pose.position.z))
-                hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                             kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))
-                convex_hull.append(hpose.p)
-                hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                             kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))
-                convex_hull.append(hpose.p)
-                hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                             kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))
-                convex_hull.append(hpose.p)
-                hpose = roompose * kdl.Frame(kdl.Rotation(),
-                                             kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
-                convex_hull.append(hpose.p)
+            # Get the bounding box of the room
+            convex_hull = []
+            for testarea in room_entity.data['areas']:
+                ''' See if the area is in the list of inspection areas '''
+                if testarea['name'] == 'in':
+                    ''' Check if we have a shape '''
+                    if 'shape' not in testarea:
+                        rospy.logwarn("No shape in area {0}".format(testarea['name']))
+                        continue
+                    ''' Check if length of shape equals one '''
+                    if not len(testarea['shape']) == 1:
+                        rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
+                        continue
+                    ''' Check if the first entry is a box '''
+                    if not 'box' in testarea['shape'][0]:
+                        rospy.logwarn("No box in {0}".format(testarea['name']))
+                        continue
+                    box = testarea['shape'][0]['box']
+                    if 'min' not in box or 'max' not in box:
+                        rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
+                        continue
+                    # Now we're sure to have the correct bounding box
+                    roompose = kdl.Frame(kdl.Rotation.Quaternion(room_entity.pose.orientation.x,
+                                                                room_entity.pose.orientation.y,
+                                                                room_entity.pose.orientation.z,
+                                                                room_entity.pose.orientation.w),
+                                         kdl.Vector(room_entity.pose.position.x,
+                                                    room_entity.pose.position.y,
+                                                    room_entity.pose.position.z))
+                    hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                                 kdl.Vector(box['min']['x'], box['min']['y'], box['min']['z']))
+                    convex_hull.append(hpose.p)
+                    hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                                 kdl.Vector(box['max']['x'], box['min']['y'], box['min']['z']))
+                    convex_hull.append(hpose.p)
+                    hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                                 kdl.Vector(box['max']['x'], box['max']['y'], box['min']['z']))
+                    convex_hull.append(hpose.p)
+                    hpose = roompose * kdl.Frame(kdl.Rotation(),
+                                                 kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
+                    convex_hull.append(hpose.p)
 
-        # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
-        # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
+            # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
+            # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
 
         entities = self._robot.ed.get_entities(parse=True)
         possible_humans = []
@@ -94,29 +96,38 @@ class PersonDesignator(ds.Designator):
             rospy.logwarn("No possible humans found")
             return None
 
-        # Check which entities are in the room
-        persons_in_room = []
-        for ph in possible_humans:
-            phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
-            if geometry_helpers.isPointInsideHull(phposition, convex_hull):
-                persons_in_room.append(ph)
-        if not persons_in_room:
-            rospy.logwarn("None of the found possible humans was in the room")
-            return None
+        # If we have a room designator, we try to pick a person in the room, as close to the center point as possible
+        if room_designator:
+            # Check which entities are in the room  
+            persons_in_room = []
+            for ph in possible_humans:
+                phposition = kdl.Vector(ph.pose.position.x, ph.pose.position.y, ph.pose.position.z)
+                if geometry_helpers.isPointInsideHull(phposition, convex_hull):
+                    persons_in_room.append(ph)
+            if not persons_in_room:
+                rospy.logwarn("None of the found possible humans was in the room")
+                return None
 
-        # Sort according to distance to center pose
-        persons_in_room = sorted(persons_in_room,
-                                 key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
-                                                           ph.pose.position.y - room_entity.pose.position.y))
+            # Sort according to distance to center pose
+            persons_in_room = sorted(persons_in_room,
+                                     key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
+                                                               ph.pose.position.y - room_entity.pose.position.y))
 
-        # Return the best one
-        return persons_in_room[0]
+            # Return the best one
+            return persons_in_room[0]
+        else:
+            # We just pick the person closest to the robot
+            bp = self._robot.base.get_location()
+            possible_humans = sorted(possible_humans,
+                                     key=lambda ph: math.hypot(ph.pose.position.x - bp.pose.position.x,
+                                                               ph.pose.position.y - bp.pose.position.y))
+            return possible_humans[0]
 
 
 class FindPerson(smach.StateMachine):
     """ Class to find ANY person within a certain room. It does NOT look for a particular person by trying to recognize
     people. To find anyone, a laser rangefinder will be used """
-    def __init__(self, robot, room_designator):
+    def __init__(self, robot, room_designator=None):
         """ Constructor
         :param robot: robot object
         :param room_designator: EdEntityDesignator for the room in which to look for a person
@@ -126,6 +137,10 @@ class FindPerson(smach.StateMachine):
 
         person_designator = PersonDesignator(robot=robot,
                                              room_designator=room_designator)
+
+        # If the room is not specified, the robot can't go there so will start looking at its current location
+        if not room_designator:
+            self.set_initial_state("NAVIGATE_TO_PERSON")
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
