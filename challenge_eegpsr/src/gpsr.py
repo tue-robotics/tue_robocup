@@ -620,14 +620,14 @@ class GPSR:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        done = False
-        while not done:
+        while True:
+            self.hey_robot_wait_forever()
             self.execute_command(robot, command_recognizer, action_functions, mock_sentence)
-            if not run_forever:
-                done = True
 
-        if not skip_init:
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint), radius = 0.3)
+            if not run_forever:
+                break
+
+            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
             nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
