@@ -541,13 +541,16 @@ class GPSR:
                 print "Semantics: %s" % res[1]
                 return res
 
-            def ask_confirm():
-                robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
-                answer = robot.ears.recognize("(yes|no)", {})
-                if not answer or answer.result != "yes":
-                    return False
-                else:
-                    return True
+            def ask_confirm(self, tries=3):
+                for i in range(0, tries):
+                    result = robot.ears.recognize("(yes|no)",{})
+                    if result and result.result != "":
+                        answer = result.result
+                        return answer == "yes"
+
+                    if i != tries - 1:
+                        robot.speech.speak("Please say yes or no")
+                return False
 
             (sentence, semantics_str) = prompt_once()
 
