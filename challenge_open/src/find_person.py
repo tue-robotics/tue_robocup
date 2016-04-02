@@ -226,9 +226,7 @@ class FindPerson(smach.StateMachine):
                                    transitions={'spoken': 'failed'})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM",
-                                   NavigateToSymbolic(robot=robot,
-                                                      entity_designator_area_name_map={person_designator: "near"},
-                                                      entity_lookat_designator=person_designator),
+                                   NavigateToObserve(robot=robot, entity_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
                                                 'goal_not_defined': 'SAY_NO_PERSON_YET_WITHOUT_ROOM',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON_WITHOUT_ROOM'})
@@ -249,11 +247,9 @@ class FindPerson(smach.StateMachine):
                                                 'preempted': 'NAVIGATE_TO_PERSON_WITHOUT_ROOM2'})
 
             smach.StateMachine.add("NAVIGATE_TO_PERSON_WITHOUT_ROOM2",
-                                   NavigateToSymbolic(robot=robot,
-                                                      entity_designator_area_name_map={person_designator: "near"    },
-                                                      entity_lookat_designator=person_designator),
+                                   NavigateToObserve(robot=robot, entity_designator=person_designator),
                                    transitions={'arrived': 'SAY_FOUND',
-                                                'goal_not_defined': 'SAY_NO_PERSON_YET',
+                                                'goal_not_defined': 'SAY_CANNOT_FIND_PERSON',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON'})
 
         # If the room is not specified, the robot can't go there so will start looking at its current location
