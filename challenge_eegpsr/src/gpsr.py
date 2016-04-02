@@ -50,9 +50,10 @@ import robot_smach_states.util.designators as ds
 
 from robot_smach_states import LookAtArea, StartChallengeRobust
 
-from robot_smach_states.src.robot_smach_states import FollowOperator
+from robot_smach_states import FollowOperator
 
-challenge_knowledge = load_knowledge('challenge_gpsr')
+challenge_knowledge = load_knowledge('challenge_eegpsr')
+
 speech_data = load_knowledge('challenge_speech_recognition')
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -453,7 +454,7 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def start_challenge(self, robot):
-        s = StartChallengeRobust(robot, challenge_knowledge.starting_point)
+        s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
         s.execute()
 
     # ------------------------------------------------------------------------------------------------------------------------
@@ -552,7 +553,9 @@ class GPSR:
             self.start_challenge(robot)
 
             # Move to the start location
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id='gpsr_starting_pose'), radius = 0.3)
+            nwc = NavigateToWaypoint(robot,
+                                     EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose),
+                                     radius=0.3)
             nwc.execute()
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
