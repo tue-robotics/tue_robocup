@@ -87,6 +87,8 @@ class CommandRecognizer:
 
         self.grammar_string = unwrap_grammar("T", self.parser)
 
+        print len(self.grammar_string)
+
     def parse(self, sentence):
         semantics = self.parser.parse("T", sentence.lower().strip().split(" "))
 
