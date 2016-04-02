@@ -158,19 +158,19 @@ class GPSR:
             else:
                 robot.speech.speak("I don't know where I can find the person")
 
-        elif challenge_knowledge.is_location(id):
-            # Driving to a location
+        # elif challenge_knowledge.is_location(id):
+        #     # Driving to a location
 
-            if not nav_area:
-                nav_area = challenge_knowledge.common.get_inspect_position(id)
+        #     if not nav_area:
+        #         nav_area = challenge_knowledge.common.get_inspect_position(id)
 
-            location_des = ds.EntityByIdDesignator(robot, id=id)
+        #     location_des = ds.EntityByIdDesignator(robot, id=id)
 
-            nwc = NavigateToSymbolic( robot,
-                  {location_des : nav_area},
-                  location_des)
+        #     nwc = NavigateToSymbolic( robot,
+        #           {location_des : nav_area},
+        #           location_des)
 
-            nwc.execute()
+        #     nwc.execute()
         else:
             # Driving to anything else (e.g. a waypoint)
             nwc = NavigateToObserve(robot, EntityByIdDesignator(robot, id=id))
@@ -472,40 +472,61 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
+    def execute_command(self, robot, command_recognizer, action_functions, mock_sentence=None):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # If sentence is given on command-line
 
-        if sentence:
-            res = command_recognizer.parse(sentence)
+        if mock_sentence:
+            res = command_recognizer.parse(mock_sentence)
             if not res:
                 robot.speech.speak("Sorry, could not parse the given command")
                 return False
+
+            (sentence, semantics_str) = res
+            print "Sentence: %s" % sentence
+            print "Semantics: %s" % semantics_str
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # When using text-to-speech
 
         else:
-            robot.head.look_at_standing_person()
-            robot.head.wait_for_motion_done()
+            def prompt_once():
+                robot.head.look_at_standing_person()
+                robot.head.wait_for_motion_done()
 
-            res = None
-            while not res:
-                robot.speech.speak("What can I do for you?", block=True)
-                res = command_recognizer.recognize(robot)
-                if not res:
-                    robot.speech.speak("Sorry, I could not understand", block=True)
+                res = None
+                while not res:
+                    robot.speech.speak("What can I do for you?", block=True)
+                    res = command_recognizer.recognize(robot)
+                    if not res:
+                        robot.speech.speak("Sorry, I could not understand", block=True)
+
+                print "Sentence: %s" % res[0]
+                print "Semantics: %s" % res[1]
+                return res
+
+            def ask_confirm():
+                robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
+                answer = robot.ears.recognize("(yes|no)", {})
+                if not answer or answer.result != "yes":
+                    return False
+                else:
+                    return True
+
+            (sentence, semantics_str) = prompt_once()
+
+            # confirm
+            if not ask_confirm():
+                # we heared the wrong thing
+                (sentence, semantics_str) = prompt_once()
+
+                if not ask_confirm():
+                    # we heared the wrong thing twice
+                    robot.speech.speak("Sorry")
+                    return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        (sentence, semantics_str) = res
-        print "Sentence: %s" % sentence
-        print "Semantics: %s" % semantics_str
-
-        robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
-
-        # TODO: ask for confirmation?
 
         semantics = yaml.load(semantics_str)
 
