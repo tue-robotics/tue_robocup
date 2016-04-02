@@ -565,7 +565,7 @@ class GPSR:
                     robot.speech.speak("Sorry")
                     return
 
-        semantics_str = command_recognizer.resolve(semantics_str)
+        semantics_str = command_recognizer.resolve(semantics_str, robot)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
