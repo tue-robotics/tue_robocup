@@ -543,6 +543,7 @@ class GPSR:
                 return res
 
             def ask_confirm(tries=3):
+                robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
                 for i in range(0, tries):
                     result = robot.ears.recognize("(yes|no)",{})
                     if result and result.result != "":
