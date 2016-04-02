@@ -118,7 +118,7 @@ class FollowOperator(smach.State):
 
                 if answer:
                     if answer.result == "yes":
-                        operator = self._robot.ed.get_closest_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                        operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
                     elif answer.result == "no":
@@ -129,7 +129,7 @@ class FollowOperator(smach.State):
                     self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                     return False
             else:
-                operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_laser_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -317,11 +317,11 @@ class FollowOperator(smach.State):
 
     def _recover_operator(self):
         if self._breadcrumbs:
-            recovered_operator = self._robot.ed.get_closest_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
+            recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
         else:
             while rospy.Time.now() - self._lost_time < rospy.Duration(self._lost_timeout):
                 # Try to catch up with a close entity
-                recovered_operator = self._robot.ed.get_closest_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
+                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
                 if recovered_operator:
                     break
                 rospy.sleep(0.2)
