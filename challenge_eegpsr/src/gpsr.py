@@ -34,6 +34,7 @@ import cfgparser
 import rospy
 import random
 import argparse
+import time
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
@@ -430,13 +431,13 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def execute_command(self, robot, command_recognizer, action_functions, sentence=None):
+    def execute_command(self, robot, command_recognizer, action_functions, mock_sentence=None):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # If sentence is given on command-line
 
-        if sentence:
-            res = command_recognizer.parse(sentence)
+        if mock_sentence:
+            res = command_recognizer.parse(mock_sentence)
             if not res:
                 robot.speech.speak("Sorry, could not parse the given command")
                 return False
@@ -487,38 +488,25 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def run(self):
-        rospy.init_node("gpsr")
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument('robot', help='Robot name')
-        parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
-        parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
-        parser.add_argument('sentence', nargs='*', help='Optional sentence')
-        args = parser.parse_args()
-        rospy.loginfo('args: %s', args)
-
-        robot_name = args.robot
-        run_forever = args.forever
-        skip_init = args.skip
-        sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+    def run(self, robot_name, skip_init, run_forever, mock_sentence):
 
         if robot_name == 'amigo':
             from robot_skills.amigo import Amigo as Robot
         elif robot_name == 'sergio':
             from robot_skills.sergio import Sergio as Robot
         else:
-            print "unknown robot"
-            return 1
+            raise ValueError('unknown robot')
 
         robot = Robot()
+        # Sleep for 1 second to make sure everything is connected
+        time.sleep(1)
 
         # wait for door etc.
         if not skip_init:
             self.start_challenge(robot)
 
             # Move to the start location
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="gpsr_starting_pose"), radius = 0.3)
+            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id='gpsr_starting_pose'), radius = 0.3)
             nwc.execute()
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
@@ -537,7 +525,7 @@ class GPSR:
 
         done = False
         while not done:
-            self.execute_command(robot, command_recognizer, action_functions, sentence)
+            self.execute_command(robot, command_recognizer, action_functions, mock_sentence)
             if not run_forever:
                 done = True
 
@@ -547,6 +535,24 @@ class GPSR:
 
 # ------------------------------------------------------------------------------------------------------------------------
 
+def main():
+    rospy.init_node("eegpsr")
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('robot', help='Robot name')
+    parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
+    parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
+    parser.add_argument('sentence', nargs='*', help='Optional sentence')
+    args = parser.parse_args()
+    rospy.loginfo('args: %s', args)
+
+    mock_sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+
+    gpsr = GPSR()
+    gpsr.run(robot_name=args.robot, skip_init=args.skip, run_forever=args.forever, mock_sentence=mock_sentence)
+
+# ------------------------------------------------------------------------------------------------------------------------
+
 if __name__ == "__main__":
     gpsr = GPSR()
-    sys.exit(gpsr.run())
+    sys.exit(main())
