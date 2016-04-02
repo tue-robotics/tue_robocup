@@ -35,7 +35,7 @@ class PersonDesignator(ds.Designator):
     def _resolve(self):
 
         # If a room designator is specified, get it from ED
-        if room_designator:
+        if self._room_designator:
             room_entity = self._room_designator.resolve()
             if not room_entity:
                 rospy.logwarn('Cannot find room entity')
@@ -97,7 +97,7 @@ class PersonDesignator(ds.Designator):
             return None
 
         # If we have a room designator, we try to pick a person in the room, as close to the center point as possible
-        if room_designator:
+        if self._room_designator:
             # Check which entities are in the room
             persons_in_room = []
             for ph in possible_humans:
@@ -135,12 +135,17 @@ class FindPerson(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        person_designator = PersonDesignator(robot=robot,
-                                             room_designator=room_designator)
 
-        # If the room is not specified, the robot can't go there so will start looking at its current location
+
         if not room_designator:
-            self.set_initial_state("NAVIGATE_TO_PERSON_WITHOUT_ROOM")
+            room_designator = ds.EdEntityDesignator(robot)
+            person_designator = PersonDesignator(robot=robot,
+                                                 room_designator=None)
+            use_room = False
+        else:
+            use_room = True
+            person_designator = PersonDesignator(robot=robot,
+                                                 room_designator=room_designator)
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_ROOM",
@@ -252,6 +257,10 @@ class FindPerson(smach.StateMachine):
                                                 'goal_not_defined': 'SAY_NO_PERSON_YET',
                                                 'unreachable': 'SAY_CANNOT_REACH_PERSON'})
 
+        # If the room is not specified, the robot can't go there so will start looking at its current location
+        if not use_room:
+            self.set_initial_state(["NAVIGATE_TO_PERSON_WITHOUT_ROOM"])
+
 
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')
@@ -277,4 +286,5 @@ if __name__ == "__main__":
     room_designator = ds.EdEntityDesignator(robot, id=room)
 
     sm = FindPerson(robot, room_designator)
+    sm = FindPerson(robot, None)
     sm.execute()
