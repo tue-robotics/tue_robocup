@@ -60,18 +60,25 @@ class GPSR:
         self.last_location = None
         self.last_entity = None
 
-        self._action_requested = False
+        self.command_data = {}
+        self.wait_for_trigger = True
 
-        self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
+        if robot.robot_name == "amigo":
+            self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
+        elif robot.robot_name == "sergio"
+            self._trigger_sub = rospy.Subscriber("/sergio/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
+            self.pub_trigger = rospy.Publisher('/amigo/trigger', std_msgs.msg.String)
 
         self.robot = robot
 
     def _trigger_callback(self, msg):
-        """ Callback function for the trigger topic. Sets self._action_requested to True if the msg is 'gpsr'
-        :param msg:
-        """
-        if msg.data == "gpsr":
-            self._action_requested = True
+        self.wait_for_trigger = False
+
+        if msg.data != "gpsr":
+            self.command_data = yaml.load(msg.data)
+
+    def send_trigger(self, msg):
+        self.pub_trigger.publish(msg)
 
     def resolve_entity_description(self, parameters):
         descr = EntityDescription()
@@ -373,6 +380,11 @@ class GPSR:
 
         if pick_up and entity_descr.id:
 
+            if robot.robot_name == "sergio":
+                robot.speech.speak("But, wait a minute! I can't pick this up, I have no arms! Let's call my friend amigo!")
+                self.send_trigger(yaml.dump(self.command_data))
+                return
+
             robot.speech.speak("Going to grab the {}".format(entity_descr.type))
 
             # grab it
@@ -507,6 +519,9 @@ class GPSR:
 
         semantics = yaml.load(semantics_str)
 
+        self.command_data = semantics
+        self.command_data["sentence"] = sentence
+
         actions = []
         if "action1" in semantics:
             actions += [semantics["action1"]]
@@ -560,15 +575,23 @@ class GPSR:
             robot.head.reset()
             
             # Wait for trigger to become True
-            while not self._action_requested and not rospy.is_shutdown():
+            while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
 
             if rospy.is_shutdown():
                 return
 
-            self._action_requested = False
             try:
+                sentence = None
+                if self.command_data:
+                    sentence = self.command_data["sentence"]
+
                 self.execute_command(robot, command_recognizer, action_functions, sentence)
+                self.command_data = {}
+
+                if robot.robot_name == "sergio":
+                    self.wait_for_trigger = True
+
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
