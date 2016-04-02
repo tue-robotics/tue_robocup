@@ -411,7 +411,7 @@ class FollowOperator(smach.State):
             else:
                 self._update_navigation()
 
-            rospy.sleep(1) # Loop at 1Hz
+            rospy.sleep(.5) # Loop at 2Hz
 
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
