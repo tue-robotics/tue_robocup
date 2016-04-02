@@ -1,31 +1,6 @@
 #! /usr/bin/python
 
 # ------------------------------------------------------------------------------------------------------------------------
-# By Sjoerd van den Dries, 2016
-
-# TODO:
-
-# DONE:
-# - Fix constraint outside arena (quick fix: seal exit in heightmap)
-# - define in_front_of's, etc
-# - handover
-# - Add entrance and exit
-# - Enter arena
-# - Find person in different states
-# - also use the nav area for navigation
-# - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-# Cannot deal with:
-#    look for a person in the entrance and answer a question
-
-        # go to the bookcase, find a person, and say your name
-
-        # bookcase
-        #      Locate at least three objects there.
-
-# ------------------------------------------------------------------------------------------------------------------------
 
 import os
 import sys
@@ -160,19 +135,19 @@ class GPSR:
             else:
                 robot.speech.speak("I don't know where I can find the person")
 
-        # elif challenge_knowledge.is_location(id):
-        #     # Driving to a location
+        elif challenge_knowledge.is_location(id):
+            # Driving to a location
 
-        #     if not nav_area:
-        #         nav_area = challenge_knowledge.common.get_inspect_position(id)
+            if not nav_area:
+                nav_area = challenge_knowledge.common.get_inspect_position(id)
 
-        #     location_des = ds.EntityByIdDesignator(robot, id=id)
+            location_des = ds.EntityByIdDesignator(robot, id=id)
 
-        #     nwc = NavigateToSymbolic( robot,
-        #           {location_des : nav_area},
-        #           location_des)
+            nwc = NavigateToSymbolic( robot,
+                  {location_des : nav_area},
+                  location_des)
 
-        #     nwc.execute()
+            nwc.execute()
         else:
             # Driving to anything else (e.g. a waypoint)
             nwc = NavigateToObserve(robot, EntityByIdDesignator(robot, id=id))

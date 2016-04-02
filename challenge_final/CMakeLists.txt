@@ -110,17 +110,11 @@ include_directories(
 #   src/${PROJECT_NAME}/challenge_final.cpp
 # )
 
-## Declare a cpp executable
-add_executable(send_image src/send_image.cpp)
-
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(challenge_final_node challenge_final_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(send_image
-   ${catkin_LIBRARIES}
- )
 
 #############
 ## Install ##
