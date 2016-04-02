@@ -620,6 +620,7 @@ class GPSR:
         action_functions = {}
         action_functions["navigate"] = self.navigate
         action_functions["find"] = self.find
+        action_functions["follow"] = self.follow
         action_functions["answer-question"] = self.answer_question
         action_functions["pick-up"] = self.find_and_pick_up
         action_functions["bring"] = self.bring
