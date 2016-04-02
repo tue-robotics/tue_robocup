@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import math
 import rospy
 import smach
 import tf
@@ -121,6 +122,7 @@ class PickUp(smach.State):
         rospy.loginfo("ID to update: {0}".format(grab_entity.id))
         if not updated_grab_entity:
             rospy.logerr("Could not resolve the updated grab_entity, this should not happen [CHECK WHY THIS IS HAPPENING]")
+            grab_entity = self.associate(original_entity=grab_entity)
         else:
             rospy.loginfo("Updated pose of entity (x, y, z) : (%f, %f, %f) --> (%f, %f, %f)" %
                     (grab_entity.pose.position.x, grab_entity.pose.position.y, grab_entity.pose.position.z,
@@ -201,6 +203,38 @@ class PickUp(smach.State):
         self.robot.head.cancel_goal()
 
         return 'succeeded'
+
+    def associate(self, original_entity):
+        """ Tries to associate the original entity with one of the entities in the world model. This is useful if
+        after an update, the original entity is no longer present in the world model. If no good map can be found,
+        the original entity will be returned as the associated entity.
+        :param original_entity:
+        :return: associated entity
+        """
+        # Get all entities
+        entities = self.robot.ed.get_entities(parse=False)
+
+        # Remove all entities with a shape. These are probably not the ones we want to grasp
+        for e in entities:
+            if e.has_shape:
+                entities.remove(e)
+        entities = sorted(entities,
+                          key=lambda entity: self.distance(entity, original_entity))
+
+        if self.distance(entities[0], original_entity) < 0.05:  # Objects Less than 5 cm apart might be associated
+            return entities[0]
+        else:
+            return original_entity
+
+    def distance(self, e1, e2):
+        """ Computes the distance between two entities
+        :param e1:
+        :param e2:
+        :return:
+        """
+        return math.hypot(math.hypot(e1.pose.position.x - e2.pose.position.x,
+                                     e1.pose.position.y - e2.pose.position.y),
+                                     e1.pose.position.z - e2.pose.position.z)
 
 
 class Grab(smach.StateMachine):
