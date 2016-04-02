@@ -42,6 +42,12 @@ PERSON["type" : "person", "id" : N, "loc" : L] -> NAME[N] LOC_DET[L]
 PERSON["special" : "it"] -> him | her | them
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
+# Exit
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action" : "exit"] -> exit the arena | leave the arena
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # Follow
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -51,7 +57,7 @@ VP["action": "follow", "entity" : {X}] -> follow PERSON[X]
 # Find
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": A, "entity": {X}] -> V_FIND[A] OBJ_FIND[X]
+VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
 
 V_FIND["find"] -> find | look for
 
@@ -84,8 +90,8 @@ V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 # Placing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on LOC[L]
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in LOC[L]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on the LOC[L]
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in the LOC[L]
 VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER_SPEC[L]
 VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER[L] at the LOC[L]
 V_PLACE -> put | place

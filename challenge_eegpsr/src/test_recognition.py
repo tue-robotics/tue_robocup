@@ -60,9 +60,21 @@ def print_result(res):
 
 # ----------------------------------------------------------------------------------------------------
 
-def text_mode(command_recognizer, sentence):
+def text_mode(command_recognizer, sentence, robot_name):
+    rospy.init_node("gpsr_test_recognition")
+
+    if robot_name == 'amigo':
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == 'sergio':
+        from robot_skills.sergio import Sergio as Robot
+    else:
+        print "unknown robot"
+        return 1
+
+    robot = Robot()
+
     print "---------------------------------------------------------------"
-    print_result(command_recognizer.parse(sentence))
+    print_result(command_recognizer.parse(sentence, robot))
     print "---------------------------------------------------------------"
 
 # ----------------------------------------------------------------------------------------------------
@@ -115,12 +127,12 @@ def main():
 
     sentence = " ".join([word for word in sys.argv[2:] if word[0] != '_'])
 
-    if sentence:
-        text_mode(command_recognizer, sentence)
-        return
+    robot_name = sys.argv[1]
 
-    else:
-        robot_name = sys.argv[1]
+    if sentence:
+        text_mode(command_recognizer, sentence, robot_name)
+        return
+    else:        
         speech_mode(command_recognizer, robot_name)       
 
 # ----------------------------------------------------------------------------------------------------
