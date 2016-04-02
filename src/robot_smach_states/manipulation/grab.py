@@ -188,6 +188,9 @@ class PickUp(smach.State):
 
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
+        # Update Kinect once again to make sure the object disappears from ED
+        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
+
         arm.wait_for_motion_done()
 
         # Carrying pose

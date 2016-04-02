@@ -418,10 +418,6 @@ class EmptySpotDesignator(Designator):
                 e.convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
                 e.convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
                 e.convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
-                # e.convex_hull.append(gm.Point(-0.15, box['min']['y'], box['min']['z']))  # 1
-                # e.convex_hull.append(gm.Point(0.15, box['min']['y'], box['min']['z']))  # 2
-                # e.convex_hull.append(gm.Point(0.15, box['max']['y'], box['min']['z']))  # 3
-                # e.convex_hull.append(gm.Point(-0.15, box['max']['y'], box['min']['z']))  # 4
 
                 # Make sure we overwrite the e.z_max
                 e.z_max = box['min']['z'] - 0.04  # 0.04 is the usual offset

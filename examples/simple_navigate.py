@@ -22,6 +22,11 @@ if __name__ == "__main__":
         sys.exit()
 
     robot = Robot()
+    
+    if len(sys.argv) > 2:
+        room = sys.argv[2]
+    else:
+        room = "kitchen"
 
     rospy.sleep(2) # wait for tf cache to be filled
     
@@ -32,6 +37,11 @@ if __name__ == "__main__":
     #nav_state.execute()
 
     nav_state = NavigateToSymbolic(robot, {
-                                            ds.EntityByIdDesignator(robot, id="kitchen"):"in"},
-                                            ds.EntityByIdDesignator(robot, id="dinnertable"))
+                                            ds.EntityByIdDesignator(robot, id=room):"in"},
+                                            ds.EntityByIdDesignator(robot, id=room))
     nav_state.execute()
+    
+    #nav_state = NavigateToSymbolic(robot, {
+    #                                        ds.EntityByIdDesignator(robot, id="couch"):"in_front_of"},
+    #                                        ds.EntityByIdDesignator(robot, id="couch"))
+    #nav_state.execute()
