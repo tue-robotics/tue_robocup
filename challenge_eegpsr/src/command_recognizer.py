@@ -69,7 +69,7 @@ def hear(robot, sentence, options):
     while True:
         robot.speech.speak(sentence)
         res = robot.ears.recognize("<loc>", {"loc": options})
-        if not res:
+        if not res or not res.result:
             robot.speech.speak("Sorry, I could not understand")
         else:
             break
