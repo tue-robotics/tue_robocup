@@ -567,6 +567,21 @@ class GPSR:
         robot.torso.reset()
         robot.head.reset()
 
+        if robot.robot_name == "amigo":
+
+            # Wait for trigger to become True
+            while self.wait_for_trigger and not rospy.is_shutdown():
+                time.sleep(0.1)
+
+            # TODO:
+            #   - Wait for door
+            #   - Force drive, etc
+
+            robot.base.set_initial_pose(-1, 0, 0)
+
+            # s = StartChallengeRobust(robot, challenge_knowledge.starting_point)
+            # s.execute()
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         done = False
@@ -595,6 +610,8 @@ class GPSR:
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
+
+            self.command_data = {}
 
 # ------------------------------------------------------------------------------------------------------------------------
 
