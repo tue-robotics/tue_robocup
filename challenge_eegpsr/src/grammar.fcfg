@@ -29,7 +29,7 @@ ADJ_PERSON["calling"] -> calling
 
 LOC_DET[R] -> in the ROOM[R]
 
-TO_LOC[X] -> LOC[X]
+TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
 TO_LOC[{"special" : "operator"}] -> me
 
@@ -62,7 +62,13 @@ OBJ_FIND[P] -> PERSON[P]
 # Say
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
+VP["action": "count", "cat" : C] -> V_SAY how many OBJ_CAT[C] there are
+VP["action": "count", "cat" : C] -> V_SAY how many GENDER[C] there are
 VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many OBJ_CAT[C] are at the LOC[L]
+VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many GENDER[C] are at the LOC[L]
+
+GENDER["women"] -> women
+GENDER["men"] -> men
 
 V_SAY -> tell | say | speak
 
@@ -87,6 +93,19 @@ V_PLACE -> put | place
 CONTAINER_SPEC[{"type" : X}] -> CONTAINER[X]
 CONTAINER_SPEC[{"type" : X, "loc" : L}] -> CONTAINER[X] at the LOC[L]
 
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Moving
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
+
+NAV_LOC[X] -> TO_LOC[X]
+NAV_LOC[X] -> the ROOM[X]
+
+V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
+
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -102,17 +121,6 @@ VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRIN
 V_BRING -> give | bring | hand | deliver | take | carry | transport
 
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Moving
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
-
-NAV_LOC[X] -> TO_LOC[X]
-NAV_LOC[X] -> ROOM[X]
-
-V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
 
 
