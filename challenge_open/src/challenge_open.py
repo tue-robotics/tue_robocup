@@ -409,7 +409,7 @@ class GPSR:
         to_descr = self.resolve_entity_description(parameters["to"])
 
         if not to_descr:
-            return        
+            return
 
         if to_descr.type == "person" or to_descr.id == "gpsr_starting_pose":
             if to_descr.location:
@@ -515,7 +515,7 @@ class GPSR:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def run(self, robot, sentence):
-        
+
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -549,8 +549,14 @@ class GPSR:
             while not self._action_requested and not rospy.is_shutdown():
                 time.sleep(0.1)
 
+            if rospy.is_shutdown():
+                return
+
             self._action_requested = False
-            self.execute_command(robot, command_recognizer, action_functions, sentence)
+            try:
+                self.execute_command(robot, command_recognizer, action_functions, sentence)
+            except:
+                robot.speech.speak("I am truly sorry, but I messed up this assignment")
 
 # ------------------------------------------------------------------------------------------------------------------------
 
