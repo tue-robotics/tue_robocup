@@ -63,6 +63,9 @@ class EntityDescription(object):
         self.type = type
         self.location = location
 
+    def __repr__(self):
+        return "(id={}, type={}, location={})".format(self.id, self.type, self.location)
+
 # ------------------------------------------------------------------------------------------------------------------------
 
 def not_implemented(robot, parameters):
@@ -156,11 +159,11 @@ class GPSR:
                 nav_area = challenge_knowledge.common.get_inspect_position(id)
 
             location_des = ds.EntityByIdDesignator(robot, id=id)
-            room_des = ds.EntityByIdDesignator(robot, id=challenge_knowledge.common.get_room(id))
 
             nwc = NavigateToSymbolic( robot,
-                  {location_des : nav_area, room_des : "in"},
+                  {location_des : nav_area},
                   location_des)
+
             nwc.execute()
         else:
             # Driving to anything else (e.g. a waypoint)
@@ -186,6 +189,7 @@ class GPSR:
 
         else:
             robot.speech.speak("I am going to the %s" % entity_descr.id, block=False)
+            print entity_descr
             self.move_robot(robot, entity_descr.id, entity_descr.type)
             self.last_location = entity_descr
 
