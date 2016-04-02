@@ -559,7 +559,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('robot', help='Robot name')
-    parser.add_argument('--forever', action='store_true', help='Turn on infinite loop')
+    parser.add_argument('--once', action='store_true', help='Turn on infinite loop')
     parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
     parser.add_argument('sentence', nargs='*', help='Optional sentence')
     args = parser.parse_args()
@@ -568,7 +568,7 @@ def main():
     mock_sentence = " ".join([word for word in args.sentence if word[0] != '_'])
 
     gpsr = GPSR()
-    gpsr.run(robot_name=args.robot, skip_init=args.skip, run_forever=args.forever, mock_sentence=mock_sentence)
+    gpsr.run(robot_name=args.robot, skip_init=args.skip, run_forever=not args.skip, mock_sentence=mock_sentence)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
