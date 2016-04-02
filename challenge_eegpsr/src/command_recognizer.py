@@ -202,7 +202,7 @@ class CommandRecognizer:
 
         # print len(self.grammar_string)
 
-    def resolve(semantics_str, robot):
+    def resolve(self, semantics_str, robot):
         if not semantics_str:
             return None
 
