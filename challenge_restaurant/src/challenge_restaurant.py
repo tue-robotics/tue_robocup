@@ -256,7 +256,7 @@ class AskOrder(smach.State):
     def _confirm(self, tries=3):
         for i in range(0, tries):
             result = self._robot.ears.recognize("(yes|no)",{})
-            if result and result.result != "":
+            if result and result.result:
                 answer = result.result
                 return answer == "yes"
 
@@ -271,7 +271,7 @@ class AskOrder(smach.State):
         order = None
         while not order:
             result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
-            if result:
+            if result and result.result:
 
                 self._robot.speech.speak("I heard %s, is this correct?" % result.result)
                 if not self._confirm():
