@@ -659,7 +659,7 @@ def main():
     mock_sentence = " ".join([word for word in args.sentence if word[0] != '_'])
 
     gpsr = GPSR()
-    gpsr.run(robot_name=args.robot, skip_init=args.skip, run_forever=not args.skip, mock_sentence=mock_sentence)
+    gpsr.run(robot_name=args.robot, skip_init=args.skip, run_forever=not args.once, mock_sentence=mock_sentence)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
