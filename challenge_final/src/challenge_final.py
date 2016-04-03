@@ -581,7 +581,9 @@ class GPSR:
             wait_state.run(robot=robot, timeout=None)
             robot.speech.speak("Let's do this")
 
-            robot.base.set_initial_pose(-1, 0, 0)  # ToDo: do we need a sleep
+            robot.base.set_initial_pose(-1.64, 0, 0)  
+            # Wait 0.5 s just to be sure
+            rospy.sleep(rospy.Duration(0.5))
 
             robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
 
