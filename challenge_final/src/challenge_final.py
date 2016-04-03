@@ -138,7 +138,7 @@ class GPSR:
                 else:
                     # TODO
                     self.move_robot(robot, id=loc)
-                    robot.base.force_drive(0, 0, 3.1415 / 4, 4)
+                    #robot.base.force_drive(0, 0, 3.1415 / 4, 4)
                     # robot.speech.speak("I need to find a person near this location, but can't do this yet! Ask Janno!")
                     f = FindPerson(robot, None)
                     result = f.execute()
