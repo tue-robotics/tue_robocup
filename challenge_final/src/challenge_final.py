@@ -381,7 +381,9 @@ class GPSR:
         if pick_up and entity_descr.id:
 
             if robot.robot_name == "sergio":
-                robot.speech.speak("But, wait a minute! I can't pick this up, I have no arms! Let's call my friend amigo!")
+                robot.speech.speak("But, wait a minute! I can't pick this up, I have no arms", mood="sad")
+                # Make second sentence blocking, to prevent to robots from talking at the same time
+                robot.speech.speak("But hey, maybe my friend amigo can help me out", mood="excited", block=True)
                 self.send_trigger(yaml.dump(self.command_data))
                 return
 
@@ -574,10 +576,12 @@ class GPSR:
                 time.sleep(0.1)
 
             from robot_smach_states import WaitForDoorOpen
+            robot.speech.speak("Knock, knock, will you let me in", block=False)
             wait_state = WaitForDoorOpen(robot=robot)
             wait_state.run(robot=robot, timeout=None)
+            robot.speech.speak("Let's do this")
 
-            robot.base.set_initial_pose(-1, 0, 0)
+            robot.base.set_initial_pose(-1, 0, 0)  # ToDo: do we need a sleep
 
             robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
 
