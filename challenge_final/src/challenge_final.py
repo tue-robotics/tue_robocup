@@ -614,7 +614,8 @@ class GPSR:
 
                 self.execute_command(robot, command_recognizer, action_functions, sentence)
                 self.sentence = None
-
+            except KeyboardInterrupt:
+                rospy.logwarn('KeyboardInterrupt')
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
                 rospy.logerr("%s", sys.exc_info())
