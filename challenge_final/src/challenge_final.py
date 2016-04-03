@@ -620,7 +620,7 @@ class GPSR:
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
                 rospy.logerr("%s", traceback.format_exc(sys.exc_info()))
-                robot.speech.speak("I am truly sorry, but I messed up this assignment")
+                robot.speech.speak("I am truly sorry, let's try this again")
 
             self.sentence = None
             self.wait_for_trigger = True
