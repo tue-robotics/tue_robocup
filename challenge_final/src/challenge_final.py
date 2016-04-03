@@ -567,6 +567,9 @@ class GPSR:
         robot.torso.reset()
         robot.head.reset()
 
+        self.sentence = None
+        self.wait_for_trigger = True
+
         if robot.robot_name == "amigo":
 
             # Wait for trigger to become True
@@ -596,9 +599,7 @@ class GPSR:
             robot.head.reset()
 
             # Wait for trigger to become True
-            self.sentence = None
-            self.wait_for_trigger = True
-            while self.wait_for_trigger and not rospy.is_shutdown():
+                while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
 
             if rospy.is_shutdown():
@@ -617,6 +618,7 @@ class GPSR:
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
 
             self.sentence = None
+            self.wait_for_trigger = True
 
 # ------------------------------------------------------------------------------------------------------------------------
 
