@@ -57,7 +57,7 @@ class CommandRecognizer:
             self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, resolve_name(obj, challenge_knowledge)))
             self.parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, resolve_name(obj, challenge_knowledge)))  
 
-        # location_names = list(set([o["name"] for o in challenge_knowledge.common.locations]))          
+        #location_names = list(set([o["name"] for o in challenge_knowledge.common.locations]))          
 
         for loc in challenge_knowledge.location_names:
             #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))

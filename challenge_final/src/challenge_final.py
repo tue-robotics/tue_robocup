@@ -27,7 +27,7 @@ import robot_smach_states.util.designators as ds
 
 from robot_smach_states import LookAtArea, StartChallengeRobust
 
-challenge_knowledge = load_knowledge('challenge_open')
+challenge_knowledge = load_knowledge('challenge_final')
 speech_data = load_knowledge('challenge_speech_recognition')
 
 # ------------------------------------------------------------------------------------------------------------------------

@@ -10,7 +10,7 @@ from command_recognizer import CommandRecognizer
 
 from generate_command import CommandGenerator
 
-challenge_knowledge = load_knowledge('challenge_gpsr')
+challenge_knowledge = load_knowledge('challenge_final')
 
 # ----------------------------------------------------------------------------------------------------
 
