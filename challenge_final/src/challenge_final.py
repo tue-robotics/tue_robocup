@@ -540,7 +540,7 @@ class GPSR:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def run(self, robot, sentence):
+    def run(self, robot, sentence, skip_init):
 
         command_recognizer = CommandRecognizer(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
@@ -570,7 +570,7 @@ class GPSR:
         self.sentence = None
         self.wait_for_trigger = True
 
-        if robot.robot_name == "amigo":
+        if robot.robot_name == "amigo" and not skip_init:
 
             # Wait for trigger to become True
             while self.wait_for_trigger and not rospy.is_shutdown():
@@ -653,7 +653,7 @@ def main():
     time.sleep(1)
 
     gpsr = GPSR(robot)
-    gpsr.run(robot, sentence)
+    gpsr.run(robot, sentence, skip_init)
 
 # ------------------------------------------------------------------------------------------------------------------------
 
