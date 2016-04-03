@@ -60,14 +60,14 @@ class GPSR:
         self.last_location = None
         self.last_entity = None
 
-        self.command_data = {}
+        self.sentence = None
         self.wait_for_trigger = True
 
         if robot.robot_name == "amigo":
             self._trigger_sub = rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
         elif robot.robot_name == "sergio":
             self._trigger_sub = rospy.Subscriber("/sergio/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
-            self.pub_trigger = rospy.Publisher('/amigo/trigger', std_msgs.msg.String)
+            self.pub_trigger = rospy.Publisher('/amigo/trigger', std_msgs.msg.String, queue_size=1)
 
         self.robot = robot
 
@@ -75,7 +75,9 @@ class GPSR:
         self.wait_for_trigger = False
 
         if msg.data != "gpsr":
-            self.command_data = yaml.load(msg.data)
+            self.sentence = msg.data
+        else:
+            self.sentence = None
 
     def send_trigger(self, msg):
         self.pub_trigger.publish(msg)
@@ -384,7 +386,7 @@ class GPSR:
                 robot.speech.speak("But, wait a minute! I can't pick this up, I have no arms", mood="sad")
                 # Make second sentence blocking, to prevent to robots from talking at the same time
                 robot.speech.speak("But hey, maybe my friend amigo can help me out", mood="excited", block=True)
-                self.send_trigger(yaml.dump(self.command_data))
+                self.send_trigger(self.sentence)
                 return
 
             robot.speech.speak("Going to grab the {}".format(entity_descr.type))
@@ -478,6 +480,8 @@ class GPSR:
             print "Sentence: %s" % sentence
             print "Semantics: %s" % semantics_str
 
+            robot.speech.speak("I received a command. I have to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # When using text-to-speech
 
@@ -509,20 +513,14 @@ class GPSR:
 
             # confirm
             if not ask_confirm():
-                # we heared the wrong thing
-                (sentence, semantics_str) = prompt_once()
-
-                if not ask_confirm():
-                    # we heared the wrong thing twice
-                    robot.speech.speak("Sorry")
-                    return
+                robot.speech.speak("Sorry")
+                return
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         semantics = yaml.load(semantics_str)
 
-        self.command_data = semantics
-        self.command_data["sentence"] = sentence
+        self.sentence = sentence
 
         actions = []
         if "action1" in semantics:
@@ -598,6 +596,7 @@ class GPSR:
             robot.head.reset()
 
             # Wait for trigger to become True
+            self.sentence = None
             while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
 
@@ -606,11 +605,11 @@ class GPSR:
 
             try:
                 sentence = None
-                if self.command_data:
-                    sentence = self.command_data["sentence"]
+                if self.sentence:
+                    sentence = self.sentence
 
                 self.execute_command(robot, command_recognizer, action_functions, sentence)
-                self.command_data = {}
+                self.sentence = None
 
                 if robot.robot_name == "sergio":
                     self.wait_for_trigger = True
@@ -619,7 +618,7 @@ class GPSR:
                 rospy.logerr("{0}".format(e.message))
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
 
-            self.command_data = {}
+            self.sentence = None
 
 # ------------------------------------------------------------------------------------------------------------------------
 
