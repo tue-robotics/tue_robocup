@@ -190,11 +190,14 @@ class ED:
 
     def reset(self):
         """Removes all non-mesh objects from ED"""
-        try:
-            self._ed_reset_srv()
-        except rospy.ServiceException, e:
-            rospy.logerr("Could not reset ED: {0}".format(e))
-        rospy.sleep(1.0)
+        rospy.logwarn("ED RESET does not work (Final, reo2016). Please change back after Robocup!")
+        pass
+
+        # try:
+        #     self._ed_reset_srv()
+        # except rospy.ServiceException, e:
+        #     rospy.logerr("Could not reset ED: {0}".format(e))
+        # rospy.sleep(1.0)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
