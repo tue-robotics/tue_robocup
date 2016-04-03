@@ -113,6 +113,8 @@ class GPSR:
 
     def move_robot(self, robot, id=None, type=None, nav_area=None, loc=None):
 
+        rospy.logwarn("move_robot({}, {}, {}, {}".format(id, type, nav_area, loc))
+
         if id in challenge_knowledge.rooms:
             # Driving to a room
 

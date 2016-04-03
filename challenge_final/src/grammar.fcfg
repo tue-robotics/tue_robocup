@@ -27,7 +27,9 @@ NEAR_PP -> near | at | who is near
 
 TO_LOC[X] -> LOC[X]
 TO_LOC[{"type" : "person", "loc" : {"id" : X}}] -> PERSON NEAR_PP FURNITURE[X]
-TO_LOC[{"special" : "operator"}] -> me
+TO_LOC[O] -> OPERATOR[O]
+
+OPERATOR[{"type" : "person", "loc" : {"id" : "couch"}}] -> me
 
 PERSON -> a person | the person
 
@@ -44,7 +46,7 @@ V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
-VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
+VP["action" : "bring", "entity" : X, "to" : O ] -> V_BRING OPERATOR[O] SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
 
