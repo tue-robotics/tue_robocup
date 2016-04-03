@@ -582,7 +582,7 @@ class GPSR:
             wait_state.run(robot=robot, timeout=None)
             robot.speech.speak("Let's do this")
 
-            robot.base.set_initial_pose(-1.64, 0, 0)  
+            robot.base.set_initial_pose(-1.64, 0, 0)
             # Wait 0.5 s just to be sure
             rospy.sleep(rospy.Duration(0.5))
 
@@ -615,6 +615,7 @@ class GPSR:
 
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
+                rospy.logerr("%s", sys.exc_info())
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
 
             self.sentence = None
