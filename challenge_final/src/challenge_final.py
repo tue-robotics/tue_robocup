@@ -104,7 +104,7 @@ class GPSR:
                 descr.location = self.resolve_entity_description(parameters["loc"])
 
         print descr.id
-        if not self.robot.ed.get_entity(id=descr.id, parse=False):
+        if descr.type != "person" and descr.id and not self.robot.ed.get_entity(id=descr.id, parse=False):
             self.robot.speech.speak("I do not know where the {} is".format(descr.id))
             return None
 
