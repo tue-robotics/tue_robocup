@@ -45,7 +45,7 @@ V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
+#VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
 VP["action" : "bring", "entity" : X, "to" : O ] -> V_BRING OPERATOR[O] SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
