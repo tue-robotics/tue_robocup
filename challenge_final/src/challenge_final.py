@@ -246,7 +246,7 @@ class GPSR:
         entity_descr = self.resolve_entity_description(parameters["entity"])
 
         if not entity_descr:
-            return
+            return False
 
         if not entity_descr.location:
             entity_descr.location = self.last_location
@@ -257,10 +257,10 @@ class GPSR:
 
             if not entity_descr.location:
                 robot.speech.speak("Person location undefined")
-                return
+                return False
 
             self.move_robot(robot, id=entity_descr.id, type=entity_descr.type, loc=entity_descr.location.id)
-            return
+            return True
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -390,7 +390,7 @@ class GPSR:
                 # Make second sentence blocking, to prevent to robots from talking at the same time
                 robot.speech.speak("But hey, maybe my friend amigo can help me out", mood="excited", block=True)
                 self.send_trigger(self.sentence)
-                return
+                return False
 
             robot.speech.speak("Going to grab the {}".format(entity_descr.type))
 
@@ -398,6 +398,8 @@ class GPSR:
             grab = Grab(robot, EdEntityDesignator(robot, id=entity_descr.id),
                  UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator"))
             result = grab.execute()
+
+        return True
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -409,8 +411,9 @@ class GPSR:
         if "entity" in parameters:
             entity_descr = self.resolve_entity_description(parameters["entity"])
 
-            if not self.last_entity or entity_descr.type != self.last_entity.type:
-                self.find_and_pick_up(robot, parameters)
+            # if not self.last_entity or entity_descr.type != self.last_entity.type:
+            if not self.find_and_pick_up(robot, parameters):
+                return False
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Deliver it
