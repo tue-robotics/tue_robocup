@@ -597,6 +597,7 @@ class GPSR:
 
             # Wait for trigger to become True
             self.sentence = None
+            self.wait_for_trigger = True
             while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
 
@@ -610,9 +611,6 @@ class GPSR:
 
                 self.execute_command(robot, command_recognizer, action_functions, sentence)
                 self.sentence = None
-
-                if robot.robot_name == "sergio":
-                    self.wait_for_trigger = True
 
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
