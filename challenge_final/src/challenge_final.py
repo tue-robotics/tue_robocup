@@ -93,7 +93,7 @@ class GPSR:
             if special =="it":
                 descr = self.last_entity
             elif special == "operator":
-                descr.id = "gpsr_starting_pose"
+                descr = EntityDescription(type="person", loc=EntityDescription(id="dinnertable"))
         else:
             if "id" in parameters:
                 descr.id = parameters["id"]
