@@ -599,7 +599,7 @@ class GPSR:
             robot.head.reset()
 
             # Wait for trigger to become True
-                while self.wait_for_trigger and not rospy.is_shutdown():
+            while self.wait_for_trigger and not rospy.is_shutdown():
                 time.sleep(0.1)
 
             if rospy.is_shutdown():
