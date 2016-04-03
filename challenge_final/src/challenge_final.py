@@ -11,6 +11,7 @@ import rospy
 import random
 import std_msgs
 import argparse
+import traceback
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
@@ -618,7 +619,7 @@ class GPSR:
                 rospy.logwarn('KeyboardInterrupt')
             except Exception as e:
                 rospy.logerr("{0}".format(e.message))
-                rospy.logerr("%s", sys.exc_info())
+                rospy.logerr("%s", traceback.format_exc(sys.exc_info()))
                 robot.speech.speak("I am truly sorry, but I messed up this assignment")
 
             self.sentence = None
