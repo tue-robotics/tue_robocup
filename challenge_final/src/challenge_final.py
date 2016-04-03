@@ -392,7 +392,7 @@ class GPSR:
                 self.send_trigger(self.sentence)
                 return False
 
-            robot.speech.speak("Going to grab the {}".format(entity_descr.type))
+            robot.speech.speak("Going to grab the object")
 
             # grab it
             grab = Grab(robot, EdEntityDesignator(robot, id=entity_descr.id),
