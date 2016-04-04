@@ -201,7 +201,6 @@ class FollowOperator(smach.State):
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
                 self._operator_id = None
-                #self._lost_time = rospy.Time.now()
                 self._robot.speech.speak("Not so fast!", block=False)
             return False
 
@@ -260,11 +259,6 @@ class FollowOperator(smach.State):
             o.frame = 'map'
             o.look_at = self._last_operator.pose.position
 
-        ''' Determine if the goal has been reached. If it has, return True '''
-        dx = operator_position.x - robot_position.x
-        dy = operator_position.y - robot_position.y
-        length = math.hypot(dx, dy)
-
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
         plan = []
@@ -301,7 +295,6 @@ class FollowOperator(smach.State):
         if not self._robot.base.global_planner.checkPlan(plan):
             print "Breadcrumb plan is blocked"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
-            plan_found = False
             plan = [point for point in plan if self._robot.base.global_planner.checkPlan([point])]
 
         self._visualize_plan(plan)
@@ -335,7 +328,6 @@ class FollowOperator(smach.State):
         ''' Determine if the goal has been reached. If it has, return True '''
         dx = operator_position.x - robot_position.x
         dy = operator_position.y - robot_position.y
-        length = math.hypot(dx, dy)
 
         yaw = math.atan2(dy, dx)
         plan = [msg_constructors.PoseStamped(x=robot_position.x, y=robot_position.y, z=0, yaw=yaw)]
@@ -411,7 +403,7 @@ class FollowOperator(smach.State):
             else:
                 self._update_navigation()
 
-            rospy.sleep(.5) # Loop at 2Hz
+            rospy.sleep(self._period) # Loop at 2Hz
 
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
