@@ -60,6 +60,7 @@ def save_entity_image_to_file(world_model_ed, entityID):
         os.makedirs(os.path.dirname(file_name))
 
     cropped_image.save(file_name)
+    rospy.loginfo("Saving image to '%s'" % file_name)
 
     return file_name
 

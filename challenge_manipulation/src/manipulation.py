@@ -45,23 +45,29 @@ from robocup_knowledge import load_knowledge
 import pdf
 
 challenge_knowledge = load_knowledge('challenge_manipulation')
+CABINET = challenge_knowledge.cabinet
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
 ROOM = challenge_knowledge.room
 OBJECT_TYPES = challenge_knowledge.object_types
 MAX_NUM_ENTITIES_IN_PDF = 10
+MIN_GRASP_HEIGHT = challenge_knowledge.min_grasp_height
+MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
+SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
+
+PREFERED_ARM="left"  # Must be "left" or "right"
 
 DEBUG = False
 
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
-if PICK_SHELF not in OBJECT_SHELVES:
-    rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
-    OBJECT_SHELVES.append(PICK_SHELF)
+# if PICK_SHELF not in OBJECT_SHELVES:
+#     rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
+#     OBJECT_SHELVES.append(PICK_SHELF)
 
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor', 'room']
@@ -71,7 +77,6 @@ PLACE_HEIGHT = 1.0
 not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
 size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
 has_type = lambda entity: entity.type != ""
-min_height = lambda entity: entity.min_z > 0.3
 min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
 
 def max_width(entity):
@@ -124,64 +129,106 @@ class InspectShelves(smach.State):
 
     def execute(self, userdata):
 
+        global SEGMENTED_ENTITIES
         global DETECTED_OBJECTS_WITH_PROBS
 
-        ''' Loop over shelves '''
-        for shelf in self.object_shelves:
+        ''' Get cabinet entity '''
+        cabinet_entity = self.robot.ed.get_entity(id=CABINET, parse=True)
 
-            rospy.loginfo("Shelf: {0}".format(shelf))
-
-            ''' Get entities '''
-            shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
-
-            if shelf_entity:
-
-                ''' Extract center point '''
-                cp = shelf_entity.pose.position
-
-                ''' Look at target '''
-                self.robot.head.look_at_point(geom.PointStamped(cp.x, cp.y, cp.z, "/map"))
-
-                ''' Move spindle
-                    Implemented only for AMIGO (hence the hardcoding)
-                    Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
-                # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
-                # ToDo: do head and torso simultaneously
-                height = min(0.4, max(0.1, cp.z-0.55))
-                self.robot.torso._send_goal([height], timeout=5.0)
-
-                ''' Sleep for 1 second '''
-                import os; do_wait = os.environ.get('ROBOT_REAL')
-                if do_wait == 'true':
-                    rospy.sleep(3.0) # ToDo: remove???
-
-                if DEBUG:
-                    rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
-                    import ipdb;ipdb.set_trace()
+        ''' Get the pose of all shelves '''
+        shelves = []
+        for area in cabinet_entity.data['areas']:
+            ''' See if the area is in the list of inspection areas '''
+            if area['name'] in OBJECT_SHELVES:
+                ''' Check if we have a shape '''
+                if 'shape' not in area:
+                    rospy.logwarn("No shape in area {0}".format(area['name']))
+                    continue
+                ''' Check if length of shape equals one '''
+                if not len(area['shape']) == 1:
+                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(area['name']))
+                    continue
+                ''' Check if the first entry is a box '''
+                if not 'box' in area['shape'][0]:
+                    rospy.logwarn("No box in {0}".format(area['name']))
+                    continue
+                box = area['shape'][0]['box']
+                if 'min' not in box or 'max' not in box:
+                    rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
                     continue
 
-                ''' Enable kinect segmentation plugin (only one image frame) '''
-                # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
-                segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
+                x = 0.5 * (box['min']['x'] + box['max']['x'])
+                y = 0.5 * (box['min']['y'] + box['max']['y'])
+                z = 0.5 * (box['min']['z'] + box['max']['z'])
+                shelves.append({'ps': geom.PointStamped(x, y, z, cabinet_entity.id), 'name': area['name']})
+            else:
+                rospy.loginfo("{0} not in object shelves".format(area['name']))
 
-                entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+        # rospy.loginfo("Inspection points: {0}".format(shelves))
+        # ''' Loop over shelves '''
+        # for shelf in self.object_shelves:
+        for shelf in shelves:
 
-                # Recite entities
-                for etp in entity_types_and_probs:
-                    self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+            ps = shelf['ps']
+            cp = ps.point
 
-                # Lock entities
-                self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+            # ''' Get entities '''
+            # shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
 
-                # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
-                # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
-                for e in entity_types_and_probs:
-                    entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
-                    DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+            # if shelf_entity:
 
-                # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
-                DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
-                # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            # ''' Extract center point '''
+            # cp = shelf_entity.pose.position
+
+            ''' Look at target '''
+            self.robot.head.look_at_point(ps)
+
+            ''' Move spindle
+                Implemented only for AMIGO (hence the hardcoding)
+                Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
+            # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
+            # ToDo: do head and torso simultaneously
+            height = min(0.4, max(0.1, cp.z-0.55))
+            self.robot.torso._send_goal([height], timeout=5.0)
+
+            ''' Sleep for 1 second '''
+            import os; do_wait = os.environ.get('ROBOT_REAL')
+            if do_wait == 'true':
+                rospy.sleep(3.0) # ToDo: remove???
+                rospy.logwarn("Do we have to wait this long???")
+
+            if DEBUG:
+                rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
+                import ipdb;ipdb.set_trace()
+                continue
+
+            ''' Enable kinect segmentation plugin (only one image frame) '''
+            # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
+            # segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
+            segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
+
+            for id_ in segmented_entities.new_ids:
+                entity = self.robot.ed.get_entity(id=id_, parse=False)  # In simulation, the entity type is not yet updated...
+                SEGMENTED_ENTITIES.append((entity, id_))
+
+            entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+
+            # Recite entities
+            for etp in entity_types_and_probs:
+                self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+
+            # Lock entities
+            self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+
+            # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
+            # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
+            for e in entity_types_and_probs:
+                entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
+                DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+
+            # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
+            # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
 
         if not DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
@@ -225,14 +272,32 @@ class ManipRecogSingleItem(smach.StateMachine):
         self.manipulated_items = manipulated_items
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        self.pick_shelf = ds.EntityByIdDesignator(robot, id=PICK_SHELF, name="pick_shelf")
-        self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
+        self.cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+        # self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
-        def on_top(entity):
-            container_entity = self.pick_shelf.resolve()
-            return onTopOff(entity, container_entity)
+        def detected(entity):
+            """ Checks if the entity is in the (global) list of detected objects
+            :param entity:
+            :return:
+            """
+            # for tup in DETECTED_OBJECTS_WITH_PROBS:
+            for tup in SEGMENTED_ENTITIES:
+                if tup[0].id == entity.id:
+                    return True
+            return False
+
+        def entity_z_pos(entity):
+            """ Checks if the entity is between the minimum and maximum grasp height
+            :param entity:
+            :return:
+            """
+            if not entity.has_pose:
+                return False
+            return MIN_GRASP_HEIGHT < entity.pose.position.z < MAX_GRASP_HEIGHT
+
+
 
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
@@ -241,12 +306,20 @@ class ManipRecogSingleItem(smach.StateMachine):
             return p.x*p.x
 
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
+            criteriafuncs=[not_ignored, size, not_manipulated, detected, min_entity_height, entity_z_pos, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
-        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_shelf, name="placement"), name="place_position")
+        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
 
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
+        if PREFERED_ARM == "left":
+            prefered_arm = robot.leftArm
+        elif PREFERED_ARM == "right":
+            prefered_arm = robot.rightArm
+        else:
+            rospy.logwarn("Impossible preferred arm: {0}, defaulting to left".format(PREFERED_ARM))
+            prefered_arm = robot.leftArm
+
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, prefered_arm, name="empty_arm_designator")
         self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
 
         # print "{0} = pick_shelf".format(self.pick_shelf)
@@ -265,7 +338,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             ''' Look at pick shelf '''
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
-                                     states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
+                                     states.LookAtArea(robot, self.cabinet, area=PICK_SHELF),
                                      transitions={  'succeeded'         :'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
@@ -323,7 +396,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'stored':'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
-                                     states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
+                                     states.LookAtArea(robot, self.cabinet, area=PLACE_SHELF),
                                      transitions={  'succeeded'         :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
@@ -378,12 +451,12 @@ def setup_statemachine(robot):
                                transitions={'continue'                  :'NAV_TO_START',
                                             'no_response'               :'AWAIT_START'})
 
-        pick_shelf = ds.EntityByIdDesignator(robot, id=PICK_SHELF)
+        cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
         room = ds.EntityByIdDesignator(robot, id=ROOM)
         smach.StateMachine.add( "NAV_TO_START",
                                 states.NavigateToSymbolic(robot,
-                                                          {pick_shelf:"in_front_of", room:"in"},
-                                                          pick_shelf),
+                                                          {cabinet:"in_front_of", room:"in"},
+                                                          cabinet),
                                 transitions={   'arrived'           :'RESET_ED',
                                                 'unreachable'       :'RESET_ED',
                                                 'goal_not_defined'  :'RESET_ED'})

@@ -1,0 +1,91 @@
+T[{action1: A1}] -> C[A1]
+T[{action1: A1, action2: A2}] -> C[A1] and C[A2]
+
+C[{A}] -> VP[A]
+
+# Go to the X
+# Go to the X and look for objects
+# Grab the X from the Y and bring it to me
+# Bring me the X from the Y
+# Find the person near the X
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Entities
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+LOC[{"id" : X}] -> FURNITURE[X]
+
+SMALL_OBJECT_SPEC[{ "special" : "it" }] -> it
+SMALL_OBJECT_SPEC[{ "type" : X }] -> OBJ[X]
+SMALL_OBJECT_SPEC[{ "type" : X, "loc" : Y }] -> OBJ[X] FROM_PP LOC[Y]
+
+OBJ["any"] -> the object
+OBJ["any"] -> objects
+
+FROM_PP -> from | on | which is on
+NEAR_PP -> near | at | who is near
+
+TO_LOC[X] -> LOC[X]
+TO_LOC[{"type" : "person", "loc" : {"id" : X}}] -> PERSON NEAR_PP FURNITURE[X]
+TO_LOC[{"special" : "operator"}] -> me
+
+PERSON -> a person | the person
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Grasping
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": X] -> V_GRASP[A] SMALL_OBJECT_SPEC[X]
+
+V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Bringing
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
+VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
+
+V_BRING -> give | bring | hand | deliver | take | carry | transport
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Moving
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
+
+NAV_LOC[X] -> TO_LOC[X]
+
+V_MOVE["navigate"] -> move to | go to | drive to | navigate to
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Find
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
+
+V_FIND["find"] -> find | look for
+
+OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Questions
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "answer-question"] -> answer a question
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Say
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
+VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it | what time is it
+VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
+
+VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
+VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
+VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me what day it is | V_SAY the date
+VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
+
+V_SAY -> tell | say | speak
+

@@ -1,8 +1,0 @@
-// Locations
-<seat> = couchtable | loungechair
-<table> = couchtable | dinnertable
-<shelf> = desk | cabinet | bedcabinet
-<bin> = bin
-<room> = bedroom | livingroom
-<bedroom> = cabinet | bed | bedcabinet | bin
-<livingroom> = dinnertable | desk | couchtable | loungechair

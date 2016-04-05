@@ -1,0 +1,1134 @@
+[INFO] [WallTime: 1459544057.948318] Nav_analyser: Bagging = False
+[INFO] [WallTime: 1459544057.951611] Waiting for the global planner services ...
+[INFO] [WallTime: 1459544058.258642] Cannot find gripper left server
+[INFO] [WallTime: 1459544058.512709] Cannot find grasp precompute left server
+[INFO] [WallTime: 1459544058.766399] Cannot find joint trajectory action server left
+[INFO] [WallTime: 1459544059.062890] Cannot find gripper right server
+[INFO] [WallTime: 1459544059.316903] Cannot find grasp precompute right server
+[INFO] [WallTime: 1459544059.570865] Cannot find joint trajectory action server right
+[INFO] [WallTime: 1459544059.590473] Initializing ebutton listener
+[INFO] [WallTime: 1459544059.595766] Using robot 'sergio'.
+Asserting waypoint one to world model
+
+
+
+
+CURRENT BASE POSE:
+
+
+
+header:
+  seq: 0
+  stamp:
+    secs: 1459544059
+    nsecs: 641568899
+  frame_id: /map
+pose:
+  position:
+    x: 0
+    y: 0
+    z: 0.5
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.247403959255
+    w: 0.968912421711
+
+
+
+
+{"entities":[{"id" : "one", "type": "waypoint", "pose": { "x": 0.000000, "y": 0.000000, "z": 0.500000, "X": 0.000000, "Y": -0.000000, "Z": 0.500000 }}]}
+Asserting waypoint two to world model
+
+
+
+
+CURRENT BASE POSE:
+
+
+
+header:
+  seq: 0
+  stamp:
+    secs: 1459544059
+    nsecs: 652728080
+  frame_id: /map
+pose:
+  position:
+    x: -1.9
+    y: 0
+    z: 0.5
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.999999682932
+    w: 0.000796326710733
+
+
+
+
+{"entities":[{"id" : "two", "type": "waypoint", "pose": { "x": -1.900000, "y": 0.000000, "z": 0.500000, "X": 0.000000, "Y": -0.000000, "Z": 3.140000 }}]}
+Asserting waypoint three to world model
+
+
+
+
+CURRENT BASE POSE:
+
+
+
+header:
+  seq: 0
+  stamp:
+    secs: 1459544059
+    nsecs: 662627935
+  frame_id: /map
+pose:
+  position:
+    x: 2
+    y: -2
+    z: 0.5
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.681638760023
+    w: 0.731688868874
+
+
+
+
+{"entities":[{"id" : "three", "type": "waypoint", "pose": { "x": 2.000000, "y": -2.000000, "z": 0.500000, "X": 0.000000, "Y": -0.000000, "Z": 1.500000 }}]}
+[ERROR] [WallTime: 1459544059.673988] Called get_state when no goal is running
+[INFO] [WallTime: 1459544059.679527] 'Using a professional waiter'
+/home/amigo/ros/indigo/system/src/smach_ros/src/smach_ros/introspection.py:132: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStructure)
+/home/amigo/ros/indigo/system/src/smach_ros/src/smach_ros/introspection.py:137: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStatus)
+[INFO] [WallTime: 1459544062.000327] State machine starting in initial state 'INITIALIZE' with userdata:
+    []
+[WARN] [WallTime: 1459544062.254076] Joint trajectory action is not present: joint goal not reached
+[WARN] [WallTime: 1459544062.508044] Joint trajectory action is not present: joint goal not reached
+[INFO] [WallTime: 1459544063.515928] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1459544063.519308] State machine transitioning 'INITIALIZE':'initialized'-->'STORE_KITCHEN'
+{"entities":[{"id" : "kitchen", "type": "waypoint", "pose": { "x": -0.812254, "y": -0.349863, "z": 0.000000, "X": -0.000000, "Y": -0.000000, "Z": 0.459615 }}]}
+[INFO] [WallTime: 1459544063.531713] State machine transitioning 'STORE_KITCHEN':'done'-->'HEAD_STRAIGHT'
+[INFO] [WallTime: 1459544063.533175] State machine transitioning 'HEAD_STRAIGHT':'done'-->'SAY_INTRO'
+[INFO] [WallTime: 1459544063.533865] 'Hi, Show me your restaurant please.'
+[INFO] [WallTime: 1459544066.052618] State machine transitioning 'SAY_INTRO':'spoken'-->'FOLLOW_INITIAL'
+[INFO] [WallTime: 1459544066.053620] 'Should I follow you?'
+[INFO] [WallTime: 1459544067.286670] Example of what the robot can hear: 'no'
+[INFO] [WallTime: 1459544071.477248] Robot heard 'no'
+[ERROR] [WallTime: 1459544071.477840] Called get_state when no goal is running
+[INFO] [WallTime: 1459544071.478220] State machine transitioning 'FOLLOW_INITIAL':'no_operator'-->'FOLLOW_INITIAL'
+[INFO] [WallTime: 1459544071.479116] 'Should I follow you?'
+[INFO] [WallTime: 1459544072.711848] Example of what the robot can hear: 'yes'
+[INFO] [WallTime: 1459544074.241928] Robot heard 'no'
+[ERROR] [WallTime: 1459544074.242312] Called get_state when no goal is running
+[INFO] [WallTime: 1459544074.242559] State machine transitioning 'FOLLOW_INITIAL':'no_operator'-->'FOLLOW_INITIAL'
+[INFO] [WallTime: 1459544074.243213] 'Should I follow you?'
+[INFO] [WallTime: 1459544075.471243] Example of what the robot can hear: 'yes'
+[INFO] [WallTime: 1459544085.533126] Robot heard ''
+[INFO] [WallTime: 1459544087.535518] 'Should I follow you?'
+[INFO] [WallTime: 1459544088.780065] Example of what the robot can hear: 'no'
+[INFO] [WallTime: 1459544091.147158] Robot heard 'no'
+[ERROR] [WallTime: 1459544091.147841] Called get_state when no goal is running
+[INFO] [WallTime: 1459544091.148303] State machine transitioning 'FOLLOW_INITIAL':'no_operator'-->'FOLLOW_INITIAL'
+[INFO] [WallTime: 1459544091.150064] 'Should I follow you?'
+[INFO] [WallTime: 1459544092.386926] Example of what the robot can hear: 'no'
+[INFO] [WallTime: 1459544094.527443] Robot heard 'yes'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544094.535949] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+I have breadcrumbs, let's update navigation
+Operator position: x: 0.0615969002247
+y: 0.373745977879
+z: 1.01824641228
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544098.640600] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745192d8>
+Update navigation returned False, checking if standing still long enough...
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: 0.185263037682
+y: 0.577971220016
+z: 1.0178347826
+Last pose stamped operator (0.061597,0.373746) at 1459544098.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544099.702872] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504b00>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.837254,-0.354550) at 1459544098.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: 0.287197083235
+y: 0.770986914635
+z: 1.01754045486
+Last pose stamped operator (0.185263,0.577971) at 1459544099.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544100.767458] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504200>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.753486,-0.276610) at 1459544099.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: 0.23499506712
+y: 0.674104094505
+z: 1.01782739162
+Last pose stamped operator (0.287197,0.770987) at 1459544100.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544101.858073] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374be9cf8>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 1.090554
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544102.962879] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d098>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.690647,-0.262382) at 1459544100.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544103.991720] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d170>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.546037,-0.092722) at 1459544102.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544105.013918] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374522a28>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.400881,0.000738) at 1459544103.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544106.043477] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374522680>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.344202,0.055196) at 1459544105.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544107.157429] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745192d8>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.178124,0.285303) at 1459544106.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544108.276549] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d248>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (0.074406,0.686786) at 1459544107.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544109.400103] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518908>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (0.335583,1.139723) at 1459544108.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544110.520174] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518170>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (0.487345,1.586772) at 1459544109.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544111.634916] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237456b9e0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (0.500767,2.077652) at 1459544110.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544112.729815] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744ff488>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (0.419428,2.603557) at 1459544111.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544113.829753] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374519170>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (0.216885,3.054851) at 1459544112.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -0.699071347713
+y: 4.59062004089
+z: 1.01854050159
+Last pose stamped operator (0.234995,0.674104) at 1459544101.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544114.932457] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504ea8>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.016159,3.465387) at 1459544113.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -0.687394082546
+y: 4.5913438797
+z: 1.01856780052
+Operator is standing still for 1.094770 seconds
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544116.063160] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745184d0>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 1.130513
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -0.687466323376
+y: 4.62091684341
+z: 1.01920974255
+Operator is standing still for 2.236518 seconds
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544117.172165] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237450d560>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.102731,3.610599) at 1459544114.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Update navigation succeeded. Arrived!
+[INFO] [WallTime: 1459544118.196865] 'stopped'
+[INFO] [WallTime: 1459544119.051826] State machine transitioning 'FOLLOW_INITIAL':'stopped'-->'STORE'
+[INFO] [WallTime: 1459544119.052907] 'You stopped, can you confirm that we are at a table?'
+[INFO] [WallTime: 1459544122.180712] Example of what the robot can hear: 'yes'
+[INFO] [WallTime: 1459544124.392021] Robot heard 'yes'
+[INFO] [WallTime: 1459544124.392868] 'Which table number is this?'
+[INFO] [WallTime: 1459544126.354959] Example of what the robot can hear: '[This is ][table ]two'
+[INFO] [WallTime: 1459544128.601420] Robot heard 'table one'
+[INFO] [WallTime: 1459544128.601988] 'Table one, is this correct?'
+[INFO] [WallTime: 1459544130.696051] Example of what the robot can hear: 'yes'
+[INFO] [WallTime: 1459544132.844116] Robot heard 'no'
+[INFO] [WallTime: 1459544132.844564] 'Which table number is this?'
+[INFO] [WallTime: 1459544134.846455] Example of what the robot can hear: '[This is ][table ]three'
+[INFO] [WallTime: 1459544138.826878] Robot heard 'table one'
+[INFO] [WallTime: 1459544138.827558] 'Table one, is this correct?'
+[INFO] [WallTime: 1459544140.958732] Example of what the robot can hear: 'yes'
+[INFO] [WallTime: 1459544149.966635] Robot heard 'yes'
+[INFO] [WallTime: 1459544149.972851] 'I am now going to look for the table'
+[INFO] [WallTime: 1459544150.196467] looking at side right
+[INFO] [WallTime: 1459544151.202693] Updating kinect for side right
+[INFO] [WallTime: 1459544151.582680] Found 6 entities for side right
+[INFO] [WallTime: 1459544153.227370] looking at side left
+[INFO] [WallTime: 1459544154.833922] Updating kinect for side left
+[INFO] [WallTime: 1459544155.136683] Found 4 entities for side left
+[INFO] [WallTime: 1459544156.759611] Side right scoring (0.855635): {'face_found': False, 'min_distance': 0.5630308984725906, 'area_sum': 0.29260454176147199}
+[INFO] [WallTime: 1459544156.759962] Side left scoring (0.323852): {'face_found': False, 'min_distance': 0.07724731223863406, 'area_sum': 0.24660447336042068}
+[INFO] [WallTime: 1459544156.760553] 'The table is to my right'
+Asserting waypoint one to world model
+
+
+
+
+CURRENT BASE POSE:
+
+
+
+header:
+  seq: 2
+  stamp:
+    secs: 1459544149
+    nsecs: 967443943
+  frame_id: /map
+pose:
+  position:
+    x: -0.479978613413
+    y: 4.04931259452
+    z: 0.5
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.29374393638
+    w: 0.955884145616
+
+
+
+
+{"entities":[{"id" : "one", "type": "waypoint", "pose": { "x": -0.479979, "y": 4.049313, "z": 0.500000, "X": 0.000000, "Y": -0.000000, "Z": 0.596282 }}]}
+[INFO] [WallTime: 1459544158.432697] State machine transitioning 'STORE':'done'-->'CHECK_KNOWLEDGE'
+[INFO] [WallTime: 1459544158.448075] State machine transitioning 'CHECK_KNOWLEDGE':'no'-->'FOLLOW'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544158.453778] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544162.672237] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504050>
+Update navigation returned False, checking if standing still long enough...
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544163.812423] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237450d9e0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.470174,4.033974) at 1459544162.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544164.927496] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504a70>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.563338,4.119091) at 1459544163.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544166.067765] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745049e0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.648619,4.189613) at 1459544164.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544167.184720] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374ba5f38>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.687134,4.228095) at 1459544166.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544168.217783] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504710>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-0.825050,4.189011) at 1459544167.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544169.245477] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374521878>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.039187,4.161499) at 1459544168.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544170.272764] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374519200>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.242006,4.241909) at 1459544169.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544171.299181] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374528290>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.412329,4.386490) at 1459544170.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544172.377657] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374580f80>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.537975,4.634717) at 1459544171.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544173.507872] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374ba53f8>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.717433,4.795399) at 1459544172.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544174.536412] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237456bb00>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.815362,4.916973) at 1459544173.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.07710599899
+y: 6.8509759903
+z: 1.01795101166
+[INFO] [WallTime: 1459544175.554739] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374b34b48>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-1.988188,5.237100) at 1459544174.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.09637737274
+y: 6.84179878235
+z: 1.01870822906
+Operator is standing still for 1.022024 seconds
+[INFO] [WallTime: 1459544176.576607] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237450de60>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.276163,5.628649) at 1459544175.000000 secs
+Not there yet...
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.09638667107
+y: 6.74872398376
+z: 1.01923251152
+Last pose stamped operator (-3.077106,6.850976) at 1459544175.000000 secs
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.08502054214
+y: 6.75179576874
+z: 1.01964306831
+Operator is standing still for 1.011846 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.10486340523
+y: 6.76597690582
+z: 1.0198135376
+Operator is standing still for 2.021082 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.08180332184
+y: 6.75217676163
+z: 1.02002108097
+Operator is standing still for 3.027970 seconds
+[INFO] [WallTime: 1459544180.617190] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544183.402200] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544187.825034] State machine transitioning 'FOLLOW':'stopped'-->'STORE'
+[INFO] [WallTime: 1459544187.826110] 'You stopped, can you confirm that we are at a table?'
+[INFO] [WallTime: 1459544190.954170] Example of what the robot can hear: 'no'
+[INFO] [WallTime: 1459544193.398629] Robot heard 'yes'
+[INFO] [WallTime: 1459544193.399075] 'Which table number is this?'
+[INFO] [WallTime: 1459544195.402342] Example of what the robot can hear: '[This is ][table ]two'
+[INFO] [WallTime: 1459544197.655830] Robot heard 'table two'
+[INFO] [WallTime: 1459544197.656342] 'Table two, is this correct?'
+[INFO] [WallTime: 1459544199.788786] Example of what the robot can hear: 'no'
+[INFO] [WallTime: 1459544202.171671] Robot heard 'yes'
+[INFO] [WallTime: 1459544202.175451] 'I am now going to look for the table'
+[INFO] [WallTime: 1459544202.399411] looking at side right
+[INFO] [WallTime: 1459544203.405263] Updating kinect for side right
+[INFO] [WallTime: 1459544203.846841] Found 9 entities for side right
+[INFO] [WallTime: 1459544205.430481] looking at side left
+[INFO] [WallTime: 1459544206.937301] Updating kinect for side left
+[INFO] [WallTime: 1459544207.236759] Found 4 entities for side left
+[INFO] [WallTime: 1459544208.933322] Side right scoring (0.847209): {'face_found': False, 'min_distance': 0.5678215642838531, 'area_sum': 0.27938790360914822}
+[INFO] [WallTime: 1459544208.933897] Side left scoring (0.651092): {'face_found': False, 'min_distance': 0.21502857662832456, 'area_sum': 0.43606300014795352}
+[INFO] [WallTime: 1459544208.934620] 'The table is to my left'
+Asserting waypoint two to world model
+
+
+
+
+CURRENT BASE POSE:
+
+
+
+header:
+  seq: 4
+  stamp:
+    secs: 1459544202
+    nsecs: 172070026
+  frame_id: /map
+pose:
+  position:
+    x: -2.70469388974
+    y: 6.3342857044
+    z: 0.5
+  orientation:
+    x: -0.0
+    y: 0.0
+    z: 0.93764908032
+    w: -0.347583374422
+
+
+
+
+{"entities":[{"id" : "two", "type": "waypoint", "pose": { "x": -2.704694, "y": 6.334286, "z": 0.500000, "X": 0.000000, "Y": -0.000000, "Z": -2.431608 }}]}
+[INFO] [WallTime: 1459544210.606671] State machine transitioning 'STORE':'done'-->'CHECK_KNOWLEDGE'
+[INFO] [WallTime: 1459544210.625426] State machine transitioning 'CHECK_KNOWLEDGE':'no'-->'FOLLOW'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544210.638784] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.21057128906
+y: 7.30347442627
+z: 1.0190820694
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544215.816147] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745285f0>
+Update navigation returned False, checking if standing still long enough...
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544216.913006] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374528f80>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.678497,6.369897) at 1459544215.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544218.044489] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518ea8>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.762777,6.353843) at 1459544216.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544219.211766] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744ff950>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 1.167456
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544220.408696] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518bd8>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 2.365240
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544221.602826] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744ff950>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 3.558551
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544222.837999] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237450d4d0>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 4.794096
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544224.128074] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374528ef0>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 6.083768
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544225.408804] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518ef0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.775893,6.491441) at 1459544218.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544226.681008] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518200>
+Update navigation returned False, checking if standing still long enough...
+Robot is standing still :/
+Robot dit not move for x seconds: 1.272375
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544227.967063] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744ff5f0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.760629,6.539637) at 1459544225.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544229.216435] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d9e0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.858198,6.591938) at 1459544227.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544230.468789] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518488>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.870106,6.698728) at 1459544229.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.53568601608
+y: 8.84276580811
+z: 1.01748633385
+Last pose stamped operator (-3.210571,7.303474) at 1459544215.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544231.708319] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744ff1b8>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.086362,6.973935) at 1459544230.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.75176048279
+y: 9.19942474365
+z: 1.01782977581
+Last pose stamped operator (-3.535686,8.842766) at 1459544231.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544232.919050] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518830>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.161579,7.650123) at 1459544231.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.67829680443
+y: 9.27749443054
+z: 1.01777243614
+Last pose stamped operator (-3.751760,9.199425) at 1459544232.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544234.110599] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374519758>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.004913,7.967850) at 1459544232.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.83484530449
+y: 9.46542930603
+z: 1.01746416092
+Last pose stamped operator (-3.678297,9.277494) at 1459544233.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544235.276232] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744fff38>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-2.891553,8.229811) at 1459544234.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.74245452881
+y: 9.69729423523
+z: 1.01740670204
+Last pose stamped operator (-3.834845,9.465429) at 1459544235.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544236.535587] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745215a8>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.065841,8.354901) at 1459544235.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544237.705357] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374521950>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.119096,8.373010) at 1459544236.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.65136742592
+y: 10.1304006577
+z: 1.01807332039
+Last pose stamped operator (-3.742455,9.697294) at 1459544236.000000 secs
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544238.801764] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d440>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.184198,8.536129) at 1459544237.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544239.911695] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374574200>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.282361,8.837714) at 1459544238.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544240.956107] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d680>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.307730,8.903273) at 1459544239.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+[INFO] [WallTime: 1459544242.000602] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23745049e0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.363973,8.963013) at 1459544240.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544243.096521] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374518ef0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.535342,9.278259) at 1459544242.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544244.206125] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237450d830>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.656682,9.647176) at 1459544243.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544245.346615] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f23744b2b00>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.723370,9.837438) at 1459544244.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544246.502949] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374b34b48>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.715456,10.094432) at 1459544245.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544247.620919] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374b965f0>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.623032,10.647132) at 1459544246.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544248.708844] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374c29b00>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.538670,11.260997) at 1459544247.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Breadcrumb plan is blocked
+[INFO] [WallTime: 1459544249.815183] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452d710>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.421130,11.791947) at 1459544248.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.08433151245
+y: 13.9408054352
+z: 1.01796650887
+Last pose stamped operator (-3.651367,10.130401) at 1459544238.000000 secs
+[INFO] [WallTime: 1459544250.834434] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f2374504710>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.325153,12.278812) at 1459544249.000000 secs
+Not there yet...
+I have breadcrumbs, let's update navigation
+Operator position: x: -3.11255550385
+y: 13.9537963867
+z: 1.01870322227
+Operator is standing still for 1.018988 seconds
+[INFO] [WallTime: 1459544251.944470] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f237452de60>
+Update navigation returned False, checking if standing still long enough...
+Last pose stamped (-3.235288,12.678115) at 1459544250.000000 secs
+Not there yet...
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.11407136917
+y: 13.9710454941
+z: 1.01922702789
+Operator is standing still for 2.126531 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.11637163162
+y: 13.9631967545
+z: 1.0195441246
+Operator is standing still for 3.137164 seconds
+[INFO] [WallTime: 1459544253.967926] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544256.748647] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544261.160544] State machine transitioning 'FOLLOW':'stopped'-->'STORE'
+[INFO] [WallTime: 1459544261.161715] 'You stopped, can you confirm that we are at a table?'
+[INFO] [WallTime: 1459544264.286045] Example of what the robot can hear: 'no'
+[INFO] [WallTime: 1459544266.437914] Robot heard 'yes'
+[INFO] [WallTime: 1459544266.438439] 'Which table number is this?'
+[INFO] [WallTime: 1459544268.443157] Example of what the robot can hear: '[This is ][table ]three'
+[INFO] [WallTime: 1459544270.912809] Robot heard 'table three'
+[INFO] [WallTime: 1459544270.913521] 'Table three, is this correct?'
+[INFO] [WallTime: 1459544273.135538] Example of what the robot can hear: 'yes'
+[INFO] [WallTime: 1459544278.837013] Robot heard 'yes'
+[INFO] [WallTime: 1459544278.840794] 'I am now going to look for the table'
+[INFO] [WallTime: 1459544279.064327] looking at side right
+[INFO] [WallTime: 1459544280.073427] Updating kinect for side right
+[INFO] [WallTime: 1459544280.335836] Found 3 entities for side right
+[INFO] [WallTime: 1459544281.927865] looking at side left
+[INFO] [WallTime: 1459544283.534940] Updating kinect for side left
+[INFO] [WallTime: 1459544283.923729] Found 8 entities for side left
+[INFO] [WallTime: 1459544286.353027] 'hi there'
+[INFO] [WallTime: 1459544287.339550] Side right scoring (0.576609): {'face_found': False, 'min_distance': 0.32636334270662254, 'area_sum': 0.25024523044373836}
+[INFO] [WallTime: 1459544287.340029] Side left scoring (1.456941): {'face_found': True, 'min_distance': 0.42789895153294477, 'area_sum': 0.029042129986464715}
+[INFO] [WallTime: 1459544287.340815] 'The table is to my right'
+Asserting waypoint three to world model
+
+
+
+
+CURRENT BASE POSE:
+
+
+
+header:
+  seq: 6
+  stamp:
+    secs: 1459544278
+    nsecs: 837954044
+  frame_id: /map
+pose:
+  position:
+    x: -3.15778801122
+    y: 13.3502849874
+    z: 0.5
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.00813009504347
+    w: 0.999966950231
+
+
+
+
+{"entities":[{"id" : "three", "type": "waypoint", "pose": { "x": -3.157788, "y": 13.350285, "z": 0.500000, "X": 0.000000, "Y": -0.000000, "Z": 0.016260 }}]}
+[INFO] [WallTime: 1459544288.966477] State machine transitioning 'STORE':'done'-->'CHECK_KNOWLEDGE'
+[INFO] [WallTime: 1459544288.985417] State machine transitioning 'CHECK_KNOWLEDGE':'yes'-->'SAY_FOLLOW_TO_KITCHEN'
+[INFO] [WallTime: 1459544288.986103] 'Please bring me back to the kitchen!'
+[INFO] [WallTime: 1459544291.117869] State machine transitioning 'SAY_FOLLOW_TO_KITCHEN':'spoken'-->'FOLLOW_TO_KITCHEN'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544291.131037] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 1.010497 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 2.020866 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 3.032560 seconds
+[INFO] [WallTime: 1459544304.356050] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544307.134167] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544311.543000] State machine transitioning 'FOLLOW_TO_KITCHEN':'stopped'-->'CHECK_IN_KITCHEN'
+[INFO] [WallTime: 1459544311.551485] State machine transitioning 'CHECK_IN_KITCHEN':'not_in_kitchen'-->'FOLLOW_TO_KITCHEN'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544311.559543] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 1.010892 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 2.021868 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 3.036402 seconds
+[INFO] [WallTime: 1459544324.790683] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544327.572781] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544331.987302] State machine transitioning 'FOLLOW_TO_KITCHEN':'stopped'-->'CHECK_IN_KITCHEN'
+[INFO] [WallTime: 1459544331.996119] State machine transitioning 'CHECK_IN_KITCHEN':'not_in_kitchen'-->'FOLLOW_TO_KITCHEN'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544332.004632] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 1.013278 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 2.022577 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 3.039449 seconds
+[INFO] [WallTime: 1459544345.227357] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544348.008480] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544352.423056] State machine transitioning 'FOLLOW_TO_KITCHEN':'stopped'-->'CHECK_IN_KITCHEN'
+[INFO] [WallTime: 1459544352.429271] State machine transitioning 'CHECK_IN_KITCHEN':'not_in_kitchen'-->'FOLLOW_TO_KITCHEN'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544352.436636] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 1.017920 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 2.037939 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 3.052181 seconds
+[INFO] [WallTime: 1459544365.703554] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544368.481214] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544372.899199] State machine transitioning 'FOLLOW_TO_KITCHEN':'stopped'-->'CHECK_IN_KITCHEN'
+[INFO] [WallTime: 1459544372.911410] State machine transitioning 'CHECK_IN_KITCHEN':'not_in_kitchen'-->'FOLLOW_TO_KITCHEN'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544372.917563] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 1.010612 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 2.031097 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 3.047686 seconds
+[INFO] [WallTime: 1459544386.171312] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544388.952995] 'Out of breadcrumbs and I still have an operator, I must be there!'
+[INFO] [WallTime: 1459544393.372275] State machine transitioning 'FOLLOW_TO_KITCHEN':'stopped'-->'CHECK_IN_KITCHEN'
+[INFO] [WallTime: 1459544393.382987] State machine transitioning 'CHECK_IN_KITCHEN':'not_in_kitchen'-->'FOLLOW_TO_KITCHEN'
+We have a new operator: d33a1161f80b7f28c3513bb8dff7b179-laser
+[INFO] [WallTime: 1459544393.390807] 'Ok, I will follow you!'
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 1.017811 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 2.023606 seconds
+No more breadcrumbs. Checking if I still have an operator...
+I still have an operator. Checking if standstill timeout is reached
+Operator position: x: -3.95170497894
+y: 13.6795387268
+z: 0.706856429577
+Operator is standing still for 3.033640 seconds
+[INFO] [WallTime: 1459544406.616225] 'Operator is standing still long enough  ...'
+[INFO] [WallTime: 1459544409.396364] 'Out of breadcrumbs and I still have an operator, I must be there!'
+^C[ERROR] [WallTime: 1459544410.047067] InvalidUserCodeError: Could not execute state 'FOLLOW_TO_KITCHEN' of type '<robot_smach_states.navigation.follow_operator.FollowOperator object at 0x7f2374bad3d0>': Traceback (most recent call last):
+  File "/home/amigo/ros/indigo/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 404, in execute
+    self._robot.speech.speak("Out of breadcrumbs and I still have an operator, I must be there!")
+  File "/home/amigo/ros/indigo/system/src/robot_skills/src/robot_skills/speech.py", line 61, in speak
+    resp1 = self._speech_service(req)
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 435, in __call__
+    return self.call(*args, **kwds)
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 523, in call
+    raise rospy.exceptions.ROSInterruptException("node shutdown interrupted service call")
+ROSInterruptException: node shutdown interrupted service call
+
+An exception occured
+[ERROR] [WallTime: 1459544410.047458] Error: /home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/util/startup.py,79,startup,outcome = executioner.execute()
+['/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/util/startup.py', 79, 'startup', 'outcome = executioner.execute()', InvalidUserCodeError('Could not execute state \'FOLLOW_TO_KITCHEN\' of type \'<robot_smach_states.navigation.follow_operator.FollowOperator object at 0x7f2374bad3d0>\': Traceback (most recent call last):\n  File "/home/amigo/ros/indigo/system/src/smach/src/smach/state_machine.py", line 247, in _update_once\n    self._remappings[self._current_label]))\n  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 404, in execute\n    self._robot.speech.speak("Out of breadcrumbs and I still have an operator, I must be there!")\n  File "/home/amigo/ros/indigo/system/src/robot_skills/src/robot_skills/speech.py", line 61, in speak\n    resp1 = self._speech_service(req)\n  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 435, in __call__\n    return self.call(*args, **kwds)\n  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 523, in call\n    raise rospy.exceptions.ROSInterruptException("node shutdown interrupted service call")\nROSInterruptException: node shutdown interrupted service call\n',)]
+[INFO] [WallTime: 1459544410.047769] Torso cancelling all goals on close
+[INFO] [WallTime: 1459544410.047962] left arm cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1459544410.048176] right arm cancelling all goals on all arm-related ACs on close
+If you want to save the learned locations, do '$ rosparam dump $(rospack find challenge_restaurant)/param/locations.yaml /restaurant_locations/'
