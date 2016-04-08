@@ -60,7 +60,7 @@ class ED:
 
         self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
 
-        # Person recognition        
+        # Person recognition
         self._learn_person_srv = rospy.ServiceProxy('/%s/learn_person'%robot_name, ed_perception.srv.LearnPerson)
         self._recognize_person_srv = rospy.ServiceProxy('/%s/recognize_person'%robot_name, ed_perception.srv.RecognizePerson)
 
@@ -78,13 +78,13 @@ class ED:
         """Enables the specified plugins in ED"""
         return self._set_plugin_status(plugin_names, '"enabled":1')
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def disable_plugins(self, plugin_names):
         """Disables the specified plugins in ED"""
         return self._set_plugin_status(plugin_names, '"enabled":0')
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def _set_plugin_status(self, plugin_names, status):
         if not plugin_names:
@@ -190,16 +190,14 @@ class ED:
 
     def reset(self):
         """Removes all non-mesh objects from ED"""
-        rospy.logwarn("ED RESET does not work (Final, reo2016). Please change back after Robocup!")
-        pass
 
-        # try:
-        #     self._ed_reset_srv()
-        # except rospy.ServiceException, e:
-        #     rospy.logerr("Could not reset ED: {0}".format(e))
-        # rospy.sleep(1.0)
+        try:
+            self._ed_reset_srv()
+        except rospy.ServiceException, e:
+            rospy.logerr("Could not reset ED: {0}".format(e))
+        rospy.sleep(.2)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []):
         """
@@ -257,7 +255,7 @@ class ED:
 
         return self._ed_update_srv(request=json)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def lock_entities(self, lock_ids, unlock_ids):
         for eid in lock_ids:
@@ -266,7 +264,7 @@ class ED:
         for eid in unlock_ids:
             self.update_entity(id=eid, remove_flags=['locked'])
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def get_closest_possible_person_entity(self, type="", center_point=Point(), radius=0, room = ""):
         if isinstance(center_point, PointStamped):
@@ -314,7 +312,7 @@ class ED:
     # ----------------------------------------------------------------------------------------------------
 
     def update_kinect(self, area_description="", background_padding=0):
-        """ 
+        """
         Update ED based on kinect (depth) images
 
         :param area_description An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
@@ -332,7 +330,7 @@ class ED:
 
         return res
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def get_perception_model_path(self, perception_model_name = ""):
         import rospkg
@@ -346,7 +344,7 @@ class ED:
             rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
             return ""
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def classify(self, ids, perception_model_name="", property="type", types=None):
         """ Classifies the entities with the given IDs. If we are simulating instead of acting on the real robot,
@@ -393,14 +391,14 @@ class ED:
         else:
             return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def classify_with_probs(self, ids, types):
         rospy.logwarn("Is classify_with_probs function deprecated?")  # ToDo: @Luis: is this true?
         res = self._ed_classify_srv(ids = ids, types = types)
         return zip(res.types, res.probabilities)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def add_perception_training_instance(self, id, property, value, perception_model_name = ""):
         perception_model_path = self.get_perception_model_path(perception_model_name)
@@ -414,7 +412,7 @@ class ED:
 
         return True
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def learn_person(self, name):
         res = self._learn_person_srv(person_name=name)
@@ -423,7 +421,7 @@ class ED:
             return False
         return True
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def detect_persons(self):
         res = self._recognize_person_srv()
@@ -433,7 +431,7 @@ class ED:
         else:
             return res.person_detections
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def save_image(self, path = "", path_suffix = "", filename = ""):
         import os
@@ -463,7 +461,7 @@ class ED:
         with open(fname + ".json", "w") as f:
             f.write(res.json_meta_data)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
@@ -479,13 +477,13 @@ class ED:
         matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
         return matches
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def _transform_center_point_to_map(self, pointstamped):
         point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
         return point_in_map
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def _publish_marker(self, center_point, radius):
         marker = visualization_msgs.msg.Marker()
@@ -503,7 +501,7 @@ class ED:
         marker.color.a = 0.5
         marker.color.r = 1
 
-        self._marker_publisher.publish(marker)   
+        self._marker_publisher.publish(marker)
 
     # ----------------------------------------------------------------------------------------------------
     #                                               OBSOLETE
