@@ -396,25 +396,116 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
 
     with sm:
-        smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'STORE_KITCHEN', 'abort':'aborted'})
-        smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'HEAD_STRAIGHT'})
-        smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
+        smach.StateMachine.add('INITIALIZE',
+                               states.Initialize(robot),
+                               transitions={'initialized': 'STORE_KITCHEN',
+                                            'abort': 'aborted'}
+                               )
 
-        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Show me your restaurant please."), transitions={ 'spoken' :'FOLLOW_INITIAL'})
+        smach.StateMachine.add('STORE_KITCHEN',
+                               StoreKitchen(robot),
+                               transitions={'done': 'HEAD_STRAIGHT'}
+                               )
 
-        smach.StateMachine.add('FOLLOW_INITIAL', states.FollowOperator(robot, operator_timeout=30, operator_id_des=operator_id), transitions={ 'stopped':'STORE', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
+        smach.StateMachine.add('HEAD_STRAIGHT',
+                               HeadStraight(robot),
+                               transitions={'done': 'SAY_INTRO'}
+                               )
 
-        smach.StateMachine.add('FOLLOW', states.FollowOperator(robot, operator_timeout=30, ask_follow=False, operator_id_des=operator_id), transitions={ 'stopped':'STORE', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
-        smach.StateMachine.add('STORE', StoreWaypoint(robot), transitions={ 'done':'CHECK_KNOWLEDGE', 'continue':'FOLLOW' })
-        smach.StateMachine.add('CHECK_KNOWLEDGE', CheckKnowledge(robot), transitions={ 'yes':'SAY_FOLLOW_TO_KITCHEN', 'no':'FOLLOW'})
+        smach.StateMachine.add('SAY_INTRO',
+                               states.Say(robot, "Hi, Show me your restaurant please."),
+                               transitions={'spoken': 'FOLLOW_INITIAL'}
+                               )
 
-        smach.StateMachine.add('SAY_FOLLOW_TO_KITCHEN', states.Say(robot, "Please bring me back to the kitchen!"), transitions={ 'spoken' :'FOLLOW_TO_KITCHEN'})
+        smach.StateMachine.add('FOLLOW_INITIAL',
+                               states.FollowOperator(robot,
+                                                     operator_timeout=30,
+                                                     operator_id_des=operator_id
+                                                     ),
+                               transitions={'stopped': 'STORE',
+                                            'lost_operator': 'FOLLOW_INITIAL',
+                                            'no_operator': 'FOLLOW_INITIAL'}
+                               )
 
-        smach.StateMachine.add('FOLLOW_TO_KITCHEN_INITIAL', states.FollowOperator(robot, operator_timeout=30, operator_id_des=operator_id), transitions={ 'stopped':'CHECK_IN_KITCHEN', 'lost_operator':'FOLLOW_TO_KITCHEN', 'no_operator':'FOLLOW_TO_KITCHEN'})
-        smach.StateMachine.add('FOLLOW_TO_KITCHEN', states.FollowOperator(robot, operator_timeout=30, ask_follow=False, operator_id_des=operator_id), transitions={ 'stopped':'CHECK_IN_KITCHEN', 'lost_operator':'FOLLOW_TO_KITCHEN_INITIAL', 'no_operator':'FOLLOW_TO_KITCHEN_INITIAL'})
-        smach.StateMachine.add('CHECK_IN_KITCHEN', CheckInKitchen(robot), transitions={ 'not_in_kitchen':'FOLLOW_TO_KITCHEN', 'in_kitchen':'SAY_IN_KITCHEN'})
+        smach.StateMachine.add('FOLLOW',
+                               states.FollowOperator(robot,
+                                                     operator_timeout=30,
+                                                     ask_follow=False,
+                                                     operator_id_des=operator_id
+                                                     ),
+                               transitions={'stopped': 'STORE',
+                                            'lost_operator': 'FOLLOW_INITIAL',
+                                            'no_operator': 'FOLLOW_INITIAL'}
+                               )
 
-        smach.StateMachine.add('SAY_IN_KITCHEN', states.Say(robot, "We are in the kitchen again!"), transitions={ 'spoken' :'SAY_WHICH_ORDER'})
+        smach.StateMachine.add('STORE',
+                               StoreWaypoint(robot),
+                               transitions={'done': 'CHECK_KNOWLEDGE',
+                                            'continue': 'FOLLOW'}
+                               )
+
+        smach.StateMachine.add('CHECK_KNOWLEDGE',
+                               CheckKnowledge(robot),
+                               transitions={'yes': 'SAY_FOLLOW_TO_KITCHEN',
+                                            'no':'FOLLOW'}
+                               )
+
+        smach.StateMachine.add('SAY_FOLLOW_TO_KITCHEN',
+                               states.Say(robot,
+                                          "Please bring me back to the kitchen!"
+                                          ),
+                               transitions={'spoken': 'FOLLOW_TO_KITCHEN'}
+                               )
+
+        smach.StateMachine.add('FOLLOW_TO_KITCHEN',
+                               states.FollowOperator(robot,
+                                                     operator_timeout=30,
+                                                     ask_follow=True,
+                                                     operator_id_des=operator_id
+                                                     ),
+                               transitions={'stopped': 'CHECK_IN_KITCHEN',
+                                            'lost_operator': 'SAY_GOTO_KITCHEN',
+                                            'no_operator': 'SAY_GOTO_KITCHEN'}
+                               )
+
+        smach.StateMachine.add('SAY_GOTO_KITCHEN',
+                               states.Say(robot,
+                                          "You know what? I will go back to the kitchen on my own!",
+                                          block=False
+                                          ),
+                               transitions={'spoken': 'GOTO_KITCHEN'})
+
+        smach.StateMachine.add('GOTO_KITCHEN',
+                               states.NavigateToWayPoint(robot,
+                                                         EntityByIdDesignator(robot, id="kitchen")
+                                                         ),
+                               transitions={'arrived': 'SAY_IN_KITCHEN',
+                                            'unreachable': 'SAY_FOLLOW_TO_KITCHEN',
+                                            'goal_not_defined': 'SAY_FOLLOW_TO_KITCHEN'}
+                               )
+
+        smach.StateMachine.add('FOLLOW_TO_KITCHEN',
+                               states.FollowOperator(robot,
+                                                     operator_timeout=30,
+                                                     ask_follow=False
+                                                     ),
+                               transitions={'stopped': 'CHECK_IN_KITCHEN',
+                                            'lost_operator': 'FOLLOW_TO_KITCHEN_INITIAL',
+                                            'no_operator': 'FOLLOW_TO_KITCHEN_INITIAL'}
+                               )
+
+        smach.StateMachine.add('CHECK_IN_KITCHEN',
+                               CheckInKitchen(robot),
+                               transitions={'not_in_kitchen': 'FOLLOW_TO_KITCHEN',
+                                            'in_kitchen':'SAY_IN_KITCHEN'}
+                               )
+
+        smach.StateMachine.add('SAY_IN_KITCHEN',
+                               states.Say(robot,
+                                          "We are in the kitchen again!"
+                                          ),
+                               transitions={'spoken': 'SAY_WHICH_ORDER'}
+                               )
 
         # Where to take the order from?
         smach.StateMachine.add('SAY_WHICH_ORDER', states.Say(robot, "From which table should I take the first order?"), transitions={ 'spoken' :'HEAR_WHICH_ORDER'})
