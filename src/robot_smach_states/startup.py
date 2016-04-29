@@ -2,48 +2,30 @@
 import roslib;
 import rospy
 import smach
-import roslaunch, rospkg
+
 
 from robot_smach_states.state import State
 
 import utility
 import human_interaction
 from sensor_msgs.msg import LaserScan
-import os.path
 
 from threading import Event
 
 import robot_skills.util.msg_constructors as msgs
 from robot_smach_states.util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
+from util.robocup_recorder import start_robocup_recorder
 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
-
-    @staticmethod
-    def _start_robocup_recorder(robot_name):
-        try:
-            package_path = rospkg.RosPack().get_path('%s_bringup' % robot_name)
-        except rospkg.ResourceNotFound as e:
-            rospy.logerr("Could not find bringup package of robot %s" % robot_name)
-            return
-
-        file_path = package_path + "/launch/record_robocup.launch"
-        if not os.path.isfile(file_path):
-            rospy.logerr("Could not find record_robocup.launch in bringup package of robot %s" % robot_name)
-            return
-
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-        roslaunch.configure_logging(uuid)
-        launch = roslaunch.parent.ROSLaunchParent(uuid, [file_path])
-        launch.start()
 
     def __init__(self, robot, initial_pose, use_entry_points = False):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
         assert hasattr(robot, "speech")
 
-        self._start_robocup_recorder(robot.robot_name)
+        start_robocup_recorder(robot.robot_name)
 
         with self:
             smach.StateMachine.add( "INITIALIZE",
