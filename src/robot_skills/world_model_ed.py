@@ -62,6 +62,7 @@ class ED:
 
         # Person recognition
         self._learn_person_srv = rospy.ServiceProxy('/%s/learn_person'%robot_name, ed_perception.srv.LearnPerson)
+        self._clear_persons_srv = rospy.ServiceProxy('/%s/clear_persons' % robot_name, Empty)
         self._recognize_person_srv = rospy.ServiceProxy('/%s/recognize_person'%robot_name, ed_perception.srv.RecognizePerson)
 
         self._tf_listener = tf_listener
@@ -189,12 +190,14 @@ class ED:
     # ----------------------------------------------------------------------------------------------------
 
     def reset(self):
-        """Removes all non-mesh objects from ED"""
+        """Reset world model to initial state, also clears trained persons"""
+        self.clear_persons()
 
         try:
             self._ed_reset_srv()
         except rospy.ServiceException, e:
             rospy.logerr("Could not reset ED: {0}".format(e))
+
         rospy.sleep(.2)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -410,6 +413,12 @@ class ED:
             rospy.logerr("While adding perception training instance: %s" % res.error_msg)
             return False
 
+        return True
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def clear_persons(self):
+        res = self._clear_persons_srv()
         return True
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
