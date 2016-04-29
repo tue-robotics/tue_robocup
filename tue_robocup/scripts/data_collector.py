@@ -26,7 +26,8 @@ import shutil
 
 GLOBS = {
     "faces": "/tmp/faces/*.jpg",
-    "speech": "/tmp/*.wav"
+    "speech": "/tmp/*.wav",
+    "mapping_data_and_plans": "/tmp/*.bag"
 }
 
 
