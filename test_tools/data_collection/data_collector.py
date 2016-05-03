@@ -25,9 +25,10 @@ from glob import glob
 import shutil
 
 GLOBS = {
-    "faces": "/tmp/faces/*.jpg",
-    "speech": "/tmp/*.wav",
-    "mapping_data_and_plans": "/tmp/*.bag"
+    "faces": ["/tmp/faces/*.jpg"],
+    "speech": ["/tmp/*.wav"],
+    "mapping_data_and_plans": ["/tmp/*.bag"],
+    "objects" : [os.path.expanduser("~/ed/kinect/*/*.*"), os.path.expanduser("~/ed/kinect/*/*/*.*")]
 }
 
 
@@ -86,14 +87,15 @@ if __name__ == '__main__':
         os.makedirs(name)
 
     # Copy files
-    for dir_name, glob_entry in GLOBS.iteritems():
-        dir_name = name + "/" + dir_name
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
+    for dir_name, glob_entries in GLOBS.iteritems():
+        for glob_entry in glob_entries:
+            dir_name = name + "/" + dir_name
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name)
 
-        for file_name in glob(glob_entry):
-            # Check if modification date is between bounds (or unknown)
-            mod_date = _get_modification_date(file_name)
-            if not mod_date or start < mod_date < end:
-                print "Writing file '%s' to '%s'" % (file_name, dir_name)
-                shutil.copy(file_name, dir_name)
+            for file_name in glob(glob_entry):
+                # Check if modification date is between bounds (or unknown)
+                mod_date = _get_modification_date(file_name)
+                if not mod_date or start < mod_date < end:
+                    print "Writing file '%s' to '%s'" % (file_name, dir_name)
+                    shutil.copy(file_name, dir_name)
