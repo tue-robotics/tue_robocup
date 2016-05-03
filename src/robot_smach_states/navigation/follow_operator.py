@@ -49,6 +49,8 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_operator_pose_stamped = None
 
+        self._period = 0.5
+
     def _operator_standing_still_for_x_seconds(self, timeout):
         if not self._operator:
             return False
