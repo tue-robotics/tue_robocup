@@ -92,6 +92,9 @@ class DetermineObject(smach.State):
         # Check if there is a human blocking the path
         persons = self._robot.ed.detect_persons()
 
+        if not persons:
+            persons = []
+
         rospy.loginfo("Person detection result: %s" % persons)
 
         block_is_person = False
