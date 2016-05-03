@@ -7,6 +7,7 @@ target2_pre = "exit"
 target2_radius1 = 1.5
 target2_radius2 = 0.1
 target2_radius3 = 0.7
+target2_obstacle_radius = 0.6
 
 target3 = "hallway"
 target3_radius1 = 0.1
