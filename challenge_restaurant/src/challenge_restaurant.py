@@ -476,7 +476,7 @@ def setup_statemachine(robot):
                                transitions={'spoken': 'GOTO_KITCHEN'})
 
         smach.StateMachine.add('GOTO_KITCHEN',
-                               states.NavigateToWayPoint(robot,
+                               states.NavigateToWaypoint(robot,
                                                          EntityByIdDesignator(robot, id="kitchen")
                                                          ),
                                transitions={'arrived': 'SAY_IN_KITCHEN',
@@ -484,15 +484,15 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'SAY_FOLLOW_TO_KITCHEN'}
                                )
 
-        smach.StateMachine.add('FOLLOW_TO_KITCHEN',
-                               states.FollowOperator(robot,
-                                                     operator_timeout=30,
-                                                     ask_follow=False
-                                                     ),
-                               transitions={'stopped': 'CHECK_IN_KITCHEN',
-                                            'lost_operator': 'FOLLOW_TO_KITCHEN_INITIAL',
-                                            'no_operator': 'FOLLOW_TO_KITCHEN_INITIAL'}
-                               )
+#        smach.StateMachine.add('FOLLOW_TO_KITCHEN',
+#                               states.FollowOperator(robot,
+#                                                     operator_timeout=30,
+#                                                     ask_follow=False
+#                                                     ),
+#                               transitions={'stopped': 'CHECK_IN_KITCHEN',
+#                                            'lost_operator': 'FOLLOW_TO_KITCHEN_INITIAL',
+#                                            'no_operator': 'FOLLOW_TO_KITCHEN_INITIAL'}
+#                               )
 
         smach.StateMachine.add('CHECK_IN_KITCHEN',
                                CheckInKitchen(robot),
