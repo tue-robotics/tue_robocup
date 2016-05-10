@@ -317,8 +317,10 @@ class FollowOperator(smach.State):
         # recognize operator and then find closest entity to face.
         for detection in detections:
             if detection.name is self._operator_name:
-                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=detection.pose.pose.position)
+                tmp_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
+                                                                       center_point=detection.pose.pose.position)
+                if tmp_operator:
+                    recovered_operator = tmp_operator
 
         if recovered_operator:
             self._operator_id = recovered_operator.id
