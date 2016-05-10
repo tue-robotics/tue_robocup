@@ -2,37 +2,11 @@
 
 # ------------------------------------------------------------------------------------------------------------------------
 # By Sjoerd van den Dries, 2016
-
-# TODO:
-
-# DONE:
-# - Fix constraint outside arena (quick fix: seal exit in heightmap)
-# - define in_front_of's, etc
-# - handover
-# - Add entrance and exit
-# - Enter arena
-# - Find person in different states
-# - also use the nav area for navigation
-# - in "bring the lemon from the dinnertable to james who is in the kitchen", semantic key "from" is overwritten!
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-# Cannot deal with:
-#    look for a person in the entrance and answer a question
-
-        # go to the bookcase, find a person, and say your name
-
-        # bookcase
-        #      Locate at least three objects there.
-
 # ------------------------------------------------------------------------------------------------------------------------
 
 import os
 import sys
-import yaml
-import cfgparser
 import rospy
-import random
 import argparse
 import time
 
@@ -109,6 +83,10 @@ def main():
 
     if sentence:
         semantics = command_center.parse_command(sentence)
+        if not semantics:
+            rospy.logerr("Cannot parse \"{}\"".format(sentence))
+            return 
+
         command_center.execute_command(semantics)
     else:
 
@@ -117,15 +95,10 @@ def main():
 
             semantics = command_center.request_command(ask_confirmation=True, ask_missing_info=False)
 
-            try:
-                command_center.execute_command(semantics)
-            except KeyboardInterrupt as e:
-                rospy.logwarn('keyboard interupt')
-                return 0
-            except Exception as e:
-                rospy.logerr("execute_command failed: %s", str(e))
+            if not command_center.execute_command(semantics):
+                robot.speech.speak("I am truly sorry, let's try this again")                
 
-            if  args.once:
+            if args.once:
                 break
 
             nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
@@ -135,3 +108,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+    
