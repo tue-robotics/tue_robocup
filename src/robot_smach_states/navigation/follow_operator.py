@@ -269,7 +269,8 @@ class FollowOperator(smach.State):
         plan = []
         previous_point = robot_position
 
-        breadcrumbs = self._breadcrumbs + [self._operator]
+        if self._operator:
+            breadcrumbs = self._breadcrumbs + [self._operator]
         for crumb in breadcrumbs:
             dx = crumb.pose.position.x - previous_point.x
             dy = crumb.pose.position.y - previous_point.y
@@ -315,6 +316,7 @@ class FollowOperator(smach.State):
             return False
 
         # recognize operator and then find closest entity to face.
+        recovered_operator = None
         for detection in detections:
             if detection.name is self._operator_name:
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
@@ -331,7 +333,6 @@ class FollowOperator(smach.State):
         robot_position = self._robot.base.get_location().pose.position
         operator_position = self._last_operator.pose.position
 
-        ''' Define end goal constraint, solely based on the (old) operator position '''
         p = PositionConstraint()
         p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x, operator_position.y, self._operator_radius)
 
@@ -342,7 +343,6 @@ class FollowOperator(smach.State):
             o.frame = 'map'
             o.look_at = self._last_operator.pose.position
 
-        ''' Determine if the goal has been reached. If it has, return True '''
         dx = operator_position.x - robot_position.x
         dy = operator_position.y - robot_position.y
 
@@ -357,7 +357,7 @@ class FollowOperator(smach.State):
         lost_operator = self._operator is None
 
         # Try to recover operator if lost and reached last seen operator position
-        if lost_operator and self._operator_distance < self._operator_radius:
+        if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(1.0): # TODO: HACK! Magic number!
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "lost_operator"
