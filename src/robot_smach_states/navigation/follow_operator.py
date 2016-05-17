@@ -57,7 +57,7 @@ class FollowOperator(smach.State):
 
         operator_current_pose = self._operator.pose
         operator_current_pose_stamped = msg_constructors.PoseStamped(x=operator_current_pose.position.x, y=operator_current_pose.position.y)
-        print "Operator position: %s" % self._operator.pose.position
+        #print "Operator position: %s" % self._operator.pose.position
 
         if not self._last_operator_pose_stamped:
             self._last_operator_pose_stamped = operator_current_pose_stamped
@@ -65,7 +65,7 @@ class FollowOperator(smach.State):
             # Compare the pose with the last pose and update if difference is larger than x
             if math.hypot(operator_current_pose_stamped.pose.position.x - self._last_operator_pose_stamped.pose.position.x, operator_current_pose_stamped.pose.position.y - self._last_operator_pose_stamped.pose.position.y) > 0.15:
                 # Update the last pose
-                print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped.pose.position.x, self._last_operator_pose_stamped.pose.position.y, self._last_operator_pose_stamped.header.stamp.secs)
+           #     print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped.pose.position.x, self._last_operator_pose_stamped.pose.position.y, self._last_operator_pose_stamped.header.stamp.secs)
                 self._last_operator_pose_stamped = operator_current_pose_stamped
             else:
                 print "Operator is standing still for %f seconds" % (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped.header.stamp).to_sec()
@@ -87,10 +87,10 @@ class FollowOperator(smach.State):
             if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.x,
                           current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.05 or abs(current_yaw - last_yaw) > 0.3:
                 # Update the last pose
-                print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
+          #      print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
                 self._last_pose_stamped = current_pose_stamped
             else:
-                print "Robot is standing still :/"
+         #       print "Robot is standing still :/"
 
                 print "Robot dit not move for x seconds: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
 
@@ -120,11 +120,13 @@ class FollowOperator(smach.State):
                 if answer:
                     if answer.result == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
-                        self._robot.speech.speak("Please look at me while I learn to recognize you. Just in case.", block=False)
 
-                        self._robot.ed.learn_person(self._operator_name)
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
+                        else:
+                            self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
+                            self._robot.ed.learn_person(self._operator_name)
+                            self._robot.speech.speak("Just in case... Alright, let's go!", block=False)
                     elif answer.result == "no":
                         return False
                     else:
@@ -202,6 +204,13 @@ class FollowOperator(smach.State):
 
             return True
         else:
+            robot_position = self._robot.base.get_location().pose.position
+            operator_position = self._last_operator.pose.position
+
+            dx = operator_position.x - robot_position.x
+            dy = operator_position.y - robot_position.y
+            self._operator_distance = math.hypot(dx, dy)
+
             # If the operator is lost, check if we still have an ID
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
@@ -269,8 +278,7 @@ class FollowOperator(smach.State):
         plan = []
         previous_point = robot_position
 
-        if self._operator:
-            breadcrumbs = self._breadcrumbs + [self._operator]
+        breadcrumbs = self._breadcrumbs + [self._last_operator]
         for crumb in breadcrumbs:
             dx = crumb.pose.position.x - previous_point.x
             dy = crumb.pose.position.y - previous_point.y
@@ -297,9 +305,8 @@ class FollowOperator(smach.State):
         if len(plan) > cutoff:
             del plan[-cutoff:]
 
-        ''' Check if plan is valid. If not, remove invalid points from the path '''
+        # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(plan):
-            print "Breadcrumb plan is blocked"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             plan = [point for point in plan if self._robot.base.global_planner.checkPlan([point])]
 
@@ -307,6 +314,8 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(plan, p, o)
 
     def _recover_operator(self):
+        print "Trying to recover operator"
+        
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please stand in front of me and look at me" % self._operator_name, block=False)
 
@@ -357,7 +366,15 @@ class FollowOperator(smach.State):
         lost_operator = self._operator is None
 
         # Try to recover operator if lost and reached last seen operator position
+        print "Checking end criteria"
+        if lost_operator:
+            print "Lost operator"
+
+        if self._operator_distance < self._lookat_radius:
+            print "Within lookat radius"
+
         if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(1.0): # TODO: HACK! Magic number!
+            print "lost operator and within lookat radius and standing still for 1 second"
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "lost_operator"
