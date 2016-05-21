@@ -8,6 +8,7 @@ from geometry_msgs.msg import PolygonStamped, PointStamped, Point, PoseStamped, 
 from threading import Event
 from visualization_msgs.msg import Marker, MarkerArray
 
+
 class ForceDriveToTouchDoor(smach.State):
     """
     Once a door is no longer locked, the lever is not latched into locking plate, it can be pushed open.
@@ -21,10 +22,9 @@ class ForceDriveToTouchDoor(smach.State):
      - Now move forward, perpendicular to the wall the door is in.
     """
 
-    def __init__(self, robot, door_entity_designator, approach_speed=0.1):
+    def __init__(self, robot, approach_speed=0.1):
         smach.State.__init__(self, outcomes=['front', 'left', 'right', 'failed'])
         self.robot = robot
-        self.door_entity_designator = door_entity_designator
 
         self.approach_speed = approach_speed
 
@@ -261,3 +261,54 @@ class PushPerpendicularToDoor(smach.State):
     force_drive to push with a force perpendicular to the door plane
     """
     pass
+
+
+class PushSidewaysAndBack(smach.State):
+    """
+    Drive sideways for some distance (in base_link) and move back again
+    """
+    def __init__(self, robot, y_dist, speed=0.1):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.robot = robot
+        self.y_dist = y_dist
+        self.speed = speed
+
+    def execute(self, userdata=None):
+        duration = self.y_dist / self.speed
+        if self.robot.base.force_drive(0, self.speed, 0, duration):  # There
+            if self.robot.base.force_drive(0, -self.speed, 0, duration):  # and back again
+                return 'succeeded'
+            else:
+                return 'failed'
+        else:
+            return 'failed'
+
+
+class OpenDoorByPushing(smach.StateMachine):
+    def __init__(self, robot, approach_speed=0.1, push_speed=0.05):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        with self:
+            smach.StateMachine.add('APPROACH_AGAINST_1',
+                                   ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
+                                   transitions={'front':'APPROACH_AGAINST_2',
+                                                'left':'PUSH_LEFT',
+                                                'right':'PUSH_RIGHT',
+                                                'failed':'failed'})
+
+            smach.StateMachine.add('APPROACH_AGAINST_2',
+                                   ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
+                                   transitions={'front':'succeeded',
+                                                'left':'PUSH_LEFT',
+                                                'right':'PUSH_RIGHT',
+                                                'failed':'failed'})
+
+            smach.StateMachine.add('PUSH_LEFT',
+                                   PushSidewaysAndBack(robot, y_dist=0.1, speed=push_speed),
+                                   transitions={'succeeded':'succeeded',
+                                                'failed':'failed'})
+
+            smach.StateMachine.add('PUSH_RIGHT',
+                                   PushSidewaysAndBack(robot, y_dist=-0.1, speed=push_speed),
+                                   transitions={'succeeded':'succeeded',
+                                                'failed':'failed'})
