@@ -6,8 +6,8 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'couchtable',    'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'dinnertable',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'couch_table',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'dinner_table',  'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
     { 'name':'bar',           'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
     { 'name':'bookcase',      'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
 
