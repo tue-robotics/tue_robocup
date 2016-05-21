@@ -51,12 +51,12 @@ class ForceDriveToTouchDoor(smach.State):
 
         footprint = self.get_footprint()
 
-        # import ipdb; ipdb.set_trace()
-        # break 184
-        drive_dist, footprint_point = self.find_drive_distance_to_first_obstacle(footprint, scan_in_bl)
+        footprint_point, drive_dist, scan_point = self.find_drive_distance_to_first_obstacle(footprint, scan_in_bl)
+
+        self.publish_debug_info(footprint_point, drive_dist, scan_point)
 
         collision_side = "front"
-        if footprint_point[1] < 0: collision_side = 'left' # Left side
+        if footprint_point[1] > 0: collision_side = 'left' # Left side
         else: collision_side = 'right'  # Right side
 
         drive_time = drive_dist / self.approach_speed
@@ -64,7 +64,8 @@ class ForceDriveToTouchDoor(smach.State):
         rospy.loginfo("Will drive {}m forward towards door. "
                       "Collision will happen on my {} side".format(drive_dist, collision_side))
 
-        if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time/5):
+        import ipdb; ipdb.set_trace()
+        if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time):
             return collision_side
         else:
             return "failed"
@@ -73,7 +74,8 @@ class ForceDriveToTouchDoor(smach.State):
         """
         Subscribe to laserscans and unsubscribe when we get one.
         This is realized through a threading.Event which is set when a message is received
-        :return:
+        :return: the most recent laser scan
+        :rtype LaserScan
         """
         received = Event()
 
@@ -133,7 +135,13 @@ class ForceDriveToTouchDoor(smach.State):
         X = scan.ranges * np.cos(angles) # TODO: get distance between laser frame and base_link
         Y = scan.ranges * np.sin(angles)
 
-        return np.array([X,Y]).T
+        posestampeds = [PoseStamped(scan.header, Pose(position=Point(x,y, 0))) for (x, y) in zip(X, Y)]
+        in_baselink = [self.robot.tf_transform_pose(ps, '{}/base_link'.format(self.robot.robot_name)) for ps in posestampeds]
+
+        Xb = [ps.pose.position.x for ps in in_baselink]
+        Yb = [ps.pose.position.y for ps in in_baselink]
+
+        return np.array([Xb,Yb]).T
 
     def add_delta_to_points(self, points, delta):
         """
@@ -176,13 +184,17 @@ class ForceDriveToTouchDoor(smach.State):
 
         :param footprint_points:
         :param scan_points:
-        :return: A tuple (the distance to travel in X to minimize the distance to the scan, corresp. footprint point)
+        :return: A tuple giving the footprint point closest to the scan, distance to the scan and scan point closest to the footprint
+        :rtype tuple of (np.array([x, y]), distance, np.array([x, y]))
         """
 
         def calc(forward_travel):
             shifted_points = self.add_delta_to_points(footprint_points, delta=np.array([forward_travel, 0]))
             fp, distance, sp = self.distance_between_footprint_and_scan(shifted_points, scan_points)
-            return fp, distance, sp
+            # print "If I drive {0:.3f}, distance will be {2} between {1} and {3}".format(forward_travel, fp, distance, sp)
+
+            original_fp = self.add_delta_to_points(fp, delta=np.array([-forward_travel, 0]))
+            return original_fp, distance, sp
 
         forward_travels = np.arange(0, 1, stepsize)
         fp_distance_sp = map(calc, forward_travels)
@@ -193,8 +205,40 @@ class ForceDriveToTouchDoor(smach.State):
 
         forward_travel_to_minimize_distance = forward_travels[smallest_distance_index]
         footprint_point_closest_to_scan = fp_distance_sp[smallest_distance_index][0]
+        scan_point_closest_to_footprint = fp_distance_sp[smallest_distance_index][2]
 
-        return (forward_travel_to_minimize_distance, footprint_point_closest_to_scan)
+        return (footprint_point_closest_to_scan, forward_travel_to_minimize_distance, scan_point_closest_to_footprint)
+
+    def publish_debug_info(self, footprint_point, distance, scan_point):
+        array = MarkerArray()
+
+        fp = Marker()
+        fp.id = 1
+        fp.type = fp.SPHERE
+        scale = 0.1
+        fp.pose.position.x,fp.pose.position.y, fp.pose.position.z = footprint_point[0], footprint_point[1], 0
+        fp.scale.x, fp.scale.y, fp.scale.z = scale, scale, scale
+        fp.color.r, fp.color.g, fp.color.b, fp.color.a = (0, 0, 1, 1)
+        fp.header.frame_id = "{}/base_link".format(self.robot.robot_name)
+        fp.frame_locked = True
+        fp.action = fp.ADD
+        fp.ns = "door_opening"
+        array.markers += [fp]
+
+        sp = Marker()
+        sp.id = 2
+        sp.type = sp.SPHERE
+        scale = 0.1
+        sp.pose.position.x,sp.pose.position.y, sp.pose.position.z = scan_point[0], scan_point[1], 0
+        sp.scale.x, sp.scale.y, sp.scale.z = scale, scale, scale
+        sp.color.r, sp.color.g, sp.color.b, sp.color.a = (1, 0, 0, 1)
+        sp.header.frame_id = "{}/base_link".format(self.robot.robot_name)
+        sp.frame_locked = False
+        sp.action = sp.ADD
+        sp.ns = "door_opening"
+        array.markers += [sp]
+
+        self.debug_vizualizer.publish(array)
 
 
 class PushPerpendicularToDoor(smach.State):
