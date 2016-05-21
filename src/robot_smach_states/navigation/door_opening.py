@@ -45,13 +45,16 @@ class ForceDriveToTouchDoor(smach.State):
 
         # To determine the side, get the intersection point and the Y coordinate. If in y-, then right, if y+ then left.
 
+        np.set_printoptions(precision=4, suppress=True)
+
+        footprint = self.get_footprint()
+        footprint = self.select_frontside_of_footprint(footprint)
 
         scan = self.get_laserscan()
         scan_in_bl = self.scan_to_base_link_points(scan)
+        scan_in_bl = self.select_scanpoints_in_front_of_footprint(scan_in_bl, footprint)
 
-        footprint = self.get_footprint()
-
-        footprint_point, drive_dist, scan_point = self.find_drive_distance_to_first_obstacle(footprint, scan_in_bl)
+        footprint_point, drive_dist, scan_point = self.find_drive_distance_to_first_obstacle(footprint, scan_in_bl, stepsize=0.01)
 
         self.publish_debug_info(footprint_point, drive_dist, scan_point)
 
@@ -64,8 +67,7 @@ class ForceDriveToTouchDoor(smach.State):
         rospy.loginfo("Will drive {}m forward towards door. "
                       "Collision will happen on my {} side".format(drive_dist, collision_side))
 
-        import ipdb; ipdb.set_trace()
-        if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time):
+        if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time*0.9):
             return collision_side
         else:
             return "failed"
@@ -121,6 +123,18 @@ class ForceDriveToTouchDoor(smach.State):
         as_array = np.array([X, Y]).T
 
         return as_array
+
+    def select_frontside_of_footprint(self, footprint_points):
+        return footprint_points[footprint_points[:,0] > 0]
+
+    def select_scanpoints_in_front_of_footprint(self, scan_points, footprint, tolerance=0.1):
+        y_min = np.min(footprint[:,1])-tolerance
+        y_max = np.max(footprint[:,1])+tolerance
+
+        larger_than_min = scan_points[scan_points[:,1] > y_min]
+        smaller_than_max = larger_than_min[larger_than_min[:,1] < y_max]
+
+        return smaller_than_max
 
     def scan_to_base_link_points(self, scan):
         """
