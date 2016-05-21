@@ -1,7 +1,12 @@
 __author__ = 'amigo'
 
+import rospy
 import smach
 import numpy as np
+from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import PolygonStamped, PointStamped, Point, PoseStamped, Pose
+from threading import Event
+from visualization_msgs.msg import Marker, MarkerArray
 
 class ForceDriveToTouchDoor(smach.State):
     """
@@ -16,9 +21,14 @@ class ForceDriveToTouchDoor(smach.State):
      - Now move forward, perpendicular to the wall the door is in.
     """
 
-    def __init__(self, robot, door_entity_designator):
+    def __init__(self, robot, door_entity_designator, approach_speed=0.1):
+        smach.State.__init__(self, outcomes=['front', 'left', 'right', 'failed'])
         self.robot = robot
         self.door_entity_designator = door_entity_designator
+
+        self.approach_speed = approach_speed
+
+        self.debug_vizualizer = rospy.Publisher("visualization_marker_array", MarkerArray)
 
     def execute(self, userdata=None):
         # Align with the door frame; the X-axis should be perpendicular to the wall; y parallel to the wall
@@ -30,33 +40,118 @@ class ForceDriveToTouchDoor(smach.State):
         # Get footprint of the robot: topic /{robotname}/local_planner/local_costmap/robot_footprint/footprint_stamped
         # Convert this to /base_link coordinates
 
-        # Find a distance (in base_link X +) when the footprint and the scan will intersect
+        # Find a distance (in base_link X+) when the footprint and the scan will intersect
         # Sample the X distances for the conversion of the footprint above or do this algebraically?
 
         # To determine the side, get the intersection point and the Y coordinate. If in y-, then right, if y+ then left.
 
-        pass
+
+        scan = self.get_laserscan()
+        scan_in_bl = self.scan_to_base_link_points(scan)
+
+        footprint = self.get_footprint()
+
+        # import ipdb; ipdb.set_trace()
+        # break 184
+        drive_dist, footprint_point = self.find_drive_distance_to_first_obstacle(footprint, scan_in_bl)
+
+        collision_side = "front"
+        if footprint_point[1] < 0: collision_side = 'left' # Left side
+        else: collision_side = 'right'  # Right side
+
+        drive_time = drive_dist / self.approach_speed
+
+        rospy.loginfo("Will drive {}m forward towards door. "
+                      "Collision will happen on my {} side".format(drive_dist, collision_side))
+
+        if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time/5):
+            return collision_side
+        else:
+            return "failed"
+
+    def get_laserscan(self):
+        """
+        Subscribe to laserscans and unsubscribe when we get one.
+        This is realized through a threading.Event which is set when a message is received
+        :return:
+        """
+        received = Event()
+
+        laserscan = [None]
+        def get_scan(scan):
+            laserscan[0] = scan  # Going via a list is apparently the way to have a proper closure. Py3 has 'nonlocal'
+            received.set()
+
+        laser_sub = rospy.Subscriber("/{}/base_laser/scan".format(self.robot.robot_name), LaserScan, get_scan)
+        received.wait(5.0)
+
+        laser_sub.unregister()
+
+        return laserscan[0]
+
+    def get_footprint(self):
+        """
+        Subscribe to footprint and unsubscribe when we get one.
+        This is realized through a threading.Event which is set when a message is received
+        :return:
+        """
+        received = Event()
+
+        footprint = [None]
+        def get_footprint(fp):
+            # print "Received footprint"
+            footprint[0] = fp
+            received.set()
+
+        footprint_sub = rospy.Subscriber("/{}/local_planner/local_costmap/robot_footprint/footprint_stamped".
+                                         format(self.robot.robot_name), PolygonStamped, get_footprint)
+
+        received.wait(5.0)
+        footprint_sub.unregister()
+        footprint = footprint[0]
+
+        posestampeds = [PoseStamped(footprint.header, Pose(position=point)) for point in footprint.polygon.points]
+        in_baselink = [self.robot.tf_transform_pose(ps, '{}/base_link'.format(self.robot.robot_name)) for ps in posestampeds]
+
+        X = [ps.pose.position.x for ps in in_baselink]
+        Y = [ps.pose.position.y for ps in in_baselink]
+        # Z = [ps.point.z for ps in in_baselink]
+        as_array = np.array([X, Y]).T
+
+        return as_array
 
     def scan_to_base_link_points(self, scan):
         """
         Convert a sensor_msgs.msg.LaserScan message to a list of point in base_link frame
-        Returns a numpy.ndarray of shape (N, 3)
+        Returns a numpy.ndarray of shape (N, 2)
         :param scan:
-        :type scan sensor_msgs.msg.LaserScan message
+        :type scan LaserScan
         :return:
         """
-        pass
 
+        angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
+        X = scan.ranges * np.cos(angles) # TODO: get distance between laser frame and base_link
+        Y = scan.ranges * np.sin(angles)
+
+        return np.array([X,Y]).T
 
     def add_delta_to_points(self, points, delta):
         """
-        Adds a distance to a list of points. Points should be an (n, 3)-shaped numpy.ndarray
-        and delta must be a (3)-shaped array.
+        Adds a distance to a list of points. Points should be an (N, 2)-shaped numpy.ndarray
+        and delta must be a (2)-shaped np.ndarray.
         :param points:
         :param delta:
         :return:
         """
-        pass
+        return np.add(points, delta)
+
+    def closest_other_point(self, point, points):
+        dx = points[:,0] - point[0]
+        dy = points[:,1] - point[1]
+
+        distances = np.hypot(dx, dy)
+        smallest_index = np.argmin(distances)
+        return (distances[smallest_index], points[smallest_index])
 
     def distance_between_footprint_and_scan(self, footprint_points, scan_points):
         """
@@ -65,9 +160,14 @@ class ForceDriveToTouchDoor(smach.State):
         :param scan_points: Points (in base_link) that are scanned by the front laser
         :return: tuple of (footprint_point, distance, scan_point)
         """
-        pass
 
-    def find_drive_distance_to_first_obstacle(self, footprint_points, scan_points):
+        fp_dist_sp = [(point, self.closest_other_point(point, scan_points)) for point in footprint_points]
+        # fp_dist_sp is a list of (footprint_point, (distance, scan_point))-tuples
+        smallest = min(fp_dist_sp, key=lambda pair: pair[1][0])
+
+        return (smallest[0], smallest[1][0], smallest[1][1])
+
+    def find_drive_distance_to_first_obstacle(self, footprint_points, scan_points, stepsize=0.025):
         """
         Samples the distance with which to shift the footprint_points forwards (through a delta in X)
         and find the deltaX that makes for the smallest distance between these sets of points.
@@ -76,8 +176,26 @@ class ForceDriveToTouchDoor(smach.State):
 
         :param footprint_points:
         :param scan_points:
-        :return:
+        :return: A tuple (the distance to travel in X to minimize the distance to the scan, corresp. footprint point)
         """
+
+        def calc(forward_travel):
+            shifted_points = self.add_delta_to_points(footprint_points, delta=np.array([forward_travel, 0]))
+            fp, distance, sp = self.distance_between_footprint_and_scan(shifted_points, scan_points)
+            return fp, distance, sp
+
+        forward_travels = np.arange(0, 1, stepsize)
+        fp_distance_sp = map(calc, forward_travels)
+
+        distances = np.array([fp_dist_sp[1] for fp_dist_sp in fp_distance_sp])
+
+        smallest_distance_index = np.argmin(distances)
+
+        forward_travel_to_minimize_distance = forward_travels[smallest_distance_index]
+        footprint_point_closest_to_scan = fp_distance_sp[smallest_distance_index][0]
+
+        return (forward_travel_to_minimize_distance, footprint_point_closest_to_scan)
+
 
 class PushPerpendicularToDoor(smach.State):
     """
