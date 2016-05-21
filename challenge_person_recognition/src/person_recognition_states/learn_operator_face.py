@@ -4,13 +4,10 @@ import robot_smach_states.util.designators as ds
 
 
 class LearnOperatorFace(smach.StateMachine):
-    def __init__(self, robot, operator_name_designator):
+    def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
-
-        ds.check_resolve_type(operator_name_designator, str)
-        self.operatorNameDes = operator_name_designator
 
         @smach.cb_interface(outcomes=['done'])
         def look_at_standing_person(userdata):
@@ -27,7 +24,7 @@ class LearnOperatorFace(smach.StateMachine):
                                     learn to recognize your face.", block=True), transitions={'spoken': 'LEARN_PERSON'})
 
             smach.StateMachine.add('LEARN_PERSON',
-                                   states.LearnPerson(robot, name_designator=operator_name_designator),
+                                   states.LearnPerson(robot, name_designator=ds.VariableDesignator("person X")),
                                    transitions={'succeeded_learning': 'SAY_OPERATOR_LEARNED',
                                                 'failed_learning': 'SAY_FAILED_LEARNING',
                                                 'timeout_learning': 'SAY_FAILED_LEARNING'})

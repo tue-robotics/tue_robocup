@@ -1,4 +1,2 @@
-from find_operator import FindOperator
 from learn_operator_face import LearnOperatorFace
-from learn_operator_name import LearnOperatorName
-from find_and_describe_crowd import FindAndDescribeCrowd
+from detect import Detect
