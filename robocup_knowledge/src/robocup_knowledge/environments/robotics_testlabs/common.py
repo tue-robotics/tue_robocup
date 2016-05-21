@@ -6,8 +6,8 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'couchtable',    'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'dinnertable',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'couch_table',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'dinner_table',  'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
     { 'name':'bar',           'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
     { 'name':'bookcase',      'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
 
@@ -34,7 +34,6 @@ rooms = location_rooms + ["workshop"]
 
 objects = [
     {'category': 'decoration',  'group': 'known',       'name': 'candle'},
-    {'category': 'decoration',  'group': 'known',       'name': 'yellow candle'},
     {'category': 'food',        'group': 'known',       'name': 'bubblegum'},
     {'category': 'leisure',     'group': 'known',       'name': 'cup'},
     {'category': 'leisure',     'group': 'known',       'name': 'deodorant',          'sub-category': 'medicine'},
@@ -76,13 +75,17 @@ object_groups = list(set([ o["group"] for o in objects ]))
 object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
+    "food": {"bookcase": "shelf3"},
+    "drink": {"cabinet": "on_top_of"},
+    "tool": {"workbench": "on_top_of"},
+    "decoration": {"dinner_table": "on_top_of"},
+    "leisure": {"bar": "on_top_of"},
+    "bowl": {"dinner_table": "on_top_of"},
+    "tray": {"dinner_table": "on_top_of"}
 }
 
 inspect_areas = {
-    "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4"],
-    "kitchencounter" : ["right_of_sink", "left_of_sink"],
-    "sideboard" : ["on_top_of_left", "on_top_of_right"],
-    "tv_stand" : ["on_top_of_left", "on_top_of_right"]
+    "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 }
 
 inspect_positions = {
@@ -179,10 +182,9 @@ def get_object_category(obj):
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    for o in objects:
-        if o["category"] == obj_cat:
-            return (o["placement"], "on_top_of")
-    return None
+    location = category_locations[obj_cat].keys()[0]
+    area_name = category_locations[obj_cat].values()[0]
+    return (location, area_name)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

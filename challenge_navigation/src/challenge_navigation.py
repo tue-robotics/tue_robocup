@@ -311,21 +311,73 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
         smach.StateMachine.add( 'SAY_SHOULD_I_RETURN', states.Say(robot, "Should I return to target 3?", look_at_standing_person=True), transitions={ 'spoken' : 'HEAR_SHOULD_I_RETURN'})
-        smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SAY_RETURN_TARGET3", "no" : "SAY_STAND_IN_FRONT"})
+        smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SAY_GOBACK_ARENA", "no" : "SAY_STAND_IN_FRONT"})
 
         ######################################################################################################################################################
         #
-        #                                                       RETURN TARGET 3
+        #                                                       RETURN TO ARENA DOOR
         #
         ######################################################################################################################################################
 
 
-        smach.StateMachine.add( 'SAY_RETURN_TARGET3',
-                                states.Say(robot, ["I will go back to target 3 now",
-                                                    "I will return to target 3",
-                                                    "Lets go to target 3 again",
-                                                    "Going to target 3, again"], block=False),
-                                transitions={   'spoken'            :   'RETURN_TARGET3'})
+        smach.StateMachine.add( 'SAY_GOBACK_ARENA',
+                                states.Say(robot, ["I will go back to the arena",
+                                                    "I will return to the arena",
+                                                    "Lets return to the arena",
+                                                    "Going back to the arena",
+                                                    "Returning to the arena"], block=False),
+                                transitions={   'spoken'            :   'GOTO_ARENA_DOOR'})
+
+        smach.StateMachine.add('GOTO_ARENA_DOOR',
+                               states.NavigateToWaypoint(robot,
+                                                         EntityByIdDesignator(robot, id=challenge_knowledge.target_door),
+                                                         challenge_knowledge.target_door_radius),
+                               transitions={'arrived': 'ARENA_DOOR_REACHED',
+                                            'unreachable': 'RESET_ED_ARENA_DOOR',
+                                            'goal_not_defined': 'RESET_ED_ARENA_DOOR'})
+
+        smach.StateMachine.add('ARENA_DOOR_REACHED',
+                               states.Say(robot, ["I am at the door of the arena",
+                                                  "I have arrived at the door of the arena",
+                                                  "I am now at the door of the arena"], block=True),
+                               transitions={'spoken': 'SAY_RETURN_TARGET3'})
+
+        smach.StateMachine.add('RESET_ED_ARENA_DOOR',
+                               states.ResetED(robot),
+                               transitions={'done': 'GOTO_ARENA_DOOR_BACKUP'})
+
+        smach.StateMachine.add('GOTO_ARENA_DOOR_BACKUP',
+                               states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target_door),
+                                                         challenge_knowledge.target_door_radius),
+                               transitions={'arrived': 'ARENA_DOOR_REACHED',
+                                            'unreachable': 'TIMEOUT_ARENA_DOOR',
+                                            'goal_not_defined': 'TIMEOUT_ARENA_DOOR'})
+
+        smach.StateMachine.add('TIMEOUT_ARENA_DOOR',
+                               checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                               transitions={'not_yet': 'GOTO_ARENA_DOOR', 'time_out': 'SAY_GOTO_ARENA_DOOR_FAILED'})
+
+        # Should we mention that we failed???
+        smach.StateMachine.add('SAY_GOTO_ARENA_DOOR_FAILED',
+                               states.Say(robot, ["I am unable to reach the arena door",
+                                                  "I cannot reach the arena door",
+                                                  "The arena door is unreachable"], block=True),
+                               transitions={'spoken': 'SAY_RETURN_TARGET3'})
+
+        # Open door
+
+        ######################################################################################################################################################
+        #
+        #                                                       RETURN TO TARGET 3
+        #
+        ######################################################################################################################################################
+
+        smach.StateMachine.add('SAY_RETURN_TARGET3',
+                               states.Say(robot, ["I will go back to target 3 now",
+                                                  "I will return to target 3",
+                                                  "Lets go to target 3 again",
+                                                  "Going to target 3, again"], block=False),
+                               transitions={'spoken': 'RETURN_TARGET3'})
 
         smach.StateMachine.add('RETURN_TARGET3',
                                 states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target4), challenge_knowledge.target4_radius1),
