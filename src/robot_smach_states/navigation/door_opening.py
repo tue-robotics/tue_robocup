@@ -66,7 +66,7 @@ class ForceDriveToTouchDoor(smach.State):
 
         rospy.loginfo("Will drive {}m forward towards door. "
                       "Collision will happen on my {} side".format(drive_dist, collision_side))
-
+         # import ipdb; ipdb.set_trace()
         if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time*0.9):
             return collision_side
         else:
@@ -145,7 +145,8 @@ class ForceDriveToTouchDoor(smach.State):
         :return:
         """
 
-        angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
+        # angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
+        angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges))
         X = scan.ranges * np.cos(angles) # TODO: get distance between laser frame and base_link
         Y = scan.ranges * np.sin(angles)
 
@@ -292,8 +293,8 @@ class OpenDoorByPushing(smach.StateMachine):
             smach.StateMachine.add('APPROACH_AGAINST_1',
                                    ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
                                    transitions={'front':'APPROACH_AGAINST_2',
-                                                'left':'PUSH_LEFT',
-                                                'right':'PUSH_RIGHT',
+                                                'left':'APPROACH_AGAINST_2',
+                                                'right':'APPROACH_AGAINST_2',
                                                 'failed':'failed'})
 
             smach.StateMachine.add('APPROACH_AGAINST_2',
