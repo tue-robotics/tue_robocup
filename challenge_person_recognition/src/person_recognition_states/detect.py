@@ -30,9 +30,8 @@ class RecognizePersons(smach.State):
 
     def _get_detections(self, external_api_request):
         z = 1.0
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(100, 0, z,
-                                                                      self.robot.robot_name + "/base_link"),
-                                      end_time=0, timeout=8)
+        self.robot.head.look_at_point(msgs.PointStamped(100, 0, z, self.robot.robot_name + "/base_link"))
+        self.robot.head.wait_for_motion_done()
         time.sleep(1)
 
         detections = self.robot.ed.detect_persons(external_api_request=external_api_request)
@@ -155,6 +154,30 @@ class Detect(smach.StateMachine):
         self.turned = False
 
         with self:
+
+            @smach.cb_interface(outcomes=['done'])
+            def wait_a_sec(userdata):
+                robot.speech.speak("I will wait for 10 seconds for you to join the crowd", block=False)
+                time.sleep(10)
+                return 'done'
+
+            smach.StateMachine.add('WAIT_FOR_OPERATOR_TO_JOIN',
+                                   smach.CBState(wait_a_sec),
+                                   transitions={'done': 'FORCE_DRIVE'})
+
+            @smach.cb_interface(outcomes=['done'])
+            def force_drive(userdata):
+                if not self.turned:
+                    vth = 0.5
+                    th = 3.1415
+                    robot.head.cancel_goal()
+                    robot.base.force_drive(0, 0, vth, th / vth)
+                    self.turned = True
+                return 'done'
+
+            smach.StateMachine.add('FORCE_DRIVE',
+                                   smach.CBState(force_drive),
+                                   transitions={'done': 'SAY_SEARCHING_CROWD'})
 
             smach.StateMachine.add('SAY_SEARCHING_CROWD',
                                     states.Say(robot, "I'm looking for the crowd.", block=False),
