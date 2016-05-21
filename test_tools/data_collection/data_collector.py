@@ -25,7 +25,7 @@ import shutil
 from util import parse_start_end, get_modification_date
 
 GLOBS = {
-    "faces": ["/tmp/faces/*.jpg"],
+    "faces": ["/tmp/faces/*.jpeg"],
     "speech": ["/tmp/*.wav"],
     "mapping_data_and_plans": ["/tmp/*.bag"],
     "objects" : [os.path.expanduser("~/ed/kinect/*/*.*"), os.path.expanduser("~/ed/kinect/*/*/*.*")]
