@@ -67,16 +67,10 @@ put_locations = list(set([o["name"] for o in locations if o["manipulation"] != "
 category_locations = {
     "cleaning_stuff": {"closet": "on_top_of"},
     "food": {"kitchencounter": "left_of_sink"},
-    "drinks": {"kitchencounter": "right_of_sink"},
+    "drink": {"kitchencounter": "right_of_sink"},
     "candy": {"sideboard": "on_top_of"},
-    "containers": {"dinnertable": "on_top_of"}
+    "container": {"dinnertable": "on_top_of"}
 }
-
-def is_location(loc_name):
-    for loc in locations:
-        if loc["name"] == loc_name:
-            return True
-    return False
 
 inspect_areas = {
     "closet" : ["on_top_of"],
@@ -95,6 +89,14 @@ inspect_positions = {
     }
 }
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+def is_location(location):
+    for loc in locations:
+        if loc["name"] == location:
+            return True
+    return False
+
 def get_room(location):
     for loc in locations:
         if loc["name"] == location:
@@ -112,3 +114,72 @@ def get_inspect_position(location, area=""):
         return inspect_positions[location][area]
     else:
         return "in_front_of"
+
+def is_pick_location(location):
+    for loc in locations:
+        if loc["name"] == location and loc["manipulation"] == "yes":
+            return True
+    return False
+
+def is_place_location(location):
+    for loc in locations:
+        if loc["name"] == location and (loc["manipulation"] == "yes" or loc["manipulation"] == "only_putting"):
+            return True
+    return False
+
+def get_locations(room=None, pick_location=None, place_location=None):
+    return [loc["name"] for loc in locations
+                if (room == None or loc["room"] == room) and \
+                   (pick_location == None or is_pick_location(loc["name"])) and \
+                   (place_location == None or is_place_location(loc["name"]))]
+
+def get_objects(category=None):
+    return [obj["name"] for obj in objects 
+                if category == None or category == obj["category"]]
+
+def get_object_category(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["category"]
+    return None
+
+# Returns (location, area_name)
+def get_object_category_location( obj_cat):
+    location = category_locations[obj_cat].keys()[0]
+    area_name = category_locations[obj_cat].values()[0]
+    return (location, area_name)
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -     
+
+if __name__ == "__main__":
+    print "\n-----------------------------------------------------------------------------"
+    for obj in get_objects():
+        cat = get_object_category(obj)
+        print "object '{}'".format(obj)
+        (location, area_name) = get_object_category_location(cat)
+
+        print "    category: '{}'".format(cat)
+        print "    found '{} {}'".format(area_name, location)
+
+    print "\n-----------------------------------------------------------------------------"
+    for loc in get_locations():
+        print "location '{}', room: '{}'".format(loc, get_room(loc))
+
+    print "\n-----------------------------------------------------------------------------"
+    print "Pick locations:"
+    for loc in get_locations(pick_location=True):
+        print "    {}".format(loc)
+
+    print "\n-----------------------------------------------------------------------------"
+    print "Place locations:"
+    for loc in get_locations(place_location=True):
+        print "    {}".format(loc)
+
+
+    print "\n-----------------------------------------------------------------------------"
+    print "None-manipulation locations:"
+    for loc in get_locations(pick_location=False, place_location=False):
+        print "    {}".format(loc)       
+
+
+
