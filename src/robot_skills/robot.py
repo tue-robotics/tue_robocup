@@ -9,6 +9,7 @@ import head
 
 # Human Robot Interaction
 import speech
+from hmi_server.api import Api
 import ears
 import ebutton
 import lights
@@ -51,7 +52,9 @@ class Robot(object):
         # Human Robot Interaction
         self.lights = lights.Lights(self.robot_name)
         self.speech = speech.Speech(self.robot_name, wait_services, lambda: self.lights.set_color(1,0,0), lambda: self.lights.set_color(0,0,1))
+        self.hmi = Api(self.robot_name + '/hmi')
         self.ears = ears.Ears(self.robot_name, lambda: self.lights.set_color(0,1,0), lambda: self.lights.set_color(0,0,1))
+        self.ears._hmi = self.hmi # TODO: when ears is gone, remove this line
         self.ebutton = ebutton.EButton()
 
         # Perception: can we get rid of this???
