@@ -7,7 +7,11 @@ guiding_spec = "(<location> <side>|<continue>)"
 # Do not alter keys or side values
 guiding_choices = {"location" : ["one", "two", "three"], "side" : ["left", "right", "front"], "continue" : ["continue"]}
 
-navigation_position_constraint_operator = "x^2 + y^2 < 0.7^2"
+# Do not alter the keys please :)
+professional_guiding_spec = "([This is ][table ]<location>)"
+
+# Do not alter keys or side values
+professional_guiding_choices = {"location" : ["one", "two", "three"]}
 
 kitchen_radius = 2
 
