@@ -15,8 +15,6 @@ from threading import Event
 import robot_skills.util.msg_constructors as msgs
 from robot_smach_states.util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
-from util.robocup_recorder import start_robocup_recorder
-
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
@@ -24,8 +22,6 @@ class StartChallengeRobust(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
         assert hasattr(robot, "speech")
-
-        start_robocup_recorder(robot.robot_name)
 
         with self:
             smach.StateMachine.add( "INITIALIZE",

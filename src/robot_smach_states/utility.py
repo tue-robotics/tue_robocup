@@ -9,13 +9,16 @@ from visualization_msgs.msg import Marker
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
 from ed.msg import EntityInfo
-from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
+
+from util.robocup_recorder import start_robocup_recorder
+
 
 # ----------------------------------------------------------------------------------------------------
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
+        start_robocup_recorder(robot.robot_name)
         smach.State.__init__(self, outcomes=['initialized',
                                              'abort'])
         self.robot = robot
