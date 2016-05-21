@@ -125,8 +125,14 @@ class FollowOperator(smach.State):
                             self._robot.speech.speak("Please stand in front of me")
                         else:
                             self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
-                            self._robot.ed.learn_person(self._operator_name)
-                            self._robot.speech.speak("Just in case... Alright, let's go!", block=False)
+                            self._robot.speech.speak("Just in case...",block=False)
+                            learn_person_start_time = rospy.Time.now()
+                            learn_person_timeout = 10.0 # TODO: Parameterize
+                            while (rospy.Time.now() - learn_person_start_time).to_sec() < learn_person_timeout:
+                                if self._robot.ed.learn_person(self._operator_name):
+                                    break
+                                
+                            self._robot.speech.speak("Alright, let's go!", block=False)
                     elif answer.result == "no":
                         return False
                     else:
@@ -210,7 +216,6 @@ class FollowOperator(smach.State):
             dx = operator_position.x - robot_position.x
             dy = operator_position.y - robot_position.y
             self._operator_distance = math.hypot(dx, dy)
-
             # If the operator is lost, check if we still have an ID
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
@@ -278,7 +283,10 @@ class FollowOperator(smach.State):
         plan = []
         previous_point = robot_position
 
-        breadcrumbs = self._breadcrumbs + [self._last_operator]
+        if self._operator:
+            breadcrumbs = self._breadcrumbs + [self._operator]
+        else:
+            breadcrumbs = self._breadcrumbs + [self._last_operator]
         for crumb in breadcrumbs:
             dx = crumb.pose.position.x - previous_point.x
             dy = crumb.pose.position.y - previous_point.y
@@ -307,6 +315,7 @@ class FollowOperator(smach.State):
 
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(plan):
+            print "Breadcrumb plan is blocked"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             plan = [point for point in plan if self._robot.base.global_planner.checkPlan([point])]
 
@@ -314,27 +323,41 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(plan, p, o)
 
     def _recover_operator(self):
-        print "Trying to recover operator"
-        
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please stand in front of me and look at me" % self._operator_name, block=False)
+        
 
-        # Find faces
-        detections = self._robot.ed.detect_persons()
-        if not detections:
-            return False
-
-        # recognize operator and then find closest entity to face.
+        # Wait for the operator and find his/her face
+        operator_recovery_timeout = 20.0 #TODO: parameterize
+        start_time = rospy.Time.now()
         recovered_operator = None
-        for detection in detections:
-            if detection.name is self._operator_name:
+        while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+            print "Trying to detect faces..."
+            detections = self._robot.ed.detect_persons()
+            best_score = -0.4 # TODO: magic number
+            best_detection = None
+            for d in detections:
+                print "name: %s" % d.name
+                print "score: %f" % d.name_score
+                if d.name == self._operator_name and d.name_score > best_score:
+                    best_score = d.name_score
+                    best_detection = d
+                
+                if not d.name:
+                    best_detection = None
+                    break
+        
+            if best_detection:
+                print "Trying to find closest laser entity to face"
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=detection.pose.pose.position)
-
-        if recovered_operator:
-            self._operator_id = recovered_operator.id
-            self._operator = recovered_operator
-            return True
+                                                                             center_point=best_detection.pose.pose.position)
+            if recovered_operator:
+                print "Found one!"
+                self._operator_id = recovered_operator.id
+                print "Recovered operator id: %s" % self._operator_id
+                self._operator = recovered_operator
+                self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
+                return True
 
         return False
 
@@ -367,12 +390,7 @@ class FollowOperator(smach.State):
 
         # Try to recover operator if lost and reached last seen operator position
         print "Checking end criteria"
-        if lost_operator:
-            print "Lost operator"
-
-        if self._operator_distance < self._lookat_radius:
-            print "Within lookat radius"
-
+        print "Operator is at %f meters distance" % self._operator_distance
         if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(1.0): # TODO: HACK! Magic number!
             print "lost operator and within lookat radius and standing still for 1 second"
             if not self._recover_operator():
