@@ -1,6 +1,7 @@
 __author__ = 'amigo'
 
 import smach
+import numpy as np
 
 class ForceDriveToTouchDoor(smach.State):
     """
@@ -37,9 +38,24 @@ class ForceDriveToTouchDoor(smach.State):
         pass
 
     def scan_to_base_link_points(self, scan):
+        """
+        Convert a sensor_msgs.msg.LaserScan message to a list of point in base_link frame
+        Returns a numpy.ndarray of shape (N, 3)
+        :param scan:
+        :type scan sensor_msgs.msg.LaserScan message
+        :return:
+        """
         pass
 
-    def add_delta_to_points(self, points):
+
+    def add_delta_to_points(self, points, delta):
+        """
+        Adds a distance to a list of points. Points should be an (n, 3)-shaped numpy.ndarray
+        and delta must be a (3)-shaped array.
+        :param points:
+        :param delta:
+        :return:
+        """
         pass
 
     def distance_between_footprint_and_scan(self, footprint_points, scan_points):
