@@ -6,27 +6,23 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    {'room':'livingroom', 'category': 'shelf', 'name':'cupboard','manipulation':'yes'},
-    {'room':'livingroom', 'category': 'table',      'name':'couchtable','manipulation':'yes'},
-    {'room':'kitchen', 'category': 'shelf',      'name':'cabinet',   'manipulation':'yes'},
-    {'room':'livingroom', 'category': 'appliance',  'name':'tv',        'manipulation':'no'},
-    {'room':'livingroom', 'category': 'seat',       'name':'couch',     'manipulation':'no'},
-    {'room':'kitchen', 'category': '',          'name':'kitchencounter','manipulation':'yes'},
-    {'room':'kitchen', 'category': 'appliance', 'name':'stove',         'manipulation':'yes'},
-    {'room':'kitchen', 'category': 'appliance', 'name':'fridge',        'manipulation':'yes'},
-    {'room':'kitchen', 'category': 'appliance', 'name':'sink',          'manipulation':'yes'},
-    {'room':'kitchen', 'category': 'utility',   'name':'trashbin',      'manipulation':'no'},
-    {'room':'kitchen', 'category': 'table',     'name':'bartable',      'manipulation':'yes'},
-    {'room':'hallway', 'category': 'table',    'name':'small_table',   'manipulation':'yes'},
-    {'room':'hallway', 'category': 'utility',  'name':'coathanger',    'manipulation':'no'},
-    {'room':'bedroom', 'category': 'seat',  'name':'bed',                   'manipulation':'yes'},
-    {'room':'bedroom', 'category': 'table', 'name':'left_bedside_table',    'manipulation':'yes'},
-    {'room':'bedroom', 'category': 'table', 'name':'right_bedside_table',   'manipulation':'yes'},
-    {'room':'office', 'category': 'table', 'name':'counter',        'manipulation':'yes'},
-    {'room':'office', 'category': 'shelf', 'name':'left_bookcase',  'manipulation':'yes'},
-    {'room':'office', 'category': 'shelf', 'name':'right_bookcase', 'manipulation':'yes'},
-    {'room':'livingroom', 'category': 'table', 'name':'dinnertable',    'manipulation':'yes'},
-    {'room':'office', 'category': 'table', 'name':'desk',           'manipulation':'yes'}
+    { 'name':'couchtable',    'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'dinnertable',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'bar',           'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'bookcase',      'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
+
+    { 'name':'cabinet',       'room':'kitchen',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'trashbin',      'room':'kitchen',    'category': 'utility', 'manipulation':'no'  },
+    { 'name':'plant',         'room':'kitchen',    'category': 'plant',   'manipulation':'no'  },
+
+    { 'name':'bed',           'room':'bedroom',    'category': 'seat',    'manipulation':'yes' },
+    { 'name':'nightstand',    'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
+
+    { 'name':'flight_case',   'room':'workshop',   'category': 'table',   'manipulation':'no'  },
+    { 'name':'battery_table', 'room':'workshop',   'category': 'table',   'manipulation':'no' },
+    { 'name':'workbench',     'room':'workshop',   'category': 'table',   'manipulation':'yes' },
+
+    { 'name':'hallway_table', 'room':'hallway',    'category': 'table',   'manipulation':'yes' }
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -34,61 +30,65 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
 
-rooms = location_rooms
+rooms = location_rooms + ["workshop"]
 
 objects = [
-{'category': 'decoration',  'placement': 'couchtable',  'group': 'known',   'name': 'candle'},
-{'category': 'decoration',  'placement': 'couchtable',  'group': 'known',   'name': 'yellow candle'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'bubblegum'},
-{'category': 'leisure', 'placement': 'small_table', 'group': 'known',       'name': 'cup'},
-{'category': 'leisure', 'placement': 'small_table', 'group': 'known',       'name': 'deodorant',          'sub-category': 'medicine'},
-{'category': 'leisure', 'placement': 'small_table', 'group': 'known',       'name': 'cigarettes'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'beer'},
-{'category': 'tool',    'placement': 'counter',     'group': 'known',       'name': 'wd40'},
-{'category': 'tool',    'placement': 'counter',     'group': 'known',       'name': 'filler'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'chocolate_cereals',  'sub-category': 'cereal'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'coke',               'sub-category': 'medicine'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'chocosticks'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'noodles'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'coffee'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'cranberry_cereals',  'sub-category': 'cereal'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'muesli_cereals',     'sub-category': 'cereal'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'bubblemint',         'sub-category': 'medicine'},
-{'category': 'tool',    'placement': 'counter',     'group': 'known',       'name': 'brush'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'red_bull'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'meadow_milk',        'sub-category': 'milk'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'ice-tea'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'mints',              'sub-category': 'medicine'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'pringles'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'fresh_milk',         'sub-category': 'milk'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'oblates'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'known',       'name': 'coffeepads'},
-{'category': 'food',    'placement': 'stove',       'group': 'known',       'name': 'peanut'},
-{'category': 'food',    'placement': 'stove',       'group': 'alike',       'name': 'mandarine',          'sub-category': 'fruit'},
-{'category': 'tool',    'placement': 'counter',     'group': 'alike',       'name': 'tape'},
-{'category': 'food',    'placement': 'stove',       'group': 'alike',       'name': 'lemon',              'sub-category': 'fruit'},
-{'category': 'tool',    'placement': 'counter',     'group': 'alike',       'name': 'twine'},
-{'category': 'drink',   'placement': 'cabinet',     'group': 'alike',       'name': 'fanta'},
-{'category': 'food',    'placement': 'stove',       'group': 'alike',       'name': 'apple',              'sub-category': 'fruit'},
-{'category': 'bowl',    'placement': '',            'group': 'containers',  'name': 'bowl'},
-{'category': 'tray',    'placement': '',            'group': 'containers',  'name': 'tray'}]
+    {'category': 'decoration',  'group': 'known',       'name': 'candle'},
+    {'category': 'decoration',  'group': 'known',       'name': 'yellow candle'},
+    {'category': 'food',        'group': 'known',       'name': 'bubblegum'},
+    {'category': 'leisure',     'group': 'known',       'name': 'cup'},
+    {'category': 'leisure',     'group': 'known',       'name': 'deodorant',          'sub-category': 'medicine'},
+    {'category': 'leisure',     'group': 'known',       'name': 'cigarettes'},
+    {'category': 'drink',       'group': 'known',       'name': 'beer'},
+    {'category': 'tool',        'group': 'known',       'name': 'wd40'},
+    {'category': 'tool',        'group': 'known',       'name': 'filler'},
+    {'category': 'food',        'group': 'known',       'name': 'chocolate_cereals',  'sub-category': 'cereal'},
+    {'category': 'drink',       'group': 'known',       'name': 'coke',               'sub-category': 'medicine'},
+    {'category': 'food',        'group': 'known',       'name': 'chocosticks'},
+    {'category': 'food',        'group': 'known',       'name': 'noodles'},
+    {'category': 'drink',       'group': 'known',       'name': 'coffee'},
+    {'category': 'food',        'group': 'known',       'name': 'cranberry_cereals',  'sub-category': 'cereal'},
+    {'category': 'food',        'group': 'known',       'name': 'muesli_cereals',     'sub-category': 'cereal'},
+    {'category': 'food',        'group': 'known',       'name': 'bubblemint',         'sub-category': 'medicine'},
+    {'category': 'tool',        'group': 'known',       'name': 'brush'},
+    {'category': 'drink',       'group': 'known',       'name': 'red_bull'},
+    {'category': 'drink',       'group': 'known',       'name': 'meadow_milk',        'sub-category': 'milk'},
+    {'category': 'drink',       'group': 'known',       'name': 'ice-tea'},
+    {'category': 'food',        'group': 'known',       'name': 'mints',              'sub-category': 'medicine'},
+    {'category': 'food',        'group': 'known',       'name': 'pringles'},
+    {'category': 'drink',       'group': 'known',       'name': 'fresh_milk',         'sub-category': 'milk'},
+    {'category': 'food',        'group': 'known',       'name': 'oblates'},
+    {'category': 'drink',       'group': 'known',       'name': 'coffeepads'},
+    {'category': 'food',        'group': 'known',       'name': 'peanut'},
+    {'category': 'food',        'group': 'alike',       'name': 'mandarine',          'sub-category': 'fruit'},
+    {'category': 'tool',        'group': 'alike',       'name': 'tape'},
+    {'category': 'food',        'group': 'alike',       'name': 'lemon',              'sub-category': 'fruit'},
+    {'category': 'tool',        'group': 'alike',       'name': 'twine'},
+    {'category': 'drink',       'group': 'alike',       'name': 'fanta'},
+    {'category': 'food',        'group': 'alike',       'name': 'apple',              'sub-category': 'fruit'},
+    {'category': 'bowl',        'group': 'containers',  'name': 'bowl'},
+    {'category': 'tray',        'group': 'containers',  'name': 'tray'}
+]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
 object_groups = list(set([ o["group"] for o in objects ]))
-object_placements = list(set([ o["placement"] for o in objects ]))
 object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
 }
 
 inspect_areas = {
+    "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4"],
+    "kitchencounter" : ["right_of_sink", "left_of_sink"],
+    "sideboard" : ["on_top_of_left", "on_top_of_right"],
+    "tv_stand" : ["on_top_of_left", "on_top_of_right"]
 }
 
 inspect_positions = {
 }
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ''' colors from printing on screen '''
 class bcolors:
@@ -102,12 +102,12 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-''' 
+'''
 	General function for printing shortcuts
 	name: name of the progam that instanciates make_prints
 	sentence: sentence to be displayed
 
-	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>" 
+	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
 '''
 def make_prints(name):
 
@@ -123,7 +123,7 @@ def make_prints(name):
 
     return printOk, printError, printWarning
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def is_location(location):
     for loc in locations:
@@ -168,7 +168,7 @@ def get_locations(room=None, pick_location=None, place_location=None):
                    (place_location == None or place_location == is_place_location(loc["name"]))]
 
 def get_objects(category=None):
-    return [obj["name"] for obj in objects 
+    return [obj["name"] for obj in objects
                 if category == None or category == obj["category"]]
 
 def get_object_category(obj):
@@ -184,7 +184,7 @@ def get_object_category_location(obj_cat):
             return (o["placement"], "on_top_of")
     return None
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -     
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if __name__ == "__main__":
     print "\n-----------------------------------------------------------------------------"
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     print "\n-----------------------------------------------------------------------------"
     print "None-manipulation locations:"
     for loc in get_locations(pick_location=False, place_location=False):
-        print "    {}".format(loc)       
+        print "    {}".format(loc)
 
 
 
