@@ -1,4 +1,4 @@
-target1 = "living_room"
+target1 = "livingroom"
 target1_radius1 = 0.1
 target1_radius2 = 0.7
 
@@ -12,6 +12,9 @@ target2_obstacle_radius = 0.6
 target3 = "hallway"
 target3_radius1 = 0.1
 target3_radius2 = 0.7
+
+target_door = "door_navigation"
+target_door_radius = 0.1
 
 target4 = "hallway"
 target4_radius1 = 0.1

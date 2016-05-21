@@ -1,6 +1,6 @@
-T[{action1: A1}] -> C[A1]
-T[{action1: A1, action2: A2}] -> C[A1] and C[A2]
-#T[{action1: A1, action2: A2, action3: A3}] -> C[A1] C[A2] and C[A3]
+T[{actions : <A1>}] -> C[A1]
+T[{actions : <A1, A2>}] -> C[A1] and C[A2]
+T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> VP[A]
 
