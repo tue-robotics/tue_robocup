@@ -68,7 +68,7 @@ class Turn(smach.State):
         return "turned"
 
 class DetermineObject(smach.State):
-    def __init__(self, robot, entity_id):
+    def __init__(self, robot, entity_id, obstacle_radius):
         smach.State.__init__(self, outcomes=["done", "timeout"])
         self._robot = robot
 
@@ -79,6 +79,7 @@ class DetermineObject(smach.State):
             sys.exit(1)
 
         self.pc = PositionConstraint(frame="/map", constraint="(x-%f)^2+(y-%f)^2 < 0.05" % (pose.position.x, pose.position.y))
+        self.obstacle_radius = obstacle_radius
 
     def execute(self, userdata):
 
@@ -92,20 +93,23 @@ class DetermineObject(smach.State):
         # Check if there is a human blocking the path
         persons = self._robot.ed.detect_persons()
 
+        if not persons:
+            persons = []
+
         rospy.loginfo("Person detection result: %s" % persons)
 
         block_is_person = False
         for person in persons:
-            pose_base_link = self._robot.tf_listener.transformPose(target_frame=self._robot.robot_name+'/base_link',
-                                                                   pose=person.pose)
+#            pose_base_link = self._robot.tf_listener.transformPose(target_frame=self._robot.robot_name+'/base_link',
+#                                                                   pose=person.pose)
+#
+#            x = pose_base_link.pose.position.x
+#            y = pose_base_link.pose.position.y
 
-            x = pose_base_link.pose.position.x
-            y = pose_base_link.pose.position.y
-
-            r = challenge_knowledge.target2_obstacle_radius  # Distance from the robot's base link in the x-direction
-            if (x - r)*(x - r) + y*y < r*r:
-                block_is_person = True
-                break
+#            r = self.obstacle_radius  # Distance from the robot's base link in the x-direction
+#            if (x - r)*(x - r) + y*y < r*r:
+            block_is_person = True
+            break
 
         # Stop looking at person
         self._robot.head.cancel_goal()
@@ -212,7 +216,7 @@ def setup_statemachine(robot):
                                                 'goal_not_defined'  :   'DETERMINE_OBJECT'})
 
         smach.StateMachine.add('DETERMINE_OBJECT',
-                                DetermineObject(robot, challenge_knowledge.target2),
+                                DetermineObject(robot, challenge_knowledge.target2, challenge_knowledge.target2_obstacle_radius),
                                 transitions={   'done'           :   'GOTO_TARGET2_AGAIN',
                                                 'timeout'        :   'GOTO_TARGET2_AGAIN'})
 
