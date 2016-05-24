@@ -19,7 +19,7 @@ from robot_skills.util import transformations, msg_constructors
 
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, operator_radius=1, lookat_radius=1.5, timeout=1.0, start_timeout=10, operator_timeout=20,
-                 distance_threshold=None, lost_timeout=5, lost_distance=1.5,
+                 distance_threshold=None, lost_timeout=5, lost_distance=0.5,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
@@ -45,6 +45,7 @@ class FollowOperator(smach.State):
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name, geometry_msgs.msg.PointStamped, queue_size=10)
         self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name, geometry_msgs.msg.PointStamped, queue_size=10)
 
         self._last_pose_stamped = None
         self._last_operator_pose_stamped = None
@@ -131,7 +132,7 @@ class FollowOperator(smach.State):
                             while (rospy.Time.now() - learn_person_start_time).to_sec() < learn_person_timeout:
                                 if self._robot.ed.learn_person(self._operator_name):
                                     break
-                                
+
                             self._robot.speech.speak("Alright, let's go!", block=False)
                     elif answer.result == "no":
                         return False
@@ -325,7 +326,7 @@ class FollowOperator(smach.State):
     def _recover_operator(self):
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please stand in front of me and look at me" % self._operator_name, block=False)
-        
+
 
         # Wait for the operator and find his/her face
         operator_recovery_timeout = 20.0 #TODO: parameterize
@@ -342,13 +343,20 @@ class FollowOperator(smach.State):
                 if d.name == self._operator_name and d.name_score > best_score:
                     best_score = d.name_score
                     best_detection = d
-                
+
                 if not d.name:
                     best_detection = None
                     break
-        
+
             if best_detection:
                 print "Trying to find closest laser entity to face"
+                print "best detection frame id: %s"%best_detection.pose.header.frame_id
+                operator_pos = geometry_msgs.msg.PointStamped()
+                operator_pos.header.stamp = best_detection.pose.header.stamp
+                operator_pos.header.frame_id = best_detection.pose.header.frame_id
+                operator_pos.point = best_detection.pose.pose.position
+                self._face_pos_pub.publish(operator_pos)
+
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
                                                                              center_point=best_detection.pose.pose.position)
             if recovered_operator:
