@@ -7,6 +7,8 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PolygonStamped, PointStamped, Point, PoseStamped, Pose
 from threading import Event
 from visualization_msgs.msg import Marker, MarkerArray
+from cb_planner_msgs_srvs.msg import PositionConstraint
+from robot_skills.base import computePathLength
 
 
 class ForceDriveToTouchDoor(smach.State):
@@ -20,6 +22,9 @@ class ForceDriveToTouchDoor(smach.State):
     To do this, the following steps are needed:
      - Move slowly to put the edge of the base against the door
      - Now move forward, perpendicular to the wall the door is in.
+
+    Test in amigo-console with
+    do = state_machine.ForceDriveToTouchDoor(amigo, None); do.execute(); do.execute()
     """
 
     def __init__(self, robot, approach_speed=0.1):
@@ -266,6 +271,8 @@ class PushPerpendicularToDoor(smach.State):
 class PushSidewaysAndBack(smach.State):
     """
     Drive sideways for some distance (in base_link) and move back again
+
+    Test in amigo-console with state_machine.PushSidewaysAndBack(amigo, 0.2, 0.05).execute()
     """
     def __init__(self, robot, y_dist, speed=0.1):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -284,7 +291,57 @@ class PushSidewaysAndBack(smach.State):
             return 'failed'
 
 
+class CheckDoorPassable(smach.State):
+    """Check whether a given door can be passed. The precondition is that the robot is in front of said door.
+
+    Test in amigo-console with
+    state_machine.CheckDoorPassable(amigo, None, ds.EdEntityDesignator(amigo, id='door1')).execute() """
+
+    def __init__(self, robot, door_entity_designator, destination_designator):
+        """
+        :param robot: Robot on which to perform this state
+        :param door_entity_designator: The door which to pass
+        :param destination_designator: The destination to reach through this door.
+        :return:
+        """
+        self.robot = robot
+        self.door_entity_designator = door_entity_designator
+        self.destination_designator = destination_designator
+
+    def execute(self, userdata=None):
+        e = self.destination_designator.resolve()
+
+        if not e:
+            rospy.logerr("CheckDoorPassable::execute: No entity could be resolved from designator '%s'" % self.destination_designator)
+            return None
+
+        try:
+            pose = e.data["pose"]
+            x = pose["x"]
+            y = pose["y"]
+            rz = e.data["pose"]["rz"]
+        except:
+            try:
+                x = e.pose.position.x
+                y = e.pose.position.y
+            except:
+                return None
+
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="/map")
+        plan = self.robot.base.global_planner.getPlan(pc)
+
+        if plan and computePathLength(plan) < 3.0:
+            return "passable"
+        else:
+            return "blocked"
+
+
+
 class OpenDoorByPushing(smach.StateMachine):
+    """
+    Test in amigo-console with
+    do = state_machine.OpenDoorByPushing(sergio); do.execute()
+    """
     def __init__(self, robot, approach_speed=0.1, push_speed=0.05):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
