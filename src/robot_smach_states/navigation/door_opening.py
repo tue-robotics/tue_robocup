@@ -343,7 +343,7 @@ class CheckDoorPassable(smach.State):
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    do = state_machine.OpenDoorByPushing(amigo, ds.EdEntityDesignator(amigo, id='door_navigation')); do.execute()
+    wp = ds.EdEntityDesignator(amigo, id='door_navigation'); do = state_machine.OpenDoorByPushing(amigo, wp); print do.execute(); print state_machine.NavigateToWaypoint(amigo, wp).execute()
     """
     def __init__(self, robot, destination_designator, door_entity_designator=None, approach_speed=0.1, push_speed=0.05, attempts=10):
         """
