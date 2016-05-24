@@ -295,15 +295,17 @@ class CheckDoorPassable(smach.State):
     """Check whether a given door can be passed. The precondition is that the robot is in front of said door.
 
     Test in amigo-console with
-    state_machine.CheckDoorPassable(amigo, None, ds.EdEntityDesignator(amigo, id='door1')).execute() """
+    state_machine.CheckDoorPassable(amigo, ds.EdEntityDesignator(amigo, id='door_navigation')).execute() """
 
-    def __init__(self, robot, door_entity_designator, destination_designator):
+    def __init__(self, robot, destination_designator, door_entity_designator=None):
         """
         :param robot: Robot on which to perform this state
-        :param door_entity_designator: The door which to pass
         :param destination_designator: The destination to reach through this door.
+        :param door_entity_designator: The door which to pass
         :return:
         """
+        smach.State.__init__(self, outcomes=['passable', 'blocked'])
+
         self.robot = robot
         self.door_entity_designator = door_entity_designator
         self.destination_designator = destination_designator
@@ -340,32 +342,64 @@ class CheckDoorPassable(smach.State):
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    do = state_machine.OpenDoorByPushing(sergio); do.execute()
+    do = state_machine.OpenDoorByPushing(amigo, None, ds.EdEntityDesignator(amigo, id='door_navigation')); do.execute()
     """
-    def __init__(self, robot, approach_speed=0.1, push_speed=0.05):
+    def __init__(self, robot, destination_designator, door_entity_designator=None, approach_speed=0.1, push_speed=0.05):
+        """
+        Push against a door until its open
+        :param robot: Robot on which to execute this state machine
+        :param door_entity_designator: The door entity. Defaults to None, which implies the door its in front of
+        :param destination_designator: The point to reach, usually behind the door. Needed to check for reachability
+        :param approach_speed: Speed with which to approach the door
+        :param push_speed: Speed with which to push against the door
+        :return:
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         with self:
-            smach.StateMachine.add('APPROACH_AGAINST_1',
-                                   ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
-                                   transitions={'front':'APPROACH_AGAINST_2',
-                                                'left':'PUSH_LEFT',
-                                                'right':'PUSH_RIGHT',
-                                                'failed':'failed'})
+            # START REPEAT DOOR OPENING
 
-            smach.StateMachine.add('APPROACH_AGAINST_2',
-                                   ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
-                                   transitions={'front':'succeeded',
-                                                'left':'PUSH_LEFT',
-                                                'right':'PUSH_RIGHT',
-                                                'failed':'failed'})
+            push_door_iterator = smach.Iterator(outcomes=['open', 'closed', 'failed'],
+                                                it = lambda:range(0, 5),
+                                                it_label='counter',
+                                                input_keys=[],
+                                                output_keys=[],
+                                                exhausted_outcome = 'failed')
+            with push_door_iterator:
+                push_door = smach.StateMachine( outcomes = ['open', 'closed', 'failed'])
+                with push_door:
+                    smach.StateMachine.add( 'APPROACH_AGAINST_N',
+                                            ForceDriveToTouchDoor(robot, approach_speed),
+                                            transitions={'front':'closed',
+                                                        'left':'CHECK_DOOR_PASSABLE',
+                                                        'right':'CHECK_DOOR_PASSABLE',
+                                                        'failed':'failed'})
 
-            smach.StateMachine.add('PUSH_LEFT',
-                                   PushSidewaysAndBack(robot, y_dist=0.1, speed=push_speed),
-                                   transitions={'succeeded':'succeeded',
-                                                'failed':'failed'})
+                    smach.StateMachine.add( 'CHECK_DOOR_PASSABLE',
+                                            CheckDoorPassable(robot,
+                                                              destination_designator=destination_designator,
+                                                              door_entity_designator=None),
+                                            transitions={'blocked':'closed',
+                                                         'passable':'open'})
 
-            smach.StateMachine.add('PUSH_RIGHT',
-                                   PushSidewaysAndBack(robot, y_dist=-0.1, speed=push_speed),
-                                   transitions={'succeeded':'succeeded',
-                                                'failed':'failed'})
+                smach.Iterator.set_contained_state( 'APPROACH_AGAINST',
+                                                     push_door,
+                                                     loop_outcomes=['failed', 'closed'],
+                                                     break_outcomes=['open'])
+
+            smach.StateMachine.add( 'PUSH_DOOR_ITERATOR',
+                                    push_door_iterator,
+                                    {   'open':'succeeded',
+                                        'closed':'failed',
+                                        'failed':'failed'})
+            # END REPEAT DOOR OPENING
+
+            # smach.StateMachine.add('PUSH_LEFT',
+            #                        PushSidewaysAndBack(robot, y_dist=0.1, speed=push_speed),
+            #                        transitions={'succeeded':'succeeded',
+            #                                     'failed':'failed'})
+            #
+            # smach.StateMachine.add('PUSH_RIGHT',
+            #                        PushSidewaysAndBack(robot, y_dist=-0.1, speed=push_speed),
+            #                        transitions={'succeeded':'succeeded',
+            #                                     'failed':'failed'})
