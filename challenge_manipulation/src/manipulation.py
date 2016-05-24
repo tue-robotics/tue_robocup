@@ -306,7 +306,8 @@ class ManipRecogSingleItem(smach.StateMachine):
             return p.x*p.x
 
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, detected, min_entity_height, entity_z_pos, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
+            criteriafuncs=[not_ignored, size, not_manipulated, detected, min_entity_height, entity_z_pos, max_width],
+            weight_function=weight_function, debug=False, name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")

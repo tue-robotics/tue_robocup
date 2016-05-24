@@ -20,5 +20,5 @@ room = "livingroom"
 object_types = [o["name"] for o in common.objects if o["category"] != "container"]
 
 # ToDo: make nice
-min_grasp_height = 0.73
-max_grasp_height = 1.02
+min_grasp_height = 0.73  # area_bottom_height - 4 cm
+max_grasp_height = 1.02  # area_top_height
