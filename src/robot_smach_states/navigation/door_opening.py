@@ -150,7 +150,8 @@ class ForceDriveToTouchDoor(smach.State):
         :return:
         """
 
-        angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
+        #angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
+        angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)) 
         X = scan.ranges * np.cos(angles) # TODO: get distance between laser frame and base_link
         Y = scan.ranges * np.sin(angles)
 
@@ -342,9 +343,9 @@ class CheckDoorPassable(smach.State):
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    do = state_machine.OpenDoorByPushing(amigo, None, ds.EdEntityDesignator(amigo, id='door_navigation')); do.execute()
+    do = state_machine.OpenDoorByPushing(amigo, ds.EdEntityDesignator(amigo, id='door_navigation')); do.execute()
     """
-    def __init__(self, robot, destination_designator, door_entity_designator=None, approach_speed=0.1, push_speed=0.05):
+    def __init__(self, robot, destination_designator, door_entity_designator=None, approach_speed=0.1, push_speed=0.05, attempts=10):
         """
         Push against a door until its open
         :param robot: Robot on which to execute this state machine
@@ -360,7 +361,7 @@ class OpenDoorByPushing(smach.StateMachine):
             # START REPEAT DOOR OPENING
 
             push_door_iterator = smach.Iterator(outcomes=['open', 'closed', 'failed'],
-                                                it = lambda:range(0, 5),
+                                                it = lambda:range(0, attempts),
                                                 it_label='counter',
                                                 input_keys=[],
                                                 output_keys=[],
