@@ -19,6 +19,15 @@ knowledge = load_knowledge("challenge_following_and_guiding")
 
 import sys, select, termios, tty
 
+class SetPlateCarryingPose(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=["done"])
+        self._robot = robot
+        
+    def execute(self, userdata):
+        amigo.rightArm._send_joint_trajectory([[0,.4,0.6,1.3,-.1,0.2,0]])
+        amigo.leftArm._send_joint_trajectory([[-0.8,-.1,.7,2.15,1.2,0.3,0]])
+
 class StoreStartingPoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
@@ -89,7 +98,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add(
             'SAY_ALSJEBLIEFT', 
-            states.Say(robot, "Alsjeblieft Rick. De enveloppen.", look_at_standing_person=True, language='Dutch', block=False), 
+            states.Say(robot, "Alsjeblieft Rick. De enveloppen.", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
             transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS2'})
 
         smach.StateMachine.add(
@@ -99,7 +108,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add(
             'SAY_ALTIJD', 
-            states.Say(robot, "Voor jou altijd, Rick.", look_at_standing_person=True, language='Dutch', block=False), 
+            states.Say(robot, "Voor jou altijd, Rick.", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
             transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS3'})
 
         smach.StateMachine.add(
@@ -109,7 +118,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add(
             'SAY_STEKKER', 
-            states.Say(robot, "Ik heb stiekem gekeken, Rick. Maar als ik dat verklap, trekken ze de stekker eruit!", look_at_standing_person=True, language='Dutch', block=False), 
+            states.Say(robot, "Ik heb stiekem gekeken, Rick. Maar als ik dat verklap, trekken ze de stekker eruit!", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
             transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS4'})
 
         smach.StateMachine.add(
@@ -119,7 +128,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add(
             'RESET_HEAD', 
-            HeadCancel(), 
+            HeadCancel(robot), 
             transitions={ 'done': 'GO_BACK_TO_STARTING_POINT'})
 
         smach.StateMachine.add(
