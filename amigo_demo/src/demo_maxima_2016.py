@@ -5,6 +5,7 @@ import smach
 import sys
 import math
 import time
+import signal
 
 from visualization_msgs.msg import Marker
 
@@ -25,8 +26,9 @@ class SetPlateCarryingPose(smach.State):
         self._robot = robot
         
     def execute(self, userdata):
-        amigo.rightArm._send_joint_trajectory([[0,.4,0.6,1.3,-.1,0.2,0]])
-        amigo.leftArm._send_joint_trajectory([[-0.8,-.1,.7,2.15,1.2,0.3,0]])
+        self._robot.rightArm._send_joint_trajectory([[0,.4,0.5,1.3,.1,0.6,-0.6]])
+        self._robot.leftArm._send_joint_trajectory([[-1.2,-.1,.6,2.2,1.0,0.9,0]])
+        return 'done'
 
 class StoreStartingPoint(smach.State):
     def __init__(self, robot):
@@ -59,7 +61,7 @@ class HeadCancel(smach.State):
 
 class WaitForKeyPress(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=["done"])
+        smach.State.__init__(self, outcomes=["1", "2", "3", "4", "5"])
 
         self.settings = termios.tcgetattr(sys.stdin)
 
@@ -68,12 +70,36 @@ class WaitForKeyPress(smach.State):
         select.select([sys.stdin], [], [], 0)
         key = sys.stdin.read(1)
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+
         return key
 
     def execute(self, userdata):
-        self._getKey()
+        
+        while True:
+            print "Press one of the following keys:"
+            print '\t1:\tzeg "Ik kom eraan"'
+            print '\t2:\tzeg "Aljeblieft Rick"'
+            print '\t3:\tzeg "Voor jou altijd"'
+            print '\t4:\tzeg "Ik heb gespiekt"'
+            print '\t5:\tzeg "Oeps!"'
 
-        return "done"
+            key = self._getKey()
+
+            if key == '1':
+                return "1"
+            elif key == '2':
+                return "2"
+            elif key == '3':
+                return "3"
+            elif key == '4':
+                return "4"
+            elif key == '5':
+                return "5"
+            elif key == "\03":
+                sys.exit(0)
+            else:
+                print "You pressed %s." % key
+                print "Don't do that"
 
 def setup_statemachine(robot):
 
@@ -89,42 +115,41 @@ def setup_statemachine(robot):
         smach.StateMachine.add(
             'STORE_STARTING_POINT', 
             StoreStartingPoint(robot), 
-            transitions={   'done':'WAIT_FOR_KEY_PRESS1'})
+            transitions={   'done':'SET_ARM_POSITIONS'})
 
         smach.StateMachine.add(
-            'WAIT_FOR_KEY_PRESS1', 
+            'SET_ARM_POSITIONS',
+            SetPlateCarryingPose(robot),
+            transitions={   'done':'WAIT_FOR_KEY_PRESS'})
+
+        smach.StateMachine.add(
+            'WAIT_FOR_KEY_PRESS', 
             WaitForKeyPress(), 
-            transitions={ 'done': 'SAY_ALSJEBLIEFT'})
+            transitions={   '1': 'SAY_IK_KOM',
+                            '2': 'SAY_ALSJEBLIEFT',
+                            '3': 'SAY_ALTIJD',
+                            '4': 'SAY_STEKKER',
+                            '5': 'SAY_OEPS'})
+
+        smach.StateMachine.add(
+            'SAY_IK_KOM', 
+            states.Say(robot, "Ik kom eraan!", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
+            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS'})
 
         smach.StateMachine.add(
             'SAY_ALSJEBLIEFT', 
             states.Say(robot, "Alsjeblieft Rick. De enveloppen.", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
-            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS2'})
-
-        smach.StateMachine.add(
-            'WAIT_FOR_KEY_PRESS2', 
-            WaitForKeyPress(), 
-            transitions={ 'done': 'SAY_ALTIJD'})
+            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS'})
 
         smach.StateMachine.add(
             'SAY_ALTIJD', 
             states.Say(robot, "Voor jou altijd, Rick.", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
-            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS3'})
-
-        smach.StateMachine.add(
-            'WAIT_FOR_KEY_PRESS3', 
-            WaitForKeyPress(), 
-            transitions={ 'done': 'SAY_STEKKER'})
+            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS'})
 
         smach.StateMachine.add(
             'SAY_STEKKER', 
             states.Say(robot, "Ik heb stiekem gekeken, Rick. Maar als ik dat verklap, trekken ze de stekker eruit!", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
-            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS4'})
-
-        smach.StateMachine.add(
-            'WAIT_FOR_KEY_PRESS4', 
-            WaitForKeyPress(), 
-            transitions={ 'done': 'RESET_HEAD'})
+            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS'})
 
         smach.StateMachine.add(
             'RESET_HEAD', 
@@ -135,8 +160,13 @@ def setup_statemachine(robot):
             'GO_BACK_TO_STARTING_POINT', 
             states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="starting_point"), radius = knowledge.back_radius, speak=False),
             transitions={   'arrived': 'done', 
-                            'unreachable':'GO_BACK_TO_STARTING_POINT', 
+                            'unreachable':'WAIT_FOR_KEY_PRESS', 
                             'goal_not_defined':'aborted'})
+
+        smach.StateMachine.add(
+            'SAY_OEPS', 
+            states.Say(robot, "Oeps!", look_at_standing_person=True, language='nl', voice='marjolijn', block=False), 
+            transitions={ 'spoken' :'WAIT_FOR_KEY_PRESS'})
 
         return sm
 
