@@ -62,7 +62,6 @@ class HeadCancel(smach.State):
 class WaitForKeyPress(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=["1", "2", "3", "4", "5"])
-
         self.settings = termios.tcgetattr(sys.stdin)
 
     def _getKey(self):
@@ -109,13 +108,8 @@ def setup_statemachine(robot):
         smach.StateMachine.add(
             'INITIALIZE', 
             states.Initialize(robot), 
-            transitions={   'initialized':'STORE_STARTING_POINT', 
+            transitions={   'initialized':'SET_ARM_POSITIONS', 
                             'abort':'aborted'})
-
-        smach.StateMachine.add(
-            'STORE_STARTING_POINT', 
-            StoreStartingPoint(robot), 
-            transitions={   'done':'SET_ARM_POSITIONS'})
 
         smach.StateMachine.add(
             'SET_ARM_POSITIONS',
