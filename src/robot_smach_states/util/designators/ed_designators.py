@@ -290,8 +290,16 @@ class ReasonedEntityDesignator(Designator):
 
 class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
-    It does this by queying ED for entities that occupy some space.
-        If the result is no entities, then we found an open spot."""
+    It does this by querying ED for entities that occupy some space.
+        If the result is no entities, then we found an open spot.
+
+    To test this in the robotics_test_lab with amigo-console:
+    robot = amigo
+    CABINET = "bookcase"
+    PLACE_SHELF = "shelf2"
+    cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
+    """
     def __init__(self, robot, place_location_designator, name=None, area=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
