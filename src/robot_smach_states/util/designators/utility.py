@@ -74,11 +74,11 @@ class LockingDesignator(Designator):
             return self._current
         else:
             self._current = self.to_be_locked.resolve()
-            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, str(self._current)[:10]))
+            rospy.loginfo("LockingDesignator '{0}' resolved to {1}, but is *not locked* to it".format(self.name, str(self._current)[:30]))
             return self._current
 
     def __repr__(self):
-        return "LockingDesignator({})".format(self.to_be_locked)
+        return "LockingDesignator({})".format(str(self.to_be_locked.name))
 
 
 class AttrDesignator(Designator):
