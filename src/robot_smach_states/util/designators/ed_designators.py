@@ -368,6 +368,10 @@ class EmptySpotDesignator(Designator):
             best_poi = feasible_POIs[0][0] # Get the POI of the best match
             placement = msg_constructors.PoseStamped(pointstamped=best_poi)
             # rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+
+            selection = self.create_selection_marker(placement)
+            self.marker_pub.publish(MarkerArray([selection]))
+
             return placement
         else:
             rospy.logerr("Could not find an empty spot")
@@ -390,6 +394,25 @@ class EmptySpotDesignator(Designator):
         marker.color.a = 1
 
         marker.lifetime = rospy.Duration(10.0)
+        return marker
+
+    def create_selection_marker(self, selected_pose):
+        marker = Marker()
+        marker.id = len(self.marker_array.markers) + 1
+        marker.type = 2
+        marker.header.frame_id = selected_pose.header.frame_id
+        marker.header.stamp = rospy.Time.now()
+        marker.pose.position.x = selected_pose.pose.position.x
+        marker.pose.position.y = selected_pose.pose.position.y
+        marker.pose.position.z = selected_pose.pose.position.z
+        marker.pose.orientation.w = 1
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.r = 1
+        marker.color.a = 0.7
+
+        marker.lifetime = rospy.Duration(30.0)
         return marker
 
     def determine_points_of_interest_with_area(self, e, area):
