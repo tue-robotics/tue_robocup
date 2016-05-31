@@ -3,6 +3,7 @@
 import inspect
 import pprint
 import math
+import copy
 
 import PyKDL as kdl
 
@@ -446,8 +447,9 @@ class EmptySpotDesignator(Designator):
             return []
 
         ''' Convert convex hull to map frame '''
+
         center_pose = poseMsgToKdlFrame(e.pose)
-        ch = []
+        ch = list()
         for point in e.convex_hull:
             p = pointMsgToKdlVector(point)
             # p = center_pose * p
@@ -456,10 +458,11 @@ class EmptySpotDesignator(Designator):
             # pf = pf * center_pose  # Original
             pf = center_pose * pf  # Test
             p = pf.p
-            ch.append(p)
+            ch.append(copy.deepcopy(p))  # Needed to fix "RuntimeError: underlying C/C++ object has been deleted"
 
         ''' Loop over hulls '''
         self.marker_array.markers = []
+
         ch.append(ch[0])
         for i in xrange(len(ch) - 1):
                 dx = ch[i+1].x() - ch[i].x()
