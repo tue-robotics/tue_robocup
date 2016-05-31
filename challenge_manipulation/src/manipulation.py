@@ -44,6 +44,8 @@ from robocup_knowledge import load_knowledge
 # PDF writer
 import pdf
 
+USE_SLAM = False  # Indicates whether or not to use SLAM for localization
+
 challenge_knowledge = load_knowledge('challenge_manipulation')
 CABINET = challenge_knowledge.cabinet
 OBJECT_SHELVES = challenge_knowledge.object_shelves
@@ -115,6 +117,76 @@ class EntityDescriptionDesignator(ds.Designator):
         else:
             sentence = self.unknown_formats
         return sentence
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class ForceDrive(smach.State):
+    """ Force drives... """
+    def __init__(self, robot, vx, vy, vth, duration):
+        """ Constructor
+        :param robot: robot object
+        :param vx: velocity in x-direction
+        :param vy: velocity in y-direction
+        :param vth: yaw-velocity
+        :param duration: float indicating how long to drive
+        """
+        smach.State.__init__(self, outcomes=['done'])
+        self._robot = robot
+        self._vx = vx
+        self._vy = vy
+        self._vth = vth
+        self._duration = duration
+
+    def execute(self, userdata):
+        """ Executes the state """
+        self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
+        return 'done'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class FitEntity(smach.State):
+    """ Fits an entity """
+
+    def __init__(self, robot, entity_str):
+        """ Constructor
+        :param robot: robot object
+        :param entity_str: string with the entity type to fit
+        """
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        self._robot = robot
+        from ed_robocup.srv import FitEntityInImage
+        self._srv = rospy.ServiceProxy(robot.robot_name + '/ed/fit_entity_in_image', FitEntityInImage)
+        self._entity_str = entity_str
+
+    def execute(self, userdata):
+        """ Executes the state """
+        # Make sure the robot looks at the entity
+        self._robot.head.reset()  # ToDo: this is abuse of the reset function
+        self._robot.head.wait_for_motion_done(5.0)
+
+        rospy.sleep(rospy.Duration(1.0))
+
+        # Try to fit the object
+        from ed_robocup.srv import FitEntityInImageRequest
+        req = FitEntityInImageRequest()
+        req.entity_type = self._entity_str  # 1280 1024
+        req.px = 1280/4  # 2
+        req.py = 1024/4  # 2
+        print "Request: {0}".format(req)
+        result = self._srv(req)
+
+        # Cancel the head goal and return
+        self._robot.head.cancel_goal()
+        if result.error_msg:
+            rospy.logerr("Fit entity: {0}".format(result))
+            return 'failed'
+        else:
+            return 'succeeded'
+
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -447,13 +519,34 @@ def setup_statemachine(robot):
                                InitializeWorldModel(robot),
                                transitions={'done'                      :'AWAIT_START'})
 
+        if USE_SLAM:
+            drive_state = "NAV_TO_FIT_POSE"
+        else:
+            drive_state = "NAV_TO_START"
         smach.StateMachine.add("AWAIT_START",
                                states.AskContinue(robot),
-                               transitions={'continue'                  :'NAV_TO_START',
-                                            'no_response'               :'AWAIT_START'})
+                               transitions={'continue': drive_state,
+                                            'no_response': 'AWAIT_START'})
 
         cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
         room = ds.EntityByIdDesignator(robot, id=ROOM)
+
+        if USE_SLAM:
+            vth = 1.0
+            smach.StateMachine.add("NAV_TO_FIT_POSE",
+                                   ForceDrive(robot, 0, 0, vth, 3.14/vth),
+                                   transitions={'done': 'FIT_ENTITY'})
+
+            smach.StateMachine.add("FIT_ENTITY",
+                                   FitEntity(robot, CABINET),
+                                   transitions={'succeeded': 'NAV_TO_START',
+                                                'failed': 'SAY_FITTING_FAILED'})
+
+            smach.StateMachine.add("SAY_FITTING_FAILED",
+                                   states.Say(robot, ["Fitting the {0} failed, I will stop now.".format(CABINET)],
+                                              mood="sad"),
+                                   transitions={'spoken': 'Aborted'})
+
         smach.StateMachine.add( "NAV_TO_START",
                                 states.NavigateToSymbolic(robot,
                                                           {cabinet:"in_front_of", room:"in"},
