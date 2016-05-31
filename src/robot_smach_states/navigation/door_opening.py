@@ -7,6 +7,8 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PolygonStamped, PointStamped, Point, PoseStamped, Pose
 from threading import Event
 from visualization_msgs.msg import Marker, MarkerArray
+from cb_planner_msgs_srvs.msg import PositionConstraint
+from robot_skills.base import computePathLength
 
 
 class ForceDriveToTouchDoor(smach.State):
@@ -20,6 +22,9 @@ class ForceDriveToTouchDoor(smach.State):
     To do this, the following steps are needed:
      - Move slowly to put the edge of the base against the door
      - Now move forward, perpendicular to the wall the door is in.
+
+    Test in amigo-console with
+    do = state_machine.ForceDriveToTouchDoor(amigo, None); do.execute(); do.execute()
     """
 
     def __init__(self, robot, approach_speed=0.1):
@@ -66,7 +71,7 @@ class ForceDriveToTouchDoor(smach.State):
 
         rospy.loginfo("Will drive {}m forward towards door. "
                       "Collision will happen on my {} side".format(drive_dist, collision_side))
-         # import ipdb; ipdb.set_trace()
+
         if self.robot.base.force_drive(self.approach_speed, 0, 0, drive_time*0.9):
             return collision_side
         else:
@@ -145,8 +150,8 @@ class ForceDriveToTouchDoor(smach.State):
         :return:
         """
 
-        # angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
-        angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges))
+        #angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
+        angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)) 
         X = scan.ranges * np.cos(angles) # TODO: get distance between laser frame and base_link
         Y = scan.ranges * np.sin(angles)
 
@@ -267,6 +272,8 @@ class PushPerpendicularToDoor(smach.State):
 class PushSidewaysAndBack(smach.State):
     """
     Drive sideways for some distance (in base_link) and move back again
+
+    Test in amigo-console with state_machine.PushSidewaysAndBack(amigo, 0.2, 0.05).execute()
     """
     def __init__(self, robot, y_dist, speed=0.1):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -285,31 +292,115 @@ class PushSidewaysAndBack(smach.State):
             return 'failed'
 
 
+class CheckDoorPassable(smach.State):
+    """Check whether a given door can be passed. The precondition is that the robot is in front of said door.
+
+    Test in amigo-console with
+    state_machine.CheckDoorPassable(amigo, ds.EdEntityDesignator(amigo, id='door_navigation')).execute() """
+
+    def __init__(self, robot, destination_designator, door_entity_designator=None):
+        """
+        :param robot: Robot on which to perform this state
+        :param destination_designator: The destination to reach through this door.
+        :param door_entity_designator: The door which to pass
+        :return:
+        """
+        smach.State.__init__(self, outcomes=['passable', 'blocked'])
+
+        self.robot = robot
+        self.door_entity_designator = door_entity_designator
+        self.destination_designator = destination_designator
+
+    def execute(self, userdata=None):
+        e = self.destination_designator.resolve()
+
+        if not e:
+            rospy.logerr("CheckDoorPassable::execute: No entity could be resolved from designator '%s'" % self.destination_designator)
+            return None
+
+        try:
+            pose = e.data["pose"]
+            x = pose["x"]
+            y = pose["y"]
+            rz = e.data["pose"]["rz"]
+        except:
+            try:
+                x = e.pose.position.x
+                y = e.pose.position.y
+            except:
+                return None
+
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="/map")
+        plan = self.robot.base.global_planner.getPlan(pc)
+
+        if plan and computePathLength(plan) < 3.0:
+            return "passable"
+        else:
+            return "blocked"
+
+
+
 class OpenDoorByPushing(smach.StateMachine):
-    def __init__(self, robot, approach_speed=0.1, push_speed=0.05):
+    """
+    Test in amigo-console with
+    wp = ds.EdEntityDesignator(amigo, id='door_navigation'); do = state_machine.OpenDoorByPushing(amigo, wp); print do.execute(); print state_machine.NavigateToWaypoint(amigo, wp).execute()
+    """
+    def __init__(self, robot, destination_designator, door_entity_designator=None, approach_speed=0.1, push_speed=0.05, attempts=10):
+        """
+        Push against a door until its open
+        :param robot: Robot on which to execute this state machine
+        :param door_entity_designator: The door entity. Defaults to None, which implies the door its in front of
+        :param destination_designator: The point to reach, usually behind the door. Needed to check for reachability
+        :param approach_speed: Speed with which to approach the door
+        :param push_speed: Speed with which to push against the door
+        :return:
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         with self:
-            smach.StateMachine.add('APPROACH_AGAINST_1',
-                                   ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
-                                   transitions={'front':'APPROACH_AGAINST_2',
-                                                'left':'APPROACH_AGAINST_2',
-                                                'right':'APPROACH_AGAINST_2',
-                                                'failed':'failed'})
+            # START REPEAT DOOR OPENING
 
-            smach.StateMachine.add('APPROACH_AGAINST_2',
-                                   ForceDriveToTouchDoor(robot, approach_speed=approach_speed),
-                                   transitions={'front':'succeeded',
-                                                'left':'PUSH_LEFT',
-                                                'right':'PUSH_RIGHT',
-                                                'failed':'failed'})
+            push_door_iterator = smach.Iterator(outcomes=['open', 'closed', 'failed'],
+                                                it = lambda:range(0, attempts),
+                                                it_label='counter',
+                                                input_keys=[],
+                                                output_keys=[],
+                                                exhausted_outcome = 'failed')
+            with push_door_iterator:
+                push_door = smach.StateMachine( outcomes = ['open', 'closed', 'failed'])
+                with push_door:
+                    smach.StateMachine.add( 'APPROACH_AGAINST_N',
+                                            ForceDriveToTouchDoor(robot, approach_speed),
+                                            transitions={'front':'closed',
+                                                        'left':'CHECK_DOOR_PASSABLE',
+                                                        'right':'CHECK_DOOR_PASSABLE',
+                                                        'failed':'failed'})
 
-            smach.StateMachine.add('PUSH_LEFT',
-                                   PushSidewaysAndBack(robot, y_dist=0.1, speed=push_speed),
-                                   transitions={'succeeded':'succeeded',
-                                                'failed':'failed'})
+                    smach.StateMachine.add( 'CHECK_DOOR_PASSABLE',
+                                            CheckDoorPassable(robot,
+                                                              destination_designator=destination_designator,
+                                                              door_entity_designator=None),
+                                            transitions={'blocked':'closed',
+                                                         'passable':'open'})
 
-            smach.StateMachine.add('PUSH_RIGHT',
-                                   PushSidewaysAndBack(robot, y_dist=-0.1, speed=push_speed),
-                                   transitions={'succeeded':'succeeded',
-                                                'failed':'failed'})
+                smach.Iterator.set_contained_state( 'APPROACH_AGAINST',
+                                                     push_door,
+                                                     loop_outcomes=['failed', 'closed'],
+                                                     break_outcomes=['open'])
+
+            smach.StateMachine.add( 'PUSH_DOOR_ITERATOR',
+                                    push_door_iterator,
+                                    {   'open':'succeeded',
+                                        'closed':'failed',
+                                        'failed':'failed'})
+            # END REPEAT DOOR OPENING
+
+            # smach.StateMachine.add('PUSH_LEFT',
+            #                        PushSidewaysAndBack(robot, y_dist=0.1, speed=push_speed),
+            #                        transitions={'succeeded':'succeeded',
+            #                                     'failed':'failed'})
+            #
+            # smach.StateMachine.add('PUSH_RIGHT',
+            #                        PushSidewaysAndBack(robot, y_dist=-0.1, speed=push_speed),
+            #                        transitions={'succeeded':'succeeded',
+            #                                     'failed':'failed'})

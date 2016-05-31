@@ -54,11 +54,12 @@ class AbortAnalyzer(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class getPlan(smach.State):
-    def __init__(self, robot, constraint_function):
+    def __init__(self, robot, constraint_function, speak=True):
         smach.State.__init__(self,
             outcomes=['unreachable','goal_not_defined','goal_ok','preempted'])
         self.robot = robot
         self.constraint_function = constraint_function
+        self.speak = speak
 
     def execute(self, userdata):
 
@@ -87,7 +88,9 @@ class getPlan(smach.State):
         # Constraints and plan seem to be valid, so set the plan
         self.robot.base.local_planner.setPlan(plan, pc, oc)
 
-        self.robot.speech.speak(choice(["Affirmative!","I'm on my way!","Getting there!","I will be there in a sec!", "I'm coming!"]), block=False)
+        if self.speak:
+            print "SPEAKING!!!!"
+            self.robot.speech.speak(choice(["Affirmative!","I'm on my way!","Getting there!","I will be there in a sec!", "I'm coming!"]), block=False)
 
         return "goal_ok"
 
@@ -218,9 +221,10 @@ class planBlocked(smach.State):
 # # ----------------------------------------------------------------------------------------------------
 
 class NavigateTo(smach.StateMachine):
-    def __init__(self, robot, reset_head=True):
+    def __init__(self, robot, reset_head=True, speak=True):
         smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','goal_not_defined'])
         self.robot = robot
+        self.speak = speak
 
         with self:
 
@@ -229,7 +233,7 @@ class NavigateTo(smach.StateMachine):
 
             with sm_nav:
 
-                smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint),
+                smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint, self.speak),
                     transitions={'unreachable'                          :   'unreachable',
                                  'goal_not_defined'                     :   'goal_not_defined',
                                  'goal_ok'                              :   'EXECUTE_PLAN'})

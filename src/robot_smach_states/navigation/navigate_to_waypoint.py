@@ -15,9 +15,9 @@ import rospy
 # ----------------------------------------------------------------------------------------------------
 
 class NavigateToWaypoint(NavigateTo):
-    def __init__(self, robot, waypoint_designator, radius = 0.15, look_at_designator=None):
+    def __init__(self, robot, waypoint_designator, radius = 0.15, look_at_designator=None, speak=True):
         """@param waypoint_designator resolves to a waypoint stored in ED"""
-        super(NavigateToWaypoint, self).__init__(robot)
+        super(NavigateToWaypoint, self).__init__(robot, speak=speak)
 
         self.robot               = robot
 
