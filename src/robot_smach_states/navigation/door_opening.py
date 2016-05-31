@@ -9,6 +9,9 @@ from threading import Event
 from visualization_msgs.msg import Marker, MarkerArray
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.base import computePathLength
+import robot_smach_states as states
+from ed.msg import EntityInfo
+import robot_smach_states.util.designators as ds
 
 
 class ForceDriveToTouchDoor(smach.State):
@@ -339,25 +342,51 @@ class CheckDoorPassable(smach.State):
             return "blocked"
 
 
+class WaypointOfDoorDesignator(ds.Designator):
+    def __init__(self, robot, door_entity_designator, direction, name=None):
+        super(WaypointOfDoorDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        self.robot = robot
+        self.door_entity_designator = door_entity_designator
+        self.data_field = {'start':'push_start_waypoint', 'destination':'push_destination_waypoint'}[direction]
+
+    def _resolve(self):
+        rospy.logdebug("Finding from where to open a door")
+        door_entity = self.door_entity_designator.resolve()
+        if door_entity:
+            waypoint_id = door_entity.data[self.data_field]
+            waypoint = self.robot.ed.get_entity(id=waypoint_id)
+            if waypoint:
+                rospy.loginfo("Door {} should be opened from {}".format(door_entity.id, waypoint.id))
+                return waypoint
+        return None
+
 
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    wp = ds.EdEntityDesignator(amigo, id='door_navigation'); do = state_machine.OpenDoorByPushing(amigo, wp); print do.execute(); print state_machine.NavigateToWaypoint(amigo, wp).execute()
+    door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print do.execute();
     """
-    def __init__(self, robot, destination_designator, door_entity_designator=None, approach_speed=0.1, push_speed=0.05, attempts=10):
+    def __init__(self, robot, door_entity_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
         """
         Push against a door until its open
         :param robot: Robot on which to execute this state machine
         :param door_entity_designator: The door entity. Defaults to None, which implies the door its in front of
-        :param destination_designator: The point to reach, usually behind the door. Needed to check for reachability
         :param approach_speed: Speed with which to approach the door
         :param push_speed: Speed with which to push against the door
         :return:
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
+        door_start_wp_designator = WaypointOfDoorDesignator(robot, door_entity_designator, direction='start', name='door_open_start')
+        door_dest_wp_designator = WaypointOfDoorDesignator(robot, door_entity_designator, direction='destination', name='door_open_dest')
+
         with self:
+            smach.StateMachine.add( 'GOTO_DOOR_START',
+                                            states.NavigateToWaypoint(robot, door_start_wp_designator, radius=0.05),
+                                            transitions={'arrived'          :'PUSH_DOOR_ITERATOR',
+                                                         'unreachable'      :'failed',
+                                                         'goal_not_defined' :'failed'})
+
             # START REPEAT DOOR OPENING
 
             push_door_iterator = smach.Iterator(outcomes=['open', 'closed', 'failed'],
@@ -378,8 +407,8 @@ class OpenDoorByPushing(smach.StateMachine):
 
                     smach.StateMachine.add( 'CHECK_DOOR_PASSABLE',
                                             CheckDoorPassable(robot,
-                                                              destination_designator=destination_designator,
-                                                              door_entity_designator=None),
+                                                              destination_designator=door_dest_wp_designator,
+                                                              door_entity_designator=door_entity_designator),
                                             transitions={'blocked':'closed',
                                                          'passable':'open'})
 
