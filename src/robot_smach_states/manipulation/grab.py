@@ -14,6 +14,7 @@ from robot_smach_states.util.designators import check_type
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 
+
 class PrepareEdGrasp(smach.State):
     def __init__(self, robot, arm, grab_entity):
         """
@@ -22,7 +23,7 @@ class PrepareEdGrasp(smach.State):
         :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['arm'])
 
         # Assign member variables
         self.robot = robot
@@ -40,6 +41,7 @@ class PrepareEdGrasp(smach.State):
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
+        userdata.arm = arm.side
 
         # Open gripper (non-blocking)
         arm.send_gripper_goal('open', timeout=0)
@@ -60,7 +62,6 @@ class PrepareEdGrasp(smach.State):
         return 'succeeded'
 
 
-
 class PickUp(smach.State):
     def __init__(self, robot, arm, grab_entity):
         """
@@ -69,7 +70,7 @@ class PickUp(smach.State):
         :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['arm'])
 
         # Assign member variables
         self.robot = robot
@@ -77,7 +78,7 @@ class PickUp(smach.State):
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
 
-    def execute(self, userdata):  #robot, arm, grab_entity):
+    def execute(self, userdata):
 
         grab_entity = self.grab_entity_designator.resolve()
         if not grab_entity:
@@ -88,6 +89,7 @@ class PickUp(smach.State):
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
+        userdata.arm = arm.side  # Using userdata makes sure we don't need to do any more arm entity magic
 
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
@@ -121,12 +123,14 @@ class PickUp(smach.State):
 
         rospy.loginfo("ID to update: {0}".format(grab_entity.id))
         if not updated_grab_entity:
-            rospy.logerr("Could not resolve the updated grab_entity, this should not happen [CHECK WHY THIS IS HAPPENING]")
+            rospy.logerr("Could not resolve the updated grab_entity, "
+                         "this should not happen [CHECK WHY THIS IS HAPPENING]")
             grab_entity = self.associate(original_entity=grab_entity)
         else:
             rospy.loginfo("Updated pose of entity (x, y, z) : (%f, %f, %f) --> (%f, %f, %f)" %
-                    (grab_entity.pose.position.x, grab_entity.pose.position.y, grab_entity.pose.position.z,
-                     updated_grab_entity.pose.position.x, updated_grab_entity.pose.position.y, updated_grab_entity.pose.position.z))
+                          (grab_entity.pose.position.x, grab_entity.pose.position.y, grab_entity.pose.position.z,
+                           updated_grab_entity.pose.position.x, updated_grab_entity.pose.position.y,
+                           updated_grab_entity.pose.position.z))
             grab_entity = updated_grab_entity
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -139,20 +143,21 @@ class PickUp(smach.State):
         goal_map = msgs.Point(0, 0, 0)
 
         # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
-        if goal_bl == None:
+        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
+                                               tf_listener=self.robot.tf_listener)
+        if goal_bl is None:
             return 'failed'
 
         # Pre-grasp --> this is only necessary when using visual servoing
         # rospy.loginfo('Starting Pre-grasp')
-        #if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-        #                     frame_id='/'+self.robot.robot_name+'/base_link',
-        #                     timeout=20, pre_grasp=True, first_joint_pos_only=True
-        #                     ):
-        #    rospy.logerr('Pre-grasp failed:')
-        #    arm.reset()
-        #    arm.send_gripper_goal('close', timeout=None)
-        #    return 'failed'
+        # if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+        #                      frame_id='/'+self.robot.robot_name+'/base_link',
+        #                      timeout=20, pre_grasp=True, first_joint_pos_only=True
+        #                      ):
+        #     rospy.logerr('Pre-grasp failed:')
+        #     arm.reset()
+        #     arm.send_gripper_goal('close', timeout=None)
+        #     return 'failed'
 
         # Grasp
         # rospy.loginfo('Start grasping')
@@ -226,7 +231,8 @@ class PickUp(smach.State):
         else:
             return original_entity
 
-    def distance(self, e1, e2):
+    @staticmethod
+    def distance(e1, e2):
         """ Computes the distance between two entities
         :param e1:
         :param e2:
@@ -234,7 +240,30 @@ class PickUp(smach.State):
         """
         return math.hypot(math.hypot(e1.pose.position.x - e2.pose.position.x,
                                      e1.pose.position.y - e2.pose.position.y),
-                                     e1.pose.position.z - e2.pose.position.z)
+                          e1.pose.position.z - e2.pose.position.z)
+
+
+class ResetOnFailure(smach.StateMachine):
+    """ Class to reset the robot after a grab has failed """
+    def __init__(self, robot):
+        """ Constructor
+        :param robot: robot object
+        """
+        smach.StateMachine.__init__(self, outcomes=['done'], input_keys=['arm'])
+
+        self._robot = robot
+
+    def execute(self, userdata):
+        """ Execute hook """
+        # ToDo: test this for real
+        arm = self._robot.get_arm(userdata.arm)[0]  # Using userdata makes sure we don't need more arm designator magic
+        self._robot.torso.high()  # Move up to make resetting of the arm safer
+        arm.send_gripper_goal('close')
+        self._robot.head.reset()  # Sends a goal
+        self._robot.head.cancel_goal()  # And cancels it...
+        arm.reset()
+        self._robot.torso.reset()
+        return 'done'
 
 
 class Grab(smach.StateMachine):
@@ -254,14 +283,17 @@ class Grab(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
-                                   transitions={ 'succeeded'    : 'NAVIGATE_TO_GRAB',
-                                                 'failed'       : 'failed'})
+                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
+                                                'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
-                                   transitions={'unreachable':      'failed',
-                                                'goal_not_defined': 'failed',
-                                                'arrived':          'GRAB'})
+                                   transitions={'unreachable': 'RESET_FAILURE',
+                                                'goal_not_defined': 'RESET_FAILURE',
+                                                'arrived': 'GRAB'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',
-                                                'failed':    'failed'})
+                                                'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot),
+                                   transitions={'done': 'failed'})
