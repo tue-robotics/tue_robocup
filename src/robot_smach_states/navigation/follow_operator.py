@@ -18,8 +18,8 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, lookat_radius=1.5, timeout=1.0, start_timeout=10, operator_timeout=20,
-                 distance_threshold=None, lost_timeout=5, lost_distance=0.5,
+    def __init__(self, robot, ask_follow=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
+                 distance_threshold=None, lost_timeout=5, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
@@ -129,11 +129,15 @@ class FollowOperator(smach.State):
                             self._robot.speech.speak("Just in case...",block=False)
                             learn_person_start_time = rospy.Time.now()
                             learn_person_timeout = 10.0 # TODO: Parameterize
-                            while (rospy.Time.now() - learn_person_start_time).to_sec() < learn_person_timeout:
+                            num_detections = 0
+                            while num_detections < 5:
                                 if self._robot.ed.learn_person(self._operator_name):
+                                    num_detections+=1
+                                elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
+                                    self._robot.speech.speak("Please stand in front of me and look at me")
+                                    operator = None
                                     break
 
-                            self._robot.speech.speak("Alright, let's go!", block=False)
                     elif answer.result == "no":
                         return False
                     else:
@@ -146,9 +150,8 @@ class FollowOperator(smach.State):
                 if not operator:
                     rospy.sleep(1)
 
-        # Operator is None?
         print "We have a new operator: %s"%operator.id
-        self._robot.speech.speak("Ok, I will follow you!", block=False)
+        self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._operator_id = operator.id
         self._breadcrumbs.append(operator)
 
@@ -403,6 +406,7 @@ class FollowOperator(smach.State):
             print "lost operator and within lookat radius and standing still for 1 second"
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
+                self._robot.speech.speak("I am unable to recover you")
                 return "lost_operator"
 
         # Check are standing still long
