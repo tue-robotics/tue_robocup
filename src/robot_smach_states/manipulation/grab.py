@@ -163,7 +163,7 @@ class PickUp(smach.State):
         # rospy.loginfo('Start grasping')
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
                              frame_id='/'+self.robot.robot_name+'/base_link',
-                             timeout=120, pre_grasp=True,
+                             timeout=20, pre_grasp=True,
                              allowed_touch_objects=[grab_entity.id]
                              ):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
