@@ -27,12 +27,19 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'LEARN_OPERATOR_FACE',
                                     LearnOperatorFace(robot),
                                     transitions={'succeeded': 'WAIT_FOR_OPERATOR_TO_JOIN',
-                                                 'failed': 'WAIT_FOR_OPERATOR_TO_JOIN'})
+                                                 'failed': 'LEARN_OPERATOR_FACE'})
 
             @smach.cb_interface(outcomes=['done'])
             def wait_a_sec(userdata):
-                robot.speech.speak("I will wait for 10 seconds for you to join the crowd", block=False)
-                time.sleep(10)
+                robot.speech.speak("I will wait for 10 seconds for you to join the crowd", block=True)
+                start = rospy.Time.now()
+                stop = rospy.Duration(10) + start
+
+                last_spoken = start
+                while rospy.Time.now() < stop:
+                    if (rospy.Time.now() - last_spoken).to_sec() > 1.0:
+                        robot.speech.speak("%d" % (stop - rospy.Time.now()).to_sec())
+                        last_spoken = rospy.Time.now()
                 return 'done'
 
             smach.StateMachine.add('WAIT_FOR_OPERATOR_TO_JOIN',
