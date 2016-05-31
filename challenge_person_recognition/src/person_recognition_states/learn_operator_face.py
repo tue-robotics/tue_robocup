@@ -24,7 +24,7 @@ class LearnOperatorFace(smach.StateMachine):
                                     learn to recognize your face.", block=True), transitions={'spoken': 'LEARN_PERSON'})
 
             smach.StateMachine.add('LEARN_PERSON',
-                                   states.LearnPerson(robot, name_designator=ds.VariableDesignator("person X")),
+                                   states.LearnPerson(robot, name_designator=ds.VariableDesignator("operator")),
                                    transitions={'succeeded_learning': 'SAY_OPERATOR_LEARNED',
                                                 'failed_learning': 'SAY_FAILED_LEARNING',
                                                 'timeout_learning': 'SAY_FAILED_LEARNING'})
