@@ -14,6 +14,7 @@ from smach_ros import SimpleActionState
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult #
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 import time
+import math
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -491,7 +492,7 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
 
             count += 1
 
-            if count == n_samples/2:
+            if count == math.ceil(n_samples/2):
                 robot.speech.speak("Almost done, keep looking.", block=False)
         else:
             print ("[LearnPersonProcedure] " + "No person found.")
