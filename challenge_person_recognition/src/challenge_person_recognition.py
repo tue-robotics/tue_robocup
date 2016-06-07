@@ -4,6 +4,8 @@ import rospy
 import smach
 import robot_smach_states as states
 import time
+import os
+import datetime
 
 from robot_smach_states.util.startup import startup
 
@@ -73,3 +75,12 @@ if __name__ == "__main__":
     rospy.init_node('person_recognition_exec')
 
     startup(ChallengePersonRecognition, challenge_name="person_recognition")
+    cmd = 'convert `ls -t /tmp/faces/*_annotated.jpeg | head -1` /home/amigo/usb/tech_united_%s.pdf' % datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+
+    rospy.loginfo("Executing bash command: %s" % cmd)
+    os.system(cmd)
+
+    rospy.loginfo("Listing files on USB:")
+    os.system("ls -lah /home/amigo/usb")
+
+    rospy.loginfo("If this went wrong for a reason, please execute the command on amigo1 to create a pdf and copy to USB manually")

@@ -2,9 +2,9 @@
 <package>
   <name>challenge_person_recognition</name>
   <version>1.0.0</version>
-  <description>Person Recognition challenge from Robocup 2015 rulebook</description>
+  <description>Person Recognition challenge from Robocup 2016 rulebook</description>
 
-  <maintainer email="luisfferreira@outlook.com">Luis Ferreira</maintainer>
+  <maintainer email="reinzor@gmail.com">Rein Appeldoorn</maintainer>
 
   <license>TODO</license>
 
