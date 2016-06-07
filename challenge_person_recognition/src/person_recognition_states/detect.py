@@ -80,6 +80,7 @@ class RecognizePersons(smach.State):
             try_number += 1
 
             detections, operator = self._get_detections(external_api_request=True)
+            self.robot.speech.speak(random.choice(["Let's take a closer look",
                                                    "Let's see what we are dealing with",
                                                    "Let's get some more details"]))
 
