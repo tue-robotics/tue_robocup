@@ -487,6 +487,9 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
     start_time = time.time()
     while count < n_samples:
         if robot.ed.learn_person(person_name):
+            if count == 0:
+                robot.speech.speak("Hi there!")
+
             # reset timer
             start_time = time.time()
 
