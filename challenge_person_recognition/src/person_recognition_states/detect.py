@@ -59,8 +59,10 @@ class RecognizePersons(smach.State):
         number_of_people = 0
         operator_list = []
 
+        sentences = ["You are all looking great today!            Keep looking in my camera!", "I like it when everybody is staring at me; being in the center of attention!"]
+
         for i in range(0, shots):
-            self.robot.speech.speak("%d" % i)
+            self.robot.speech.speak(sentences[i % shots], block=False)
             detections, operator = self._get_detections(external_api_request=False)
 
             # Get number of people
@@ -79,10 +81,10 @@ class RecognizePersons(smach.State):
         while True:
             try_number += 1
 
-            detections, operator = self._get_detections(external_api_request=True)
             self.robot.speech.speak(random.choice(["Let's take a closer look",
                                                    "Let's see what we are dealing with",
                                                    "Let's get some more details"]))
+            detections, operator = self._get_detections(external_api_request=True)
 
             if self._shot_valid(number_of_people, operator_list, detections, operator):
                 return detections, operator
@@ -98,15 +100,17 @@ class RecognizePersons(smach.State):
     def _describe_crowd(self, detections):
         num_females = 0
         num_males = 0
+        num_ppl = 0
 
         for d in detections:
+            num_ppl += 1
             if d.gender_score:
                 if d.gender == 1:
                     num_males += 1
                 else:
                     num_females += 1
 
-        self.robot.speech.speak("I found %d people in the crowd" % (num_males+num_females))
+        self.robot.speech.speak("I found %d people in the crowd" % num_ppl)
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
     def _describe_operator(self, operator):
