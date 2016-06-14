@@ -25,6 +25,7 @@ import random
 
 # ED
 from ed_gui_server.msg import EntityInfo
+from ed_robocup.srv import FitEntityInImageRequest
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
@@ -44,7 +45,7 @@ from robocup_knowledge import load_knowledge
 # PDF writer
 import pdf
 
-USE_SLAM = False  # Indicates whether or not to use SLAM for localization
+USE_SLAM = True  # Indicates whether or not to use SLAM for localization
 
 challenge_knowledge = load_knowledge('challenge_manipulation')
 CABINET = challenge_knowledge.cabinet
@@ -170,13 +171,13 @@ class FitEntity(smach.State):
 
         rospy.sleep(rospy.Duration(1.0))
 
+        rospy.loginfo("Trying to fit...")
+
         # Try to fit the object
-        from ed_robocup.srv import FitEntityInImageRequest
         req = FitEntityInImageRequest()
         req.entity_type = self._entity_str  # 1280 1024
-        req.px = 1280/4  # 2
-        req.py = 1024/4  # 2
-        print "Request: {0}".format(req)
+        req.px = 0.5
+        req.py = 0.5
         result = self._srv(req)
 
         # Cancel the head goal and return
@@ -520,7 +521,7 @@ def setup_statemachine(robot):
                                transitions={'done'                      :'AWAIT_START'})
 
         if USE_SLAM:
-            drive_state = "NAV_TO_FIT_POSE"
+            drive_state = "RESET_ED_SLAM"
         else:
             drive_state = "NAV_TO_START"
         smach.StateMachine.add("AWAIT_START",
@@ -532,14 +533,18 @@ def setup_statemachine(robot):
         room = ds.EntityByIdDesignator(robot, id=ROOM)
 
         if USE_SLAM:
-            vth = 1.0
-            smach.StateMachine.add("NAV_TO_FIT_POSE",
-                                   ForceDrive(robot, 0, 0, vth, 3.14/vth),
+            # vth = 1.0
+            # smach.StateMachine.add("NAV_TO_FIT_POSE",
+            #                        ForceDrive(robot, 0, 0, vth, 3.14/vth),
+            #                        transitions={'done': 'FIT_ENTITY'})
+
+            smach.StateMachine.add("RESET_ED_SLAM",
+                                   states.ResetED(robot),
                                    transitions={'done': 'FIT_ENTITY'})
 
             smach.StateMachine.add("FIT_ENTITY",
                                    FitEntity(robot, CABINET),
-                                   transitions={'succeeded': 'NAV_TO_START',
+                                   transitions={'succeeded': 'INSPECT_SHELVES',
                                                 'failed': 'SAY_FITTING_FAILED'})
 
             smach.StateMachine.add("SAY_FITTING_FAILED",
