@@ -360,7 +360,7 @@ class FollowOperator(smach.State):
                 operator_pos.point = best_detection.pose.pose.position
                 self._face_pos_pub.publish(operator_pos)
 
-                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
+                recovered_operator = self._robot.ed.get_closest_possible_person_entity(radius=self._lost_distance,
                                                                              center_point=best_detection.pose.pose.position)
             if recovered_operator:
                 print "Found one!"
