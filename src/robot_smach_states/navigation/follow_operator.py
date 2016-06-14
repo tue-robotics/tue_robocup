@@ -224,7 +224,7 @@ class FollowOperator(smach.State):
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
                 self._operator_id = None
-                self._robot.speech.speak("Stop! I lost you!", block=False)
+                self._robot.speech.speak("Stop! I lost you! Until I find you again, please wait there.", block=False)
             return False
 
     def _visualize_breadcrumbs(self):
@@ -441,6 +441,7 @@ class FollowOperator(smach.State):
                 self._operator_id = operator_id
 
         self._robot.head.close()
+        self._robot.head.wait_for_motion_done()
 
         if self._robot.robot_name == "amigo":
             self._robot.torso.send_goal('reset', timeout=4.0)
