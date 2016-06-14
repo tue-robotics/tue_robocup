@@ -303,7 +303,7 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(plan, p, o)
 
     def _recover_operator(self):
-        recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
+        recovered_operator = self._robot.ed.get_closest_possible_person_entity(radius=self._lost_distance, center_point=self._last_operator.pose.position)
 
         if recovered_operator:
             self._operator_id = recovered_operator.id
