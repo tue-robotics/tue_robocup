@@ -330,7 +330,7 @@ class FollowOperator(smach.State):
 
     def _recover_operator(self):
         self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("%s, please stand in front of me and look at me" % self._operator_name, block=False)
+        self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
         # Wait for the operator and find his/her face
         operator_recovery_timeout = 20.0 #TODO: parameterize
@@ -342,8 +342,20 @@ class FollowOperator(smach.State):
                                           y=0.0,
                                           z=1.7,
                                           frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=1.0,
+                                          y=1.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
             msg_constructors.PointStamped(x=0.4,
                                           y=2.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=2.0,
+                                          y=0.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=1.0,
+                                          y=-1.0,
                                           z=1.7,
                                           frame_id="/%s/base_link" % self._robot.robot_name),
             msg_constructors.PointStamped(x=0.4,
