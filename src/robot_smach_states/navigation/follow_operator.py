@@ -18,7 +18,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
+    def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
                  distance_threshold=None, lost_timeout=5, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
@@ -34,6 +34,7 @@ class FollowOperator(smach.State):
         self._breadcrumb_distance = 0.1  # meters between dropped breadcrumbs
         self._operator_timeout = operator_timeout
         self._ask_follow = ask_follow
+        self._learn_face = learn_face
         self._lost_timeout = lost_timeout
         self._lost_distance = lost_distance
         self._standing_still_timeout = standing_still_timeout
@@ -125,18 +126,19 @@ class FollowOperator(smach.State):
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
                         else:
-                            self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
-                            self._robot.speech.speak("Just in case...",block=False)
-                            learn_person_start_time = rospy.Time.now()
-                            learn_person_timeout = 10.0 # TODO: Parameterize
-                            num_detections = 0
-                            while num_detections < 5:
-                                if self._robot.ed.learn_person(self._operator_name):
-                                    num_detections+=1
-                                elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
-                                    self._robot.speech.speak("Please stand in front of me and look at me")
-                                    operator = None
-                                    break
+                            if self._learn_face:
+                                self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
+                                self._robot.speech.speak("Just in case...",block=False)
+                                learn_person_start_time = rospy.Time.now()
+                                learn_person_timeout = 10.0 # TODO: Parameterize
+                                num_detections = 0
+                                while num_detections < 5:
+                                    if self._robot.ed.learn_person(self._operator_name):
+                                        num_detections+=1
+                                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
+                                        self._robot.speech.speak("Please stand in front of me and look at me")
+                                        operator = None
+                                        break
 
                     elif answer.result == "no":
                         return False
