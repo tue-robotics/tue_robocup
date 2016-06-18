@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <!-- Start speech interpreter -->
-    <include file="$(find amigo_launch_files)/launch/interaction/speech_interpreter.launch" />	
-</launch>	
-
-
-
