@@ -1,15 +1,10 @@
 from robocup_knowledge import knowledge_loader
-challenge_speech_recognition_data = knowledge_loader.load_knowledge("challenge_speech_recognition")
+common = knowledge_loader.load_knowledge("common")
 
-spec_questions = challenge_speech_recognition_data.spec 
-choices_questions = challenge_speech_recognition_data.choices 
+initial_pose = "initial_pose"  # initial pose
+starting_pose = "gpsr_meeting_point"  # Designated pose to wait for commands
+exit_waypoint = "exit_door_B1"
 
-# rooms
-rooms = ["kitchen", "bedroom", "living_room"]
+rooms = common.rooms + ["entrance", "exit"]
 
-object_aliases = { "dinner table" : "dinnertable"}
-
-# mapping from furniture to small objects that are on top of them (and can be grabbed)
-furniture_to_objects = { "cabinet" : ["beer", "bifrutas", "coffee_pads", "coke", "deodorant"],
-                         "dinnertable" : ["fanta", "ice_tea", "mentos", "sprite", "tea", "teddy_bear", "water", "xylit24_spearmint", "xylit24_white"],
-                         "bed" : [] }
+translations = { "bookcase" : "bocase" }

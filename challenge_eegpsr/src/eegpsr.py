@@ -57,7 +57,7 @@ def main():
 
     mock_sentence = " ".join([word for word in args.sentence if word[0] != '_'])
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     if args.robot == 'amigo':
         from robot_skills.amigo import Amigo as Robot
@@ -67,7 +67,7 @@ def main():
         raise ValueError('unknown robot')
 
     robot = Robot()
-    
+
     # Sleep for 1 second to make sure everything is connected
     time.sleep(1)
 
@@ -77,15 +77,15 @@ def main():
 
     command_center.set_grammar(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    sentence = " ".join([word for word in args.sentence if word[0] != '_'])        
+    sentence = " ".join([word for word in args.sentence if word[0] != '_'])
 
     if sentence:
         semantics = command_center.parse_command(sentence)
         if not semantics:
             rospy.logerr("Cannot parse \"{}\"".format(sentence))
-            return 
+            return
 
         command_center.execute_command(semantics)
     else:
@@ -93,10 +93,10 @@ def main():
         while True:
             hey_robot_wait_forever(robot)
 
-            semantics = command_center.request_command(ask_confirmation=True, ask_missing_info=False)
+            (sentence, semantics) = command_center.request_command(ask_confirmation=True, ask_missing_info=False)
 
             if not command_center.execute_command(semantics):
-                robot.speech.speak("I am truly sorry, let's try this again")                
+                robot.speech.speak("I am truly sorry, let's try this again")
 
             if args.once:
                 break
@@ -108,4 +108,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-    
