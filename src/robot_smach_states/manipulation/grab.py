@@ -169,7 +169,7 @@ class PickUp(smach.State):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
-            arm.send_gripper_goal('close', timeout=None)
+            arm.send_gripper_goal('close', timeout=0.0)
             return 'failed'
 
         # Close gripper
