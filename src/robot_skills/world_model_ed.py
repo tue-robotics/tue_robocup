@@ -432,8 +432,8 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def detect_persons(self):
-        res = self._recognize_person_srv()
+    def detect_persons(self, external_api_request=False):
+        res = self._recognize_person_srv(external_api_request=external_api_request)
         if res.error_msg:
             rospy.logerr("Detect persons failed: %s" % res.error_msg)
             return None
