@@ -110,6 +110,7 @@ class Head():
         if self._goal:
             while (rospy.Time.now() - starttime).to_sec() < timeout:
                 if self._at_setpoint:
+                    rospy.sleep(0.3)
                     return True
                 else:
                     rospy.sleep(0.1)
