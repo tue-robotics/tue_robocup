@@ -199,6 +199,9 @@ class Base(object):
         return True
 
     def get_location(self):
+        """ Returns a PoseStamped with the robot pose
+        :return: PoseStamped with robot pose
+        """
         return get_location(self._robot_name, self._tf_listener)
 
     def set_initial_pose(self, x, y, phi):
