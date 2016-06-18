@@ -10,7 +10,6 @@ object_shelves = ["shelf1", "shelf3", "shelf4"]
 grasp_shelf = "shelf3"
 
 # Shelf where we will actually place stuff
-# place_shelf = "bookcase/shelf1"
 place_shelf = "shelf2"
 
 # Room where everything will take place

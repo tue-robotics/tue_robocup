@@ -339,7 +339,7 @@ class RemoveSegmentedEntities(smach.State):
 
     def execute(self, userdata=None):
 
-        entities = self.robot.get_entities(parse=False)
+        entities = self.robot.ed.get_entities(parse=False)
 
         for e in entities:
             if e.has_shape and e.id != '_root':
