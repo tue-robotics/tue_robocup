@@ -457,7 +457,10 @@ class FollowOperator(smach.State):
         # Check are standing still long
         if self._standing_still_for_x_seconds(self._standing_still_timeout):
             self._robot.base.local_planner.cancelCurrentPlan()
-            return "lost_operator"
+            if not self._recover_operator():
+                self._robot.base.local_planner.cancelCurrentPlan()
+                self._robot.speech.speak("I am unable to recover you")
+                return "lost_operator"
 
         # Check if we are already there (in operator radius and operator standing still long enough)
         if self._operator_distance < self._operator_radius and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
