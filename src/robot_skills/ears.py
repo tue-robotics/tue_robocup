@@ -41,30 +41,21 @@ class Ears:
         rospy.loginfo("Example of what the robot can hear: \x1b[1;43m'{}'\x1b[0m".format(example))
 
     #Function listens explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
-    def recognize(self, spec, choices={}, time_out = rospy.Duration(10)):
-        req = GetSpeechRequest()
-        req.spec = spec
-        req.choices = [ Choice(id=k, values=v) for k, v in choices.iteritems() ]
-        req.time_out = time_out
+    def recognize(self, spec, choices={}, time_out=rospy.Duration(10)):
 
         if hasattr(self._pre_hook, '__call__'):
             self._pre_hook()
-
-        answer = None
 
         try:
             self._print_example(spec, choices)
         except:
             pass
 
-        try:
-            answer = self._get_speech_client_service(req)
+        answer = self._hmi.old_query(spec, choices, timeout=time_out.to_sec())
+        if answer:
             rospy.loginfo("Robot heard \x1b[1;42m'{}'\x1b[0m".format(answer.result)) #The funny characters color the background
-
-            if answer:
-                answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
-        except rospy.ServiceException as e:
-            rospy.logerr("Service exception: %s"%e)
+        else:
+            rospy.loginfo("Robot did not hear you \x1b[1;41m(timeout)\x1b[0m")
 
         if hasattr(self._post_hook, '__call__'):
             self._post_hook()
