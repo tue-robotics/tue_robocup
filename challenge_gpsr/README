@@ -1,67 +1,25 @@
-# Responsible: Erik
+Responsible: Sjoerd
 
-### STARTUP:
+# Start-up
 
-amigo1:
-    1. ahardware
+    amiddle
 
-amigo1:
-    2. amiddle
+    rosrun challenge_gpsr gpsr.py <robot-name>
 
-Place amigo on start position 
-(rwc2015 = start position unknown??) 
-(robotics testlabs = in front of virtual door)
-
-### HOW TO TEST:
-
-Run speech generator to get several sentences that amigo should be able to hear:
-    3. rosrun challenge_gpsr generate_random_sentence.py
-
-This file can be re-executed to get new sentence.
-Sentences can sometimes be unclear or not logic. Please mention in test report.
-
-Then run on the same amigo pc:
-    4. rosrun challenge_gpsr gpsr.py amigo
+# Scenario
 
 The robot will drive to the meeting point and say "What can I do for you?" and then you can say your sentence.
 
-!!! Please mention in your test results how many times amigo was able to understand you !!!
-!!! Also mention weird actions to say to the robot !!!
+# Testing
 
------------------------------------------------------------------------------------------
+## Generating random command
 
-Testing finding person of the challenge
------------------------------
-Position amigo in a room where he should find a person
+    rosrun challenge_gpsr generate_command.py
 
-$ roscd challenge_gpsr/src/challenge_gpsr/
-$ amigo-console
->>> from gpsr import *
->>> test_find_person(amigo,'hallway') # 'hallway' can also be another room.
+or to get multiple commands at once:
 
+    rosrun challenge_gpsr generate_command.py <number-of-commands>
 
-Testing getting action by speech
------------------------------
+## Test recognition
 
-$ roscd challenge_gpsr/src/challenge_gpsr/
-$ amigo-console
->>> from gpsr import *
->>> test_ask_action(amigo)
-
-
-Testing time statements
------------------------------
-
-$ roscd challenge_gpsr/src/challenge_gpsr/
-$ amigo-console
->>> from gpsr import *
->>> test_time(amigo,'the_time')
-
-
-Testing time statements
------------------------------
-
-$ roscd challenge_gpsr/src/challenge_gpsr/
-$ amigo-console
->>> from gpsr import *
->>> test_placing(amigo,'dinnertable')
+    rosrun challenge_gpsr test_recognition.py <robot-name>
