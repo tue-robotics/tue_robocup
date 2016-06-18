@@ -338,6 +338,8 @@ class FollowOperator(smach.State):
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
             print "Trying to detect faces..."
             detections = self._robot.ed.detect_persons()
+            if not detections:
+                detections = []
             best_score = -0.4 # TODO: magic number
             best_detection = None
             for d in detections:
