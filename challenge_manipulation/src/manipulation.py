@@ -330,6 +330,26 @@ class InitializeWorldModel(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+
+class RemoveSegmentedEntities(smach.State):
+    """ Removes all entities that have no shape (except _root) """
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+
+        entities = self.robot.get_entities(parse=False)
+
+        for e in entities:
+            if e.has_shape and e.id != '_root':
+                e.remove_entity(e.id)
+
+        return "done"
+
+
+# ----------------------------------------------------------------------------------------------------
+
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
     - Stand of front of the bookcase
@@ -402,7 +422,10 @@ class ManipRecogSingleItem(smach.StateMachine):
             #                                         'unreachable'       :'LOOKAT_PICK_SHELF',
             #                                         'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
-            ''' Look at pick shelf '''
+            smach.StateMachine.add("REMOVE_ENTITIES",
+                                   RemoveSegmentedEntities(robot=robot),
+                                   transitions={'done': 'LOOKAT_PICK_SHELF'})
+
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
                                      states.LookAtArea(robot, self.cabinet, area=PICK_SHELF),
                                      transitions={  'succeeded'         :'LOCK_ITEM'})
