@@ -336,7 +336,27 @@ class FollowOperator(smach.State):
         operator_recovery_timeout = 20.0 #TODO: parameterize
         start_time = rospy.Time.now()
         recovered_operator = None
+
+        head_goals = [
+            msg_constructors.PointStamped(x=2.0,
+                                          y=0.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=0.4,
+                                          y=2.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=0.4,
+                                          y=-2.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name)
+            ]
+
+        i = 0
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+            self._robot.head.look_at_point(head_goals[i])
+            i += 1
+            self._robot.head.wait_for_motion_done()
             print "Trying to detect faces..."
             detections = self._robot.ed.detect_persons()
             best_score = -0.4 # TODO: magic number
@@ -374,8 +394,10 @@ class FollowOperator(smach.State):
                 print "Recovered operator id: %s" % self._operator_id
                 self._operator = recovered_operator
                 self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
+                self._robot.head.close()
                 return True
 
+        self._robot.head.close()
         return False
 
     def _turn_towards_operator(self):
