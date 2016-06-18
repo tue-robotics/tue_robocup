@@ -65,20 +65,6 @@ OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
 OBJ_FIND[P] -> PERSON[P]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
-# Say
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# VP["action": "count", "cat" : C] -> V_SAY how many OBJ_CAT[C] there are
-# VP["action": "count", "cat" : C] -> V_SAY how many GENDER[C] there are
-# VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many OBJ_CAT[C] are at the LOC[L]
-# VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many GENDER[C] are at the LOC[L]
-
-# GENDER["women"] -> women
-# GENDER["men"] -> men
-
-# V_SAY -> tell | say | speak
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
 # Grasping
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -110,13 +96,6 @@ NAV_LOC[X] -> the ROOM[X]
 
 V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -125,10 +104,6 @@ VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] 
 VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
-
-
-
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions
@@ -144,7 +119,7 @@ VP["action": "answer-question"] -> answer her question
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
-VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it | what time is it
+VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
 VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
 
 VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
