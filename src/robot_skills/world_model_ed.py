@@ -260,6 +260,15 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    def remove_entity(self, id):
+        """ Removes entity with the provided id to the world model
+        Args:
+            id: string with the ID of the entity to remove
+        """
+        rospy.logwarn("Trying to remove entity {0}, not yet implemented".format(id))
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     def lock_entities(self, lock_ids, unlock_ids):
         for eid in lock_ids:
             self.update_entity(id=eid, add_flags=['locked'])
