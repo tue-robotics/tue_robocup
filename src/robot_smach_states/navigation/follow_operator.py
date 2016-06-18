@@ -356,6 +356,9 @@ class FollowOperator(smach.State):
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
             self._robot.head.look_at_point(head_goals[i])
             i += 1
+            if i == len(head_goals):
+                i = 0
+
             self._robot.head.wait_for_motion_done()
             print "Trying to detect faces..."
             detections = self._robot.ed.detect_persons()
