@@ -34,16 +34,9 @@ or
 # ----------------------------------------------------------------------------------------------------
 
 def init_command_center(robot=None):
-    if not robot:
-        class Robot:
-            pass
-
-        robot = Robot()
-
     command_center = CommandCenter(robot)
     challenge_knowledge = load_knowledge('challenge_gpsr')
     command_center.set_grammar(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
-
     return command_center
 
 # ----------------------------------------------------------------------------------------------------
