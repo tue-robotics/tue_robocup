@@ -461,6 +461,7 @@ def setup_statemachine(robot):
                                states.FollowOperator(robot,
                                                      operator_timeout=30,
                                                      ask_follow=True,
+                                                     learn_face=False,
                                                      operator_id_des=operator_id
                                                      ),
                                transitions={'stopped': 'CHECK_IN_KITCHEN',
