@@ -52,7 +52,10 @@ class Ears:
             pass
 
         answer = self._hmi.old_query(spec, choices, timeout=time_out.to_sec())
-        rospy.loginfo("Robot heard \x1b[1;42m'{}'\x1b[0m".format(answer.result)) #The funny characters color the background
+        if answer:
+            rospy.loginfo("Robot heard \x1b[1;42m'{}'\x1b[0m".format(answer.result)) #The funny characters color the background
+        else:
+            rospy.loginfo("Robot did not hear you \x1b[1;41m(timeout)\x1b[0m")
 
         if hasattr(self._post_hook, '__call__'):
             self._post_hook()
