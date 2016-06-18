@@ -202,7 +202,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []):
+    def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
         """
         Updates entity
         :param id: entity id
@@ -211,10 +211,14 @@ class ED:
         :param flags: (OBSOLETE, use add_flags and remove_flags): (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,  e.g., 'perception'
         :param add_flags: list of flags which will be added to the specified entity
         :param remove_flags: list of flags which will removed from the specified entity
+        :param action: update_action, e.g. remove
         """
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
+
+        if action:
+            json_entity += ', "action": "%s"' % action
 
         if posestamped:
             X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
@@ -265,7 +269,7 @@ class ED:
         Args:
             id: string with the ID of the entity to remove
         """
-        rospy.logwarn("Trying to remove entity {0}, not yet implemented".format(id))
+        return self.update_entity(id=id, action="remove")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
