@@ -330,7 +330,7 @@ class FollowOperator(smach.State):
 
     def _recover_operator(self):
         self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("%s, please stand in front of me and look at me" % self._operator_name, block=False)
+        self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
         # Wait for the operator and find his/her face
         operator_recovery_timeout = 20.0 #TODO: parameterize
@@ -342,8 +342,20 @@ class FollowOperator(smach.State):
                                           y=0.0,
                                           z=1.7,
                                           frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=1.0,
+                                          y=1.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
             msg_constructors.PointStamped(x=0.4,
                                           y=2.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=2.0,
+                                          y=0.0,
+                                          z=1.7,
+                                          frame_id="/%s/base_link" % self._robot.robot_name),
+            msg_constructors.PointStamped(x=1.0,
+                                          y=-1.0,
                                           z=1.7,
                                           frame_id="/%s/base_link" % self._robot.robot_name),
             msg_constructors.PointStamped(x=0.4,
@@ -356,9 +368,14 @@ class FollowOperator(smach.State):
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
             self._robot.head.look_at_point(head_goals[i])
             i += 1
+            if i == len(head_goals):
+                i = 0
+
             self._robot.head.wait_for_motion_done()
             print "Trying to detect faces..."
             detections = self._robot.ed.detect_persons()
+            if not detections:
+                detections = []
             best_score = -0.4 # TODO: magic number
             best_detection = None
             for d in detections:
