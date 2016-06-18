@@ -13,7 +13,8 @@ from math import hypot
 
 from .util import transformations
 
-from std_srvs.srv import Empty #Reset Ed
+import ed.srv
+from std_srvs.srv import Empty
 
 import tf
 import visualization_msgs.msg
@@ -56,7 +57,7 @@ class ED:
         self._ed_perception_add_training_instance_srv = rospy.ServiceProxy('/%s/ed/add_training_instance'%robot_name, AddTrainingInstance)
         self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
-        self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
+        self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, ed.srv.Reset)
 
         self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
 
@@ -189,12 +190,12 @@ class ED:
     #                                             UPDATING
     # ----------------------------------------------------------------------------------------------------
 
-    def reset(self):
+    def reset(self, keep_all_shapes=False):
         """Reset world model to initial state, also clears trained persons"""
         self.clear_persons()
 
         try:
-            self._ed_reset_srv()
+            self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
         except rospy.ServiceException, e:
             rospy.logerr("Could not reset ED: {0}".format(e))
 
