@@ -61,13 +61,14 @@ MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
 SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
 
-PREFERED_ARM="left"  # Must be "left" or "right"
+PREFERRED_ARM = "left"  # Must be "left" or "right"
 
 DEBUG = False
 
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
-    rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
+    rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, "
+                 "will remove".format(PLACE_SHELF))
 # if PICK_SHELF not in OBJECT_SHELVES:
 #     rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
 #     OBJECT_SHELVES.append(PICK_SHELF)
@@ -350,17 +351,6 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
-        def detected(entity):
-            """ Checks if the entity is in the (global) list of detected objects
-            :param entity:
-            :return:
-            """
-            # for tup in DETECTED_OBJECTS_WITH_PROBS:
-            for tup in SEGMENTED_ENTITIES:
-                if tup[0].id == entity.id:
-                    return True
-            return False
-
         def entity_z_pos(entity):
             """ Checks if the entity is between the minimum and maximum grasp height
             :param entity:
@@ -370,8 +360,6 @@ class ManipRecogSingleItem(smach.StateMachine):
                 return False
             return MIN_GRASP_HEIGHT < entity.pose.position.z < MAX_GRASP_HEIGHT
 
-
-
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
             # TODO: return x coordinate of entity.center_point in base_link frame
@@ -379,18 +367,22 @@ class ManipRecogSingleItem(smach.StateMachine):
             return p.x*p.x
 
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, detected, min_entity_height, entity_z_pos, max_width],
-            weight_function=weight_function, debug=False, name="item"), name="current_item")
+                                                                       criteriafuncs=[not_ignored, size,
+                                                                                      not_manipulated,
+                                                                                      min_entity_height, entity_z_pos,
+                                                                                      max_width],
+                                                                       weight_function=weight_function, debug=False,
+                                                                       name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
 
-        if PREFERED_ARM == "left":
+        if PREFERRED_ARM == "left":
             prefered_arm = robot.leftArm
-        elif PREFERED_ARM == "right":
+        elif PREFERRED_ARM == "right":
             prefered_arm = robot.rightArm
         else:
-            rospy.logwarn("Impossible preferred arm: {0}, defaulting to left".format(PREFERED_ARM))
+            rospy.logwarn("Impossible preferred arm: {0}, defaulting to left".format(PREFERRED_ARM))
             prefered_arm = robot.leftArm
 
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, prefered_arm, name="empty_arm_designator")
