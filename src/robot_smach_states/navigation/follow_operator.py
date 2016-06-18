@@ -362,6 +362,8 @@ class FollowOperator(smach.State):
             self._robot.head.wait_for_motion_done()
             print "Trying to detect faces..."
             detections = self._robot.ed.detect_persons()
+            if not detections:
+                detections = []
             best_score = -0.4 # TODO: magic number
             best_detection = None
             for d in detections:
