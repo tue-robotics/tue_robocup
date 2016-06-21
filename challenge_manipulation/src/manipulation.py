@@ -343,7 +343,7 @@ class RemoveSegmentedEntities(smach.State):
 
         for e in entities:
             if e.has_shape and e.id != '_root':
-                e.remove_entity(e.id)
+                self.robot.ed.remove_entity(e.id)
 
         return "done"
 
