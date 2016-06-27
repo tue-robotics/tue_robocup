@@ -14,6 +14,7 @@ target3_radius1 = 0.1
 target3_radius2 = 0.7
 
 target_door = "door_navigation"
+door_id = "door1"
 target_door_radius = 0.1
 
 target4 = "hallway"
@@ -29,3 +30,5 @@ starting_point = "initial_pose"
 rotation = 0
 
 time_out_seconds = 60.0
+time_out_seconds_door = 120.0
+

@@ -329,8 +329,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_ARENA_DOOR'})
 
         smach.StateMachine.add('GOTO_ARENA_DOOR',
-                               states.NavigateToWaypoint(robot,
-                                                         EntityByIdDesignator(robot, id=challenge_knowledge.target_door),
+                               states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target_door),
                                                          challenge_knowledge.target_door_radius),
                                transitions={'arrived': 'ARENA_DOOR_REACHED',
                                             'unreachable': 'RESET_ED_ARENA_DOOR',
@@ -340,7 +339,7 @@ def setup_statemachine(robot):
                                states.Say(robot, ["I am at the door of the arena",
                                                   "I have arrived at the door of the arena",
                                                   "I am now at the door of the arena"], block=True),
-                               transitions={'spoken': 'SAY_RETURN_TARGET3'})
+                               transitions={'spoken': 'SAY_OPEN_DOOR'})
 
         smach.StateMachine.add('RESET_ED_ARENA_DOOR',
                                states.ResetED(robot),
@@ -354,17 +353,46 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'TIMEOUT_ARENA_DOOR'})
 
         smach.StateMachine.add('TIMEOUT_ARENA_DOOR',
-                               checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                               checkTimeOut(robot, challenge_knowledge.time_out_seconds_door),
                                transitions={'not_yet': 'GOTO_ARENA_DOOR', 'time_out': 'SAY_GOTO_ARENA_DOOR_FAILED'})
 
-        # Should we mention that we failed???
         smach.StateMachine.add('SAY_GOTO_ARENA_DOOR_FAILED',
                                states.Say(robot, ["I am unable to reach the arena door",
                                                   "I cannot reach the arena door",
                                                   "The arena door is unreachable"], block=True),
-                               transitions={'spoken': 'SAY_RETURN_TARGET3'})
+                               transitions={'spoken': 'Done'})
 
-        # Open door
+        ######################################################################################################################################################
+        #
+        #                                                       Opening Door
+        #
+        ######################################################################################################################################################
+
+        smach.StateMachine.add('OPEN_DOOR',
+                               states.OpenDoorByPushing(robot, EntityByIdDesignator(robot, id=challenge_knowledge.door_id)),
+                               transitions={'succeeded': 'SAY_RETURN_TARGET3',
+                                            'failed': 'TIMEOUT_ARENA_DOOR_OPENING'})
+
+        smach.StateMachine.add('SAY_OPEN_DOOR',
+                               states.say(robot, ["I am going to open the door",
+                                                  "Going to open the door of the arena",
+                                                  "Door, open sesame"], block=True),
+                               transitions={'spoken': 'OPEN_DOOR'})
+
+        smach.StateMachine.add('SAY_OPEN_DOOR_AGAIN',
+                               states.say(robot, ["I failed to open the door. I will try it again",
+                                                  "Let me try again to open the door"], block=True),
+                               transitions={'spoken': 'OPEN_DOOR'})
+
+        smach.StateMachine.add('TIMEOUT_ARENA_DOOR_OPENING',
+                               checkTimeOut(robot, challenge_knowledge.time_out_seconds),
+                               transitions={'not_yet': 'SAY_OPEN_DOOR_AGAIN', 'time_out': 'SAY_OPEN_DOOR_FAILED'})
+
+        smach.StateMachine.add('SAY_OPEN_DOOR_FAILED',
+                               states.say(robot, ["I was not able to open the door. I am done with this challange",
+                                                  "I was not able to open the door. I am done with this challange"], block=True),
+                               transitions={'spoken': 'Done'})
+
 
         ######################################################################################################################################################
         #
