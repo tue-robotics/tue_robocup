@@ -20,7 +20,7 @@ from robot_skills.util import transformations, msg_constructors
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
                  distance_threshold=None, lost_timeout=5, lost_distance=0.8,
-                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0):
+                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0, replan=False):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._time_started = None
@@ -50,6 +50,8 @@ class FollowOperator(smach.State):
 
         self._last_pose_stamped = None
         self._last_operator_pose_stamped = None
+
+        self._replan = replan
 
         self._period = 0.5
 
@@ -184,6 +186,8 @@ class FollowOperator(smach.State):
             dy = crumb.pose.position.y - robot_position.y
             if math.hypot(dx, dy) > self._lookat_radius + 0.1:
                 temp_crumbs.append(crumb)
+            else:
+                temp_crumbs = []
 
         self._breadcrumbs = temp_crumbs
 
@@ -456,6 +460,10 @@ class FollowOperator(smach.State):
 
         # Check are standing still long
         if self._standing_still_for_x_seconds(self._standing_still_timeout):
+            # Either way, we're in a local navigation minimum. 
+            # May be solved by letting the local planner change state
+            # Either we're following something that is not really the operator but also unreachable,
+            # or we're in a local navigation minimum and 
             self._robot.base.local_planner.cancelCurrentPlan()
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
