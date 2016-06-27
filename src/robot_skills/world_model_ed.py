@@ -19,6 +19,8 @@ from std_srvs.srv import Empty
 import tf
 import visualization_msgs.msg
 
+import os
+
 
 import yaml
 
@@ -483,6 +485,9 @@ class ED:
 
         with open(fname + ".json", "w") as f:
             f.write(res.json_meta_data)
+
+        # rgbd to png
+        os.system('rosrun rgbd rgbd_to_rgb_png %s' % (fname + ".rgbd"))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
