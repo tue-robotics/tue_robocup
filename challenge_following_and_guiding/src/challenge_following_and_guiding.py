@@ -100,7 +100,7 @@ def setup_statemachine(robot):
                                 transitions={'arrived': 'SAY_BACK', 'unreachable':'GUIDE_TO_ROBOCUP_ARENA_BACKUP', 'goal_not_defined':'GUIDE_TO_ROBOCUP_ARENA_BACKUP'})
 
         smach.StateMachine.add('GUIDE_TO_ROBOCUP_ARENA_BACKUP', states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="robocup_arena"), radius = knowledge.back_radius+0.1),
-                                transitions={'arrived': 'SAY_BACK', 'unreachable':'SAY_BACK', 'goal_not_defined':'SAY_BACK'})
+                                transitions={'arrived': 'SAY_BACK', 'unreachable':'GUIDE_TO_ROBOCUP_ARENA', 'goal_not_defined':'GUIDE_TO_ROBOCUP_ARENA'})
 
         smach.StateMachine.add('SAY_BACK', states.Say(robot, "We are back in the robocup arena!", look_at_standing_person=True), transitions={ 'spoken' :'done'})
 
