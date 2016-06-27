@@ -25,6 +25,21 @@ import shutil
 from util import parse_start_end
 
 
+def del_empty_dirs(s_dir):
+    b_empty = True
+
+    for s_target in os.listdir(s_dir):
+        s_path = os.path.join(s_dir, s_target)
+        if os.path.isdir(s_path):
+            if not del_empty_dirs(s_path):
+                b_empty = False
+        else:
+            b_empty = False
+
+    if b_empty:
+        print('del: %s' % s_dir)
+        os.rmdir(s_dir)
+
 if __name__ == '__main__':
     now = datetime.now()
     now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
@@ -60,3 +75,5 @@ if __name__ == '__main__':
         print ">> %s" % cp_cmd
 
         os.system(cp_cmd)
+
+    del_empty_dirs(name)
