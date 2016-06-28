@@ -1,4 +1,4 @@
-starting_point = "initial_pose"
+starting_point = "initial_pose_door_a"
 
 intermediate_1 = "registration_table1"
 intermediate_2 = "registration_table2"
