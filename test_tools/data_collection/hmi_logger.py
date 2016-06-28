@@ -6,24 +6,24 @@ from hmi_msgs.msg import QueryActionGoal, QueryActionResult
 from datetime import datetime
 import os
 
-import pyaudio
-import wave
+# import pyaudio
+# import wave
 import json
 
-CHUNK = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 2
-RATE = 44100
+# CHUNK = 1024
+# FORMAT = pyaudio.paInt16
+# CHANNELS = 2
+# RATE = 44100
 
-P = pyaudio.PyAudio()
+# P = pyaudio.PyAudio()
 
-RECORDING = False
-RESULT = None
-STREAM = P.open(format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                input=True,
-                frames_per_buffer=CHUNK)
+# RECORDING = False
+# RESULT = None
+# STREAM = P.open(format=FORMAT,
+#                 channels=CHANNELS,
+#                 rate=RATE,
+#                 input=True,
+#                 frames_per_buffer=CHUNK)
 
 
 def start(msg):
@@ -32,30 +32,31 @@ def start(msg):
     if RECORDING:
         return
 
-    frames = []
+    # frames = []
 
     rospy.loginfo("Starting HMI recording")
     RECORDING = True
 
-    last_print = rospy.Time.now()
+    # last_print = rospy.Time.now()
     while RECORDING:
-        data = STREAM.read(CHUNK)
-        frames.append(data)
-        if rospy.Time.now() - last_print > rospy.Duration(1):
-            rospy.loginfo(".. recording")
-            last_print = rospy.Time.now()
+        rospy.sleep(0.1)
+    #     data = STREAM.read(CHUNK)
+    #     frames.append(data)
+    #     if rospy.Time.now() - last_print > rospy.Duration(1):
+    #         rospy.loginfo(".. recording")
+    #         last_print = rospy.Time.now()
 
     now = datetime.now()
-    wav_filename = "%s/%s.wav" % (STORAGE_FOLDER, now.strftime("%Y-%m-%d-%H-%M-%d-%f"))
-    wf = wave.open(wav_filename, 'wb')
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(P.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    wf.writeframes(b''.join(frames))
-    wf.close()
+    # wav_filename = "%s/%s.wav" % (STORAGE_FOLDER, now.strftime("%Y-%m-%d-%H-%M-%d-%f"))
+    # wf = wave.open(wav_filename, 'wb')
+    # wf.setnchannels(CHANNELS)
+    # wf.setsampwidth(P.get_sample_size(FORMAT))
+    # wf.setframerate(RATE)
+    # wf.writeframes(b''.join(frames))
+    # wf.close()
 
     data = {
-        "wav_filename": wav_filename,
+        # "wav_filename": wav_filename,
         "request": msg.__str__(),
         "result": RESULT.__str__()
     }
@@ -87,6 +88,6 @@ if __name__ == '__main__':
 
     rospy.spin()
 
-    STREAM.stop_stream()
-    STREAM.close()
-    P.terminate()
+    # STREAM.stop_stream()
+    # STREAM.close()
+    # P.terminate()
