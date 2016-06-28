@@ -1,1 +1,2 @@
 from knowledge_loader import load_knowledge
+import environments
