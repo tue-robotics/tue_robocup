@@ -178,7 +178,7 @@ class FollowOperator(smach.State):
             else:
                 self._breadcrumbs.append(self._operator)
 
-        ''' Remove 'reached' breadcrumbs from breadcrumb path'''
+        # Remove 'reached' breadcrumbs from breadcrumb path
         robot_position = self._robot.base.get_location().pose.position
         temp_crumbs = []
         for crumb in self._breadcrumbs:
@@ -325,7 +325,7 @@ class FollowOperator(smach.State):
 
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(plan):
-            print "Breadcrumb plan is blocked"
+            print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             plan = [point for point in plan if self._robot.base.global_planner.checkPlan([point])]
 
@@ -333,6 +333,7 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(plan, p, o)
 
     def _recover_operator(self):
+        print "Trying to recover the operator"
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
@@ -460,11 +461,26 @@ class FollowOperator(smach.State):
 
         # Check are standing still long
         if self._standing_still_for_x_seconds(self._standing_still_timeout):
-            # Either way, we're in a local navigation minimum. 
-            # May be solved by letting the local planner change state
-            # Either we're following something that is not really the operator but also unreachable,
-            # or we're in a local navigation minimum and 
+            # Navigation stuck! One of the following possiblities
+            # - Following an operator, operator is still correct, corner is cut or path is otherwise invalid: (path should not have been cut off) replan with global planner and wait for the local planner to get us out of here
+            # - Following an operator, operator is still correct, local planner is in local minimum: wait for the local planner to get us out of here (at least 10 s)
+            # - Following an operator, operator is not correct, 'operator' is unreachable: try a global plan and wait for the local planner to get us out of here
+            # - Not following an operator, planner is in local minimum: try a global plan and wait for the local planner to get us out of here
             self._robot.base.local_planner.cancelCurrentPlan()
+            if self._replan:
+                print "Trying to get a local plan"
+                operator_position = self._last_operator.pose.position
+                p = PositionConstraint()
+                p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x, operator_position.y, self._operator_radius)
+                plan = self._robot.base.global_planner.getPlan(pc):
+                if not plan or not self._robot.base.global_planner.checkPlan(plan)
+                    print "No global plan possible"
+                else:
+                    print "Found a global plan, sending it to the local planner"
+                    o = self._robot.base.local_planner.getCurrentOrientationConstraint();
+                    self._visualize_plan(plan)
+                    self._robot.base.local_planner.setPlan(plan, p, o)
+
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 self._robot.speech.speak("I am unable to recover you")
