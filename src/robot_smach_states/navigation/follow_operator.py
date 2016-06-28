@@ -51,7 +51,11 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_operator_pose_stamped = None
 
-        self._replan = replan
+        self._replan_allowed = replan
+        self._replan_timeout = 15 # seconds before another replan is allowed
+        self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
+        self._replan_attempts = 0
+        self._max_replan_attempts = 3
 
         self._period = 0.5
 
@@ -180,6 +184,7 @@ class FollowOperator(smach.State):
 
         # Remove 'reached' breadcrumbs from breadcrumb path
         robot_position = self._robot.base.get_location().pose.position
+        # robot_yaw = transformations.euler_z_from_quaternion(self._robot.base.pose.orientation)
         temp_crumbs = []
         for crumb in self._breadcrumbs:
             dx = crumb.pose.position.x - robot_position.x
@@ -445,6 +450,21 @@ class FollowOperator(smach.State):
 
         self._robot.base.local_planner.setPlan(plan, p, o)
 
+    def _replan(self):
+        self._replan_attempts += 1
+        print "Trying to get a global plan"
+        operator_position = self._last_operator.pose.position
+        pc = self._robot.base.global_planner.getCurrentPositionConstraint()
+        plan = self._robot.base.global_planner.getPlan(pc)
+        if not plan or not self._robot.base.global_planner.checkPlan(plan):
+            print "No global plan possible"
+        else:
+            print "Found a global plan, sending it to local planner"
+            self._replan_time = rospy.Time.now()
+            o = self._robot.base.local_planner.getCurrentOrientationConstraint();
+            self._visualize_plan(plan)
+            self._robot.base.local_planner.setPlan(plan, p, o)
+
     def _check_end_criteria(self):
         # Check if we still have an operator
         lost_operator = self._operator is None
@@ -467,32 +487,27 @@ class FollowOperator(smach.State):
             # - Following an operator, operator is not correct, 'operator' is unreachable: try a global plan and wait for the local planner to get us out of here
             # - Not following an operator, planner is in local minimum: try a global plan and wait for the local planner to get us out of here
             self._robot.base.local_planner.cancelCurrentPlan()
-            if self._replan:
-                print "Trying to get a local plan"
-                operator_position = self._last_operator.pose.position
-                p = PositionConstraint()
-                p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x, operator_position.y, self._operator_radius)
-                plan = self._robot.base.global_planner.getPlan(pc):
-                if not plan or not self._robot.base.global_planner.checkPlan(plan)
-                    print "No global plan possible"
-                else:
-                    print "Found a global plan, sending it to the local planner"
-                    o = self._robot.base.local_planner.getCurrentOrientationConstraint();
-                    self._visualize_plan(plan)
-                    self._robot.base.local_planner.setPlan(plan, p, o)
+            if self._replan_allowed and self._replan_attempts < self._max_replan_attempts and (rospy.Time.now() - self._replan_time).to_sec() > self._replan_timeout:
+                self._replan()
 
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 self._robot.speech.speak("I am unable to recover you")
                 return "lost_operator"
+        else:
+            self._replan_attempts = 0
 
         # Check if we are already there (in operator radius and operator standing still long enough)
+        print "Checking if done following"
         if self._operator_distance < self._operator_radius and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
+            print "I'm close enough to the operator and he's been standing there for long enough"
             if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
-                # Check if we pass the start timeout
+                print "Checking if we pass the start timeout"
                 self._operator_id_des.writeable.write(self._operator_id)
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "stopped"
+        else:
+            print "apparently not"
 
         # No end criteria met
         return None
@@ -537,7 +552,10 @@ class FollowOperator(smach.State):
             if not self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout) and self._operator_distance < self._lookat_radius:
                 self._turn_towards_operator()
             else:
-                self._update_navigation()
+                if ((self._robot.base.get_location().header.stamp - self._time_started).to_sec() < self._start_timeout or not self._standing_still_for_x_seconds(2.0)) and (rospy.Time.now() - self._replan_time).to_sec() > self._replan_timeout:
+                    self._update_navigation()
+                else:
+                    print "Not updating navigation because standing still for 1 s or replan happened < 15 s ago"
 
             rospy.sleep(self._period) # Loop at 2Hz
 
