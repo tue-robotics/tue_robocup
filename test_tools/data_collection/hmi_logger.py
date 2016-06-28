@@ -17,8 +17,8 @@ import json
 
 # P = pyaudio.PyAudio()
 
-# RECORDING = False
-# RESULT = None
+RECORDING = False
+RESULT = None
 # STREAM = P.open(format=FORMAT,
 #                 channels=CHANNELS,
 #                 rate=RATE,
@@ -61,16 +61,18 @@ def start(msg):
         "result": RESULT.__str__()
     }
 
-    json_filename = "%s/%s.json" % (STORAGE_FOLDER, now.strftime("%Y-%m-%d-%H-%M-%d-%f"))
-    with open(json_filename, 'w') as outfile:
-        json.dump(data, outfile)
+    if RESULT.status.status == 3:
+        json_filename = "%s/%s.json" % (STORAGE_FOLDER, now.strftime("%Y-%m-%d-%H-%M-%d-%f"))
+        with open(json_filename, 'w') as outfile:
+            json.dump(data, outfile)
 
-    rospy.loginfo("Writing HMI log to %s" % json_filename)
+        rospy.loginfo("Writing HMI log to %s" % json_filename)
 
 
 def end(msg):
     global RECORDING, RESULT
     RESULT = msg
+    rospy.loginfo("End callback")
     RECORDING = False
 
 
