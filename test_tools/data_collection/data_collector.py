@@ -28,7 +28,7 @@ GLOBS = {
     "faces": ["/tmp/faces/*.jpeg"],
     "hmi": ["/tmp/hmi/*.json"],
     "speech": ["/tmp/*.wav"],
-    "mapping_data_and_plans": ["/tmp/*.bag"],
+    "mapping_data_plans_and_audio": ["/tmp/*.bag"],
     "objects" : [os.path.expanduser("~/ed/kinect/*/*.*"), os.path.expanduser("~/ed/kinect/*/*/*.*")]
 }
 
