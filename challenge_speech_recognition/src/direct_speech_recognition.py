@@ -22,7 +22,9 @@ class HearQuestion(smach.State):
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
         if not res:
-            self.robot.speech.speak("My ears are not working properly.")
+            self.robot.speech.speak(["I did not understand you!",
+                                     "Hmm, i don't know what you mean!",
+                                     "Please speak louder next time"])
 
         if res:
             if "question" in res.choices:
