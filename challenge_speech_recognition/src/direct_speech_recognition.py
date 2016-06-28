@@ -3,6 +3,7 @@ import roslib;
 import rospy
 import smach
 import sys
+import random
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import Designator, EdEntityDesignator
@@ -22,9 +23,9 @@ class HearQuestion(smach.State):
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
         if not res:
-            self.robot.speech.speak(["I did not understand you!",
+            self.robot.speech.speak(random.choice(["I did not understand you!",
                                      "Hmm, i don't know what you mean!",
-                                     "Please speak louder next time"])
+                                     "Please speak louder next time"]))
 
         if res:
             if "question" in res.choices:
