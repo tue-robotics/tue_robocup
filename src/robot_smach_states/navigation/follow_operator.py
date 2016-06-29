@@ -501,11 +501,14 @@ class FollowOperator(smach.State):
         print "Checking if done following"
         if self._operator_distance < self._operator_radius and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
             print "I'm close enough to the operator and he's been standing there for long enough"
+            print "Checking if we pass the start timeout"
             if (self._robot.base.get_location().header.stamp - self._time_started).to_sec() > self._start_timeout:
-                print "Checking if we pass the start timeout"
+                print "Passed"
                 self._operator_id_des.writeable.write(self._operator_id)
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "stopped"
+            else:
+                print "Not passed"
         else:
             print "apparently not"
 
