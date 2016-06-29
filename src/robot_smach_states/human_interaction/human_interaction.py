@@ -286,9 +286,9 @@ class AskContinue(smach.StateMachine):
                                     transitions={'spoken':'HEAR'})
 
             smach.StateMachine.add('HEAR',
-                                    Hear(self.robot, 'continue', self.timeout),
-                                    transitions={   'heard':'continue',
-                                                    'not_heard':'no_response'})
+                                    HearOptions(self.robot, ['continue'], self.timeout),
+                                    transitions={   'continue':'continue',
+                                                    'no_result':'no_response'})
 
 ##########################################################################################################################################
 
