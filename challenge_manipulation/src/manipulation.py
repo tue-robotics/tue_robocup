@@ -48,7 +48,10 @@ import pdf
 USE_SLAM = True  # Indicates whether or not to use SLAM for localization
 
 challenge_knowledge = load_knowledge('challenge_manipulation')
-CABINET = challenge_knowledge.cabinet
+if USE_SLAM:
+    CABINET = challenge_knowledge.cabinet_slam
+else:
+    CABINET = challenge_knowledge.cabinet_amcl
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
@@ -369,7 +372,6 @@ class SegmentShelf(smach.State):
 
     def execute(self, userdata=None):
         self.robot.ed.update_kinect("{} {}".format(self._area_id, self._entity_id))
-        import ipdb;ipdb.set_trace()
         rospy.sleep(rospy.Duration(0.5))  # Is this necessary???
 
         return 'done'
@@ -557,13 +559,28 @@ def setup_statemachine(robot):
 
     with sm:
         smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'INIT_WM',
-                                                'abort':'Aborted'})
+                               states.Initialize(robot),
+                               transitions={'initialized': 'INIT_WM',
+                                            'abort': 'Aborted'})
 
         smach.StateMachine.add("INIT_WM",
                                InitializeWorldModel(robot),
-                               transitions={'done'                      :'AWAIT_START'})
+                               transitions={'done': 'AWAIT_START'})
+
+        # smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
+        #                        states.Say(robot, ["Hi there, I will now wait until you remove the cup",
+        #                                           "I'm waiting for you to remove the cup"], block=False),
+        #                        transitions={"spoken": "WAIT_FOR_DOOR"})
+        #
+        # smach.StateMachine.add("WAIT_FOR_DOOR",
+        #                        states.WaitForDoorOpen(robot, timeout=10),
+        #                        transitions={"closed": "DOOR_CLOSED",
+        #                                     "open": "AWAIT_START"})
+        #
+        # smach.StateMachine.add("DOOR_CLOSED",
+        #                        states.Say(robot, ["I am waiting for you to remove the cup",
+        #                                           "I'd start, if you remove the cup from my laser"]),
+        #                        transitions={"spoken": "WAIT_FOR_DOOR"})
 
         if USE_SLAM:
             drive_state = "RESET_ED_SLAM"
