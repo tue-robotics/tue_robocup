@@ -18,6 +18,16 @@ target_door_opening_start="door_opening_start"
 target_door_opening_dest="door_opening_dest"
 target_door_radius = 0.1
 
+target_door_1 = "navigation_door_1"
+target_door_opening_start_1="door_opening_start_1"
+target_door_opening_dest_1="door_opening_dest_1"
+target_door_radius_1 = 0.1
+
+target_door_2 = "navigation_door_2"
+target_door_opening_start_2="door_opening_start_2"
+target_door_opening_dest_2="door_opening_dest_2"
+target_door_radius_2 = 0.1
+
 target4 = "navigation_target4"
 target4_radius1 = 0.1
 target4_radius2 = 0.7

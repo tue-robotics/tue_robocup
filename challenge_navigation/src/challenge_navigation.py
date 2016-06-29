@@ -67,6 +67,41 @@ class Turn(smach.State):
 
         return "turned"
 
+class DetermineDoor(smach.State):
+    def __init__(self, robot, door_id_designator):
+        smach.State.__init__(self, outcomes=["door_found","preempted"])
+        self._robot = robot
+        self._door_id_designator = door_id_designator
+
+    def execute(selfself, userdata):
+        door_1_position = self._robot.ed.get_entity(id=challenge_knowledge.target_door_1)
+        door_2_position = self._robot.ed.get_entity(id=challenge_knowledge.target_door_2)
+
+        door_1_constraint = PositionConstraint()
+        door_1_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (door_1_position.x, door_1_position.y, 0.7)
+
+        door_2_constraint = PositionConstraint()
+        door_2_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (door_2_position.x, door_2_position.y, 0.7)
+
+        # TODO: make sure that waypoints exist!!!
+        # TODO: make sure door id designator is writable
+
+        while True:
+            plan1 = self._robot.base.global_planner.getPlan(door_1_constraint)
+            plan2 = self._robot.base.global_planner.getPlan(door_2_constraint)
+            if len(plan1) == 0:
+                self._door_id_designator.writeable.write(challenge_knowledge.door_1_id)
+                return "door_found"
+            elif len(plan2) == 0:
+                self._door_id_designator.writeable.write(challenge_knowledge.door_2_id)
+                return "door_found"
+
+            if self.preempt_requested():
+                return 'preempted'
+
+            time.sleep(1)
+
+
 class DetermineObject(smach.State):
     def __init__(self, robot, entity_id, obstacle_radius):
         smach.State.__init__(self, outcomes=["done", "timeout"])
@@ -309,7 +344,16 @@ def setup_statemachine(robot):
         smach.StateMachine.add( 'TURN', Turn(robot, challenge_knowledge.rotation), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
         smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True, look_at_standing_person=True), transitions={ 'spoken' : 'FOLLOW_OPERATOR'})
 
-        smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot, replan=True), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
+        # TODO: Fix concurrence
+        cc = smach.Concurrence(['succeeded', 'done'],
+                         default_outcome='done',
+                         child_termination_cb=lambda so: True,
+                         outcome_map={'succeeded': {'FOLLOW_OPERATOR': 'stopped', 'DETERMINE_DOOR': 'preempted'}})
+        with cc:
+            smach.Concurrence.add('FOLLOW_OPERATOR', states.FollowOperator(robot, replan=True))
+            smach.Concurrence.add('DETERMINE_DOOR', DetermineDoor(robot))
+
+        # smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot, replan=True), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
         smach.StateMachine.add( 'SAY_SHOULD_I_RETURN', states.Say(robot, "Should I return to target 3?", look_at_standing_person=True), transitions={ 'spoken' : 'HEAR_SHOULD_I_RETURN'})
         smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SAY_GOBACK_ARENA", "no" : "SAY_STAND_IN_FRONT"})
 
