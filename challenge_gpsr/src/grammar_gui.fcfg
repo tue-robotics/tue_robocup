@@ -6,7 +6,15 @@ C[{A}] -> VP[A]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-SMALL_OBJECT[object] -> apple | banana
+SMALL_OBJECT[object] -> choco syrup | apple | pretzels | plate | biscuits | coke | baby sweets | shampoo | paprika | sponge | cloth | beer | soap | pumper nickel | tray | tea | bowl | chips | egg | pringles | coconut milk
+
+ROOM[room] -> living room | kitchen | dining room | corridor | bedroom
+
+LOC[loc] -> bed | desk | bedside | bar | sink | cupboard | sideshelf | tv stand | dining table | bookcase | living shelf | living table | drawer | cabinet
+
+#NAME[name] -> emma | taylor | sophia | isabella | ava | robin | emily | angel | madison | charlotte | noah | liam | mason | jacob | william | ethan | michael | alexander | james | daniel
+
+NAME[name] -> emma | taylor
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
