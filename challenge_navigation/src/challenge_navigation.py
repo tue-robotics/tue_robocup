@@ -140,9 +140,9 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
                                 states.StartChallengeRobust(robot, challenge_knowledge.starting_point, use_entry_points = True),
-                                transitions={   "Done"              :   "SAY_GOTO_TARGET1",
-                                                "Aborted"           :   "SAY_GOTO_TARGET1",
-                                                "Failed"            :   "SAY_GOTO_TARGET1"})
+                                transitions={   "Done"              :   "SAY_GOTO_TARGET2",
+                                                "Aborted"           :   "SAY_GOTO_TARGET2",
+                                                "Failed"            :   "SAY_GOTO_TARGET2"})
 
         smach.StateMachine.add( 'SAY_GOTO_TARGET1',
                                 states.Say(robot, ["I will go to my first target now",
@@ -167,7 +167,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Reached target 1",
                                                     "I have arrived at target 1",
                                                     "I am now at target 1"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_TARGET2'})
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET3'})
 
         smach.StateMachine.add('RESET_ED_TARGET1',
                                 states.ResetED(robot),
@@ -188,7 +188,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["I am not able to reach target 1",
                                                     "I cannot reach target 1",
                                                     "Target 1 is unreachable"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_TARGET2'})
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET3'})
 
         ######################################################################################################################################################
         #
@@ -230,7 +230,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Reached target 2",
                                                     "I have arrived at target 2",
                                                     "I am now at target 2"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_TARGET3'})
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET1'})
 
         smach.StateMachine.add('RESET_ED_TARGET2',
                                 states.ResetED(robot),
@@ -250,7 +250,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["I am unable to reach target 2",
                                                     "I cannot reach target 2",
                                                     "Target 2 is unreachable"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_TARGET3'})
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET1'})
 
         ######################################################################################################################################################
         #
@@ -374,13 +374,13 @@ def setup_statemachine(robot):
                                             'failed': 'TIMEOUT_ARENA_DOOR_OPENING'})
 
         smach.StateMachine.add('SAY_OPEN_DOOR',
-                               states.say(robot, ["I am going to open the door",
+                               states.Say(robot, ["I am going to open the door",
                                                   "Going to open the door of the arena",
                                                   "Door, open sesame"], block=True),
                                transitions={'spoken': 'OPEN_DOOR'})
 
         smach.StateMachine.add('SAY_OPEN_DOOR_AGAIN',
-                               states.say(robot, ["I failed to open the door. I will try it again",
+                               states.Say(robot, ["I failed to open the door. I will try it again",
                                                   "Let me try again to open the door"], block=True),
                                transitions={'spoken': 'OPEN_DOOR'})
 
@@ -389,7 +389,7 @@ def setup_statemachine(robot):
                                transitions={'not_yet': 'SAY_OPEN_DOOR_AGAIN', 'time_out': 'SAY_OPEN_DOOR_FAILED'})
 
         smach.StateMachine.add('SAY_OPEN_DOOR_FAILED',
-                               states.say(robot, ["I was not able to open the door. I am done with this challange",
+                               states.Say(robot, ["I was not able to open the door. I am done with this challange",
                                                   "I was not able to open the door. I am done with this challange"], block=True),
                                transitions={'spoken': 'Done'})
 

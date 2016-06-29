@@ -26,7 +26,7 @@ exit2 = "navigation_exit2"
 exit3 = "navigation_exit3"
 exit4 = "navigation_exit4"
 
-starting_point = "initial_pose"
+starting_point = "initial_pose_door_c"
 rotation = 0
 
 time_out_seconds = 60.0
