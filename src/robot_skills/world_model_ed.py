@@ -440,7 +440,11 @@ class ED:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def learn_person(self, name):
-        res = self._learn_person_srv(person_name=name)
+        try:
+            res = self._learn_person_srv(person_name=name)
+        except rospy.ServiceException as e:
+            rospy.logerr(e)
+            return False
         if res.error_msg:
             rospy.logerr("Learn person failed: %s" % res.error_msg)
             return False
@@ -449,7 +453,11 @@ class ED:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def detect_persons(self, external_api_request=False):
-        res = self._recognize_person_srv(external_api_request=external_api_request)
+        try:
+            res = self._recognize_person_srv(external_api_request=external_api_request)
+        except rospy.ServiceException as e:
+            rospy.logerr(e)
+            return False
         if res.error_msg:
             rospy.logerr("Detect persons failed: %s" % res.error_msg)
             return None
