@@ -524,7 +524,6 @@ class FollowOperator(smach.State):
                 self._operator_id = operator_id
 
         self._robot.head.close()
-        self._robot.head.wait_for_motion_done()
 
         if self._robot.robot_name == "amigo":
             self._robot.torso.send_goal('reset', timeout=4.0)
