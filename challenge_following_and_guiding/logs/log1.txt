@@ -1,0 +1,350 @@
+[INFO] [WallTime: 1467188558.860747] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1467188558.864103] State machine transitioning 'INITIALIZE':'initialized'-->'STORE_ROBOCUP_ARENA'
+{"entities":[{"id" : "robocup_arena", "type": "waypoint", "pose": { "x": -0.010880, "y": 0.018333, "z": 0.000000, "X": 0.000000, "Y": 0.000000, "Z": -0.001551 }}]}
+[INFO] [WallTime: 1467188558.871769] State machine transitioning 'STORE_ROBOCUP_ARENA':'done'-->'HEAD_STRAIGHT'
+[INFO] [WallTime: 1467188558.872811] State machine transitioning 'HEAD_STRAIGHT':'done'-->'SAY_INTRO'
+[INFO] [WallTime: 1467188558.873558] 'Hi, Guide me out of the arena please.'
+[INFO] [WallTime: 1467188561.323162] State machine transitioning 'SAY_INTRO':'spoken'-->'FOLLOW_INITIAL'
+[INFO] [WallTime: 1467188561.324191] 'Should I follow you?'
+[INFO] [WallTime: 1467188562.549717] spec: (yes|no)
+[INFO] [WallTime: 1467188562.550503] Example: 'no'
+[INFO] [WallTime: 1467188565.255076] Result: result: yes
+choices: {}
+[INFO] [WallTime: 1467188565.255293] Robot heard 'yes'
+[INFO] [WallTime: 1467188565.273004] 'Please look at me while I learn to recognize you.'
+[INFO] [WallTime: 1467188568.076961] 'Just in case...'
+We have a new operator: fbf7451d38e13c1e99c195c5cd9f9848-laser
+[INFO] [WallTime: 1467188578.978018] 'Gotcha! I will follow you!'
+Checking end criteria
+Operator is at 0.954946 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.000054 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188579.018721] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b47b48>
+Checking end criteria
+Operator is at 0.992573 meters distance
+Robot dit not move for x seconds: 0.521921
+Checking if done following
+Operator is standing still for 0.522047 seconds
+apparently not
+Operator is standing still for 0.522131 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188579.536487] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b47200>
+Checking end criteria
+Operator is at 0.941119 meters distance
+Robot dit not move for x seconds: 1.039700
+Checking if done following
+Operator is standing still for 1.039954 seconds
+apparently not
+Operator is standing still for 1.040004 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188580.054133] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b47d40>
+Checking end criteria
+Operator is at 0.920979 meters distance
+Robot dit not move for x seconds: 1.561425
+Checking if done following
+apparently not
+Operator is standing still for 0.000038 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188580.575974] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b47f80>
+Checking end criteria
+Operator is at 0.778932 meters distance
+Robot dit not move for x seconds: 2.080145
+Checking if done following
+apparently not
+Operator is standing still for 0.000036 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188581.094279] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b4d1b8>
+Checking end criteria
+Operator is at 0.673529 meters distance
+Robot dit not move for x seconds: 2.600960
+Checking if done following
+Operator is standing still for 0.521008 seconds
+apparently not
+Operator is standing still for 0.521062 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188581.615364] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b4d128>
+Checking end criteria
+Operator is at 0.673323 meters distance
+Robot dit not move for x seconds: 3.113762
+Checking if done following
+Operator is standing still for 1.033706 seconds
+apparently not
+Operator is standing still for 1.033750 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188582.128066] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b47878>
+Checking end criteria
+Operator is at 0.679295 meters distance
+Robot dit not move for x seconds: 3.635801
+Checking if done following
+Operator is standing still for 1.556052 seconds
+apparently not
+Operator is standing still for 1.556100 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188582.650477] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b4d1b8>
+Checking end criteria
+Operator is at 0.691025 meters distance
+Robot dit not move for x seconds: 4.154681
+Checking if done following
+Operator is standing still for 2.075313 seconds
+apparently not
+Operator is standing still for 2.075365 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188583.174643] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b4d5f0>
+Checking end criteria
+Operator is at 0.693918 meters distance
+Robot dit not move for x seconds: 4.677527
+Checking if done following
+Operator is standing still for 2.597652 seconds
+apparently not
+Operator is standing still for 2.597704 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188583.692024] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b4d830>
+Checking end criteria
+Operator is at 0.688449 meters distance
+Checking if done following
+Operator is standing still for 3.119515 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Operator is standing still for 3.121371 seconds
+[INFO] [WallTime: 1467188584.220744] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b4d5a8>
+[ERROR] [WallTime: 1467188584.406192] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467188584.728372] 'Stop! I lost you! Until I find you again, please wait there.'
+Checking end criteria
+Operator is at 0.684913 meters distance
+Robot dit not move for x seconds: 0.587915
+Robot dit not move for x seconds: 0.590691
+Checking if done following
+apparently not
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188584.805032] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34b47e60>
+Checking end criteria
+Operator is at 0.683707 meters distance
+Robot dit not move for x seconds: 1.100839
+lost operator and within lookat radius and standing still for 1 second
+Trying to recover the operator
+[INFO] [WallTime: 1467188585.312682] 'operator, please look at me while I am looking for you'
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+name: 
+score: -1000000000.000000
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+name: operator
+score: -1.443252
+Trying to detect faces...
+Trying to detect faces...
+name: operator
+score: -0.232612
+Trying to find closest laser entity to face
+best detection frame id: /map
+entities sorted closest to robot =  [id: fc921d615e39f14b796a969006c62841-laser
+type: ''
+types: []
+existence_probability: 1.0
+last_update_time: 
+  secs: 1467188608
+  nsecs: 32656431
+creation_time: 
+  secs: 0
+  nsecs: 0
+has_shape: False
+has_pose: True
+pose: 
+  position: 
+    x: 1.29441690445
+    y: -0.640512228012
+    z: 1.00188422203
+  orientation: 
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+data: None
+flags: ['possible_human']
+convex_hull: 
+  - 
+    x: 0.122044801712
+    y: 0.227484434843
+    z: 0.0
+  - 
+    x: 0.0971970558167
+    y: 0.227761685848
+    z: 0.0
+  - 
+    x: 0.0744694471359
+    y: 0.221089720726
+    z: 0.0
+  - 
+    x: 0.0186256170273
+    y: 0.18000638485
+    z: 0.0
+  - 
+    x: -0.00666034221649
+    y: 0.150124311447
+    z: 0.0
+  - 
+    x: -0.0513564348221
+    y: 0.0836048722267
+    z: 0.0
+  - 
+    x: -0.0736216306686
+    y: 0.0345283150673
+    z: 0.0
+  - 
+    x: -0.0928528308868
+    y: -0.0298938751221
+    z: 0.0
+  - 
+    x: -0.104788541794
+    y: -0.0718252062798
+    z: 0.0
+  - 
+    x: -0.106116771698
+    y: -0.0780946612358
+    z: 0.0
+  - 
+    x: -0.122044682503
+    y: -0.192734003067
+    z: 0.0
+  - 
+    x: -0.114126205444
+    y: -0.205902099609
+    z: 0.0
+  - 
+    x: -0.0940152406693
+    y: -0.227761626244
+    z: 0.0
+z_min: -0.000419020652771
+z_max: 0.000419020652771]
+Found one!
+Recovered operator id: fc921d615e39f14b796a969006c62841-laser
+[INFO] [WallTime: 1467188608.134208] 'There you are! Go ahead, I'll follow you again'
+Robot dit not move for x seconds: 23.946777
+Trying to recover the operator
+[INFO] [WallTime: 1467188608.158773] 'operator, please look at me while I am looking for you'
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+name: operator
+score: -1.034632
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+name: 
+score: -1000000000.000000
+Trying to detect faces...
+Trying to detect faces...
+Trying to detect faces...
+name: operator
+score: -0.230772
+Trying to find closest laser entity to face
+best detection frame id: /map
+entities sorted closest to robot =  [id: fc921d615e39f14b796a969006c62841-laser
+type: ''
+types: []
+existence_probability: 1.0
+last_update_time: 
+  secs: 1467188631
+  nsecs: 407299280
+creation_time: 
+  secs: 0
+  nsecs: 0
+has_shape: False
+has_pose: True
+pose: 
+  position: 
+    x: 1.2338886261
+    y: -0.646291732788
+    z: 1.00201487541
+  orientation: 
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+data: None
+flags: ['possible_human']
+convex_hull: 
+  - 
+    x: 0.120079159737
+    y: 0.248503059149
+    z: 0.0
+  - 
+    x: 0.0954402685165
+    y: 0.24291831255
+    z: 0.0
+  - 
+    x: 0.0737444162369
+    y: 0.230429261923
+    z: 0.0
+  - 
+    x: 0.0290641784668
+    y: 0.201000481844
+    z: 0.0
+  - 
+    x: 0.0242500305176
+    y: 0.19640854001
+    z: 0.0
+  - 
+    x: 0.006711602211
+    y: 0.177668362856
+    z: 0.0
+  - 
+    x: -0.0471788644791
+    y: 0.105207562447
+    z: 0.0
+  - 
+    x: -0.0671935081482
+    y: 0.0698737502098
+    z: 0.0
+  - 
+    x: -0.107626318932
+    y: -0.0337511301041
+    z: 0.0
+  - 
+    x: -0.119465827942
+    y: -0.154176712036
+    z: 0.0
+  - 
+    x: -0.120079040527
+    y: -0.168755471706
+    z: 0.0
+  - 
+    x: -0.115226626396
+    y: -0.187539041042
+    z: 0.0
+  - 
+    x: -0.110885500908
+    y: -0.198478460312
+    z: 0.0
+  - 
+    x: -0.0546418428421
+    y: -0.248503088951
+    z: 0.0
+z_min: -0.000412464141846
+z_max: 0.000412464141846]
+Found one!
+Recovered operator id: fc921d615e39f14b796a969006c62841-laser
+[INFO] [WallTime: 1467188631.483820] 'There you are! Go ahead, I'll follow you again'
+Checking if done following
+apparently not
+Operator is standing still for 0.000064 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467188631.506313] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f3c34c837a0>
+Checking end criteria
+Operator is at 1.440940 meters distance
+Robot dit not move for x seconds: 47.810489
+Trying to recover the operator
+[INFO] [WallTime: 1467188632.023070] 'operator, please look at me while I am looking for you'
+Trying to detect faces...
+name: operator
+score: -1.268420
+name: operator
+score: -0.319348
+Trying to find closest laser entity to face
+best detection frame id: /map
