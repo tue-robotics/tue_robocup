@@ -16,10 +16,11 @@ place_shelf = "shelf2"
 room = "livingroom"  # ToDo: update!!!
 
 # Object types that can be recognized
-object_types = ['beer', 'bifrutas', 'coffee_pads', 'coke',
-                'deodorant', 'fanta', 'ice_tea', 'mentos',
-                'sprite', 'tea', 'teddy_bear', 'water',
-                'xylit24_spearmint', 'xylit24_white']
+object_types = []  # ToDo
+# object_types = ['beer', 'bifrutas', 'coffee_pads', 'coke',
+#                 'deodorant', 'fanta', 'ice_tea', 'mentos',
+#                 'sprite', 'tea', 'teddy_bear', 'water',
+#                 'xylit24_spearmint', 'xylit24_white']
 
 # Minimum and maximum height from which to grab an object
 min_grasp_height = 0.0  # ToDo
