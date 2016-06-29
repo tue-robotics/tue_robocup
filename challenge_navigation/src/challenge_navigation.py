@@ -145,9 +145,9 @@ def setup_statemachine(robot):
                                                 "Failed"            :   "SAY_GOTO_TARGET2"})
 
         smach.StateMachine.add( 'SAY_GOTO_TARGET1',
-                                states.Say(robot, ["I will go to my first target now",
-                                                    "I will now go to my first target",
-                                                    "Lets go to my first target",
+                                states.Say(robot, ["I will go to target 1 now",
+                                                    "I will now go to target 1",
+                                                    "Lets go to target 1",
                                                     "Going to target 1"], block=False),
                                 transitions={   'spoken'            :   'GOTO_TARGET1'})
 
