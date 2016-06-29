@@ -62,8 +62,8 @@ def is_place_location(location):
 
 def get_locations(room=None, pick_location=None, place_location=None):
     return [loc["name"] for loc in locations if (room is None or loc["room"] == room) and
-            (pick_location is None or is_pick_location(loc["name"])) and
-            (place_location is None or is_place_location(loc["name"]))]
+            (pick_location is None or pick_location == is_pick_location(loc["name"])) and
+            (place_location is None or place_location == is_place_location(loc["name"]))]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
