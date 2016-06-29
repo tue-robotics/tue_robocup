@@ -1,0 +1,41 @@
+[INFO] [WallTime: 1467197447.275506] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1467197447.278680] State machine transitioning 'INITIALIZE':'initialized'-->'STORE_ROBOCUP_ARENA'
+{"entities":[{"id" : "robocup_arena", "type": "waypoint", "pose": { "x": -0.144700, "y": 0.488813, "z": 0.000000, "X": 0.000000, "Y": 0.000000, "Z": -0.048875 }}]}
+[INFO] [WallTime: 1467197447.284512] State machine transitioning 'STORE_ROBOCUP_ARENA':'done'-->'HEAD_STRAIGHT'
+[INFO] [WallTime: 1467197447.285106] State machine transitioning 'HEAD_STRAIGHT':'done'-->'SAY_INTRO'
+[INFO] [WallTime: 1467197447.285863] 'Hi, Guide me out of the arena please.'
+[INFO] [WallTime: 1467197449.709902] State machine transitioning 'SAY_INTRO':'spoken'-->'FOLLOW_INITIAL'
+[INFO] [WallTime: 1467197449.711082] 'Should I follow you?'
+[INFO] [WallTime: 1467197450.835487] spec: <choice>
+[INFO] [WallTime: 1467197450.836160] Example: 'yes'
+[INFO] [WallTime: 1467197453.805678] Result: result: yes
+choices: {'choice': 'yes'}
+[INFO] [WallTime: 1467197453.806168] Robot heard 'yes'
+[INFO] [WallTime: 1467197453.813952] 'Please look at me while I learn to recognize you.'
+[INFO] [WallTime: 1467197456.620226] 'Just in case...'
+We have a new operator: 80128d83ffeeedc8ea286aae8c73d295-laser
+[INFO] [WallTime: 1467197467.280949] 'Gotcha! I will follow you!'
+[ERROR] [WallTime: 1467197467.322054] InvalidUserCodeError: Could not execute state 'FOLLOW_INITIAL' of type '<robot_smach_states.navigation.follow_operator.FollowOperator object at 0x7fa986f729d0>': Traceback (most recent call last):
+  File "/home/amigo/ros/indigo/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 540, in execute
+    self._track_operator()
+  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 229, in _track_operator
+    operator_position = self._last_operator.pose.position
+AttributeError: 'FollowOperator' object has no attribute '_last_operator'
+
+An exception occured
+[ERROR] [WallTime: 1467197467.322344] Error: /home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/util/startup.py,79,startup,outcome = executioner.execute()
+['/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/util/startup.py', 79, 'startup', 'outcome = executioner.execute()', InvalidUserCodeError('Could not execute state \'FOLLOW_INITIAL\' of type \'<robot_smach_states.navigation.follow_operator.FollowOperator object at 0x7fa986f729d0>\': Traceback (most recent call last):\n  File "/home/amigo/ros/indigo/system/src/smach/src/smach/state_machine.py", line 247, in _update_once\n    self._remappings[self._current_label]))\n  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 540, in execute\n    self._track_operator()\n  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 229, in _track_operator\n    operator_position = self._last_operator.pose.position\nAttributeError: \'FollowOperator\' object has no attribute \'_last_operator\'\n',)]
+[INFO] [WallTime: 1467197467.322657] Torso cancelling all goals on close
+[INFO] [WallTime: 1467197467.322800] left arm cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1467197467.323019] right arm cancelling all goals on all arm-related ACs on close
+[sergio/robcup_recorder-10] killing on exit
+[sergio/record_throttle_base_laser-9] killing on exit
+[sergio/record_throttle_odom-8] killing on exit
+[sergio/record_relay_body_plan-7] killing on exit
+[sergio/record_relay_base_plan-6] killing on exit
+[sergio/record_throttle_gmapping_map-5] killing on exit
+[sergio/record_throttle_ed_map-4] killing on exit
+[sergio/record_throttle_tf-3] killing on exit
+[sergio/hmi/hmi_logger-1] killing on exit
