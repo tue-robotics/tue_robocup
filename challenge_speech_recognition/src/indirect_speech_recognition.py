@@ -52,7 +52,7 @@ class Turn(smach.State):
 
         operator = None
         while not operator:
-            operator = self.robot.ed.get_closest_entity(self, radius=1.7,
+            operator = self.robot.ed.get_closest_entity(self, radius=1.9,
                                                         center_point=self.robot.base.get_location().pose.position)
             print operator
             if not operator:
@@ -90,7 +90,7 @@ class Turn(smach.State):
             vth = 0.5
             th = 3.1415
             self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
-        
+
         self._turn_to_closest_entity()
 
         self.robot.speech.speak(random.choice(["There you are!",
