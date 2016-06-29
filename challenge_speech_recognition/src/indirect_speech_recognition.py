@@ -85,7 +85,9 @@ class Turn(smach.State):
         print "Last talker id: " + self.robot.hmi.last_talker_id
 
         # Calculate params
-        if "dragonfly_speech_recognition" not in self.robot.hmi.last_talker_id:
+        if "dragonfly_speech_recognition" in self.robot.hmi.last_talker_id:
+            th = 0
+        else:
             th = 3.1415
 
         vth = 0.5
