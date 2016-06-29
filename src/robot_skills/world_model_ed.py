@@ -434,7 +434,10 @@ class ED:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def clear_persons(self):
-        res = self._clear_persons_srv()
+        try:
+            res = self._clear_persons_srv()
+        except rospy.ServiceException, e:
+            rospy.logerr("Could not Reset Persons ED: {0}".format(e))
         return True
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
