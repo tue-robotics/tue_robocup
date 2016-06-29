@@ -39,30 +39,4 @@ grab_locations = list(set([o["name"] for o in locations if o["manipulation"] == 
 put_locations = list(set([o["name"] for o in locations if o["manipulation"] != "no"]))
 
 if __name__ == "__main__":
-    print "\n-----------------------------------------------------------------------------"
-    for obj in get_objects():
-        cat = get_object_category(obj)
-        print "object '{}'".format(obj)
-        print "    category: '{}'".format(cat)
-        (location, area_name) = get_object_category_location(cat)
-        print "    found '{} {}'".format(area_name, location)
-
-    print "\n-----------------------------------------------------------------------------"
-    for loc in get_locations():
-        print "location '{}', room: '{}'".format(loc, get_room(loc))
-
-    print "\n-----------------------------------------------------------------------------"
-    print "Pick locations:"
-    for loc in get_locations(pick_location=True):
-        print "    {}".format(loc)
-
-    print "\n-----------------------------------------------------------------------------"
-    print "Place locations:"
-    for loc in get_locations(place_location=True):
-        print "    {}".format(loc)
-
-
-    print "\n-----------------------------------------------------------------------------"
-    print "None-manipulation locations:"
-    for loc in get_locations(pick_location=False, place_location=False):
-        print "    {}".format(loc)
+    test_knowledge()
