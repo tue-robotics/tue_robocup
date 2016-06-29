@@ -1,5 +1,5 @@
 # Entity where the shelves are part of
-cabinet = "bookcase"  # ToDo: update
+cabinet = "bookcase_noback1"  # ToDo: update
 
 # Shelves where objects might be
 # object_shelves = ["bookcase/shelf2", "bookcase/shelf3"]
@@ -16,7 +16,7 @@ place_shelf = "shelf2"
 room = "livingroom"  # ToDo: update!!!
 
 # Object types that can be recognized
-object_types = []  # ToDo
+object_types = ["coke"]  # ToDo
 # object_types = ['beer', 'bifrutas', 'coffee_pads', 'coke',
 #                 'deodorant', 'fanta', 'ice_tea', 'mentos',
 #                 'sprite', 'tea', 'teddy_bear', 'water',
