@@ -1,5 +1,5 @@
 # Entity where the shelves are part of
-cabinet = "bookcase"  # ToDo: update
+cabinet = "bookcase_noback1"  # ToDo: update
 
 # Shelves where objects might be
 # object_shelves = ["bookcase/shelf2", "bookcase/shelf3"]

@@ -349,6 +349,30 @@ class RemoveSegmentedEntities(smach.State):
 
         return "done"
 
+# ----------------------------------------------------------------------------------------------------
+
+
+class SegmentShelf(smach.State):
+    """ Segments the entities on a specific shelf. This assumes that the robot is already looking in the right
+    direction. """
+    def __init__(self, robot, entity_id, area_id):
+        """
+        :param robot: robot object
+        :param entity_id: string with the id of the entity
+        :param area_id: string with the id of the area
+        """
+        smach.State.__init__(self, outcomes=['done'])
+
+        self.robot = robot
+        self._entity_id = entity_id
+        self._area_id = area_id
+
+    def execute(self, userdata=None):
+        self.robot.ed.update_kinect("{} {}".format(self._area_id, self._entity_id))
+        import ipdb;ipdb.set_trace()
+        rospy.sleep(rospy.Duration(0.5))  # Is this necessary???
+
+        return 'done'
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -430,7 +454,11 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
                                      states.LookAtArea(robot, self.cabinet, area=PICK_SHELF),
-                                     transitions={  'succeeded'         :'LOCK_ITEM'})
+                                     transitions={  'succeeded'         :'SEGMENT_SHELF'})
+
+            smach.StateMachine.add("SEGMENT_SHELF",
+                                   SegmentShelf(robot, entity_id=CABINET, area_id=PICK_SHELF),
+                                   transitions={'done': 'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
