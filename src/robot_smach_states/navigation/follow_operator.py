@@ -51,6 +51,7 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_operator_pose_stamped = None
 
+        self._replan_active = False
         self._replan_allowed = replan
         self._replan_timeout = 15 # seconds before another replan is allowed
         self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
@@ -205,6 +206,9 @@ class FollowOperator(smach.State):
             self._operator = None
 
         if self._operator:
+            if (rospy.Time.now() - self._operator.last_update_time).to_sec() > self._period:
+                self._robot.speech.speak("Not so fast!")
+
             # If the operator is still tracked, it is also the last_operator
             self._last_operator = self._operator
 
@@ -347,32 +351,21 @@ class FollowOperator(smach.State):
         start_time = rospy.Time.now()
         recovered_operator = None
 
-        head_goals = [
-            msg_constructors.PointStamped(x=2.0,
-                                          y=0.0,
-                                          z=1.7,
-                                          frame_id="/%s/base_link" % self._robot.robot_name),
-            msg_constructors.PointStamped(x=1.0,
-                                          y=1.0,
-                                          z=1.7,
-                                          frame_id="/%s/base_link" % self._robot.robot_name),
-            msg_constructors.PointStamped(x=0.4,
-                                          y=2.0,
-                                          z=1.7,
-                                          frame_id="/%s/base_link" % self._robot.robot_name),
-            msg_constructors.PointStamped(x=2.0,
-                                          y=0.0,
-                                          z=1.7,
-                                          frame_id="/%s/base_link" % self._robot.robot_name),
-            msg_constructors.PointStamped(x=1.0,
-                                          y=-1.0,
-                                          z=1.7,
-                                          frame_id="/%s/base_link" % self._robot.robot_name),
-            msg_constructors.PointStamped(x=0.4,
-                                          y=-2.0,
-                                          z=1.7,
-                                          frame_id="/%s/base_link" % self._robot.robot_name)
-            ]
+        look_distance = 2.0
+        look_angles = [0.0,
+                       math.pi/6,
+                       math.pi/4,
+                       math.pi/2.3,
+                       0.0,
+                       -math.pi/6,
+                       -math.pi/4,
+                       -math.pi/2.3]
+        head_goals = [msg_constructors.PointStamped(x=look_distance*math.cos(angle),
+                                                    y=look_distance*math.sin(angle),
+                                                    z=1.7,
+                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+                      for angle in look_angles
+                      ]
 
         i = 0
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
@@ -459,18 +452,28 @@ class FollowOperator(smach.State):
         if not plan or not self._robot.base.global_planner.checkPlan(plan):
             print "No global plan possible"
         else:
+            self._robot.speech.speak("Just a sec, let me try this way.")
             print "Found a global plan, sending it to local planner"
             self._replan_time = rospy.Time.now()
+            self._replan_active = True
             o = self._robot.base.local_planner.getCurrentOrientationConstraint();
             self._visualize_plan(plan)
             self._robot.base.local_planner.setPlan(plan, p, o)
+            self._breadcrumbs = []
 
     def _check_end_criteria(self):
         # Check if we still have an operator
         lost_operator = self._operator is None
 
-        # Try to recover operator if lost and reached last seen operator position
         print "Checking end criteria"
+
+        if self._replan_active:
+            if self._robot.base.local_planner.getStatus() == "arrived":
+                self._replan_active = False
+                if not self._recover_operator():
+                    return "lost_operator"
+
+        # Try to recover operator if lost and reached last seen operator position
         print "Operator is at %f meters distance" % self._operator_distance
         if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(1.0): # TODO: HACK! Magic number!
             print "lost operator and within lookat radius and standing still for 1 second"
@@ -520,6 +523,7 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_operator_pose_stamped = None
         self._breadcrumbs = []
+        old_no_breadcrumbs = len(self._breadcrumbs)
 
         if self._operator_id_des:
             operator_id = self._operator_id_des.resolve()
@@ -554,10 +558,27 @@ class FollowOperator(smach.State):
             if not self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout) and self._operator_distance < self._lookat_radius:
                 self._turn_towards_operator()
             else:
-                if ((self._robot.base.get_location().header.stamp - self._time_started).to_sec() < self._start_timeout or not self._standing_still_for_x_seconds(2.0)) and (rospy.Time.now() - self._replan_time).to_sec() > self._replan_timeout:
-                    self._update_navigation()
+                # Only update navigation if there is something to update: operator must have moved
+                if len(self._breadcrumbs) > old_no_breadcrumbs:
+                    if self._replan:
+                        # If replanned: if recently replanned, only update navigation if not standing still for too long
+                        # (to make sure that local planner reaches align state) or just started following
+                        print "Replan=True, so check if we replanned..."
+                        if self._replan_time.to_sec() > self._time_started.to_sec():
+                            print "We did replan at least once"
+                            if self._replan_active:
+                                print "and this plan is still active, so I'll give the global planner a chance"
+                            else:
+                                print "but we reached that goal at some point, so we can safely update navigation"
+                                self._update_navigation()
+                        else:
+                            print "We never replanned so far, so we can safely update navigation"
+                            self._update_navigation()
+                    else:
+                        print "Updating navigation"
+                        self._update_navigation()
                 else:
-                    print "Not updating navigation because standing still for 1 s or replan happened < 15 s ago"
+                    print "Not updating navigation because no new breadcrumbs."
 
             rospy.sleep(self._period) # Loop at 2Hz
 
