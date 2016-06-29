@@ -207,7 +207,7 @@ class InspectShelves(smach.State):
         global DETECTED_OBJECTS_WITH_PROBS
 
         ''' Get cabinet entity '''
-        rospy.sleep(rospy.Duration(0.25))  # Sleep for a while to make 
+        rospy.sleep(rospy.Duration(0.25))  # Sleep for a while to make
         # sure that the robot is actually in ED
         cabinet_entity = self.robot.ed.get_entity(id=CABINET, parse=True)
 
@@ -344,7 +344,7 @@ class RemoveSegmentedEntities(smach.State):
         entities = self.robot.ed.get_entities(parse=False)
 
         for e in entities:
-            if e.has_shape and e.id != '_root':
+            if not e.has_shape and e.id != '_root':
                 self.robot.ed.remove_entity(e.id)
 
         return "done"

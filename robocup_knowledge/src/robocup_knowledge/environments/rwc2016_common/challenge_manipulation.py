@@ -16,7 +16,7 @@ place_shelf = "shelf2"
 room = "livingroom"  # ToDo: update!!!
 
 # Object types that can be recognized
-object_types = []  # ToDo
+object_types = ["coke"]  # ToDo
 # object_types = ['beer', 'bifrutas', 'coffee_pads', 'coke',
 #                 'deodorant', 'fanta', 'ice_tea', 'mentos',
 #                 'sprite', 'tea', 'teddy_bear', 'water',
