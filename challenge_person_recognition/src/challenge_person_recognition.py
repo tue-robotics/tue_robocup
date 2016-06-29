@@ -23,8 +23,13 @@ class ChallengePersonRecognition(smach.StateMachine):
         with self:
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={'initialized': 'LEARN_OPERATOR_FACE',
+                                    transitions={'initialized': 'AWAIT_START',
                                                  'abort': 'Aborted'})
+
+            smach.StateMachine.add("AWAIT_START",
+                                   states.AskContinue(robot),
+                                   transitions={'continue': 'LEARN_OPERATOR_FACE',
+                                                'no_response': 'AWAIT_START'})
 
             smach.StateMachine.add( 'LEARN_OPERATOR_FACE',
                                     LearnOperatorFace(robot),
