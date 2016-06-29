@@ -18,6 +18,22 @@ locations.extend([
     {"name": "cabinet", "room": "corridor", "location_category": "", "manipulation": "yes"}
 ])
 
+category_locations.update({
+    "candies":    ( "bedside",      "shelf3" ),
+    "snacks":     ( "desk",         "on_top_of" ),
+    "drinks":     ( "bookcase",     "on_top_of" ),
+    "food":       ( "sideshelf",    "on_top_of" ),
+    "toiletries": ( "living_shelf", "on_top_of" ),
+    "containers": ( "sink",         "on_top_of" )
+})
+
+inspect_areas = {
+    "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
+}
+
+inspect_positions = {
+}
+
 rooms = list(set([o["room"] for o in locations]))
 grab_locations = list(set([o["name"] for o in locations if o["manipulation"] == "yes"]))
 put_locations = list(set([o["name"] for o in locations if o["manipulation"] != "no"]))
@@ -27,9 +43,8 @@ if __name__ == "__main__":
     for obj in get_objects():
         cat = get_object_category(obj)
         print "object '{}'".format(obj)
-        (location, area_name) = get_object_category_location(cat)
-
         print "    category: '{}'".format(cat)
+        (location, area_name) = get_object_category_location(cat)
         print "    found '{} {}'".format(area_name, location)
 
     print "\n-----------------------------------------------------------------------------"
