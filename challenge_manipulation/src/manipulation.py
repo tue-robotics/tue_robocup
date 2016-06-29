@@ -207,6 +207,8 @@ class InspectShelves(smach.State):
         global DETECTED_OBJECTS_WITH_PROBS
 
         ''' Get cabinet entity '''
+        rospy.sleep(rospy.Duration(0.25))  # Sleep for a while to make 
+        # sure that the robot is actually in ED
         cabinet_entity = self.robot.ed.get_entity(id=CABINET, parse=True)
 
         ''' Get the pose of all shelves '''
