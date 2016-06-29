@@ -1,0 +1,22 @@
+[ERROR] [WallTime: 1467201288.259165] InvalidUserCodeError: Could not execute state 'RECOGNIZE_PERSONS' of type '<person_recognition_states.detect.RecognizePersons object at 0x7fca681d4310>': Traceback (most recent call last):
+  File "/home/amigo/ros/indigo/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/indigo/repos/https:/github.com/tue-robotics/tue_robocup.git/challenge_person_recognition/src/person_recognition_states/detect.py", line 157, in execute
+    detections, operator = self._recognize()
+  File "/home/amigo/ros/indigo/repos/https:/github.com/tue-robotics/tue_robocup.git/challenge_person_recognition/src/person_recognition_states/detect.py", line 66, in _recognize
+    detections, operator = self._get_detections(external_api_request=False)
+  File "/home/amigo/ros/indigo/repos/https:/github.com/tue-robotics/tue_robocup.git/challenge_person_recognition/src/person_recognition_states/detect.py", line 37, in _get_detections
+    detections = self.robot.ed.detect_persons(external_api_request=external_api_request)
+  File "/home/amigo/ros/indigo/system/src/robot_skills/src/robot_skills/world_model_ed.py", line 455, in detect_persons
+    res = self._recognize_person_srv(external_api_request=external_api_request)
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 435, in __call__
+    return self.call(*args, **kwds)
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 515, in call
+    responses = transport.receive_once()
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_base.py", line 696, in receive_once
+    p.read_messages(b, msg_queue, sock)
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 353, in read_messages
+    self._read_ok_byte(b, sock)
+  File "/opt/ros/indigo/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 336, in _read_ok_byte
+    raise ServiceException("service [%s] responded with an error: %s"%(self.resolved_name, str))
+ServiceException: service [/sergio/recognize_person] responded with an error: /build/buildd/opencv-2.4.8+dfsg1/modules/core/src/matrix.cpp:323: error: (-215) 0 <= roi.x && 0 <= roi.width && roi.x + roi.width <= m.cols && 0 <= roi.y && 0 <= roi.height && roi.y + roi.height <= m.rows in function Mat
