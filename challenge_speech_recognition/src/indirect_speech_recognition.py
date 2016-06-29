@@ -85,16 +85,12 @@ class Turn(smach.State):
         print "Last talker id: " + self.robot.hmi.last_talker_id
 
         # Calculate params
-        if "dragonfly_speech_recognition" in self.robot.hmi.last_talker_id:
-            th = 0
-        else:
+        if "dragonfly_speech_recognition" not in self.robot.hmi.last_talker_id:
+            # TUrn
+            vth = 0.5
             th = 3.1415
-
-        vth = 0.5
-
-        # TUrn
-        self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
-
+            self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
+        
         self._turn_to_closest_entity()
 
         self.robot.speech.speak(random.choice(["There you are!",
