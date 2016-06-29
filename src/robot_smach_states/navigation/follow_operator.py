@@ -447,7 +447,9 @@ class FollowOperator(smach.State):
         self._replan_attempts += 1
         print "Trying to get a global plan"
         operator_position = self._last_operator.pose.position
-        pc = self._robot.base.global_planner.getCurrentPositionConstraint()
+        # Define end goal constraint, solely based on the (old) operator position
+        pc = PositionConstraint()
+        pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x, operator_position.y, self._operator_radius)
         plan = self._robot.base.global_planner.getPlan(pc)
         if not plan or not self._robot.base.global_planner.checkPlan(plan):
             print "No global plan possible"
@@ -456,7 +458,7 @@ class FollowOperator(smach.State):
             print "Found a global plan, sending it to local planner"
             self._replan_time = rospy.Time.now()
             self._replan_active = True
-            o = self._robot.base.local_planner.getCurrentOrientationConstraint();
+            o = self._robot.base.local_planner.getCurrentOrientationConstraint()
             self._visualize_plan(plan)
             self._robot.base.local_planner.setPlan(plan, p, o)
             self._breadcrumbs = []
