@@ -106,7 +106,7 @@ class Hear(smach.State):
 
 class HearOptions(smach.State):
     def __init__(self, robot, options, timeout = rospy.Duration(10), look_at_standing_person=True):
-        outcomes = options
+        outcomes = list(options) # make a copy
         outcomes.append("no_result")
         smach.State.__init__(self, outcomes=outcomes)
         self._options = options
