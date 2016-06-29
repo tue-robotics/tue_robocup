@@ -14,7 +14,8 @@ target3_radius1 = 0.1
 target3_radius2 = 0.7
 
 target_door = "navigation_door"
-door_id = "navigation_door"  # What does this do?
+target_door_opening_start="door_opening_start"
+target_door_opening_dest="door_opening_dest"
 target_door_radius = 0.1
 
 target4 = "navigation_target4"
