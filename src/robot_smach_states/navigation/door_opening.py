@@ -154,7 +154,7 @@ class ForceDriveToTouchDoor(smach.State):
         """
 
         #angles = np.arange(scan.angle_min, scan.angle_max-scan.angle_increment, scan.angle_increment)
-        angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges)) 
+        angles = np.linspace(scan.angle_min, scan.angle_max, len(scan.ranges))
         X = scan.ranges * np.cos(angles) # TODO: get distance between laser frame and base_link
         Y = scan.ranges * np.sin(angles)
 
@@ -363,6 +363,7 @@ class WaypointOfDoorDesignator(ds.Designator):
     def _resolve(self):
         rospy.logdebug("Finding from where to open a door")
         door_entity = self.door_entity_designator.resolve()
+        import ipdb; ipdb.set_trace()
         if door_entity:
             waypoint_id = door_entity.data[self.data_field]
             waypoint = self.robot.ed.get_entity(id=waypoint_id)
@@ -377,7 +378,7 @@ class OpenDoorByPushing(smach.StateMachine):
     Test in amigo-console with
     door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print do.execute();
     """
-    def __init__(self, robot, door_entity_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
+    def __init__(self, robot, door_start_wp_designator, door_dest_wp_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
         """
         Push against a door until its open
         :param robot: Robot on which to execute this state machine
@@ -392,8 +393,8 @@ class OpenDoorByPushing(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        door_start_wp_designator = WaypointOfDoorDesignator(robot, door_entity_designator, direction='start', name='door_open_start')
-        door_dest_wp_designator = WaypointOfDoorDesignator(robot, door_entity_designator, direction='destination', name='door_open_dest')
+        #door_start_wp_designator = WaypointOfDoorDesignator(robot, door_entity_designator, direction='start', name='door_open_start')
+        #door_dest_wp_designator = WaypointOfDoorDesignator(robot, door_entity_designator, direction='destination', name='door_open_dest')
 
         with self:
             smach.StateMachine.add( 'GOTO_DOOR_START',
@@ -422,8 +423,7 @@ class OpenDoorByPushing(smach.StateMachine):
 
                     smach.StateMachine.add( 'CHECK_DOOR_PASSABLE',
                                             CheckDoorPassable(robot,
-                                                              destination_designator=door_dest_wp_designator,
-                                                              door_entity_designator=door_entity_designator),
+                                                              destination_designator=door_dest_wp_designator),
                                             transitions={'blocked':'closed',
                                                          'passable':'open'})
 
