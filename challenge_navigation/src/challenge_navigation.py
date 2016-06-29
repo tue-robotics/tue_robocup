@@ -369,7 +369,7 @@ def setup_statemachine(robot):
         ######################################################################################################################################################
 
         smach.StateMachine.add('OPEN_DOOR',
-                               states.OpenDoorByPushing(robot, EntityByIdDesignator(robot, id=challenge_knowledge.door_id)),
+                               states.OpenDoorByPushing(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target_door_opening_start), EntityByIdDesignator(robot, id=challenge_knowledge.target_door_opening_dest)),
                                transitions={'succeeded': 'SAY_RETURN_TARGET3',
                                             'failed': 'TIMEOUT_ARENA_DOOR_OPENING'})
 
