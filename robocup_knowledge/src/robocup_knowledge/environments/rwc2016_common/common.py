@@ -10,13 +10,38 @@ locations = []
 category_locations = {}
 inspect_areas = {}
 inspect_positions = {}
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 rooms = []
 grab_locations = []
 put_locations = []
 
+objects = [
+    { 'name' : 'choco_syrup',   'category' : 'candies' },
+    { 'name' : 'biscuits',      'category' : 'candies' },
+    { 'name' : 'baby_sweets',   'category' : 'candies' },
+    { 'name' : 'egg',           'category' : 'candies' },
+    { 'name' : 'chips',         'category' : 'snacks' },
+    { 'name' : 'pretzels',      'category' : 'snacks' },
+    { 'name' : 'pringles',      'category' : 'snacks' },
+    { 'name' : 'beer',          'category' : 'drinks' },
+    { 'name' : 'coconut_milk',  'category' : 'drinks' },
+    { 'name' : 'coke',          'category' : 'drinks' },
+    { 'name' : 'tea',           'category' : 'drinks' },
+    { 'name' : 'apple',         'category' : 'food' },
+    { 'name' : 'paprika',       'category' : 'food' },
+    { 'name' : 'pumper_nickel', 'category' : 'food' },
+    { 'name' : 'shampoo',       'category' : 'toiletries' },
+    { 'name' : 'soap',          'category' : 'toiletries' },
+    { 'name' : 'sponge',        'category' : 'toiletries' },
+    { 'name' : 'cloth',         'category' : 'toiletries' },
+    { 'name' : 'bowl',          'category' : 'containers' },
+    { 'name' : 'tray',          'category' : 'containers' },
+    { 'name' : 'plate',         'category' : 'containers' }
+]
+
+object_names = list(set([ o["name"] for o in objects ]))
+object_categories = list(set([ o["category"] for o in objects ]))
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def is_location(location):
     for loc in locations:
@@ -67,11 +92,6 @@ def get_locations(room=None, pick_location=None, place_location=None):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-objects = []
-object_names = []
-object_categories = []
-
-
 def get_objects(category=None):
     return [obj["name"] for obj in objects
                 if category == None or category == obj["category"]]
@@ -85,7 +105,9 @@ def get_object_category(obj):
 
 
 # Returns (location, area_name)
-def get_object_category_location( obj_cat):
-    location = category_locations[obj_cat].keys()[0]
-    area_name = category_locations[obj_cat].values()[0]
-    return location, area_name
+def get_object_category_location(obj_cat):
+    if not obj_cat in category_locations:
+        return None
+    else:
+        (location, area_name) = category_locations[obj_cat]
+        return (location, area_name)
