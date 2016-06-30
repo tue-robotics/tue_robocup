@@ -179,15 +179,19 @@ class PickUp(smach.State):
 
         # Lift
         # rospy.loginfo('Start lifting')
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.1, 0.0, 0.0,
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.3, 0.0, 0.0,
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
             rospy.logerr('Failed lift')
+            
+        # RoboCup manipulation challenge solution: sleep to make sure we get points for grasping
+        rospy.loginfo("Sleep RoboCup style")
+        rospy.sleep(rospy.Duration(2.5))
 
         # Retract
         # rospy.loginfo('Start retracting')
-        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, 0.1, 0.0, 0.0,
+        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, 0.6, 0.0, 0.0,
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=0.0, allowed_touch_objects=[grab_entity.id]
                              ):
