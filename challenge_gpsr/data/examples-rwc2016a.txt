@@ -1,0 +1,28 @@
+ROOMS: kitchen, living_room, corridor, office, bedroom
+
+NAMES: Emma, Taylor, Sophia, Isabella, Ava, Robin, Emily,
+       Angel, Madison, Charlotte, Noah, Liam, Mason, Jacob,
+       William, Ethan, Michael, Alexander, James, Daniel
+
+LOCS:  drawer, desk, bed, bedside, bar, cupboard, sink, sideshelf,
+       bookcase, dining_table, tv_stand, living_shelf, living_table, cabinet
+
+OBJECTS: choco_syrup, apple, pretzels, plate, biscuits, coke, baby_sweets,
+         shampoo, paprika, sponge, cloth, beer, soap, pumper_nickel, tray,
+         tea, bowl, chips, egg, pringles, coconut_milk
+
+---------------------------------------
+
+go to the <ROOM>, find <NAME>, and follow her
+go to the <LOC>, pick up the <OBJECT> and bring it to me
+navigate to the <LOC>, find <NAME> and answer a question
+take the <OBJECT> from the <LOC> and tell the name of your team
+pick up the <OBJECT> from the <LOC> and bring it to <NAME> in the <ROOM>
+tell what day is tomorrow and find <NAME> in the <ROOM>
+bring me the <OBJECT> from the <LOC> and tell the time
+
+---------------------------------------
+
+
+
+
