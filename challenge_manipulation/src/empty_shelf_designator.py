@@ -39,8 +39,8 @@ class EmptyShelfDesignator(Designator):
             rospy.logerr("EmptyShelfDesignator: please provide an area")
 
         self.place_location_designator = place_location_designator
-        self._edge_distance = 0.1                   # Distance to table edge
-        self._spacing = 0.15
+        self._edge_distance = 0.08                   # Distance to table edge
+        self._spacing = 0.12
         self._area = area
 
         self.marker_pub = rospy.Publisher('/empty_spots', MarkerArray, queue_size=1)

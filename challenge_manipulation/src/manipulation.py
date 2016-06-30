@@ -42,6 +42,8 @@ from robot_skills.util import transformations
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge
 
+from empty_shelf_designator import EmptyShelfDesignator
+
 # PDF writer
 import pdf
 
@@ -423,7 +425,10 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                                        name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
-        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
+        # self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
+        self.place_position = ds.LockingDesignator(EmptyShelfDesignator(robot, self.cabinet,
+                                                                        name="placement", area=PLACE_SHELF),
+                                                   name="place_position")
 
         if PREFERRED_ARM == "left":
             prefered_arm = robot.leftArm
