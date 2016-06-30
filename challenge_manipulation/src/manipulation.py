@@ -611,7 +611,7 @@ def setup_statemachine(robot):
 
             smach.StateMachine.add("FIT_ENTITY",
                                    FitEntity(robot, CABINET),
-                                   transitions={'succeeded': 'INSPECT_SHELVES',
+                                   transitions={'succeeded': 'NAV_TO_START',
                                                 'failed': 'SAY_FITTING_FAILED'})
 
             smach.StateMachine.add("SAY_FITTING_FAILED",
@@ -621,15 +621,15 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "NAV_TO_START",
                                 states.NavigateToSymbolic(robot,
-                                                          {cabinet:"in_front_of", room:"in"},
-                                                          cabinet),
-                                transitions={   'arrived'           :'RESET_ED',
-                                                'unreachable'       :'RESET_ED',
-                                                'goal_not_defined'  :'RESET_ED'})
+                                                          {cabinet: "in_front_of"},
+                                                           cabinet),
+                                transitions={   'arrived'           :'INSPECT_SHELVES',
+                                                'unreachable'       :'INSPECT_SHELVES',
+                                                'goal_not_defined'  :'INSPECT_SHELVES'})
 
-        smach.StateMachine.add("RESET_ED",
-                                states.ResetED(robot),
-                                transitions={'done'                     :'INSPECT_SHELVES'})
+        # smach.StateMachine.add("RESET_ED",
+        #                         states.ResetED(robot),
+        #                         transitions={'done'                     :'INSPECT_SHELVES'})
 
         smach.StateMachine.add("INSPECT_SHELVES",
                                 InspectShelves(robot, OBJECT_SHELVES),
