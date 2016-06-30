@@ -58,7 +58,7 @@ class RecognizePersons(smach.State):
         self.robot.speech.speak("I am looking for my operator", block=False)
 
         # 1) Check how many people in the crowd
-        shots = 4
+        shots = 3
 
         number_of_people = 0
         operator_list = []
