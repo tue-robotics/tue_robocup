@@ -66,7 +66,7 @@ class RecognizePersons(smach.State):
         sentences = ["You are all looking great today!            Keep looking in my camera!", "I like it when everybody is staring at me; being in the center of attention!"]
 
         for i in range(0, shots):
-            self.robot.speech.speak(sentences[i % shots], block=False)
+            self.robot.speech.speak(sentences[i % (shots - 1)], block=False)
             detections, operator = self._get_detections(external_api_request=False)
 
             # Get number of people
