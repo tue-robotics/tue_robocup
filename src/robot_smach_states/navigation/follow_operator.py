@@ -415,6 +415,7 @@ class FollowOperator(smach.State):
                 self._operator = recovered_operator
                 self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
                 self._robot.head.close()
+                self._time_started = rospy.Time.now()
                 return True
 
         self._robot.head.close()
