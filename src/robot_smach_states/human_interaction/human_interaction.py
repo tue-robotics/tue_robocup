@@ -124,9 +124,8 @@ class HearOptions(smach.State):
             self._robot.head.cancel_goal()
 
         if answer:
-            if answer.result:
-                if "option" in answer.choices:
-                    return answer.choices["option"]
+            if "option" in answer.choices:
+                return answer.choices["option"]
         else:
             self._robot.speech.speak("Something is wrong with my ears, please take a look!")
 
