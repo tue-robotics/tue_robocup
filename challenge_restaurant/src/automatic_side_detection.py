@@ -31,7 +31,7 @@ class WaitSay(smach.State):
         self._robot.head.look_at_standing_person()
         answer = None
         while not answer or answer.result != "side detection":
-            answer = self._robot.ears.recognize("side detection")
+            answer = self._robot.ears.recognize('<option>', {'option': ['side detection'])
         self._robot.head.cancel_goal()
 
         return "done"
@@ -157,7 +157,7 @@ class StoreWaypoint(smach.State):
 
     def _confirm(self, tries=3):
         for i in range(0, tries):
-            result = self._robot.ears.recognize("(yes|no)",{})
+            result = self._robot.ears.recognize('<option>', {'option': ['yes', 'no']})
             if result and result.result != "":
                 answer = result.result
                 return answer == "yes"
