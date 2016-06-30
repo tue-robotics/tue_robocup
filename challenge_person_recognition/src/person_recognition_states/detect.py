@@ -35,6 +35,10 @@ class RecognizePersons(smach.State):
         time.sleep(1)
 
         detections = self.robot.ed.detect_persons(external_api_request=external_api_request)
+
+        if not detections:
+            detections = []
+
         operator_candidates = [candidate for candidate in detections if candidate.name == "operator"]
 
         rospy.loginfo("Detections: %s", detections)
