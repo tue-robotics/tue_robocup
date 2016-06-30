@@ -8,7 +8,7 @@ C[{A}] -> VP[A]
 
 SMALL_OBJECT[object] -> choco syrup | apple | pretzels | plate | biscuits | coke | baby sweets | shampoo | paprika | sponge | cloth | beer | soap | pumper nickel | tray | tea | bowl | chips | egg | pringles | coconut milk
 
-#NAME[name] -> emma | taylor | sophia | isabella | ava | robin | emily | angel | madison | charlotte | noah | liam | mason | jacob | william | ethan | michael | alexander | james | daniel
+NAME[name] -> emma | taylor | sophia | isabella | ava | robin | emily | angel | madison | charlotte | noah | liam | mason | jacob | william | ethan | michael | alexander | james | daniel
 
 #NAME[name] -> emma | taylor
 
@@ -22,9 +22,9 @@ LOC[loc] -> drawer | desk | bed | bedside | bar | cupboard | sink | sideshelf | 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # ARENA B
 
-# ROOM[room] -> living room | kitchen | dining room | corridor | bedroom
+#ROOM[room] -> living_room | kitchen | dining_room | corridor | bedroom
 
-# LOC[loc] -> drawer | desk | bed | bedside | bar | cupboard | sink | sideshelf | bookcase | dining table | tv stand | living shelf | living table | cabinet
+#LOC[loc] -> bed | desk | bedside | bar | sink | cupboard | sideshelf | tv_stand | dining_table | bookcase | living_shelf | living_table | drawer | cabinet
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
