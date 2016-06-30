@@ -472,7 +472,7 @@ class FollowOperator(smach.State):
         if self._replan_active:
             if self._robot.base.local_planner.getStatus() == "arrived":
                 self._replan_active = False
-                if not self._recover_operator():
+                if lost_operator and not self._recover_operator():
                     return "lost_operator"
 
         # Try to recover operator if lost and reached last seen operator position
@@ -561,24 +561,24 @@ class FollowOperator(smach.State):
                 self._turn_towards_operator()
             else:
                 # Only update navigation if there is something to update: operator must have moved
-                if len(self._breadcrumbs) > old_no_breadcrumbs:
-                    if self._replan:
-                        # If replanned: if recently replanned, only update navigation if not standing still for too long
-                        # (to make sure that local planner reaches align state) or just started following
-                        print "Replan=True, so check if we replanned..."
-                        if self._replan_time.to_sec() > self._time_started.to_sec():
-                            print "We did replan at least once"
-                            if self._replan_active:
-                                print "and this plan is still active, so I'll give the global planner a chance"
-                            else:
-                                print "but we reached that goal at some point, so we can safely update navigation"
-                                self._update_navigation()
+                # if len(self._breadcrumbs) > old_no_breadcrumbs:
+                if self._replan:
+                    # If replanned: if recently replanned, only update navigation if not standing still for too long
+                    # (to make sure that local planner reaches align state) or just started following
+                    print "Replan=True, so check if we replanned..."
+                    if self._replan_time.to_sec() > self._time_started.to_sec():
+                        print "We did replan at least once"
+                        if self._replan_active:
+                            print "and this plan is still active, so I'll give the global planner a chance"
                         else:
-                            print "We never replanned so far, so we can safely update navigation"
+                            print "but we reached that goal at some point, so we can safely update navigation"
                             self._update_navigation()
                     else:
-                        print "Updating navigation"
+                        print "We never replanned so far, so we can safely update navigation"
                         self._update_navigation()
+                    # else:
+                    #     print "Updating navigation"
+                    #     self._update_navigation()
                 else:
                     print "Not updating navigation because no new breadcrumbs."
 
