@@ -126,7 +126,7 @@ class FollowOperator(smach.State):
                 self._robot.speech.speak("Should I follow you?", block=True)
                 answer = self._robot.ears.recognize("<choice>", {"choice" : ["yes", "no"]})
 
-                if 'choice' in answer.choices:
+                if answer and 'choice' in answer.choices:
                     if answer.choices['choice'] == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
 
@@ -458,9 +458,9 @@ class FollowOperator(smach.State):
             print "Found a global plan, sending it to local planner"
             self._replan_time = rospy.Time.now()
             self._replan_active = True
-            o = self._robot.base.local_planner.getCurrentOrientationConstraint()
+            oc = self._robot.base.local_planner.getCurrentOrientationConstraint()
             self._visualize_plan(plan)
-            self._robot.base.local_planner.setPlan(plan, p, o)
+            self._robot.base.local_planner.setPlan(plan, pc, oc)
             self._breadcrumbs = []
 
     def _check_end_criteria(self):
