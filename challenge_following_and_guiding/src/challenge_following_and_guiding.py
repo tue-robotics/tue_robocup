@@ -53,13 +53,13 @@ class WaitForOperatorCommand(smach.State):
 
     def _confirm(self, tries=3):
         for i in range(0, tries):
-            result = self._robot.ears.recognize("(yes|no)",{})
-            if result and result.result != "":
-                answer = result.result
-                return answer == "yes"
+            result = self._robot.ears.recognize("<choice>", {"choice" : ["yes", "no"]})
+            if 'choice' in result.choices:
+                return result.choices['choice'] == "yes"
 
-            if i != tries - 1:
+            if i < tries - 1:
                 self._robot.speech.speak("Please say yes or no")
+
         return False
 
     def execute(self, userdata):

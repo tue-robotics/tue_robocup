@@ -29,30 +29,31 @@ class HearQuestion(smach.State):
 
         if not res:
             self.robot.speech.speak("My ears are not working properly.")
-
         if res:
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
                 self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
+
                 return "answered"
             else:
                 self.robot.speech.speak("Sorry, I do not understand your question")
 
         return "not_answered"
 
+
 class Turn(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["turned"])
         self.robot = robot
 
-    def execute(self, userdata):
-
+    def _turn_to_closest_entity(self):
         # Reset the world model just to be sure
         self.robot.ed.reset()
 
         operator = None
         while not operator:
-            operator = self.robot.ed.get_closest_entity(self, radius=1.7, center_point=self.robot.base.get_location().pose.position)
+            operator = self.robot.ed.get_closest_entity(self, radius=1.9,
+                                                        center_point=self.robot.base.get_location().pose.position)
             print operator
             if not operator:
                 vth = 0.5
@@ -65,21 +66,41 @@ class Turn(smach.State):
         # Turn towards the operator
         current = self.robot.base.get_location()
         robot_th = tf.euler_z_from_quaternion(current.pose.orientation)
-        desired_th = math.atan2(operator.pose.position.y - current.pose.position.y, operator.pose.position.x - current.pose.position.x)
+        desired_th = math.atan2(operator.pose.position.y - current.pose.position.y,
+                                operator.pose.position.x - current.pose.position.x)
 
         # Calculate params
         th = desired_th - robot_th
         if th > 3.1415:
-            th -= 2*3.1415
+            th -= 2 * 3.1415
         if th < -3.1415:
-            th += 2*3.1415
+            th += 2 * 3.1415
         vth = 0.5
 
         # TUrn
         self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
-        self.robot.speech.speak("There you are!")
+
+    def execute(self, userdata):
+
+        print "Last talker id: " + self.robot.hmi.last_talker_id
+
+        # Calculate params
+        if "dragonfly_speech_recognition" not in self.robot.hmi.last_talker_id:
+            # TUrn
+            vth = 0.5
+            th = 3.1415
+            self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
+
+        self._turn_to_closest_entity()
+
+        self.robot.speech.speak(random.choice(["There you are!",
+                                               "Hi there!",
+                                               "I think the sound is coming from this direction"]))
+
+        time.sleep(1.0)
 
         return "turned"
+
 
 def setup_statemachine(robot):
 

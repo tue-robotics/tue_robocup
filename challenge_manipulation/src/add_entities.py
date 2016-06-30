@@ -40,4 +40,10 @@ if __name__ == "__main__":
         W.add_object("coke13", "sim-coke", 0.992, -4.740, 0.8)
         W.add_object("coke14", "sim-coke", 0.852, -4.520, 0.8)
 
+    if env == "rwc2016" or env == "rwc2016a" or env == "rwc2016b" or env == "rwc2016_common":
+
+        # Bookcase
+        W.add_object("coke11", "sim-coke", 9.16, 5.67, 0.8)
+        W.add_object("coke12", "sim-coke", 9.41, 5.67, 0.8)
+        W.add_object("coke13", "sim-coke", 9.63, 5.68, 0.8)
 

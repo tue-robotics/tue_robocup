@@ -78,7 +78,7 @@ def speech_mode(robot):
     while not rospy.is_shutdown():
         # robot.speech.speak("What can I do for you?")
 
-        res = command_center.request_command(ask_confirmation=False, ask_missing_info=False)
+        res = command_center.request_command(ask_confirmation=False, ask_missing_info=False, timeout=600)
 
         if res:
             (words, semantics) = res

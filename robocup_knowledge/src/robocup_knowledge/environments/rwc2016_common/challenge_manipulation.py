@@ -1,5 +1,12 @@
+import copy
+
+# Common knowledge
+from robocup_knowledge import knowledge_loader
+common = knowledge_loader.load_knowledge("common")
+
 # Entity where the shelves are part of
-cabinet = "bookcase"  # ToDo: update
+cabinet_slam = "bookcase_noback1"  # In case of slam
+cabinet_amcl = "bookcase"          # In case of amcl
 
 # Shelves where objects might be
 # object_shelves = ["bookcase/shelf2", "bookcase/shelf3"]
@@ -16,7 +23,7 @@ place_shelf = "shelf2"
 room = "livingroom"  # ToDo: update!!!
 
 # Object types that can be recognized
-object_types = []  # ToDo
+object_types = copy.copy(common.object_names)
 # object_types = ['beer', 'bifrutas', 'coffee_pads', 'coke',
 #                 'deodorant', 'fanta', 'ice_tea', 'mentos',
 #                 'sprite', 'tea', 'teddy_bear', 'water',

@@ -81,10 +81,16 @@ def main():
         command_center.execute_command(semantics)
     else:
         while True:
-            (sentence, semantics) = command_center.request_command(ask_confirmation=True, ask_missing_info=False)
+            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600)           
+
+            if not res:
+                continue
+
+            (sentence, semantics) = res
 
             if not command_center.execute_command(semantics):
                 robot.speech.speak("I am truly sorry, let's try this again")
+                continue
 
             if args.once:
                 break
