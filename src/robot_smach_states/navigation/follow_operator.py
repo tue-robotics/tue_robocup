@@ -495,10 +495,10 @@ class FollowOperator(smach.State):
             if self._replan_allowed and self._replan_attempts < self._max_replan_attempts and (rospy.Time.now() - self._replan_time).to_sec() > self._replan_timeout:
                 self._replan()
 
-            if not self._recover_operator():
-                self._robot.base.local_planner.cancelCurrentPlan()
-                self._robot.speech.speak("I am unable to recover you")
-                return "lost_operator"
+            #if not self._recover_operator():
+             #   self._robot.base.local_planner.cancelCurrentPlan()
+             #   self._robot.speech.speak("I am unable to recover you")
+             #   return "lost_operator"
         else:
             self._replan_attempts = 0
 
