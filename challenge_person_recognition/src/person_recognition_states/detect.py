@@ -109,6 +109,8 @@ class RecognizePersons(smach.State):
                     num_males += 1
                 else:
                     num_females += 1
+            else:
+                num_males += 1
 
         self.robot.speech.speak("I found %d people in the crowd" % num_ppl)
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
