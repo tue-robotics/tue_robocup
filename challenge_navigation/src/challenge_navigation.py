@@ -7,7 +7,7 @@ import time
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, analyse_designators
+from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
@@ -66,6 +66,62 @@ class Turn(smach.State):
         self.robot.base.force_drive(0, 0, vth, self.radians / vth)
 
         return "turned"
+
+class DetermineDoor(smach.State):
+    def __init__(self, robot, door_id_designator):
+        smach.State.__init__(self, outcomes=["door_found","preempted"])
+        self._robot = robot
+        self._door_id_designator = door_id_designator
+
+    def execute(self, userdata):
+        door_1_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_1).pose.position
+        door_2_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_2).pose.position
+
+        door_1_constraint = PositionConstraint()
+        door_1_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (door_1_position.x, door_1_position.y, 0.7)
+
+        door_2_constraint = PositionConstraint()
+        door_2_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (door_2_position.x, door_2_position.y, 0.7)
+
+        # TODO: make sure that waypoints exist!!!
+        # TODO: make sure door id designator is writeable
+
+        while True:
+            plan1 = self._robot.base.global_planner.getPlan(door_1_constraint)
+            plan2 = self._robot.base.global_planner.getPlan(door_2_constraint)
+            print "Plan 1 length: %i" % len(plan1)
+            print "Plan 2 length: %i" % len(plan2)
+            if len(plan1) < 3:
+                self._door_id_designator.writeable.write(challenge_knowledge.target_door_1)
+                return "door_found"
+            elif len(plan2) < 3:
+                self._door_id_designator.writeable.write(challenge_knowledge.target_door_2)
+                return "door_found"
+
+            if self.preempt_requested():
+                return 'preempted'
+
+            time.sleep(1)
+
+class SelectWaypoints(smach.State):
+    def __init__(self, door_id_designator, wp_1_des, wp_2_des):
+        smach.State.__init__(self, outcomes=["done"])
+        self._door_id_designator = door_id_designator
+        self._wp_1_des = wp_1_des
+        self._wp_2_des = wp_2_des
+
+    def execute(self, userdata):
+        if self._door_id_designator.resolve() == challenge_knowledge.target_door_1:
+            self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_1)
+            self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_1)
+        elif self._door_id_designator.resolve() == challenge_knowledge.target_door_2:
+            self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_2)
+            self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_2)
+        else:
+            self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_1)
+            self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_1)
+        return 'done'
+
 
 class DetermineObject(smach.State):
     def __init__(self, robot, entity_id, obstacle_radius):
@@ -307,11 +363,36 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add( 'TURN', Turn(robot, challenge_knowledge.rotation), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
-        smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True, look_at_standing_person=True), transitions={ 'spoken' : 'FOLLOW_OPERATOR'})
+        smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True, look_at_standing_person=True), transitions={ 'spoken' : 'FOLLOW_WITH_DOOR_CHECK'})
 
-        smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot, replan=True), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
+        # TODO: Fix concurrence
+        door_id_designator = VariableDesignator(challenge_knowledge.target_door_1)
+        open_door_wp1_des = VariableDesignator(resolve_type=str)
+        open_door_wp2_des = VariableDesignator(resolve_type=str)
+
+        cc = smach.Concurrence(['stopped', 'no_operator', 'lost_operator'],
+                         default_outcome='no_operator',
+                         child_termination_cb=lambda so: True,
+                         outcome_map={'stopped': {'FOLLOW_OPERATOR': 'stopped'},
+                                      # 'stopped': {'FOLLOW_OPERATOR': 'stopped', 'DETERMINE_DOOR': 'door_found'},
+                                      'no_operator': {'FOLLOW_OPERATOR': 'no_operator'},
+                                      # 'no_operator': {'FOLLOW_OPERATOR': 'no_operator', 'DETERMINE_DOOR': 'door_found'},
+                                      # 'lost_operator': {'FOLLOW_OPERATOR': 'lost_operator', 'DETERMINE_DOOR': 'preempted'},
+                                      'lost_operator': {'FOLLOW_OPERATOR': 'lost_operator'}})
+        with cc:
+            smach.Concurrence.add('FOLLOW_OPERATOR', states.FollowOperator(robot, replan=True))
+            smach.Concurrence.add('DETERMINE_DOOR', DetermineDoor(robot, door_id_designator))
+
+        smach.StateMachine.add('FOLLOW_WITH_DOOR_CHECK',
+                               cc,
+                               transitions = {'no_operator': 'FOLLOW_WITH_DOOR_CHECK',
+                                              'stopped':'SAY_SHOULD_I_RETURN',
+                                              'lost_operator':'SAY_SHOULD_I_RETURN'})
+
+        # smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot, replan=True), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
         smach.StateMachine.add( 'SAY_SHOULD_I_RETURN', states.Say(robot, "Should I return to target 3?", look_at_standing_person=True), transitions={ 'spoken' : 'HEAR_SHOULD_I_RETURN'})
-        smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SAY_GOBACK_ARENA", "no" : "SAY_STAND_IN_FRONT"})
+        smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SELECT_WAYPOINTS", "no" : "SAY_STAND_IN_FRONT"})
+        smach.StateMachine.add( 'SELECT_WAYPOINTS', SelectWaypoints(door_id_designator, open_door_wp1_des, open_door_wp2_des), transitions={'done':'SAY_GOBACK_ARENA'})
 
         ######################################################################################################################################################
         #
@@ -329,7 +410,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_ARENA_DOOR'})
 
         smach.StateMachine.add('GOTO_ARENA_DOOR',
-                               states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target_door),
+                               states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=door_id_designator),
                                                          challenge_knowledge.target_door_radius),
                                transitions={'arrived': 'ARENA_DOOR_REACHED',
                                             'unreachable': 'RESET_ED_ARENA_DOOR',
@@ -346,7 +427,7 @@ def setup_statemachine(robot):
                                transitions={'done': 'GOTO_ARENA_DOOR_BACKUP'})
 
         smach.StateMachine.add('GOTO_ARENA_DOOR_BACKUP',
-                               states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target_door),
+                               states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=door_id_designator),
                                                          challenge_knowledge.target_door_radius),
                                transitions={'arrived': 'ARENA_DOOR_REACHED',
                                             'unreachable': 'TIMEOUT_ARENA_DOOR',
@@ -369,7 +450,11 @@ def setup_statemachine(robot):
         ######################################################################################################################################################
 
         smach.StateMachine.add('OPEN_DOOR',
-                               states.OpenDoorByPushing(robot, EntityByIdDesignator(robot, id=challenge_knowledge.target_door_opening_start), EntityByIdDesignator(robot, id=challenge_knowledge.target_door_opening_dest)),
+                               states.OpenDoorByPushing(robot,
+                                                        EdEntityDesignator(robot,
+                                                                             id_designator=open_door_wp1_des),
+                                                        EdEntityDesignator(robot,
+                                                                             id_designator=open_door_wp2_des)),
                                transitions={'succeeded': 'SAY_RETURN_TARGET3',
                                             'failed': 'TIMEOUT_ARENA_DOOR_OPENING'})
 
