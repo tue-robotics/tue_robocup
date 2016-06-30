@@ -179,7 +179,7 @@ class PickUp(smach.State):
 
         # Lift
         # rospy.loginfo('Start lifting')
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.0, 0.0, 0.0,
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.1, 0.0, 0.0,
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
@@ -187,7 +187,7 @@ class PickUp(smach.State):
 
         # Retract
         # rospy.loginfo('Start retracting')
-        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, 0.0, 0.0, 0.0,
+        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, 0.1, 0.0, 0.0,
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=0.0, allowed_touch_objects=[grab_entity.id]
                              ):
