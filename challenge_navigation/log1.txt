@@ -1,0 +1,721 @@
+[INFO] [WallTime: 1467268088.009122] 'Door is open!'
+[INFO] [WallTime: 1467268088.063032] State machine transitioning 'DOOR_OPEN':'spoken'-->'INIT_POSE'
+id: initial_pose_door_c
+type: waypoint
+types: ['waypoint']
+existence_probability: 1.0
+last_update_time: 
+  secs: 0
+  nsecs:         0
+creation_time: 
+  secs: 0
+  nsecs:         0
+has_shape: False
+has_pose: True
+pose: 
+  position: 
+    x: 14.66
+    y: 5.56
+    z: 0.0
+  orientation: 
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+data: {'color': {'blue': 0, 'green': 0, 'red': 1}, 'pose': {'y': 5.56, 'x': 14.66, 'z': 0, 'rz': -1.57}, 'type': 'waypoint', 'id': 'initial_pose_door_c', 'affordances': {'navigate-to': {'position_constraint': {'constraint': 'x^2 + y^2 < 0.5^2'}}}}
+flags: []
+convex_hull: []
+z_min: 0.0
+z_max: 0.0
+[INFO] [WallTime: 1467268088.082211] Set initial pose to 14.66, 5.56, -1.57
+[INFO] [WallTime: 1467268088.582954] State machine transitioning 'INIT_POSE':'done'-->'ENTER_ROOM'
+[INFO] [WallTime: 1467268088.583424] State machine starting in initial state 'THROUGH_DOOR' with userdata: 
+	[]
+[INFO] [WallTime: 1467268088.583709] 'I will start my task now'
+[INFO] [WallTime: 1467268088.603936] State machine transitioning 'THROUGH_DOOR':'spoken'-->'FORCE_DRIVE_THROUGH_DOOR'
+[INFO] [WallTime: 1467268088.604269] AMIGO uses force drive as a back-up scenario!
+[ERROR] [WallTime: 1467268088.604456] Called get_state when no goal is running
+[INFO] [WallTime: 1467268093.838427] State machine transitioning 'FORCE_DRIVE_THROUGH_DOOR':'done'-->'GO_TO_ENTRY_POINT'
+TODO: IMPLEMENT THIS STATE
+[INFO] [WallTime: 1467268093.838906] State machine terminating 'GO_TO_ENTRY_POINT':'no_goal':'done'
+[INFO] [WallTime: 1467268093.839065] State machine terminating 'ENTER_ROOM':'done':'Done'
+[INFO] [WallTime: 1467268093.839203] State machine transitioning 'START_CHALLENGE_ROBUST':'Done'-->'SAY_GOTO_TARGET2'
+[INFO] [WallTime: 1467268093.839534] 'Going to target 2'
+[INFO] [WallTime: 1467268093.896706] State machine transitioning 'SAY_GOTO_TARGET2':'spoken'-->'GOTO_TARGET2_PRE'
+[INFO] [WallTime: 1467268093.897149] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268093.900284] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268093.900812] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268094.065193] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80126d88>
+SPEAKING!!!!
+[INFO] [WallTime: 1467268094.065674] 'Getting there!'
+[INFO] [WallTime: 1467268094.082287] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467268100.294251] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268100.294730] Plan blocked
+[WARN] [WallTime: 1467268100.795852] Plan free again
+[INFO] [WallTime: 1467268100.796141] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268100.802722] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[ERROR] [WallTime: 1467268105.882919] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268110.815474] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467268110.815706] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467268110.819255] 
+
+Navigation summary:
+Covered 5.90650595399 meters in 16.9185130596 seconds (0.349114956685) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467268110.819599] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467268110.819888] State machine transitioning 'GOTO_TARGET2_PRE':'arrived'-->'GOTO_TARGET2'
+[INFO] [WallTime: 1467268110.820530] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268110.823239] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268110.823636] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268110.955309] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8012e320>
+SPEAKING!!!!
+[INFO] [WallTime: 1467268110.955899] 'Getting there!'
+[INFO] [WallTime: 1467268110.974011] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467268122.096225] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467268122.096431] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467268122.099935] 
+
+Navigation summary:
+Covered 1.93467026624 meters in 11.2764458656 seconds (0.171567379412) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467268122.100150] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467268122.100309] State machine transitioning 'GOTO_TARGET2':'arrived'-->'SAY_TARGET2_REACHED'
+[INFO] [WallTime: 1467268122.100734] 'I have arrived at target 2'
+[INFO] [WallTime: 1467268123.999753] State machine transitioning 'SAY_TARGET2_REACHED':'spoken'-->'SAY_GOTO_TARGET1'
+[INFO] [WallTime: 1467268124.000118] 'Going to target 1'
+[INFO] [WallTime: 1467268124.052742] State machine transitioning 'SAY_GOTO_TARGET1':'spoken'-->'GOTO_TARGET1'
+[INFO] [WallTime: 1467268124.053121] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268124.056109] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268124.056545] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268124.195179] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80118ab8>
+SPEAKING!!!!
+[INFO] [WallTime: 1467268124.195778] 'Affirmative!'
+[INFO] [WallTime: 1467268124.211154] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467268130.125138] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268130.125619] Plan blocked
+[INFO] [WallTime: 1467268133.133825] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80116950>
+[INFO] [WallTime: 1467268133.635191] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467268137.042594] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268137.043467] Plan blocked
+[WARN] [WallTime: 1467268137.544348] Plan free again
+[INFO] [WallTime: 1467268137.544720] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268137.562837] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268154.478920] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268154.479320] Plan blocked
+[WARN] [WallTime: 1467268154.980220] Plan free again
+[INFO] [WallTime: 1467268154.980539] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268155.002809] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268156.082779] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268156.083237] Plan blocked
+[WARN] [WallTime: 1467268157.584860] Plan free again
+[INFO] [WallTime: 1467268157.585149] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268157.602751] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268157.986345] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268157.986679] Plan blocked
+[WARN] [WallTime: 1467268160.488939] Plan free again
+[INFO] [WallTime: 1467268160.489419] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268160.522566] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268162.192904] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268162.193232] Plan blocked
+[WARN] [WallTime: 1467268162.693784] Plan free again
+[INFO] [WallTime: 1467268162.694135] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268162.722884] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268162.995175] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268162.995592] Plan blocked
+[WARN] [WallTime: 1467268163.996758] Plan free again
+[INFO] [WallTime: 1467268163.997064] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268164.002912] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[ERROR] [WallTime: 1467268169.044749] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268170.709976] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467268170.710168] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467268170.713473] 
+
+Navigation summary:
+Covered 8.10917001445 meters in 46.6572139263 seconds (0.173803134222) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467268170.713702] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467268170.713866] State machine transitioning 'GOTO_TARGET1':'arrived'-->'SAY_TARGET1_REACHED'
+[INFO] [WallTime: 1467268170.714240] 'I have arrived at target 1'
+[INFO] [WallTime: 1467268172.682491] State machine transitioning 'SAY_TARGET1_REACHED':'spoken'-->'SAY_GOTO_TARGET3'
+[INFO] [WallTime: 1467268172.683003] 'Going to target 3'
+[INFO] [WallTime: 1467268172.700984] State machine transitioning 'SAY_GOTO_TARGET3':'spoken'-->'GOTO_TARGET3'
+[INFO] [WallTime: 1467268172.701665] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268172.704720] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268172.705176] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268172.832502] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80118878>
+SPEAKING!!!!
+[INFO] [WallTime: 1467268172.833093] 'Affirmative!'
+[INFO] [WallTime: 1467268172.847717] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467268182.166382] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268182.166824] Plan blocked
+[WARN] [WallTime: 1467268184.169436] Plan free again
+[INFO] [WallTime: 1467268184.169755] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268184.202311] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268184.871561] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268184.871842] Plan blocked
+[WARN] [WallTime: 1467268186.874433] Plan free again
+[INFO] [WallTime: 1467268186.874709] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268186.882599] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268189.781131] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268189.781487] Plan blocked
+[WARN] [WallTime: 1467268190.282104] Plan free again
+[INFO] [WallTime: 1467268190.282382] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268190.323135] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[ERROR] [WallTime: 1467268195.365427] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268214.330681] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268214.331073] Plan blocked
+[WARN] [WallTime: 1467268214.831775] Plan free again
+[INFO] [WallTime: 1467268214.831991] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268214.842378] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268255.314512] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268255.314901] Plan blocked
+[WARN] [WallTime: 1467268255.815807] Plan free again
+[INFO] [WallTime: 1467268255.816072] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268255.842244] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268261.327557] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268261.327865] Plan blocked
+[WARN] [WallTime: 1467268261.828837] Plan free again
+[INFO] [WallTime: 1467268261.829237] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467268261.843865] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467268269.245686] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467268269.245954] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467268269.249265] 
+
+Navigation summary:
+Covered 14.3708019752 meters in 96.5444750786 seconds (0.148851624741) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467268269.249486] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467268269.249757] State machine transitioning 'GOTO_TARGET3':'arrived'-->'SAY_TARGET3_REACHED'
+[INFO] [WallTime: 1467268269.250055] 'Reached target 3'
+[INFO] [WallTime: 1467268270.604501] State machine transitioning 'SAY_TARGET3_REACHED':'spoken'-->'TURN'
+Turning 0.000000 radians with force drive
+[INFO] [WallTime: 1467268270.605260] State machine transitioning 'TURN':'turned'-->'SAY_STAND_IN_FRONT'
+[INFO] [WallTime: 1467268270.605968] 'Please stand in front of me!'
+[INFO] [WallTime: 1467268272.487844] State machine transitioning 'SAY_STAND_IN_FRONT':'spoken'-->'FOLLOW_OPERATOR'
+[INFO] [WallTime: 1467268272.488981] 'Should I follow you?'
+[INFO] [WallTime: 1467268273.655468] spec: <choice>
+[INFO] [WallTime: 1467268273.657007] Example: 'yes'
+[INFO] [WallTime: 1467268276.223857] Result: result: yes
+choices: {'choice': 'yes'}
+[INFO] [WallTime: 1467268276.224039] Robot heard 'yes'
+[INFO] [WallTime: 1467268276.234320] 'Please look at me while I learn to recognize you.'
+[INFO] [WallTime: 1467268279.042315] 'Just in case...'
+We have a new operator: 7c6973b74cbc34d073ecbebeec6547fb-laser
+[INFO] [WallTime: 1467268289.564304] 'Gotcha! I will follow you!'
+Checking end criteria
+Operator is at 0.951527 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.000055 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268289.615521] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb801077a0>
+Checking end criteria
+Operator is at 0.948541 meters distance
+Robot dit not move for x seconds: 0.513909
+Checking if done following
+Operator is standing still for 0.514001 seconds
+apparently not
+Operator is standing still for 0.514087 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268290.128923] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135ab8>
+Checking end criteria
+Operator is at 0.955842 meters distance
+Robot dit not move for x seconds: 1.034209
+Checking if done following
+Operator is standing still for 1.034413 seconds
+apparently not
+Operator is standing still for 1.034504 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268290.649347] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80132368>
+Checking end criteria
+Operator is at 0.939232 meters distance
+Robot dit not move for x seconds: 1.558637
+Checking if done following
+Operator is standing still for 1.559079 seconds
+apparently not
+Operator is standing still for 1.559250 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268291.174504] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80132680>
+Checking end criteria
+Operator is at 0.928407 meters distance
+Robot dit not move for x seconds: 2.079358
+Checking if done following
+Operator is standing still for 2.079654 seconds
+apparently not
+Operator is standing still for 2.079723 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268291.694681] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80132ab8>
+Checking end criteria
+Operator is at 0.937479 meters distance
+Robot dit not move for x seconds: 2.602648
+Checking if done following
+Operator is standing still for 2.602688 seconds
+apparently not
+Operator is standing still for 2.602835 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268292.217614] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135f80>
+Checking end criteria
+Operator is at 0.889647 meters distance
+Robot dit not move for x seconds: 3.125389
+Checking if done following
+Operator is standing still for 3.125779 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 3.127984 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.888871 meters distance
+Robot dit not move for x seconds: 3.646055
+Checking if done following
+Operator is standing still for 3.646096 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 3.648335 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.819146 meters distance
+Robot dit not move for x seconds: 4.164317
+Checking if done following
+apparently not
+Operator is standing still for 0.000101 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268293.780125] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80132560>
+Checking end criteria
+Operator is at 0.653282 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.000046 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268294.298674] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80132fc8>
+Checking end criteria
+Operator is at 0.630624 meters distance
+Robot dit not move for x seconds: 0.516008
+Checking if done following
+Operator is standing still for 0.516127 seconds
+apparently not
+Operator is standing still for 0.516235 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268294.816628] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8cd346c8>
+[ERROR] [WallTime: 1467268294.816937] Received comm state ACTIVE when in simple state DONE with SimpleActionClient in NS /sergio/local_planner/action_server
+Checking end criteria
+Operator is at 0.917254 meters distance
+Robot dit not move for x seconds: 1.036001
+Checking if done following
+apparently not
+Operator is standing still for 0.000048 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268295.334864] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80132bd8>
+Checking end criteria
+Operator is at 1.240802 meters distance
+Checking if done following
+apparently not
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 1.577217 meters distance
+Robot dit not move for x seconds: 0.513100
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467268296.401746] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80107248>
+[ERROR] [WallTime: 1467268296.442353] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+Checking end criteria
+Operator is at 1.676944 meters distance
+Robot dit not move for x seconds: 1.072718
+Checking if done following
+apparently not
+Operator is standing still for 0.558743 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[ERROR] [WallTime: 1467268296.963202] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268296.974000] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80115248>
+Checking end criteria
+Operator is at 1.828566 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467268297.542841] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8cd346c8>
+[ERROR] [WallTime: 1467268297.562784] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+Checking end criteria
+Operator is at 1.821182 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.562759 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[ERROR] [WallTime: 1467268298.082776] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268298.109302] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80115a70>
+Checking end criteria
+Operator is at 2.020593 meters distance
+Robot dit not move for x seconds: 0.572509
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[ERROR] [WallTime: 1467268298.643334] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268298.695766] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80107320>
+Checking end criteria
+Operator is at 1.941312 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.578801 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[ERROR] [WallTime: 1467268299.243209] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268299.247179] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8cdbe9e0>
+Checking end criteria
+Operator is at 1.954905 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+[ERROR] [WallTime: 1467268299.762937] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467268299.815752] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80108200>
+Checking end criteria
+Operator is at 1.804129 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.575769 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[ERROR] [WallTime: 1467268300.363758] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467268300.390118] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8cdbe1b8>
+Checking end criteria
+Operator is at 1.619221 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 1.150355 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467268300.951104] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80108518>
+[ERROR] [WallTime: 1467268300.963200] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+Checking end criteria
+Operator is at 1.432444 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 1.712280 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+[INFO] [WallTime: 1467268301.477999] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135440>
+[ERROR] [WallTime: 1467268301.482886] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+Checking end criteria
+Operator is at 1.238363 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 2.231832 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 1.085927 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 2.741504 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268302.503547] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8d364b90>
+Checking end criteria
+Operator is at 0.986525 meters distance
+Checking if done following
+Operator is standing still for 3.259874 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Passed
+[INFO] [WallTime: 1467268303.021413] State machine transitioning 'FOLLOW_OPERATOR':'stopped'-->'SAY_SHOULD_I_RETURN'
+[INFO] [WallTime: 1467268303.022545] 'Should I return to target 3?'
+[INFO] [WallTime: 1467268305.016261] State machine transitioning 'SAY_SHOULD_I_RETURN':'spoken'-->'HEAR_SHOULD_I_RETURN'
+[INFO] [WallTime: 1467268305.017012] spec: <option>
+[INFO] [WallTime: 1467268305.017432] Example: 'yes'
+[INFO] [WallTime: 1467268315.049545] Preempt finished within specified preempt_timeout [1.00]
+[INFO] [WallTime: 1467268315.049743] Robot heard ''
+[INFO] [WallTime: 1467268315.050134] State machine transitioning 'HEAR_SHOULD_I_RETURN':'no_result'-->'SAY_STAND_IN_FRONT'
+[INFO] [WallTime: 1467268315.050850] 'Please stand in front of me!'
+[INFO] [WallTime: 1467268316.963699] State machine transitioning 'SAY_STAND_IN_FRONT':'spoken'-->'FOLLOW_OPERATOR'
+We have a new operator: 7c6973b74cbc34d073ecbebeec6547fb-laser
+[INFO] [WallTime: 1467268316.971150] 'Gotcha! I will follow you!'
+Checking end criteria
+Operator is at 0.924828 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.000062 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268317.001795] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8ccefa28>
+Checking end criteria
+Operator is at 0.925718 meters distance
+Robot dit not move for x seconds: 0.514940
+Checking if done following
+Operator is standing still for 0.515057 seconds
+apparently not
+Operator is standing still for 0.515147 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268317.516222] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135998>
+Checking end criteria
+Operator is at 0.919955 meters distance
+Robot dit not move for x seconds: 1.036163
+Checking if done following
+Operator is standing still for 1.036666 seconds
+apparently not
+Operator is standing still for 1.036767 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268318.038573] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb8d392c68>
+Checking end criteria
+Operator is at 0.954077 meters distance
+Robot dit not move for x seconds: 1.555499
+Checking if done following
+Operator is standing still for 1.555273 seconds
+apparently not
+Operator is standing still for 1.555348 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268318.556320] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135200>
+Checking end criteria
+Operator is at 0.906657 meters distance
+Robot dit not move for x seconds: 2.072994
+Checking if done following
+Operator is standing still for 2.072914 seconds
+apparently not
+Operator is standing still for 2.073010 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268319.073917] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135ef0>
+Checking end criteria
+Operator is at 0.907044 meters distance
+Robot dit not move for x seconds: 2.592070
+Checking if done following
+Operator is standing still for 2.592053 seconds
+apparently not
+Operator is standing still for 2.592116 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467268319.593505] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb80135e18>
+Checking end criteria
+Operator is at 0.906436 meters distance
+Robot dit not move for x seconds: 3.110612
+Checking if done following
+Operator is standing still for 3.111118 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 3.113603 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.939268 meters distance
+Robot dit not move for x seconds: 3.629784
+Checking if done following
+Operator is standing still for 3.629357 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 3.630955 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.935907 meters distance
+Robot dit not move for x seconds: 4.144458
+Checking if done following
+Operator is standing still for 4.144811 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 4.146972 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.896227 meters distance
+Robot dit not move for x seconds: 4.660860
+Checking if done following
+Operator is standing still for 4.661318 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 4.664563 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.907582 meters distance
+Robot dit not move for x seconds: 5.182319
+Checking if done following
+Operator is standing still for 5.182664 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 5.184599 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.907706 meters distance
+Robot dit not move for x seconds: 5.703738
+Checking if done following
+Operator is standing still for 5.704044 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 5.706133 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.900769 meters distance
+Robot dit not move for x seconds: 6.220828
+Checking if done following
+Operator is standing still for 6.221198 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 6.223324 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.912306 meters distance
+Robot dit not move for x seconds: 6.741000
+Checking if done following
+Operator is standing still for 6.741555 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 6.743799 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.932344 meters distance
+Robot dit not move for x seconds: 7.262141
+Checking if done following
+Operator is standing still for 7.263206 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 7.265476 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.906122 meters distance
+Robot dit not move for x seconds: 7.785727
+Checking if done following
+Operator is standing still for 7.786021 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 7.788095 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.900321 meters distance
+Robot dit not move for x seconds: 8.298876
+Checking if done following
+Operator is standing still for 8.299158 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 8.301305 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.906646 meters distance
+Robot dit not move for x seconds: 8.818821
+Checking if done following
+Operator is standing still for 8.819202 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 8.821282 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.901370 meters distance
+Robot dit not move for x seconds: 9.340266
+Checking if done following
+Operator is standing still for 9.340626 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 9.342583 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.910090 meters distance
+Robot dit not move for x seconds: 9.858713
+Checking if done following
+Operator is standing still for 9.859661 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Not passed
+Operator is standing still for 9.862154 seconds
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 0.905308 meters distance
+Robot dit not move for x seconds: 10.377665
+Checking if done following
+Operator is standing still for 10.378072 seconds
+I'm close enough to the operator and he's been standing there for long enough
+Checking if we pass the start timeout
+Passed
+[INFO] [WallTime: 1467268327.379271] State machine transitioning 'FOLLOW_OPERATOR':'stopped'-->'SAY_SHOULD_I_RETURN'
+[INFO] [WallTime: 1467268327.380310] 'Should I return to target 3?'
+[INFO] [WallTime: 1467268329.333921] State machine transitioning 'SAY_SHOULD_I_RETURN':'spoken'-->'HEAR_SHOULD_I_RETURN'
+[INFO] [WallTime: 1467268329.335219] spec: <option>
+[INFO] [WallTime: 1467268329.335629] Example: 'no'
+[INFO] [WallTime: 1467268332.302760] Result: result: yes
+choices: {'option': 'yes'}
+[INFO] [WallTime: 1467268332.302934] Robot heard 'yes'
+[INFO] [WallTime: 1467268332.303207] State machine transitioning 'HEAR_SHOULD_I_RETURN':'yes'-->'SAY_GOBACK_ARENA'
+[INFO] [WallTime: 1467268332.303432] 'Returning to the arena'
+[INFO] [WallTime: 1467268332.319266] State machine transitioning 'SAY_GOBACK_ARENA':'spoken'-->'GOTO_ARENA_DOOR'
+[INFO] [WallTime: 1467268332.319551] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268332.321673] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268332.321893] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268332.449072] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7ffb801080e0>
+SPEAKING!!!!
+[INFO] [WallTime: 1467268332.449434] 'Affirmative!'
+[INFO] [WallTime: 1467268332.468327] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467268341.285887] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467268341.286348] Plan blocked
+[INFO] [WallTime: 1467268344.329106] State machine transitioning 'PLAN_BLOCKED':'blocked'-->'GET_PLAN'
+[INFO] [WallTime: 1467268344.480803] State machine terminating 'GET_PLAN':'unreachable':'unreachable'
+[INFO] [WallTime: 1467268344.481278] State machine transitioning 'NAVIGATE':'unreachable'-->'STOP_ANALYSIS_UNREACHABLE'
+[INFO] [WallTime: 1467268344.484593] 
+
+Navigation summary:
+Covered 2.46528597111 meters in 12.1626861095 seconds (0.202692558938) m/s avg.
+Result = unreachable with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467268344.484760] State machine terminating 'STOP_ANALYSIS_UNREACHABLE':'done':'unreachable'
+[INFO] [WallTime: 1467268344.484871] State machine transitioning 'GOTO_ARENA_DOOR':'unreachable'-->'RESET_ED_ARENA_DOOR'
+[INFO] [WallTime: 1467268344.694762] State machine transitioning 'RESET_ED_ARENA_DOOR':'done'-->'GOTO_ARENA_DOOR_BACKUP'
+[INFO] [WallTime: 1467268344.695188] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268344.698708] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268344.699096] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268344.852857] State machine terminating 'GET_PLAN':'unreachable':'unreachable'
+[INFO] [WallTime: 1467268344.853196] State machine transitioning 'NAVIGATE':'unreachable'-->'STOP_ANALYSIS_UNREACHABLE'
+[INFO] [WallTime: 1467268344.856806] 
+
+Navigation summary:
+Covered 0.0 meters in 0.157870054245 seconds (0.0) m/s avg.
+Result = unreachable with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467268344.857042] State machine terminating 'STOP_ANALYSIS_UNREACHABLE':'done':'unreachable'
+[INFO] [WallTime: 1467268344.857279] State machine transitioning 'GOTO_ARENA_DOOR_BACKUP':'unreachable'-->'TIMEOUT_ARENA_DOOR'
+[INFO] [WallTime: 1467268345.161688] 'Trying for another 120 seconds .. wiggle wiggle'
+[INFO] [WallTime: 1467268345.794097] State machine transitioning 'TIMEOUT_ARENA_DOOR':'not_yet'-->'GOTO_ARENA_DOOR'
+[INFO] [WallTime: 1467268345.794609] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467268345.797726] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467268345.798084] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467268345.957983] State machine terminating 'GET_PLAN':'unreachable':'unreachable'
+[INFO] [WallTime: 1467268345.958758] State machine transitioning 'NAVIGATE':'unreachable'-->'STOP_ANALYSIS_UNREACHABLE'
+[INFO] [WallTime: 1467268345.963560] 

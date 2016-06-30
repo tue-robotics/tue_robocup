@@ -255,7 +255,7 @@ class AskOrder(smach.State):
 
     def _confirm(self, tries=3):
         for i in range(0, tries):
-            result = self._robot.ears.recognize("(yes|no)",{})
+            result = self._robot.ears.recognize("<option>", {"option":["yes", "no"]})
             if result and result.result:
                 answer = result.result
                 return answer == "yes"

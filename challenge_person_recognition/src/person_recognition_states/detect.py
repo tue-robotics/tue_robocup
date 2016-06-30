@@ -35,6 +35,10 @@ class RecognizePersons(smach.State):
         time.sleep(1)
 
         detections = self.robot.ed.detect_persons(external_api_request=external_api_request)
+
+        if not detections:
+            detections = []
+
         operator_candidates = [candidate for candidate in detections if candidate.name == "operator"]
 
         rospy.loginfo("Detections: %s", detections)
@@ -102,21 +106,28 @@ class RecognizePersons(smach.State):
         num_males = 0
         num_ppl = 0
 
+        has_additional_information = False
+
         for d in detections:
             num_ppl += 1
             if d.gender_score:
+                has_additional_information = True
                 if d.gender == 1:
                     num_males += 1
                 else:
                     num_females += 1
+            else:
+                num_males += 1
+
+        if not has_additional_information:
+            self.robot.speech.speak("Unfortunately, I could not access the internet for better classification.")
 
         self.robot.speech.speak("I found %d people in the crowd" % num_ppl)
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
     def _describe_operator(self, operator):
-        if operator.gender == 1:
-            gender = "male"
-        else:
+        gender = "male"
+        if operator.gender == 2:
             gender = "female"
 
         z = operator.pose.pose.position.z
