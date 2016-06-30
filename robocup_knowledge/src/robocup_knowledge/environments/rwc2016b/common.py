@@ -2,24 +2,24 @@ from robocup_knowledge.environments.rwc2016_common.common import *
 
 # Keep same reference
 locations.extend([
-    {"name": "bed", "room": "bedroom", "location_category": "", "manipulation": "no"},
-    {"name": "desk", "room": "bedroom", "location_category": "snacks", "manipulation": "yes"},
-    {"name": "bedside", "room": "bedroom", "location_category": "candies", "manipulation": "yes"},
-    {"name": "bar", "room": "kitchen", "location_category": "", "manipulation": "yes"},
-    {"name": "sink", "room": "kitchen", "location_category": "containers", "manipulation": "yes"},
-    {"name": "cupboard", "room": "kitchen", "location_category": "drinks", "manipulation": "yes"},
-    {"name": "sideshelf", "room": "kitchen", "location_category": "food", "manipulation": "yes"},
-    {"name": "tv_stand", "room": "dining_room", "location_category": "", "manipulation": "yes"},
-    {"name": "dining_table", "room": "dining_room", "location_category": "", "manipulation": "yes"},
-    {"name": "bookcase", "room": "dining_room", "location_category": "", "manipulation": "yes"},
-    {"name": "living_shelf", "room": "living_room", "location_category": "", "manipulation": "yes"},
-    {"name": "living_table", "room": "living_room", "location_category": "", "manipulation": "yes"},
-    {"name": "drawer", "room": "living_room", "location_category": "toiletries", "manipulation": "yes"},
-    {"name": "cabinet", "room": "corridor", "location_category": "", "manipulation": "yes"}
+    { "room" : "bedroom",     "name" : "bed",          "location_category" : "",           "manipulation" : "no" },
+    { "room" : "bedroom",     "name" : "desk",         "location_category" : "snacks",     "manipulation" : "yes" },
+    { "room" : "bedroom",     "name" : "bedside",      "location_category" : "candies",    "manipulation" : "yes" },
+    { "room" : "kitchen",     "name" : "bar",          "location_category" : "",           "manipulation" : "yes" },
+    { "room" : "kitchen",     "name" : "sink",         "location_category" : "containers", "manipulation" : "yes" },
+    { "room" : "kitchen",     "name" : "cupboard",     "location_category" : "drinks",     "manipulation" : "yes" },
+    { "room" : "kitchen",     "name" : "sideshelf",    "location_category" : "food",       "manipulation" : "yes" },
+    { "room" : "dining_room", "name" : "tv_stand",     "location_category" : "",           "manipulation" : "yes" },
+    { "room" : "dining_room", "name" : "dining_table", "location_category" : "",           "manipulation" : "yes" },
+    { "room" : "dining_room", "name" : "bookcase",     "location_category" : "",           "manipulation" : "yes" },
+    { "room" : "living_room", "name" : "living_shelf", "location_category" : "",           "manipulation" : "yes" },
+    { "room" : "living_room", "name" : "living_table", "location_category" : "",           "manipulation" : "yes" },
+    { "room" : "living_room", "name" : "drawer",       "location_category" : "toiletries", "manipulation" : "yes" },
+    { "room" : "corridor",    "name" : "cabinet",      "location_category" : "",           "manipulation" : "yes" }
 ])
 
 category_locations.update({
-    "candies":    ( "bedside",      "shelf3" ),
+    "candies":    ( "bedside",      "on_top_of" ),
     "snacks":     ( "desk",         "on_top_of" ),
     "drinks":     ( "cupboard",     "on_top_of" ),
     "food":       ( "sideshelf",    "on_top_of" ),
