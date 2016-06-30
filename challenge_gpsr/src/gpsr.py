@@ -95,8 +95,9 @@ def main():
             if args.once:
                 break
 
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
-            nwc.execute()
+            if not args.skip:
+                nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
+                nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
 
