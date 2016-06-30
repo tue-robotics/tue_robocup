@@ -336,7 +336,7 @@ class CheckDoorPassable(smach.State):
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="/map")
         plan = self.robot.base.global_planner.getPlan(pc)
 
-        if plan and computePathLength(plan) < 3.0:
+        if plan and len(plan) < 3 and computePathLength(plan) < 3.0:
             return "passable"
         else:
             return "blocked"
