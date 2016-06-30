@@ -104,3 +104,8 @@ if __name__ == "__main__":
     os.system("ls -lah /home/amigo/usb")
 
     rospy.loginfo("If this went wrong for a reason, please execute the command on amigo1 to create a pdf and copy to USB manually")
+
+    cmd = 'convert `ls -t /tmp/faces/*_annotated.jpeg | head -1` /home/amigo/tech_united_%s.pdf' % datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+
+    rospy.loginfo("Executing bash command: %s" % cmd)
+    os.system(cmd)
