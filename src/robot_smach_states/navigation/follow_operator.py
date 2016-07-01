@@ -52,6 +52,7 @@ class FollowOperator(smach.State):
         self._last_operator_pose_stamped = None
 
         self._replan_active = False
+        self._last_operator = None
         self._replan_allowed = replan
         self._replan_timeout = 15 # seconds before another replan is allowed
         self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
@@ -142,7 +143,7 @@ class FollowOperator(smach.State):
                                 while num_detections < 5:
                                     if self._robot.ed.learn_person(self._operator_name):
                                         num_detections+=1
-                                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
+                                    if (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
                                         self._robot.speech.speak("Please stand in front of me and look at me")
                                         operator = None
                                         break
@@ -155,16 +156,20 @@ class FollowOperator(smach.State):
                     self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                     return False
             else:
-                operator = self._robot.ed.get_closest_laser_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
         print "We have a new operator: %s"%operator.id
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._operator_id = operator.id
+        self._operator = operator
         self._breadcrumbs.append(operator)
 
         self._robot.head.close()
+
+        print ("NOW!!!")
+        rospy.sleep(3)
 
         return True
 
@@ -199,6 +204,37 @@ class FollowOperator(smach.State):
 
         self._visualize_breadcrumbs()
 
+    def _backup_register(self):
+        # This only happens when the operator was just registered, and never tracked
+        print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
+        self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
+                                                                                center_point=msg_constructors.PointStamped(
+                                                                                    x=1.5, y=0, z=1,
+                                                                                    frame_id="/%s/base_link" % self._robot.robot_name))
+        if self._operator:
+            return True
+        else:
+            print "Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1"
+            self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
+                                                                          center_point=msg_constructors.PointStamped(
+                                                                              x=1.5, y=0, z=1,
+                                                                              frame_id="/%s/base_link" % self._robot.robot_name)
+                                                                          )
+
+        if self._operator:
+            return True
+        else:
+            print "Trying to register operator again"
+            self._robot.speech.speak("Oops, let's try this again...", block=False)
+            self._register_operator()
+            self._operator = self._robot.ed.get_entity( id=self._operator_id )
+
+        if self._operator:
+            self._last_operator = self._operator
+            return True
+
+        return False
+
     def _track_operator(self):
         if self._operator_id:
             self._operator = self._robot.ed.get_entity( id=self._operator_id )
@@ -230,6 +266,31 @@ class FollowOperator(smach.State):
             return True
         else:
             robot_position = self._robot.base.get_location().pose.position
+
+            if not self._last_operator:
+                if self._backup_register():
+                    # If the operator is still tracked, it is also the last_operator
+                    self._last_operator = self._operator
+
+                    operator_pos = geometry_msgs.msg.PointStamped()
+                    operator_pos.header.stamp = rospy.get_rostime()
+                    operator_pos.header.frame_id = self._operator_id
+                    operator_pos.point.x = 0.0
+                    operator_pos.point.y = 0.0
+                    operator_pos.point.z = 0.0
+                    self._operator_pub.publish(operator_pos)
+
+                    robot_position = self._robot.base.get_location().pose.position
+                    operator_position = self._last_operator.pose.position
+
+                    dx = operator_position.x - robot_position.x
+                    dy = operator_position.y - robot_position.y
+                    self._operator_distance = math.hypot(dx, dy)
+
+                    return True
+                else:
+                    self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
+
             operator_position = self._last_operator.pose.position
 
             dx = operator_position.x - robot_position.x
