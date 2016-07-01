@@ -143,7 +143,7 @@ class FollowOperator(smach.State):
                                 while num_detections < 5:
                                     if self._robot.ed.learn_person(self._operator_name):
                                         num_detections+=1
-                                    if (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
+                                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
                                         self._robot.speech.speak("Please stand in front of me and look at me")
                                         operator = None
                                         break
