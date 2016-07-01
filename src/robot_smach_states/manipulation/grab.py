@@ -32,16 +32,16 @@ class PrepareEdGrasp(smach.State):
 
     def execute(self, userdata):
 
-        entity = self.grab_entity_designator.resolve()
-        if not entity:
-            rospy.logerr("Could not resolve grab_entity")
-            return "failed"
-
         arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
         userdata.arm = arm.side
+
+        entity = self.grab_entity_designator.resolve()
+        if not entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
 
         # Open gripper (non-blocking)
         arm.send_gripper_goal('open', timeout=0)
@@ -270,10 +270,12 @@ class ResetOnFailure(smach.StateMachine):
         # ToDo: test this for real
         arm = self._robot.get_arm(userdata.arm)[0]  # Using userdata makes sure we don't need more arm designator magic
         self._robot.torso.high()  # Move up to make resetting of the arm safer
-        arm.send_gripper_goal('close')
+        if arm:
+            arm.send_gripper_goal('close')
         self._robot.head.reset()  # Sends a goal
         self._robot.head.cancel_goal()  # And cancels it...
-        arm.reset()
+        if arm:
+            arm.reset()
         self._robot.torso.reset()
         return 'done'
 
