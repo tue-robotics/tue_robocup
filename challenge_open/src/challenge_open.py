@@ -58,8 +58,8 @@ class ChallengeOpen:
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         sentences = [
-                "Hey hello there! What can I do for you?"
-                "I'm so sorry! Please tell me what I can do for you!"
+                "What can I do for you?",
+                "Can I do something?"
                 ]
 
         rospy.loginfo("Ready, waiting for trigger!")
