@@ -191,7 +191,7 @@ class PickUp(smach.State):
 
         # RoboCup manipulation challenge solution: sleep to make sure we get points for grasping
         rospy.loginfo("Sleep RoboCup style")
-        rospy.sleep(rospy.Duration(2.5))
+        rospy.sleep(rospy.Duration(5.0))
 
         # Retract
         # rospy.loginfo('Start retracting')
