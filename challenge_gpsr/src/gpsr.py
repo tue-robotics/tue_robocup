@@ -72,6 +72,8 @@ def main():
 
     sentence = " ".join([word for word in args.sentence if word[0] != '_'])
 
+    first = True
+
     if sentence:
         semantics = command_center.parse_command(sentence)
         if not semantics:
@@ -81,10 +83,28 @@ def main():
         command_center.execute_command(semantics)
     else:
         while True:
-            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600)           
+
+            if first:
+                # First sentence robot says
+                sentences = ["Hello there! Welcome to the GPSR. You can give me an order, but wait for the ping."]
+            else:
+                # Sentence robot says after completing a task
+                sentences = ["Hello there, you look lovely! I'm here to take a new order, but wait for the ping!"] 
+
+            # These sentences are for when the first try fails
+            # (Robot says "Do you want me to ...?", you say "No", then robot says sentence below)
+            sentences += [
+                "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
+                "Again, I am deeply sorry. Bad robot! Please try again, but wait for the ping!",
+                "You and I have communication issues. Speak up! Tell me what you want, but wait for the ping"
+                ]
+
+            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600, sentences=sentences)           
 
             if not res:
                 continue
+
+            first = False
 
             (sentence, semantics) = res
 
