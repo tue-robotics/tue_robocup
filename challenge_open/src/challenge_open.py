@@ -75,10 +75,14 @@ class ChallengeOpen:
                 self.sentence = None
 
             elif self.do_listen_command:
-                command_semantics = command_center.request_command(ask_confirmation=True, ask_missing_info=False,
-                                                                   sentences=sentences, n_tries=2)
-                if not command_semantics:
+                res = command_center.request_command(ask_confirmation=True,
+                    ask_missing_info=False, sentences=sentences, n_tries=2)
+
+                if not res:
                     self.robot.speech.speak("I did not understand")
+                else:
+                    (command_words, command_semantics) = res
+
                 self.do_listen_command = False
             else:
                 time.sleep(0.1)
