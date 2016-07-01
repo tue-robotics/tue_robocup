@@ -31,7 +31,7 @@ class WaitSay(smach.State):
         self._robot.head.look_at_standing_person()
         answer = None
         while not answer or answer.result != "side detection":
-            answer = self._robot.ears.recognize('<option>', {'option': ['side detection'])
+            answer = self._robot.ears.recognize('<option>', {'option': ['side detection']})
         self._robot.head.cancel_goal()
 
         return "done"
