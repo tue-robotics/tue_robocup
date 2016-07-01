@@ -177,8 +177,8 @@ class ForceRotate(smach.State):
         if self._first_stamp is None:
             self._first_stamp = rospy.Time.now()
 
-        if (rospy.Time.now() - self._first_stamp).to_sec > self._timeout:
-            rospy.loginfo("ForceRotate timed out...")
+        if (rospy.Time.now() - self._first_stamp).to_sec() > self._timeout:
+            rospy.loginfo("ForceRotate timed out {0}, timeout is {1}...".format((rospy.Time.now() - self._first_stamp).to_sec(), self._timeout))
             return 'timedout'
 
         self._robot.base.force_drive(0, 0, self._vth, self._duration)
