@@ -31,7 +31,7 @@ LOC_DET[R] -> in the ROOM[R]
 
 TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
-TO_LOC[{"special" : "operator"}] -> me
+TO_LOC[{"id" : "gpsr_meeting_point"}] -> me
 
 PERSON["type" : "person"] -> DET person
 PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
@@ -101,7 +101,7 @@ V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
-VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
+VP["action" : "bring", "entity" : X, "to" : {"id" : "gpsr_meeting_point"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
 
