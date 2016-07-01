@@ -150,6 +150,42 @@ class ForceDrive(smach.State):
         self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
         return 'done'
 
+# ----------------------------------------------------------------------------------------------------
+
+
+class ForceRotate(smach.State):
+    """ Force forth and back. If a timeout is exceeded, we won't do this anymore """
+
+    def __init__(self, robot, vth, duration, timeout):
+        """ Constructor
+        :param robot: robot object
+        :param vth: yaw-velocity
+        :param duration: float indicating how long to drive
+        :param timeout: after this, timedout is returned
+        :return done: rotated back and forth
+        :return timedout: this takes too long
+        """
+        smach.State.__init__(self, outcomes=['done', 'timedout'])
+        self._robot = robot
+        self._vth = vth
+        self._duration = duration
+        self._timeout = timeout
+        self._first_stamp = None
+
+    def execute(self, userdata):
+        """ Executes the state """
+        if self._first_stamp is None:
+            self._first_stamp = rospy.Time.now()
+
+        if (rospy.Time.now() - self._first_stamp).to_sec > self._timeout:
+            rospy.loginfo("ForceRotate timed out...")
+            return 'timedout'
+
+        self._robot.base.force_drive(0, 0, self._vth, self._duration)
+        self._vth = -self._vth
+        self._robot.base.force_drive(0, 0, self._vth, self._duration)
+        return 'done'
+
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -624,40 +660,13 @@ def setup_statemachine(robot):
                                                           {cabinet: "in_front_of"},
                                                            cabinet),
                                 transitions={   'arrived'           :'INSPECT_SHELVES',
-                                                'unreachable'       :'FORCE_DRIVE',
+                                                'unreachable'       :'FORCE_ROTATE',
                                                 'goal_not_defined'  :'INSPECT_SHELVES'})
 
-        smach.StateMachine.add("FORCE_DRIVE",
-                               ForceDrive(robot, 0, 0, 0.5, 1.0),
-                               transitions={'done': "FORCE_DRIVE_BACK"})
-
-        smach.StateMachine.add("FORCE_DRIVE_BACK",
-                               ForceDrive(robot, 0, 0, -0.5, 1.0),
-                               transitions={'done': "NAV_TO_START2"})
-
-        smach.StateMachine.add("NAV_TO_START2",
-                               states.NavigateToSymbolic(robot,
-                                                         {cabinet: "in_front_of"},
-                                                         cabinet),
-                               transitions={'arrived': 'INSPECT_SHELVES',
-                                            'unreachable': 'FORCE_DRIVE2',
-                                            'goal_not_defined': 'INSPECT_SHELVES'})
-
-        smach.StateMachine.add("FORCE_DRIVE2",
-                               ForceDrive(robot, 0, 0, -0.5, 1.0),
-                               transitions={'done': "FORCE_DRIVE_BACK2"})
-
-        smach.StateMachine.add("FORCE_DRIVE_BACK2",
-                               ForceDrive(robot, 0, 0, 0.5, 1.0),
-                               transitions={'done': "NAV_TO_START3"})
-
-        smach.StateMachine.add("NAV_TO_START3",
-                               states.NavigateToSymbolic(robot,
-                                                         {cabinet: "in_front_of"},
-                                                         cabinet),
-                               transitions={'arrived': 'INSPECT_SHELVES',
-                                            'unreachable': 'INSPECT_SHELVES',
-                                            'goal_not_defined': 'INSPECT_SHELVES'})
+        smach.StateMachine.add("FORCE_ROTATE",
+                               ForceRotate(robot, 0.5, 2.0, 30.0),
+                               transitions={'done': "NAV_TO_START",
+                                            'timedout': "INSPECT_SHELVES"})
 
         # smach.StateMachine.add("RESET_ED",
         #                         states.ResetED(robot),
