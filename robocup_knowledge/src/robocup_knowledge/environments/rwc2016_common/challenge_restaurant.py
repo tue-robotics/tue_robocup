@@ -19,6 +19,6 @@ kitchen_radius = 2
 order_spec = "(<beverage>|<food1> and [(a|an)] <food2>)"
 
 # Do not alter keys or side values
-drinks = [ o["name"] for o in common.objects if o["category"] == "drink" ]
+drinks = [ o["name"] for o in common.objects if o["category"] == "drinks" ]
 foods = [ o["name"] for o in common.objects if o["category"] == "food" ]
 order_choices = {"beverage": drinks, "food1": foods, "food2": foods }
