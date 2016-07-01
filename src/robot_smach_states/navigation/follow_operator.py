@@ -408,7 +408,7 @@ class FollowOperator(smach.State):
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
         # Wait for the operator and find his/her face
-        operator_recovery_timeout = 20.0 #TODO: parameterize
+        operator_recovery_timeout = 60.0 #TODO: parameterize
         start_time = rospy.Time.now()
         recovered_operator = None
 
