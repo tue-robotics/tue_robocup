@@ -89,9 +89,9 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Guide me out of the arena please.", look_at_standing_person=True), transitions={ 'spoken' :'FOLLOW_INITIAL'})
 
-        smach.StateMachine.add('FOLLOW_INITIAL', states.FollowOperator(robot, operator_timeout=30), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'WAIT_FOR_OPERATOR_COMMAND', 'no_operator':'FOLLOW_INITIAL'})
+        smach.StateMachine.add('FOLLOW_INITIAL', states.FollowOperator(robot, operator_timeout=30,replan=True), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'WAIT_FOR_OPERATOR_COMMAND', 'no_operator':'FOLLOW_INITIAL'})
 
-        smach.StateMachine.add('FOLLOW', states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'SAY_GUIDE', 'no_operator':'SAY_GUIDE'})
+        smach.StateMachine.add('FOLLOW', states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'SAY_GUIDE', 'no_operator':'SAY_GUIDE'})
         smach.StateMachine.add('WAIT_FOR_OPERATOR_COMMAND', WaitForOperatorCommand(robot), transitions={ 'follow':'FOLLOW', 'command':'SAY_GUIDE' })
 
         smach.StateMachine.add('SAY_GUIDE', states.Say(robot, "I will guide you back to the robocup arena!", look_at_standing_person=True), transitions={ 'spoken' :'GUIDE_TO_ROBOCUP_ARENA'})

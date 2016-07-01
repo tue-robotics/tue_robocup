@@ -115,6 +115,8 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
         rospy.logwarn("Writing to local file instead")
         html2pdf(html, "%s"%filename)
 
+    html2pdf(html, "%s/%s"%(os.path.expanduser("~"), filename))
+
 if __name__ == '__main__':
     rospy.init_node("testpdf")
     pisa.showLogging()
