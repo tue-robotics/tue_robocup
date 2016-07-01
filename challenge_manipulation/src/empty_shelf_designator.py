@@ -39,7 +39,7 @@ class EmptyShelfDesignator(Designator):
             rospy.logerr("EmptyShelfDesignator: please provide an area")
 
         self.place_location_designator = place_location_designator
-        self._edge_distance = 0.08                   # Distance to table edge
+        self._edge_distance = 0.06                   # Distance to table edge
         self._spacing = 0.12
         self._area = area
 
