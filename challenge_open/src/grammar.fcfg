@@ -1,6 +1,6 @@
 T[{actions : <A1>}] -> C[A1]
 T[{actions : <A1, A2>}] -> C[A1] and C[A2]
-T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+#T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> VP[A]
 
@@ -18,20 +18,20 @@ LOC[{"id" : X}] -> ROOM[X] | FURNITURE[X]
 SMALL_OBJECT_SPEC[{ "special" : "it" }] -> it
 SMALL_OBJECT_SPEC[{ "type" : X }] -> DET SMALL_OBJECT[X]
 SMALL_OBJECT_SPEC[{ "type" : X, "loc" : Y }] -> DET SMALL_OBJECT[X] FROM_PP the LOC[Y]
-SMALL_OBJECT_SPEC[{ "cat" : C }] -> DET OBJ_CAT[C]
-SMALL_OBJECT_SPEC[{ "cat" : C, "loc" : Y }] -> DET OBJ_CAT[C] FROM_PP the LOC[Y]
+#SMALL_OBJECT_SPEC[{ "cat" : C }] -> DET OBJ_CAT[C]
+#SMALL_OBJECT_SPEC[{ "cat" : C, "loc" : Y }] -> DET OBJ_CAT[C] FROM_PP the LOC[Y]
 
 FROM_PP -> from | on | which is on
 AT_PP -> in | at | who is in
 
-ADJ_PERSON["waving"] -> waving
-ADJ_PERSON["calling"] -> calling
+#ADJ_PERSON["waving"] -> waving
+#ADJ_PERSON["calling"] -> calling
 
 LOC_DET[R] -> in the ROOM[R]
 
 TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
-TO_LOC[{"special" : "operator"}] -> me
+TO_LOC[{"id" : "gpsr_meeting_point"}] -> me
 
 PERSON["type" : "person"] -> DET person
 PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
@@ -65,20 +65,6 @@ OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
 OBJ_FIND[P] -> PERSON[P]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
-# Say
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-VP["action": "count", "cat" : C] -> V_SAY how many OBJ_CAT[C] there are
-VP["action": "count", "cat" : C] -> V_SAY how many GENDER[C] there are
-VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many OBJ_CAT[C] are at the LOC[L]
-VP["action": "count", "cat" : C, "loc" : L] -> V_SAY how many GENDER[C] are at the LOC[L]
-
-GENDER["women"] -> women
-GENDER["men"] -> men
-
-V_SAY -> tell | say | speak
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
 # Grasping
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -110,25 +96,14 @@ NAV_LOC[X] -> the ROOM[X]
 
 V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-
-
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
-VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
+VP["action" : "bring", "entity" : X, "to" : {"id" : "gpsr_meeting_point"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
-
-
-
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions
@@ -144,7 +119,7 @@ VP["action": "answer-question"] -> answer her question
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
-VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it | what time is it
+VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
 VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
 
 VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
