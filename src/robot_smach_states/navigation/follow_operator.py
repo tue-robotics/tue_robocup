@@ -137,6 +137,7 @@ class FollowOperator(smach.State):
                             if self._learn_face:
                                 self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
                                 self._robot.speech.speak("Just in case...",block=False)
+				self._robot.head.look_at_standing_person()
                                 learn_person_start_time = rospy.Time.now()
                                 learn_person_timeout = 10.0 # TODO: Parameterize
                                 num_detections = 0
