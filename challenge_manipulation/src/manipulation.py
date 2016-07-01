@@ -624,8 +624,40 @@ def setup_statemachine(robot):
                                                           {cabinet: "in_front_of"},
                                                            cabinet),
                                 transitions={   'arrived'           :'INSPECT_SHELVES',
-                                                'unreachable'       :'INSPECT_SHELVES',
+                                                'unreachable'       :'FORCE_DRIVE',
                                                 'goal_not_defined'  :'INSPECT_SHELVES'})
+
+        smach.StateMachine.add("FORCE_DRIVE",
+                               ForceDrive(robot, 0, 0, 0.5, 1.0),
+                               transitions={'done': "FORCE_DRIVE_BACK"})
+
+        smach.StateMachine.add("FORCE_DRIVE_BACK",
+                               ForceDrive(robot, 0, 0, -0.5, 1.0),
+                               transitions={'done': "NAV_TO_START2"})
+
+        smach.StateMachine.add("NAV_TO_START2",
+                               states.NavigateToSymbolic(robot,
+                                                         {cabinet: "in_front_of"},
+                                                         cabinet),
+                               transitions={'arrived': 'INSPECT_SHELVES',
+                                            'unreachable': 'FORCE_DRIVE2',
+                                            'goal_not_defined': 'INSPECT_SHELVES'})
+
+        smach.StateMachine.add("FORCE_DRIVE2",
+                               ForceDrive(robot, 0, 0, -0.5, 1.0),
+                               transitions={'done': "FORCE_DRIVE_BACK2"})
+
+        smach.StateMachine.add("FORCE_DRIVE_BACK2",
+                               ForceDrive(robot, 0, 0, 0.5, 1.0),
+                               transitions={'done': "NAV_TO_START3"})
+
+        smach.StateMachine.add("NAV_TO_START3",
+                               states.NavigateToSymbolic(robot,
+                                                         {cabinet: "in_front_of"},
+                                                         cabinet),
+                               transitions={'arrived': 'INSPECT_SHELVES',
+                                            'unreachable': 'INSPECT_SHELVES',
+                                            'goal_not_defined': 'INSPECT_SHELVES'})
 
         # smach.StateMachine.add("RESET_ED",
         #                         states.ResetED(robot),
