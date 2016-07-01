@@ -449,9 +449,9 @@ class FollowOperator(smach.State):
         print "Trying to get a global plan"
         operator_position = self._last_operator.pose.position
         # Define end goal constraint, solely based on the (old) operator position
-        pc = PositionConstraint()
-        pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x, operator_position.y, self._operator_radius)
-        plan = self._robot.base.global_planner.getPlan(pc)
+        self._replan_pc = PositionConstraint()
+        self._replan_pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x, operator_position.y, self._operator_radius)
+        plan = self._robot.base.global_planner.getPlan(self._replan_pc)
         if not plan or not self._robot.base.global_planner.checkPlan(plan):
             print "No global plan possible"
         else:
@@ -461,7 +461,7 @@ class FollowOperator(smach.State):
             self._replan_active = True
             oc = self._robot.base.local_planner.getCurrentOrientationConstraint()
             self._visualize_plan(plan)
-            self._robot.base.local_planner.setPlan(plan, pc, oc)
+            self._robot.base.local_planner.setPlan(plan, self._replan_pc, oc)
             self._breadcrumbs = []
 
     def _check_end_criteria(self):
@@ -471,7 +471,7 @@ class FollowOperator(smach.State):
         print "Checking end criteria"
 
         if self._replan_active:
-            if self._robot.base.local_planner.getStatus() == "arrived":
+            if len(self._robot.base.global_planner.getPlan(self._replan_pc)) < 10:
                 self._replan_active = False
                 if lost_operator and not self._recover_operator():
                     return "lost_operator"
