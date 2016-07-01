@@ -85,12 +85,19 @@ def main():
         while True:
 
             if first:
-                sentences = ["Hello there! Welcome to the GPSR. You can give me any command after the ping."]
+                # First sentence robot says
+                sentences = ["Hello there! Welcome to the GPSR. You can give me an order, but wait for the ping."]
             else:
-                sentences = ["Hello there, you look lovely! I'm here to take a new order. Wait for the ping!"] 
+                # Sentence robot says after completing a task
+                sentences = ["Hello there, you look lovely! I'm here to take a new order, but wait for the ping!"] 
 
-            # This sentence is for when the first fails
-            sentences += ["I'm so sorry, but I did not understand. Can you please speak louder and slower? And wait for the ping!"]
+            # These sentences are for when the first try fails
+            # (Robot says "Do you want me to ...?", you say "No", then robot says sentence below)
+            sentences += [
+                "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
+                "Again, I am deeply sorry. Bad robot! Please try again, but wait for the ping!",
+                "You and I have communication issues. Speak up! Tell me what you want, but wait for the ping"
+                ]
 
             res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600, sentences=sentences)           
 
