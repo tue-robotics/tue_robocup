@@ -1,0 +1,8 @@
+[ERROR] [WallTime: 1467359537.085781] InvalidUserCodeError: Could not execute state 'FOLLOW_INITIAL' of type '<robot_smach_states.navigation.follow_operator.FollowOperator object at 0x7f5b7e804a50>': Traceback (most recent call last):
+  File "/home/amigo/ros/indigo/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 550, in execute
+    self._track_operator()
+  File "/home/amigo/ros/indigo/system/src/robot_smach_states/src/robot_smach_states/navigation/follow_operator.py", line 233, in _track_operator
+    operator_position = self._last_operator.pose.position
+AttributeError: 'FollowOperator' object has no attribute '_last_operator'
