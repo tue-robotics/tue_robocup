@@ -36,11 +36,21 @@ def save_entity_image_to_file(world_model_ed, entityID):
     # ed request
     info = world_model_ed.get_entity_info(entityID)
 
+    if len(info.measurement_image_unmasked) == 0:
+        rospy.logerr("Received empty image for %s from ED.", entityID)
+        return None
+
     try:
         byte_array = bytearray(info.measurement_image_unmasked)
         stream = StringIO.StringIO(byte_array)
         image = Image.open(stream)
+    except Exception as e:
+        rospy.logerr("Failed to load image from entity %s", entityID)
+        rospy.logerr("Failed to load image ... Try installing the latest version of PILLOW: sudo pip install -I pillow")
+        rospy.logerr(e)
+        return None
 
+    try:
         image_data = np.asarray(image)
         image_data_bw = image_data.max(axis=2)
         non_empty_columns = np.where(image_data_bw.max(axis=0)>0)[0]
@@ -51,8 +61,8 @@ def save_entity_image_to_file(world_model_ed, entityID):
 
         cropped_image = Image.fromarray(image_data_new)
     except:
-        rospy.logerr("Failed to load image ... Try installing the latest version of PILLOW: sudo pip install -I pillow")
-        return None
+        rospy.logerr("Could not crop image, I will use the original image as cropped image")
+        cropped_image = image
 
     file_name = "images/%s.jpg"%entityID
 
