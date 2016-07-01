@@ -394,21 +394,30 @@ class ED:
                 # This is what we do for real
                 # for idx, id, type in enumerate (res.ids):
                 # print "TODO: finish type filtering in Classification"
-                return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities) if exp_val in types]
+                posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
+                return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if exp_val in types]
             else:
                 # This is what we do in simulation
                 import random
                 extypes = types + [""]
                 exvalues = []
                 exprobs = []
+                posteriors = []
                 for id in ids:
-                    exvalues.append(random.choice(extypes))
+                    exvalue = random.choice(extypes)
+                    distr = { exvalue : 0.7, random.choice(extypes) : 0.2, random.choice(extypes) : 0.1 }
+
+                    exvalues.append(exvalue)
                     exprobs.append(random.random())
+                    posteriors.append(distr)
+
                     self.update_entity(id=id, type=exvalues[-1])
+
                     print "ID: {0}: {1} (prob = {2})".format(id, exvalues[-1], exprobs[-1])
-                return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(ids, exvalues, exprobs) if exp_val in types]
+                return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr in zip(ids, exvalues, exprobs, posteriors) if exp_val in types]
         else:
-            return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
+            posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
+            return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors)]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
