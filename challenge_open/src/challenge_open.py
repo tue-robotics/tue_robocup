@@ -57,6 +57,11 @@ class ChallengeOpen:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        sentences = [
+                "Hey hello there! What can I do for you?"
+                "I'm so sorry! Please tell me what I can do for you!"
+                ]
+
         rospy.loginfo("Ready, waiting for trigger!")
 
         while not rospy.is_shutdown():
@@ -70,9 +75,10 @@ class ChallengeOpen:
                 self.sentence = None
 
             elif self.do_listen_command:
-                command_semantics = command_center.request_command(ask_confirmation=True, ask_missing_info=False)
+                command_semantics = command_center.request_command(ask_confirmation=True, ask_missing_info=False,
+                                                                   sentences=sentences, n_tries=2)
                 if not command_semantics:
-                    self.robot.speech.speak("Sorry, I did not understand")
+                    self.robot.speech.speak("I did not understand")
                 self.do_listen_command = False
             else:
                 time.sleep(0.1)
