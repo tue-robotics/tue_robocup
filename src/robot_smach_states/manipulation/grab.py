@@ -189,10 +189,6 @@ class PickUp(smach.State):
                              ):
             rospy.logerr('Failed lift')
 
-        # RoboCup manipulation challenge solution: sleep to make sure we get points for grasping
-        rospy.loginfo("Sleep RoboCup style")
-        rospy.sleep(rospy.Duration(5.0))
-
         # Retract
         # rospy.loginfo('Start retracting')
         if arm.side == "left":
