@@ -1,10 +1,11 @@
 from robocup_knowledge.environments.rwc2016a.common import *
 
-locations = [
-    { "room" : "", "name" : "bar",       "location_category" : "" ,          "manipulation" : "yes" },
-    { "room" : "", "name" : "table1",         "location_category" : "",     "manipulation" : "yes" },
-    { "room" : "", "name" : "table2",          "location_category" : "",           "manipulation" : "yes"  },
-    { "room" : "", "name" : "table3",      "location_category" : "",    "manipulation" : "yes" }
+del locations[:]
+locations += [
+    { "room" : "", "name" : "bar",    "location_category" : "" ,          "manipulation" : "yes" },
+    { "room" : "", "name" : "table1", "location_category" : "",     "manipulation" : "yes" },
+    { "room" : "", "name" : "table2", "location_category" : "",           "manipulation" : "yes"  },
+    { "room" : "", "name" : "table3", "location_category" : "",    "manipulation" : "yes" }
 ]
 # During the final challenge, we have no rooms
 rooms = []
