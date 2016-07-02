@@ -482,6 +482,8 @@ class FollowOperator(smach.State):
 
         self._robot.head.close()
         self._turn_towards_operator()
+        self._update_navigation()
+        rospy.sleep(2.0)
         return False
 
     def _turn_towards_operator(self):
