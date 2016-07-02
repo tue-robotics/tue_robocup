@@ -3,8 +3,12 @@ T[{actions : <A1, A2>}] -> C[A1] and C[A2]
 T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 T[{actions : <A1, A2, A3, A4>}] -> C[A1] C[A2] C[A3] and C[A4]
 
-
 C[{A}] -> VP[A]
+C[{A}] -> CALL VP[A]
+
+# take it tell the day of the week <----
+
+CALL -> robot | please | robot please | could you | could you please
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
@@ -44,7 +48,10 @@ PERSON["type" : "person", "loc" : L] -> DET person LOC_DET[L]
 PERSON["type" : "person", "adj" : A, "loc" : L] -> DET ADJ_PERSON[A] person LOC_DET[L]
 PERSON["type" : "person", "id" : N] -> NAME[N]
 PERSON["type" : "person", "id" : N, "loc" : L] -> NAME[N] LOC_DET[L]
+PERSON["type" : "person", "loc" : L] -> NAME[N] NEAR_IN_ON the LOC[L]
 PERSON["special" : "it"] -> him | her | them
+
+NEAR_IN_ON -> near | in | on
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Exit
@@ -155,6 +162,6 @@ VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me w
 VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 VP["action": "say", "sentence": "JOKE"] -> V_SAY a joke
-#VP["action": "say", "sentence": "DARK_SIDE"] -> join the dark side
+VP["action": "say", "sentence": "DARK_SIDE"] -> join the dark side
 
 V_SAY -> tell | say | speak
