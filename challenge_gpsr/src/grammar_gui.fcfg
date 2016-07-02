@@ -46,7 +46,10 @@ SMALL_OBJECT_SPEC[{ "cat" : C, "loc" : Y }] -> DET OBJ_CAT[C] FROM_PP the LOC[Y]
 FROM_PP -> on
 AT_PP -> in
 
+BLA -> in | on | near
+
 LOC_DET[R] -> in the ROOM[R]
+LOC_DET[X] -> BLA the LOC[X]
 
 TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
@@ -143,4 +146,7 @@ VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me w
 VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 V_SAY -> tell
+
+VP["action": "say"] -> ask her name
+VP["action": "say"] -> tell a joke
 
