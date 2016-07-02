@@ -153,6 +153,7 @@ VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me w
 VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 VP["action": "say", "sentence": "JOKE"] -> V_SAY a joke
+VP["action": "say", "sentence": "DARK_SIDE"] -> join the dark side
 
 V_SAY -> tell | say | speak
 
