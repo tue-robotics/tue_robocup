@@ -8,6 +8,8 @@ C[{A}] -> VP[A]
 # Entities
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
+ME[{"type" : "person", "loc" : "sideshelf"}] -> me
+
 NP[M] -> SMALL_OBJECT[M]
 NP[M] -> LOC[M]
 
@@ -31,14 +33,14 @@ LOC_DET[R] -> in the ROOM[R]
 
 TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
-TO_LOC[{"id" : "gpsr_meeting_point"}] -> me
+TO_LOC[X] -> ME[X]
 
 # PERSON["type" : "person"] -> DET person
 # PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
 # PERSON["type" : "person", "loc" : L] -> DET person LOC_DET[L]
 PERSON["type" : "person", "loc" : L] -> DET person near the LOC[L]
 # PERSON["type" : "person", "adj" : A, "loc" : L] -> DET ADJ_PERSON[A] person LOC_DET[L]
-PERSON["special" : "it"] -> him | her | them
+# PERSON["special" : "it"] -> him | her | them
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Exit
@@ -101,7 +103,7 @@ V_MOVE["navigate"] -> move to | go to | drive to | navigate to
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
 VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
-VP["action" : "bring", "entity" : X, "to" : {"id" : "gpsr_meeting_point"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
+VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING ME[Y] SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver
 
