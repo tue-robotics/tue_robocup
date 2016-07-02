@@ -11,7 +11,7 @@ import rospy
 # ----------------------------------------------------------------------------------------------------
 
 class NavigateToPose(NavigateTo):
-    def __init__(self, robot, x, y, rz, radius = 0.15):
+    def __init__(self, robot, x, y, rz, radius=0.15, frame_id="/map"):
         super(NavigateToPose, self).__init__(robot)
 
         self.x = x
