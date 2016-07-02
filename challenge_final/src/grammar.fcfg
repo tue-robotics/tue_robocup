@@ -9,8 +9,8 @@ C[{A}] -> VP[A]
 
 VP["action" : "take-order", "entity" : X] -> take order for FURNITURE[X]
 
-# VP[""] -> put it on the sergio tray
-# VP[""] -> serve drink SMALL_OBJECT[X]
+# VP[""] -> serve drink
+# VP[""] -> prepare drink SMALL_OBJECT[X]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities

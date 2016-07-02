@@ -61,8 +61,11 @@ class ChallengeFinal:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def wait_for_trigger(self):
-        # TODO
-        rospy.loginfo("Waiting for other robot")
+        while not rospy.is_shutdown() and not self.sentence:
+            time.sleep(0.1)
+        trigger = self.sentence
+        self.sentence = None
+        return trigger
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -94,20 +97,28 @@ class ChallengeFinal:
         # Optional: check with AMIGO if this bar object exists
 
         # Send trigger to AMIGO to get drink ready
-        self.robot.speech.speak("I will ask my friend AMIGO to prepare it!", block=False)
-        self.trigger_other_robot("serve drink {}".format(bar_object))
+        self.robot.speech.speak("I will ask my friend AMIGO to prepare it! In the meanwhile, I'll go to the bar!", block=False)
+        self.trigger_other_robot("prepare drink {}".format(bar_object))
 
         # Drive to the kitchen
         cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
 
         # Tell AMIGO that we are there
-        self.trigger_other_robot("put it on the sergio tray".format(bar_object))
+        self.robot.speech.speak("Put it on my tray AMIGO!", block=True)
+        self.trigger_other_robot("serve drink".format(bar_object))
 
         # Wait for AMIGO's trigger that the entity is there
+        while not rospy.is_shutdown() and self.wait_for_trigger() != "bring it":
+            rospy.loginfo("I'm busy waiting, can't do anything else!")  
+            time.sleep(1)            
+
+        self.robot.speech.speak("Yay! I've go the {}".format(bar_object), block=True)          
 
         # Drive back to the person ordering the drink
+        cs.actions.move_robot(robot, world, id=entity.id)
 
         # Tell him to get it
+        self.robot.speech.speak("Here you go friend! A lovely {} for you!".format(bar_object), block=False)
 
     # ------------------------------------------------------------------------------------------------------------------------
         
