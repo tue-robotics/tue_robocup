@@ -33,12 +33,11 @@ TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
 TO_LOC[{"id" : "gpsr_meeting_point"}] -> me
 
-PERSON["type" : "person"] -> DET person
-PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
-PERSON["type" : "person", "loc" : L] -> DET person LOC_DET[L]
-PERSON["type" : "person", "adj" : A, "loc" : L] -> DET ADJ_PERSON[A] person LOC_DET[L]
-PERSON["type" : "person", "id" : N] -> NAME[N]
-PERSON["type" : "person", "id" : N, "loc" : L] -> NAME[N] LOC_DET[L]
+# PERSON["type" : "person"] -> DET person
+# PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
+# PERSON["type" : "person", "loc" : L] -> DET person LOC_DET[L]
+PERSON["type" : "person", "loc" : L] -> DET person near the LOC[L]
+# PERSON["type" : "person", "adj" : A, "loc" : L] -> DET ADJ_PERSON[A] person LOC_DET[L]
 PERSON["special" : "it"] -> him | her | them
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,10 +75,11 @@ V_GRASP["pick-up"] -> grab | grasp | pick up | take | get
 # Placing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] on the LOC[L]
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] in the LOC[L]
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER_SPEC[L]
-VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER[L] at the LOC[L]
+PP_PLACE -> on | in
+
+VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] PP_PLACE the LOC[L]
+# VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER_SPEC[L]
+# VP["action" : "bring", "to" : L] -> V_PLACE SMALL_OBJECT_SPEC[X] into the CONTAINER[L] at the LOC[L]
 V_PLACE -> put | place
 
 CONTAINER_SPEC[{"type" : X}] -> CONTAINER[X]
@@ -94,7 +94,7 @@ VP["action": A, "entity": X] -> V_MOVE[A] NAV_LOC[X]
 NAV_LOC[X] -> TO_LOC[X]
 NAV_LOC[X] -> the ROOM[X]
 
-V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
+V_MOVE["navigate"] -> move to | go to | drive to | navigate to
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Bringing
@@ -103,29 +103,31 @@ V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come 
 VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
 VP["action" : "bring", "entity" : X, "to" : {"id" : "gpsr_meeting_point"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
 
-V_BRING -> give | bring | hand | deliver | take | carry | transport
+V_BRING -> give | bring | hand | deliver
 
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Questions
-# - - - - - - - - - - - - - - - - - - - - - - - - -
+# # - - - - - - - - - - - - - - - - - - - - - - - - -
+# # Questions
+# # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "answer-question"] -> answer a question
-VP["action": "answer-question"] -> answer the question
-VP["action": "answer-question"] -> answer his question
-VP["action": "answer-question"] -> answer her question
+# VP["action": "answer-question"] -> answer a question
+# VP["action": "answer-question"] -> answer the question
+# VP["action": "answer-question"] -> answer his question
+# VP["action": "answer-question"] -> answer her question
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Say
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
-VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
-VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
+VP["action": "say", "sentence": "TIME"] -> what time is it
 
-VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
-VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
-VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me what day it is | V_SAY the date
-VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
+# VP["action": "say", "sentence": "ROBOT_NAME"] -> V_SAY your name
+# VP["action": "say", "sentence": "TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
+# VP["action": "say", "sentence": "my team is tech united"] -> V_SAY the name of your team
 
-V_SAY -> tell | say | speak
+# VP["action": "say", "sentence": "DAY_OF_MONTH"] -> V_SAY the day of the month
+# VP["action": "say", "sentence": "DAY_OF_WEEK"] -> V_SAY the day of the week
+# VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me what day it is | V_SAY the date
+# VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
+
+# V_SAY -> tell | say | speak
 
