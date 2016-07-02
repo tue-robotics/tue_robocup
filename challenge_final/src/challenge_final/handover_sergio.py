@@ -50,6 +50,9 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
     #     source_frame = "/amigo/grippoint_{0}".format(side)
 
     yaw_ref = yaw_gripper + math.pi  # SERGIO should be opposite to the AMIGO gripper
+    gripper_pose_map = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw_ref),
+                                 kdl.Vector(x_gripper, y_gripper, 0))  # Note: using yaw ref instead of yaw gripper
+    # implies that we have already rotated 180 degrees
 
     rate = rospy.Rate(20.0)
 
@@ -76,13 +79,14 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
                                              base_pose_map_msg.pose.position.y,
                                              base_pose_map_msg.pose.position.z))
 
-        gripper_pose_map = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw_ref),
-                                     kdl.Vector(x_gripper, y_gripper, 0))  # Note: using yaw ref instead of yaw gripper
-        # implies that we have already rotated 180 degrees
+        # error = kdl.diff(gripper_pose_map, base_pose_map)
+        # trans = error.vel
+        # rot = error.rot.z()
 
-        error = kdl.diff(base_pose_map, gripper_pose_map)
-        trans = error.vel
-        rot = error.rot.z()
+        ref_pose_robot = base_pose_map.Inverse() * gripper_pose_map
+        trans = ref_pose_robot.p
+        (roll, pitch, rot) = ref_pose_robot.M.GetRPY()
+        # import ipdb;ipdb.set_trace()
 
         # If within goal constraints, return succeeded
         if abs(trans.x()) < TRANS_ERROR_CONSTRAINT and \
@@ -106,6 +110,8 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
         v.linear.y = max(-MAX_TRANS_VEL, min(MAX_TRANS_VEL, vy))
         v.angular.x = max(-MAX_ROT_VEL, min(MAX_ROT_VEL, vth))
 
+        # import ipdb;        ipdb.set_trace()
+
         sergio.base._cmd_vel.publish(v)
 
         rate.sleep()
@@ -124,15 +130,24 @@ if __name__ == "__main__":
     rospy.init_node("Test handover motions")
     sergio = Sergio(wait_services=True)
 
-    rospy.loginfo("SERGIO is loaded and will move to the pre-handover pose")
-    result = move_sergio_to_pre_handover_pose(sergio)
+    """ Testing in simulation """
+    x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
+    y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
+    yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
+    result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
     rospy.loginfo("{0}".format(result))
 
-
-    raw_input("Press enter as soon as AMIGO has its arm ready for the next part")
-    result = move_sergio_to_handover_pose(sergio)
-    rospy.loginfo("{0}".format(result))
-
-    raw_input("Press enter as soon as AMIGO has place the object on SERGIO's tray")
-    result = move_sergio_back(sergio)
-    print "Result: {0}".format(result)
+    # """ Testing for real """
+    # rospy.loginfo("SERGIO is loaded and will move to the pre-handover pose")
+    # result = move_sergio_to_pre_handover_pose(sergio)
+    # rospy.loginfo("{0}".format(result))
+    #
+    # x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
+    # y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
+    # yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
+    # result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
+    # rospy.loginfo("{0}".format(result))
+    #
+    # raw_input("Press enter as soon as AMIGO has place the object on SERGIO's tray")
+    # result = move_sergio_back(sergio)
+    # print "Result: {0}".format(result)
