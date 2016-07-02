@@ -1,8 +1,11 @@
-import action_result
+#!/usr/bin/python
+
+from action_result import ActionResult
 import rospy
 import robot_smach_states as states
-import PyKDL
 import json
+import tf
+from robot_skills.amigo import Amigo
 
 BAR_ENTITY_FRAME_ID = "/bar"
 DIST_FROM_BAR = 1.0
@@ -13,20 +16,32 @@ RETRACT_TORSO_HEIGHT = 0.4
 HANDOVER_POSE_RADIUS =0.05
 ARM_SIDE = "left"
 
-def amigo_navigate_amigo_to_handover(amigo):
+def amigo_navigate_to_handover_pose(amigo):
     navigateToPoseSM = states.NavigateToPose(amigo,
                                              x=DIST_FROM_BAR,
                                              y=0.0,
-                                             z=0.0,
+                                             rz=0.0,
                                              radius=HANDOVER_POSE_RADIUS,
                                              frame_id=BAR_ENTITY_FRAME_ID)
 
+    nav_res = navigateToPoseSM.execute()
+    if nav_res == "arrived":
+        return ActionResult(ActionResult.SUCCEEDED, "Amigo: Arrived at handover pose")
+    else:
+        return ActionResult(ActionResult.FAILED, "Amigo: handover pose %s",nav_res)
+
 def amigo_move_arm_to_place_position(amigo):
-    if amigo.rightArm._send_joint_trajectory([PLACE_JOINT_CONFIG]):
-        res = ActionResult.SUCCEEDED
-        (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s"%ARM_SIDE)
+    if ARM_SIDE == "left":
+        if amigo.leftArm._send_joint_trajectory([PLACE_JOINT_CONFIG]):
+            res = ActionResult.SUCCEEDED
+    elif ARM_SIDE == "right":
+        if amigo.rightArm._send_joint_trajectory([PLACE_JOINT_CONFIG]):
+            res = ActionResult.SUCCEEDED
+
+    if res == ActionResult.SUCCEEDED:
+        (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s" % ARM_SIDE)
         (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([rx, ry, rz, rw])
-        msg = "Amigo: I'm ready to place the drink at: %s" %json.dumps({'x':x, 'y':y, 'yaw': yaw})
+        msg = "Amigo: I'm ready to place the drink at: %s" % json.dumps({'x': x, 'y': y, 'yaw': yaw})
     else:
         res = ActionResult.FAILED
         msg = "Amigo: Place joint goal could not be reached"
@@ -49,7 +64,7 @@ def amigo_place(amigo):
     rospy.sleep(1.0)
 
     # Send upper torso goal and wait for the torso to reach it
-    if not amigo.torso.send_goal([RETRACT_TORSO_HEIGHT]):
+    if not amigo.torso._send_goal([RETRACT_TORSO_HEIGHT]):
         return ActionResult(res,"Amigo: Could not reach upper torso goal")
     amigo.torso.wait_for_motion_done()
 
@@ -75,3 +90,25 @@ def amigo_reset_arm(amigo):
         amigo.rightArm.wait_for_motion_done()
 
     return ActionResult(ActionResult.SUCCEEDED, "Amigo: Reset arm succeeded")
+
+if __name__ == "__main__":
+
+    """ Test stuff """
+    rospy.init_node("Test handover motions: Amigo")
+    amigo = Amigo(wait_services=True)
+
+    rospy.loginfo("AMIGO is loaded and will move to the pre-handover pose")
+    result = amigo_navigate_to_handover_pose(amigo)
+    rospy.loginfo("{0}".format(result.message))
+
+    rospy.loginfo("AMIGO will move its arm to the place position")
+    result = amigo_move_arm_to_place_position(amigo)
+    rospy.loginfo("{0}".format(result.message))
+
+    raw_input("Press enter when SERGIO has its tray under amigo's gripper")
+    result = amigo_place(amigo)
+    rospy.loginfo("{0}".format(result.message))
+
+    raw_input("Press enter as soon as SERGIO has moved away from under AMIGO'S arm")
+    result = amigo_reset_arm(amigo)
+    rospy.loginfo("{0}".format(result.message))
