@@ -14,6 +14,8 @@ import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robocup_knowledge import load_knowledge
+from robot_smach_states import StartChallengeRobust
+
 
 import action_server
 from action_server.command_center import CommandCenter
@@ -78,8 +80,23 @@ def main():
     command_center.set_grammar(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Start
+
+    if not args.skip:
+
+        # Wait for door, enter arena
+        s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
+        s.execute()
+
+        # Move to the start location
+        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
+        nwc.execute()    
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+
+    first = True
 
     if sentence:
         semantics = command_center.parse_command(sentence)
@@ -91,9 +108,32 @@ def main():
     else:
 
         while True:
-            hey_robot_wait_forever(robot)
 
-            (sentence, semantics) = command_center.request_command(ask_confirmation=True, ask_missing_info=False)
+            if first:
+                # First sentence robot says
+                sentences = ["Hello there! Welcome to the double E GPSR. You can give me an order, but wait for the ping."]
+            else:
+                # Sentence robot says after completing a task
+                sentences = ["Hello there, you look lovely! I'm here to take a new order, but wait for the ping!"] 
+
+            # These sentences are for when the first try fails
+            # (Robot says "Do you want me to ...?", you say "No", then robot says sentence below)
+            sentences += [
+                "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
+                "Again, I am deeply sorry. Bad robot! Please try again, but wait for the ping!",
+                "You and I have communication issues. Speak up! Tell me what you want, but wait for the ping"
+                ]
+
+            hey_robot_wait_forever(robot)                
+
+            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600, sentences=sentences)           
+
+            if not res:
+                continue
+
+            first = False
+
+            (sentence, semantics) = res
 
             if not command_center.execute_command(semantics):
                 robot.speech.speak("I am truly sorry, let's try this again")
@@ -101,8 +141,9 @@ def main():
             if args.once:
                 break
 
-            nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
-            nwc.execute()
+            if not args.skip:
+                nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
+                nwc.execute()
 
 # ------------------------------------------------------------------------------------------------------------------------
 
