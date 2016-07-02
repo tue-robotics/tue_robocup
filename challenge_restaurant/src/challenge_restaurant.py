@@ -481,9 +481,16 @@ def setup_statemachine(robot):
                                                          EntityByIdDesignator(robot, id="kitchen")
                                                          ),
                                transitions={'arrived': 'SAY_IN_KITCHEN',
-                                            'unreachable': 'SAY_FOLLOW_TO_KITCHEN',
-                                            'goal_not_defined': 'SAY_FOLLOW_TO_KITCHEN'}
+                                            'unreachable': 'SAY_I_DONT_KNOW_HOW',
+                                            'goal_not_defined': 'SAY_I_DONT_KNOW_HOW'}
                                )
+
+	smach.StateMachine.add('SAY_I_DONT_KNOW_HOW',
+				states.Say(robot,
+						"Oops, I don't know the way back.",
+						block=True
+						),
+				transitions={'spoken': 'GOTO_KITCHEN'})
 
 #        smach.StateMachine.add('FOLLOW_TO_KITCHEN',
 #                               states.FollowOperator(robot,
