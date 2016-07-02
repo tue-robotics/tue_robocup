@@ -38,7 +38,7 @@ class ChallengeFinal:
         self.robot.head.cancel_goal()
         self._trigger_sub = rospy.Subscriber("/" + robot.robot_name + "/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
 
-        other_robot = "sergio" if robot.robot_name == "amigo" else "sergio"
+        other_robot = "sergio" if robot.robot_name == "amigo" else "amigo"
 
         self._trigger_pub = rospy.Publisher("/" + other_robot + "/trigger", std_msgs.msg.String)
 
