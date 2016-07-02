@@ -3,103 +3,106 @@ import rospy
 
 from std_msgs.msg import String
 from std_srvs.srv import Empty
+import time
 from datetime import datetime, timedelta
 
 from challenge_final.srv import *
 
-class Time:
-    def __init__(self, tzdiff):
-        self.timezone_difference = timedelta(hours=tzdiff)
-        # self.start_time = None
-        # self.countdown_time = None
+import threading
 
-        self.countdown_time = timedelta(minutes=10, seconds=0)
-        self.start_time = datetime.now() + self.timezone_difference
+class StopWatch:
+    def __init__(self,start_time=datetime.now()):
+        self._start_time = start_time
 
-        line = "Starting countdown from " + str(self.countdown_time)
-        print line
-        
+    def getElapsedTime(self):
+        return datetime.now() - self._start_time
 
-    def start_clock(self, req):
-        self.start_time = datetime.now() + self.timezone_difference
+    def reset(self):
+        self._start_time = datetime.now()
 
-        line = "Starting clock at " + str(self.start_time.time().hour) + " " + str(self.start_time.time().minute)
-        print line
-        return True
 
-    def start_countdown(self, req):
-        self.countdown_time = timedelta(minutes=req.mins, seconds=req.secs)
-        self.start_time = datetime.now() + self.timezone_difference
+class Clock:
+    def __init__(self, robot, tzdiff=0):
+        self._robot = robot
+        self._timezone_difference = timedelta(hours=tzdiff)
+        self._stopwatches = []
+        self._timers = {}
 
-        line = "Starting countdown from " + str(self.countdown_time)
-        print line
-        return True
+    def start_stopwatch(self):
+        stopwatch_number = len(self._stopwatches)
+        self._stopwatches.append( StopWatch() )
 
-    def get_time(self, req):
-        current_time = datetime.now() + self.timezone_difference
+        print "Starting stopwatch %i" % stopwatch_number
 
-        # If the timer is counting down
-        if self.countdown_time:
-            time_left = self.countdown_time - (current_time - self.start_time)
-            time_left_hrs = time_left.seconds / 3600
-            time_left_min = ( time_left.seconds % 3600 ) / 60
-            time_left_sec = time_left.seconds % 60
+        return stopwatch_number
 
-            if time_left.days < 0:
-                line = " You better hurry up! "
-                # over_time = timedelta(0) - time_left
-                # over_time_min = ( over_time.seconds % 3600 ) / 60
-                # over_time_sec = over_time.seconds % 60
-                
-                # if over_time_min == 0 and over_time.seconds > 0:
-                #     line = " Our time was already up " + str(over_time.seconds) + " seconds ago. I'll stop the timer now. "
-                # else:
-                #     line = " Our time was already up " + str(over_time_min) + " minutes ago. I'll stop the timer now. "
-                self.countdown_time = None
-                self.start_time = None
-            else:
-                line = "We still have " + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds left. "
-            print line
-            return line
+    def get_stopwatch_time(self, stopwatch_number=0):
+        if stopwatch_number >= len(self._stopwatches) or stopwatch_number < 0:
+            now = datetime.now()
+            return now-now
 
-        # If the timer is counting up
-        elif self.start_time:
-            duration_dt  = current_time - self.start_time
-            duration_hrs = duration_dt.seconds / 3600
-            duration_min = ( duration_dt.seconds % 3600 ) / 60
-            duration_sec = duration_dt.seconds % 60
+        return self._stopwatches[stopwatch_number].getElapsedTime()
 
-            line = "You started the timer " + str(duration_hrs) + " hours " + str(duration_min) + " minutes and " + str(duration_sec) + " seconds ago."
-            print line
-            return line
+    def get_stopwatch_hrs(self, stopwatch_number=0):
+        return get_stopwatch_time(stopwatch_number).seconds / 3600
 
-        # If the timer is not counting at all
-        else:
-            print current_time
-            # line = "The current time is " + str(current_time.time().hour) + ":" + str(current_time.time().minute)
-            line = "I don't know. You should have set a timer, pal. But it's " + str(current_time.time().hour) + ":" + str(current_time.time().minute) + " now."
-            print line
-            return line
+    def get_stopwatch_mins(self, stopwatch_number=0):
+        return (get_stopwatch_time(stopwatch_number).seconds % 3600) / 60
 
-    def is_running(self, req):
-        if self.start_time:
+    def get_stopwatch_secs(self, stopwatch_number=0):
+        return get_stopwatch_time(stopwatch_number).seconds % 60
+
+    def count_up_out_loud(self, secs):
+        count_seconds = secs
+        current_seconds = 1
+
+        while current_seconds < count_seconds:
+            self._robot.speech.speak(str(current_seconds),block=False)
+            current_seconds += 1
+            time.sleep(1.0)
+
+        self._robot.speech.speak(str(current_seconds),block=False)
+
+    def count_down_out_loud(self, secs):
+        while secs > 0:
+            secs -= 1
+            self._robot.speech.speak(str(current_seconds),block=False)
+            time.sleep(1.0)
+
+    def tell_time(self):
+        current_real_time = datetime.now() + self._timezone_difference
+        self._robot.speech.speak("It is %s:%s" % (str(current_real_time.time().hour), str(current_real_time.time().minute)))
+
+    def start_timer(self, hrs, mins, secs):
+        countdown_time = timedelta(hours=hrs, minutes=mins, seconds=secs)
+        end_time = datetime.now() + countdown_time
+        stopwatch_number = start_stopwatch()
+        self._timers[stopwatch_number] = end_time
+
+        print "Starting timer for %s using stopwatch %i" % (str(self.countdown_time), stopwatch_number)
+        return stopwatch_number
+
+    def tell_remaining_timer_time(self, timer_number):
+        if timer_number >= len(self._stopwatches) or timer_number < 0:
+            return False
+
+        time_left = self._timers[timer_number] - datetime.now()
+
+        time_left_hrs = time_left.seconds / 3600
+        time_left_min = ( time_left.seconds % 3600 ) / 60
+        time_left_sec = time_left.seconds % 60
+
+        if time_left.days < 0:
+            line = "You better hurry up!"
             return True
+        else:
+            if time_left_hrs > 0:
+                line = "We still have %i hours, %i minutes and %i seconds left. " % (time_left_hrs, time_left_min, time_left_sec)
+            else if time_left_min > 0:
+                line = "We still have %i minutes and %i seconds left." % (time_left_min, time_left_sec)
+            else if time_left_sec < 10:
+                line = "Your time is almost up!"
 
+        self._robot.speech.speak(line)
 
-if __name__ == "__main__":
-
-    rospy.init_node('time_server')
-
-    # HACK!!!
-    timezone_difference = 6
-    # !!!
-
-    time = Time(tzdiff=timezone_difference)
-
-    set_clock_service       = rospy.Service('timer/start_clock', EmptyBool, time.start_clock)
-    set_countdown_service   = rospy.Service('timer/start_countdown', StartCountdown, time.start_countdown)
-    give_time_service       = rospy.Service('timer/get_time', EmptyString, time.get_time)
-    is_running_service      = rospy.Service('timer/timer_running', EmptyBool, time.is_running)
-
-    while not rospy.is_shutdown():
-        rospy.spin()
+        return True
