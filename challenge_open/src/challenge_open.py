@@ -28,6 +28,10 @@ class ChallengeOpen:
 
     def __init__(self, robot, sentence=None):
         self.robot = robot
+        self.robot.leftArm.reset()
+        self.robot.rightArm.reset()
+        self.robot.torso.reset()
+        self.robot.head.cancel_goal()
         self._trigger_sub = rospy.Subscriber("/" + robot.robot_name + "/trigger", std_msgs.msg.String, self._trigger_callback, queue_size=1)
 
         self.do_listen_command = False
