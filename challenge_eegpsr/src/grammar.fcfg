@@ -1,7 +1,7 @@
 T[{actions : <A1>}] -> C[A1]
 T[{actions : <A1, A2>}] -> C[A1] and C[A2]
 T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
-T[{actions : <A1, A2, A3, A4>}] -> C[A1] C[A2] C[A3] and C[A4]
+#T[{actions : <A1, A2, A3, A4>}] -> C[A1] C[A2] C[A3] and C[A4]
 
 C[{A}] -> VP[A]
 C[{A}] -> CALL VP[A]
