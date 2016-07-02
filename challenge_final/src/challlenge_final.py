@@ -55,7 +55,7 @@ class ChallengeOpen:
 
         command_center = CommandCenter(self.robot)
 
-        challenge_knowledge = load_knowledge('challenge_open')
+        challenge_knowledge = load_knowledge('challenge_final')
 
         command_center.set_grammar(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
 
@@ -98,7 +98,7 @@ class ChallengeOpen:
 # ------------------------------------------------------------------------------------------------------------------------
 
 def main():
-    rospy.init_node("challenge_open")
+    rospy.init_node("challenge_final")
 
     parser = argparse.ArgumentParser()
     parser.add_argument('robot', help='Robot name')
