@@ -1,6 +1,8 @@
 T[{actions : <A1>}] -> C[A1]
 T[{actions : <A1, A2>}] -> C[A1] and C[A2]
 T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+T[{actions : <A1, A2, A3, A4>}] -> C[A1] C[A2] C[A3] and C[A4]
+
 
 C[{A}] -> VP[A]
 
@@ -33,6 +35,9 @@ TO_LOC[X] -> the LOC[X]
 TO_LOC[{P}] -> PERSON[P]
 TO_LOC[{"special" : "operator"}] -> me
 
+TO_LOC[{"id" : "entrance"}] -> entrance
+TO_LOC[{"id" : "exit"}] -> exit
+
 PERSON["type" : "person"] -> DET person
 PERSON["type" : "person", "adj" : A] -> DET ADJ_PERSON[A] person
 PERSON["type" : "person", "loc" : L] -> DET person LOC_DET[L]
@@ -59,7 +64,7 @@ VP["action": "follow", "entity" : {X}] -> follow PERSON[X]
 
 VP["action": A, "entity": X] -> V_FIND[A] OBJ_FIND[X]
 
-V_FIND["find"] -> find | look for
+V_FIND["find"] -> find | look for | locate
 
 OBJ_FIND[X] -> SMALL_OBJECT_SPEC[X] | TO_LOC[X]
 OBJ_FIND[P] -> PERSON[P]
@@ -110,25 +115,22 @@ NAV_LOC[X] -> the ROOM[X]
 
 V_MOVE["navigate"] -> move to | go to | drive to | navigate to | come to | come back to | get into | reach
 
+VP["action": "navigate", "entity": X] -> V_GUIDE HIM_HER to TO_LOC[X]
 
+HIM_HER -> him | her
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
+V_GUIDE -> guide | take
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] to TO_LOC[Y]
+VP["action" : "bring", "entity" : X, "to" : Y ] -> V_BRING SMALL_OBJECT_SPEC[X] ON_TO TO_LOC[Y]
 VP["action" : "bring", "entity" : X, "to" : {"special" : "operator"} ] -> V_BRING me SMALL_OBJECT_SPEC[X]
 
 V_BRING -> give | bring | hand | deliver | take | carry | transport
 
-
-
-
+ON_TO -> on | to
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Questions
@@ -153,7 +155,6 @@ VP["action": "say", "sentence": "TODAY"] -> V_SAY what day is today | V_SAY me w
 VP["action": "say", "sentence": "TOMORROW"] -> V_SAY what day is tomorrow
 
 VP["action": "say", "sentence": "JOKE"] -> V_SAY a joke
-VP["action": "say", "sentence": "DARK_SIDE"] -> join the dark side
+#VP["action": "say", "sentence": "DARK_SIDE"] -> join the dark side
 
 V_SAY -> tell | say | speak
-
