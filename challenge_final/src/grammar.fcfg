@@ -5,6 +5,14 @@ T[{actions : <A1, A2>}] -> C[A1] and C[A2]
 C[{A}] -> VP[A]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
+# Custom
+
+VP["action" : "take-order", "entity" : X] -> take order for FURNITURE[X]
+
+# VP[""] -> put it on the sergio tray
+# VP[""] -> serve drink SMALL_OBJECT[X]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
