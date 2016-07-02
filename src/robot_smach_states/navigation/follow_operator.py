@@ -481,6 +481,7 @@ class FollowOperator(smach.State):
                 return True
 
         self._robot.head.close()
+        self._turn_towards_operator()
         return False
 
     def _turn_towards_operator(self):
