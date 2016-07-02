@@ -12,7 +12,7 @@ import time
 
 import robot_smach_states
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-
+from robot_smach_states.util.designators import EntityByIdDesignator
 from robocup_knowledge import load_knowledge
 
 import action_server
