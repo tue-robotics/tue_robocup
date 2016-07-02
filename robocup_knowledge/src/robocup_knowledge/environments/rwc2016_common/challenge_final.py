@@ -14,5 +14,5 @@ for loc in locations:
 
 translations = { "bookcase" : "bocase" }
 
-bar_objects = ["coke"]
+bar_objects = ["tea", "pringles", "sponge"]
 bar_id = "bar"
