@@ -555,8 +555,16 @@ class FollowOperator(smach.State):
             # - Following an operator, operator is not correct, 'operator' is unreachable: try a global plan and wait for the local planner to get us out of here
             # - Not following an operator, planner is in local minimum: try a global plan and wait for the local planner to get us out of here
             self._robot.base.local_planner.cancelCurrentPlan()
-            if self._replan_allowed and self._replan_attempts < self._max_replan_attempts and (rospy.Time.now() - self._replan_time).to_sec() > self._replan_timeout:
-                self._replan()
+            if self._replan_allowed:
+                if self._replan_attempts < self._max_replan_attempts:
+                    if (rospy.Time.now() - self._replan_time).to_sec() > self._replan_timeout:
+                        self._replan()
+                else:
+                    if not self._recover_operator():
+                        return "lost_operator"
+            elif not self._recover_operator():
+                return "lost_operator"
+
 
             #if not self._recover_operator():
              #   self._robot.base.local_planner.cancelCurrentPlan()
