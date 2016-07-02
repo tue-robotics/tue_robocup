@@ -184,9 +184,11 @@ class ChallengeFinal:
     def serve(self, robot, world, parameters):
         bar_object = cs.actions.resolve_entity_description(world, parameters["entity"])
         
+        self.robot.speech.speak("Here you go sergio!", block=False)
+
         # For now just open the gripper
         robot.leftArm.send_gripper_goal("open")
-        robot.leftArm.send_rightgripper_goal("open")
+        robot.rightArm.send_gripper_goal("open")
 
         # TODO
 
