@@ -46,4 +46,7 @@ if __name__ == "__main__":
         W.add_object("coke11", "sim-coke", 9.16, 5.67, 0.8)
         W.add_object("coke12", "sim-coke", 9.41, 5.67, 0.8)
         W.add_object("coke13", "sim-coke", 9.63, 5.68, 0.8)
+        
+        # SERGIO force drive example
+        W.add_object("testthingie", "sim-coke", 2, 0, 0)
 

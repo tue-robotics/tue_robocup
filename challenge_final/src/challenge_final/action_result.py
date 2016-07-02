@@ -16,3 +16,6 @@ class ActionResult(object):
         """
         self.result = result
         self.message = message
+
+    def __repr__(self):
+        return self.message
