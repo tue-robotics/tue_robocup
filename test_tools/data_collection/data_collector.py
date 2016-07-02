@@ -31,6 +31,22 @@ GLOBS = {
     "objects" : [os.path.expanduser("~/ed/kinect/*/*.*"), os.path.expanduser("~/ed/kinect/*/*/*.*")]
 }
 
+
+def del_empty_dirs(s_dir):
+    b_empty = True
+
+    for s_target in os.listdir(s_dir):
+        s_path = os.path.join(s_dir, s_target)
+        if os.path.isdir(s_path):
+            if not del_empty_dirs(s_path):
+                b_empty = False
+        else:
+            b_empty = False
+
+    if b_empty:
+        print('del: %s' % s_dir)
+        os.rmdir(s_dir)
+
 if __name__ == '__main__':
     now = datetime.now()
 
@@ -62,3 +78,5 @@ if __name__ == '__main__':
                 if not mod_date or start < mod_date < end:
                     print "Writing file '%s' to '%s'" % (file_name, dir_name)
                     shutil.copy(file_name, dir_name)
+
+    del_empty_dirs(name)
