@@ -119,16 +119,24 @@ class ChallengeFinal:
 
         # pos = None
 
-        # # Wait for AMIGO's trigger that the entity is there
-        # while not rospy.is_shutdown():
-        #     trigger = self.wait_for_trigger()
-        #     if trigger and trigger.find("ready to place"):
-        #         json_coordinate = trigger.split(":")[1]
-        #         pos_dict = json.loads(json_coordinate)
-        #         pos = (pos_dict["x"], pos_dict["y"])
+        print "GOT HERE!"
 
-        #     rospy.loginfo("I'm busy waiting, can't do anything else!")  
-        #     time.sleep(1)            
+        # Wait for AMIGO's trigger that the entity is there
+        while not rospy.is_shutdown():
+            trigger = self.wait_for_trigger()
+
+            print "trigger = {}".format(trigger)
+
+            if trigger and trigger.find("receive at") >= 0:
+                args = trigger.split(":")
+                if (len(args) > 1):
+                    json_coordinate = args[1]
+                    pos_dict = json.loads(json_coordinate)
+                    pos = (pos_dict["x"], pos_dict["y"])
+                break
+
+            rospy.loginfo("I'm busy waiting, can't do anything else!")  
+            time.sleep(1)            
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         # Tell AMIGO that we are there
@@ -177,7 +185,7 @@ class ChallengeFinal:
 
         x = 1.23
         y = 2.45
-        self.trigger_other_robot('ready to place at: { "x": %f, "y": %f }' % (x, y))
+        self.trigger_other_robot('receive at: { "x": %f, "y": %f }' % (x, y))
 
     # ------------------------------------------------------------------------------------------------------------------------
 
