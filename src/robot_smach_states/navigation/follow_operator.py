@@ -643,7 +643,8 @@ class FollowOperator(smach.State):
                     #     print "Updating navigation"
                     #     self._update_navigation()
                 else:
-                    print "Not updating navigation because no new breadcrumbs."
+                    self._update_navigation()
+                    print "Updating navigation."
 
             rospy.sleep(self._period) # Loop at 2Hz
 
