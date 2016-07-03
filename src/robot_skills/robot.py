@@ -122,6 +122,15 @@ class Robot(object):
         backup_side = backup_obj_dict[preferred_side]
         return preferred_side, backup_side
 
+    def get_left_gripper_pose_map(self):
+        """ Gets the pose of the left gripper in map frame"""
+        (x, y, z), (rx, ry, rz, rw) = self.tf_listener.lookupTransform("/map", "amigo/grippoint_left")
+        import PyKDL as kdl
+        result = kdl.Frame(kdl.Rotation.Quaternion(rx, ry, rz, rw), kdl.Vector(x, y, z))
+        (roll, pitch, yaw) = result.M.GetRPY()
+        print "x: {0}, y: {1}, z:{2}, roll: {3}. pitch: {4}, yaw: {5}".format(x, y, z, roll, pitch, yaw)
+        return result
+
     def close(self):
         try:
             self.head.close()
