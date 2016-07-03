@@ -172,11 +172,14 @@ class ChallengeFinal:
             print "trigger = {}".format(trigger)
 
             if trigger and trigger.find("receive at") >= 0:
-                args = trigger.split(":")
+                args = trigger.split("at")
                 if (len(args) > 1):
-                    json_coordinate = args[1]
-                    pos_dict = json.loads(json_coordinate)
-                    pos = (pos_dict["x"], pos_dict["y"])
+                    params = args[1].strip().split(" ")
+                    x = float(params[0])
+                    y = float(params[1])
+                    theta = float(params[2])
+
+                    print "POS is: {} {} {}".format(x, y, theta)
                 break
 
             rospy.loginfo("I'm busy waiting, can't do anything else!")  
@@ -263,7 +266,8 @@ class ChallengeFinal:
 
         x = 1.23
         y = 2.45
-        self.trigger_other_robot('receive at: { "x": %f, "y": %f }' % (x, y))
+        theta = 1.57
+        self.trigger_other_robot('receive at %f %f %f' % (x, y, theta))
 
     # ------------------------------------------------------------------------------------------------------------------------
 

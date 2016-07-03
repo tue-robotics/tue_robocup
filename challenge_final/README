@@ -24,7 +24,7 @@
 
     AMIGO will look for X, grab it, and extend his arm
 
-* [AMIGO -> SERGIO] "receive at: { "x": 0.1, "y" : 0.5 }"
+* [AMIGO -> SERGIO] "receive at: X Y THETA"    (example: "receive at: 0.5 1.5 1.57")
 
     Tells SERGIO to catch the object at that specific location
 
