@@ -5,6 +5,9 @@ locations += [
     { "room" : "", "name" : "bar",    "location_category" : "" ,          "manipulation" : "yes" },
     { "room" : "", "name" : "table1", "location_category" : "",     "manipulation" : "yes" },
     { "room" : "", "name" : "table2", "location_category" : "",           "manipulation" : "yes"  },
+    { "room" : "", "name" : "sideshelf", "location_category" : "",           "manipulation" : "yes"  },
+    { "room" : "", "name" : "bookcase", "location_category" : "",           "manipulation" : "yes"  },
+    { "room" : "", "name" : "sink", "location_category" : "",           "manipulation" : "yes"  },
     { "room" : "", "name" : "table3", "location_category" : "",    "manipulation" : "yes" }
 ]
 # During the final challenge, we have no rooms
