@@ -18,10 +18,11 @@ class NavigateToPose(NavigateTo):
         self.y = y
         self.rz = rz
         self.radius = radius
+        self._frame_id = frame_id
 
     def generateConstraint(self):
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(self.x, self.y, self.radius), frame="/map")
-        oc = OrientationConstraint(look_at=Point(self.x+1, self.y, 0.0), angle_offset=self.rz, frame="/map")
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(self.x, self.y, self.radius), frame=self._frame_id)
+        oc = OrientationConstraint(look_at=Point(self.x+1, self.y, 0.0), angle_offset=self.rz, frame=self._frame_id)
 
         return pc, oc
 
