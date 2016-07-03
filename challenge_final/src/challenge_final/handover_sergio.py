@@ -13,7 +13,7 @@ from action_result import ActionResult
 TESTMODE = True
 
 ENTITY_FRAME_ID = "/bar"
-X_OFFSET = 3.0  # Distance between the center point of the bar and the pose where SERGIO will stand
+X_OFFSET = 2.5  # Distance between the center point of the bar and the pose where SERGIO will stand
 
 TRANS_ERROR_CONSTRAINT = 0.05  # We're satisfied if we're within 5 cm in each direction
 ROT_ERROR_CONSTRAINT = 10.0/180.0 * math.pi  # and within 10 degrees
