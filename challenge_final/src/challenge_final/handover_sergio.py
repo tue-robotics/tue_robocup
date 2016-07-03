@@ -13,11 +13,15 @@ from action_result import ActionResult
 TESTMODE = True
 
 ENTITY_FRAME_ID = "/bar"
-X_OFFSET = 3.0
-TRANS_ERROR_CONSTRAINT = 0.05
-ROT_ERROR_CONSTRAINT = 10.0/180.0 * math.pi
-MAX_TRANS_ERROR = 0.5
-MAX_ROT_ERROR = 30.0/180.0 * math.pi
+X_OFFSET = 3.0  # Distance between the center point of the bar and the pose where SERGIO will stand
+
+TRANS_ERROR_CONSTRAINT = 0.05  # We're satisfied if we're within 5 cm in each direction
+ROT_ERROR_CONSTRAINT = 10.0/180.0 * math.pi  # and within 10 degrees
+
+MAX_TRANS_ERROR = 0.5  # If we're further than 1.5 meters apart, better skip it
+MAX_ROT_ERROR = 30.0/180.0 * math.pi  # or if the angle offset is more than 30 degrees
+
+# Controller parameters
 TRANS_GAIN = 0.2
 ROT_GAIN = 0.15
 MAX_TRANS_VEL = 0.5
@@ -25,10 +29,13 @@ MAX_TRANS_VEL = 0.5
 MAX_ROT_VEL = 1.0
 # MIN_ROT_VEL = 0.1
 
+OBJ_OFFSET_X = 0.0425  # Desired x-pos of the object in base link frame
+OBJ_OFFSET_Y = -0.14  # Desired y-pos of the object in base link frame
 
-def move_sergio_to_pre_handover_pose(sergio):
+
+def move_sergio_to_pre_handover_pose(sergio, entity_frame_id):
     """ Makes SERGIO navigate to the pre handover pose """
-    nav_state = NavigateToPose(sergio, x=X_OFFSET, y=0.0, angle_offset=math.pi, frame_id=ENTITY_FRAME_ID)
+    nav_state = NavigateToPose(sergio, x=X_OFFSET, y=0.0, angle_offset=math.pi, frame_id=entity_frame_id)
     nav_state.execute()
     if result == 'arrived':
         return ActionResult(ActionResult.SUCCEEDED, 'SERGIO reached pre handover pose')
@@ -84,6 +91,8 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
         # rot = error.rot.z()
 
         ref_pose_robot = base_pose_map.Inverse() * gripper_pose_map
+        ref_pose_robot.pose.x(ref_pose_robot.p.x() - OBJ_OFFSET_X)
+        ref_pose_robot.pose.y(ref_pose_robot.p.y() - OBJ_OFFSET_Y)
         trans = ref_pose_robot.p
         (roll, pitch, rot) = ref_pose_robot.M.GetRPY()
         # import ipdb;ipdb.set_trace()
@@ -139,7 +148,7 @@ if __name__ == "__main__":
 
     # """ Testing for real """
     # rospy.loginfo("SERGIO is loaded and will move to the pre-handover pose")
-    # result = move_sergio_to_pre_handover_pose(sergio)
+    # result = move_sergio_to_pre_handover_pose(sergio, ENTITY_FRAME_ID)
     # rospy.loginfo("{0}".format(result))
     #
     # x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
