@@ -176,7 +176,8 @@ class ChallengeFinal:
         self.trigger_other_robot("prepare {}".format(bar_object_id.replace("_", " ")))
 
         # Drive to the kitchen
-        cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
+        # cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
+        cs.actions.move_robot(robot, world, id="table1")
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Wait until AMIGO has the object ready, and extract the position
