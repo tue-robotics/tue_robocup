@@ -182,12 +182,17 @@ class ChallengeFinal:
         # cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
         cs.actions.move_robot(robot, world, id="table1")
 
+        challenge_final.handover_sergio.move_sergio_to_pre_handover_pose(robot)
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Wait until AMIGO has the object ready, and extract the position
 
         # pos = None
 
         # Wait for AMIGO's trigger that the entity is there
+
+        x = None
+
         while not rospy.is_shutdown():
             trigger = self.wait_for_trigger()
 
@@ -207,6 +212,12 @@ class ChallengeFinal:
             rospy.loginfo("I'm busy waiting, can't do anything else!")
             time.sleep(1)
 
+        if not x:
+            self.robot.speech.speak("AMIGO did not send the coordinates", block=True)
+            return
+
+        challenge_final.handover_sergio.move_sergio_to_handover_pose(robot, x, y, theta)
+
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Tell AMIGO that we are there
 
@@ -221,6 +232,8 @@ class ChallengeFinal:
             time.sleep(1)
 
         self.robot.speech.speak("Yay! I've go the {}".format(bar_object_id), block=True)
+
+        challenge_final.handover_sergio.move_sergio_back(robot)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Hand it over to the person
@@ -279,23 +292,20 @@ class ChallengeFinal:
 
         print parameters
 
-        # cs.actions.find_and_pick_up(robot, world, parameters, pick_up=True)
+        cs.actions.find_and_pick_up(robot, world, parameters, pick_up=True)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         challenge_final.handover_amigo.amigo_navigate_to_handover_pose(robot)
-        challenge_final.handover_amigo.amigo_move_arm_to_place_position(robot)
+        (res, pose) = challenge_final.handover_amigo.amigo_move_arm_to_place_position(robot)
 
-        # # TODO: move arm to location
-
-        # self.robot.speech.speak("I should move my arm now to a place location, but I can't do that yet!".format(bar_object.id), block=True)
-
-        # # TODO: get current gripper location
-
-        x = 1.23
-        y = 2.45
-        theta = 1.57
-        self.trigger_other_robot('receive at %f %f %f' % (x, y, theta))
+        if pose:
+            x = pose[0]
+            y = pose[1]
+            theta = pose[2]
+            self.trigger_other_robot('receive at %f %f %f' % (x, y, theta))
+        else:
+            self.robot.speech.speak("I could not move my arm to the correct location!")
 
     # ------------------------------------------------------------------------------------------------------------------------
 

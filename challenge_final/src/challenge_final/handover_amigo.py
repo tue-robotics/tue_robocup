@@ -36,7 +36,11 @@ def amigo_navigate_to_handover_pose(amigo, frame_id=BAR_ENTITY_FRAME_ID, dist_fr
     else:
         return ActionResult(ActionResult.FAILED, ("Amigo: handover pose %s",nav_res))
 
+# Return is (ActionResult, pose)  where pose is tuple (x, y, theta)
 def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
+
+    pose = None
+
     res = ActionResult.FAILED
 
     if not amigo.torso._send_goal([HANDOVER_TORSO_HEIGHT]):
@@ -56,10 +60,11 @@ def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
         (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([rx, ry, rz, rw])
         print "Amigo gripper height: %f" % z
         msg = "Amigo: I'm ready to place the drink at: %s" % json.dumps({'x': x, 'y': y, 'yaw': yaw})
+        pose = (x, y, yaw)
     else:
         msg = "Amigo: Place joint goal could not be reached"
 
-    return ActionResult(res,msg)
+    return (ActionResult(res,msg), pose)
 
 def amigo_place(amigo, side=ARM_SIDE):
     res = ActionResult.FAILED
