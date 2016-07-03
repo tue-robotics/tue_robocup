@@ -150,7 +150,8 @@ class ChallengeFinal:
                 rospy.loginfo("I'm busy waiting, can't do anything else!")
 
         if trigger != "yes we have":
-            bar_object_id = self._ask_order_from_person("I just heard the %s is not available, sorry. Can I get you anything else?" % bar_object_id)
+            bar_object_id = self._ask_order_from_person(robot, world, "I just heard the %s is not available, sorry. Can I get you anything else?" % bar_object_id)
+
             if not bar_object_id:
                 return
 
