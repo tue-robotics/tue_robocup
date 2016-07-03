@@ -140,7 +140,7 @@ class ChallengeFinal:
 
         self.robot.speech.speak("Hey amigo, do we have a {}?".format(bar_object_id), block=True)
 
-        self.trigger_other_robot("check {}".format(bar_object_id))
+        self.trigger_other_robot("check {}".format(bar_object_id.replace("_", " ")))
 
         while not rospy.is_shutdown():
             trigger = self.wait_for_trigger()
@@ -162,10 +162,10 @@ class ChallengeFinal:
 
         self.robot.speech.speak("I will ask my friend AMIGO to prepare it! In the meanwhile, I'll go to the bar!", block=False)
 
-        self.trigger_other_robot("prepare {}".format(bar_object_id))
+        self.trigger_other_robot("prepare {}".format(bar_object_id.replace("_", " ")))
 
         # Send trigger to AMIGO to get drink ready
-        self.trigger_other_robot("prepare {}".format(bar_object_id))
+        self.trigger_other_robot("prepare {}".format(bar_object_id.replace("_", " ")))
 
         # Drive to the kitchen
         cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
@@ -199,7 +199,7 @@ class ChallengeFinal:
         # Tell AMIGO that we are there
 
         self.robot.speech.speak("Put it on my tray AMIGO!", block=True)
-        self.trigger_other_robot("serve {}".format(bar_object_id))
+        self.trigger_other_robot("serve {}".format(bar_object_id.replace("_", " ")))
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Wait for AMIGO's trigger that the entity is there
