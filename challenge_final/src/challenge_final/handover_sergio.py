@@ -12,7 +12,7 @@ from action_result import ActionResult
 
 TESTMODE = True
 
-ENTITY_FRAME_ID = "/bar"
+ENTITY_FRAME_ID = "bar"
 X_OFFSET = 2.5  # Distance between the center point of the bar and the pose where SERGIO will stand
 
 TRANS_ERROR_CONSTRAINT = 0.05  # We're satisfied if we're within 5 cm in each direction
@@ -35,7 +35,7 @@ OBJ_OFFSET_Y = -0.14  # Desired y-pos of the object in base link frame
 
 def move_sergio_to_pre_handover_pose(sergio, entity_frame_id):
     """ Makes SERGIO navigate to the pre handover pose """
-    nav_state = NavigateToPose(sergio, x=X_OFFSET, y=0.0, angle_offset=math.pi, frame_id=entity_frame_id)
+    nav_state = NavigateToPose(sergio, x=X_OFFSET, y=0.0, rz=math.pi, radius=0.10, frame_id=entity_frame_id)
     nav_state.execute()
     if result == 'arrived':
         return ActionResult(ActionResult.SUCCEEDED, 'SERGIO reached pre handover pose')
@@ -129,34 +129,34 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
 def move_sergio_back(sergio):
     """ Makes SERGIO forcedrive backwards until it is out of the way """
     # ToDo: as an additional measure of robustness, we could check if SERGIO is really out of the way...
-    sergio.base.force_drive(-0.1, 0, 0, 3.0)
+    sergio.base.force_drive(-0.2, 0, 0, 3.0)
     return ActionResult(ActionResult.SUCCEEDED, "SERGIO is out of the way")
 
 
 if __name__ == "__main__":
 
     """ Test stuff """
-    rospy.init_node("Test handover motions")
+    rospy.init_node("test_handover_motions")
     sergio = Sergio(wait_services=True)
 
     """ Testing in simulation """
+    # x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
+    # y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
+    # yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
+    # result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
+    # rospy.loginfo("{0}".format(result))
+
+    # """ Testing for real """
+    rospy.loginfo("SERGIO is loaded and will move to the pre-handover pose")
+    result = move_sergio_to_pre_handover_pose(sergio, ENTITY_FRAME_ID)
+    rospy.loginfo("{0}".format(result))
+
     x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
     y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
     yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
     result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
     rospy.loginfo("{0}".format(result))
 
-    # """ Testing for real """
-    # rospy.loginfo("SERGIO is loaded and will move to the pre-handover pose")
-    # result = move_sergio_to_pre_handover_pose(sergio, ENTITY_FRAME_ID)
-    # rospy.loginfo("{0}".format(result))
-    #
-    # x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
-    # y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
-    # yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
-    # result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
-    # rospy.loginfo("{0}".format(result))
-    #
-    # raw_input("Press enter as soon as AMIGO has place the object on SERGIO's tray")
-    # result = move_sergio_back(sergio)
-    # print "Result: {0}".format(result)
+    raw_input("Press enter as soon as AMIGO has place the object on SERGIO's tray")
+    result = move_sergio_back(sergio)
+    print "Result: {0}".format(result)
