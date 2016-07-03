@@ -87,8 +87,13 @@ def move_sergio_to_handover_pose(sergio, x_gripper_map, y_gripper_map, yaw_gripp
     # # implies that we have already rotated 180 degrees
 
     rate = rospy.Rate(20.0)
+    timeout_time = 30
 
+    start_time = rospy.Time.now()
     while True and not rospy.is_shutdown():
+
+        if (rospy.Time.now() - start_time).to_sec() > timeout_time:
+            return ActionResult(ActionResult.FAILED, "Timeout of %d seconds passsed, aborted" % timeout_time)
 
         # # Check the current offset
         # try:
