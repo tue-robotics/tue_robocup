@@ -221,6 +221,9 @@ class ChallengeFinal:
 
         robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
 
+        # Drive to the kitchen
+        cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
+
         self.trigger_other_robot("continue")
 
     # ------------------------------------------------------------------------------------------------------------------------
