@@ -9,6 +9,8 @@ import sys
 import rospy
 import argparse
 import time
+import subprocess
+import rospkg
 
 import std_msgs
 import robot_smach_states
@@ -20,6 +22,10 @@ from action_server.command_center import CommandCenter
 
 import hmi_server
 import json
+
+rospack = rospkg.RosPack()
+doorbell_path = os.path.join(
+    rospack.get_path('challenge_final'), 'data', 'doorbell.wav')
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -105,6 +111,9 @@ class ChallengeFinal:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def take_order(self, robot, world, parameters):
+        ret = subprocess.call(['aplay', doorbell_path])
+        if ret:
+            rospy.logerr('Doorbell file not found')
         entity = cs.actions.resolve_entity_description(world, parameters["entity"])
         cs.actions.move_robot(robot, world, id=entity.id)
 
@@ -135,7 +144,7 @@ class ChallengeFinal:
 
         while not rospy.is_shutdown():
             trigger = self.wait_for_trigger()
-            if trigger == "yes we have" or trigger == "no we don't have":
+            if trigger == "yes we have" or trigger == "no we do not have":
                 break
             else:
                 rospy.loginfo("I'm busy waiting, can't do anything else!")
@@ -172,11 +181,14 @@ class ChallengeFinal:
             print "trigger = {}".format(trigger)
 
             if trigger and trigger.find("receive at") >= 0:
-                args = trigger.split(":")
+                args = trigger.split("at")
                 if (len(args) > 1):
-                    json_coordinate = args[1]
-                    pos_dict = json.loads(json_coordinate)
-                    pos = (pos_dict["x"], pos_dict["y"])
+                    params = args[1].strip().split(" ")
+                    x = float(params[0])
+                    y = float(params[1])
+                    theta = float(params[2])
+
+                    print "POS is: {} {} {}".format(x, y, theta)
                 break
 
             rospy.loginfo("I'm busy waiting, can't do anything else!")
@@ -237,7 +249,7 @@ class ChallengeFinal:
             self.trigger_other_robot("yes we have")
         else:
             self.robot.speech.speak("Nope, don't have a {}".format(bar_object.id), block=True)
-            self.trigger_other_robot("no we don't have")
+            self.trigger_other_robot("no we do not have")
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -262,7 +274,8 @@ class ChallengeFinal:
 
         x = 1.23
         y = 2.45
-        self.trigger_other_robot('receive at: { "x": %f, "y": %f }' % (x, y))
+        theta = 1.57
+        self.trigger_other_robot('receive at %f %f %f' % (x, y, theta))
 
     # ------------------------------------------------------------------------------------------------------------------------
 
