@@ -55,14 +55,14 @@ def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
 
     amigo.torso.wait_for_motion_done()
 
-    if res == ActionResult.SUCCEEDED:
-        (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s" % side)
-        (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([rx, ry, rz, rw])
-        print "Amigo gripper height: %f" % z
-        msg = "Amigo: I'm ready to place the drink at: %s" % json.dumps({'x': x, 'y': y, 'yaw': yaw})
-        pose = (x, y, yaw)
-    else:
-        msg = "Amigo: Place joint goal could not be reached"
+    # if res == ActionResult.SUCCEEDED:
+    (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s" % side)
+    (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([rx, ry, rz, rw])
+    print "Amigo gripper height: %f" % z
+    msg = "Amigo: I'm ready to place the drink at: %s" % json.dumps({'x': x, 'y': y, 'yaw': yaw})
+    pose = (x, y, yaw)
+    # else:
+    #     msg = "Amigo: Place joint goal could not be reached"
 
     return (ActionResult(res,msg), pose)
 
