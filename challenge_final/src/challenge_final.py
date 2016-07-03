@@ -276,7 +276,7 @@ class ChallengeFinal:
             self.robot.speech.speak("Yes, we have a {}".format(bar_object.id), block=True)
             self.trigger_other_robot("yes we have")
         else:
-            self.robot.speech.speak("Nope, don't have a {}".format(bar_object.id), block=True)
+            self.robot.speech.speak("Nope, I don't have a {}. But I do have tea, pringles and a sponge".format(bar_object.id), block=True)
             self.trigger_other_robot("no we do not have")
 
     # ------------------------------------------------------------------------------------------------------------------------
