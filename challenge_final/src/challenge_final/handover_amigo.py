@@ -10,7 +10,7 @@ from robot_skills.amigo import Amigo
 
 BAR_ENTITY_FRAME_ID = "bar"
 DIST_FROM_BAR = 1.0
-PLACE_JOINT_CONFIG = [-1.0, 0.0, -1.57, 0.7, 0.0, -.2, 0]
+PLACE_JOINT_CONFIG = [-1.0, 0.0, -1.0, 0.8, -0.3, -0.0, 0.0]
 RESET_JOINT_CONFIG = [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
 PLACE_TORSO_HEIGHT = 0.15
 RETRACT_TORSO_HEIGHT = 0.2
