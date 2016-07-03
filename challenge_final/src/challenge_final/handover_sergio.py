@@ -167,7 +167,7 @@ def move_sergio_to_handover_pose(sergio, x_gripper_map, y_gripper_map, yaw_gripp
         v = geometry_msgs.msg.Twist()  # Initialize velocity
         v.linear.x = max(-MAX_TRANS_VEL, min(MAX_TRANS_VEL, vx))
         v.linear.y = max(-MAX_TRANS_VEL, min(MAX_TRANS_VEL, vy))
-        v.angular.x = max(-MAX_ROT_VEL, min(MAX_ROT_VEL, vth))
+        v.angular.z = max(-MAX_ROT_VEL, min(MAX_ROT_VEL, vth))
 
         # import ipdb;        ipdb.set_trace()
 
