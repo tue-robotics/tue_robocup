@@ -46,6 +46,8 @@ def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
     if not amigo.torso._send_goal([HANDOVER_TORSO_HEIGHT]):
         return ActionResult(res, "Amigo: Could not reach lower torso goal")
 
+    amigo.head.look_at_hand(side)
+
     if side == "left":
         if amigo.leftArm._send_joint_trajectory([PLACE_JOINT_CONFIG]):
             res = ActionResult.SUCCEEDED
@@ -98,6 +100,7 @@ def amigo_place(amigo, side=ARM_SIDE):
     return ActionResult(res, "Amigo: Successfully placed item")
 
 def amigo_reset_arm(amigo, side=ARM_SIDE):
+    amigo.head.close()
     if side == "left":
         if not amigo.leftArm._send_joint_trajectory([RESET_JOINT_CONFIG]):
             return ActionResult(ActionResult.FAILED, "Amigo: Failed to move arm to reset position")
