@@ -44,7 +44,7 @@ def move_sergio_to_pre_handover_pose(sergio, entity_frame_id):
         return ActionResult(ActionResult.FAILED, 'SERGIO failed to reach the pre-handover pose, goal {0}'.format(result))
 
 
-def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
+def move_sergio_to_handover_pose(sergio, x_gripper_map, y_gripper_map, yaw_gripper_map):
     """ Makes SERGIO force drive until its tray is underneath AMIGO's arm
      :param sergio: robot object
      :param x: x coordinate of amigo gripper in map frame
@@ -57,10 +57,34 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
     # else:
     #     source_frame = "/amigo/grippoint_{0}".format(side)
 
-    yaw_ref = yaw_gripper + math.pi  # SERGIO should be opposite to the AMIGO gripper
-    gripper_pose_map = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw_ref),
-                                 kdl.Vector(x_gripper, y_gripper, 0))  # Note: using yaw ref instead of yaw gripper
-    # implies that we have already rotated 180 degrees
+    # Convert the gripper pose to odom frame to get rid of localization jitter
+    gripper_pose_map = geometry_msgs.msg.PoseStamped()
+    gripper_pose_map.header.frame_id = "/map"
+    gripper_pose_map.header.stamp = rospy.Time.now()
+    gripper_pose_map.pose.position.x = x_gripper_map
+    gripper_pose_map.pose.position.y = y_gripper_map
+    o = kdl.Rotation.RPY(0, 0, yaw_gripper_map)
+    (rx, ry, rz, rw) = o.GetQuaternion()
+    gripper_pose_map.pose.orientation.x = rx
+    gripper_pose_map.pose.orientation.y = ry
+    gripper_pose_map.pose.orientation.z = rz
+    gripper_pose_map.pose.orientation.w = rw
+
+    gripper_pose_odom_msg = sergio.tf_listener.transformPose("/sergio/odom", gripper_pose_map)
+    gripper_pose_odom = kdl.Frame(kdl.Rotation.Quaternion(gripper_pose_odom_msg.pose.orientation.x,
+                                                          gripper_pose_odom_msg.pose.orientation.y,
+                                                          gripper_pose_odom_msg.pose.orientation.z,
+                                                          gripper_pose_odom_msg.pose.orientation.w),
+                                  kdl.Vector(gripper_pose_odom_msg.pose.position.x,
+                                             gripper_pose_odom_msg.pose.position.y,
+                                             gripper_pose_odom_msg.pose.position.z))
+
+    gripper_pose_odom.M.DoRotZ(math.pi)  # Rotate PI around the z axis to make sure SERGIO is opposite to AMIGO's gripper
+
+    # yaw_ref = yaw_gripper + math.pi  # SERGIO should be opposite to the AMIGO gripper
+    # gripper_pose_map = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw_ref),
+    #                              kdl.Vector(x_gripper, y_gripper, 0))  # Note: using yaw ref instead of yaw gripper
+    # # implies that we have already rotated 180 degrees
 
     rate = rospy.Rate(20.0)
 
@@ -78,20 +102,44 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
         # rot = kdl.Rotation.Quaternion(r[0], r[1], r[2], r[3])
         # (roll, pitch, yaw) = rot.GetRPY()
 
-        base_pose_map_msg = sergio.base.get_location()  #
-        base_pose_map = kdl.Frame(kdl.Rotation.Quaternion(base_pose_map_msg.pose.orientation.x,
-                                                          base_pose_map_msg.pose.orientation.y,
-                                                          base_pose_map_msg.pose.orientation.z,
-                                                          base_pose_map_msg.pose.orientation.w),
-                                  kdl.Vector(base_pose_map_msg.pose.position.x,
-                                             base_pose_map_msg.pose.position.y,
-                                             base_pose_map_msg.pose.position.z))
+        # base_pose_map_msg = sergio.base.get_location()  #
+        # base_pose_map = kdl.Frame(kdl.Rotation.Quaternion(base_pose_map_msg.pose.orientation.x,
+        #                                                   base_pose_map_msg.pose.orientation.y,
+        #                                                   base_pose_map_msg.pose.orientation.z,
+        #                                                   base_pose_map_msg.pose.orientation.w),
+        #                           kdl.Vector(base_pose_map_msg.pose.position.x,
+        #                                      base_pose_map_msg.pose.position.y,
+        #                                      base_pose_map_msg.pose.position.z))
+
+        # tf_listener.waitForTransform("/map", "/" + robot_name + "/base_link", rospy.Time.now(), rospy.Duration(20.0))
+        # t = f.getLatestCommonTime("sergio/base_link", "sergio/odom")
+        try:
+            (ro_trans, ro_rot) = sergio.tf_listener.lookupTransform("sergio/odom", "/sergio/base_link", rospy.Time(0))
+
+            # position = geometry_msgs.msg.Point()
+            # orientation = geometry_msgs.msg.Quaternion()
+
+            # position.x = ro_trans[0]
+            # position.y = ro_trans[1]
+            # orientation.x = ro_rot[0]
+            # orientation.y = ro_rot[1]
+            # orientation.z = ro_rot[2]
+            # orientation.w = ro_rot[3]
+        except:
+            rospy.logerr("Cannot get transform between baselink and odom")
+            return ActionResult(ActionResult.FAILED, "Transform error, feedback loop does not work")
+
+        base_pose_odom = kdl.Frame(kdl.Rotation.Quaternion(ro_rot[0],
+                                                           ro_rot[1],
+                                                           ro_rot[2],
+                                                           ro_rot[3]),
+                                   kdl.Vector(ro_trans[0], ro_trans[1], ro_trans[2]))
 
         # error = kdl.diff(gripper_pose_map, base_pose_map)
         # trans = error.vel
         # rot = error.rot.z()
 
-        ref_pose_robot = base_pose_map.Inverse() * gripper_pose_map
+        ref_pose_robot = base_pose_odom.Inverse() * gripper_pose_odom
         ref_pose_robot.p.x(ref_pose_robot.p.x() - OBJ_OFFSET_X)
         ref_pose_robot.p.y(ref_pose_robot.p.y() - OBJ_OFFSET_Y)
         trans = ref_pose_robot.p
@@ -145,7 +193,9 @@ if __name__ == "__main__":
     # x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
     # y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
     # yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
-    # result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
+    # result = move_sergio_to_handover_pose(sergio, x_gripper_map=x_gripper,
+    #                                       y_gripper_map=y_gripper,
+    #                                       yaw_gripper_map=yaw_gripper)
     # rospy.loginfo("{0}".format(result))
 
     # """ Testing for real """
@@ -156,7 +206,9 @@ if __name__ == "__main__":
     x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
     y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
     yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
-    result = move_sergio_to_handover_pose(sergio, x_gripper=x_gripper, y_gripper=y_gripper, yaw_gripper=yaw_gripper)
+    result = move_sergio_to_handover_pose(sergio, x_gripper_map=x_gripper,
+                                          y_gripper_map=y_gripper,
+                                          yaw_gripper_map=yaw_gripper)
     rospy.loginfo("{0}".format(result))
 
     raw_input("Press enter as soon as AMIGO has place the object on SERGIO's tray")
