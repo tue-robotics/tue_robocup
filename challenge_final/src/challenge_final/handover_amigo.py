@@ -5,32 +5,34 @@ import rospy
 import robot_smach_states as states
 import json
 import tf
+import math
 from robot_skills.amigo import Amigo
 
-BAR_ENTITY_FRAME_ID = "/bar"
+BAR_ENTITY_FRAME_ID = "bar"
 DIST_FROM_BAR = 1.0
-PLACE_JOINT_CONFIG = [0, 1.0, 0.3, 0.8, -0.2, -.2, 0]
+PLACE_JOINT_CONFIG = [-1.0, 0.0, -1.57, 0.7, 0.0, -.2, 0]
 RESET_JOINT_CONFIG = [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
-PLACE_TORSO_HEIGHT = 0.2
-RETRACT_TORSO_HEIGHT = 0.4
-HANDOVER_POSE_RADIUS =0.05
+PLACE_TORSO_HEIGHT = 0.15
+RETRACT_TORSO_HEIGHT = 0.2
+HANDOVER_POSE_RADIUS =0.20
 ARM_SIDE = "left"
 
-def amigo_navigate_to_handover_pose(amigo):
+def amigo_navigate_to_handover_pose(amigo, frame_id=BAR_ENTITY_FRAME_ID, dist_from_bar=DIST_FROM_BAR):
     navigateToPoseSM = states.NavigateToPose(amigo,
-                                             x=DIST_FROM_BAR,
+                                             x=dist_from_bar,
                                              y=0.0,
-                                             rz=0.0,
+                                             rz=-math.pi/2.0,
                                              radius=HANDOVER_POSE_RADIUS,
-                                             frame_id=BAR_ENTITY_FRAME_ID)
+                                             frame_id=frame_id)
 
     nav_res = navigateToPoseSM.execute()
     if nav_res == "arrived":
         return ActionResult(ActionResult.SUCCEEDED, "Amigo: Arrived at handover pose")
     else:
-        return ActionResult(ActionResult.FAILED, "Amigo: handover pose %s",nav_res)
+        return ActionResult(ActionResult.FAILED, ("Amigo: handover pose %s",nav_res))
 
 def amigo_move_arm_to_place_position(amigo):
+    res = ActionResult.FAILED
     if ARM_SIDE == "left":
         if amigo.leftArm._send_joint_trajectory([PLACE_JOINT_CONFIG]):
             res = ActionResult.SUCCEEDED
@@ -41,9 +43,9 @@ def amigo_move_arm_to_place_position(amigo):
     if res == ActionResult.SUCCEEDED:
         (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s" % ARM_SIDE)
         (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([rx, ry, rz, rw])
+        print "Amigo gripper height: %f" % z
         msg = "Amigo: I'm ready to place the drink at: %s" % json.dumps({'x': x, 'y': y, 'yaw': yaw})
     else:
-        res = ActionResult.FAILED
         msg = "Amigo: Place joint goal could not be reached"
 
     return ActionResult(res,msg)
