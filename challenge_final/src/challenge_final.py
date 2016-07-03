@@ -45,6 +45,8 @@ class ChallengeFinal:
         self.do_listen_command = False
         self.sentence = sentence
 
+        self.first_order = True
+
     # ------------------------------------------------------------------------------------------------------------------------
 
     def _trigger_callback(self, msg):
@@ -74,23 +76,20 @@ class ChallengeFinal:
 
     # ------------------------------------------------------------------------------------------------------------------------
 
-    def take_order(self, robot, world, parameters):
-        entity = cs.actions.resolve_entity_description(world, parameters["entity"])
-        cs.actions.move_robot(robot, world, id=entity.id)
-
+    def _ask_order_from_person(self, robot, world, message):
         robot.head.look_at_ground_in_front_of_robot(2)
         robot.head.wait_for_motion_done()
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         # Take order
 
-        self.robot.speech.speak("Hello! What can I get you?")
+        self.robot.speech.speak(message)
 
         bar_object_id = None
 
         while True:            
             try:
-                result = robot.hmi.query("What do you want?", "<choice>", {"choice":self.knowledge.bar_objects}, timeout=10)
+                result = robot.hmi.query("What do you want?", "<choice>", {"choice":self.knowledge.object_names}, timeout=10)
             except hmi_server.api.TimeoutException:
                 self.robot.speech.speak("Please let me know what you want")
             else:
@@ -98,17 +97,64 @@ class ChallengeFinal:
                 break
 
         if not bar_object_id:
-            return
+            return None
 
         self.robot.speech.speak("Ok, you want a {}".format(bar_object_id), block=False)
+        return bar_object_id
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def take_order(self, robot, world, parameters):
+        entity = cs.actions.resolve_entity_description(world, parameters["entity"])
+        cs.actions.move_robot(robot, world, id=entity.id)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Take order
+
+        bar_object_id = self._ask_order_from_person(robot, world, "Hello! What can I get you?")
+        if not bar_object_id:
+            return
+
+        if not self.first_order:
+            self.robot.speech.speak("I will get it! Oh wait, stupid me! I can't get it because I don't have any arms!")
+            self.robot.speech.speak("If only I had a bartender friend to help me..")
+            self.trigger_other_robot("come in")
+            self.first_order = False
+
+            while not rospy.is_shutdown():
+                trigger = self.wait_for_trigger()
+                if trigger == "continue":
+                    break
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        # Check if item is available
+
+        self.robot.speech.speak("Hey amigo, do we have a {}?".format(bar_object_id), block=True)
+
+        self.trigger_other_robot("check {}".format(bar_object_id))
+
+        while not rospy.is_shutdown():
+            trigger = self.wait_for_trigger()
+            if trigger == "yes we have" or trigger == "no we don't have":
+                break
+            else:
+                rospy.loginfo("I'm busy waiting, can't do anything else!")
+
+        if trigger != "yes we have":
+            bar_object_id = self._ask_order_from_person("I just heard the {} is not available, sorry. Can I get you anything else?")
+            if not bar_object_id:
+                return
+
+        self.robot.speech.speak("We have it!", block=True)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         # Ask AMIGO to prepare drink and drive to the bar
 
-        # Optional: check with AMIGO if this bar object exists
+        self.robot.speech.speak("I will ask my friend AMIGO to prepare it! In the meanwhile, I'll go to the bar!", block=False)
+        
+        self.trigger_other_robot("prepare {}".format(bar_object_id))
 
         # Send trigger to AMIGO to get drink ready
-        self.robot.speech.speak("I will ask my friend AMIGO to prepare it! In the meanwhile, I'll go to the bar!", block=False)
         self.trigger_other_robot("prepare {}".format(bar_object_id))
 
         # Drive to the kitchen
@@ -118,8 +164,6 @@ class ChallengeFinal:
         # Wait until AMIGO has the object ready, and extract the position
 
         # pos = None
-
-        print "GOT HERE!"
 
         # Wait for AMIGO's trigger that the entity is there
         while not rospy.is_shutdown():
@@ -161,6 +205,26 @@ class ChallengeFinal:
 
         # Tell him to get it
         self.robot.speech.speak("Here you go friend! A lovely {} for you!".format(bar_object_id), block=True)
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def come_in(self, robot, world, parameters):
+        self.robot.speech.speak("knock knock! Here I am, AMIGO the bartender", block=True)
+        self.trigger_other_robot("continue")
+
+    # ------------------------------------------------------------------------------------------------------------------------
+
+    def check(self, robot, world, parameters):
+        bar_object = cs.actions.resolve_entity_description(world, parameters["entity"])
+
+        self.robot.speech.speak("Let me see...", block=True)
+
+        if bar_object.id in self.knowledge.bar_objects:
+            self.robot.speech.speak("Yes, we have a {}".format(bar_object.id), block=True)
+            self.trigger_other_robot("yes we have")
+        else:
+            self.robot.speech.speak("Nope, don't have a {}".format(bar_object.id), block=True)
+            self.trigger_other_robot("no we don't have")
 
     # ------------------------------------------------------------------------------------------------------------------------
 
@@ -219,6 +283,8 @@ class ChallengeFinal:
         self.command_center.register_action("take-order", self.take_order)
         self.command_center.register_action("prepare", self.prepare)
         self.command_center.register_action("serve", self.serve)
+        self.command_center.register_action("check", self.check)
+        self.command_center.register_action("come-in", self.come_in)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

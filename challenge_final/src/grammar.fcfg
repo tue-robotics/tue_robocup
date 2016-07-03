@@ -11,6 +11,8 @@ VP["action" : "take-order", "entity" : X] -> take order for FURNITURE[X]
 
 VP["action" : "serve", "entity" : { "id" : X }] -> serve SMALL_OBJECT[X]
 VP["action" : "prepare", "entity" : { "id" : X }] -> prepare SMALL_OBJECT[X]
+VP["action" : "check", "entity" : { "id" : X }] -> check SMALL_OBJECT[X]
+VP["action" : "come-in"] -> come in
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Entities
