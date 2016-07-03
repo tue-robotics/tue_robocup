@@ -13,8 +13,8 @@ BAR_ENTITY_FRAME_ID = "bar"
 DIST_FROM_BAR = 1.0
 PLACE_JOINT_CONFIG = [-0.8, 0.0, -1, 0.8, -0.3, 0.2, 0.0]
 RESET_JOINT_CONFIG = [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
-PLACE_TORSO_HEIGHT = 0.17
-HANDOVER_TORSO_HEIGHT = 0.25
+PLACE_TORSO_HEIGHT = 0.27
+HANDOVER_TORSO_HEIGHT = 0.35
 HANDOVER_POSE_RADIUS =0.20
 ARM_SIDE = "left"
 
@@ -131,7 +131,6 @@ if __name__ == "__main__":
 
     rospy.loginfo("AMIGO will move its arm to the place position")
     result = amigo_move_arm_to_place_position(amigo, side)
-    rospy.loginfo("{0}".format(result.message))
 
     raw_input("Press enter when SERGIO has its tray under amigo's gripper")
     result = amigo_place(amigo, side)
