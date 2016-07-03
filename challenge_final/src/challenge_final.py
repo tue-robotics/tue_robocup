@@ -135,7 +135,7 @@ class ChallengeFinal:
 
         while not rospy.is_shutdown():
             trigger = self.wait_for_trigger()
-            if trigger == "yes we have" or trigger == "no we don't have":
+            if trigger == "yes we have" or trigger == "no we do not have":
                 break
             else:
                 rospy.loginfo("I'm busy waiting, can't do anything else!")
@@ -238,7 +238,7 @@ class ChallengeFinal:
             self.trigger_other_robot("yes we have")
         else:
             self.robot.speech.speak("Nope, don't have a {}".format(bar_object.id), block=True)
-            self.trigger_other_robot("no we don't have")
+            self.trigger_other_robot("no we do not have")
 
     # ------------------------------------------------------------------------------------------------------------------------
 
