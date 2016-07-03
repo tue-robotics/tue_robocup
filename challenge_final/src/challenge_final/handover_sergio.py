@@ -18,12 +18,13 @@ X_OFFSET = 2.5  # Distance between the center point of the bar and the pose wher
 TRANS_ERROR_CONSTRAINT = 0.05  # We're satisfied if we're within 5 cm in each direction
 ROT_ERROR_CONSTRAINT = 10.0/180.0 * math.pi  # and within 10 degrees
 
-MAX_TRANS_ERROR = 0.5  # If we're further than 1.5 meters apart, better skip it
-MAX_ROT_ERROR = 30.0/180.0 * math.pi  # or if the angle offset is more than 30 degrees
+MAX_TRANS_ERROR = 1.0  # If we're further than 1.5 meters apart, better skip it
+MAX_ROT_ERROR = 45.0/180.0 * math.pi  # or if the angle offset is more than 30 degrees
 
 # Controller parameters
-TRANS_GAIN = 0.2
-ROT_GAIN = 0.15
+TRANS_GAIN = 0.4  #0.2
+ROT_GAIN = 0.3  #0.15
+
 MAX_TRANS_VEL = 0.5
 # MIN_TRANS_VEL = 0.05
 MAX_ROT_VEL = 1.0
@@ -36,7 +37,7 @@ OBJ_OFFSET_Y = -0.14  # Desired y-pos of the object in base link frame
 def move_sergio_to_pre_handover_pose(sergio, entity_frame_id):
     """ Makes SERGIO navigate to the pre handover pose """
     nav_state = NavigateToPose(sergio, x=X_OFFSET, y=0.0, rz=math.pi, radius=0.10, frame_id=entity_frame_id)
-    nav_state.execute()
+    result = nav_state.execute()
     if result == 'arrived':
         return ActionResult(ActionResult.SUCCEEDED, 'SERGIO reached pre handover pose')
     else:
@@ -91,8 +92,8 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
         # rot = error.rot.z()
 
         ref_pose_robot = base_pose_map.Inverse() * gripper_pose_map
-        ref_pose_robot.pose.x(ref_pose_robot.p.x() - OBJ_OFFSET_X)
-        ref_pose_robot.pose.y(ref_pose_robot.p.y() - OBJ_OFFSET_Y)
+        ref_pose_robot.p.x(ref_pose_robot.p.x() - OBJ_OFFSET_X)
+        ref_pose_robot.p.y(ref_pose_robot.p.y() - OBJ_OFFSET_Y)
         trans = ref_pose_robot.p
         (roll, pitch, rot) = ref_pose_robot.M.GetRPY()
         # import ipdb;ipdb.set_trace()
@@ -107,6 +108,7 @@ def move_sergio_to_handover_pose(sergio, x_gripper, y_gripper, yaw_gripper):
         if abs(trans.x()) > MAX_TRANS_ERROR or \
                 abs(trans.y()) > MAX_TRANS_ERROR or \
                 abs(rot) > MAX_ROT_ERROR:
+            rospy.logwarn("Distance x: {0}, y: {1}, yaw: {2}".format(trans.x(), trans.y(), rot))
             return ActionResult(ActionResult.FAILED, "SERGIO and AMIGO are too far apart for safe handover")
 
         # Else, control action
