@@ -9,6 +9,7 @@ import sys
 import rospy
 import argparse
 import time
+import subprocess
 
 import std_msgs
 
@@ -105,6 +106,9 @@ class ChallengeFinal:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def take_order(self, robot, world, parameters):
+        ret = subprocess.call(['aplay', 'doorbell_short.wav'])
+        if not ret:
+            rospy.logerr('Doorbell file not found')
         entity = cs.actions.resolve_entity_description(world, parameters["entity"])
         cs.actions.move_robot(robot, world, id=entity.id)
 
