@@ -135,7 +135,7 @@ class ChallengeFinal:
         if not bar_object_id:
             return
 
-        if not self.first_order:
+        if self.first_order:
             self.robot.speech.speak("I will get it! Oh wait, stupid me! I can't get it because I don't have any arms!")
             self.robot.speech.speak("If only I had a bartender friend to help me..")
             self.trigger_other_robot("come in")
@@ -322,6 +322,11 @@ class ChallengeFinal:
 
         # Tell SERGIO to bring it!
         self.trigger_other_robot('bring it')
+        time.sleep(5)
+        challenge_final.handover_amigo.amigo_reset_arm(robot)
+
+        # Drive to the kitchen
+        cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
 
     # ------------------------------------------------------------------------------------------------------------------------
 
