@@ -10,6 +10,7 @@ import rospy
 import argparse
 import time
 import subprocess
+import rospkg
 
 import std_msgs
 
@@ -24,6 +25,10 @@ from action_server.command_center import CommandCenter
 
 import hmi_server
 import json
+
+rospack = rospkg.RosPack()
+doorbell_path = os.path.join(
+    rospack.get_path('challenge_final'), 'data', 'doorbell.wav')
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -106,8 +111,8 @@ class ChallengeFinal:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def take_order(self, robot, world, parameters):
-        ret = subprocess.call(['aplay', 'doorbell_short.wav'])
-        if not ret:
+        ret = subprocess.call(['aplay', doorbell_path])
+        if ret:
             rospy.logerr('Doorbell file not found')
         entity = cs.actions.resolve_entity_description(world, parameters["entity"])
         cs.actions.move_robot(robot, world, id=entity.id)
