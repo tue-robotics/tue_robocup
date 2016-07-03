@@ -203,9 +203,14 @@ if __name__ == "__main__":
     result = move_sergio_to_pre_handover_pose(sergio, ENTITY_FRAME_ID)
     rospy.loginfo("{0}".format(result))
 
-    x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
-    y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
-    yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
+    # x_gripper = float(raw_input("Enter the x coordinate of the gripper: "))
+    # y_gripper = float(raw_input("Enter the y coordinate of the gripper: "))
+    # yaw_gripper = float(raw_input("Enter the yaw of the gripper: "))
+    inputstr = raw_input("Copy the input string from the AMIGO console: ")
+    inputstrlist = inputstr.split(';')
+    x_gripper = float(inputstrlist[0])
+    y_gripper = float(inputstrlist[1])
+    yaw_gripper = float(inputstrlist[2])
     result = move_sergio_to_handover_pose(sergio, x_gripper_map=x_gripper,
                                           y_gripper_map=y_gripper,
                                           yaw_gripper_map=yaw_gripper)
