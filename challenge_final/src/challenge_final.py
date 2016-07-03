@@ -252,7 +252,7 @@ class ChallengeFinal:
         wait_state.run(robot=robot, timeout=None)
         robot.speech.speak("Here I am, AMIGO the bartender to your service!", block=False)
 
-        robot.base.set_initial_pose(-1.64, 0, 0)
+        robot.base.set_initial_pose(0, 0, 0)
         # Wait 0.5 s just to be sure
         rospy.sleep(rospy.Duration(0.5))
 
@@ -314,7 +314,7 @@ class ChallengeFinal:
 
         self.robot.speech.speak("Here you go sergio!", block=False)
 
-        challenge_final.handover_amigo.amigo_place(robot)        
+        challenge_final.handover_amigo.amigo_place(robot)
 
         # # For now just open the gripper
         # robot.leftArm.send_gripper_goal("open")
