@@ -180,9 +180,9 @@ class ChallengeFinal:
 
         # Drive to the kitchen
         # cs.actions.move_robot(robot, world, id=self.knowledge.bar_id)
-        cs.actions.move_robot(robot, world, id="table1")
+        # cs.actions.move_robot(robot, world, id="table1")
 
-        challenge_final.handover_sergio.move_sergio_to_pre_handover_pose(robot)
+        challenge_final.handover_sergio.move_sergio_to_pre_handover_pose(robot, self.knowledge.bar_id)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Wait until AMIGO has the object ready, and extract the position
