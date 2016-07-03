@@ -209,7 +209,18 @@ class ChallengeFinal:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def come_in(self, robot, world, parameters):
-        self.robot.speech.speak("knock knock! Here I am, AMIGO the bartender", block=True)
+        from robot_smach_states import WaitForDoorOpen
+        robot.speech.speak("Knock, knock, will you let me in", block=False)
+        wait_state = WaitForDoorOpen(robot=robot)
+        wait_state.run(robot=robot, timeout=None)
+        robot.speech.speak("Here I am, AMIGO the bartender to your service!", block=False)
+
+        robot.base.set_initial_pose(-1.64, 0, 0)
+        # Wait 0.5 s just to be sure
+        rospy.sleep(rospy.Duration(0.5))
+
+        robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
+
         self.trigger_other_robot("continue")
 
     # ------------------------------------------------------------------------------------------------------------------------
