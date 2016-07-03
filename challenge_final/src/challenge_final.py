@@ -23,6 +23,9 @@ from action_server.command_center import CommandCenter
 import hmi_server
 import json
 
+import challenge_final.handover_amigo
+import challenge_final.handover_sergio
+
 rospack = rospkg.RosPack()
 doorbell_path = os.path.join(
     rospack.get_path('challenge_final'), 'data', 'doorbell_short.wav')
@@ -252,6 +255,8 @@ class ChallengeFinal:
     def check(self, robot, world, parameters):
         bar_object = cs.actions.resolve_entity_description(world, parameters["entity"])
 
+        challenge_final.handover_amigo.amigo_reset_arm(robot)
+
         self.robot.speech.speak("Let me see...", block=True)
 
         if bar_object.id in self.knowledge.bar_objects:
@@ -274,13 +279,18 @@ class ChallengeFinal:
 
         print parameters
 
-        cs.actions.find_and_pick_up(robot, world, parameters, pick_up=True)
+        # cs.actions.find_and_pick_up(robot, world, parameters, pick_up=True)
 
-        # TODO: move arm to location
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        self.robot.speech.speak("I should move my arm now to a place location, but I can't do that yet!".format(bar_object.id), block=True)
+        challenge_final.handover_amigo.amigo_navigate_to_handover_pose(robot)
+        challenge_final.handover_amigo.amigo_move_arm_to_place_position(robot)
 
-        # TODO: get current gripper location
+        # # TODO: move arm to location
+
+        # self.robot.speech.speak("I should move my arm now to a place location, but I can't do that yet!".format(bar_object.id), block=True)
+
+        # # TODO: get current gripper location
 
         x = 1.23
         y = 2.45
@@ -294,11 +304,11 @@ class ChallengeFinal:
 
         self.robot.speech.speak("Here you go sergio!", block=False)
 
-        # For now just open the gripper
-        robot.leftArm.send_gripper_goal("open")
-        robot.rightArm.send_gripper_goal("open")
+        challenge_final.handover_amigo.amigo_place(robot)        
 
-        # TODO
+        # # For now just open the gripper
+        # robot.leftArm.send_gripper_goal("open")
+        # robot.rightArm.send_gripper_goal("open")
 
         # Tell SERGIO to bring it!
         self.trigger_other_robot('bring it')
