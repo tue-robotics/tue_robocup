@@ -28,7 +28,7 @@ import json
 
 rospack = rospkg.RosPack()
 doorbell_path = os.path.join(
-    rospack.get_path('challenge_final'), 'data', 'doorbell.wav')
+    rospack.get_path('challenge_final'), 'data', 'doorbell_short.wav')
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -111,13 +111,21 @@ class ChallengeFinal:
     # ------------------------------------------------------------------------------------------------------------------------
 
     def take_order(self, robot, world, parameters):
-        ret = subprocess.call(['aplay', doorbell_path])
-        if ret:
-            rospy.logerr('Doorbell file not found')
+        ret = subprocess.Popen(['aplay', doorbell_path])
         entity = cs.actions.resolve_entity_description(world, parameters["entity"])
         cs.actions.move_robot(robot, world, id=entity.id)
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        ret_status = ret.poll()
+        if ret_status == None:
+            rospy.logwarn('killing the doorbell')
+            ret.terminate()
+            rospy.loginfo('killed the doorbell')
+        elif ret_status == 0:
+            rospy.loginfo('Doorbell was played')
+        else:
+            rospy.logerr('Doorbell file not found')
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Take order
 
         bar_object_id = self._ask_order_from_person(robot, world, "Hello! What can I get you?")
