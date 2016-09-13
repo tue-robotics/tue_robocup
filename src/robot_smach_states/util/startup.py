@@ -62,39 +62,21 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     introserver = None
 
     with robot:
-        try:
-            # build the state machine
-            executioner = statemachine_creator(robot)
-            if initial_state:
-                initial_state = [initial_state]
-                rospy.logwarn(
-                    "Overriding initial state with {}".format(initial_state))
-                executioner.set_initial_state(initial_state)
+        # build the state machine
+        executioner = statemachine_creator(robot)
+        if initial_state:
+            initial_state = [initial_state]
+            rospy.logwarn(
+                "Overriding initial state with {}".format(initial_state))
+            executioner.set_initial_state(initial_state)
 
-            introserver = smach_ros.IntrospectionServer(robot_name, executioner, '/SM_ROOT_PRIMARY')
-            introserver.start()
+        introserver = smach_ros.IntrospectionServer(robot_name, executioner, '/SM_ROOT_PRIMARY')
+        introserver.start()
 
-            if not no_execute:
-                # Run the statemachine
-                outcome = executioner.execute()
-                print "Final outcome: {0}".format(outcome)
-        except Exception, e:
-            print "An exception occured"
-            frame = traceback.extract_tb(sys.exc_info()[2])[0]
-            fname, lineno, fn, text = frame
-            rospy.logerr(
-                "Error: {0},{1},{2},{3}".format(fname, lineno, fn, text))
+        if not no_execute:
+            # Run the statemachine
+            outcome = executioner.execute()
+            print "Final outcome: {0}".format(outcome)
 
-            fname_stripped = fname.split("/")[-1:][0]
-
-            message = "I encountered an error in '{0}'' on line {1}: '{4}'. " \
-                      "Can I get a restart and try again?"\
-                .format(fname_stripped, lineno, fn, text, e)
-            message = message.replace("_", " ")
-            message = message.replace(".py", "")
-
-            print[fname, lineno, fn, text, e]
-#            robot.speech.speak(message)
-        finally:
-            if introserver:
-                introserver.stop()
+        if introserver:
+            introserver.stop()
