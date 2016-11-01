@@ -1,3 +1,11 @@
 manipulation_challenge.pdf
 .idea
 **/.coverage
+
+*.pyc
+*.egg-info
+_build
+_readthedocs_build
+autoapi
+_build_rtd
+/.tox/
