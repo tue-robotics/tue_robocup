@@ -4,7 +4,6 @@ import rospy
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.utility import LockingDesignator
 from robot_skills.arms import Arm
-from robot_skills.mockbot import Arm as mockArm
 
 __author__ = 'loy'
 
