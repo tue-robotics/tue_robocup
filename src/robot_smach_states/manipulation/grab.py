@@ -142,11 +142,15 @@ class PickUp(smach.State):
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
 
-        # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
-                                               tf_listener=self.robot.tf_listener)
-        if goal_bl is None:
-            return 'failed'
+        try:
+            # Transform to base link frame
+            goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
+                                                   tf_listener=self.robot.tf_listener)
+            if goal_bl is None:
+                return 'failed'
+        except tf.Exception as tfe:
+                rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
+                return 'failed'
 
         # Pre-grasp --> this is only necessary when using visual servoing
         # rospy.loginfo('Starting Pre-grasp')
