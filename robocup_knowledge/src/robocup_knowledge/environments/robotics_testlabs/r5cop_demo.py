@@ -4,14 +4,27 @@ starting_point = "initial_pose"
 inspection_places = [
     {"entity_id": "dinner_table",
      "room_id": "livingroom",
-     "navigate_area": "near",
+     "navigate_area": "in_front_of",
      "segment_areas": ["on_top_of"]},
 
     {"entity_id": "cabinet",
      "room_id": "kitchen",
-     "navigate_area": "near",
+     "navigate_area": "in_front_of",
      "segment_areas": ["on_top_of"]},
 ]
 
-known_types = ["coke", "fanta", "mentos", "bifrutas", "beer", "coffee_pads", "deodorant", "ice_tea", "sprite", "tea", "water", "xylit24_spearmint", "xylit24_white", "", "unknown"]
+known_types = [
+    "coke",
+    "fanta",
+    "mentos",
+    "bifrutas",
+    "beer",
+    "coffee_pads",
+    "deodorant",
+    "ice_tea",
+    "sprite",
+    "tea",
+    "water",
+    "xylit24_spearmint",
+    "xylit24_white"]
 
