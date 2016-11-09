@@ -12,6 +12,10 @@ from robot_skills.classification_result import ClassificationResult
 
 import time
 
+
+def _color_info(string):
+    rospy.loginfo('\033[92m' + string + '\033[0m')
+
 # ----------------------------------------------------------------------------------------------------
 
 class SetPlugins(smach.State):
@@ -22,7 +26,7 @@ class SetPlugins(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        if self.disable:  
+        if self.disable:
             self.robot.ed.disable_plugins(self.disable)
 
         if self.enable:
@@ -58,22 +62,20 @@ class InitializeWorldModel(smach.State):
      - searchArea: where are the objects wrt the entity, default = on_top_of
 '''
 class SegmentObjects(smach.State):
-    def __init__(self, robot, objectIDsDes, entityDes, searchArea="on_top_of"):
+    def __init__(self, robot, segmented_entity_ids_designator, entity_to_inspect_designator,
+                 segmentation_area="on_top_of"):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
-        ds.check_resolve_type(entityDes, EntityInfo)
-        self.entityDes = entityDes
-        self.searchArea = searchArea
+        ds.check_resolve_type(entity_to_inspect_designator, EntityInfo)
+        self.entity_to_inspect_designator = entity_to_inspect_designator
+        self.segmentation_area = segmentation_area
 
-        ds.check_resolve_type(objectIDsDes, [ClassificationResult])
-        ds.is_writeable(objectIDsDes)
-        self.objectIDsDes = objectIDsDes
+        ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
+        ds.is_writeable(segmented_entity_ids_designator)
+        self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
-    def execute(self, userdata=None):
-        entity = self.entityDes.resolve()
-        objIDs = []
-
+    def _look_at_segmentation_area(self, entity):
         look_at_point_z = 0.7
 
         # Make sure the head looks at the entity
@@ -83,7 +85,7 @@ class SegmentObjects(smach.State):
         # Check if we have areas
         if "areas" in entity.data:
             d = entity.data
-            search_area = next((x for x in d["areas"] if x["name"] == self.searchArea), None)
+            search_area = next((x for x in d["areas"] if x["name"] == self.segmentation_area), None)
 
             # check if search area
             if search_area:
@@ -94,7 +96,6 @@ class SegmentObjects(smach.State):
 
         # Make sure the spindle is at the appropriate height if we are AMIGO
         if self.robot.robot_name == "amigo":
-
             # Send spindle goal to bring head to a suitable location
             # Correction for standard height: with a table heigt of 0.76 a spindle position
             # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
@@ -106,30 +107,33 @@ class SegmentObjects(smach.State):
 
         self.robot.head.wait_for_motion_done()
 
+    def execute(self, userdata=None):
+        entity_to_inspect = self.entity_to_inspect_designator.resolve()
+
+        self._look_at_segmentation_area(entity_to_inspect)
+
         # This is needed because the head is not entirely still when the look_at_point function finishes
         time.sleep(0.5)
 
         # Inspect 'on top of' the entity
-        res = self.robot.ed.update_kinect("{} {}".format(self.searchArea, entity.id))
+        res = self.robot.ed.update_kinect("{} {}".format(self.segmentation_area, entity_to_inspect.id))
+        segmented_object_ids = res.new_ids + res.updated_ids
 
-        # string[] new_ids      # ids of new entities
-        # string[] updated_ids  # ids of updated entities
-        # string[] deleted_ids  # ids of deleted entities
-        # string error_msg      # Empty if no errors
+        if segmented_object_ids:
+            _color_info(">> Segmented %d objects!" % len(segmented_object_ids))
 
-        objIDs = objIDs + res.new_ids
-        objIDs = objIDs + res.updated_ids
-        print "Segmented {} objects!".format(len(objIDs))
+            # Classify and update IDs
+            object_classifications = self.robot.ed.classify(ids=segmented_object_ids)
 
-        # Classify and update IDs
-        objClassif = self.robot.ed.classify(ids=objIDs)
-        
-        # import ipdb; ipdb.set_trace()
-        
-        for idx, obj in enumerate(objClassif): 
-            print "Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id)        
+            if object_classifications:
+                for idx, obj in enumerate(object_classifications):
+                    _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id))
 
-        self.objectIDsDes.write(objClassif)
+                self.segmented_entity_ids_designator.write(object_classifications)
+            else:
+                rospy.logerr("    Classification failed, this should not happen!")
+        else:
+            rospy.logwarn(">> Tried to segment but no objects found")
 
         # Cancel the head goal
         self.robot.head.cancel_goal()
