@@ -143,14 +143,30 @@ class PickUp(smach.State):
         goal_map = msgs.Point(0, 0, 0)
 
         try:
-            if self.robot.tf_listener.waitForTransform(grab_entity.id, self.robot.robot_name + "/base_link"):
-                # Transform to base link frame
-                goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
-                                                       tf_listener=self.robot.tf_listener)
-                if goal_bl is None:
+            # In case grasp point determination didn't work
+            if grasp_pose is None:
+                if self.robot.tf_listener.waitForTransform(grab_entity.id, self.robot.robot_name + "/base_link"):
+                    # Transform to base link frame
+                    goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
+                                                           tf_listener=self.robot.tf_listener)
+                    if goal_bl is None:
+                        return 'failed'
+                else:
                     return 'failed'
             else:
-                return 'failed'
+                # We do have a grasp pose, given as a kdl frame in map
+                if self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link"):
+                    # Transform to base link frame
+                    goal_bl = transformations.tf_transform(msgs.Point(grasp_pose.p.x(),
+                                                                      grasp_pose.p.y(),
+                                                                      grasp_pose.p.z()),
+                                                           "/map", self.robot.robot_name + "/base_link",
+                                                           tf_listener=self.robot.tf_listener)
+                    if goal_bl is None:
+                        return 'failed'
+                else:
+                    return 'failed'
+
         except tf.Exception as tfe:
             rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
             return 'failed'
