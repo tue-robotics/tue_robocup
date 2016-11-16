@@ -163,21 +163,6 @@ class PerceptionED(object):
         self.people_detection_torso_laser = mock.MagicMock()
 
 
-class Reasoner(object):
-    def __init__(self, *args, **kwargs):
-        self.close = mock.MagicMock()
-        self.query = mock.MagicMock()
-        self.assertz = mock.MagicMock()
-        self.exists_predicate = mock.MagicMock()
-        self.__getattr__ = mock.MagicMock()
-        self.attach_object_to_gripper = mock.MagicMock()
-        self.detach_all_from_gripper = mock.MagicMock()
-        self.set_time_marker = mock.MagicMock()
-        self.get_time_since = mock.MagicMock()
-        self.reset = mock.MagicMock()
-        self.load_database = mock.MagicMock()
-
-
 class Speech(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
@@ -325,7 +310,6 @@ class Mockbot(robot.Robot):
 
         # Reasoning/world modeling
         self.ed = ED()
-        self.reasoner = Reasoner()
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
@@ -365,7 +349,6 @@ if __name__ == "__main__":
     print "   \\___/          "
     import atexit
     from robot_skills.util import msg_constructors as msgs
-    # from reasoner import Compound, Conjunction, Sequence, Variable
 
     rospy.init_node("mockbot_executioner", anonymous=True)
     mockbot = Mockbot(wait_services=False)
@@ -383,16 +366,11 @@ if __name__ == "__main__":
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
     look_at_point = lambda x, y, z: mockbot.head.look_at_point(msgs.PointStamped(x, y, z, frame_id="/mockbot/base_link"))
 
-    r = mockbot.reasoner
-    q = mockbot.reasoner.query
-
     mapgo = mockbot.base.go
 
     def basego(x,y,phi):
         return mockbot.base.go(x,y,phi,frame="/mockbot/base_link")
 
-    open_door   = lambda: r.assertz(r.state("door1", "open"))
-    close_door  = lambda: r.assertz(r.state("door1", "close"))
     def insert_object(x,y,z):
         from test_tools.WorldFaker import WorldFaker
         wf = WorldFaker()

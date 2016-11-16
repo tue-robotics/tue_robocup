@@ -6,7 +6,6 @@ import spindle
 import arms
 import ebutton
 import head
-# import reasoner
 
 import tf_server
 

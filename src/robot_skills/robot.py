@@ -22,7 +22,6 @@ import tf_server
 
 # Reasoning/world modeling
 import world_model_ed
-import reasoner
 
 # Misc: do we need this???
 import geometry_msgs
@@ -62,7 +61,6 @@ class Robot(object):
 
         # Reasoning/world modeling
         self.ed = world_model_ed.ED(self.robot_name, self.tf_listener, wait_service=wait_services)
-        self.reasoner = reasoner.Reasoner(self.robot_name)
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
@@ -179,10 +177,6 @@ class Robot(object):
             self.lights.close()
         except: pass
 
-        try:
-            self.reasoner.close()
-        except: pass
-
     def __enter__(self):
         pass
 
@@ -191,75 +185,6 @@ class Robot(object):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
 
-    # This function was originally located in base.py, but since the reasoner is needed to get room dimentions, it is placed here.
-    def get_base_goal_poses(self, target_point_stamped, x_offset, y_offset, cost_threshold_norm=0.2):
-
-        request = amigo_inverse_reachability.srv.GetBaseGoalPosesRequest()
-
-        request.robot_pose = self.base.location.pose
-
-        request.target_pose.position = target_point_stamped.point
-        request.target_pose.orientation.x = 0
-        request.target_pose.orientation.y = 0
-        request.target_pose.orientation.z = 0
-        request.target_pose.orientation.w = 1
-
-        request.cost_threshold_norm = cost_threshold_norm
-
-        request.x_offset = x_offset
-        request.y_offset = y_offset
-        rospy.logdebug("Inverse reachability request = {0}".format(request).replace("\n", " ").replace("\t", " "))
-        response = self._get_base_goal_poses(request)
-        rospy.logdebug("Inverse reachability response = {0}".format(response).replace("\n", " ").replace("\t", " "))
-
-        ## Only get poses that are in the same room as the grasp point.
-
-        rooms_dimensions = self.reasoner.query(Compound("room_dimensions", "Room", Compound("size", "Xmin", "Ymin", "Zmin", "Xmax", "Ymax", "Zmax")))
-
-        if rooms_dimensions:
-            for x in range(0,len(rooms_dimensions)):
-                room_dimensions = rooms_dimensions[x]
-                if float(room_dimensions["Xmin"]) < target_point_stamped.point.x < float(room_dimensions["Xmax"]) \
-                    and float(room_dimensions["Ymin"]) < target_point_stamped.point.y < float(room_dimensions["Ymax"]):
-                    rospy.loginfo("Point for inverse reachability in room: {0}".format(str(room_dimensions["Room"])))
-                    rospy.sleep(2)
-                    break
-                else:
-                    room_dimensions = ""
-
-        if rooms_dimensions and room_dimensions:
-
-            x_min = float(room_dimensions["Xmin"])
-            x_max = float(room_dimensions["Xmax"])
-            y_min = float(room_dimensions["Ymin"])
-            y_max = float(room_dimensions["Ymax"])
-            #print "x_min = ", x_min, ", x_max = ", x_max, ", y_min = ", y_min, ", y_max = ", y_max, "\n"
-            base_goal_poses = []
-            for base_goal_pose in response.base_goal_poses:
-
-                x_pose = base_goal_pose.position.x
-                y_pose = base_goal_pose.position.y
-                # print "x_pose = ", x_pose, ", y_pose = ", y_pose, "\n"
-                if x_min < x_pose < x_max and y_min < y_pose < y_max:
-                    # print "Pose added\n"
-                    base_goal_poses.append(geometry_msgs.msg.PoseStamped())
-                    base_goal_poses[-1].header.frame_id = "/map"
-                    base_goal_poses[-1].header.stamp = rospy.Time()
-                    base_goal_poses[-1].pose = base_goal_pose
-                # else:
-                    # print "point deleted\n"
-            # print "AFTER base_goal_poses length = ", len(base_goal_poses), "\n"
-
-        else:
-            base_goal_poses = []
-
-            for base_goal_pose in response.base_goal_poses:
-                base_goal_poses.append(geometry_msgs.msg.PoseStamped())
-                base_goal_poses[-1].header.frame_id = "/map"
-                base_goal_poses[-1].header.stamp = rospy.Time()
-                base_goal_poses[-1].pose = base_goal_pose
-
-        return base_goal_poses
 
 if __name__ == "__main__":
     rospy.init_node("robot")
