@@ -1,9 +1,0 @@
-TODO
-=========
-
-- fix hardcoded state machine
-- loop the challenge
-- use the same tf as the learing phase
-
-- Amigo drives towards the wrong table, probably an error in GET_OBJECT_SHELF
-- seamless integration of two laser scanners

@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-    <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find challenge_demo)/launch/config.rviz" output="screen" />
-</launch>
