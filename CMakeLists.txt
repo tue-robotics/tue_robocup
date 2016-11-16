@@ -22,7 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
     text_to_speech
     ed
     ed_navigation
-    swi_prolog
 )
 
 catkin_python_setup()

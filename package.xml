@@ -49,9 +49,6 @@
   <build_depend>head_ref</build_depend>
   <run_depend>head_ref</run_depend>
 
-  <build_depend>swi_prolog</build_depend>
-  <run_depend>swi_prolog</run_depend>
-
   <build_depend>control_msgs</build_depend>
   <run_depend>control_msgs</run_depend>
 
@@ -90,9 +87,6 @@
 
   <build_depend>ed_gui_server</build_depend>
   <run_depend>ed_gui_server</run_depend>
-
-  <build_depend>swi_prolog</build_depend>
-  <run_depend>swi_prolog</run_depend>
 
   <run_depend>python-mock</run_depend>
 
