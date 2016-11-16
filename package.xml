@@ -58,12 +58,6 @@
   <build_depend>trajectory_msgs</build_depend>
   <run_depend>trajectory_msgs</run_depend>
 
-  <build_depend>tue_move_base_msgs</build_depend>
-  <run_depend>tue_move_base_msgs</run_depend>
-
-  <build_depend>tue_costmap_msgs</build_depend>
-  <run_depend>tue_costmap_msgs</run_depend>
-
   <build_depend>cb_planner_msgs_srvs</build_depend>
   <run_depend>cb_planner_msgs_srvs</run_depend>
 

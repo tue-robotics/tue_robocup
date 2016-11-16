@@ -17,8 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
     head_ref
     control_msgs
     trajectory_msgs
-    tue_move_base_msgs
-    tue_costmap_msgs
     cb_planner_msgs_srvs
     tue_manipulation_msgs
     text_to_speech
