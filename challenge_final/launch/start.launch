@@ -3,7 +3,7 @@
 <launch>
 
     <!-- middleware -->
-    <include file="$(find amigo_launch_files)/launch/middleware/middleware.launch"/>
+    <include file="$(find amigo_bringup)/launch/middleware.launch"/>
 
     <!-- open_challenge_deps -->
     <include file="$(find challenge_final)/launch/dependencies.launch"/>
