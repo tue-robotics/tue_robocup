@@ -339,6 +339,9 @@ class ED:
                Or, in other words: the padding that is added to existing objects before they are removed from the point cloud
         :returns Update result
         """
+        # Check the area description
+        if area_description == "":
+            rospy.logwarn("No area_description provided for 'update_kinect'. This is probably a bad idea.")
 
         # Save the image (logging)
         self.save_image(path_suffix=area_description.replace(" ", "_"))
