@@ -127,10 +127,10 @@ class PickUp(smach.State):
                          "this should not happen [CHECK WHY THIS IS HAPPENING]")
             grab_entity = self.associate(original_entity=grab_entity)
         else:
-            rospy.loginfo("Updated pose of entity (x, y, z) : (%f, %f, %f) --> (%f, %f, %f)" %
-                          (grab_entity.pose.position.x, grab_entity.pose.position.y, grab_entity.pose.position.z,
-                           updated_grab_entity.pose.position.x, updated_grab_entity.pose.position.y,
-                           updated_grab_entity.pose.position.z))
+            rospy.loginfo("Updated pose of entity (dx, dy, dz) : (%f, %f, %f)" %
+                          (updated_grab_entity.pose.position.x - grab_entity.pose.position.x,
+                           updated_grab_entity.pose.position.y - grab_entity.pose.position.y, 
+                           updated_grab_entity.pose.position.z - grab_entity.pose.position.z))
             grab_entity = updated_grab_entity
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -286,14 +286,16 @@ class ResetOnFailure(smach.StateMachine):
 
     def execute(self, userdata):
         """ Execute hook """
-        # ToDo: test this for real
-        arm = self._robot.get_arm(userdata.arm)[0]  # Using userdata makes sure we don't need more arm designator magic
+        if hasattr(userdata, 'arm'):
+            arm = self._robot.get_arm(userdata.arm)[0]  # Using userdata makes sure we don't need more arm designator magic
+        else:
+            arm = None
         self._robot.torso.high()  # Move up to make resetting of the arm safer
-        if arm:
+        if arm is not None:
             arm.send_gripper_goal('close')
         self._robot.head.reset()  # Sends a goal
         self._robot.head.cancel_goal()  # And cancels it...
-        if arm:
+        if arm is not None:
             arm.reset()
         self._robot.torso.reset()
         return 'done'
