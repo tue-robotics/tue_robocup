@@ -223,8 +223,6 @@ class ED(object):
         self.get_closest_possible_person_entity = lambda *args, **kwargs: ED.generate_random_entity()
         self.enable_plugins = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
-        self.classify_with_probs = mock.MagicMock()
-        self.add_perception_training_instance = mock.MagicMock()
 
         self._person_names = []
 

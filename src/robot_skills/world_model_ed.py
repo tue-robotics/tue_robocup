@@ -354,94 +354,26 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_perception_model_path(self, perception_model_name = ""):
-        import rospkg
-        rospack = rospkg.RosPack()
-
-        try:
-            import os
-            robot_env = os.environ['ROBOT_ENV']
-            return rospack.get_path('ed_perception_models') + "/models/" + robot_env + "/" + perception_model_name
-        except KeyError:
-            rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
-            return ""
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def classify(self, ids, perception_model_name="", property="type", types=None):
-        """ Classifies the entities with the given IDs. If we are simulating instead of acting on the real robot,
-        a random type from the list of possible types is given.
-        # ToDo: @Luis: how does this work???
+    def classify(self, ids, types=None):
+        """ Classifies the entities with the given IDs 
         Args:
             ids: list with IDs
-            perception_model_name:
-            property:
             types: list with types to identify
 
         Returns: list with ClassificationResults, which is a named tuple with id, type and probability
 
         """
-        perception_model_path = self.get_perception_model_path(perception_model_name)
-        if not perception_model_path:
-            rospy.logerr("No perception model path")
-            return []
 
-        res = self._ed_classify_srv(ids=ids, property=property, perception_models_path=perception_model_path)
+        res = self._ed_classify_srv(ids=ids)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
-        # if there is a set of expected types, only report the one with the highest probability
-        if types:
-            import os
-            if os.environ.get('ROBOT_REAL', 'false') in ['true', 'True', 'TRUE']:
-                # This is what we do for real
-                # for idx, id, type in enumerate (res.ids):
-                # print "TODO: finish type filtering in Classification"
-                posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
-                return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if exp_val in types]
-            else:
-                # This is what we do in simulation
-                import random
-                extypes = types + [""]
-                exvalues = []
-                exprobs = []
-                posteriors = []
-                for id in ids:
-                    exvalue = random.choice(extypes)
-                    distr = { exvalue : 0.7, random.choice(extypes) : 0.2, random.choice(extypes) : 0.1 }
+        
+        posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
 
-                    exvalues.append(exvalue)
-                    exprobs.append(random.random())
-                    posteriors.append(distr)
-
-                    self.update_entity(id=id, type=exvalues[-1])
-
-                    print "ID: {0}: {1} (prob = {2})".format(id, exvalues[-1], exprobs[-1])
-                return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr in zip(ids, exvalues, exprobs, posteriors) if exp_val in types]
-        else:
-            posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
-            return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors)]
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def classify_with_probs(self, ids, types):
-        rospy.logwarn("Is classify_with_probs function deprecated?")  # ToDo: @Luis: is this true?
-        res = self._ed_classify_srv(ids = ids, types = types)
-        return zip(res.types, res.probabilities)
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def add_perception_training_instance(self, id, property, value, perception_model_name = ""):
-        perception_model_path = self.get_perception_model_path(perception_model_name)
-        if not perception_model_path:
-            return False
-
-        res = self._ed_perception_add_training_instance_srv(id = id, property = property, value = value, perception_models_path = perception_model_path)
-        if res.error_msg:
-            rospy.logerr("While adding perception training instance: %s" % res.error_msg)
-            return False
-
-        return True
+        # Filter on types if types is not None
+       	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr 
+       				in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if types is None or exp_val in types]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -558,7 +490,7 @@ class ED:
     #                                               OBSOLETE
     # ----------------------------------------------------------------------------------------------------
 
-    def configure_kinect_segmentation(self, continuous=None, max_sensor_range=0):
+    def configure_kinect_segmentationf(self, continuous=None, max_sensor_range=0):
         raise NotImplementedError("Method 'configure_kinect_segmentation' has become obsolete - don't use it")
 
 
