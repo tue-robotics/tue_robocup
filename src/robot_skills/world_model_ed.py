@@ -50,9 +50,6 @@ class ED:
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
         self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
         self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
-        # self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
-        # self._ed_mesh_entity_in_view_srv = rospy.ServiceProxy('/%s/ed/kinect/mesh_entity_in_view'%robot_name, MeshEntityInView)
-        # self._ed_segment_srv = rospy.ServiceProxy('/%s/ed/kinect/segment'%robot_name, Segment)
         self._ed_kinect_update_srv = rospy.ServiceProxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update)
 
         self._ed_classify_srv = rospy.ServiceProxy('/%s/ed/classify'%robot_name, Classify)
@@ -63,52 +60,11 @@ class ED:
 
         self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
 
-        # Person recognition
-        self._learn_person_srv = rospy.ServiceProxy('/%s/learn_person'%robot_name, ed_perception.srv.LearnPerson)
-        self._clear_persons_srv = rospy.ServiceProxy('/%s/clear_persons' % robot_name, Empty)
-        self._recognize_person_srv = rospy.ServiceProxy('/%s/recognize_person'%robot_name, ed_perception.srv.RecognizePerson)
-
         self._tf_listener = tf_listener
 
         self.navigation = Navigation(robot_name, tf_listener, wait_service)
 
         self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker, queue_size=10)
-
-    # ----------------------------------------------------------------------------------------------------
-    #                                           CONFIGURATION
-    # ----------------------------------------------------------------------------------------------------
-
-    def enable_plugins(self, plugin_names):
-        """Enables the specified plugins in ED"""
-        return self._set_plugin_status(plugin_names, '"enabled":1')
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def disable_plugins(self, plugin_names):
-        """Disables the specified plugins in ED"""
-        return self._set_plugin_status(plugin_names, '"enabled":0')
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def _set_plugin_status(self, plugin_names, status):
-        if not plugin_names:
-            return
-
-        yaml = '{"plugins":['
-        for name in plugin_names:
-            yaml += '{"name":"%s",%s},' % (name, status)
-
-        # remove last comma
-        yaml = yaml[:-1]
-        yaml += ']}'
-
-        resp = self._ed_configure_srv(request=yaml)
-        if not resp.error_msg:
-            return True
-
-        rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
-        return False
-
 
     # ----------------------------------------------------------------------------------------------------
     #                                             QUERYING
@@ -193,8 +149,6 @@ class ED:
     # ----------------------------------------------------------------------------------------------------
 
     def reset(self, keep_all_shapes=False):
-        """Reset world model to initial state, also clears trained persons"""
-        self.clear_persons()
 
         try:
             self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
@@ -290,28 +244,9 @@ class ED:
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
-        #print "entities 1 in get_closest_possible_person_entity = ", entities
 
         # HACK
         entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
-        #print "entities 2 in get_closest_possible_person_entity = ", entities
-
-        # if only the persons in a certain room should be found:
-        # if not (room == "" and len(entities) == 0):
-        #     print "room in ed = ", room
-        #     room_entity = self.get_entity(id=str(room))
-        #     x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
-        #     print "x_max_room = ", x_max_room
-        #     x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
-        #     print "x_min_room = ", x_min_room
-        #     y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
-        #     print "y_max_room = ", y_max_room
-        #     y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
-        #     print "y_min_room = ", y_min_room
-
-        #     entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
-
-        #     print "entities sorted in room = ", entities
 
         if len(entities) == 0:
             return None
@@ -374,42 +309,6 @@ class ED:
         # Filter on types if types is not None
        	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr 
        				in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if types is None or exp_val in types]
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def clear_persons(self):
-        try:
-            res = self._clear_persons_srv()
-        except rospy.ServiceException, e:
-            rospy.logerr("Could not Reset Persons ED: {0}".format(e))
-        return True
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def learn_person(self, name):
-        try:
-            res = self._learn_person_srv(person_name=name)
-        except rospy.ServiceException as e:
-            rospy.logerr(e)
-            return False
-        if res.error_msg:
-            rospy.logerr("Learn person failed: %s" % res.error_msg)
-            return False
-        return True
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    def detect_persons(self, external_api_request=False):
-        try:
-            res = self._recognize_person_srv(external_api_request=external_api_request)
-        except rospy.ServiceException as e:
-            rospy.logerr(e)
-            return False
-        if res.error_msg:
-            rospy.logerr("Detect persons failed: %s" % res.error_msg)
-            return None
-        else:
-            return res.person_detections
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -485,14 +384,3 @@ class ED:
         marker.color.r = 1
 
         self._marker_publisher.publish(marker)
-
-    # ----------------------------------------------------------------------------------------------------
-    #                                               OBSOLETE
-    # ----------------------------------------------------------------------------------------------------
-
-    def configure_kinect_segmentationf(self, continuous=None, max_sensor_range=0):
-        raise NotImplementedError("Method 'configure_kinect_segmentation' has become obsolete - don't use it")
-
-
-    def configure_perception(self, continuous):
-        raise NotImplementedError("Method 'configure_perception' has become obsolete - don't use it")

@@ -15,7 +15,6 @@ from ed_sensor_integration.srv import UpdateResponse
 import arms
 from robot_skills import robot
 from robot_skills.classification_result import ClassificationResult
-from ed_perception.msg import PersonDetection
 import robot_skills.util.msg_constructors as msgs
 
 
@@ -122,47 +121,6 @@ class Lights(object):
         self.start_sinus = mock.MagicMock()
 
 
-class Perception(object):
-    def __init__(self, *args, **kwargs):
-        self.close = mock.MagicMock()
-        self.toggle = mock.MagicMock()
-        self.toggle_always_on = mock.MagicMock()
-        self.toggle_always_off = mock.MagicMock()
-        self.toggle_everything_off = mock.MagicMock()
-        self.toggle_recognition = mock.MagicMock()
-        self.toggle_perception_2d = mock.MagicMock()
-        self.set_perception_roi = mock.MagicMock()
-        self.set_table_roi = mock.MagicMock()
-        self.toggle_bin_detection = mock.MagicMock()
-        self.load_template_matching_config = mock.MagicMock()
-        self.learn_person = mock.MagicMock()
-        self.cancel_learn_persons = mock.MagicMock()
-        self.__cb_learn_face = mock.MagicMock()
-        self.get_learn_face_counter = mock.MagicMock()
-        self.rec_start = mock.MagicMock()
-        self.people_detection_torso_laser = mock.MagicMock()
-
-
-class PerceptionED(object):
-    def __init__(self, *args, **kwargs):
-        self.close = mock.MagicMock()
-        self.toggle = mock.MagicMock()
-        self.toggle_always_on = mock.MagicMock()
-        self.toggle_always_off = mock.MagicMock()
-        self.toggle_everything_off = mock.MagicMock()
-        self.toggle_recognition = mock.MagicMock()
-        self.toggle_perception_2d = mock.MagicMock()
-        self.set_perception_roi = mock.MagicMock()
-        self.set_table_roi = mock.MagicMock()
-        self.toggle_bin_detection = mock.MagicMock()
-        self.load_template_matching_config = mock.MagicMock()
-        self.learn_person = mock.MagicMock()
-        self.cancel_learn_persons = mock.MagicMock()
-        self.get_learn_face_counter = mock.MagicMock()
-        self.rec_start = mock.MagicMock()
-        self.people_detection_torso_laser = mock.MagicMock()
-
-
 class Speech(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
@@ -217,12 +175,8 @@ class ED(object):
         self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
         self.navigation = mock.MagicMock()
         self.navigation.get_position_constraint = mock.MagicMock()
-        self.configure_kinect_segmentation = mock.MagicMock()
         self.update_entity = mock.MagicMock()
-        self.configure_perception = mock.MagicMock()
         self.get_closest_possible_person_entity = lambda *args, **kwargs: ED.generate_random_entity()
-        self.enable_plugins = mock.MagicMock()
-        self.disable_plugins = mock.MagicMock()
 
         self._person_names = []
 
@@ -244,34 +198,9 @@ class ED(object):
         res.deleted_ids = []
         return res
 
-    def classify(self, ids, perception_model_name="", property ="type", types=None):
+    def classify(self, ids, types=None):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
-
-    def learn_person(self, id=None, name=None):
-        self._person_names += [name]
-        return True
-
-    def classify_person(self, id):
-    	if not self._person_names:
-    		return []
-
-    	import random
-    	name = random.choice(self._person_names)
-
-    	return [ClassificationResult(id, name, random.uniform(0,1))]
-
-    def detect_persons(self):
-        alice = PersonDetection(name="Alice", age=27, gender=PersonDetection.FEMALE, body_pose="standing", pose=msgs.PoseStamped(2, -0.5, 1.7))
-        bob = PersonDetection(name="Bob", age=25, gender=PersonDetection.MALE, body_pose="sitting", pose=msgs.PoseStamped(2, 0.5, 1.2))
-        charlie = PersonDetection(name="Charlie", age=23, gender=PersonDetection.MALE, body_pose="lying", pose=msgs.PoseStamped(1.5, 0, 0.3))
-        detections = [alice, bob, charlie]
-        return detections
-
-# class MockbotArms(arms.Arms):
-#     def __init__(self, tf_listener):
-#         super(MockbotArms, self).__init__(tf_listener)
-
 
 class Mockbot(robot.Robot):
     """
@@ -302,9 +231,6 @@ class Mockbot(robot.Robot):
         self.ears = Ears()
         self.ebutton = EButton()
         self.lights = Lights()
-
-        # Perception: can we get rid of this???
-        self.perception = Perception()
 
         # Reasoning/world modeling
         self.ed = ED()

@@ -14,9 +14,6 @@ import ears
 import ebutton
 import lights
 
-# Perception
-import perception_ed
-
 # tf
 import tf_server
 
@@ -55,9 +52,6 @@ class Robot(object):
         self.ears = ears.Ears(self.robot_name, lambda: self.lights.set_color(0,1,0), lambda: self.lights.set_color(0,0,1))
         self.ears._hmi = self.hmi # TODO: when ears is gone, remove this line
         self.ebutton = ebutton.EButton()
-
-        # Perception: can we get rid of this???
-        self.perception = perception_ed.PerceptionED(wait_service=wait_services)
 
         # Reasoning/world modeling
         self.ed = world_model_ed.ED(self.robot_name, self.tf_listener, wait_service=wait_services)
@@ -133,9 +127,6 @@ class Robot(object):
         try:
             self.head.close()
         except: pass
-        # try:
-        #     self.worldmodel.close()
-        # except: pass
 
         try:
             self.base.close()
@@ -159,10 +150,6 @@ class Robot(object):
 
         try:
             self.rightArm.close()
-        except: pass
-
-        try:
-            self.perception.close()
         except: pass
 
         try:
