@@ -142,7 +142,8 @@ class FollowOperator(smach.State):
                                 learn_person_timeout = 10.0 # TODO: Parameterize
                                 num_detections = 0
                                 while num_detections < 5:
-                                    if self._robot.ed.learn_person(self._operator_name):
+                                    rospy.logerr("self._robot.ed.learn _person(self._operator_name) method disappeared!, returning False")
+                                    if False:
                                         num_detections+=1
                                     elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
                                         self._robot.speech.speak("Please stand in front of me and look at me")
@@ -438,7 +439,9 @@ class FollowOperator(smach.State):
 
             self._robot.head.wait_for_motion_done()
             print "Trying to detect faces..."
-            detections = self._robot.ed.detect_persons()
+            rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+            rospy.logerr("I will return an empty detection list!")
+            detections = []
             if not detections:
                 detections = []
             best_score = -0.5 # TODO: magic number

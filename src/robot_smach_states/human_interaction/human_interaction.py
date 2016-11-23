@@ -432,7 +432,9 @@ class WaitForPersonDetection(smach.State):
         while counter < self.attempts:
             print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
 
-            detections = self.robot.ed.detect_persons()
+            rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+            rospy.logerr("I will return an empty detection list!")
+            detections = []
             if detections:
                 print "[WaitForPersonDetection] " + "Found a human!"
                 return 'succeeded'
@@ -450,7 +452,9 @@ def detect_human_in_front(robot):
         Scan for humans in the robots field of view. Return person detections if any
     """
 
-    result = robot.ed.detect_persons()
+    rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+    rospy.logerr("I will return an empty detection list!")
+    detections = []
 
     if not result:
         return False
@@ -485,7 +489,8 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
     count = 0
     start_time = time.time()
     while count < n_samples:
-        if robot.ed.learn_person(person_name):
+        rospy.logerr("robot.ed.learn_ person(person_name), dissapeared! I will return false")
+        if False:
             if count == 0:
                 robot.speech.speak("Hi there!")
 
