@@ -83,9 +83,6 @@ class PersonDesignator(ds.Designator):
                                                  kdl.Vector(box['min']['x'], box['max']['y'], box['min']['z']))
                     convex_hull.append(hpose.p)
 
-            # In principle (i.e., in 2016), we don't need to enable/disable laser_integration: it is enabled by default
-            # #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
-
         entities = self._robot.ed.get_entities(parse=True)
         possible_humans = []
         for e in entities:

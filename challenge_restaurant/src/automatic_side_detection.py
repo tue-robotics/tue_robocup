@@ -101,7 +101,9 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            persons = self._robot.ed.detect_persons()
+			rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+			rospy.logerr("I will return an empty detection list!")
+			persons = []
             self._sides[side]["score"]["face_found"] = False
             if persons:
                 for person in persons:

@@ -39,7 +39,7 @@ NUMBER_OF_TRIES = 0
 ##### For current item designator #####
 size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
 has_type = lambda entity: entity.type != ""
-min_height = lambda entity: entity.min_z > 0.1 #0.3 
+min_height = lambda entity: entity.min_z > 0.1 #0.3
 min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.1
 
 
@@ -92,10 +92,6 @@ class InitializeWorldModel(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        self.robot.ed.configure_kinect_segmentation(continuous=False)
-        #self.robot.ed.configure_perception(continuous=False)
-        #self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
-
         return "done"
 
 class SetInitialPose(smach.State):
@@ -188,7 +184,7 @@ class FakeStartupRobot(smach.State):
         self.robot.rightArm.reset()
         self.robot.spindle.reset()
         self.robot.head.reset()
-        
+
         dx = 0.01
         x = 0.02
         for i in range(0,20):
@@ -234,7 +230,7 @@ class WaitForEntityInitialPose(smach.State):
 
         return "initial_pose_to_be_set_manually"
 
-                
+
 
 
 class Sleep(smach.State):
@@ -256,7 +252,7 @@ class ForceDriveToTheRight(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.base.force_drive(0, -0.5, 0, 2.0)    
+        self.robot.base.force_drive(0, -0.5, 0, 2.0)
 
         return "done"
 
@@ -346,7 +342,7 @@ class AskPersonLoc(smach.State):
                     e = self.robot.ed.get_entity(id='rwc2015/' + str(result.choices['location']) + '-0')
                     #FOR TESTING (CHECKCOMMENTED)
                     #e = self.robot.ed.get_entity(id=str(result.choices['location']))
-                    
+
                     if not e:
                         return 'failed'
                     BED_DESIGNATOR.writeable.write(e)
@@ -376,7 +372,7 @@ class AskPersonLoc(smach.State):
 
 ###### Janno ######
 class PersonDesignator(Designator):
-    """ Designator that can be used to drive to a person near a furniture object 
+    """ Designator that can be used to drive to a person near a furniture object
     :param robot robot
     :furniture_designator Designator with resolve type string
     """
@@ -406,11 +402,9 @@ class PersonDesignator(Designator):
             rospy.logwarn('Entity with id {0} not found'.format(furniture_id))
             return None
 
-        #self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
         #rospy.sleep(0.1)
         person = self._robot.ed.get_closest_possible_person_entity(type="possible_human", center_point=f.pose.position, radius=10)
 
-        #self._robot.ed.disable_plugins(plugin_names=["laser_integration"])
         if not person:
             rospy.logwarn('No person found near the {0}'.format(furniture_id))
             return None
@@ -429,7 +423,7 @@ class PickupObject(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         location_designator = PICKUPLOC_DESIGNATOR
-        
+
         object_designator = VariableDesignator(resolve_type=str)
 
         point = msgs.Point(0, 0, 0)
@@ -455,7 +449,7 @@ class PickupObject(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_LOCATION_UNKNOWN",
                                     states.Say(robot, ["I'm sorry, but at this moment I do not know where this location is."], block=False),
-                                    transitions={   'spoken'            :'failed'}) 
+                                    transitions={   'spoken'            :'failed'})
 
 
             smach.StateMachine.add('CHECK_POINT',
@@ -546,11 +540,11 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_SUCCEEDED",
                                     states.Say(robot, ["Let's go back"], mood="excited", block=False),
-                                    transitions={   'spoken'            :'RESET_HEAD_SUCCEEDED'}) 
+                                    transitions={   'spoken'            :'RESET_HEAD_SUCCEEDED'})
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad", block=False),
-                                    transitions={   'spoken'            :'RESET_HEAD_FAILED'}) 
+                                    transitions={   'spoken'            :'RESET_HEAD_FAILED'})
 
             # ToDo: is this necessary?
             smach.StateMachine.add( "RESET_HEAD_SUCCEEDED",
@@ -648,18 +642,18 @@ class CheckPoint(smach.State):
 
 
 class FindObjectOnFurniture(smach.State):
-    """ Class to find an object designated by the object designator on a piece of furniture 
-        designated by the location designator. The robot looks to the location designator and enables the segmentation plugin. 
-        If not 
+    """ Class to find an object designated by the object designator on a piece of furniture
+        designated by the location designator. The robot looks to the location designator and enables the segmentation plugin.
+        If not
         If specified, the current id is stored in the return designator.
-        Else, all objects are stored 
+        Else, all objects are stored
     """
     def __init__(self, robot, location_designator, object_designator, return_designator=None):
         """ Constructor
 
         :param robot robot object
         :param location_designator: EdEntityDesignator returning the furniture object
-        :param object_designator: string designator returning the type of the object to look for 
+        :param object_designator: string designator returning the type of the object to look for
         :param return_designator: EdEntityDesignator. If specified, the 'id' is set to one of the ID's found here. IF desired, more logic can be applied here
         """
         smach.State.__init__(self, outcomes=['found', 'not_found', 'failed'])
@@ -689,7 +683,7 @@ class FindObjectOnFurniture(smach.State):
 
 
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
-        id_list = [] # List with entities that are flagged with 'perception'                
+        id_list = [] # List with entities that are flagged with 'perception'
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
@@ -787,7 +781,7 @@ def setup_statemachine(robot):
 
 
         ######################################################
-        ##################### INITIALIZE #####################             
+        ##################### INITIALIZE #####################
         ######################################################
 
         smach.StateMachine.add('INITIALIZE_NO_ED',
@@ -804,11 +798,11 @@ def setup_statemachine(robot):
         smach.StateMachine.add('FAKESHUTDOWN',
                                     FakeShutdownRobot(robot),
                                     transitions={   'done':'WAIT_FOR_TRIGGER_TO_START'})
-       
-        smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+
+        smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START",
                                     WaitForEntity(robot,ed_entity_name='rwc2015/bar-0'),
                                     transitions={   'entity_exists'        :'FAKESTARTUP'})
-    
+
         smach.StateMachine.add('FAKESTARTUP',
                                     FakeStartupRobot(robot),
                                     transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
@@ -817,7 +811,7 @@ def setup_statemachine(robot):
                                     ForceDriveToTheRight(robot),
                                     transitions={   'done':'WAIT_FOR_ENTITY_INITIAL_POSE'})
 
-        smach.StateMachine.add("WAIT_FOR_ENTITY_INITIAL_POSE", 
+        smach.StateMachine.add("WAIT_FOR_ENTITY_INITIAL_POSE",
                                     WaitForEntityInitialPose(robot,ed_entity_name=challenge_knowledge.initial_pose_amigo),
                                     transitions={   'entity_exists'                   : 'SET_INITIAL_POSE',
                                                     'initial_pose_to_be_set_manually' : 'GOTO_BAR_FOR_OPERATOR'})
@@ -830,7 +824,7 @@ def setup_statemachine(robot):
 
 
         ######################################################
-        ##################### ASK STATE  #####################             
+        ##################### ASK STATE  #####################
         ######################################################
 
 
@@ -910,6 +904,6 @@ if __name__ == "__main__":
     rospy.loginfo("----------------------- FINAL CHINA 2015 ------------------------")
     rospy.loginfo("----------------------------- AMIGO -----------------------------")
     rospy.loginfo("-----------------------------------------------------------------")
-        
+
 
     states.util.startup(setup_statemachine, challenge_name="final")

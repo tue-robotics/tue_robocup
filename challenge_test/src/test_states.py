@@ -137,12 +137,12 @@ class PickUpRandomObj(smach.State):
                     sentence+=("and a ")
 
                 sentence+=("{} ".format(objsResolved[0].type if objsResolved[0].type else "unknown object"))
-            
+
             # print sentence
 
             # Anounce objects found
             self.robot.speech.speak(sentence, block=False)
-            
+
             selectedObj = random.choice(objsResolved)
 
             # import ipdb; ipdb.set_trace()
@@ -160,7 +160,7 @@ class PickUpRandomObj(smach.State):
 
             if result == 'done':
                 return 'succeeded'
-            else: 
+            else:
                 return 'failed'
 
 
@@ -179,8 +179,9 @@ class RecognizePeople(smach.State):
     def execute(self, userdata):
         printOk("RecognizePeople")
 
-        detections = self.robot.ed.detect_persons()
-        # detections is a list of ed_perception.msg.PersonDetection
+        rospy.logerr("ed.detect_ persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+        rospy.logerr("I will return an empty detection list!")
+        detections = []
 
         if not detections:
             return no_people
@@ -190,7 +191,7 @@ class RecognizePeople(smach.State):
                     "person" if len(detections) == 1 else "people"), block=False)
 
             # import ipdb; ipdb.set_trace()
-            
+
             for det in detections:
                 printOk("Name: {} \tAge:{} \tGender:{} Pose:{}".format(det.name, det.age, det.gender, det.pose))
 
@@ -210,8 +211,8 @@ class SelectNextContainer(smach.State):
         Select a new test to be executed, either by a certain order, random or on repeat
     """
     def __init__(self, robot, containerResultDes):
-        smach.State.__init__(   self, outcomes=['go_to_enter_room', 
-                                                'go_to_wait_person', 
+        smach.State.__init__(   self, outcomes=['go_to_enter_room',
+                                                'go_to_wait_person',
                                                 'go_to_pick_up',
                                                 'go_to_recognize_people',
                                                 'go_to_search_people'])
@@ -224,7 +225,7 @@ class SelectNextContainer(smach.State):
     def execute(self, userdata):
         printOk("SelectNextContainer")
 
-        # skip if there is no nextContainer (first run) 
+        # skip if there is no nextContainer (first run)
         if self.nextContainer:
             # update total number of runs
             self.statusLog[self.nextContainer][1] += 1
@@ -240,7 +241,7 @@ class SelectNextContainer(smach.State):
 
         # import ipdb; ipdb.set_trace()
         self.nextContainer = random.choice(self.get_registered_outcomes())
-        
+
         printOk("Jumping to next container: '{}'".format(self.nextContainer))
         return self.nextContainer
 

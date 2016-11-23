@@ -3,7 +3,6 @@ import time
 import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from ed_perception.msg import PersonDetection
 import rospy
 from robocup_knowledge import load_knowledge
 import math
@@ -34,7 +33,9 @@ class RecognizePersons(smach.State):
         self.robot.head.wait_for_motion_done()
         time.sleep(1)
 
-        detections = self.robot.ed.detect_persons(external_api_request=external_api_request)
+        rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+        rospy.logerr("I will return an empty detection list!")
+        detections = []
 
         if not detections:
             detections = []

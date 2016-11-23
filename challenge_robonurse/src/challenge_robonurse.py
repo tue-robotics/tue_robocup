@@ -68,7 +68,6 @@ class StoreGrannyPose(smach.State):
         # Hardcoded center pointS!!!
         table_centerpoint = gm.Point(3.12, -6.725, 0.0)
         possible_humans = self.robot.ed.get_closest_possible_person_entity(type="", center_point=table_centerpoint)
-        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
 
         self.robot.head.look_at_ground_in_front_of_robot(10)
 
@@ -97,7 +96,7 @@ class DetectFallingGranny(smach.State):
             return None
         if entity.pose.position.x > roi_x_start and entity.pose.position.x < roi_x_end and entity.pose.position.y > roi_y_start and entity.pose.position.y < roi_y_end:
             return entity
-        return None 
+        return None
 
 
     def detect_action(self, ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y, timeout, distance_threshold):
@@ -155,7 +154,7 @@ class DetectFallingGranny(smach.State):
 
             rospy.sleep(0.2)
 
-        # Check the result 
+        # Check the result
         if not last_seen_operator:
             return "fall"
 
@@ -194,7 +193,7 @@ class InitializeWorldModel(smach.State):
     def execute(self, userdata=None):
         self.robot.ed.configure_kinect_segmentation(continuous=False)
         self.robot.ed.configure_perception(continuous=False)
-        
+
         self.robot.ed.reset()
 
         return "done"
@@ -561,7 +560,7 @@ class GetPills(smach.StateMachine):
             #                                         'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
 
             smach.StateMachine.add('GOTO_HANDOVER_GRANNY',
-                                    states.NavigateToSymbolic(robot, 
+                                    states.NavigateToSymbolic(robot,
                                         {grannies_table: "in_front_of_pos2" },
                                                               grannies_table),
                                     transitions={   'arrived'           :   'SAY_HANDOVER_BOTTLE',
@@ -899,7 +898,7 @@ def test_describe_pills(robot):
     ask_bottles_spec = ds.VariableDesignator(resolve_type=str, name="ask_bottles_spec")
     ask_bottles_choices = ds.VariableDesignator(resolve_type=dict, name="ask_bottles_choices")
     bottle_description_map_desig = ds.VariableDesignator(resolve_type=dict, name="bottle_description_map_desig")
-    
+
     state_describe = DescribeBottles(robot, bottles_to_describe,
                                     spec_designator=ask_bottles_spec,
                                     choices_designator=ask_bottles_choices,

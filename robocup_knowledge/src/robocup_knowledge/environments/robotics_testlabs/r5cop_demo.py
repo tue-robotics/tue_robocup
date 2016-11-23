@@ -4,12 +4,12 @@ starting_point = "initial_pose"
 inspection_places = [
     {"entity_id": "dinner_table",
      "room_id": "livingroom",
-     "navigate_area": "in_front_of",
+     "navigate_area": "near",
      "segment_areas": ["on_top_of"]},
 
     {"entity_id": "cabinet",
      "room_id": "kitchen",
-     "navigate_area": "in_front_of",
+     "navigate_area": "near",
      "segment_areas": ["on_top_of"]},
 ]
 

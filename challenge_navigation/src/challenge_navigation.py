@@ -147,7 +147,9 @@ class DetermineObject(smach.State):
         time.sleep(1)
 
         # Check if there is a human blocking the path
-        persons = self._robot.ed.detect_persons()
+        rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+        rospy.logerr("I will return an empty detection list!")
+        persons = []
 
         if not persons:
             persons = []
