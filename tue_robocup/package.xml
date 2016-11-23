@@ -11,7 +11,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>amigo_demo</run_depend>
   <run_depend>challenge_final</run_depend>
   <run_depend>challenge_gpsr</run_depend>
   <run_depend>challenge_manipulation</run_depend>
