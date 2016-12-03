@@ -11,7 +11,6 @@ import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
-from ed_perception.msg import FaceLearningGoal, FaceLearningResult #
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 import time
 import math
