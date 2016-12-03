@@ -4,7 +4,7 @@ from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 # from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
 import ed_perception.srv
-from ed_perception.srv import Classify, AddTrainingInstance
+from ed_perception.srv import Classify
 from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -53,7 +53,6 @@ class ED:
         self._ed_kinect_update_srv = rospy.ServiceProxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update)
 
         self._ed_classify_srv = rospy.ServiceProxy('/%s/ed/classify'%robot_name, Classify)
-        self._ed_perception_add_training_instance_srv = rospy.ServiceProxy('/%s/ed/add_training_instance'%robot_name, AddTrainingInstance)
         self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, ed.srv.Reset)
