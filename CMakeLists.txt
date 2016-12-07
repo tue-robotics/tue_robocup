@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
     text_to_speech
     ed
     ed_navigation
+    dragonfly_speech_recognition
 )
 
 catkin_python_setup()
