@@ -163,6 +163,7 @@ class Put(smach.State):
 
         self._robot.torso.reset()
         arm.reset()
+        arm.wait_for_motion_done()
 
         return 'succeeded'
 
