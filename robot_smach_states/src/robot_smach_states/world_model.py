@@ -16,22 +16,6 @@ import time
 def _color_info(string):
     rospy.loginfo('\033[92m' + string + '\033[0m')
 
-# ----------------------------------------------------------------------------------------------------
-
-'''
-    Initialize world model with a certain configuration.
-    Set perception mode to non-continuos and disable laser_integration.
-'''
-class InitializeWorldModel(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-        self.robot.ed.reset()
-
-        return 'done'
-
 
 '''
     Look at an entiy and segment objects whithin the area desired
