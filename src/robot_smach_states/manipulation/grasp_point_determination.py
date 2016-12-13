@@ -6,6 +6,7 @@ import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from robot_smach_states.util.geometry_helpers import pointMsgToKdlVector, poseMsgToKdlFrame, offsetConvexHull
 
+
 class GraspPointDeterminant(object):
     """ Computes grasp points """
 
@@ -18,7 +19,6 @@ class GraspPointDeterminant(object):
         self._robot = robot
         self._marker_array_pub = rospy.Publisher('/grasp_markers', MarkerArray, queue_size=1)
 
-        self._candidates = [] # List with dicts containing KDL vector representing the grasp vector and optionally a score
         self._width_treshold = 0.1 # ToDo: make variable!!!
 
     def get_grasp_pose(self, entity, arm):
@@ -28,6 +28,7 @@ class GraspPointDeterminant(object):
         :param arm: arm to use
         :return KDL frame with grasp pose in map frame
         """
+        candidates = []
         starttime = rospy.Time.now()
         # ToDo: divide into functions
         ''' Create a grasp vector for every side of the convex hull '''
@@ -113,20 +114,23 @@ class GraspPointDeterminant(object):
             rscore = 1.0 - (abs(Y)/math.pi)
             score = min(score, rscore)
 
-            self._candidates.append({'vector': cvec, 'score': score})
+            candidates.append({'vector': cvec, 'score': score})
 
-        self._candidates = sorted(self._candidates, key = lambda candidate: candidate['score'], reverse=True)
+        candidates = sorted(candidates, key = lambda candidate: candidate['score'], reverse=True)
         # self._candidates = self._candidates[0:5] # ToDo: remove??
 
-        self.visualize()
+        self.visualize(candidates)
         print "GPD took %f seconds"%(rospy.Time.now() - starttime).to_sec()
 
-        return self._candidates[0]['vector']
+        return candidates[0]['vector']
 
-    def visualize(self):
-        """ Visualizes the candidate grasp vectors """
+    def visualize(self, candidates):
+        """ Visualizes the candidate grasp vectors 
+        
+        :param candidates: list with candidates containing a vector and a score
+        """
         msg = MarkerArray()
-        for i, c in enumerate(self._candidates):
+        for i, c in enumerate(candidates):
             marker = Marker()
             marker.header.frame_id = "/map"
             marker.header.stamp = rospy.Time.now()
