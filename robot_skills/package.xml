@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<package>
+  <name>robot_skills</name>
+  <version>0.0.0</version>
+  <description>No description available</description>
+
+  <maintainer email="todo@tue.nl">Janno Lunenburg</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rospy</build_depend>
+  <run_depend>rospy</run_depend>
+
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+
+  <build_depend>smach</build_depend>
+  <run_depend>smach</run_depend>
+
+  <build_depend>smach_ros</build_depend>
+  <run_depend>smach_ros</run_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <run_depend>geometry_msgs</run_depend>
+
+  <build_depend>std_srvs</build_depend>
+  <run_depend>std_srvs</run_depend>
+
+  <build_depend>actionlib</build_depend>
+  <run_depend>actionlib</run_depend>
+
+  <build_depend>tf</build_depend>
+  <run_depend>tf</run_depend>
+
+  <build_depend>tf_server</build_depend>
+  <run_depend>tf_server</run_depend>
+
+  <build_depend>amigo_msgs</build_depend>
+  <run_depend>amigo_msgs</run_depend>
+
+  <build_depend>tue_msgs</build_depend>
+  <run_depend>tue_msgs</run_depend>
+
+  <build_depend>visualization_msgs</build_depend>
+  <run_depend>visualization_msgs</run_depend>
+
+  <build_depend>head_ref</build_depend>
+  <run_depend>head_ref</run_depend>
+
+  <build_depend>control_msgs</build_depend>
+  <run_depend>control_msgs</run_depend>
+
+  <build_depend>trajectory_msgs</build_depend>
+  <run_depend>trajectory_msgs</run_depend>
+
+  <build_depend>cb_planner_msgs_srvs</build_depend>
+  <run_depend>cb_planner_msgs_srvs</run_depend>
+
+  <build_depend>octomap_msgs</build_depend>
+  <run_depend>octomap_msgs</run_depend>
+
+  <build_depend>tue_recorder</build_depend>
+  <run_depend>tue_recorder</run_depend>
+
+  <build_depend>cb_planner_msgs_srvs</build_depend>
+  <run_depend>cb_planner_msgs_srvs</run_depend>
+
+  <build_depend>dragonfly_speech_recognition</build_depend>
+  <run_depend>dragonfly_speech_recognition</run_depend>
+
+  <build_depend>tue_manipulation_msgs</build_depend>
+  <run_depend>tue_manipulation_msgs</run_depend>
+
+  <build_depend>text_to_speech</build_depend>
+  <run_depend>text_to_speech</run_depend>
+
+  <build_depend>ed</build_depend>
+  <run_depend>ed</run_depend>
+
+  <build_depend>ed_perception</build_depend>
+  <run_depend>ed_perception</run_depend>
+
+  <build_depend>ed_navigation</build_depend>
+  <run_depend>ed_navigation</run_depend>
+
+  <build_depend>ed_gui_server</build_depend>
+  <run_depend>ed_gui_server</run_depend>
+
+  <run_depend>python-mock</run_depend>
+
+</package>
