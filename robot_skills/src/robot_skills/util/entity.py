@@ -32,6 +32,21 @@ class Entity(object):
         self.volumes = volumes.keys()
         self.super_types = super_types
 
+    def distance_to(self, point):
+        """
+        Calculate the distance between this entity's pose and the given point.
+        :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
+        :return: the distance between the entity's pose and the point
+
+        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, None, None)
+        >>> point = kdl.Vector(1, 1, 1)
+        >>> e.distance_to(point)
+        3.4641016151377544
+        """
+
+        # The length of the difference vector between the pose's position and the point
+        return (self.pose.p - point).Norm()
+
 
 def from_entity_info(e):
     """ Converts ed.msg.EntityInfo to an Entity
@@ -52,3 +67,7 @@ def from_entity_info(e):
     super_types = e.types
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, convex_hull=convex_hull,
                   volumes=areas, super_types=super_types)
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

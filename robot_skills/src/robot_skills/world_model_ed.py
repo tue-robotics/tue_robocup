@@ -19,6 +19,7 @@ from std_srvs.srv import Empty
 import tf
 import visualization_msgs.msg
 
+import PyKDL as kdl
 import os
 
 
@@ -89,7 +90,7 @@ class ED:
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=Point(), radius=0):
+    def get_closest_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
@@ -103,15 +104,14 @@ class ED:
 
         # Sort by distance
         try:
-            #TODO: use KDL types
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to(center_point))
         except:
             print "Failed to sort entities"
             return None
 
         return entities[0]
 
-    def get_closest_laser_entity(self, type="", center_point=Point(), radius=0):
+    def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
@@ -125,7 +125,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to(center_point))
         except:
             print "Failed to sort entities"
             return None
@@ -251,7 +251,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to(center_point))
             print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
