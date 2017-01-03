@@ -13,14 +13,14 @@ class Entity(object):
     """ Holds all data concerning entities
 
     """
-    def __init__(self, identifier, object_type, frame_id, pose, convex_hull, volumes, super_types):
+    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types):
         """ Constructor
 
         :param identifier: string with the id of this entity
         :param object_type: string with the type of this entity
         :param frame_id: frame id w.r.t. which the pose is defined
         :param pose: kdl frame with the pose of this entity
-        :param convex_hull: ConvexHull
+        :param shape: Shape of this entity
         :param volumes: dict mapping strings to Areas
         :param super_types: list with strings representing super types in an ontology of object types
         """
@@ -28,7 +28,7 @@ class Entity(object):
         self.type = object_type
         self.frame_id = frame_id
         self.pose = pose
-        self.convex_hull = convex_hull
+        self.shape = shape
         self._volumes = volumes
         self.volumes = volumes.keys()
         self.super_types = super_types
@@ -59,13 +59,13 @@ def from_entity_info(e):
     object_type = e.type
     frame_id = "/map"  # ED has all poses in map
     pose = pose_msg_to_kdl_frame(e.pose)
-    convex_hull = convex_hull_from_entity_info(e)
+    shape = convex_hull_from_entity_info(e)
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
     volumes = volumes_from_entity_info_data(yaml.load(e.data))
 
     super_types = e.types
-    return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, convex_hull=convex_hull,
+    return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
                   volumes=volumes, super_types=super_types)
 
 if __name__ == "__main__":
