@@ -4,6 +4,7 @@ import yaml
 # ROS
 import PyKDL as kdl
 
+from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame
 from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.convex_hull import convex_hull_from_entity_info
 
@@ -57,8 +58,7 @@ def from_entity_info(e):
     identifier = e.id
     object_type = e.type
     frame_id = "/map"  # ED has all poses in map
-    # ToDo: pose
-    pose = kdl.Frame()
+    pose = pose_msg_to_kdl_frame(e.pose)
     convex_hull = convex_hull_from_entity_info(e)
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
