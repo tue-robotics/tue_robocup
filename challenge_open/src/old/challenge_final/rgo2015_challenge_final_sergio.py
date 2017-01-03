@@ -23,12 +23,12 @@ SMALL_MESH_IDS = [] #   ''' List with the IDs of the small meshes which have bee
 
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
-        """ 
+        """
         Sends a goal to the head in base link frame of the robot_name
         x, y, z: coordinates
         timeout: timeout of the call to the head ref action (hence is a maximum)
-        waittime: additional waiting time 
-        endtime: endtime which is passed to head ref 
+        waittime: additional waiting time
+        endtime: endtime which is passed to head ref
         """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
@@ -75,7 +75,7 @@ class AskWhatDoISee(smach.State):
                 name_object = res.choices['object']
                 self.robot.speech.speak("Okay, I will call this the {0}".format(name_object))
                 print "name_object = ", name_object
-                
+
                 ''' Assert type to ed '''
                 if len(MESH_IDS) > 0:
                     rospy.logwarn("Mesh id: {0}, type: {1}".format(MESH_IDS[-1], name_object))
@@ -94,7 +94,7 @@ class AskWhatDoISee(smach.State):
 class ExploreWaypoint(smach.StateMachine):
     def __init__(self, robot, waypoint, x=1.6, y=0, z=0):
         """
-        waypoint: string with desired waypoint 
+        waypoint: string with desired waypoint
         x, y, z: head target in base link frame_id
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -153,7 +153,7 @@ class ConversationWithOperator(smach.State):
                 object_string = res.choices['object']
                 self.robot.speech.speak("I am very sorry, but I do not have an arm to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
                 self.robot.speech.speak("Amigo, please bring my boss a {0}".format(object_string))
-                
+
                 ''' Publish trigger for AMIGO to start its task '''
                 msg = std_msgs.msg.String(object_string)
                 counter = 0
@@ -217,7 +217,7 @@ class CheckSmallObject(smach.State):
         else:
             z_pos_filtered_entities = []
             for entity in entities_on_table:
-                z_pos = entity.pose.position.z
+                z_pos = entity.pose.p.z()
                 if 0.6 < z_pos < 0.9:
                     z_pos_filtered_entities.append(entity)
 
@@ -226,7 +226,7 @@ class CheckSmallObject(smach.State):
                 small_mesh_id = entities_on_table[0].id
             elif len(z_pos_filtered_entities) == 1:
                 small_mesh_id = z_pos_filtered_entities[0].id
-            else: 
+            else:
                 rospy.logwarn("multiple entities remaining, fingers crossed")
                 small_mesh_id = z_pos_filtered_entities[0].id
 
@@ -254,7 +254,7 @@ class AskSmallObject(smach.State):
                 name_object = res.choices['object']
                 self.robot.speech.speak("Okay, now I know this is {0}".format(name_object))
                 print "name_object = ", name_object
-                
+
                 ''' Assert type to ed '''
                 if len(SMALL_MESH_IDS) > 0:
                     self.robot.ed.update_entity(id=SMALL_MESH_IDS[-1], type = name_object)
@@ -267,20 +267,20 @@ class AskSmallObject(smach.State):
                 return "failed"
         except KeyError:
             print "KEYERROR FINAL, should not happen!"
-            return "failed"        
+            return "failed"
 
 class SmallObjectHandling(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
-            
+
             ''' Wait for the operator to put something on the table '''
             smach.StateMachine.add("WAIT",
                                     states.WaitTime(robot, waittime=3.0),
                                     transitions={   'waited'                    :'SAY_MORE_TO_SEE',
                                                     'preempted'                 :'SAY_MORE_TO_SEE'})
-                                                    
+
             ''' Say more to see '''
             smach.StateMachine.add("SAY_MORE_TO_SEE",
                                     states.Say(robot, 'Lets see if I can discover anything else'),

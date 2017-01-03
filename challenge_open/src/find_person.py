@@ -107,8 +107,7 @@ class PersonDesignator(ds.Designator):
 
             # Sort according to distance to center pose
             persons_in_room = sorted(persons_in_room,
-                                     key=lambda ph: math.hypot(ph.pose.position.x - room_entity.pose.position.x,
-                                                               ph.pose.position.y - room_entity.pose.position.y))
+                                     key=lambda ph: ph.distance_to_2d(room_entity.pose.p))
 
             # Return the best one
             return persons_in_room[0]
@@ -116,8 +115,7 @@ class PersonDesignator(ds.Designator):
             # We just pick the person closest to the robot
             bp = self._robot.base.get_location()
             possible_humans = sorted(possible_humans,
-                                     key=lambda ph: math.hypot(ph.pose.position.x - bp.pose.position.x,
-                                                               ph.pose.position.y - bp.pose.position.y))
+                                     key=lambda ph: ph.distance_to_2d(bp.pose.p))
             return possible_humans[0]
 
 

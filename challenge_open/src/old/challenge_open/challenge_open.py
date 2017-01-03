@@ -90,7 +90,7 @@ class StoreWaypoint(smach.State):
 
 
 class ExplorationDesignator(EdEntityDesignator):
-    """ Designator to determine the waypoint where the robot should go in its exploration phase 
+    """ Designator to determine the waypoint where the robot should go in its exploration phase
         if no interesting point of interest is found
     """
     def __init__(self, robot):
@@ -121,13 +121,13 @@ class ExplorationDesignator(EdEntityDesignator):
             return filtered_entities[0]
 
 class PoiDesignator(EdEntityDesignator):
-    """ Designator to select the point of interest to visit 
+    """ Designator to select the point of interest to visit
     """
     def __init__(self, robot, radius):
         super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo)
         self.robot = robot
         self.radius = radius
-        self.poi_srv = rospy.ServiceProxy('/%s/ed/get_pois'%robot.robot_name, GetPOIs) 
+        self.poi_srv = rospy.ServiceProxy('/%s/ed/get_pois'%robot.robot_name, GetPOIs)
         self.pois = []
         self.visited_ids = []
 
@@ -163,7 +163,7 @@ class PoiDesignator(EdEntityDesignator):
 
         out = EntityInfo()
         poips = poi['poi']
-        out.pose.position.x = poips.point.x 
+        out.pose.position.x = poips.point.x
         out.pose.position.y = poips.point.y
         out.pose.position.z = poips.point.z
 
@@ -224,12 +224,12 @@ class CheckCommand(smach.State):
 
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
-        """ 
+        """
         Sends a goal to the head in base link frame of the robot_name
         x, y, z: coordinates
         timeout: timeout of the call to the head ref action (hence is a maximum)
-        waittime: additional waiting time 
-        endtime: endtime which is passed to head ref 
+        waittime: additional waiting time
+        endtime: endtime which is passed to head ref
         """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
@@ -250,14 +250,14 @@ class TakeSnapShot(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
-        self.snapshot_srv = rospy.ServiceProxy('/%s/ed/make_snapshot'%robot.robot_name, MakeSnapshot) 
+        self.snapshot_srv = rospy.ServiceProxy('/%s/ed/make_snapshot'%robot.robot_name, MakeSnapshot)
 
     def execute(self, userdata):
         rospy.loginfo("Taking snapshot")
         self.snapshot_srv()
         return 'succeeded'
 
-        
+
 ############################## explore state machine #####################
 class ExploreScenario(smach.StateMachine):
 
@@ -336,9 +336,9 @@ class ConversationWithOperator(smach.State):
         # Get location options
         entities = self.robot.ed.get_entities(parse=False)
 
-        # Maps the entities to strings containing the 'stripped type' 
+        # Maps the entities to strings containing the 'stripped type'
         # And replace underscores
-        furniture_list = {e:e.type.split('/')[-1].replace("_"," ") for e in entities if 'furniture' in e.flags}
+        furniture_list = {e:e.type.split('/')[-1].replace("_"," ") for e in entities if e.is_a("furniture")}
 
         # Listen to result
         speech_options = {'location': furniture_list.values()}
@@ -407,18 +407,18 @@ class CheckPoint(smach.State):
         return 'succeeded'
 
 class FindObjectOnFurniture(smach.State):
-    """ Class to find an object designated by the object designator on a piece of furniture 
-        designated by the location designator. The robot looks to the location designator and enables the segmentation plugin. 
-        If not 
+    """ Class to find an object designated by the object designator on a piece of furniture
+        designated by the location designator. The robot looks to the location designator and enables the segmentation plugin.
+        If not
         If specified, the current id is stored in the return designator.
-        Else, all objects are stored 
+        Else, all objects are stored
     """
     def __init__(self, robot, location_designator, object_designator, return_designator=None):
         """ Constructor
 
         :param robot robot object
         :param location_designator: EdEntityDesignator returning the furniture object
-        :param object_designator: string designator returning the type of the object to look for 
+        :param object_designator: string designator returning the type of the object to look for
         :param return_designator: EdEntityDesignator. If specified, the 'id' is set to one of the ID's found here. IF desired, more logic can be applied here
         """
         smach.State.__init__(self, outcomes=['found', 'not_found', 'failed'])
@@ -448,7 +448,7 @@ class FindObjectOnFurniture(smach.State):
 
 
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
-        id_list = [] # List with entities that are flagged with 'perception'                
+        id_list = [] # List with entities that are flagged with 'perception'
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
@@ -549,11 +549,11 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_SUCCEEDED",
                                     states.Say(robot, ["Let's take this back to the boss"], mood="excited", block=False),
-                                    transitions={   'spoken'            :'RESET_HEAD_SUCCEEDED'}) 
+                                    transitions={   'spoken'            :'RESET_HEAD_SUCCEEDED'})
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad", block=False),
-                                    transitions={   'spoken'            :'RESET_HEAD_FAILED'}) 
+                                    transitions={   'spoken'            :'RESET_HEAD_FAILED'})
 
             # ToDo: is this necessary?
             smach.StateMachine.add( "RESET_HEAD_SUCCEEDED",
@@ -622,7 +622,7 @@ class GuiCallCallback(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         location_designator = VariableDesignator(resolve_type=EntityInfo, name="location_designator")
-        
+
         object_designator = VariableDesignator(resolve_type=str)
 
         point = msgs.Point(0, 0, 0)

@@ -274,7 +274,7 @@ class Look_point(smach.State):
         goal = geom.PointStamped()
         goal.header.stamp = rospy.Time.now()
         goal.header.frame_id = "/map" #"/"+self._robot_name+"/base_link" # HACK TO LOOK AT RIGHT POINT.
-        goal.point = table_entity[0].pose.position
+        goal.point = table_entity[0].pose.p
 
         self.robot.head.look_at_point(goal)
         rospy.sleep(2)
@@ -298,7 +298,7 @@ def setup_statemachine(robot):
     arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
     with sm:
-        smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+        smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START",
                                     AwaitTriggerAndSave(robot),
                                     transitions={   'done'              :'INITIALIZE',
                                                     'failed'            :'INITIALIZE'})
@@ -315,7 +315,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add( "GRAB_OBJECT",
                                     GrabFinal(robot),
                                     transitions={   'done'              :'SAY_SUCCESS',
-                                                    'failed'            :'GOTO_DINNERTABLE'})       
+                                                    'failed'            :'GOTO_DINNERTABLE'})
 
         smach.StateMachine.add('GOTO_DINNERTABLE',
                                     states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.explore_location_2), radius=0.2),

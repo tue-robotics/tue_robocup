@@ -63,6 +63,15 @@ class Entity(object):
         """
         return (self.pose.p - point).Norm()
 
+    def is_a(self, super_type):
+        """
+        Check whether the entity is a (subclass of) some supertype
+        :param super_type: str representing the name of the super_type
+        :return: bool True if the entity is a (sub)type of the given super_type
+        """
+
+        return super_type in self.super_types
+
 
 def from_entity_info(e):
     """ Converts ed.msg.EntityInfo to an Entity
@@ -80,7 +89,12 @@ def from_entity_info(e):
     volumes = volumes_from_entity_info_data(yaml.load(e.data))
 
     super_types = e.types
-    return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
+
+    # TODO: this must be part of the definition of the entity in ED.
+    if e.has_shape and "amigo" not in e.id and "amigo" not in e.id and e.id is not "floor" and e.id is not "walls":
+        super_types += ["furniture"]
+
+    return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, convex_hull=convex_hull,
                   volumes=volumes, super_types=super_types)
 
 if __name__ == "__main__":
