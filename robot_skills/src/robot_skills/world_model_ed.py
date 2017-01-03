@@ -80,16 +80,12 @@ class ED:
         query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
 
         try:
-            entities = self._ed_simple_query_srv(query).entities
+            entity_infos= self._ed_simple_query_srv(query).entities
+            entities = map(from_entity_info, entity_infos)
         except Exception, e:
             rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (id, type, str(center_point), str(radius)))
             rospy.logerr("L____> [%s]" % e)
             return []
-
-        # Parse to data strings to yaml
-        if parse:
-            for e in entities:
-                e.data = yaml.load(e.data)
 
         return entities
 
@@ -100,13 +96,14 @@ class ED:
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
+            #TODO: use KDL types
             entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
         except:
             print "Failed to sort entities"
@@ -121,7 +118,7 @@ class ED:
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and e.id.endswith("-laser") ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" and e.id.endswith("-laser") ]
 
         if len(entities) == 0:
             return None
@@ -140,7 +137,7 @@ class ED:
         if len(entities) == 0:
             return None
 
-        return from_entity_info(entities[0])
+        return entities[0]
 
     def get_entity_info(self, id):
         return self._ed_entity_info_query_srv(id=id, measurement_image_border=20)
@@ -247,7 +244,7 @@ class ED:
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
 
         if len(entities) == 0:
             return None
