@@ -1,3 +1,6 @@
+# System
+import yaml
+
 # ROS
 import PyKDL as kdl
 
@@ -42,7 +45,10 @@ def from_entity_info(e):
     # ToDo: pose
     pose = kdl.Frame()
     convex_hull = convex_hull_from_entity_info(e)
-    areas = areas_from_entity_info_data(e.data)
+
+    # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
+    areas = areas_from_entity_info_data(yaml.load(e.data))
+
     super_types = e.types
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, convex_hull=convex_hull,
                   volumes=areas, super_types=super_types)
