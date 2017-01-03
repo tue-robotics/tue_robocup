@@ -4,8 +4,8 @@ import yaml
 # ROS
 import PyKDL as kdl
 
-from robot_skills.src.robot_skills.util.area import areas_from_entity_info_data
-from robot_skills.src.robot_skills.util.convex_hull import convex_hull_from_entity_info
+from robot_skills.util.volume import volumes_from_entity_info_data
+from robot_skills.util.convex_hull import convex_hull_from_entity_info
 
 
 class Entity(object):
@@ -38,7 +38,7 @@ class Entity(object):
         :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
         :return: the distance between the entity's pose and the point
 
-        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, None, None)
+        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None)
         >>> point = kdl.Vector(1, 1, 1)
         >>> e.distance_to(point)
         3.4641016151377544
@@ -62,11 +62,11 @@ def from_entity_info(e):
     convex_hull = convex_hull_from_entity_info(e)
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
-    areas = areas_from_entity_info_data(yaml.load(e.data))
+    volumes = volumes_from_entity_info_data(yaml.load(e.data))
 
     super_types = e.types
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, convex_hull=convex_hull,
-                  volumes=areas, super_types=super_types)
+                  volumes=volumes, super_types=super_types)
 
 if __name__ == "__main__":
     import doctest
