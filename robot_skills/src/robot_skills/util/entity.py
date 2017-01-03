@@ -33,7 +33,7 @@ class Entity(object):
         self.volumes = volumes.keys()
         self.super_types = super_types
 
-    def distance_to(self, point):
+    def distance_to_2d(self, point):
         """
         Calculate the distance between this entity's pose and the given point.
         :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
@@ -41,11 +41,26 @@ class Entity(object):
 
         >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None)
         >>> point = kdl.Vector(1, 1, 1)
-        >>> e.distance_to(point)
-        3.4641016151377544
+        >>> e.distance_to_2d(point)
+        2.8284271247461903
         """
 
         # The length of the difference vector between the pose's position and the point
+        difference = self.pose.p - point
+        difference.z(0)
+        return difference.Norm()
+
+    def distance_to_3d(self, point):
+        """
+        Calculate the distance between this entity's pose and the given point.
+        :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
+        :return: the distance between the entity's pose and the point
+
+        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None)
+        >>> point = kdl.Vector(1, 1, 1)
+        >>> e.distance_to_3d(point)
+        3.4641016151377544
+        """
         return (self.pose.p - point).Norm()
 
 

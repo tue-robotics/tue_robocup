@@ -104,7 +104,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
             print "Failed to sort entities"
             return None
@@ -125,7 +125,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
             print "Failed to sort entities"
             return None
@@ -251,7 +251,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
             print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
