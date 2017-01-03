@@ -26,6 +26,8 @@ import yaml
 
 from .classification_result import ClassificationResult
 
+from robot_skills.util.entity import from_entity_info
+
 
 class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
@@ -138,7 +140,7 @@ class ED:
         if len(entities) == 0:
             return None
 
-        return entities[0]
+        return from_entity_info(entities[0])
 
     def get_entity_info(self, id):
         return self._ed_entity_info_query_srv(id=id, measurement_image_border=20)
@@ -289,7 +291,7 @@ class ED:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def classify(self, ids, types=None):
-        """ Classifies the entities with the given IDs 
+        """ Classifies the entities with the given IDs
         Args:
             ids: list with IDs
             types: list with types to identify
@@ -302,11 +304,11 @@ class ED:
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
-        
+
         posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
 
         # Filter on types if types is not None
-       	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr 
+       	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr
        				in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if types is None or exp_val in types]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

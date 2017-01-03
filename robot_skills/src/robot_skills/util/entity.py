@@ -9,7 +9,7 @@ class Entity(object):
     """ Holds all data concerning entities
 
     """
-    def __init__(self, identifier, object_type, frame_id, pose, convex_hull, areas, super_types):
+    def __init__(self, identifier, object_type, frame_id, pose, convex_hull, volumes, super_types):
         """ Constructor
 
         :param identifier: string with the id of this entity
@@ -17,7 +17,7 @@ class Entity(object):
         :param frame_id: frame id w.r.t. which the pose is defined
         :param pose: kdl frame with the pose of this entity
         :param convex_hull: ConvexHull
-        :param areas: dict mapping strings to Areas
+        :param volumes: dict mapping strings to Areas
         :param super_types: list with strings representing super types in an ontology of object types
         """
         self.id = identifier
@@ -25,7 +25,8 @@ class Entity(object):
         self.frame_id = frame_id
         self.pose = pose
         self.convex_hull = convex_hull
-        self.areas = areas
+        self._volumes = volumes
+        self.volumes = volumes.keys()
         self.super_types = super_types
 
 
@@ -44,4 +45,4 @@ def from_entity_info(e):
     areas = areas_from_entity_info_data(e.data)
     super_types = e.types
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, convex_hull=convex_hull,
-                  areas=areas, super_types=super_types)
+                  volumes=areas, super_types=super_types)
