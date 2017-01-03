@@ -49,8 +49,8 @@ def volumes_from_entity_info_data(data):
     :param data: ed.msg.EntityInfo.data (string)
     :return: dict mapping strings to Volumes
     """
-    # Check if the data contains areas
-    if 'areas' not in data:
+    # Check if we have data and if it contains areas
+    if data is None or 'areas' not in data:
         return {}
 
     # Loop over all areas
@@ -83,7 +83,7 @@ def volumes_from_entity_info_data(data):
                 box = shape['box']
                 mic = box['min']
                 min_corner = kdl.Vector(mic['x'], mic['y'], mic['z'])
-                mac = box['man']
+                mac = box['max']
                 max_corner = kdl.Vector(mac['x'], mac['y'], mac['z'])
                 volumes[name] = BoxVolume(min_corner=min_corner, max_corner=max_corner)
                 continue

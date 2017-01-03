@@ -7,7 +7,6 @@ import geometry_msgs
 from ed.msg import EntityInfo
 
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.reset import ResetTorso
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState

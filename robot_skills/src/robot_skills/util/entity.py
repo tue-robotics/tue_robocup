@@ -6,7 +6,7 @@ import PyKDL as kdl
 
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame
 from robot_skills.util.volume import volumes_from_entity_info_data
-from robot_skills.util.convex_hull import convex_hull_from_entity_info
+from robot_skills.util.shape import shape_from_entity_info
 
 
 class Entity(object):
@@ -59,7 +59,7 @@ def from_entity_info(e):
     object_type = e.type
     frame_id = "/map"  # ED has all poses in map
     pose = pose_msg_to_kdl_frame(e.pose)
-    shape = convex_hull_from_entity_info(e)
+    shape = shape_from_entity_info(e)
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
     volumes = volumes_from_entity_info_data(yaml.load(e.data))
