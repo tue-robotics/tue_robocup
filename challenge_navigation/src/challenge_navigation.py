@@ -74,8 +74,8 @@ class DetermineDoor(smach.State):
         self._door_id_designator = door_id_designator
 
     def execute(self, userdata):
-        door_1_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_1).pose.position
-        door_2_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_2).pose.position
+        door_1_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_1).pose.p
+        door_2_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_2).pose.p
 
         door_1_constraint = PositionConstraint()
         door_1_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (door_1_position.x, door_1_position.y, 0.7)
