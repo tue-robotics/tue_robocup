@@ -133,7 +133,7 @@ class EmptyShelfDesignator(Designator):
         e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
-        for testarea in e.data['areas']:
+        for testarea in e.data['areas']:  # TODO: Dealing with these areas and volumes is not yet in robot_skills.util.Entity
             ''' See if the area is in the list of inspection areas '''
             if testarea['name'] == area:
                 ''' Check if we have a shape '''

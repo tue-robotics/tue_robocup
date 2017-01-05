@@ -254,7 +254,7 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for area in cabinet_entity.data['areas']:
+        for area in cabinet_entity.data['areas']:  # TODO: Dealing with these areas and volumes is not yet in robot_skills.util.Entity
             ''' See if the area is in the list of inspection areas '''
             if area['name'] in OBJECT_SHELVES:
                 ''' Check if we have a shape '''
