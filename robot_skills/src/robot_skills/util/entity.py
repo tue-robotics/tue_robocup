@@ -100,6 +100,9 @@ def from_entity_info(e):
     if e.has_shape and "amigo" not in e.id and "amigo" not in e.id and e.id is not "floor" and e.id is not "walls":
         super_types += ["furniture"]
 
+    if 'possible_human' in e.flags:
+        super_types += ["possible_human"]
+
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
                   volumes=volumes, super_types=super_types)
 
