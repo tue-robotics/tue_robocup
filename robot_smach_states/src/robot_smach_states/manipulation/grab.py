@@ -252,7 +252,7 @@ class PickUp(smach.State):
 
         # Remove all entities with a shape. These are probably not the ones we want to grasp
         for e in entities:
-            if e.has_shape:
+            if e.is_a("furniture"):
                 entities.remove(e)
         entities = sorted(entities,
                           key=lambda entity: entity.distance_to_3d(original_entity.pose.p))
