@@ -244,7 +244,7 @@ class FollowOperator(smach.State):
             self._operator = None
 
         if self._operator:
-            if (rospy.Time.now() - self._operator.last_update_time).to_sec() > self._period:
+            if (rospy.Time.now() - self._operator.last_update_time).to_sec() > self._period:  # TODO: robot_skills.util.Entity does not have a last_update_time
                 self._robot.speech.speak("Not so fast!")
 
             # If the operator is still tracked, it is also the last_operator
