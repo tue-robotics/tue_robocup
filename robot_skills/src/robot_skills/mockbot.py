@@ -17,6 +17,8 @@ from robot_skills import robot
 from robot_skills.classification_result import ClassificationResult
 import robot_skills.util.msg_constructors as msgs
 
+from robot_skills.util.entity import from_entity_info
+
 
 class Arm(arms.Arm):
     def __init__(self, robot_name, side, tf_listener):
@@ -161,7 +163,7 @@ class ED(object):
             entity.data = mock.MagicMock()
             entity.pose = mock.MagicMock()
 
-            return entity
+            return from_entity_info(entity)
 
     def __init__(self, *args, **kwargs):
         self._dynamic_entities = defaultdict(ED.generate_random_entity,
