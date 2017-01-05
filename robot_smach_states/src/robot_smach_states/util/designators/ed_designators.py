@@ -8,7 +8,7 @@ import copy
 import PyKDL as kdl
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
-from ed.msg import EntityInfo
+from robot_skills.util.entity import Entity
 from ed.srv import SimpleQuery, SimpleQueryRequest
 from geometry_msgs import msg as gm
 import rospy
@@ -59,7 +59,7 @@ class EdEntityCollectionDesignator(Designator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> entities = EdEntityCollectionDesignator(robot)
-    >>> check_resolve_type(entities, [EntityInfo]) #This is more a test for check_resolve_type to be honest :-/
+    >>> check_resolve_type(entities, [Entity]) #This is more a test for check_resolve_type to be honest :-/
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
@@ -75,7 +75,7 @@ class EdEntityCollectionDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[EntityInfo],name=name)
+        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[Entity],name=name)
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -152,7 +152,7 @@ class EdEntityDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(EdEntityDesignator, self).__init__(resolve_type=Entity, name=name)
         self.robot = robot
         self.ed = robot.ed
         if type != "" and type_designator != None:
@@ -243,7 +243,7 @@ class EntityByIdDesignator(Designator):
         :param parse: Whether to parse the Entity's data-field
         :param name: Name of the designator for introspection purposes
         """
-        super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(EntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
         self.ed = robot.ed
         self.id_ = id
         self.parse = parse
@@ -264,7 +264,7 @@ class ReasonedEntityDesignator(Designator):
         :param query: query to the reasoner. The first answer is cast to string and used as ID
         :param name: Name of the designator for introspection purposes
         """
-        super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(ReasonedEntityDesignator, self).__init__(resolve_type=Entity, name=name)
         assert hasattr(robot, "reasoner")
         self.robot = robot
         self.querystring = query
