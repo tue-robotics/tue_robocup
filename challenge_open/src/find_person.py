@@ -86,7 +86,7 @@ class PersonDesignator(ds.Designator):
         entities = self._robot.ed.get_entities(parse=True)
         possible_humans = []
         for e in entities:
-            if 'possible_human' in e.flags:
+            if e.is_a('possible_human'):
                 possible_humans.append(e)
 
         if not possible_humans:
