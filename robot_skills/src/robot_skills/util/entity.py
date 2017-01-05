@@ -68,6 +68,12 @@ class Entity(object):
         Check whether the entity is a (subclass of) some supertype
         :param super_type: str representing the name of the super_type
         :return: bool True if the entity is a (sub)type of the given super_type
+
+        >>> e = Entity("dummy", "coffee_table", None, None, None, {}, ["coffee_table", "table", "furniture", "thing"])
+        >>> e.is_a("furniture")
+        True
+        >>> e.is_a("food")
+        False
         """
 
         return super_type in self.super_types
