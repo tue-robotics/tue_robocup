@@ -229,7 +229,7 @@ class CheckInKitchen(smach.State):
         kitchen = self._robot.ed.get_entity(id="kitchen")
         if kitchen:
             current = self._robot.base.get_location()
-            if math.hypot(current.pose.position.x - kitchen.pose.position.x, current.pose.position.y - kitchen.pose.position.y) < knowledge.kitchen_radius:
+            if kitchen.distance_to_2d(current) < knowledge.kitchen_radius:
                 return "in_kitchen"
         else:
             print "NO KITCHEN IN ED???"
