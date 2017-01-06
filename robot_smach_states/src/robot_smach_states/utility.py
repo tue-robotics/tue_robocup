@@ -65,7 +65,7 @@ class SetInitialPose(smach.State):
         print e_loc
 
         try:
-            rz = e_loc.data["pose"]["rz"]
+            rz = e_loc.data["pose"]["rz"]  # TODO: robot_skills.util.Entity does not have a .data attribute
         except KeyError:
             rz = 0
 
