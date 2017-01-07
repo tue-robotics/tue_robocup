@@ -54,6 +54,7 @@ if USE_SLAM:
     CABINET = challenge_knowledge.cabinet_slam
 else:
     CABINET = challenge_knowledge.cabinet_amcl
+    
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
