@@ -160,8 +160,9 @@ class ED(object):
             if not id:
                 entity.id = str(hash(entity))
             entity.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
-            entity.data = mock.MagicMock()
+            # entity.data = mock.MagicMock()
             entity.pose = mock.MagicMock()
+            entity.data = ""
 
             return from_entity_info(entity)
 
