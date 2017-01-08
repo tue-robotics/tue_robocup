@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import unittest
 
 # datatypes
@@ -100,3 +102,6 @@ class TestLookOnTopOfEntity(unittest.TestCase):
         ps.point.z = 1  # This is the height of the object, as indicated by the z_max
 
         self.robot.head.look_at_point.assert_called_with(ps)
+
+if __name__ == '__main__':
+    unittest.main()
