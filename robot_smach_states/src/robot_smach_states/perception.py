@@ -5,7 +5,6 @@ import smach
 
 from std_msgs.msg import Header
 from geometry_msgs.msg import Point, PointStamped
-from ed.msg import EntityInfo
 
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
