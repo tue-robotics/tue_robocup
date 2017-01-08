@@ -29,7 +29,7 @@ class Entity(object):
         self.frame_id = frame_id
         self.pose = pose
         self.shape = shape
-        self._volumes = volumes
+        self._volumes = volumes  # TODO: Make this a public property? It is also accessed in LookAtArea
         self.volumes = volumes.keys()
         self.super_types = super_types
 

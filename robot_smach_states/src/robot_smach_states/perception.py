@@ -67,7 +67,7 @@ class LookAtArea(State):
         frame_id = "/"+entity.id
 
         if area in entity.volumes:
-            cp = entity.volumes[area].center_point
+            cp = entity._volumes[area].center_point  # TODO: Notice the _, we're accessing a private variable here
             center_point.x, center_point.y, center_point.z = cp.x(), cp.y(), cp.z()
 
             rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))

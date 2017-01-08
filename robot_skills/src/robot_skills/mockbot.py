@@ -109,6 +109,7 @@ class Head(object):
         self.setPanTiltGoal = mock.MagicMock()
         self.setLookAtGoal = mock.MagicMock()
         self.cancelGoal = mock.MagicMock()
+        self.wait_for_motion_done = mock.MagicMock()
         self._setHeadReferenceGoal = mock.MagicMock()
         self.__feedbackCallback = mock.MagicMock()
         self.__doneCallback = mock.MagicMock()
