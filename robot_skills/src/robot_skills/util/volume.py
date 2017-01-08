@@ -12,18 +12,40 @@ class Volume(object):
         """
         pass
 
+    @property
+    def center_point(self):
+        """Get the center of the Volume"""
+        return self._calc_center_point()
+
+    def _calc_center_point(self):
+        raise NotImplementedError("_get_center_point must be implemented by subclasses")
+
 
 class BoxVolume(Volume):
     """ Represents a box shaped volume """
     def __init__(self, min_corner, max_corner):
         """ Constructor.
 
-        :param min_corner: kdl Vector with the minimum bounding box corner
-        :param max_corner: kdl Vector with the minimum bounding box corner
+        :param min_corner: PyKDL.Vector with the minimum bounding box corner
+        :param max_corner: PyKDL.Vector with the minimum bounding box corner
         """
         super(BoxVolume, self).__init__()
+
+        assert isinstance(min_corner, kdl.Vector)
+        assert isinstance(max_corner, kdl.Vector)
+
         self._min_corner = min_corner
         self._max_corner = max_corner
+
+    def _calc_center_point(self):
+        """Calculate where the center of the box is located
+        >>> b = BoxVolume(kdl.Vector(0,0,0), kdl.Vector(1,1,1))
+        >>> b.center_point
+        [         0.5,         0.5,         0.5]
+        """
+        return kdl.Vector(0.5 * (self._min_corner.x() + self._max_corner.x()),
+                          0.5 * (self._min_corner.y() + self._max_corner.y()),
+                          0.5 * (self._min_corner.z() + self._max_corner.z()))
 
 
 class OffsetVolume(Volume):
@@ -92,3 +114,7 @@ def volumes_from_entity_info_data(data):
         print "\nError [volumes_from_entity_info_data]: don't know what to do with {}\n".format(a)
 
     return volumes
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
