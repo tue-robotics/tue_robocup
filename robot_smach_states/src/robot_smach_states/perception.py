@@ -14,7 +14,7 @@ from robot_skills.util.entity import Entity
 
 class LookAtEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
-        ds.check_type(entity, EntityInfo)
+        ds.check_type(entity, Entity)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 

@@ -14,6 +14,33 @@ from robot_skills.util.shape import RightPrism
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
+
+class TestLookAtEntity(unittest.TestCase):
+    def setUp(self):
+        self.robot = Mockbot()
+
+        self.entity = Entity("12345", "dummy", "/map",
+                             kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
+                                       kdl.Vector(3, 3, 3)),
+                             None, {}, None)
+
+    def test_look_at_enity_looks_at_correct_point(self):
+        """Test that the robot looks at the center point of the named area, w.r.t. the frame of the entity"""
+        entity_ds = ds.Designator(self.entity)
+
+        state = states.LookAtEntity(self.robot, entity_ds, waittime=0)
+
+        state.execute()
+
+        ps = PointStamped()
+        ps.header.frame_id = "/12345"  # The position of the entity is defined w.r.t. the map
+        ps.point.x = 0
+        ps.point.y = 0
+        ps.point.z = 0
+
+        self.robot.head.look_at_point.assert_called_with(ps)
+
+
 class TestLookAtArea(unittest.TestCase):
     def setUp(self):
         self.robot = Mockbot()
