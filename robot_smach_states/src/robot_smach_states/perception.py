@@ -91,7 +91,7 @@ class LookAtArea(State):
 
 class LookOnTopOfEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
-        ds.check_type(entity, EntityInfo)
+        ds.check_type(entity, Entity)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -109,7 +109,7 @@ class LookOnTopOfEntity(State):
         center_point = Point()
         frame_id = "/"+entity.id
 
-        center_point.z = entity.z_max
+        center_point.z = entity.shape._z_max  # TODO: Notice the _, we're accessing a private variable here
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = PointStamped(point=center_point,

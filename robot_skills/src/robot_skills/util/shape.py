@@ -23,7 +23,7 @@ class RightPrism(Shape):
         """
         super(RightPrism, self).__init__()
         self._convex_hull = convex_hull
-        self._z_min = z_min
+        self._z_min = z_min  # TODO: Why are these private? LookOnTopOfEntity uses these properties
         self._z_max = z_max
 
 

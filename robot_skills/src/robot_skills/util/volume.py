@@ -5,6 +5,7 @@ import PyKDL as kdl
 class Volume(object):
     """ Represents an area of an entity
 
+    Points are defined relative to the object they belong to
     """
     def __init__(self):
         """ Constructor
@@ -25,6 +26,8 @@ class BoxVolume(Volume):
     """ Represents a box shaped volume """
     def __init__(self, min_corner, max_corner):
         """ Constructor.
+
+        Points are defined relative to the object they belong to
 
         :param min_corner: PyKDL.Vector with the minimum bounding box corner
         :param max_corner: PyKDL.Vector with the minimum bounding box corner
