@@ -33,14 +33,15 @@ class GraspPointDeterminant(object):
         # ToDo: divide into functions
         ''' Create a grasp vector for every side of the convex hull '''
         ''' First: check if container actually has a convex hull '''
-        if len(entity.convex_hull) == 0:
-            print 'Error, entity {0} has no convex hull. We need to do something with this'.format(entity.id)
+        if entity.shape:
+            print 'Error, entity {0} has no shape. We need to do something with this'.format(entity.id)
             return False
 
         ''' Second: turn points into KDL objects and offset chull to get it in map frame '''
-        center_pose = poseMsgToKdlFrame(entity.pose)
+        center_pose = entity._pose
 
-        chull_obj = [pointMsgToKdlVector(p) for p in entity.convex_hull]   # convex hull in object frame
+        # TODO: We access a private variable below, that is not right of course. Maybe convex_hull can be a property?
+        chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
         chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
 
         ''' Get robot pose as a kdl frame (is required later on) '''
@@ -125,8 +126,8 @@ class GraspPointDeterminant(object):
         return candidates[0]['vector']
 
     def visualize(self, candidates):
-        """ Visualizes the candidate grasp vectors 
-        
+        """ Visualizes the candidate grasp vectors
+
         :param candidates: list with candidates containing a vector and a score
         """
         msg = MarkerArray()

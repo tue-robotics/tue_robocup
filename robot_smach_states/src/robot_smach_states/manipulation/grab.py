@@ -139,6 +139,7 @@ class PickUp(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
+        # import ipdb; ipdb.set_trace()
         grasp_pose = self._gpd.get_grasp_pose(grab_entity, arm)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,7 +149,7 @@ class PickUp(smach.State):
 
         #try:
         # In case grasp point determination didn't work
-        if grasp_pose is None:
+        if not grasp_pose:
             if self.robot.tf_listener.waitForTransform(grab_entity.id, self.robot.robot_name + "/base_link"):
                 # Transform to base link frame
                 goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
@@ -161,9 +162,9 @@ class PickUp(smach.State):
             # We do have a grasp pose, given as a kdl frame in map
             if self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link"):
                 # Transform to base link frame
-                goal_bl = transformations.tf_transform(msgs.Point(grasp_pose.p.x(),
-                                                                  grasp_pose.p.y(),
-                                                                  grasp_pose.p.z()),
+                goal_bl = transformations.tf_transform(msgs.Point(grasp_pose.position.x(),
+                                                                  grasp_pose.position.y(),
+                                                                  grasp_pose.position.z()),
                                                        "/map", self.robot.robot_name + "/base_link",
                                                        tf_listener=self.robot.tf_listener)
                 if goal_bl is None:
