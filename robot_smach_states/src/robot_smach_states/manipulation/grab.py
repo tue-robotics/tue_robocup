@@ -139,7 +139,6 @@ class PickUp(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
-        # import ipdb; ipdb.set_trace()
         grasp_pose = self._gpd.get_grasp_pose(grab_entity, arm)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
