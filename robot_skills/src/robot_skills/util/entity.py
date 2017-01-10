@@ -4,7 +4,7 @@ import yaml
 # ROS
 import PyKDL as kdl
 
-from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame
+from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, kdl_frame_to_pose_msg
 from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.shape import shape_from_entity_info
 
@@ -27,7 +27,7 @@ class Entity(object):
         self.id = identifier
         self.type = object_type
         self.frame_id = frame_id
-        self.pose = pose
+        self._pose = pose
         self.shape = shape
         self._volumes = volumes  # TODO: Make this a public property? It is also accessed in LookAtArea
         self.volumes = volumes.keys()
@@ -46,7 +46,7 @@ class Entity(object):
         """
 
         # The length of the difference vector between the pose's position and the point
-        difference = self.pose.p - point
+        difference = self._pose.p - point
         difference.z(0)
         return difference.Norm()
 
@@ -61,7 +61,7 @@ class Entity(object):
         >>> e.distance_to_3d(point)
         3.4641016151377544
         """
-        return (self.pose.p - point).Norm()
+        return (self._pose.p - point).Norm()
 
     def is_a(self, super_type):
         """
@@ -75,8 +75,17 @@ class Entity(object):
         >>> e.is_a("food")
         False
         """
-
         return super_type in self.super_types
+
+    @property
+    def pose(self):
+        """ Returns the pose (at this point, as a geometry_msgs.Pose, in the future as a kdl frame """
+        return kdl_frame_to_pose_msg(self._pose)
+
+    @pose.setter
+    def pose(self, pose):
+        """ Setter """
+        self._pose = pose_msg_to_kdl_frame(pose)
 
 
 def from_entity_info(e):
