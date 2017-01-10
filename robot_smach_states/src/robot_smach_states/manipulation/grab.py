@@ -4,7 +4,7 @@ import rospy
 import smach
 import tf
 
-import ed.msg
+from robot_skills.util.entity import Entity
 import robot_skills.util.msg_constructors as msgs
 import robot_skills.util.transformations as transformations
 
@@ -29,6 +29,8 @@ class PrepareEdGrasp(smach.State):
         self.robot = robot
         self.arm_designator = arm
         self.grab_entity_designator = grab_entity
+
+        check_type(grab_entity, Entity)
 
     def execute(self, userdata):
 
@@ -75,6 +77,8 @@ class PickUp(smach.State):
         # Assign member variables
         self.robot = robot
         self.arm_designator = arm
+
+        check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
 
@@ -302,7 +306,7 @@ class Grab(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        check_type(item, ed.msg.EntityInfo)
+        check_type(item, Entity)
         check_type(arm, Arm)
 
         with self:
