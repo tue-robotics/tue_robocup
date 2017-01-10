@@ -42,6 +42,7 @@ class Arm(arms.Arm):
         self._publish_marker = mock.MagicMock()
         self.occupied_by = None
         self._operational = True
+        self.wait_for_motion_done = mock.MagicMock()
 
 
 class Base(object):
@@ -181,6 +182,7 @@ class ED(object):
         self.navigation.get_position_constraint = mock.MagicMock()
         self.update_entity = mock.MagicMock()
         self.get_closest_possible_person_entity = lambda *args, **kwargs: ED.generate_random_entity()
+        self.get_entity_info = mock.MagicMock()
 
         self._person_names = []
 
