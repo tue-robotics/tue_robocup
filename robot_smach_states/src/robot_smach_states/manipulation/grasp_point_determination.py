@@ -19,7 +19,7 @@ class GraspPointDeterminant(object):
         self._robot = robot
         self._marker_array_pub = rospy.Publisher('/grasp_markers', MarkerArray, queue_size=1)
 
-        self._width_treshold = 0.1 # ToDo: make variable!!!
+        self._width_treshold = 0.1  # ToDo: make variable!!!
 
     def get_grasp_pose(self, entity, arm):
         """ Computes the most suitable grasp pose to grasp the specified entity with the specified arm
@@ -33,7 +33,7 @@ class GraspPointDeterminant(object):
         # ToDo: divide into functions
         ''' Create a grasp vector for every side of the convex hull '''
         ''' First: check if container actually has a convex hull '''
-        if entity.shape:
+        if entity.shape is None:
             print 'Error, entity {0} has no shape. We need to do something with this'.format(entity.id)
             return False
 
@@ -41,8 +41,10 @@ class GraspPointDeterminant(object):
         center_pose = entity._pose
 
         # TODO: We access a private variable below, that is not right of course. Maybe convex_hull can be a property?
-        chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
-        chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
+        # chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
+        # chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
+        chull = offsetConvexHull(entity.shape._convex_hull, center_pose)  # convex hull in map frame
+        import ipdb;ipdb.set_trace()
 
         ''' Get robot pose as a kdl frame (is required later on) '''
         robot_pose = self._robot.base.get_location()
@@ -117,7 +119,7 @@ class GraspPointDeterminant(object):
 
             candidates.append({'vector': cvec, 'score': score})
 
-        candidates = sorted(candidates, key = lambda candidate: candidate['score'], reverse=True)
+        candidates = sorted(candidates, key=lambda candidate: candidate['score'], reverse=True)
         # self._candidates = self._candidates[0:5] # ToDo: remove??
 
         self.visualize(candidates)
