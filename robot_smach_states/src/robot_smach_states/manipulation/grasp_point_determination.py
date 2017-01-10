@@ -44,7 +44,7 @@ class GraspPointDeterminant(object):
         # chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
         # chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
         chull = offsetConvexHull(entity.shape._convex_hull, center_pose)  # convex hull in map frame
-        import ipdb;ipdb.set_trace()
+        # import ipdb;ipdb.set_trace()
 
         ''' Get robot pose as a kdl frame (is required later on) '''
         robot_pose = self._robot.base.get_location()
