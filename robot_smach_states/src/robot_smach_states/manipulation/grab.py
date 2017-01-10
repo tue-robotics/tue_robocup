@@ -161,9 +161,9 @@ class PickUp(smach.State):
             # We do have a grasp pose, given as a kdl frame in map
             if self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link"):
                 # Transform to base link frame
-                goal_bl = transformations.tf_transform(msgs.Point(grasp_pose.position.x(),
-                                                                  grasp_pose.position.y(),
-                                                                  grasp_pose.position.z()),
+                goal_bl = transformations.tf_transform(msgs.Point(grasp_pose.p.x(),
+                                                                  grasp_pose.p.y(),
+                                                                  grasp_pose.p.z()),
                                                        "/map", self.robot.robot_name + "/base_link",
                                                        tf_listener=self.robot.tf_listener)
                 if goal_bl is None:

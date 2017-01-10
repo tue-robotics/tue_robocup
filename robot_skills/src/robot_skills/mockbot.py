@@ -204,7 +204,7 @@ class ED(object):
 
     def classify(self, ids, types=None):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
-        return [ClassificationResult(e.id, e.type, random.uniform(0,1), None) for e in entities]
+        return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
 
 class Mockbot(robot.Robot):
     """
