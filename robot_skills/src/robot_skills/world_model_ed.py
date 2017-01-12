@@ -147,8 +147,7 @@ class ED:
     #                                             UPDATING
     # ----------------------------------------------------------------------------------------------------
 
-    def reset(self, keep_all_shapes=False):
-
+    def reset(self, keep_all_shapes=True):
         try:
             self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
         except rospy.ServiceException, e:
