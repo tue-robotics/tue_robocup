@@ -54,7 +54,7 @@ if USE_SLAM:
     CABINET = challenge_knowledge.cabinet_slam
 else:
     CABINET = challenge_knowledge.cabinet_amcl
-    
+
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
@@ -255,32 +255,15 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for area in cabinet_entity.data['areas']:  # TODO: Dealing with these areas and volumes is not yet in robot_skills.util.Entity
+        for volume_name in cabinet_entity.volumes:
             ''' See if the area is in the list of inspection areas '''
-            if area['name'] in OBJECT_SHELVES:
-                ''' Check if we have a shape '''
-                if 'shape' not in area:
-                    rospy.logwarn("No shape in area {0}".format(area['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(area['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(area['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in area['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(area['name']))
-                    continue
-                box = area['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
-                    continue
+            if volume_name in OBJECT_SHELVES:
+                box = cabinet_entity._volumes[volume_name]
 
-                x = 0.5 * (box['min']['x'] + box['max']['x'])
-                y = 0.5 * (box['min']['y'] + box['max']['y'])
-                z = 0.5 * (box['min']['z'] + box['max']['z'])
-                shelves.append({'ps': geom.PointStamped(x, y, z, cabinet_entity.id), 'name': area['name']})
+                center_point = box.center_point
+                shelves.append({'ps': geom.PointStamped(center_point.x(), center_point.y(), center_point.z(), cabinet_entity.id), 'name': volume_name})
             else:
-                rospy.loginfo("{0} not in object shelves".format(area['name']))
+                rospy.loginfo("{0} not in object shelves".format(volume_name))
 
         # rospy.loginfo("Inspection points: {0}".format(shelves))
         # ''' Loop over shelves '''
