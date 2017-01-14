@@ -45,12 +45,12 @@ class SegmentObjects(smach.State):
 
         # Check if we have areas
         if entity.volumes:
-            search_volume = entity._volumes.get(self.segmentation_area, None)
+            search_volume = entity._volumes.get(self.segmentation_area, None)  # TODO: Notice the _, we're accessing a private variable here
 
             # check if search area
             if search_volume:
                 try:
-                    look_at_point_z = search_volume["shape"][0]["box"]["min"]["z"]  # TODO: Make this possible with Volumes
+                    look_at_point_z = search_volume.min_corner.z()
                 except:
                     pass
 
