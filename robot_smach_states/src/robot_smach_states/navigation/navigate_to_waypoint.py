@@ -37,18 +37,11 @@ class NavigateToWaypoint(NavigateTo):
             return None
 
         try:
-            # TODO: Does this work the way it should for new Entity's? I don't really want to fallback to the exception handler below
-            pose = e.data["pose"]
-            x = pose["x"]
-            y = pose["y"]
-            rz = e.data["pose"]["rz"]
+            x = e.pose.position.x
+            y = e.pose.position.y
+            rz = tf.euler_z_from_quaternion(e.pose.orientation)
         except:
-            try:
-                x = e.pose.position.x
-                y = e.pose.position.y
-                rz = tf.euler_z_from_quaternion(e.pose.orientation)
-            except:
-                return None
+            return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
 
