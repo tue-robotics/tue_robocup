@@ -425,35 +425,21 @@ class EmptySpotDesignator(Designator):
         e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
-        for testarea in e.data['areas']:  # TODO: Dealing with these areas and volumes is not yet in robot_skills.util.Entity
-            ''' See if the area is in the list of inspection areas '''
-            if testarea['name'] == area:
-                ''' Check if we have a shape '''
-                if 'shape' not in testarea:
-                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(testarea['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in testarea['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(testarea['name']))
-                    continue
-                box = testarea['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
-                    continue
-                # Now we're sure to have the correct bounding box
-                e.convex_hull = []
-                e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
-                e.convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                e.convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                e.convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
 
-                # Make sure we overwrite the e.z_max
-                e.z_max = box['min']['z'] - 0.04  # 0.04 is the usual offset
-                return self.determinePointsOfInterest(e)
+        if area in e.volumes:
+            box = e._volumes[area]
+
+            # Now we're sure to have the correct bounding box
+            # TODO: Entities deal with ConvexHulls differently
+            e.convex_hull = []
+            e.convex_hull.append(gm.Point(box.min_corner.x(), box.min_corner.y(), box.min_corner.z()))  # 1
+            e.convex_hull.append(gm.Point(box.max_corner.x(), box.min_corner.y(), box.min_corner.z()))  # 2
+            e.convex_hull.append(gm.Point(box.max_corner.x(), box.max_corner.y(), box.min_corner.z()))  # 3
+            e.convex_hull.append(gm.Point(box.min_corner.x(), box.max_corner.y(), box.min_corner.z()))  # 4
+
+            # Make sure we overwrite the e.z_max
+            e.z_max = box.min_corner.z() - 0.04  # 0.04 is the usual offset
+            return self.determinePointsOfInterest(e)
 
         return []
 
