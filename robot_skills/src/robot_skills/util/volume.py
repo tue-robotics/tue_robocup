@@ -70,12 +70,6 @@ class OffsetVolume(Volume):
         self._offset = offset
 
 
-class CompoundVolume(Volume):
-    """ Represents a compound volume """
-    # ToDo
-    pass
-
-
 def volumes_from_entity_info_data(data):
     """ Creates a dict mapping strings to Volumes from the EntityInfo data dictionary
 
