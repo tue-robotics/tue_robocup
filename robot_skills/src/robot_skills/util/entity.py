@@ -16,10 +16,10 @@ class Entity(object):
     def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time):
         """ Constructor
 
-        :param identifier: string with the id of this entity
-        :param object_type: string with the type of this entity
-        :param frame_id: frame id w.r.t. which the pose is defined
-        :param pose: kdl frame with the pose of this entity
+        :param identifier: str with the id of this entity
+        :param object_type: str with the type of this entity
+        :param frame_id: str frame id w.r.t. which the pose is defined
+        :param pose: kdl.Frame with the pose of this entity
         :param shape: Shape of this entity
         :param volumes: dict mapping strings to Areas
         :param super_types: list with strings representing super types in an ontology of object types
