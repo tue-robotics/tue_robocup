@@ -13,7 +13,7 @@ class Entity(object):
     """ Holds all data concerning entities
 
     """
-    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types):
+    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time):
         """ Constructor
 
         :param identifier: string with the id of this entity
@@ -31,10 +31,15 @@ class Entity(object):
         self.shape = shape
         self._volumes = volumes if volumes else {}
         self.super_types = super_types
+        self._last_update_time = last_update_time
 
     @property
     def volumes(self):
         return self._volumes
+
+    @property
+    def last_update_time(self):
+        return self._last_update_time
 
     def distance_to_2d(self, point):
         """
@@ -42,7 +47,7 @@ class Entity(object):
         :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
         :return: the distance between the entity's pose and the point
 
-        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None)
+        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None, 0)
         >>> point = kdl.Vector(1, 1, 1)
         >>> e.distance_to_2d(point)
         2.8284271247461903
@@ -59,7 +64,7 @@ class Entity(object):
         :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
         :return: the distance between the entity's pose and the point
 
-        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None)
+        >>> e = Entity("dummy", None, None, kdl.Frame(kdl.Rotation.RPY(1, 0, 0), kdl.Vector(3, 3, 3)), None, {}, None, 0)
         >>> point = kdl.Vector(1, 1, 1)
         >>> e.distance_to_3d(point)
         3.4641016151377544
@@ -72,7 +77,7 @@ class Entity(object):
         :param super_type: str representing the name of the super_type
         :return: bool True if the entity is a (sub)type of the given super_type
 
-        >>> e = Entity("dummy", "coffee_table", None, None, None, {}, ["coffee_table", "table", "furniture", "thing"])
+        >>> e = Entity("dummy", "coffee_table", None, None, None, {}, ["coffee_table", "table", "furniture", "thing"], 0)
         >>> e.is_a("furniture")
         True
         >>> e.is_a("food")
@@ -103,6 +108,8 @@ def from_entity_info(e):
     pose = pose_msg_to_kdl_frame(e.pose)
     shape = shape_from_entity_info(e)
 
+    last_update_time = e.last_update_time.to_sec()
+
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
     volumes = volumes_from_entity_info_data(yaml.load(e.data))
 
@@ -116,7 +123,7 @@ def from_entity_info(e):
         super_types += ["possible_human"]
 
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
-                  volumes=volumes, super_types=super_types)
+                  volumes=volumes, super_types=super_types, last_update_time=last_update_time)
 
 if __name__ == "__main__":
     import doctest

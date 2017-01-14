@@ -24,7 +24,7 @@ class TestLookAtEntity(unittest.TestCase):
         self.entity = Entity("12345", "dummy", "/map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
-                             None, {}, None)
+                             None, {}, None, 0)
 
     def test_look_at_enity_looks_at_correct_point(self):
         """Test that the robot looks at the center point of the named area, w.r.t. the frame of the entity"""
@@ -53,7 +53,7 @@ class TestLookAtArea(unittest.TestCase):
         self.entity = Entity("12345", "dummy", "/map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
-                             None, {"dummy_volume":box}, None)
+                             None, {"dummy_volume":box}, None, 0)
 
         self.area = "dummy_volume"
 
@@ -85,7 +85,7 @@ class TestLookOnTopOfEntity(unittest.TestCase):
         self.entity = Entity("12345", "dummy", "/map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
-                             hull, {}, None)
+                             hull, {}, None, 0)
 
     def test_look_on_top_of_entity_looks_at_correct_point(self):
         """Test that the robot looks at the center point of the named area, w.r.t. the frame of the entity"""
