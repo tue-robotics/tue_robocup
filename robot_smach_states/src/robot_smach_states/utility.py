@@ -64,12 +64,7 @@ class SetInitialPose(smach.State):
 
         print e_loc
 
-        try:
-            rz = e_loc.data["pose"]["rz"]  # TODO: robot_skills.util.Entity does not have a .data attribute
-        except KeyError:
-            rz = 0
-        except AttributeError:
-            rz = tf.euler_z_from_quaternion(e_loc.pose.orientation)
+        rz = tf.euler_z_from_quaternion(e_loc.pose.orientation)
 
         return e_loc.pose.position.x, e_loc.pose.position.y, rz
 
