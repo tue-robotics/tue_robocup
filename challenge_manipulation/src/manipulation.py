@@ -255,15 +255,13 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for volume_name in cabinet_entity.volumes:
+        for name, volume in cabinet_entity.volumes.iteritems():
             ''' See if the area is in the list of inspection areas '''
-            if volume_name in OBJECT_SHELVES:
-                box = cabinet_entity._volumes[volume_name]
-
-                center_point = box.center_point
-                shelves.append({'ps': geom.PointStamped(center_point.x(), center_point.y(), center_point.z(), cabinet_entity.id), 'name': volume_name})
+            if name in OBJECT_SHELVES:
+                center_point = volume.center_point
+                shelves.append({'ps': geom.PointStamped(center_point.x(), center_point.y(), center_point.z(), cabinet_entity.id), 'name': name})
             else:
-                rospy.loginfo("{0} not in object shelves".format(volume_name))
+                rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.id))
 
         # rospy.loginfo("Inspection points: {0}".format(shelves))
         # ''' Loop over shelves '''

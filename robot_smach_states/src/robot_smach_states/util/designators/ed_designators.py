@@ -427,7 +427,7 @@ class EmptySpotDesignator(Designator):
         # We want to give it a convex hull using the designated area
 
         if area in e.volumes:
-            box = e._volumes[area]
+            box = e.volumes[area]
 
             # Now we're sure to have the correct bounding box
             # TODO: Entities deal with ConvexHulls differently

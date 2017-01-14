@@ -29,9 +29,12 @@ class Entity(object):
         self.frame_id = frame_id
         self._pose = pose
         self.shape = shape
-        self._volumes = volumes  # TODO: Make this a public property? It is also accessed in LookAtArea and EmptyShelfDesignator
-        self.volumes = volumes.keys()
+        self._volumes = volumes if volumes else {}
         self.super_types = super_types
+
+    @property
+    def volumes(self):
+        return self._volumes
 
     def distance_to_2d(self, point):
         """

@@ -134,7 +134,7 @@ class EmptyShelfDesignator(Designator):
 
         # We want to give it a convex hull using the designated area
         if area in e.volumes:
-            box = e._volumes[area]
+            box = e.volumes[area]
         else:
             rospy.logwarn("Entity {0} has no volume named {1}".format(e.id, area))
 

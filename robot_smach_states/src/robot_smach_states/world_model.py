@@ -44,15 +44,12 @@ class SegmentObjects(smach.State):
         self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
         # Check if we have areas
-        if entity.volumes:
-            search_volume = entity._volumes.get(self.segmentation_area, None)  # TODO: Notice the _, we're accessing a private variable here
-
-            # check if search area
-            if search_volume:
-                try:
-                    look_at_point_z = search_volume.min_corner.z()
-                except:
-                    pass
+        if self.segmentation_area in entity.volumes:
+            search_volume = entity.volumes[self.segmentation_area]
+            try:
+                look_at_point_z = search_volume.min_corner.z()
+            except:
+                pass
 
         # Make sure the spindle is at the appropriate height if we are AMIGO
         if self.robot.robot_name == "amigo":
