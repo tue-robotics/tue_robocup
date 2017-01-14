@@ -50,6 +50,14 @@ class BoxVolume(Volume):
                           0.5 * (self._min_corner.y() + self._max_corner.y()),
                           0.5 * (self._min_corner.z() + self._max_corner.z()))
 
+    @property
+    def min_corner(self):
+        return self._min_corner
+
+    @property
+    def max_corner(self):
+        return self._max_corner
+
 
 class OffsetVolume(Volume):
     """ Represents a volume with a certain offset from the convex hull of the entity """
