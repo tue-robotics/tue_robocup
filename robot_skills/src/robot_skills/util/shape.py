@@ -6,12 +6,33 @@ class Shape(object):
     """ Represents shape properties """
     pass
 
+    @property
+    def bottom_z(self):
+        return self._calc_bottom_z()
+
+    def _calc_bottom_z(self):
+        raise NotImplementedError("_calc_bottom_z must be implemented by subclasses")
+
+    @property
+    def top_z(self):
+        return self._calc_bottom_z()
+
+    def _calc_top_z(self):
+        raise NotImplementedError("_calc_bottom_z must be implemented by subclasses")
+
 
 class RightPrism(Shape):
     """ Represents a right prism, i.e., a  prism in which the joining edges and faces are perpendicular to the base
     faces. This is typical for the shapes resulting from the convex hull, z min and z max of EntityInfo
 
     """
+
+    def _calc_top_z(self):
+        return self._z_max
+
+    def _calc_bottom_z(self):
+        return self._z_min
+
     def __init__(self, convex_hull, z_min, z_max):
         """ Constructor
 
@@ -23,7 +44,7 @@ class RightPrism(Shape):
         """
         super(RightPrism, self).__init__()
         self._convex_hull = convex_hull
-        self._z_min = z_min  # TODO: Why are these private? LookOnTopOfEntity uses these properties
+        self._z_min = z_min
         self._z_max = z_max
 
 

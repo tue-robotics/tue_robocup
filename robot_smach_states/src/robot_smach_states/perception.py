@@ -108,7 +108,7 @@ class LookOnTopOfEntity(State):
         center_point = Point()
         frame_id = "/"+entity.id
 
-        center_point.z = entity.shape._z_max  # TODO: Notice the _, we're accessing a private variable here
+        center_point.z = entity.shape.top_z
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = PointStamped(point=center_point,
