@@ -327,7 +327,7 @@ class EmptySpotDesignator(Designator):
         if self._area:
             points_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            points_of_interest = self.determinePointsOfInterest(place_location)
+            points_of_interest = self.determine_points_of_interest(place_location)
 
         def is_poi_occupied(poi):
             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
@@ -421,28 +421,21 @@ class EmptySpotDesignator(Designator):
         :param area:
         :return:
         """
-        # Just to be sure, copy e
-        e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
 
-        if area in e.volumes:
-            box = e.volumes[area]
+        if not area in e.volumes:
+            return []
 
-            # Now we're sure to have the correct bounding box
-            # TODO: Entities deal with ConvexHulls differently
-            e.convex_hull = []
-            e.convex_hull.append(gm.Point(box.min_corner.x(), box.min_corner.y(), box.min_corner.z()))  # 1
-            e.convex_hull.append(gm.Point(box.max_corner.x(), box.min_corner.y(), box.min_corner.z()))  # 2
-            e.convex_hull.append(gm.Point(box.max_corner.x(), box.max_corner.y(), box.min_corner.z()))  # 3
-            e.convex_hull.append(gm.Point(box.min_corner.x(), box.max_corner.y(), box.min_corner.z()))  # 4
+        box = e.volumes[area]
 
-            # Make sure we overwrite the e.z_max
-            e.z_max = box.min_corner.z() - 0.04  # 0.04 is the usual offset
-            return self.determinePointsOfInterest(e)
+        if not hasattr(box, "bottom_area"):
+            rospy.logerr("Entity {0} has no shape with a bottom_area".format(e.id))
 
-        return []
-
+        # Now we're sure to have the correct bounding box
+        # Make sure we offset the bottom of the box
+        top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
+        return self.determine_points_of_interest(e._pose, top_z, box.bottom_area)
 
     def determine_points_of_interest(self, center_pose, z_max, convex_hull):
         """
