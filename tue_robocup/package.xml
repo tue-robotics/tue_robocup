@@ -20,10 +20,8 @@
   <run_depend>challenge_restaurant</run_depend>
   <run_depend>challenge_rips</run_depend>
   <run_depend>challenge_robozoo</run_depend>
-  <run_depend>challenge_robonurse</run_depend>
   <run_depend>challenge_speech_recognition</run_depend>
   <run_depend>challenge_test</run_depend>
-  <run_depend>challenge_wakemeup</run_depend>
   <run_depend>challenge_eegpsr</run_depend>
   <run_depend>test_tools</run_depend>
 
