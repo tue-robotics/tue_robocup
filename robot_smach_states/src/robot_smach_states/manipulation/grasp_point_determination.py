@@ -38,12 +38,11 @@ class GraspPointDeterminant(object):
             return False
 
         ''' Second: turn points into KDL objects and offset chull to get it in map frame '''
-        center_pose = entity._pose
+        center_pose = entity._pose  #TODO: Access to private member
 
-        # TODO: We access a private variable below, that is not right of course. Maybe convex_hull can be a property?
         # chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
         # chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
-        chull = offsetConvexHull(entity.shape._convex_hull, center_pose)  # convex hull in map frame
+        chull = offsetConvexHull(entity.shape.convex_hull, center_pose)  # convex hull in map frame
         # import ipdb;ipdb.set_trace()
 
         ''' Get robot pose as a kdl frame (is required later on) '''

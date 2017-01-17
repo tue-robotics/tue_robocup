@@ -7,6 +7,13 @@ class Shape(object):
     pass
 
     @property
+    def convex_hull(self):
+        return self._calc_convex_hull()
+
+    def _calc_convex_hull(self):
+        raise NotImplementedError("_calc_convex_hull must be implemented by subclasses")
+
+    @property
     def bottom_z(self):
         return self._calc_bottom_z()
 
@@ -26,13 +33,6 @@ class RightPrism(Shape):
     faces. This is typical for the shapes resulting from the convex hull, z min and z max of EntityInfo
 
     """
-
-    def _calc_top_z(self):
-        return self._z_max
-
-    def _calc_bottom_z(self):
-        return self._z_min
-
     def __init__(self, convex_hull, z_min, z_max):
         """ Constructor
 
@@ -46,6 +46,16 @@ class RightPrism(Shape):
         self._convex_hull = convex_hull
         self._z_min = z_min
         self._z_max = z_max
+
+    def _calc_top_z(self):
+        return self._z_max
+
+    def _calc_bottom_z(self):
+        return self._z_min
+
+    def _calc_convex_hull(self):
+        return self._convex_hull
+
 
 
 def shape_from_entity_info(e):
