@@ -33,25 +33,25 @@ class RightPrism(Shape):
     faces. This is typical for the shapes resulting from the convex hull, z min and z max of EntityInfo
 
     """
-    def __init__(self, convex_hull, z_min, z_max):
+    def __init__(self, convex_hull, bottom_z, top_z):
         """ Constructor
 
         :param convex_hull: list with kdl Vectors representing the vertices of the convex hull. N.B.: these should only
          contain x and y values, the z-values are not relevant (the height information is contained in the z_min
          and z_max parameters).
-        :param z_min: float minimum height [m] # ToDo: w.r.t.???
-        :param z_max: float maximum height [m] # ToDo: w.r.t.???
+        :param bottom_z: float minimum height [m] w.r.t. the center of the corresponding Entity
+        :param top_z: float maximum height [m] w.r.t. the center of the corresponding Entity
         """
         super(RightPrism, self).__init__()
         self._convex_hull = convex_hull
-        self._z_min = z_min
-        self._z_max = z_max
+        self._bottom_z = bottom_z
+        self._top_z = top_z
 
     def _calc_top_z(self):
-        return self._z_max
+        return self._top_z
 
     def _calc_bottom_z(self):
-        return self._z_min
+        return self._bottom_z
 
     def _calc_convex_hull(self):
         return self._convex_hull
