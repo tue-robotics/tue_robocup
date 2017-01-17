@@ -119,7 +119,6 @@ class GraspPointDeterminant(object):
             candidates.append({'vector': cvec, 'score': score})
 
         candidates = sorted(candidates, key=lambda candidate: candidate['score'], reverse=True)
-        # self._candidates = self._candidates[0:5] # ToDo: remove??
 
         self.visualize(candidates)
         print "GPD took %f seconds"%(rospy.Time.now() - starttime).to_sec()

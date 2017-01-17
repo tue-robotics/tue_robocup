@@ -18,7 +18,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
-from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector
+from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector, offsetConvexHull
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors
@@ -444,59 +444,54 @@ class EmptySpotDesignator(Designator):
         return []
 
 
-    def determinePointsOfInterest(self, e):
+    def determine_points_of_interest(self, center_pose, z_max, convex_hull):
+        """
+        Determine candidates for place poses
+        :param center_pose: kdl.Frame, center pose of the Entity to place on top of
+        :param z_max: float, height of the entity to place on, w.r.t. the entity
+        :param convex_hull: [kdl.Vector], convex hull of the entity
+        :return: [geometry_msgs.msg.PointStamped] of candidates for placing
+        """
 
         points = []
 
-        x = e.pose.position.x
-        y = e.pose.position.y
-
-        if len(e.convex_hull) == 0:
-            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+        if len(convex_hull) == 0:
+            rospy.logerr('determine_points_of_interest: Empty convex hull')
             return []
 
-        ''' Convert convex hull to map frame '''
+        # Convert convex hull to map frame
+        ch = offsetConvexHull(convex_hull, center_pose)
 
-        center_pose = poseMsgToKdlFrame(e.pose)
-        ch = list()
-        for point in e.convex_hull:
-            p = pointMsgToKdlVector(point)
-            # p = center_pose * p
-            # p = p * center_pose
-            pf = kdl.Frame(kdl.Rotation(), p)
-            # pf = pf * center_pose  # Original
-            pf = center_pose * pf  # Test
-            p = pf.p
-            ch.append(copy.deepcopy(p))  # Needed to fix "RuntimeError: underlying C/C++ object has been deleted"
-
-        ''' Loop over hulls '''
+        # Loop over hulls
         self.marker_array.markers = []
 
-        ch.append(ch[0])
         for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x() - ch[i].x()
-                dy = ch[i+1].y() - ch[i].y()
-                length = math.hypot(dx, dy)
+            j = (i + 1) % len(ch)
 
-                d = self._edge_distance
-                while d < (length-self._edge_distance):
+            dx = ch[j].x() - ch[i].x()
+            dy = ch[j].y() - ch[i].y()
 
-                    ''' Point on edge '''
-                    xs = ch[i].x() + d/length*dx
-                    ys = ch[i].y() + d/length*dy
+            length = kdl.diff(ch[j], ch[i]).Norm()
 
-                    ''' Shift point inwards and fill message'''
-                    ps = gm.PointStamped()
-                    ps.header.frame_id = "/map"
-                    ps.point.x = xs - dy/length * self._edge_distance
-                    ps.point.y = ys + dx/length * self._edge_distance
-                    ps.point.z = e.pose.position.z + e.z_max
-                    points.append(ps)
+            d = self._edge_distance
+            while d < (length-self._edge_distance):
 
-                    self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+                # Point on edge
+                xs = ch[i].x() + d/length*dx
+                ys = ch[i].y() + d/length*dy
 
-                    # ToDo: check if still within hull???
-                    d += self._spacing
+                # Shift point inwards and fill message
+                ps = gm.PointStamped()
+                ps.header.frame_id = "/map"
+                ps.point.x = xs - dy/length * self._edge_distance
+                ps.point.y = ys + dx/length * self._edge_distance
+                ps.point.z = center_pose.p.z() + z_max
+                points.append(ps)
+
+                self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+
+                # ToDo: check if still within hull???
+                d += self._spacing
 
         self.marker_pub.publish(self.marker_array)
 

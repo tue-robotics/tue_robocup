@@ -116,7 +116,7 @@ def from_entity_info(e):
     super_types = e.types
 
     # TODO: this must be part of the definition of the entity in ED.
-    if e.has_shape and "amigo" not in e.id and "amigo" not in e.id and e.id is not "floor" and e.id is not "walls":
+    if e.has_shape and "amigo" not in e.id and "sergio" not in e.id and e.id is not "floor" and e.id is not "walls":
         super_types += ["furniture"]
 
     if 'possible_human' in e.flags:
