@@ -7,6 +7,15 @@ def pointMsgToKdlVector(point):
     Convert a ROS geometry_msgs.msg.Point message to a PyKDL.Vector object
     :type point:  geometry_msgs.msg.Point
     :rtype: PyKDL.Vector
+
+    >>> point = gm.Point(1, 2, 3)
+    >>> v = pointMsgToKdlVector(point)
+    >>> v.x()
+    1.0
+    >>> v.y()
+    2.0
+    >>> v.z()
+    3.0
     """
     return kdl.Vector(point.x, point.y, point.z)
 
@@ -15,6 +24,15 @@ def kdlVectorToPointMsg(vector):
     Convert a PyKDL.Vector object to a ROS geometry_msgs.msg.Point message
     :type vector: PyKDL.Vector
     :rtype: geometry_msgs.msg.Point
+
+    >>> vector = kdl.Vector(1, 2, 3)
+    >>> point = kdlVectorToPointMsg(vector)
+    >>> point.x
+    1.0
+    >>> point.y
+    2.0
+    >>> point.z
+    3.0
     """
     return gm.Point(vector.x(), vector.y(), vector.z())
 
