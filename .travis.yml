@@ -24,7 +24,7 @@ install:
   - sudo apt-get purge mongodb-10gen
   #sudo apt-get install mongodb-dev -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_rips ros-test_tools ros-challenge_gpsr ros-challenge_navigation ros-challenge_person_recognition ros-challenge_robonurse ros-challenge_speech_recognition
+  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_rips ros-test_tools ros-challenge_gpsr ros-challenge_navigation ros-challenge_person_recognition ros-challenge_speech_recognition
   - source ~/.tue/setup.bash # source all target setup files
   - tue-branch $(git name-rev --name-only HEAD) #Checkout everything on the same name as the current branch
   - cd
@@ -91,7 +91,7 @@ script:
   -
   - rosrun challenge_rips rips.py mockbot
   -
-  - rosrun challenge_robonurse challenge_robonurse.py mockbot
+  #- rosrun challenge_robonurse challenge_robonurse.py mockbot
   -
   - rosrun challenge_speech_recognition speech_recognition.py mockbot
   -
