@@ -79,16 +79,6 @@ def onTopOffForDesignator(container_designator):
     return on_top
 
 
-def pointMsgToKdlVector(point):
-    return kdl.Vector(point.x, point.y, point.z)
-
-
-def poseMsgToKdlFrame(pose):
-    rot = kdl.Rotation.Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
-    trans = kdl.Vector(pose.position.x ,pose.position.y, pose.position.z)
-    return kdl.Frame(rot, trans)
-
-
 def offsetConvexHull(input_ch, offset):
     """ Offsets the the convex hull 'input_ch' with 'offset'. This can be used, e.g., when a convex hull is desired in map
     frame while it is given in object frame. In that case, 'offset' represents the object pose in map frame.
