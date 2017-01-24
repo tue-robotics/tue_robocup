@@ -7,7 +7,7 @@ import robot_skills.util.msg_constructors as msgs
 
 from robot_smach_states.navigation import NavigateToObserve
 import robot_smach_states.util.designators as ds
-from ed.msg import EntityInfo
+from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
 
 import time
@@ -28,7 +28,7 @@ class SegmentObjects(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
-        ds.check_resolve_type(entity_to_inspect_designator, EntityInfo)
+        ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
         self.segmentation_area = segmentation_area
 
@@ -44,16 +44,12 @@ class SegmentObjects(smach.State):
         self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
         # Check if we have areas
-        if "areas" in entity.data:
-            d = entity.data
-            search_area = next((x for x in d["areas"] if x["name"] == self.segmentation_area), None)
-
-            # check if search area
-            if search_area:
-                try:
-                    look_at_point_z = a["shape"][0]["box"]["min"]["z"]
-                except:
-                    pass
+        if self.segmentation_area in entity.volumes:
+            search_volume = entity.volumes[self.segmentation_area]
+            try:
+                look_at_point_z = search_volume.min_corner.z()
+            except:
+                pass
 
         # Make sure the spindle is at the appropriate height if we are AMIGO
         if self.robot.robot_name == "amigo":

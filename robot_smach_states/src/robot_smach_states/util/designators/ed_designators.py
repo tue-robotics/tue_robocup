@@ -8,7 +8,7 @@ import copy
 import PyKDL as kdl
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
-from ed.msg import EntityInfo
+from robot_skills.util.entity import Entity
 from ed.srv import SimpleQuery, SimpleQueryRequest
 from geometry_msgs import msg as gm
 import rospy
@@ -18,7 +18,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
-from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector
+from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector, offsetConvexHull
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors
@@ -59,7 +59,7 @@ class EdEntityCollectionDesignator(Designator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> entities = EdEntityCollectionDesignator(robot)
-    >>> check_resolve_type(entities, [EntityInfo]) #This is more a test for check_resolve_type to be honest :-/
+    >>> check_resolve_type(entities, [Entity]) #This is more a test for check_resolve_type to be honest :-/
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
@@ -75,7 +75,7 @@ class EdEntityCollectionDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[EntityInfo],name=name)
+        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[Entity],name=name)
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -152,7 +152,7 @@ class EdEntityDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(EdEntityDesignator, self).__init__(resolve_type=Entity, name=name)
         self.robot = robot
         self.ed = robot.ed
         if type != "" and type_designator != None:
@@ -243,7 +243,7 @@ class EntityByIdDesignator(Designator):
         :param parse: Whether to parse the Entity's data-field
         :param name: Name of the designator for introspection purposes
         """
-        super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(EntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
         self.ed = robot.ed
         self.id_ = id
         self.parse = parse
@@ -264,7 +264,7 @@ class ReasonedEntityDesignator(Designator):
         :param query: query to the reasoner. The first answer is cast to string and used as ID
         :param name: Name of the designator for introspection purposes
         """
-        super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(ReasonedEntityDesignator, self).__init__(resolve_type=Entity, name=name)
         assert hasattr(robot, "reasoner")
         self.robot = robot
         self.querystring = query
@@ -327,7 +327,7 @@ class EmptySpotDesignator(Designator):
         if self._area:
             points_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            points_of_interest = self.determinePointsOfInterest(place_location)
+            points_of_interest = self.determine_points_of_interest(place_location)
 
         def is_poi_occupied(poi):
             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
@@ -421,96 +421,70 @@ class EmptySpotDesignator(Designator):
         :param area:
         :return:
         """
-        # Just to be sure, copy e
-        e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
-        for testarea in e.data['areas']:
-            ''' See if the area is in the list of inspection areas '''
-            if testarea['name'] == area:
-                ''' Check if we have a shape '''
-                if 'shape' not in testarea:
-                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(testarea['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in testarea['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(testarea['name']))
-                    continue
-                box = testarea['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
-                    continue
-                # Now we're sure to have the correct bounding box
-                e.convex_hull = []
-                e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
-                e.convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                e.convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                e.convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
 
-                # Make sure we overwrite the e.z_max
-                e.z_max = box['min']['z'] - 0.04  # 0.04 is the usual offset
-                return self.determinePointsOfInterest(e)
+        if not area in e.volumes:
+            return []
 
-        return []
+        box = e.volumes[area]
 
+        if not hasattr(box, "bottom_area"):
+            rospy.logerr("Entity {0} has no shape with a bottom_area".format(e.id))
 
-    def determinePointsOfInterest(self, e):
+        # Now we're sure to have the correct bounding box
+        # Make sure we offset the bottom of the box
+        top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
+        return self.determine_points_of_interest(e._pose, top_z, box.bottom_area)
+
+    def determine_points_of_interest(self, center_pose, z_max, convex_hull):
+        """
+        Determine candidates for place poses
+        :param center_pose: kdl.Frame, center pose of the Entity to place on top of
+        :param z_max: float, height of the entity to place on, w.r.t. the entity
+        :param convex_hull: [kdl.Vector], convex hull of the entity
+        :return: [geometry_msgs.msg.PointStamped] of candidates for placing
+        """
 
         points = []
 
-        x = e.pose.position.x
-        y = e.pose.position.y
-
-        if len(e.convex_hull) == 0:
-            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+        if len(convex_hull) == 0:
+            rospy.logerr('determine_points_of_interest: Empty convex hull')
             return []
 
-        ''' Convert convex hull to map frame '''
+        # Convert convex hull to map frame
+        ch = offsetConvexHull(convex_hull, center_pose)
 
-        center_pose = poseMsgToKdlFrame(e.pose)
-        ch = list()
-        for point in e.convex_hull:
-            p = pointMsgToKdlVector(point)
-            # p = center_pose * p
-            # p = p * center_pose
-            pf = kdl.Frame(kdl.Rotation(), p)
-            # pf = pf * center_pose  # Original
-            pf = center_pose * pf  # Test
-            p = pf.p
-            ch.append(copy.deepcopy(p))  # Needed to fix "RuntimeError: underlying C/C++ object has been deleted"
-
-        ''' Loop over hulls '''
+        # Loop over hulls
         self.marker_array.markers = []
 
-        ch.append(ch[0])
         for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x() - ch[i].x()
-                dy = ch[i+1].y() - ch[i].y()
-                length = math.hypot(dx, dy)
+            j = (i + 1) % len(ch)
 
-                d = self._edge_distance
-                while d < (length-self._edge_distance):
+            dx = ch[j].x() - ch[i].x()
+            dy = ch[j].y() - ch[i].y()
 
-                    ''' Point on edge '''
-                    xs = ch[i].x() + d/length*dx
-                    ys = ch[i].y() + d/length*dy
+            length = kdl.diff(ch[j], ch[i]).Norm()
 
-                    ''' Shift point inwards and fill message'''
-                    ps = gm.PointStamped()
-                    ps.header.frame_id = "/map"
-                    ps.point.x = xs - dy/length * self._edge_distance
-                    ps.point.y = ys + dx/length * self._edge_distance
-                    ps.point.z = e.pose.position.z + e.z_max
-                    points.append(ps)
+            d = self._edge_distance
+            while d < (length-self._edge_distance):
 
-                    self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+                # Point on edge
+                xs = ch[i].x() + d/length*dx
+                ys = ch[i].y() + d/length*dy
 
-                    # ToDo: check if still within hull???
-                    d += self._spacing
+                # Shift point inwards and fill message
+                ps = gm.PointStamped()
+                ps.header.frame_id = "/map"
+                ps.point.x = xs - dy/length * self._edge_distance
+                ps.point.y = ys + dx/length * self._edge_distance
+                ps.point.z = center_pose.p.z() + z_max
+                points.append(ps)
+
+                self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+
+                # ToDo: check if still within hull???
+                d += self._spacing
 
         self.marker_pub.publish(self.marker_array)
 

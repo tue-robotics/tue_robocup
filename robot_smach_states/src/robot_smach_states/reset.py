@@ -3,6 +3,21 @@ import rospy
 import smach
 
 
+class ResetPart(smach.State):
+    def __init__(self, robot, part, timeout=0.0):
+        self.robot = robot
+        self.part = part
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
+
+    def execute(self, userdata=None):
+        if self.timeout:
+            self.part.reset(self.timeout)
+        else:
+            self.part.reset()
+        return 'done'
+
+
 class ResetHead(smach.State):
     def __init__(self, robot, timeout=0.0):
         self.robot = robot

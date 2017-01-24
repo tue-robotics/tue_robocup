@@ -5,15 +5,15 @@ import smach
 
 from std_msgs.msg import Header
 from geometry_msgs.msg import Point, PointStamped
-from ed.msg import EntityInfo
 
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
+from robot_skills.util.entity import Entity
 
 
 class LookAtEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
-        ds.check_type(entity, EntityInfo)
+        ds.check_type(entity, Entity)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -49,7 +49,7 @@ class LookAtArea(State):
         :param waittime: (optional) waittime (in seconds) between giving a head target and returning
         :return:
         """
-        ds.check_type(entity, EntityInfo)
+        ds.check_type(entity, Entity)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -65,52 +65,32 @@ class LookAtArea(State):
         center_point = Point()
         frame_id = "/"+entity.id
 
-        for testarea in entity.data['areas']:
-            ''' See if the area is in the list of inspection areas '''
-            if testarea['name'] == area:
-                ''' Check if we have a shape '''
-                if 'shape' not in testarea:
-                    rospy.logwarn("No shape in area {0}".format(area['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(testarea['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(area['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if 'box' not in testarea['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(area['name']))
-                    continue
-                box = testarea['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
-                    continue
+        if area in entity.volumes:
+            cp = entity.volumes[area].center_point
+            center_point.x, center_point.y, center_point.z = cp.x(), cp.y(), cp.z()
 
-                center_point.x = 0.5 * (box['min']['x'] + box['max']['x'])
-                center_point.y = 0.5 * (box['min']['y'] + box['max']['y'])
-                center_point.z = 0.5 * (box['min']['z'] + box['max']['z'])
+            rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
+            point_stamped = PointStamped(point=center_point,
+                                         header=Header(frame_id=frame_id))
 
-                rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
-                point_stamped = PointStamped(point=center_point,
-                                             header=Header(frame_id=frame_id))
+            # This is awefully hardcoded for AMIGO!!! (TODO)
+            height = min(0.4, max(0.1, center_point.z-0.55))
+            robot.torso._send_goal([height], timeout=0)
 
-                # This is awefully hardcoded for AMIGO!!! (TODO)
-                height = min(0.4, max(0.1, center_point.z-0.55))
-                robot.torso._send_goal([height], timeout=0)
+            robot.head.look_at_point(point_stamped, timeout=0)
 
-                robot.head.look_at_point(point_stamped, timeout=0)
+            robot.head.wait_for_motion_done(timeout=5)
+            robot.torso.wait_for_motion_done(timeout=5)
 
-                robot.head.wait_for_motion_done(timeout=5)
-                robot.torso.wait_for_motion_done(timeout=5)
-
-                rospy.sleep(rospy.Duration(waittime))
-                return "succeeded"
+            rospy.sleep(rospy.Duration(waittime))
+            return "succeeded"
 
         rospy.logwarn("Cannot find {0} in {1}".format(area, entity.id))
         return "failed"
 
 class LookOnTopOfEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
-        ds.check_type(entity, EntityInfo)
+        ds.check_type(entity, Entity)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -128,7 +108,7 @@ class LookOnTopOfEntity(State):
         center_point = Point()
         frame_id = "/"+entity.id
 
-        center_point.z = entity.z_max
+        center_point.z = entity.shape.z_max
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = PointStamped(point=center_point,

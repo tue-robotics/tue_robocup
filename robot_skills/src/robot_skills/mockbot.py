@@ -17,6 +17,8 @@ from robot_skills import robot
 from robot_skills.classification_result import ClassificationResult
 import robot_skills.util.msg_constructors as msgs
 
+from robot_skills.util.entity import from_entity_info
+
 
 class Arm(arms.Arm):
     def __init__(self, robot_name, side, tf_listener):
@@ -40,6 +42,7 @@ class Arm(arms.Arm):
         self._publish_marker = mock.MagicMock()
         self.occupied_by = None
         self._operational = True
+        self.wait_for_motion_done = mock.MagicMock()
 
 
 class Base(object):
@@ -107,6 +110,7 @@ class Head(object):
         self.setPanTiltGoal = mock.MagicMock()
         self.setLookAtGoal = mock.MagicMock()
         self.cancelGoal = mock.MagicMock()
+        self.wait_for_motion_done = mock.MagicMock()
         self._setHeadReferenceGoal = mock.MagicMock()
         self.__feedbackCallback = mock.MagicMock()
         self.__doneCallback = mock.MagicMock()
@@ -158,10 +162,11 @@ class ED(object):
             if not id:
                 entity.id = str(hash(entity))
             entity.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
-            entity.data = mock.MagicMock()
+            # entity.data = mock.MagicMock()
             entity.pose = mock.MagicMock()
+            entity.data = ""
 
-            return entity
+            return from_entity_info(entity)
 
     def __init__(self, *args, **kwargs):
         self._dynamic_entities = defaultdict(ED.generate_random_entity,
@@ -177,6 +182,7 @@ class ED(object):
         self.navigation.get_position_constraint = mock.MagicMock()
         self.update_entity = mock.MagicMock()
         self.get_closest_possible_person_entity = lambda *args, **kwargs: ED.generate_random_entity()
+        self.get_entity_info = mock.MagicMock()
 
         self._person_names = []
 
@@ -200,7 +206,7 @@ class ED(object):
 
     def classify(self, ids, types=None):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
-        return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
+        return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
 
 class Mockbot(robot.Robot):
     """

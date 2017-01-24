@@ -8,7 +8,7 @@ from visualization_msgs.msg import Marker
 
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
-from ed.msg import EntityInfo
+from robot_skills.util import transformations as tf
 import robot_smach_states.util.designators as ds
 
 from util.robocup_recorder import start_robocup_recorder
@@ -64,10 +64,7 @@ class SetInitialPose(smach.State):
 
         print e_loc
 
-        try:
-            rz = e_loc.data["pose"]["rz"]
-        except KeyError:
-            rz = 0
+        rz = tf.euler_z_from_quaternion(e_loc.pose.orientation)
 
         return e_loc.pose.position.x, e_loc.pose.position.y, rz
 

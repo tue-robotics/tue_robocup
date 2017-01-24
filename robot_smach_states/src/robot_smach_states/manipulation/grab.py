@@ -4,7 +4,7 @@ import rospy
 import smach
 import tf
 
-import ed.msg
+from robot_skills.util.entity import Entity
 import robot_skills.util.msg_constructors as msgs
 import robot_skills.util.transformations as transformations
 
@@ -29,6 +29,8 @@ class PrepareEdGrasp(smach.State):
         self.robot = robot
         self.arm_designator = arm
         self.grab_entity_designator = grab_entity
+
+        check_type(grab_entity, Entity)
 
     def execute(self, userdata):
 
@@ -75,6 +77,8 @@ class PickUp(smach.State):
         # Assign member variables
         self.robot = robot
         self.arm_designator = arm
+
+        check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
 
@@ -129,7 +133,7 @@ class PickUp(smach.State):
         else:
             rospy.loginfo("Updated pose of entity (dx, dy, dz) : (%f, %f, %f)" %
                           (updated_grab_entity.pose.position.x - grab_entity.pose.position.x,
-                           updated_grab_entity.pose.position.y - grab_entity.pose.position.y, 
+                           updated_grab_entity.pose.position.y - grab_entity.pose.position.y,
                            updated_grab_entity.pose.position.z - grab_entity.pose.position.z))
             grab_entity = updated_grab_entity
 
@@ -144,7 +148,7 @@ class PickUp(smach.State):
 
         #try:
         # In case grasp point determination didn't work
-        if grasp_pose is None:
+        if not grasp_pose:
             if self.robot.tf_listener.waitForTransform(grab_entity.id, self.robot.robot_name + "/base_link"):
                 # Transform to base link frame
                 goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
@@ -252,26 +256,15 @@ class PickUp(smach.State):
 
         # Remove all entities with a shape. These are probably not the ones we want to grasp
         for e in entities:
-            if e.has_shape:
+            if e.is_a("furniture"):
                 entities.remove(e)
         entities = sorted(entities,
-                          key=lambda entity: self.distance(entity, original_entity))
+                          key=lambda entity: entity.distance_to_3d(original_entity.pose.p))
 
         if self.distance(entities[0], original_entity) < 0.05:  # Objects Less than 5 cm apart might be associated
             return entities[0]
         else:
             return original_entity
-
-    @staticmethod
-    def distance(e1, e2):
-        """ Computes the distance between two entities
-        :param e1:
-        :param e2:
-        :return:
-        """
-        return math.hypot(math.hypot(e1.pose.position.x - e2.pose.position.x,
-                                     e1.pose.position.y - e2.pose.position.y),
-                          e1.pose.position.z - e2.pose.position.z)
 
 
 class ResetOnFailure(smach.StateMachine):
@@ -313,7 +306,7 @@ class Grab(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        check_type(item, ed.msg.EntityInfo)
+        check_type(item, Entity)
         check_type(arm, Arm)
 
         with self:

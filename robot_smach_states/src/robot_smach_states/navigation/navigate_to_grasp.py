@@ -7,7 +7,7 @@ from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
 from robot_smach_states.util.designators import Designator, check_resolve_type
-import ed.msg
+from robot_skills.util.entity import Entity
 from robot_skills.arms import Arm
 
 import rospy
@@ -21,7 +21,7 @@ class NavigateToGrasp(NavigateTo):
         super(NavigateToGrasp, self).__init__(robot, reset_head=False)
 
         self.robot    = robot
-        check_resolve_type(entity_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
+        check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
 
         check_resolve_type(arm_designator, Arm) #Check that the arm_designator resolves to an Arm

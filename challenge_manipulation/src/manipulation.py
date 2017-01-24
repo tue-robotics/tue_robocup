@@ -45,7 +45,7 @@ from robocup_knowledge import load_knowledge
 from empty_shelf_designator import EmptyShelfDesignator
 
 # PDF writer
-import pdf
+# import pdf
 
 USE_SLAM = True  # Indicates whether or not to use SLAM for localization
 
@@ -54,6 +54,7 @@ if USE_SLAM:
     CABINET = challenge_knowledge.cabinet_slam
 else:
     CABINET = challenge_knowledge.cabinet_amcl
+
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
@@ -254,32 +255,13 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for area in cabinet_entity.data['areas']:
+        for name, volume in cabinet_entity.volumes.iteritems():
             ''' See if the area is in the list of inspection areas '''
-            if area['name'] in OBJECT_SHELVES:
-                ''' Check if we have a shape '''
-                if 'shape' not in area:
-                    rospy.logwarn("No shape in area {0}".format(area['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(area['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(area['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in area['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(area['name']))
-                    continue
-                box = area['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
-                    continue
-
-                x = 0.5 * (box['min']['x'] + box['max']['x'])
-                y = 0.5 * (box['min']['y'] + box['max']['y'])
-                z = 0.5 * (box['min']['z'] + box['max']['z'])
-                shelves.append({'ps': geom.PointStamped(x, y, z, cabinet_entity.id), 'name': area['name']})
+            if name in OBJECT_SHELVES:
+                center_point = volume.center_point
+                shelves.append({'ps': geom.PointStamped(center_point.x(), center_point.y(), center_point.z(), cabinet_entity.id), 'name': name})
             else:
-                rospy.loginfo("{0} not in object shelves".format(area['name']))
+                rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.id))
 
         # rospy.loginfo("Inspection points: {0}".format(shelves))
         # ''' Loop over shelves '''
@@ -382,7 +364,7 @@ class RemoveSegmentedEntities(smach.State):
         entities = self.robot.ed.get_entities(parse=False)
 
         for e in entities:
-            if not e.has_shape and e.id != '_root':
+            if not e.is_a("furniture") and e.id != '_root':
                 self.robot.ed.remove_entity(e.id)
 
         return "done"
@@ -682,7 +664,7 @@ def setup_statemachine(robot):
             entities = [ e[0] for e in DETECTED_OBJECTS_WITH_PROBS ]
 
             # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
-            pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF], "tech_united_manipulation_challenge")
+            # pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF], "tech_united_manipulation_challenge")
 
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',

@@ -24,5 +24,7 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>cb_planner_msgs_srvs</run_depend>
+  <run_depend>python-graphviz</run_depend>
+  <run_depend>python-psutil</run_depend>
 
 </package>

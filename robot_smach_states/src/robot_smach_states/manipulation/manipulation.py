@@ -7,7 +7,7 @@ import geometry_msgs
 from ed.msg import EntityInfo
 
 from robot_smach_states.human_interaction import Say
-from robot_smach_states.reset import ResetTorso
+from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
@@ -106,7 +106,7 @@ class HandoverToHuman(smach.StateMachine):
                         transitions={'locked'         :'SPINDLE_MEDIUM'})
 
             smach.StateMachine.add("SPINDLE_MEDIUM",
-                        ResetTorso(robot),
+                        ResetPart(robot, robot.torso),
                         transitions={'done'         :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
 
             smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL",
@@ -144,7 +144,7 @@ class HandoverToHuman(smach.StateMachine):
                                       'failed'      :'RESET_TORSO'    })
 
             smach.StateMachine.add('RESET_TORSO',
-                        ResetTorso(robot),
+                        ResetPart(robot, robot.torso),
                         transitions={'done':'UNLOCK_ARM'})
 
             smach.StateMachine.add("UNLOCK_ARM",

@@ -14,12 +14,12 @@ if __name__ == "__main__":
 
     exclude_list = ["door", "amigo", "sergio", "walls", "floor", "root"]
 
-    ids = [e.id for e in robot.ed.get_entities() if e.has_shape and not any(ex in e.id for ex in exclude_list)]
+    ids = [e.id for e in robot.ed.get_entities() if e.is_a("furniture") and not any(ex in e.id for ex in exclude_list)]
 
     while not rospy.is_shutdown():
 
 	    random.shuffle(ids)
-        
+
 	    print "IDS:", ids
 
 	    for id in ids:
