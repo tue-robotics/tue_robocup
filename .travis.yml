@@ -1,47 +1,40 @@
-language:
-  - cpp
-  - python
-python:
-  - "2.7"
-compiler:
-  - gcc
-env:
-  - ROS_DISTRO=hydro
-
-notifications:
-  - email: false
 sudo: required
+dist: trusty
+language: generic
+env:
+  - ROS_DISTRO=indigo
+  - ROS_DISTRO=jade
+notifications:
+  email:
+    on_success: change # [always|never|change], default=change
+    on_failure: change # [always|never|change], default=always
 
 before_install:
   - CI_SOURCE_PATH=$(pwd)
   - REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  - sudo pip install codecov
-  - sudo pip install xhtml2pdf # TODO: Install requirements.txt with tue-get install
 
 install:
-  # hack for mongodb update
-  - sudo apt-get purge mongodb-10gen
-  #sudo apt-get install mongodb-dev -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
+  - tue-get install ros-$REPOSITORY_NAME
   - source ~/.tue/setup.bash # source all target setup files
-  - source ~/.bashrc
-  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_rips ros-test_tools ros-challenge_gpsr ros-challenge_navigation ros-challenge_person_recognition ros-challenge_speech_recognition
-  - tue-branch $(git name-rev --name-only HEAD) #Checkout everything on the same name as the current branch
-  - cd
 
 before_script:
-  - cd ${TUE_SYSTEM_DIR}/src
-  - export ROBOT_ENV=robotics_testlabs
-  # Link the repo we are testing to the new workspace
-  - rm -rf $REPOSITORY_NAME
-  - ln -s $CI_SOURCE_PATH .
+  # remove the tue-get version of our repo with the travis one
+  - cd "$TUE_ENV_DIR/repos/https_/github.com/tue-robotics"
+  - mv "$REPOSITORY_NAME.git" "$REPOSITORY_NAME.old"
+  - ln -s "$CI_SOURCE_PATH" "$REPOSITORY_NAME.git"
+
+  # install travis' package dependencies
+  - cd "$TUE_SYSTEM_DIR/src"
+  - rm *
+  - tue-get update ros-$REPOSITORY_NAME
   - ls -l
-  - cd .. # go to the catkin workspace
+
+  # go to the catkin workspace
+  - cd "$TUE_SYSTEM_DIR"
 
 script:
-  - echo $ROS_PACKAGE_PATH
-  - rospack list
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
