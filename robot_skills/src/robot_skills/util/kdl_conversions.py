@@ -106,6 +106,20 @@ def kdlFrameToPoseMsg(frame):
     pose.orientation = kdlRotationToQuaternionMsg(frame.M)
     return pose
 
+def kdlFrameFromXYZRPY(x, y, z, roll, pitch, yaw):
+    """
+    Create a PyKDL.Frame from raw scalars
+    :param x:
+    :param y:
+    :param z:
+    :param roll:
+    :param pitch:
+    :param yaw:
+    :return:
+    :rtype: PyKDL.Frame
+    """
+    return kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z))
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

@@ -3,6 +3,7 @@ import math
 import rospy
 import smach
 import tf
+from robot_skills.utilkdl_conversions import kdlFrameFromXYZRPY
 
 from robot_skills.util.entity import Entity
 import robot_skills.util.msg_constructors as msgs
@@ -188,7 +189,7 @@ class PickUp(smach.State):
 
         # Grasp
         # rospy.loginfo('Start grasping')
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+        if not arm.send_goal(kdlFrameFromXYZRPY(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0),
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=20, pre_grasp=True,
                              allowed_touch_objects=[grab_entity.id]
@@ -210,7 +211,7 @@ class PickUp(smach.State):
             roll = 0.3
         else:
             roll = -0.3
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, roll, 0.0, 0.0,
+        if not arm.send_goal(kdlFrameFromXYZRPY(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, roll, 0.0, 0.0),
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
@@ -222,7 +223,7 @@ class PickUp(smach.State):
             roll = 0.6
         else:
             roll = -0.6
-        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, roll, 0.0, 0.0,
+        if not arm.send_goal(kdlFrameFromXYZRPY(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, roll, 0.0, 0.0),
                              frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=0.0, allowed_touch_objects=[grab_entity.id]
                              ):
