@@ -18,7 +18,8 @@ from visualization_msgs.msg import MarkerArray, Marker
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
-from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector, offsetConvexHull
+from robot_smach_states.util.geometry_helpers import offsetConvexHull
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors

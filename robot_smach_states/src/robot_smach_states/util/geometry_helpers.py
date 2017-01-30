@@ -2,6 +2,7 @@ import math
 import PyKDL as kdl
 
 import geometry_msgs.msg as gm
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector
 
 from ed.msg import EntityInfo
 

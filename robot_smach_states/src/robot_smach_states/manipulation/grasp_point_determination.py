@@ -4,7 +4,8 @@ import math
 
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
-from robot_smach_states.util.geometry_helpers import pointMsgToKdlVector, poseMsgToKdlFrame, offsetConvexHull
+from robot_smach_states.util.geometry_helpers import offsetConvexHull
+from robot_skills.util.kdl_conversions import pointMsgToKdlVector, poseMsgToKdlFrame
 
 
 class GraspPointDeterminant(object):

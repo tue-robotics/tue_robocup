@@ -6,7 +6,6 @@ from robot_smach_states.util.designators import Designator
 import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
 import robot_skills.util.msg_constructors as msg_constructors
-from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector
 import PyKDL as kdl
 import copy
 
