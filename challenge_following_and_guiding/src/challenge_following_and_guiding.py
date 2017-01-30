@@ -66,8 +66,6 @@ class WaitForOperatorCommand(smach.State):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
 
-        base_pose = self._robot.base.get_location()
-
         self._robot.head.look_at_standing_person()
 
         self._robot.speech.speak("Should I guide you back?")

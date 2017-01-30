@@ -16,6 +16,7 @@ from cb_planner_msgs_srvs.srv import GetPlan, CheckPlan
 
 from .util import nav_analyzer
 from .util import transformations
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame
 
 
 ###########################################################################################################################
@@ -263,13 +264,13 @@ def get_location(robot_name, tf_listener):
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         target_pose.header.stamp = time
-        return target_pose
+        return poseMsgToKdlFrame(target_pose.pose)
 
     except (tf.LookupException, tf.ConnectivityException):
         rospy.logerr("tf request failed!!!")
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
-        return target_pose
+        return poseMsgToKdlFrame(target_pose.pose)
 
 def computePathLength(path):
     distance = 0.0
