@@ -42,8 +42,18 @@ def kdlRotationToQuaternionMsg(rotation):
     :param rotation: Rotation to be converted
     :type rotation: PyKDL.Rotation
     :rtype: geometry_msgs.msg.Quaternion
+
+    >>> rot = kdl.Rotation.Quaternion(1, 0, 0, 0)
+    >>> quat = kdlRotationToQuaternionMsg(rot)
+    >>> (quat.x, quat.y, quat.z, quat.w)
+    (1.0, 0.0, 0.0, 0.0)
+    >>> from math import pi
+    >>> rot = kdl.Rotation.RPY(pi/2, 0, 0)
+    >>> quat = kdlRotationToQuaternionMsg(rot)
+    >>> (quat.x, quat.y, quat.z, quat.w)
+    (0.7071067811865475, 0.0, 0.0, 0.7071067811865476)
     """
-    return gm.Quaternion(rotation.GetQuaternion())
+    return gm.Quaternion(*rotation.GetQuaternion())
 
 def quaternionMsgToKdlRotation(quaternion):
     """
