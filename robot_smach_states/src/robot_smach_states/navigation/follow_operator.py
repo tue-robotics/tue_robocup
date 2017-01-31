@@ -49,6 +49,7 @@ class FollowOperator(smach.State):
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name, geometry_msgs.msg.PointStamped, queue_size=10)
 
         self._last_pose_stamped = None
+        self._last_pose_stamped_time = None
         self._last_operator_pose_stamped = None
 
         self._replan_active = False
@@ -86,26 +87,28 @@ class FollowOperator(smach.State):
 
     def _standing_still_for_x_seconds(self, timeout):
         current_pose_stamped = self._robot.base.get_location()
+        now = rospy.Time.now()
 
         if not self._last_pose_stamped:
             self._last_pose_stamped = current_pose_stamped
+            self._last_pose_stamped_time = now
         else:
-            current_yaw = transformations.euler_z_from_quaternion(current_pose_stamped.pose.orientation)
-            last_yaw = transformations.euler_z_from_quaternion(self._last_pose_stamped.pose.orientation)
+            current_yaw = current_pose_stamped.M.GetRPY()[2]  # Get the Yaw
+            last_yaw = self._last_pose_stamped.M.GetRPY()[2]  # Get the Yaw
 
             # Compare the pose with the last pose and update if difference is larger than x
-            if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.x,
-                          current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.05 or abs(current_yaw - last_yaw) > 0.3:
+            if (current_pose_stamped - self._last_pose_stamped).Norm() > 0.05 or abs(current_yaw - last_yaw) > 0.3:
                 # Update the last pose
           #      print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
                 self._last_pose_stamped = current_pose_stamped
+                self._last_pose_stamped_time = rospy.Time.now()
             else:
          #       print "Robot is standing still :/"
 
-                print "Robot dit not move for x seconds: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+                print "Robot dit not move for x seconds: %f"%(now - self._last_pose_stamped_time).to_sec()
 
                 # Check whether we passed the timeout
-                if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > timeout:
+                if (now - self._last_pose_stamped_time).to_sec() > timeout:
                     return True
         return False
 
