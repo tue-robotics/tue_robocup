@@ -475,7 +475,7 @@ class FollowOperator(smach.State):
         return False
 
     def _turn_towards_operator(self):
-        robot_position = self._robot.base.get_location().pose.position
+        robot_position = self._robot.base.get_location().p
         operator_position = self._last_operator.pose.position
 
         p = PositionConstraint()
