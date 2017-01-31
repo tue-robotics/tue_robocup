@@ -125,9 +125,9 @@ class StoreBeverageSide(smach.State):
             result = self._robot.ears.recognize('<side>', {'side':['left','right']}, time_out = rospy.Duration(10)) # Wait 100 secs
 
         if result.result == "left":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+            base_pose.M.DoRotZ(math.pi / 2)
         elif result.result == "right":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+            base_pose.M.DoRotZ(-math.pi / 2)
         else:
             print "\n\n WHUT?? No left or right lol? \n\n"
             print result
