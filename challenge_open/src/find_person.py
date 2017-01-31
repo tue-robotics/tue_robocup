@@ -115,7 +115,7 @@ class PersonDesignator(ds.Designator):
             # We just pick the person closest to the robot
             bp = self._robot.base.get_location()
             possible_humans = sorted(possible_humans,
-                                     key=lambda ph: ph.distance_to_2d(bp._pose.p))
+                                     key=lambda ph: ph.distance_to_2d(bp.p))
             return possible_humans[0]
 
 
