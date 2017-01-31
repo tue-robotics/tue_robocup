@@ -184,7 +184,7 @@ class FollowOperator(smach.State):
         just add it. '''
         if self._operator_id:
             if self._breadcrumbs:
-                if(self._breadcrumbs[-1]._pose - self._operator._pose).Norm() < self._breadcrumb_distance :
+                if self._breadcrumbs[-1].distance_to_2d(self._operator._pose.p) < self._breadcrumb_distance:
                     self._breadcrumbs[-1] = self._operator
                 else:
                     self._breadcrumbs.append(self._operator)
@@ -196,7 +196,7 @@ class FollowOperator(smach.State):
         # robot_yaw = transformations.euler_z_from_quaternion(self._robot.base.pose.orientation)
         temp_crumbs = []
         for crumb in self._breadcrumbs:
-            if (crumb - robot_position).Norm() > self._lookat_radius + 0.1:
+            if crumb.disntance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
                 temp_crumbs.append(crumb)
             else:
                 temp_crumbs = []
@@ -257,12 +257,7 @@ class FollowOperator(smach.State):
             operator_pos.point.z = 0.0
             self._operator_pub.publish(operator_pos)
 
-            robot_position = self._robot.base.get_location().pose.position
-            operator_position = self._last_operator.pose.position
-
-            dx = operator_position.x - robot_position.x
-            dy = operator_position.y - robot_position.y
-            self._operator_distance = math.hypot(dx, dy)
+            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().p))
 
             return True
         else:
@@ -281,22 +276,13 @@ class FollowOperator(smach.State):
                     operator_pos.point.z = 0.0
                     self._operator_pub.publish(operator_pos)
 
-                    robot_position = self._robot.base.get_location().pose.position
-                    operator_position = self._last_operator.pose.position
-
-                    dx = operator_position.x - robot_position.x
-                    dy = operator_position.y - robot_position.y
-                    self._operator_distance = math.hypot(dx, dy)
+                    self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().p))
 
                     return True
                 else:
                     self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
 
-            operator_position = self._last_operator.pose.position
-
-            dx = operator_position.x - robot_position.x
-            dy = operator_position.y - robot_position.y
-            self._operator_distance = math.hypot(dx, dy)
+            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().p))
             # If the operator is lost, check if we still have an ID
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
