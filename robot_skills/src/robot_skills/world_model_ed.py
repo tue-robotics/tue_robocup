@@ -157,7 +157,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
+    def update_entity(self, id, type = None, kdlFrame = None, flags = None, add_flags = [], remove_flags = [], action = None):
         """
         Updates entity
         :param id: entity id
@@ -175,10 +175,10 @@ class ED:
         if action:
             json_entity += ', "action": "%s"' % action
 
-        if posestamped:
-            X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
-            t = posestamped.pose.position
-            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
+        if kdlFrame:
+            Z, Y, X = kdlFrame.M.GetEulerZYX()
+            t = kdlFrame.p
+            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:
             json_entity += ', "flags": ['
