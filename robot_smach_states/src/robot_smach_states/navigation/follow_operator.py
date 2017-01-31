@@ -184,9 +184,7 @@ class FollowOperator(smach.State):
         just add it. '''
         if self._operator_id:
             if self._breadcrumbs:
-                dx = self._breadcrumbs[-1].pose.position.x - self._operator.pose.position.x
-                dy = self._breadcrumbs[-1].pose.position.y - self._operator.pose.position.y
-                if math.hypot(dx, dy) < self._breadcrumb_distance :
+                if(self._breadcrumbs[-1]._pose - self._operator._pose).Norm() < self._breadcrumb_distance :
                     self._breadcrumbs[-1] = self._operator
                 else:
                     self._breadcrumbs.append(self._operator)
@@ -194,13 +192,11 @@ class FollowOperator(smach.State):
                 self._breadcrumbs.append(self._operator)
 
         # Remove 'reached' breadcrumbs from breadcrumb path
-        robot_position = self._robot.base.get_location().pose.position
+        robot_position = self._robot.base.get_location()
         # robot_yaw = transformations.euler_z_from_quaternion(self._robot.base.pose.orientation)
         temp_crumbs = []
         for crumb in self._breadcrumbs:
-            dx = crumb.pose.position.x - robot_position.x
-            dy = crumb.pose.position.y - robot_position.y
-            if math.hypot(dx, dy) > self._lookat_radius + 0.1:
+            if (crumb - robot_position).Norm() > self._lookat_radius + 0.1:
                 temp_crumbs.append(crumb)
             else:
                 temp_crumbs = []
