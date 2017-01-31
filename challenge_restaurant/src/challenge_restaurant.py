@@ -191,13 +191,11 @@ else:
                     self._robot.head.cancel_goal()
 
                     if side == "left":
-                        base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                            transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+                        base_pose.M.DoRotZ(math.pi / 2)
                     elif side == "right":
-                        base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                            transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+                        base_pose.M.DoRotZ(-math.pi / 2)
 
-                    loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
+                    loc_dict = {'x':base_pose.p.x(), 'y':base_pose.p.y(), 'phi':base_pose.M.GetRPY()[2]}
                     rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
                     visualize_location(base_pose, location)
                     self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
