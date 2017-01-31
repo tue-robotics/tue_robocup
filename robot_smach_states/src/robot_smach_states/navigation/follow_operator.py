@@ -331,12 +331,12 @@ class FollowOperator(smach.State):
     def _update_navigation(self):
         self._robot.head.cancel_goal()
 
-        robot_position = self._robot.base.get_location().pose.position
-        operator_position = self._last_operator.pose.position
+        robot_position = self._robot.base.get_location().p
+        operator_position = self._last_operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
         p = PositionConstraint()
-        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x, operator_position.y, self._operator_radius)
+        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x(), operator_position.y(), self._operator_radius)
 
         o = OrientationConstraint()
         if self._operator_id:
@@ -358,7 +358,7 @@ class FollowOperator(smach.State):
             dx = crumb.pose.position.x - previous_point.x
             dy = crumb.pose.position.y - previous_point.y
 
-            length = math.hypot(dx, dy)
+            length = crumb.distance_to_2d(previous_point)
 
             if length != 0:
                 dx_norm = dx / length
