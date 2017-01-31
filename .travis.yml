@@ -1,111 +1,39 @@
-language:
-  - cpp
-  - python
-python:
-  - "2.7"
-compiler:
-  - gcc
-env:
-  - ROS_DISTRO=hydro
-
-notifications:
-  - email: false
 sudo: required
+dist: trusty
+language: generic
+env:
+  - ROS_DISTRO=indigo
+  - ROS_DISTRO=jade
+notifications:
+  email:
+    on_success: change # [always|never|change], default=change
+    on_failure: change # [always|never|change], default=always
 
 before_install:
   - CI_SOURCE_PATH=$(pwd)
   - REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  - sudo pip install codecov
-  - sudo pip install xhtml2pdf # TODO: Install requirements.txt with tue-get install
 
 install:
-  # hack for mongodb update
-  - sudo apt-get purge mongodb-10gen
-  #sudo apt-get install mongodb-dev -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_rips ros-test_tools ros-challenge_gpsr ros-challenge_navigation ros-challenge_person_recognition ros-challenge_speech_recognition
+  - tue-get install ros-$REPOSITORY_NAME
   - source ~/.tue/setup.bash # source all target setup files
-  - tue-branch $(git name-rev --name-only HEAD) #Checkout everything on the same name as the current branch
-  - cd
 
 before_script:
-  - cd ${TUE_SYSTEM_DIR}/src
-  - export ROBOT_ENV=robotics_testlabs
-  # Link the repo we are testing to the new workspace
-  - rm -rf $REPOSITORY_NAME
-  - ln -s $CI_SOURCE_PATH .
+  # remove the tue-get version of our repo with the travis one
+  - cd "$TUE_ENV_DIR/repos/https_/github.com/tue-robotics"
+  - mv "$REPOSITORY_NAME.git" "$REPOSITORY_NAME.old"
+  - ln -s "$CI_SOURCE_PATH" "$REPOSITORY_NAME.git"
+
+  # install travis' package dependencies
+  - cd "$TUE_SYSTEM_DIR/src"
+  - rm *
+  - tue-get update ros-$REPOSITORY_NAME
   - ls -l
-  - cd .. # go to the catkin workspace
+
+  # go to the catkin workspace
+  - cd "$TUE_SYSTEM_DIR"
 
 script:
-  - pushd .
-  - echo $ROS_PACKAGE_PATH
-  - rospack list
-  - cd src
-  - pwd
-  - find . -maxdepth 3 -type d -exec ls -l "{}" \;
-  - rm -rf /home/travis/build/tue-robotics/tue_robocup
-  - find . -maxdepth 3 -type d -exec ls -l "{}" \;
-  - roscd challenge_test
-  - pwd
-  - cd ..
-  - ls
-  - popd
-  - catkin_make -j2
-  - catkin_make install   # installing the package
-  - catkin_make tests     # build the tests
-  - roscore >> /dev/null & #Set up a roscore to run the tests with
-  - catkin_make run_tests # and run them
-  - rosrun tf_server tf_server >> /dev/null & #Robot keeps waiting for this
-  -
-  - cd #Go to home dir
-  -
-  - dpkg -S PyKDL.so
-  - python -c "import PyKDL; print PyKDL.__file__"
-  -
-  - pushd .
-  - roscd test_tools
-  - rosrun test_tools open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
-  - popd
-  -
-  - rosrun challenge_test test.py mockbot
-  -
-  - rosrun challenge_manipulation manipulation.py mockbot
-  -
-  - pushd .
-  - roscd test_tools
-  - rosrun test_tools open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
-  - popd
-  -
-  - rosrun challenge_navigation challenge_navigation.py mockbot
-  -
-  - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot; RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi #exitcode124 means timeout, so count as success.
-  -
-  - pushd .
-  - roscd test_tools
-  - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in.
-  - sleep 5
-  - cat open_door_log.txt
-  - popd
-  -
-  - rosrun challenge_rips rips.py mockbot
-  -
-  #- rosrun challenge_robonurse challenge_robonurse.py mockbot
-  -
-  - rosrun challenge_speech_recognition speech_recognition.py mockbot
-  -
-  - pushd .
-  - roscd test_tools
-  - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in.
-  - sleep 5
-  - cat open_door_log.txt
-  - popd
-  -
-  - timeout 5m rosrun challenge_gpsr gpsr.py mockbot; RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi; #exitcode124 means timeout, so count as success.
-  -
-  - killall roscore #And kill the roscore afterwards
-  -
-  - wget http://imgur.com/tools/imgurbash.sh
-  - chmod +x imgurbash.sh
-  - ./imgurbash.sh *_designators.png
+  - catkin build
+  - catkin run_tests # and run them
