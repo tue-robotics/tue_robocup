@@ -75,7 +75,7 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            base_position = self._robot.base.get_location().pose.position
+            base_position = self._robot.base.get_location().p
 
             # Update kinect
             try:
@@ -101,28 +101,28 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-			rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-			rospy.logerr("I will return an empty detection list!")
-			persons = []
+            rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+            rospy.logerr("I will return an empty detection list!")
+            persons = []
             self._sides[side]["score"]["face_found"] = False
             if persons:
                 for person in persons:
                     p = person.pose.pose.position
-                    if math.hypot(p.x - base_position.x, p.y - base_position.y) < self._max_radius:
+                    if math.hypot(p.x - base_position.x(), p.y - base_position.y()) < self._max_radius:
                         self._sides[side]["score"]["face_found"] = True
 
             if self._sides[side]["score"]["face_found"]:
                 self._robot.speech.speak("hi there")
 
     def _subset_selection(self, base_position, e):
-        distance = math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y)
+        distance = e.distance_to_2d(base_position)
         return distance < self._max_radius
 
     def _score_area(self, e):
         return _get_area(e.convex_hull)
 
     def _score_closest_point(self, base_position, entities):
-        distances = [ math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y) for e in entities ]
+        distances = [ e.distance_to_2d(base_position) for e in entities ]
         if distances:
             min_distance = min(distances)
         else:
