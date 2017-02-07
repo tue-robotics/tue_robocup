@@ -3,7 +3,7 @@ import math
 import rospy
 import smach
 import tf
-from robot_skills.utilkdl_conversions import kdlFrameFromXYZRPY
+from robot_skills.util.kdl_conversions import kdlFrameFromXYZRPY
 
 from robot_skills.util.entity import Entity
 import robot_skills.util.msg_constructors as msgs

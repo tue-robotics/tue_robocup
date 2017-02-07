@@ -47,7 +47,7 @@ class Arm(object):
 
         # Get stuff from the parameter server
         offset = self.load_param('skills/arm/offset/' + self.side)
-        self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pith"], offset["yaw"]),
+        self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
                                 kdl.Vector(offset["x"], offset["y"], offset["z"]))
 
         self.marker_to_grippoint_offset = self.load_param('skills/arm/offset/marker_to_grippoint')

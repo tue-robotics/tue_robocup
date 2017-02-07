@@ -157,7 +157,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, kdlFrame = None, flags = None, add_flags = [], remove_flags = [], action = None):
+    def update_entity(self, id, type = None, kdlFrame = None, frame_id="/map", flags = None, add_flags = [], remove_flags = [], action = None):
         """
         Updates entity
         :param id: entity id
@@ -178,6 +178,9 @@ class ED:
         if kdlFrame:
             Z, Y, X = kdlFrame.M.GetEulerZYX()
             t = kdlFrame.p
+            if frame_id != "/map":
+                #  TODO: transform to /map
+                pass
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:

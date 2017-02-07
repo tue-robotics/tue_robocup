@@ -106,7 +106,7 @@ def kdlFrameToPoseMsg(frame):
     pose.orientation = kdlRotationToQuaternionMsg(frame.M)
     return pose
 
-def kdlFrameFromXYZRPY(x, y, z, roll, pitch, yaw):
+def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     """
     Create a PyKDL.Frame from raw scalars
     :param x:

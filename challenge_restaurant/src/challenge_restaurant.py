@@ -106,7 +106,7 @@ class StoreKitchen(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
+        self._robot.ed.update_entity(id="kitchen", kdlFrame=self._robot.base.get_location(), type="waypoint")
 
         return "done"
 
@@ -616,10 +616,10 @@ def setup_statemachine(robot):
 
 
 def test_delivery(robot):
-    from robot_skills.util.msg_constructors import PoseStamped
-    robot.ed.update_entity(id="one", posestamped=PoseStamped(x=1.0, y=0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="two", posestamped=PoseStamped(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="three", posestamped=PoseStamped(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
+    from robot_skills.util.kdl_conversions import kdlFrameFromXYZRPY
+    robot.ed.update_entity(id="one", kdlFrame=kdlFrameFromXYZRPY(x=1.0, y=0), type="waypoint")
+    robot.ed.update_entity(id="two", kdlFrame=kdlFrameFromXYZRPY(x=-1.2, y=0.0), type="waypoint")
+    robot.ed.update_entity(id="three", kdlFrame=kdlFrameFromXYZRPY(x=1.950, y=1.551), type="waypoint")
 
     global ORDERS
     ORDERS = {"beverage":{"name":"coke", "location":"one"}, "combo":{"name":"pringles and chocolate", "location":"two"}}
