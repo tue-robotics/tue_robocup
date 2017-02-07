@@ -55,7 +55,11 @@ class Designator(object):
         if isinstance(self.resolve_type, list):
             resolve_type = self.resolve_type[0]
 
-        if result is not None and not issubclass(result_type, resolve_type):
+        if isinstance(self.resolve_type, tuple):
+            result_types = map(type, result)
+            if not all(expected_type == resolved_type for expected_type, resolved_type in zip(self.resolve_type, result_types)):
+                raise TypeError("{} resolved to a '{}' instead of expected '{}'. ".format(self, result_types, resolve_type))
+        elif result is not None and not issubclass(result_type, resolve_type):
             raise TypeError("{} resolved to a '{}' instead of expected '{}'. "
                             "Originals: result type: {}, resolve type: {}".format(self, result_type, resolve_type,
                                                                                   type(result), self.resolve_type))

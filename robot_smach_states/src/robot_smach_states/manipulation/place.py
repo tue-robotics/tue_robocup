@@ -3,7 +3,7 @@ import rospy
 import smach
 
 import robot_skills.util.transformations as transformations
-from robot_skills.util.kdl_conversions import kdlFrameFromXYZRPY
+from robot_skills.util.kdl_conversions import kdlFrameFromXYZRPY, kdlVectorToPointMsg
 from robot_smach_states.navigation import NavigateToPlace
 
 from robot_smach_states.state import State
@@ -25,7 +25,7 @@ class PreparePlace(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Check types or designator resolve types
-        check_type(placement_pose, Frame)
+        check_type(placement_pose, (Frame, str))
         check_type(arm, Arm)
 
         # Assign member variables
@@ -35,7 +35,7 @@ class PreparePlace(smach.State):
 
     def execute(self, userdata):
 
-        placement_pose = self._placement_pose_designator.resolve()
+        placement_pose, frame_id = self._placement_pose_designator.resolve()
         if not placement_pose:
             rospy.logerr("Could not resolve placement_pose")
             return "failed"
@@ -77,7 +77,7 @@ class Put(smach.State):
 
         # Check types or designator resolve types
         check_type(item_to_place, Entity)
-        check_type(placement_pose, Frame)
+        check_type(placement_pose, (Frame, str))
         check_type(arm, Arm)
 
         # Assign member variables
@@ -92,7 +92,7 @@ class Put(smach.State):
             rospy.logerr("Could not resolve item_to_place")
             #return "failed"
 
-        placement_pose = self._placement_pose_designator.resolve()
+        placement_pose, frame_id = self._placement_pose_designator.resolve()
         if not placement_pose:
             rospy.logerr("Could not resolve placement_pose")
             return "failed"
@@ -104,9 +104,9 @@ class Put(smach.State):
 
         rospy.loginfo("Placing")
 
-        # placement_pose is a PoseStamped
-        place_pose_bl = transformations.tf_transform(placement_pose.pose.position,
-                                                     placement_pose.header.frame_id,
+        # placement_pose is a PyKDL.Frame
+        place_pose_bl = transformations.tf_transform(kdlVectorToPointMsg(placement_pose.p),
+                                                     frame_id,
                                                      self._robot.robot_name+'/base_link',
                                                      tf_listener=self._robot.tf_listener)
 
@@ -183,7 +183,7 @@ class Place(smach.StateMachine):
 
         #Check types or designator resolve types
         assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
-        assert(place_pose.resolve_type == Frame or type(place_pose) == Frame)
+        assert(place_pose.resolve_type == (Frame, str) or type(place_pose) == (Frame, str))
         assert(arm.resolve_type == Arm or type(arm) == Arm)
 
         with self:

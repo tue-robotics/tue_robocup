@@ -24,7 +24,7 @@ class NavigateToPlace(NavigateTo):
         super(NavigateToPlace, self).__init__(robot)
 
         self.robot    = robot
-        check_resolve_type(place_pose_designator, Frame) #Check that place_pose_designator actually returns a PoseStamped
+        check_resolve_type(place_pose_designator, (Frame, str)) #Check that place_pose_designator actually returns a PoseStamped
         self.place_pose_designator = place_pose_designator
 
         self.arm_designator = arm_designator
@@ -44,7 +44,7 @@ class NavigateToPlace(NavigateTo):
             angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
-        place_pose = self.place_pose_designator.resolve()
+        place_pose, frame_id = self.place_pose_designator.resolve()
 
         if not place_pose:
             rospy.logerr("No such place_pose")
@@ -64,7 +64,7 @@ class NavigateToPlace(NavigateTo):
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
         # pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
         # oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
-        pc = PositionConstraint(constraint=ri+" and "+ro, frame=place_pose.header.frame_id)
-        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame=place_pose.header.frame_id, angle_offset=angle_offset)
+        pc = PositionConstraint(constraint=ri+" and "+ro, frame=frame_id)
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame=frame_id, angle_offset=angle_offset)
 
         return pc, oc
