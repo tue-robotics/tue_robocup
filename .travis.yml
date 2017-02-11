@@ -36,5 +36,6 @@ before_script:
 
 script:
   # - catkin build
+  - source ~/.tue/setup.bash # source once again
   - tue-make
   - catkin run_tests # and run them
