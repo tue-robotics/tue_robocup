@@ -1,0 +1,82 @@
+@startuml
+
+package robot_skills {
+    interface Robot
+    interface Base
+    interface Head
+    interface Arm
+    interface Reasoner
+    interface Perception
+    interface Ears
+    interface Speech
+    interface Lights
+    interface EmergencyStop
+    interface HeightAdjustment
+}
+
+interface Gui
+class OperatorGui
+class ClientGui
+class OnBoardGui
+Gui <|-- OperatorGui
+Gui <|-- ClientGui
+Gui <|-- OnBoardGui
+
+Arm <|-- MoveItArm
+Arm <|-- ActinArm
+Arm <|-- AmigoArmNav
+
+HeightAdjustment <|-- Spindle
+HeightAdjustment <|-- Lift
+HeightAdjustment <|-- Torso
+
+Base <|-- ConstraintBased
+Base <|-- RosNavStackBase
+
+Reasoner <|-- WireReasoner
+Reasoner <|-- EdReasoner
+
+Perception <|-- PeinPerception
+Perception <|-- EdPerception 
+note bottom of EdPerception
+    Most method are no-ops?
+end note
+
+Speech <|-- PhilipsTTS
+Speech <|-- GoogleTTS
+
+Robot *-- Base : has-a
+Robot *-- Head
+Robot *-- Arm
+Robot o-- HeightAdjustment : might have a
+Robot *-- Reasoner
+Robot o-- Perception
+Robot o-- Ears
+Robot o-- Speech
+Robot o-- Lights
+Robot o-- EmergencyStop
+
+Amigo    --|> Robot
+Sergio   --|> Robot
+Rose     --|> Robot
+
+Amigo *-up- Spindle
+Amigo *-up- PhilipsTTS
+Amigo *-up- RosNavStackBase
+Amigo *-up- AmigoArmNav
+
+Sergio *-up- Torso
+Sergio *-up- MoveItArm
+Sergio *-up- PhilipsTTS
+Sergio *-up- ConstraintBased : can have
+Sergio *-up- RosNavStackBase
+
+Rose *-up- ActinArm
+Rose *-up- Lift
+Rose *-up- RosNavStackBase
+Rose *-up- OperatorGui
+Rose *-up- ClientGui
+Rose *-up- OnBoardGui
+
+@enduml
+	
