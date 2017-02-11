@@ -35,5 +35,6 @@ before_script:
   - cd "$TUE_SYSTEM_DIR"
 
 script:
-  - catkin build
+  # - catkin build
+  - tue-make
   - catkin run_tests # and run them
