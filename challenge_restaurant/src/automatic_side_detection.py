@@ -9,6 +9,7 @@ from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import PointStamped
 import robot_smach_states as states
 from robot_skills.util import transformations, msg_constructors
+from robot_skills.util.kdl_conversions import FrameStamped
 
 from robocup_knowledge import load_knowledge
 knowledge = load_knowledge("challenge_restaurant")
@@ -219,7 +220,7 @@ class StoreWaypoint(smach.State):
         rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
 
         visualize_location(base_pose, location)
-        self._robot.ed.update_entity(id=location, kdlFrame=base_pose, type="waypoint")
+        self._robot.ed.update_entity(id=location, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
 
         return "done"
 

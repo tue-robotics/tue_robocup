@@ -157,7 +157,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, kdlFrame = None, frame_id="/map", flags = None, add_flags = [], remove_flags = [], action = None):
+    def update_entity(self, id, type = None, kdlFrameStamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
         """
         Updates entity
         :param id: entity id
@@ -175,11 +175,12 @@ class ED:
         if action:
             json_entity += ', "action": "%s"' % action
 
-        if kdlFrame:
-            Z, Y, X = kdlFrame.M.GetEulerZYX()
-            t = kdlFrame.p
-            if frame_id != "/map":
+        if kdlFrameStamped:
+            Z, Y, X = kdlFrameStamped.frame.M.GetEulerZYX()
+            t = kdlFrameStamped.frame.p
+            if kdlFrameStamped.frame_id != "/map":
                 #  TODO: transform to /map
+                rospy.logerr("Conversion to /map not yet implemented")
                 pass
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 

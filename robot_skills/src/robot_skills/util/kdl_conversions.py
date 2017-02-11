@@ -2,6 +2,17 @@ import PyKDL as kdl
 
 import geometry_msgs.msg as gm
 
+
+class FrameStamped(object):
+    """Kdl alternative for a geometry_msgs.PoseStamped.
+    This class consists of a kdl.Frame and the frame_id w.r.t which the Frame is defined"""
+
+    def __init__(self, frame, frame_id):
+        assert isinstance(frame, kdl.Frame)
+        self.frame = frame
+        self.frame_id = frame_id
+
+
 def pointMsgToKdlVector(point):
     """
     Convert a ROS geometry_msgs.msg.Point message to a PyKDL.Vector object
@@ -119,6 +130,30 @@ def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     :rtype: PyKDL.Frame
     """
     return kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z))
+
+def kdlFrameStampedFromPoseStampedMsg(pose_stamped):
+    """Convert a PoseStamped to FrameStamped
+    :param pose_stamped the PoseStamped to be converted
+    :returns FrameStamped"""
+    assert isinstance(pose_stamped, gm.PoseStamped)
+    return FrameStamped(frame=poseMsgToKdlFrame(pose_stamped.pose),
+                        frame_id=pose_stamped.header.frame_id)
+
+def kdlFrameStampedFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
+    """
+    Create a FrameStamped from raw scalars and a frame_id
+    :param x:
+    :param y:
+    :param z:
+    :param roll:
+    :param pitch:
+    :param yaw:
+    :param frame_id:
+    :return:
+    :rtype: FrameStamped
+    """
+    return FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z)),
+                        frame_id=frame_id)
 
 if __name__ == "__main__":
     import doctest
