@@ -421,9 +421,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             :param entity:
             :return:
             """
-            if not entity.has_pose:
+            if not entity._pose:
                 return False
-            return MIN_GRASP_HEIGHT < entity.pose.position.z < MAX_GRASP_HEIGHT
+            return MIN_GRASP_HEIGHT < entity._pose.p.z() < MAX_GRASP_HEIGHT
 
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
