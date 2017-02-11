@@ -210,8 +210,16 @@ class EdEntityDesignator(Designator):
         entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
         if entities:
             for criterium in _criteria:
-                entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
+                filtered_entities = []
+                for entity in entities:
+                    try:
+                        if criterium(entity):
+                            filtered_entities += [entity]
+                    except Exception as exp:
+                        rospy.logerr("{id} cannot be filtered with criterum '{crit}': {exp}".format(id=entity.id, crit=criterium_code, exp=exp))
+
+                entities = filtered_entities
                 rospy.loginfo("Criterium {0} leaves {1} entities".format(criterium_code, len(entities)))
                 rospy.logdebug("Remaining entities: {}".format(pprint.pformat([ent.id for ent in entities])))
 

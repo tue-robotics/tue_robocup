@@ -2,6 +2,7 @@
 import yaml
 
 # ROS
+import rospy
 import PyKDL as kdl
 
 from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, kdlFrameToPoseMsg
@@ -112,6 +113,7 @@ def from_entity_info(e):
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
     volumes = volumes_from_entity_info_data(yaml.load(e.data))
+    rospy.logdebug("Entity(id={id}) has volumes {vols} ".format(id=identifier, vols=volumes.keys()))
 
     super_types = e.types
 

@@ -24,7 +24,6 @@ import smach
 import random
 
 # ED
-from ed_gui_server.msg import EntityInfo
 from ed_robocup.srv import FitEntityInImageRequest
 
 # Robot Smach States
@@ -36,6 +35,7 @@ from robot_smach_states import Place
 from robot_smach_states.util.geometry_helpers import *
 
 # Robot Skills
+from robot_skills.util.entity import Entity
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 
@@ -85,23 +85,22 @@ PLACE_HEIGHT = 1.0
 
 # Criteria
 not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
-size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+size = lambda entity: abs(entity.shape.z_max - entity.shape.z_min) < 0.4
 has_type = lambda entity: entity.type != ""
-min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+min_entity_height = lambda entity: abs(entity.shape.z_max - entity.shape.z_min) > 0.04
 
 def max_width(entity):
-    max_bb_x = max(ch.x for ch in entity.convex_hull)
-    min_bb_x = min(ch.x for ch in entity.convex_hull)
-    max_bb_y = max(ch.y for ch in entity.convex_hull)
-    min_bb_y = min(ch.y for ch in entity.convex_hull)
-
-    x_size = abs(max_bb_x - min_bb_x)
-    y_size = abs(max_bb_y - min_bb_y)
+    x_size = abs(entity.shape.x_max - entity.shape.x_min)
+    y_size = abs(entity.shape.y_max - entity.shape.y_min)
 
     x_ok = 0.02 < x_size < 0.15
     y_ok = 0.02 < y_size < 0.15
 
-    return x_ok and y_ok
+    ok = x_ok and y_ok
+
+    if not ok:
+        rospy.logwarn("Entity(id={id}: x_size={x}, y_size={y}".format(x=x_size, y=y_size, id=entity.id))
+    return ok
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -679,7 +678,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [EntityInfo], name="placed_items"))
+            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [Entity], name="placed_items"))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM',
                                                 single_item,
