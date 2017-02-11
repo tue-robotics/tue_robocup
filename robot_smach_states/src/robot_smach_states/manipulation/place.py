@@ -3,7 +3,7 @@ import rospy
 import smach
 
 import robot_skills.util.transformations as transformations
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, kdlVectorToPointMsg, FrameStamped
+from robot_skills.util.kdl_conversions import kdlFrameFromXYZRPY, kdlVectorToPointMsg, FrameStamped
 from robot_smach_states.navigation import NavigateToPlace
 
 from robot_smach_states.state import State
@@ -33,7 +33,7 @@ class PreparePlace(smach.State):
 
     def execute(self, userdata):
 
-        placement_fs, frame_id = self._placement_pose_designator.resolve()
+        placement_fs = self._placement_pose_designator.resolve()
         if not placement_fs:
             rospy.logerr("Could not resolve placement_pose")
             return "failed"
@@ -118,19 +118,19 @@ class Put(smach.State):
             height = 0.8
 
         # Pre place
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.x, place_pose_bl.y, height+0.2, 0.0, 0.0, 0.0, frame_id="/{0}/base_link".format(self._robot.robot_name)),
+        if not arm.send_goal(kdlFrameFromXYZRPY(place_pose_bl.x, place_pose_bl.y, height+0.2, 0.0, 0.0, 0.0), frame_id="/{0}/base_link".format(self._robot.robot_name),
                              timeout=10, pre_grasp=False):
             # If we can't place, try a little closer
             place_pose_bl.x -= 0.05
             rospy.loginfo("Retrying preplace")
-            if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.x, place_pose_bl.y, height+0.2, 0.0, 0.0, 0.0, frame_id="/{0}/base_link".format(self._robot.robot_name)),
+            if not arm.send_goal(kdlFrameFromXYZRPY(place_pose_bl.x, place_pose_bl.y, height+0.2, 0.0, 0.0, 0.0), frame_id="/{0}/base_link".format(self._robot.robot_name),
                              timeout=10, pre_grasp=False):
                 rospy.logwarn("Cannot pre-place the object")
                 arm.cancel_goals()
                 return 'failed'
 
         # Place
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.x, place_pose_bl.y, height+0.15, 0.0, 0.0, 0.0, frame_id="/{0}/base_link".format(self._robot.robot_name)),
+        if not arm.send_goal(kdlFrameFromXYZRPY(place_pose_bl.x, place_pose_bl.y, height+0.15, 0.0, 0.0, 0.0), frame_id="/{0}/base_link".format(self._robot.robot_name),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
@@ -148,7 +148,7 @@ class Put(smach.State):
         arm.occupied_by = None
 
         # Retract
-        arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.x - 0.1, place_pose_bl.y, place_pose_bl.z + 0.05, 0.0, 0.0, 0.0, frame_id='/'+self._robot.robot_name+'/base_link'),
+        arm.send_goal(kdlFrameFromXYZRPY(place_pose_bl.x - 0.1, place_pose_bl.y, place_pose_bl.z + 0.05, 0.0, 0.0, 0.0), frame_id='/'+self._robot.robot_name+'/base_link',
                              timeout=0.0)
 
         self._robot.base.force_drive(-0.125, 0, 0, 1.5)

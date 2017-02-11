@@ -6,7 +6,7 @@ from robot_smach_states.util.designators import Designator
 import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
 import robot_skills.util.msg_constructors as msg_constructors
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame
+from robot_skills.util.kdl_conversions import FrameStamped, poseMsgToKdlFrame, kdlFrameStampedFromPoseStampedMsg
 import PyKDL as kdl
 import copy
 
@@ -32,7 +32,7 @@ class EmptyShelfDesignator(Designator):
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """
-        super(EmptyShelfDesignator, self).__init__(resolve_type=(kdl.Frame, str), name=name)
+        super(EmptyShelfDesignator, self).__init__(resolve_type=FrameStamped, name=name)
         self.robot = robot
 
         if area is None:
@@ -82,7 +82,7 @@ class EmptyShelfDesignator(Designator):
             ret = points_of_interest[self._count]
             self._count += 1
             rospy.loginfo("Place pose at: {0}".format(ret))
-            return poseMsgToKdlFrame(ret.pose), "/map"
+            return kdlFrameStampedFromPoseStampedMsg(ret)
 
 
     def create_marker(self, x, y, z, frame_id="/map"):

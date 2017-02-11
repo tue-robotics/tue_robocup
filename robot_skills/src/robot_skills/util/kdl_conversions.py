@@ -12,6 +12,9 @@ class FrameStamped(object):
         self.frame = frame
         self.frame_id = frame_id
 
+    def __repr__(self):
+        return "{frame} @ {fid}".format(frame=self.frame, fid=self.frame_id)
+
 
 def pointMsgToKdlVector(point):
     """
