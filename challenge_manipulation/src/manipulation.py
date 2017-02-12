@@ -45,7 +45,7 @@ from robocup_knowledge import load_knowledge
 from empty_shelf_designator import EmptyShelfDesignator
 
 # PDF writer
-# import pdf
+import pdf
 
 USE_SLAM = True  # Indicates whether or not to use SLAM for localization
 
@@ -664,7 +664,7 @@ def setup_statemachine(robot):
             entities = [ e[0] for e in DETECTED_OBJECTS_WITH_PROBS ]
 
             # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
-            # pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF], "tech_united_manipulation_challenge")
+            pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF], "tech_united_manipulation_challenge")
 
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
