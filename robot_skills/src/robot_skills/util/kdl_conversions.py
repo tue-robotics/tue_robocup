@@ -147,13 +147,13 @@ def kdlFrameStampedToPoseStampedMsg(frame_stamped):
 def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     """
     Create a PyKDL.Frame from raw scalars
-    :param x:
-    :param y:
-    :param z:
-    :param roll:
-    :param pitch:
-    :param yaw:
-    :return:
+    :param x: The X value of the position
+    :param y: The Y value of the position
+    :param z: The Z value of the position
+    :param roll: The roll of the orientation
+    :param pitch: The pitch of the orientation
+    :param yaw: The yaw of the orientation
+    :return: the given position and orientation represented as a kdl.Frame
     :rtype: PyKDL.Frame
     """
     return kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z))
@@ -168,15 +168,15 @@ def kdlFrameStampedFromPoseStampedMsg(pose_stamped):
 
 def kdlFrameStampedFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
     """
-    Create a FrameStamped from raw scalars and a frame_id
-    :param x:
-    :param y:
-    :param z:
-    :param roll:
-    :param pitch:
-    :param yaw:
-    :param frame_id:
-    :return:
+    Create a FrameStamped from raw scalars
+    :param x: The X value of the position
+    :param y: The Y value of the position
+    :param z: The Z value of the position
+    :param roll: The roll of the orientation
+    :param pitch: The pitch of the orientation
+    :param yaw: The yaw of the orientation
+    :param frame_id: the frame_id in which the frame is defined
+    :return: the given position and orientation represented as a kdl.Frame
     :rtype: FrameStamped
     """
     return FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z)),
