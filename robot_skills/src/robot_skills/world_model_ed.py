@@ -176,12 +176,11 @@ class ED:
             json_entity += ', "action": "%s"' % action
 
         if kdlFrameStamped:
+            if kdlFrameStamped.frame_id != "/map":
+                kdlFrameStamped = kdlFrameStamped.projectToFrame("/map", self._tf_listener)
+
             Z, Y, X = kdlFrameStamped.frame.M.GetEulerZYX()
             t = kdlFrameStamped.frame.p
-            if kdlFrameStamped.frame_id != "/map":
-                #  TODO: transform to /map
-                rospy.logerr("Conversion to /map not yet implemented")
-                pass
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:
