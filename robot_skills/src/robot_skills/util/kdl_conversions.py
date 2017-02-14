@@ -15,6 +15,10 @@ class FrameStamped(object):
     def __repr__(self):
         return "{frame} @ {fid}".format(frame=self.frame, fid=self.frame_id)
 
+    def projectToFrame(self, frame_id, tf_listener):
+        transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
+        return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
+
 
 def pointMsgToKdlVector(point):
     """
@@ -85,7 +89,7 @@ def quaternionMsgToKdlRotation(quaternion):
 
 def poseMsgToKdlFrame(pose):
     """
-    Convert a geometry_msgs.msg.Pose message to a ROS PyKDL.Frame object
+    Convert a geometry_msgs.msg.Pose message to a PyKDL.Frame object
     :param pose: Pose to be converted
     :type pose: geometry_msgs.msg.Pose
     :rtype: PyKDL.Frame
@@ -119,6 +123,26 @@ def kdlFrameToPoseMsg(frame):
     pose.position = kdlVectorToPointMsg(frame.p)
     pose.orientation = kdlRotationToQuaternionMsg(frame.M)
     return pose
+
+def kdlFrameStampedToPoseStampedMsg(frame_stamped):
+    """
+    Convert a ROS PyKDL.Frame object to a geometry_msgs.msg.Pose message
+    :param frame: Frame to be converted
+    :type frame: PyKDL.Frame
+    :rtype: geometry_msgs.msg.Pose
+
+    >>> frame = kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3))
+    >>> pose = kdlFrameToPoseMsg(frame)
+    >>> (pose.position.x, pose.position.y, pose.position.z)
+    (1.0, 2.0, 3.0)
+    >>> (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
+    (1.0, 0.0, 0.0, 0.0)
+    """
+    pose_stamped = gm.PoseStamped()
+    pose_stamped.header.frame_id = frame_stamped.frame_id
+    pose_stamped.pose.position = kdlVectorToPointMsg(frame_stamped.frame.p)
+    pose_stamped.pose.orientation = kdlRotationToQuaternionMsg(frame_stamped.frame.M)
+    return pose_stamped
 
 def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     """
