@@ -165,7 +165,7 @@ class Arm(object):
 
         # If necessary, prefix frame_id
         if frameStamped.frame_id.find(self.robot_name) < 0:
-            frameStamped.frame_id = "/"+self.robot_name+frameStamped.frame_id
+            frameStamped.frame_id = "/"+self.robot_name+"/"+frameStamped.frame_id
             rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
 
         #Convert to baselink, which is needed because the offset is defined in the base_link frame
