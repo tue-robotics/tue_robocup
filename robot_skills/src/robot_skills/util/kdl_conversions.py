@@ -1,4 +1,9 @@
+import rospy
 import PyKDL as kdl
+
+# Needed for UGLY hacks
+import tf
+import time
 
 import geometry_msgs.msg as gm
 
@@ -7,7 +12,7 @@ class FrameStamped(object):
     """Kdl alternative for a geometry_msgs.PoseStamped.
     This class consists of a kdl.Frame and the frame_id w.r.t which the Frame is defined"""
 
-    def __init__(self, frame, frame_id):
+    def __init__(self, frame, frame_id, stamp=None):
         assert isinstance(frame, kdl.Frame)
         self.frame = frame
         self.frame_id = frame_id
@@ -16,6 +21,10 @@ class FrameStamped(object):
         return "{frame} @ {fid}".format(frame=self.frame, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
+        tf_listener = tf.TransformListener()  # TODO: This is a fix for a problem in tf_server.tf_client @ 1503bd4
+        time.sleep(1)
+
+        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(10))
         transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
         return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
 
