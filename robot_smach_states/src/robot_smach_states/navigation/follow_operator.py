@@ -8,6 +8,7 @@ import robot_smach_states as states
 import threading
 import time
 import itertools
+import PyKDL as kdl
 
 import math
 from visualization_msgs.msg import Marker
@@ -97,7 +98,7 @@ class FollowOperator(smach.State):
             last_yaw = self._last_pose_stamped.M.GetRPY()[2]  # Get the Yaw
 
             # Compare the pose with the last pose and update if difference is larger than x
-            if (current_pose_stamped - self._last_pose_stamped).Norm() > 0.05 or abs(current_yaw - last_yaw) > 0.3:
+            if kdl.diff(current_pose_stamped.p, self._last_pose_stamped.p).Norm() > 0.05 or abs(current_yaw - last_yaw) > 0.3:
                 # Update the last pose
           #      print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
                 self._last_pose_stamped = current_pose_stamped
