@@ -2,6 +2,7 @@
 
 import rospy
 import std_msgs.msg
+import PyKDL as kdl
 import tf_server
 import visualization_msgs.msg
 from actionlib import SimpleActionClient, GoalStatus
@@ -45,7 +46,10 @@ class Arm(object):
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
-        self.offset = self.load_param('skills/arm/offset/' + self.side)
+        offset = self.load_param('skills/arm/offset/' + self.side)
+        self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
+                                kdl.Vector(offset["x"], offset["y"], offset["z"]))
+
         self.marker_to_grippoint_offset = self.load_param('skills/arm/offset/marker_to_grippoint')
 
         self.joint_names = self.load_param('skills/arm/joint_names')
@@ -140,7 +144,7 @@ class Arm(object):
             else:
                 self._operational = True
 
-    def send_goal(self, px, py, pz, roll, pitch, yaw,
+    def send_goal(self, frame,
                   timeout=30,
                   pre_grasp=False,
                   frame_id='/base_link',
@@ -149,10 +153,13 @@ class Arm(object):
         """
         Send a arm to a goal:
 
-        Using a position px, py, pz and orientation roll, pitch, yaw. A time
+        Using a combination of position and orientation: a kdl.Frame. A time
         out time_out. pre_grasp means go to an offset that is normally needed
         for things such as grasping. You can also specify the frame_id which
-        defaults to base_link """
+        defaults to base_link
+
+        :param frame position and orientation to move the arm's end effector to
+        """
 
         # save the arguments for debugging later
         myargs = locals()
@@ -172,10 +179,11 @@ class Arm(object):
 
         grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
 
-        grasp_precompute_goal.goal.x = px
-        grasp_precompute_goal.goal.y = py
-        grasp_precompute_goal.goal.z = pz
+        grasp_precompute_goal.goal.x = frame.p.x()
+        grasp_precompute_goal.goal.y = frame.p.y()
+        grasp_precompute_goal.goal.z = frame.p.z()
 
+        roll, pitch, yaw = frame.M.GetRPY()
         grasp_precompute_goal.goal.roll  = roll
         grasp_precompute_goal.goal.pitch = pitch
         grasp_precompute_goal.goal.yaw   = yaw
@@ -183,14 +191,16 @@ class Arm(object):
         self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
+        offset_frame = frame * self.offset
 
-        grasp_precompute_goal.goal.x += self.offset['x']
-        grasp_precompute_goal.goal.y += self.offset['y']
-        grasp_precompute_goal.goal.z += self.offset['z']
+        grasp_precompute_goal.goal.x = offset_frame.p.x()
+        grasp_precompute_goal.goal.y = offset_frame.p.y()
+        grasp_precompute_goal.goal.z = offset_frame.p.z()
 
-        grasp_precompute_goal.goal.roll  += self.offset['roll']
-        grasp_precompute_goal.goal.pitch +=  self.offset['pitch']
-        grasp_precompute_goal.goal.yaw   += self.offset['yaw']
+        roll, pitch, yaw = frame.M.GetRPY()
+        grasp_precompute_goal.goal.roll  = roll
+        grasp_precompute_goal.goal.pitch = pitch
+        grasp_precompute_goal.goal.yaw   = yaw
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 

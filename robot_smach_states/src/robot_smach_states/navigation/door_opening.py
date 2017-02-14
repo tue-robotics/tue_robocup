@@ -322,16 +322,10 @@ class CheckDoorPassable(smach.State):
             return None
 
         try:
-            pose = e.data["pose"]
-            x = pose["x"]
-            y = pose["y"]
-            rz = e.data["pose"]["rz"]
+            x = e.pose.position.x
+            y = e.pose.position.y
         except:
-            try:
-                x = e.pose.position.x
-                y = e.pose.position.y
-            except:
-                return None
+            return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="/map")
         plan = self.robot.base.global_planner.getPlan(pc)

@@ -19,12 +19,15 @@ from std_srvs.srv import Empty
 import tf
 import visualization_msgs.msg
 
+import PyKDL as kdl
 import os
 
 
 import yaml
 
 from .classification_result import ClassificationResult
+
+from robot_skills.util.entity import from_entity_info
 
 
 class Navigation:
@@ -78,55 +81,51 @@ class ED:
         query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
 
         try:
-            entities = self._ed_simple_query_srv(query).entities
+            entity_infos= self._ed_simple_query_srv(query).entities
+            entities = map(from_entity_info, entity_infos)
         except Exception, e:
             rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (id, type, str(center_point), str(radius)))
             rospy.logerr("L____> [%s]" % e)
             return []
 
-        # Parse to data strings to yaml
-        if parse:
-            for e in entities:
-                e.data = yaml.load(e.data)
-
         return entities
 
-    def get_closest_entity(self, type="", center_point=Point(), radius=0):
+    def get_closest_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
             print "Failed to sort entities"
             return None
 
         return entities[0]
 
-    def get_closest_laser_entity(self, type="", center_point=Point(), radius=0):
+    def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and e.id.endswith("-laser") ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" and e.id.endswith("-laser") ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
             print "Failed to sort entities"
             return None
@@ -157,7 +156,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
+    def update_entity(self, id, type = None, kdlFrameStamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
         """
         Updates entity
         :param id: entity id
@@ -175,10 +174,14 @@ class ED:
         if action:
             json_entity += ', "action": "%s"' % action
 
-        if posestamped:
-            X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
-            t = posestamped.pose.position
-            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
+        if kdlFrameStamped:
+            Z, Y, X = kdlFrameStamped.frame.M.GetEulerZYX()
+            t = kdlFrameStamped.frame.p
+            if kdlFrameStamped.frame_id != "/map":
+                #  TODO: transform to /map
+                rospy.logerr("Conversion to /map not yet implemented")
+                pass
+            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:
             json_entity += ', "flags": ['
@@ -244,14 +247,14 @@ class ED:
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
             print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
@@ -288,7 +291,7 @@ class ED:
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def classify(self, ids, types=None):
-        """ Classifies the entities with the given IDs 
+        """ Classifies the entities with the given IDs
         Args:
             ids: list with IDs
             types: list with types to identify
@@ -301,11 +304,11 @@ class ED:
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
-        
+
         posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
 
         # Filter on types if types is not None
-       	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr 
+       	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr
        				in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if types is None or exp_val in types]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

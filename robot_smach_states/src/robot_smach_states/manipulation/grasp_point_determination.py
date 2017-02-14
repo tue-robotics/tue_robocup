@@ -4,7 +4,8 @@ import math
 
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
-from robot_smach_states.util.geometry_helpers import pointMsgToKdlVector, poseMsgToKdlFrame, offsetConvexHull
+from robot_smach_states.util.geometry_helpers import offsetConvexHull
+from robot_skills.util.kdl_conversions import pointMsgToKdlVector, poseMsgToKdlFrame
 
 
 class GraspPointDeterminant(object):
@@ -19,7 +20,7 @@ class GraspPointDeterminant(object):
         self._robot = robot
         self._marker_array_pub = rospy.Publisher('/grasp_markers', MarkerArray, queue_size=1)
 
-        self._width_treshold = 0.1 # ToDo: make variable!!!
+        self._width_treshold = 0.1  # ToDo: make variable!!!
 
     def get_grasp_pose(self, entity, arm):
         """ Computes the most suitable grasp pose to grasp the specified entity with the specified arm
@@ -33,19 +34,20 @@ class GraspPointDeterminant(object):
         # ToDo: divide into functions
         ''' Create a grasp vector for every side of the convex hull '''
         ''' First: check if container actually has a convex hull '''
-        if len(entity.convex_hull) == 0:
-            print 'Error, entity {0} has no convex hull. We need to do something with this'.format(entity.id)
+        if entity.shape is None:
+            print 'Error, entity {0} has no shape. We need to do something with this'.format(entity.id)
             return False
 
         ''' Second: turn points into KDL objects and offset chull to get it in map frame '''
-        center_pose = poseMsgToKdlFrame(entity.pose)
+        center_pose = entity._pose  #TODO: Access to private member
 
-        chull_obj = [pointMsgToKdlVector(p) for p in entity.convex_hull]   # convex hull in object frame
-        chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
+        # chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
+        # chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
+        chull = offsetConvexHull(entity.shape.convex_hull, center_pose)  # convex hull in map frame
+        # import ipdb;ipdb.set_trace()
 
         ''' Get robot pose as a kdl frame (is required later on) '''
-        robot_pose = self._robot.base.get_location()
-        robot_frame = poseMsgToKdlFrame(robot_pose.pose)
+        robot_frame = self._robot.base.get_location()
         robot_frame_inv = robot_frame.Inverse()
 
         ''' Loop over lines of chull '''
@@ -116,8 +118,7 @@ class GraspPointDeterminant(object):
 
             candidates.append({'vector': cvec, 'score': score})
 
-        candidates = sorted(candidates, key = lambda candidate: candidate['score'], reverse=True)
-        # self._candidates = self._candidates[0:5] # ToDo: remove??
+        candidates = sorted(candidates, key=lambda candidate: candidate['score'], reverse=True)
 
         self.visualize(candidates)
         print "GPD took %f seconds"%(rospy.Time.now() - starttime).to_sec()
@@ -125,8 +126,8 @@ class GraspPointDeterminant(object):
         return candidates[0]['vector']
 
     def visualize(self, candidates):
-        """ Visualizes the candidate grasp vectors 
-        
+        """ Visualizes the candidate grasp vectors
+
         :param candidates: list with candidates containing a vector and a score
         """
         msg = MarkerArray()

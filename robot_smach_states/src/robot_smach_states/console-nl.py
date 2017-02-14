@@ -99,15 +99,15 @@ def parse_object(p, robot):
 
     entities = robot.ed.get_entities(parse=False)
     ids = [e.id for e in entities]
-    types = set([i for sublist in [e.types for e in entities] for i in sublist])
+    types = set([i for sublist in [e.super_types for e in entities] for i in sublist])
 
     # Simply skip articles if they are there
     if p.read("a", "an", "the"):
-        pass       
+        pass
 
     # Check adjectives
     while True:
-        if p.read("red", "green", "blue", "black", "white" "pink", "purple", "orange", "brown", "grey", "yellow"):    
+        if p.read("red", "green", "blue", "black", "white" "pink", "purple", "orange", "brown", "grey", "yellow"):
             color = p.last_read[0]
         elif p.read("small", "big", "medium"):
             size = p.last_read[0]
@@ -145,10 +145,10 @@ def parse_object(p, robot):
     else:
         entities = robot.ed.get_entities(parse=False)
 
-    robot_pos = robot.base.get_location().pose.position
+    robot_pos = robot.base.get_location().p
 
     # Sort entities by distance
-    entities = sorted(entities, key=lambda entity: length_sq(robot_pos.x - entity.pose.position.x, robot_pos.y - entity.pose.position.y))
+    entities = sorted(entities, key=lambda entity: entity.distance_to_2d(robot_pos))
 
     return entities
 
@@ -196,7 +196,7 @@ def move(p, robot):
     ACTION = SmachAction(machine)
     ACTION.start()
 
-# ----------------------------------------------------------------------------------------------------  
+# ----------------------------------------------------------------------------------------------------
 
 def lookat(p, robot):
 
@@ -313,7 +313,7 @@ class REPL(cmd.Cmd):
             elif p.read("look at", "lookat"):
                 lookat(p, self.robot)
             elif p.read("show"):
-                show(p, self.robot)                
+                show(p, self.robot)
             elif p.read("stop"):
                 stop()
             else:

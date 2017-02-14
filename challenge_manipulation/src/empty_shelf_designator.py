@@ -6,7 +6,7 @@ from robot_smach_states.util.designators import Designator
 import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
 import robot_skills.util.msg_constructors as msg_constructors
-from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector
+from robot_skills.util.kdl_conversions import FrameStamped, poseMsgToKdlFrame, kdlFrameStampedFromPoseStampedMsg
 import PyKDL as kdl
 import copy
 
@@ -32,7 +32,7 @@ class EmptyShelfDesignator(Designator):
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """
-        super(EmptyShelfDesignator, self).__init__(resolve_type=gm.PoseStamped, name=name)
+        super(EmptyShelfDesignator, self).__init__(resolve_type=FrameStamped, name=name)
         self.robot = robot
 
         if area is None:
@@ -82,7 +82,7 @@ class EmptyShelfDesignator(Designator):
             ret = points_of_interest[self._count]
             self._count += 1
             rospy.loginfo("Place pose at: {0}".format(ret))
-            return ret
+            return kdlFrameStampedFromPoseStampedMsg(ret)
 
 
     def create_marker(self, x, y, z, frame_id="/map"):
@@ -133,40 +133,23 @@ class EmptyShelfDesignator(Designator):
         e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
-        for testarea in e.data['areas']:
-            ''' See if the area is in the list of inspection areas '''
-            if testarea['name'] == area:
-                ''' Check if we have a shape '''
-                if 'shape' not in testarea:
-                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(testarea['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in testarea['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(testarea['name']))
-                    continue
-                box = testarea['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
-                    continue
-                # Now we're sure to have the correct bounding box
-                break
+        if area in e.volumes:
+            box = e.volumes[area]
+        else:
+            rospy.logwarn("Entity {0} has no volume named {1}".format(e.id, area))
 
         if not self._candidate_list_obj:
             for y in [0, self._spacing, -self._spacing, 2.0 * self._spacing, -2.0 * self._spacing]:
-                if y < box['min']['y'] or y > box['max']['y']:
+                if y < box.min_corner.y() or y > box.max_corner.y():
                     rospy.logerr("Spacing of empty spot designator is too large!!!")
                     continue
 
                 p = gm.PoseStamped()
                 p.header.stamp = rospy.Time.now()
                 p.header.frame_id = e.id
-                p.pose.position.x = box['max']['x'] - self._edge_distance
+                p.pose.position.x = box.max_corner.x() - self._edge_distance
                 p.pose.position.y = y
-                p.pose.position.z = box['min']['z'] - 0.04  # 0.04 is the usual offset
+                p.pose.position.z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
 
                 # e.convex_hull = []
                 # e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
