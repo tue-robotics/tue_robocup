@@ -65,7 +65,7 @@ class Turn(smach.State):
 
         # Turn towards the operator
         current = self.robot.base.get_location()
-        robot_th = current.M.GetRPY[2]  # Get the Yaw, rotation around Z
+        robot_th = current.M.GetRPY()[2]  # Get the Yaw, rotation around Z
         desired_th = math.atan2(operator._pose.p.y() - current.p.y(),
                                 operator._pose.p.x() - current.p.x())
 
