@@ -24,9 +24,22 @@ class FrameStamped(object):
         tf_listener = tf.TransformListener()  # TODO: This is a fix for a problem in tf_server.tf_client @ 1503bd4
         time.sleep(1)
 
-        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(10))
+        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(1))
         transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
         return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
+
+class VectorStamped(object):
+    def __init__(self, x, y, z, frame_id="/map"):
+        self.vector = kdl.Vector(x, y, z)
+        self.frame_id = frame_id
+
+    def projectToFrame(self, frame_id, tf_listener):
+        tf_listener = tf.TransformListener()  # TODO: This is a fix for a problem in tf_server.tf_client @ 1503bd4
+        time.sleep(1)
+
+        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(1))
+        transformed_point = tf_listener.transformPoint(frame_id, kdlVectorStampedToPointStamped(self))
+        return kdlVectorStampedFromPointStampedMsg(transformed_point)
 
 
 def pointMsgToKdlVector(point):
@@ -190,6 +203,24 @@ def kdlFrameStampedFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/
     """
     return FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z)),
                         frame_id=frame_id)
+
+def kdlVectorStampedFromPointStampedMsg(point_stamped):
+    """Convert a PointStamped to VectorStamped
+    :param point_stamped the PointStamped to be converted
+    :returns VectorStamped"""
+    assert isinstance(point_stamped, gm.PointStamped)
+    return VectorStamped(point=pointMsgToKdlVector(point_stamped.point),
+                         frame_id=point_stamped.header.frame_id)
+
+def kdlVectorStampedToPointStamped(vector_stamped):
+    """Convert a VectorStamped to a PointStamped
+    :param vector_stamped the VectorStamped to be converted
+    :returns PointStamped"""
+    ps = gm.PointStamped()
+    ps.header.frame_id = vector_stamped.frame_id
+    ps.point = gm.Point(vector_stamped.vector.x,
+                        vector_stamped.vector.y,
+                        vector_stamped.vector.z)
 
 if __name__ == "__main__":
     import doctest
