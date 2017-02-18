@@ -9,6 +9,7 @@ from geometry_msgs.msg import Point, PointStamped
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
 from robot_skills.util.entity import Entity
+from robot_skills.util.kdl_conversions import VectorStamped, kdlVectorStampedFromPointStampedMsg
 
 
 class LookAtEntity(State):
@@ -28,13 +29,9 @@ class LookAtEntity(State):
         #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         #The added benefit is that the entity's frame actually moves because the entity is tracked.
         #This makes the head track the entity
-        center_point = Point()
-        frame_id = "/"+entity.id
-
-        rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
-        point_stamped = PointStamped(point=center_point,
-                                     header=Header(frame_id=frame_id))
-        robot.head.look_at_point(point_stamped)
+        vs = VectorStamped(frame_id="/"+entity.id)
+        rospy.loginfo('Look at %s' % (repr(vs)))
+        robot.head.look_at_point(vs)
         rospy.sleep(rospy.Duration(waittime))
         return "succeeded"
 
@@ -67,17 +64,15 @@ class LookAtArea(State):
 
         if area in entity.volumes:
             cp = entity.volumes[area].center_point
-            center_point.x, center_point.y, center_point.z = cp.x(), cp.y(), cp.z()
+            vs = VectorStamped(cp.x(), cp.y(), cp.z(), frame_id)
 
-            rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
-            point_stamped = PointStamped(point=center_point,
-                                         header=Header(frame_id=frame_id))
+            rospy.loginfo('Look at %s' % (repr(vs)))
 
             # This is awefully hardcoded for AMIGO!!! (TODO)
-            height = min(0.4, max(0.1, center_point.z-0.55))
+            height = min(0.4, max(0.1, vs.vector.z()-0.55))
             robot.torso._send_goal([height], timeout=0)
 
-            robot.head.look_at_point(point_stamped, timeout=0)
+            robot.head.look_at_point(vs, timeout=0)
 
             robot.head.wait_for_motion_done(timeout=5)
             robot.torso.wait_for_motion_done(timeout=5)
@@ -105,15 +100,12 @@ class LookOnTopOfEntity(State):
         #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         #The added benefit is that the entity's frame actually moves because the entity is tracked.
         #This makes the head track the entity
-        center_point = Point()
-        frame_id = "/"+entity.id
+        center_point = VectorStamped(frame_id="/"+entity.id)
 
-        center_point.z = entity.shape.z_max
+        center_point.vector.z(entity.shape.z_max)
 
-        rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
-        point_stamped = PointStamped(point=center_point,
-                                     header=Header(frame_id=frame_id))
-        robot.head.look_at_point(point_stamped)
+        rospy.loginfo('Look at %s' % (repr(center_point)))
+        robot.head.look_at_point(center_point)
         rospy.sleep(rospy.Duration(waittime))
         return "succeeded"
 

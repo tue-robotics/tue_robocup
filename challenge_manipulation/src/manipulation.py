@@ -33,6 +33,7 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_smach_states.util.geometry_helpers import *
+from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg
 
 # Robot Skills
 from robot_skills.util.entity import Entity
@@ -279,7 +280,7 @@ class InspectShelves(smach.State):
             # cp = shelf_entity.pose.position
 
             ''' Look at target '''
-            self.robot.head.look_at_point(ps)
+            self.robot.head.look_at_point(kdlVectorStampedFromPointStampedMsg(ps))
 
             ''' Move spindle
                 Implemented only for AMIGO (hence the hardcoding)

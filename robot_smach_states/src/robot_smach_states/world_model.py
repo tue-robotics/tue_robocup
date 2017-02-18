@@ -4,6 +4,7 @@ import rospy
 import smach
 
 import robot_skills.util.msg_constructors as msgs
+from robot_skills.util.kdl_conversions import VectorStamped
 
 from robot_smach_states.navigation import NavigateToObserve
 import robot_smach_states.util.designators as ds
@@ -37,11 +38,11 @@ class SegmentObjects(smach.State):
         self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
     def _look_at_segmentation_area(self, entity):
-        look_at_point_z = 0.7
+        look_at_point_z = 0.7   # Where does this come from?
 
         # Make sure the head looks at the entity
         pos = entity.pose.position
-        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
+        self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
         # Check if we have areas
         if self.segmentation_area in entity.volumes:

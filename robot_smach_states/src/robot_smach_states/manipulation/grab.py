@@ -3,7 +3,7 @@ import math
 import rospy
 import smach
 import tf
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY
+from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, VectorStamped
 
 from robot_skills.util.entity import Entity
 import robot_skills.util.msg_constructors as msgs
@@ -60,7 +60,7 @@ class PrepareEdGrasp(smach.State):
 
         # Make sure the head looks at the entity
         pos = entity.pose.position
-        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, pos.z, "/map"), timeout=0.0)
+        self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, pos.z, "/map"), timeout=0.0)
 
         return 'succeeded'
 

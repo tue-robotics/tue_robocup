@@ -9,7 +9,7 @@ from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import PointStamped
 import robot_smach_states as states
 from robot_skills.util import transformations, msg_constructors
-from robot_skills.util.kdl_conversions import FrameStamped
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 
 from robocup_knowledge import load_knowledge
 knowledge = load_knowledge("challenge_restaurant")
@@ -60,19 +60,15 @@ class AutomaticSideDetection(smach.State):
         self._min_area = min_area
 
     def _get_head_goal(self, spec):
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot.robot_name+"/base_link"
-        goal.point.x = spec["x"]
-        goal.point.y = spec["y"]
-        return goal
+        vs = VectorStamped(spec["x"], spec["y"], z=0, frame_id="/"+self._robot.robot_name+"/base_link")
+        return vs
 
     def _inspect_sides(self):
         for side, spec in self._sides.iteritems():
             # Look at the side
             rospy.loginfo("looking at side %s" % side)
-            goal = self._get_head_goal(spec)
-            self._robot.head.look_at_point(goal)
+            vs = self._get_head_goal(spec)
+            self._robot.head.look_at_point(vs)
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 

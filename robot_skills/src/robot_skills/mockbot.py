@@ -14,6 +14,7 @@ from ed_sensor_integration.srv import UpdateResponse
 
 import arms
 from robot_skills import robot
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.classification_result import ClassificationResult
 import robot_skills.util.msg_constructors as msgs
 
@@ -294,7 +295,7 @@ if __name__ == "__main__":
     left_open = lambda: mockbot.leftArm.send_gripper_goal_open()
     speak = lambda sentence: mockbot.speech.speak(sentence, block=False)
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
-    look_at_point = lambda x, y, z: mockbot.head.look_at_point(msgs.PointStamped(x, y, z, frame_id="/mockbot/base_link"))
+    look_at_point = lambda x, y, z: mockbot.head.look_at_point(VectorStamped(x, y, z, frame_id="/mockbot/base_link"))
 
     mapgo = mockbot.base.go
 

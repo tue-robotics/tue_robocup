@@ -28,10 +28,14 @@ class FrameStamped(object):
         transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
         return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
 
+
 class VectorStamped(object):
-    def __init__(self, x, y, z, frame_id="/map"):
+    def __init__(self, x=0, y=0, z=0, frame_id="/map"):
         self.vector = kdl.Vector(x, y, z)
         self.frame_id = frame_id
+
+    def __repr__(self):
+        return "{vector} @ {fid}".format(vector=self.vector, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener = tf.TransformListener()  # TODO: This is a fix for a problem in tf_server.tf_client @ 1503bd4
@@ -40,6 +44,13 @@ class VectorStamped(object):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(1))
         transformed_point = tf_listener.transformPoint(frame_id, kdlVectorStampedToPointStamped(self))
         return kdlVectorStampedFromPointStampedMsg(transformed_point)
+
+    def __eq__(self, other):
+        if isinstance(other, VectorStamped):
+            return self.vector == other.vector and \
+                   self.frame_id == other.frame_id
+        else:
+            return False
 
 
 def pointMsgToKdlVector(point):
