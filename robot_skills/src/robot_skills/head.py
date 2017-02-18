@@ -5,7 +5,7 @@ from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
 from .util import msg_constructors as msgs
-from .util.kdl_conversions import kdlVectorStampedToPointStamped
+from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
 
 class Head():
@@ -24,12 +24,7 @@ class Head():
         """
         Reset head position
         """
-        reset_goal = PointStamped()
-        reset_goal.header.stamp = rospy.Time.now()
-        reset_goal.header.frame_id = "/"+self._robot_name+"/base_link"
-        reset_goal.point.x = 10
-        reset_goal.point.y = 0.0
-        reset_goal.point.z = 0.0
+        reset_goal = VectorStamped(x=10, frame_id="/"+self._robot_name+"/base_link")
 
         return self.look_at_point(reset_goal, timeout=timeout)
 
@@ -47,12 +42,7 @@ class Head():
             return False
 
     def look_at_ground_in_front_of_robot(self, distance=2):
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot_name+"/base_link"
-        goal.point.x = distance
-        goal.point.y = 0.0
-        goal.point.z = 0.0
+        goal = VectorStamped(x=distance, frame_id="/"+self._robot_name+"/base_link")
 
         return self.look_at_point(goal)
 
@@ -60,12 +50,7 @@ class Head():
         """
         Gives a target at z = 1.0 at 1 m in front of the robot
         """
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot_name+"/base_link"
-        goal.point.x = 1.0
-        goal.point.y = 0.0
-        goal.point.z = 0.5
+        goal = VectorStamped(1, 0, 0.5, frame_id="/"+self._robot_name+"/base_link")
 
         return self.look_at_point(goal)
 
@@ -73,12 +58,7 @@ class Head():
         """
         Gives a target at z = 1.0 at 1 m in front of the robot
         """
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot_name+"/base_link"
-        goal.point.x = 0.2
-        goal.point.y = 0.0
-        goal.point.z = 4.5
+        goal = VectorStamped(0.2, 0.0, 4.5, frame_id="/"+self._robot_name+"/base_link")
 
         return self.look_at_point(goal)
 
@@ -86,12 +66,7 @@ class Head():
         """
         Gives a target at z = 1.75 at 1 m in front of the robot
         """
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot_name+"/base_link"
-        goal.point.x = 1.0
-        goal.point.y = 0.0
-        goal.point.z = 1.6
+        goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self._robot_name + "/base_link")
 
         return self.look_at_point(goal)
 
