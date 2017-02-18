@@ -59,8 +59,7 @@ class PrepareEdGrasp(smach.State):
         arm.send_gripper_goal('open', timeout=0.0)
 
         # Make sure the head looks at the entity
-        pos = entity.pose.position
-        self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, pos.z, "/map"), timeout=0.0)
+        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
 
         return 'succeeded'
 

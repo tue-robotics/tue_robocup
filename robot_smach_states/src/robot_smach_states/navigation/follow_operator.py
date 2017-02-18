@@ -16,7 +16,7 @@ from visualization_msgs.msg import Marker
 from cb_planner_msgs_srvs.msg import *
 
 from robot_skills.util import transformations, msg_constructors
-from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg
+from robot_skills.util.kdl_conversions import VectorStamped
 
 
 class FollowOperator(smach.State):
@@ -410,16 +410,16 @@ class FollowOperator(smach.State):
                        -math.pi/6,
                        -math.pi/4,
                        -math.pi/2.3]
-        head_goals = [msg_constructors.PointStamped(x=look_distance*math.cos(angle),
-                                                    y=look_distance*math.sin(angle),
-                                                    z=1.7,
-                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+        head_goals = [VectorStamped(x=look_distance*math.cos(angle),
+                                    y=look_distance*math.sin(angle),
+                                    z=1.7,
+                                    frame_id="/%s/base_link" % self._robot.robot_name)
                       for angle in look_angles
                       ]
 
         i = 0
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
-            self._robot.head.look_at_point(kdlVectorStampedFromPointStampedMsg(head_goals[i]))
+            self._robot.head.look_at_point(head_goals[i])
             i += 1
             if i == len(head_goals):
                 i = 0

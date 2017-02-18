@@ -93,8 +93,8 @@ class AutomaticSideDetection(smach.State):
             self._sides[side]["score"]["area_sum"] = sum([ self._score_area(e) for e in self._sides[side]["entities"] ])
             self._sides[side]["score"]["min_distance"] = self._score_closest_point(base_position, self._sides[side]["entities"])
 
-            goal.point.z = 0.8
-            self._robot.head.look_at_point(goal)
+            vs.vector.z(0.8)
+            self._robot.head.look_at_point(vs)
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
