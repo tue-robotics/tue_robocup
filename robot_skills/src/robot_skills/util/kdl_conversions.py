@@ -28,10 +28,22 @@ class FrameStamped(object):
         transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
         return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
 
+    def extractVectorStamped(self):
+        """Extract only the position of this FrameStamped, without the orientation but with the frame_id metadata
+        :returns VectorStamped
+        >>> fs = FrameStamped(kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3)), "/map")
+        >>> fs.extractVectorStamped()
+        [           1,           2,           3] @ /map
+        """
+        return VectorStamped(frame_id=self.frame_id, vector=self.frame.p)
+
 
 class VectorStamped(object):
-    def __init__(self, x=0, y=0, z=0, frame_id="/map"):
-        self.vector = kdl.Vector(x, y, z)
+    def __init__(self, x=0, y=0, z=0, frame_id="/map", vector=None):
+        if vector:
+            self.vector = vector
+        else:
+            self.vector = kdl.Vector(x, y, z)
         self.frame_id = frame_id
 
     def __repr__(self):
