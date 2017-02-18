@@ -5,6 +5,7 @@ from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
 from .util import msg_constructors as msgs
+from .util.kdl_conversions import kdlVectorStampedToPointStamped
 
 
 class Head():
@@ -96,7 +97,8 @@ class Head():
 
     # -- Functionality --
 
-    def look_at_point(self, point_stamped, end_time=0, pan_vel=1.0, tilt_vel=1.0, timeout=0):
+    def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=1.0, timeout=0):
+        point_stamped = kdlVectorStampedToPointStamped(vector_stamped)
         self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
 
     def cancel_goal(self):
