@@ -232,7 +232,7 @@ def kdlVectorStampedFromPointStampedMsg(point_stamped):
     :param point_stamped the PointStamped to be converted
     :returns VectorStamped"""
     assert isinstance(point_stamped, gm.PointStamped)
-    return VectorStamped(point=pointMsgToKdlVector(point_stamped.point),
+    return VectorStamped(vector=pointMsgToKdlVector(point_stamped.point),
                          frame_id=point_stamped.header.frame_id)
 
 def kdlVectorStampedToPointStamped(vector_stamped):
@@ -241,9 +241,10 @@ def kdlVectorStampedToPointStamped(vector_stamped):
     :returns PointStamped"""
     ps = gm.PointStamped()
     ps.header.frame_id = vector_stamped.frame_id
-    ps.point = gm.Point(vector_stamped.vector.x,
-                        vector_stamped.vector.y,
-                        vector_stamped.vector.z)
+    ps.point = gm.Point(vector_stamped.vector.x(),
+                        vector_stamped.vector.y(),
+                        vector_stamped.vector.z())
+    return ps
 
 if __name__ == "__main__":
     import doctest

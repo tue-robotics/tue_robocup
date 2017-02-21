@@ -140,10 +140,10 @@ class GraspPointDeterminant(object):
             marker.id = i
             marker.type = marker.ARROW
             marker.action = marker.ADD
-            marker.pose.position.x = c['vector'].p.x()
-            marker.pose.position.y = c['vector'].p.y()
-            marker.pose.position.z = c['vector'].p.z()
-            (rx, ry, rz, rw) = c['vector'].M.GetQuaternion()
+            marker.pose.position.x = c['vector'].frame.p.x()
+            marker.pose.position.y = c['vector'].frame.p.y()
+            marker.pose.position.z = c['vector'].frame.p.z()
+            (rx, ry, rz, rw) = c['vector'].frame.M.GetQuaternion()
             marker.pose.orientation.x = rx
             marker.pose.orientation.y = ry
             marker.pose.orientation.z = rz

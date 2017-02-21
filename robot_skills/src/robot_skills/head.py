@@ -73,6 +73,7 @@ class Head():
     # -- Functionality --
 
     def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=1.0, timeout=0):
+        assert isinstance(vector_stamped, VectorStamped)
         point_stamped = kdlVectorStampedToPointStamped(vector_stamped)
         self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
 
