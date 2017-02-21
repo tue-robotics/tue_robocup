@@ -2,8 +2,6 @@
 
 import rospy
 import smach
-
-import robot_skills.util.msg_constructors as msgs
 from robot_skills.util.kdl_conversions import VectorStamped
 
 from robot_smach_states.navigation import NavigateToObserve
