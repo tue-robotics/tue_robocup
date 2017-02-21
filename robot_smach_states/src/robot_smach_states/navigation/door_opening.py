@@ -4,7 +4,7 @@ import rospy
 import smach
 import numpy as np
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import PolygonStamped, PointStamped, Point, PoseStamped, Pose
+from geometry_msgs.msg import PolygonStamped, Point, PoseStamped, Pose
 from threading import Event
 from visualization_msgs.msg import Marker, MarkerArray
 from cb_planner_msgs_srvs.msg import PositionConstraint
