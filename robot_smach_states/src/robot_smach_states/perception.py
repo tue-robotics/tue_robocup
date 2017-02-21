@@ -3,9 +3,6 @@ import sys
 import rospy
 import smach
 
-from std_msgs.msg import Header
-from geometry_msgs.msg import Point, PointStamped
-
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
 from robot_skills.util.entity import Entity
@@ -59,7 +56,6 @@ class LookAtArea(State):
         #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         #The added benefit is that the entity's frame actually moves because the entity is tracked.
         #This makes the head track the entity
-        center_point = Point()
         frame_id = "/"+entity.id
 
         if area in entity.volumes:
