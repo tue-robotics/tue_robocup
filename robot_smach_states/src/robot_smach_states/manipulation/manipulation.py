@@ -2,14 +2,11 @@ import rospy
 import smach
 from robot_skills.util import transformations
 
-
-import geometry_msgs
 from ed.msg import EntityInfo
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
-import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
 from robot_smach_states.util.designators import PointStampedOfEntityDesignator, LockingDesignator
 
