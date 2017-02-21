@@ -6,8 +6,6 @@ import tf
 from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, VectorStamped
 
 from robot_skills.util.entity import Entity
-import robot_skills.util.msg_constructors as msgs
-import robot_skills.util.transformations as transformations
 
 from robot_skills.arms import Arm
 from robot_smach_states.util.designators import check_type
@@ -95,15 +93,11 @@ class PickUp(smach.State):
             return "failed"
         userdata.arm = arm.side  # Using userdata makes sure we don't need to do any more arm entity magic
 
-        # goal in map frame
-        goal_map = msgs.Point(0, 0, 0)
+        goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
         try:
             # Transform to base link frame
-            goal_bl = transformations.tf_transform(
-                goal_map, grab_entity.id, self.robot.robot_name+'/base_link',
-                tf_listener=self.robot.tf_listener
-            )
+            goal_bl = goal_map.projectToFrame(self.robot.robot_name+'/base_link', tf_listener=self.robot.tf_listener)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -139,33 +133,25 @@ class PickUp(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
-        grasp_pose = self._gpd.get_grasp_pose(grab_entity, arm)
+        grasp_framestamped = self._gpd.get_grasp_pose(grab_entity, arm)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        # goal in map frame
-        goal_map = msgs.Point(0, 0, 0)
+        goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
         #try:
         # In case grasp point determination didn't work
-        if not grasp_pose:
-            if self.robot.tf_listener.waitForTransform(grab_entity.id, self.robot.robot_name + "/base_link"):
-                # Transform to base link frame
-                goal_bl = transformations.tf_transform(goal_map, grab_entity.id, self.robot.robot_name + "/base_link",
-                                                       tf_listener=self.robot.tf_listener)
-                if goal_bl is None:
-                    return 'failed'
+        if not grasp_framestamped:
+            goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
+            if goal_bl is None:
+                return 'failed'
             else:
                 return 'failed'
         else:
             # We do have a grasp pose, given as a kdl frame in map
             if self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link"):
                 # Transform to base link frame
-                goal_bl = transformations.tf_transform(msgs.Point(grasp_pose.p.x(),
-                                                                  grasp_pose.p.y(),
-                                                                  grasp_pose.p.z()),
-                                                       "/map", self.robot.robot_name + "/base_link",
-                                                       tf_listener=self.robot.tf_listener)
+                goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
                 if goal_bl is None:
                     return 'failed'
             else:
@@ -188,7 +174,7 @@ class PickUp(smach.State):
 
         # Grasp
         # rospy.loginfo('Start grasping')
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, "/"+self.robot.robot_name+"/base_link"),
+        if not arm.send_goal(goal_bl,
                              timeout=20, pre_grasp=True,
                              allowed_touch_objects=[grab_entity.id]
                              ):
@@ -209,9 +195,7 @@ class PickUp(smach.State):
             roll = 0.3
         else:
             roll = -0.3
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, roll, 0.0, 0.0, "/"+self.robot.robot_name+"/base_link"),
-                             timeout=20, allowed_touch_objects=[grab_entity.id]
-                             ):
+        if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed lift')
 
         # Retract
@@ -220,9 +204,7 @@ class PickUp(smach.State):
             roll = 0.6
         else:
             roll = -0.6
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, roll, 0.0, 0.0, "/"+self.robot.robot_name+"/base_link"),
-                             timeout=0.0, allowed_touch_objects=[grab_entity.id]
-                             ):
+        if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed retract')
 
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)

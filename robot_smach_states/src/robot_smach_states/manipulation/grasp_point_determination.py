@@ -5,7 +5,7 @@ import math
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import pointMsgToKdlVector, poseMsgToKdlFrame
+from robot_skills.util.kdl_conversions import pointMsgToKdlVector, poseMsgToKdlFrame, FrameStamped
 
 
 class GraspPointDeterminant(object):
@@ -27,7 +27,7 @@ class GraspPointDeterminant(object):
 
         :param entity: entity to grasp
         :param arm: arm to use
-        :return KDL frame with grasp pose in map frame
+        :return FrameStamped with grasp pose in map frame
         """
         candidates = []
         starttime = rospy.Time.now()
@@ -47,8 +47,8 @@ class GraspPointDeterminant(object):
         # import ipdb;ipdb.set_trace()
 
         ''' Get robot pose as a kdl frame (is required later on) '''
-        robot_frame = self._robot.base.get_location()
-        robot_frame_inv = robot_frame.Inverse()
+        robot_frame = FrameStamped(self._robot.base.get_location(), frame_id="/map")
+        robot_frame_inv = robot_frame.frame.Inverse()
 
         ''' Loop over lines of chull '''
         for i in xrange(len(chull)):
@@ -101,16 +101,18 @@ class GraspPointDeterminant(object):
 
             # Divide width in two
              # * kdl.Vector(0.5 * (wmin+wmax, 0, 0)
-            tvec = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
-                             kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.position.z)) # Helper frame
+            tvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
+                                kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.position.z)),
+                                frame_id="/map") # Helper frame
 
-            cvec = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
-                             tvec * kdl.Vector(0, -0.5 * (wmin+wmax), 0))
+            cvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
+                                tvec.frame * kdl.Vector(0, -0.5 * (wmin+wmax), 0)),
+                                frame_id="/map")
 
             ''' Optimize over yaw offset w.r.t. robot '''
             # robot_in_map * entity_in_robot = entity_in_map
             # --> entity_in_robot = robot_in_map^-1 * entity_in_map
-            gvec = robot_frame_inv * cvec
+            gvec = robot_frame_inv * cvec.frame
             (R, P, Y) = gvec.M.GetRPY()
 
             rscore = 1.0 - (abs(Y)/math.pi)
