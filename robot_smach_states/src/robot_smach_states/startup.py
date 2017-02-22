@@ -18,7 +18,7 @@ from robot_smach_states.util.designators import Designator, VariableDesignator, 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
-    def __init__(self, robot, initial_pose, use_entry_points = False):
+    def __init__(self, robot, initial_pose, use_entry_points = False, door=True):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
         assert hasattr(robot, "speech")
@@ -26,7 +26,7 @@ class StartChallengeRobust(smach.StateMachine):
         with self:
             smach.StateMachine.add( "INITIALIZE",
                                     utility.Initialize(robot),
-                                    transitions={   "initialized"   :"INSTRUCT_WAIT_FOR_DOOR",
+                                    transitions={   "initialized"   :"INSTRUCT_WAIT_FOR_DOOR" if door else "INIT_POSE",
                                                     "abort"         :"Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
@@ -51,9 +51,9 @@ class StartChallengeRobust(smach.StateMachine):
             # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
                                 utility.SetInitialPose(robot, initial_pose),
-                                transitions={   'done':'ENTER_ROOM',
+                                transitions={   'done':'ENTER_ROOM' if door else "Done",
                                                 'preempted':'Aborted',  # This transition will never happen at the moment.
-                                                'error':'ENTER_ROOM'})  # It should never go to aborted.
+                                                'error':'ENTER_ROOM' if door else "Done"})  # It should never go to aborted.
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
