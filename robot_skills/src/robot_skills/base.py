@@ -218,6 +218,9 @@ class Base(object):
 
         #rospy.loginfo("initalpose = {0}".format(initial_pose))
 
+        # We have to do this twice for some reason, somewhere in ed_localization
+        self._initial_pose_publisher.publish(initial_pose)
+        rospy.sleep(0.5)
         self._initial_pose_publisher.publish(initial_pose)
 
         return True
