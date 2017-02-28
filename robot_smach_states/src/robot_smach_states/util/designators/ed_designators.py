@@ -27,31 +27,6 @@ import robot_skills.util.msg_constructors as msg_constructors
 
 __author__ = 'loy'
 
-class PointStampedOfEntityDesignator(Designator):
-    def __init__(self, entity_designator, name=None):
-        """Resolves to the PointStamped-part of the designated entity
-        :param entity_designator entity of which we want to know the position as a PointStamped
-        """
-        super(PointStampedOfEntityDesignator, self).__init__(resolve_type=gm.PointStamped, name=name)
-        self.entity_designator = entity_designator
-        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
-
-    def _resolve(self):
-        # type is a reserved keyword. Maybe unpacking a dict as kwargs is
-        # cleaner
-        query = SimpleQueryRequest(id=self.entity_designator.resolve())
-        entities = self.ed(query).entities
-        if entities:
-            entity = entities[0]
-            pointstamped = gm.PointStamped(point=entity.pose.position,
-                                           header=std.Header(
-                                               entity.id, rospy.get_rostime())
-                                           )  # ID is also the frame ID. Ed just works that way
-            self._current = pointstamped
-            return self.current
-        else:
-            return None
-
 
 class EdEntityCollectionDesignator(Designator):
     """

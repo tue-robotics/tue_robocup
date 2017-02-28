@@ -8,7 +8,7 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
 from robot_skills.arms import ArmState
-from robot_smach_states.util.designators import PointStampedOfEntityDesignator, LockingDesignator
+from robot_smach_states.util.designators import LockingDesignator
 
 from robot_smach_states.util.designators import check_type
 from robot_skills.arms import Arm
