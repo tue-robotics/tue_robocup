@@ -33,7 +33,7 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_smach_states.util.geometry_helpers import *
-from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg
+from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg, VectorStamped
 
 # Robot Skills
 from robot_skills.util.entity import Entity
@@ -259,7 +259,7 @@ class InspectShelves(smach.State):
             ''' See if the area is in the list of inspection areas '''
             if name in OBJECT_SHELVES:
                 center_point = volume.center_point
-                shelves.append({'ps': geom.PointStamped(center_point.x(), center_point.y(), center_point.z(), cabinet_entity.id), 'name': name})
+                shelves.append({'vs': VectorStamped(vector=center_point, frame_id=cabinet_entity.id), 'name': name})
             else:
                 rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.id))
 
@@ -268,8 +268,8 @@ class InspectShelves(smach.State):
         # for shelf in self.object_shelves:
         for shelf in shelves:
 
-            ps = shelf['ps']
-            cp = ps.point
+            vector_stamped = shelf['vs']
+            center_vector = vector_stamped.vector
 
             # ''' Get entities '''
             # shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
@@ -280,14 +280,14 @@ class InspectShelves(smach.State):
             # cp = shelf_entity.pose.position
 
             ''' Look at target '''
-            self.robot.head.look_at_point(kdlVectorStampedFromPointStampedMsg(ps))
+            self.robot.head.look_at_point(vector_stamped)
 
             ''' Move spindle
                 Implemented only for AMIGO (hence the hardcoding)
                 Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
             # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
             # ToDo: do head and torso simultaneously
-            height = min(0.4, max(0.1, cp.z-0.55))
+            height = min(0.4, max(0.1, center_vector.z()-0.55))
             self.robot.torso._send_goal([height], timeout=5.0)
 
             ''' Sleep for 1 second '''
