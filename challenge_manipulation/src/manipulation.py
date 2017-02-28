@@ -221,7 +221,7 @@ class FitEntity(smach.State):
         req.entity_type = self._entity_str  # 1280 1024
         req.px = 0.5
         req.py = 0.5
-        # result = self._srv(req)
+        result = self._srv(req)
 
         # Cancel the head goal and return
         self._robot.head.cancel_goal()
