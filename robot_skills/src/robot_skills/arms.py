@@ -171,6 +171,7 @@ class Arm(object):
         #Convert to baselink, which is needed because the offset is defined in the base_link frame
         frame_in_baselink = frameStamped.projectToFrame("/"+self.robot_name+"/base_link", self.tf_listener)
 
+        # TODO: Get rid of this custom message type
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
         grasp_precompute_goal.goal.header.frame_id = frame_in_baselink.frame_id

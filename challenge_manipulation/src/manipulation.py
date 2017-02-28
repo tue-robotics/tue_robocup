@@ -365,6 +365,7 @@ class RemoveSegmentedEntities(smach.State):
 
         for e in entities:
             if not e.is_a("furniture") and e.id != '_root':
+                # import ipdb; ipdb.set_trace()
                 self.robot.ed.remove_entity(e.id)
 
         return "done"
