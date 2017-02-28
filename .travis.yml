@@ -4,6 +4,7 @@ language: generic
 env:
   - ROS_DISTRO=indigo
   - ROS_DISTRO=jade
+  - ROS_DISTRO=kinetic
 notifications:
   email:
     on_success: change # [always|never|change], default=change
