@@ -10,7 +10,6 @@ import PyKDL as kdl
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.util.entity import Entity
 from ed.srv import SimpleQuery, SimpleQueryRequest
-from geometry_msgs import msg as gm
 import rospy
 from std_msgs import msg as std
 from visualization_msgs.msg import MarkerArray, Marker
@@ -19,7 +18,7 @@ from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, kdlFrameStampedFromXYZRPY
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors
@@ -58,7 +57,7 @@ class EdEntityCollectionDesignator(Designator):
         if center_point != None and center_point_designator != None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point == None and center_point_designator == None:
-            center_point = gm.Point()
+            center_point = VectorStamped()
         if id != "" and id_designator != None:
             raise TypeError("Specify either id or id_designator, not both")
 
@@ -72,7 +71,7 @@ class EdEntityCollectionDesignator(Designator):
         if type_designator: check_resolve_type(type_designator, str)
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator, gm.PointStamped)
+        if center_point_designator: check_resolve_type(center_point_designator, VectorStamped)
         self.center_point_designator = center_point_designator
 
         if id_designator: check_resolve_type(id_designator, str)
@@ -293,7 +292,7 @@ class EmptySpotDesignator(Designator):
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """
-        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped, name=name)
+        super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
         self.robot = robot
 
         self.place_location_designator = place_location_designator
@@ -309,21 +308,21 @@ class EmptySpotDesignator(Designator):
 
         # points_of_interest = []
         if self._area:
-            points_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+            frames_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            points_of_interest = self.determine_points_of_interest(place_location)
+            frames_of_interest = self.determine_points_of_interest(place_location)
 
-        def is_poi_occupied(poi):
-            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
+        def is_poi_occupied(frame_stamped):
+            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped, radius=self._spacing)
             return not any(entities_at_poi)
 
-        open_POIs = filter(is_poi_occupied, points_of_interest)
+        open_POIs = filter(is_poi_occupied, frames_of_interest)
 
-        def distance_to_poi_area(poi):
+        def distance_to_poi_area(frame_stamped):
             #Derived from navigate_to_place
             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-            x = poi.point.x
-            y = poi.point.y
+            x = frame_stamped.frame.p.x()
+            y = frame_stamped.frame.p.y()
             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
@@ -350,13 +349,11 @@ class EmptySpotDesignator(Designator):
         if any(feasible_POIs):
             feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
             best_poi = feasible_POIs[0][0] # Get the POI of the best match
-            placement = msg_constructors.PoseStamped(pointstamped=best_poi)
-            # rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
 
-            selection = self.create_selection_marker(placement)
+            selection = self.create_selection_marker(best_poi)
             self.marker_pub.publish(MarkerArray([selection]))
 
-            return placement
+            return best_poi
         else:
             rospy.logerr("Could not find an empty spot")
             return None
@@ -384,11 +381,11 @@ class EmptySpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
-        marker.header.frame_id = selected_pose.header.frame_id
+        marker.header.frame_id = selected_pose.frame_id
         marker.header.stamp = rospy.Time.now()
-        marker.pose.position.x = selected_pose.pose.position.x
-        marker.pose.position.y = selected_pose.pose.position.y
-        marker.pose.position.z = selected_pose.pose.position.z
+        marker.pose.position.x = selected_pose.frame.p.x()
+        marker.pose.position.y = selected_pose.frame.p.y()
+        marker.pose.position.z = selected_pose.frame.p.z()
         marker.pose.orientation.w = 1
         marker.scale.x = 0.1
         marker.scale.y = 0.1
@@ -458,14 +455,13 @@ class EmptySpotDesignator(Designator):
                 ys = ch[i].y() + d/length*dy
 
                 # Shift point inwards and fill message
-                ps = gm.PointStamped()
-                ps.header.frame_id = "/map"
-                ps.point.x = xs - dy/length * self._edge_distance
-                ps.point.y = ys + dx/length * self._edge_distance
-                ps.point.z = center_pose.p.z() + z_max
-                points.append(ps)
+                fs = kdlFrameStampedFromXYZRPY(x=xs - dy/length * self._edge_distance,
+                                               y=ys + dx/length * self._edge_distance,
+                                               z=center_pose.p.z() + z_max,
+                                               frame_id="/map")
+                points += [fs]
 
-                self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+                self.marker_array.markers.append(self.create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
 
                 # ToDo: check if still within hull???
                 d += self._spacing

@@ -372,9 +372,9 @@ class ED:
         marker.header.frame_id = "/map"
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
-        marker.pose.position.x = center_point.x
-        marker.pose.position.y = center_point.y
-        marker.pose.position.z = center_point.z
+        marker.pose.position.x = center_point.vector.x()
+        marker.pose.position.y = center_point.vector.y()
+        marker.pose.position.z = center_point.vector.z()
         marker.lifetime = rospy.Duration(20.0)
         marker.scale.x = radius
         marker.scale.y = radius
