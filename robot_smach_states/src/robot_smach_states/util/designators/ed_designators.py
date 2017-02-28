@@ -424,7 +424,7 @@ class EmptySpotDesignator(Designator):
         :param center_pose: kdl.Frame, center pose of the Entity to place on top of
         :param z_max: float, height of the entity to place on, w.r.t. the entity
         :param convex_hull: [kdl.Vector], convex hull of the entity
-        :return: [geometry_msgs.msg.PointStamped] of candidates for placing
+        :return: [FrameStamped] of candidates for placing
         """
 
         points = []
