@@ -20,6 +20,7 @@ import tf
 import visualization_msgs.msg
 
 import PyKDL as kdl
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, kdlVectorToPointMsg
 import os
 
 
@@ -73,13 +74,11 @@ class ED:
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
-
+    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
         self._publish_marker(center_point, radius)
 
-        query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
+        center_point_in_map = center_point.projectToFrame("/map", self._tf_listener)
+        query = SimpleQueryRequest(id=id, type=type, center_point=kdlVectorToPointMsg(center_point_in_map.vector), radius=radius)
 
         try:
             entity_infos= self._ed_simple_query_srv(query).entities

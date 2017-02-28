@@ -19,7 +19,7 @@ from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors
@@ -136,7 +136,7 @@ class EdEntityDesignator(Designator):
         if center_point != None and center_point_designator != None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point == None and center_point_designator == None:
-            center_point = gm.Point()
+            center_point = VectorStamped()
         if id != "" and id_designator != None:
             raise TypeError("Specify either id or id_designator, not both")
 
@@ -151,7 +151,7 @@ class EdEntityDesignator(Designator):
         if type_designator: check_resolve_type(type_designator, str, list) #the resolve type of type_designator can be either st or list
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator, gm.PointStamped) #the resolve type of type_designator can be either st or list
+        if center_point_designator: check_resolve_type(center_point_designator, VectorStamped) #the resolve type of type_designator can be either st or list
         self.center_point_designator = center_point_designator
 
         if id_designator: check_resolve_type(id_designator, str)
