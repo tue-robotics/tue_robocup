@@ -6,7 +6,7 @@ from robot_smach_states.util.designators import Designator
 import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
 import robot_skills.util.msg_constructors as msg_constructors
-from robot_skills.util.kdl_conversions import FrameStamped, poseMsgToKdlFrame, kdlFrameStampedFromPoseStampedMsg
+from robot_skills.util.kdl_conversions import FrameStamped, poseMsgToKdlFrame, kdlFrameStampedFromPoseStampedMsg, kdlFrameStampedFromXYZRPY
 import PyKDL as kdl
 import copy
 
@@ -53,7 +53,7 @@ class EmptyShelfDesignator(Designator):
     def _resolve(self):
         place_location = self.place_location_designator.resolve()
 
-        points_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+        framestamped_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
 
         # # Feasible POIS: discard
         # feasible_POIs = []
@@ -79,10 +79,10 @@ class EmptyShelfDesignator(Designator):
             rospy.logerr("Could not find an empty spot")
             return None
         else:
-            ret = points_of_interest[self._count]
+            fs = framestamped_of_interest[self._count]
             self._count += 1
-            rospy.loginfo("Place pose at: {0}".format(ret))
-            return kdlFrameStampedFromPoseStampedMsg(ret)
+            rospy.loginfo("Place pose at: {0}".format(fs))
+            return fs
 
 
     def create_marker(self, x, y, z, frame_id="/map"):
@@ -108,11 +108,11 @@ class EmptyShelfDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
-        marker.header.frame_id = selected_pose.header.frame_id
+        marker.header.frame_id = selected_pose.frame_id
         marker.header.stamp = rospy.Time.now()
-        marker.pose.position.x = selected_pose.pose.position.x
-        marker.pose.position.y = selected_pose.pose.position.y
-        marker.pose.position.z = selected_pose.pose.position.z
+        marker.pose.position.x = selected_pose.vector.p.x()
+        marker.pose.position.y = selected_pose.vector.p.y()
+        marker.pose.position.z = selected_pose.vector.p.z()
         marker.pose.orientation.w = 1
         marker.scale.x = 0.1
         marker.scale.y = 0.1
@@ -144,12 +144,11 @@ class EmptyShelfDesignator(Designator):
                     rospy.logerr("Spacing of empty spot designator is too large!!!")
                     continue
 
-                p = gm.PoseStamped()
-                p.header.stamp = rospy.Time.now()
-                p.header.frame_id = e.id
-                p.pose.position.x = box.max_corner.x() - self._edge_distance
-                p.pose.position.y = y
-                p.pose.position.z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
+                frame_stamped = kdlFrameStampedFromXYZRPY()
+                frame_stamped.header.stamp = rospy.Time.now(x=box.max_corner.x() - self._edge_distance,
+                                                y=y,
+                                                z=box.min_corner.z() - 0.04,  # 0.04 is the usual offset)
+                                                frame_id=e.id)
 
                 # e.convex_hull = []
                 # e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
@@ -161,15 +160,15 @@ class EmptyShelfDesignator(Designator):
                 # e.z_max = box['min']['z'] - 0.04  # 0.04 is the usual offset
                 # return self.determinePointsOfInterest(e)
 
-                self._candidate_list_obj.append(p)
+                self._candidate_list_obj.append(frame_stamped)
 
         # publish marker
         self.marker_array = MarkerArray()
-        for ps in self._candidate_list_obj:
-            self.marker_array.markers.append(self.create_marker(ps.pose.position.x,
-                                                                ps.pose.position.y,
-                                                                ps.pose.position.z,
-                                                           e.id))
+        for frame_stamped in self._candidate_list_obj:
+            self.marker_array.markers.append(self.create_marker(frame_stamped.frame.p.x(),
+                                                                frame_stamped.frame.p.y(),
+                                                                frame_stamped.frame.p.z(),
+                                                                e.id))
         self.marker_pub.publish(self.marker_array)
 
         return self._candidate_list_obj
