@@ -2,11 +2,12 @@
 State machine startup
 
 Usage:
-  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--no_execute]
+  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--no_execute] [--initial_pose=<init_pose>]
 
 Options:
   -h --help     Show this screen.
   --initial=<init>  Initial state
+  --initial_pose=<init_pose>  Initial state
   --no-execute Only construct state machine, do not execute it, i.e. only do checks.
 """
 
@@ -17,6 +18,7 @@ import sys
 import traceback
 from docopt import docopt
 import os
+import ast
 
 
 def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
@@ -35,10 +37,11 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     available_robots = ['amigo', 'sergio', 'mockbot']
     arguments = docopt(__doc__.format(robot='|'.join(available_robots),
                                       challenge_name=challenge_name if challenge_name else "xxx"),
-                                      argv=argv[1:],
+                                      argv=[v for v in argv[1:] if not v.startswith("_")],
                        version='robot_smach_states startup 2.0')
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
+    initial_pose = arguments["--initial_pose"]
     no_execute = arguments["--no_execute"]
 
     robot = None
@@ -58,6 +61,16 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
         exit(-1)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
+
+    if initial_pose:
+        # Parse the initial pose array
+        try:
+            x, y, yaw = ast.literal_eval(initial_pose)
+
+            rospy.loginfo("Setting initial pose of (%f,%f,%f)", x, y, yaw)
+            robot.base.set_initial_pose(x, y, yaw)
+        except:
+            rospy.logerr("Failed to parse initial pose x, y, yaw from %s" % init_pose)
 
     introserver = None
 
