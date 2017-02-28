@@ -1,0 +1,349 @@
+
+[INFO] [WallTime: 1467269819.772000] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467269819.772162] State machine transitioning 'GOTO_TARGET2_PRE':'arrived'-->'GOTO_TARGET2'
+[INFO] [WallTime: 1467269819.772607] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467269819.774950] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467269819.775250] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467269819.904185] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f6644127638>
+SPEAKING!!!!
+[INFO] [WallTime: 1467269819.904593] 'Affirmative!'
+[INFO] [WallTime: 1467269819.919442] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467269829.740165] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467269829.740413] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467269829.743729] 
+
+Navigation summary:
+Covered 1.60372690366 meters in 9.96854090691 seconds (0.160878800483) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467269829.743917] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467269829.744051] State machine transitioning 'GOTO_TARGET2':'arrived'-->'SAY_TARGET2_REACHED'
+[INFO] [WallTime: 1467269829.744353] 'I am now at target 2'
+[INFO] [WallTime: 1467269831.458317] State machine transitioning 'SAY_TARGET2_REACHED':'spoken'-->'SAY_GOTO_TARGET1'
+[INFO] [WallTime: 1467269831.458670] 'I will now go to target 1'
+[INFO] [WallTime: 1467269831.518114] State machine transitioning 'SAY_GOTO_TARGET1':'spoken'-->'GOTO_TARGET1'
+[INFO] [WallTime: 1467269831.518775] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467269831.521962] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467269831.522344] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467269831.649112] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f6644115488>
+SPEAKING!!!!
+[INFO] [WallTime: 1467269831.649750] 'I will be there in a sec!'
+[INFO] [WallTime: 1467269831.712347] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467269837.322469] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269837.322793] Plan blocked
+[WARN] [WallTime: 1467269840.326158] Plan free again
+[INFO] [WallTime: 1467269840.326579] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269840.331275] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467269841.629678] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269841.630065] Plan blocked
+[INFO] [WallTime: 1467269844.641801] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66441329e0>
+[INFO] [WallTime: 1467269845.143240] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467269852.358298] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269852.359064] Plan blocked
+[WARN] [WallTime: 1467269852.860132] Plan free again
+[INFO] [WallTime: 1467269852.860556] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269852.891045] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467269853.863093] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269853.863729] Plan blocked
+[WARN] [WallTime: 1467269855.365068] Plan free again
+[INFO] [WallTime: 1467269855.365350] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269855.371049] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[ERROR] [WallTime: 1467269860.412860] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467269863.381368] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269863.381745] Plan blocked
+[WARN] [WallTime: 1467269863.882334] Plan free again
+[INFO] [WallTime: 1467269863.882565] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269863.891057] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467269865.284797] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269865.285132] Plan blocked
+[WARN] [WallTime: 1467269865.786176] Plan free again
+[INFO] [WallTime: 1467269865.786528] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269865.811524] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467269865.987392] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269865.987914] Plan blocked
+[WARN] [WallTime: 1467269866.989072] Plan free again
+[INFO] [WallTime: 1467269866.989295] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269867.011851] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[INFO] [WallTime: 1467269867.390528] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269867.390907] Plan blocked
+[WARN] [WallTime: 1467269868.892202] Plan free again
+[INFO] [WallTime: 1467269868.892618] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269868.932683] Received comm state RECALLING when in simple state DONE with SimpleActionClient in NS /sergio/head_ref/action_server
+[ERROR] [WallTime: 1467269874.012581] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467269879.213204] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467269879.213449] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467269879.216858] 
+
+Navigation summary:
+Covered 7.69122549547 meters in 47.6947391033 seconds (0.161259410159) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467269879.217053] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467269879.217194] State machine transitioning 'GOTO_TARGET1':'arrived'-->'SAY_TARGET1_REACHED'
+[INFO] [WallTime: 1467269879.217576] 'I have arrived at target 1'
+[INFO] [WallTime: 1467269881.288389] State machine transitioning 'SAY_TARGET1_REACHED':'spoken'-->'SAY_GOTO_TARGET3'
+[INFO] [WallTime: 1467269881.289170] 'Lets go to target 3'
+[INFO] [WallTime: 1467269881.315230] State machine transitioning 'SAY_GOTO_TARGET3':'spoken'-->'GOTO_TARGET3'
+[INFO] [WallTime: 1467269881.315704] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+	[]
+[INFO] [WallTime: 1467269881.318800] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1467269881.319276] State machine starting in initial state 'GET_PLAN' with userdata: 
+	[]
+[INFO] [WallTime: 1467269881.458331] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440c37e8>
+SPEAKING!!!!
+[INFO] [WallTime: 1467269881.458799] 'Getting there!'
+[INFO] [WallTime: 1467269881.473180] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1467269894.501092] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1467269894.501507] Plan blocked
+[WARN] [WallTime: 1467269895.002460] Plan free again
+[INFO] [WallTime: 1467269895.002806] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[ERROR] [WallTime: 1467269895.010912] SimpleActionClient received DONE twice
+[INFO] [WallTime: 1467269905.627143] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1467269905.627595] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1467269905.630792] 
+
+Navigation summary:
+Covered 9.55174625248 meters in 24.3118200302 seconds (0.392884870018) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1467269905.630983] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1467269905.631209] State machine transitioning 'GOTO_TARGET3':'arrived'-->'SAY_TARGET3_REACHED'
+[INFO] [WallTime: 1467269905.631619] 'I have arrived at target 3'
+[INFO] [WallTime: 1467269907.685113] State machine transitioning 'SAY_TARGET3_REACHED':'spoken'-->'TURN'
+Turning 0.000000 radians with force drive
+[INFO] [WallTime: 1467269907.686229] State machine transitioning 'TURN':'turned'-->'SAY_STAND_IN_FRONT'
+[INFO] [WallTime: 1467269907.687162] 'Please stand in front of me!'
+[INFO] [WallTime: 1467269909.659828] State machine transitioning 'SAY_STAND_IN_FRONT':'spoken'-->'FOLLOW_OPERATOR'
+[INFO] [WallTime: 1467269909.660925] 'Should I follow you?'
+[INFO] [WallTime: 1467269910.895085] spec: <choice>
+[INFO] [WallTime: 1467269910.895994] Example: 'no'
+[INFO] [WallTime: 1467269913.399961] Result: result: yes
+choices: {'choice': 'yes'}
+[INFO] [WallTime: 1467269913.400181] Robot heard 'yes'
+[INFO] [WallTime: 1467269913.411670] 'Please look at me while I learn to recognize you.'
+[INFO] [WallTime: 1467269916.220967] 'Just in case...'
+We have a new operator: 97545a80df7f74a0f2a2c9d6c85af629-laser
+[INFO] [WallTime: 1467269926.304697] 'Gotcha! I will follow you!'
+Checking end criteria
+Operator is at 1.059142 meters distance
+Checking if done following
+apparently not
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269926.364031] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664412b908>
+Checking end criteria
+Operator is at 1.062577 meters distance
+Robot dit not move for x seconds: 0.520936
+Checking if done following
+apparently not
+Operator is standing still for 0.520803 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269926.884590] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cac68>
+Checking end criteria
+Operator is at 1.074644 meters distance
+Robot dit not move for x seconds: 1.042486
+Checking if done following
+apparently not
+Operator is standing still for 1.042971 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269927.407134] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cacf8>
+Checking end criteria
+Operator is at 1.066407 meters distance
+Robot dit not move for x seconds: 1.565548
+Checking if done following
+apparently not
+Operator is standing still for 1.565625 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269927.929485] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cafc8>
+Checking end criteria
+Operator is at 1.035632 meters distance
+Robot dit not move for x seconds: 2.082476
+Checking if done following
+apparently not
+Operator is standing still for 2.082803 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269928.446789] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440ca560>
+Checking end criteria
+Operator is at 0.977722 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 0.000060 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269928.967928] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb72bd8>
+[ERROR] [WallTime: 1467269928.968337] Received comm state ACTIVE when in simple state DONE with SimpleActionClient in NS /sergio/local_planner/action_server
+Checking end criteria
+Operator is at 0.883143 meters distance
+Robot dit not move for x seconds: 0.521478
+Checking if done following
+apparently not
+Operator is standing still for 0.000052 seconds
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269929.489813] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cac68>
+Checking end criteria
+Operator is at 1.007021 meters distance
+Robot dit not move for x seconds: 1.040769
+Checking if done following
+apparently not
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269930.009130] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440ca878>
+Checking end criteria
+Operator is at 1.375816 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269930.558302] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb9a5f0>
+Checking end criteria
+Operator is at 1.666455 meters distance
+Robot dit not move for x seconds: 0.549641
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269931.117380] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb9a248>
+Checking end criteria
+Operator is at 1.776861 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269931.671651] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb9a098>
+Checking end criteria
+Operator is at 1.874653 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269932.241377] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440bf2d8>
+Checking end criteria
+Operator is at 1.983499 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269932.807807] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb9a518>
+Checking end criteria
+Operator is at 2.168098 meters distance
+Robot dit not move for x seconds: 0.573224
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269933.388587] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb9a560>
+Checking end criteria
+Operator is at 2.500262 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269933.979983] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440bfea8>
+[INFO] [WallTime: 1467269934.490071] 'Not so fast!'
+Checking end criteria
+Operator is at 2.222502 meters distance
+Checking if done following
+apparently not
+Operator is standing still for 1.904531 seconds
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269935.884168] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cae60>
+[INFO] [WallTime: 1467269936.397484] 'Stop! I lost you! Until I find you again, please wait there.'
+Checking end criteria
+Operator is at 2.150697 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269936.495401] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb56ef0>
+Checking end criteria
+Operator is at 1.998959 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269937.069624] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cac20>
+Checking end criteria
+Operator is at 1.808869 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269937.641125] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f6644115c20>
+Checking end criteria
+Operator is at 1.635720 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269938.192563] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664eb56fc8>
+Checking end criteria
+Operator is at 1.561831 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269938.752127] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f6644115b90>
+Checking end criteria
+Operator is at 1.438497 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269939.292634] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440cadd0>
+Checking end criteria
+Operator is at 1.323079 meters distance
+Checking if done following
+apparently not
+Replan=True, so check if we replanned...
+We never replanned so far, so we can safely update navigation
+Breadcrumb plan is blocked, removing blocked points
+[INFO] [WallTime: 1467269939.844038] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f66440ca4d0>
+Checking end criteria
+Operator is at 1.256333 meters distance
+Checking if done following
+apparently not
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 1.250988 meters distance
+Robot dit not move for x seconds: 0.508382
+Checking if done following
+apparently not
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 1.250942 meters distance
+Robot dit not move for x seconds: 1.016095
+Checking if done following
+apparently not
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 1.229037 meters distance
+Robot dit not move for x seconds: 1.524489
+Checking if done following
+apparently not
+Not updating navigation because no new breadcrumbs.
+Checking end criteria
+Operator is at 1.179120 meters distance
+Robot dit not move for x seconds: 0.002423
+Checking if done following
+apparently not
+Operator within self._lookat_radius
+[INFO] [WallTime: 1467269942.391001] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7f664412bd40>
