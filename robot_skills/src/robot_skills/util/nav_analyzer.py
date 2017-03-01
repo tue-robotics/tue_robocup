@@ -198,24 +198,6 @@ class NavAnalyzer:
     def abort_measurement(self):
         self.active = False
 
-    def count_reset(self, pose):
-        self.nr_reset_costmap +=1
-        stamp    = self.getTimeStamp()
-        resetitem = ET.SubElement(self.resetitems, "reset")
-        resetitem.set("id", "{0}".format(self.nr_reset_costmap))
-        resetitem.set("stamp", stamp)
-        poseitem = ET.SubElement(resetitem, "pose")
-        self.poseStampedToSubElement(pose, poseitem)
-
-    def count_clear(self, pose):
-        self.nr_clear_costmap +=1
-        stamp    = self.getTimeStamp()
-        clearitem = ET.SubElement(self.clearitems, "clear")
-        clearitem.set("id", "{0}".format(self.nr_clear_costmap))
-        clearitem.set("stamp", stamp)
-        poseitem = ET.SubElement(clearitem, "pose")
-        self.poseStampedToSubElement(pose, poseitem)
-
     def odomCallback(self, odom_msg):
 
         current_position = odom_msg.pose.pose.position
