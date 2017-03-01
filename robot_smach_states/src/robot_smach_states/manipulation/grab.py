@@ -189,12 +189,20 @@ class PickUp(smach.State):
 
         arm.occupied_by = grab_entity
 
+        # First set orientation to 0
+        goal_bl.frame.M.DoRotX(0)
+        goal_bl.frame.M.DoRotY(0)
+        goal_bl.frame.M.DoRotZ(0)
+
         # Lift
         # rospy.loginfo('Start lifting')
         if arm.side == "left":
             roll = 0.3
         else:
             roll = -0.3
+
+        goal_bl.frame.M.DoRotZ(0) # First set roll to 0
+        goal_bl.frame.M.DoRotZ(roll)  # So we don't rotate by the roll but effectively set it
         if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed lift')
 
@@ -204,6 +212,10 @@ class PickUp(smach.State):
             roll = 0.6
         else:
             roll = -0.6
+
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)
+        goal_bl.frame.M.DoRotZ(0) # First set roll to 0
+        goal_bl.frame.M.DoRotZ(roll)  # So we don't rotate by the roll but effectively set it
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed retract')
 
