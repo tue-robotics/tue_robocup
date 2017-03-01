@@ -198,19 +198,6 @@ class NavAnalyzer:
     def abort_measurement(self):
         self.active = False
 
-    def count_plan(self, robot_pose, target_pose, plantime, distance):
-        self.nr_plan +=1
-        stamp    = self.getTimeStamp()
-        planitem = ET.SubElement(self.planitems, "plan")
-        planitem.set("id", "{0}".format(self.nr_plan))
-        planitem.set("stamp", stamp)
-        planitem.set("planning_time", "{0}".format(plantime))
-        planitem.set("planning_distance", "{0}".format(distance))
-        robotposeitem = ET.SubElement(planitem, "robot_pose")
-        self.poseStampedToSubElement(robot_pose, robotposeitem)
-        goalposeitem = ET.SubElement(planitem, "goal_pose")
-        self.poseStampedToSubElement(target_pose, goalposeitem)
-
     def count_reset(self, pose):
         self.nr_reset_costmap +=1
         stamp    = self.getTimeStamp()

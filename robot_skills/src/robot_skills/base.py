@@ -40,7 +40,6 @@ class LocalPlanner():
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
         self._orientation_constraint = orientation_constraint
-        #self.analyzer.count_plan(plan[0], plan[-1], 0.0, computePathLength(plan))
         self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
         self._goal_handle = self._action_client.gh
         rospy.loginfo("Goal handle = {0}".format(self._goal_handle))
@@ -120,9 +119,6 @@ class GlobalPlanner():
         plan_time = (end_time-start_time).to_sec()
 
         path_length = self.computePathLength(resp.plan)
-
-        #if path_length > 0:
-        #    self.analyzer.count_plan(resp.plan[0], resp.plan[-1], plan_time, path_length)
 
         return resp.plan
 
