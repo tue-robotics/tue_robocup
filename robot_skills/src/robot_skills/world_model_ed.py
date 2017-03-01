@@ -156,7 +156,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, kdlFrameStamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
+    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=[], remove_flags=[], action=None):
         """
         Updates entity
         :param id: entity id
@@ -174,12 +174,12 @@ class ED:
         if action:
             json_entity += ', "action": "%s"' % action
 
-        if kdlFrameStamped:
-            if kdlFrameStamped.frame_id != "/map":
-                kdlFrameStamped = kdlFrameStamped.projectToFrame("/map", self._tf_listener)
+        if frame_stamped:
+            if frame_stamped.frame_id != "/map":
+                frame_stamped = frame_stamped.projectToFrame("/map", self._tf_listener)
 
-            Z, Y, X = kdlFrameStamped.frame.M.GetEulerZYX()
-            t = kdlFrameStamped.frame.p
+            Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
+            t = frame_stamped.frame.p
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:
