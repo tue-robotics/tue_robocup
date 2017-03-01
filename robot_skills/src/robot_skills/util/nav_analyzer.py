@@ -17,10 +17,11 @@ import math
 
 # Messages
 import nav_msgs.msg
-import geometry_msgs.msg
+import PyKDL as kdl
 
 # Robot skills
 import transformations
+from robot_skills.util.kdl_conversions import pointMsgToKdlVector
 
 
 class NavAnalyzer:
@@ -86,9 +87,7 @@ class NavAnalyzer:
                 self.base_cmd += (topic + " ")
 
         ''' Initialize variables '''
-        self.previous_position = geometry_msgs.msg.Point()
-        self.previous_position.x = 0.0
-        self.previous_position.y = 0.0
+        self.previous_position = kdl.Vector(0.0, 0.0, 0.0)
         self.distance_traveled   = 0.0
         self.nr_plan             = 0
         self.nr_clear_costmap    = 0
@@ -199,29 +198,11 @@ class NavAnalyzer:
         self.active = False
 
     def odomCallback(self, odom_msg):
-
-        current_position = odom_msg.pose.pose.position
+        current_position = pointMsgToKdlVector(odom_msg.pose.pose.position)
         if self.active:
-            dx = current_position.x - self.previous_position.x
-            dy = current_position.y - self.previous_position.y
-            self.distance_traveled += math.sqrt( dx*dx + dy*dy)
+            self.distance_traveled += kdl.diff(current_position, self.previous_position).Norm()
 
         self.previous_position = current_position
-
-    def poseStampedToSubElement(self, pose_stamped, element):
-        x   = pose_stamped.pose.position.x
-        y   = pose_stamped.pose.position.y
-        phi = transformations.euler_z_from_quaternion(pose_stamped.pose.orientation)
-        element.set("x", "{0}".format(x))
-        element.set("y", "{0}".format(y))
-        element.set("phi", "{0}".format(phi))
-
-        #xitem = ET.SubElement(element, "x")
-        #xitem.text = "{0}".format(x)
-        #yitem = ET.SubElement(element, "y")
-        #yitem.text = "{0}".format(y)
-        #phiitem = ET.SubElement(element, "phi")
-        #phiitem.text = "{0}".format(phi)
 
     def kdlFrameToSubElement(self, kdlFrame, element):
         x   = kdlFrame.p.x()
