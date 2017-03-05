@@ -29,10 +29,14 @@ from .classification_result import ClassificationResult
 
 from robot_skills.util.entity import from_entity_info
 
+def _create_service_proxy(service_name, service_type, wait_service):
+    if wait_service:
+        rospy.wait_for_service(service_name)
+    return rospy.ServiceProxy(service_name, service_type)
 
 class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
-        self._get_constraint_srv = rospy.ServiceProxy('/%s/ed/navigation/get_constraint'%robot_name, GetGoalConstraint)
+        self._get_constraint_srv = _create_service_proxy('/%s/ed/navigation/get_constraint'%robot_name, GetGoalConstraint, wait_service)
 
     def get_position_constraint(self, entity_id_area_name_map):
         try:
@@ -50,17 +54,14 @@ class Navigation:
 class ED:
 
     def __init__(self, robot_name, tf_listener, wait_service=False):
-        self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
-        self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
-        self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
-        self._ed_kinect_update_srv = rospy.ServiceProxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update)
-
-        self._ed_classify_srv = rospy.ServiceProxy('/%s/ed/classify'%robot_name, Classify)
-        self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
-
-        self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, ed.srv.Reset)
-
-        self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
+        self._ed_simple_query_srv = _create_service_proxy('/%s/ed/simple_query'%robot_name, SimpleQuery, wait_service)
+        self._ed_entity_info_query_srv = _create_service_proxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo, wait_service)
+        self._ed_update_srv = _create_service_proxy('/%s/ed/update'%robot_name, UpdateSrv, wait_service)
+        self._ed_kinect_update_srv = _create_service_proxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update, wait_service)
+        self._ed_classify_srv = _create_service_proxy('/%s/ed/classify'%robot_name, Classify, wait_service)
+        self._ed_configure_srv = _create_service_proxy('/%s/ed/configure'%robot_name, Configure, wait_service)
+        self._ed_reset_srv = _create_service_proxy('/%s/ed/reset'%robot_name, ed.srv.Reset, wait_service)
+        self._ed_get_image_srv = _create_service_proxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage, wait_service)
 
         self._tf_listener = tf_listener
 
