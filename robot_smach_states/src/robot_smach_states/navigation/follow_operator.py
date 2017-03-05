@@ -198,7 +198,7 @@ class FollowOperator(smach.State):
         # robot_yaw = transformations.euler_z_from_quaternion(self._robot.base.pose.orientation)
         temp_crumbs = []
         for crumb in self._breadcrumbs:
-            if crumb.disntance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
+            if crumb.distance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
                 temp_crumbs.append(crumb)
             else:
                 temp_crumbs = []
