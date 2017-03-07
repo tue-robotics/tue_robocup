@@ -134,7 +134,7 @@ class Put(smach.State):
         if not place_entity:
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
-            self._robot.ed.update_entity(place_entity.id, kdlFrameStamped=placement_fs)
+            self._robot.ed.update_entity(place_entity.id, frame_stamped=placement_fs)
             arm.occupied_by = None
 
         # Open gripper
