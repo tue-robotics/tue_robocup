@@ -1,5 +1,6 @@
 # Entity where the shelves are part of
-cabinet = "bookcase"
+cabinet_slam = "bookcase"
+cabinet_amcl = "bookcase"
 
 # Shelves where objects might be
 # object_shelves = ["bookcase/shelf2", "bookcase/shelf3"]

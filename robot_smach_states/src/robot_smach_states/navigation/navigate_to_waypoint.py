@@ -7,7 +7,7 @@ from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
 from robot_smach_states.util.designators import check_resolve_type
-import ed.msg
+from robot_skills.util.entity import Entity
 from robot_skills.util import transformations as tf
 
 import rospy
@@ -21,9 +21,9 @@ class NavigateToWaypoint(NavigateTo):
 
         self.robot               = robot
 
-        check_resolve_type(waypoint_designator, ed.msg.EntityInfo) #Check that the waypoint_designator resolves to an Entity
+        check_resolve_type(waypoint_designator, Entity) #Check that the waypoint_designator resolves to an Entity
         if look_at_designator is not None:
-            check_resolve_type(look_at_designator, ed.msg.EntityInfo) #Check that the look_at_designator resolves to an Entity
+            check_resolve_type(look_at_designator, Entity) #Check that the look_at_designator resolves to an Entity
 
         self.waypoint_designator = waypoint_designator
         self.radius              = radius
@@ -37,17 +37,11 @@ class NavigateToWaypoint(NavigateTo):
             return None
 
         try:
-            pose = e.data["pose"]
-            x = pose["x"]
-            y = pose["y"]
-            rz = e.data["pose"]["rz"]
+            x = e.pose.position.x
+            y = e.pose.position.y
+            rz = tf.euler_z_from_quaternion(e.pose.orientation)
         except:
-            try:
-                x = e.pose.position.x
-                y = e.pose.position.y
-                rz = tf.euler_z_from_quaternion(e.pose.orientation)
-            except:
-                return None
+            return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
 

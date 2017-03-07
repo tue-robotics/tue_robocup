@@ -9,6 +9,7 @@ import time
 
 from math import cos, sin
 from geometry_msgs.msg import *
+from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 
@@ -192,7 +193,7 @@ class planBlocked(smach.State):
 
             # Look at the entity
             #ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
-            #self.robot.head.look_at_point(ps)
+            #self.robot.head.look_at_point(kdlVectorStampedFromPointStampedMsg(ps))
 
 
             if not self.robot.base.local_planner.getStatus() == "blocked":

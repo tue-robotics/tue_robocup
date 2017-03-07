@@ -53,7 +53,7 @@ class Turn(smach.State):
         operator = None
         while not operator:
             operator = self.robot.ed.get_closest_entity(self, radius=1.9,
-                                                        center_point=self.robot.base.get_location().pose.position)
+                                                        center_point=self.robot.base.get_location().p)
             print operator
             if not operator:
                 vth = 0.5
@@ -65,9 +65,9 @@ class Turn(smach.State):
 
         # Turn towards the operator
         current = self.robot.base.get_location()
-        robot_th = tf.euler_z_from_quaternion(current.pose.orientation)
-        desired_th = math.atan2(operator.pose.position.y - current.pose.position.y,
-                                operator.pose.position.x - current.pose.position.x)
+        robot_th = current.M.GetRPY()[2]  # Get the Yaw, rotation around Z
+        desired_th = math.atan2(operator._pose.p.y() - current.p.y(),
+                                operator._pose.p.x() - current.p.x())
 
         # Calculate params
         th = desired_th - robot_th
