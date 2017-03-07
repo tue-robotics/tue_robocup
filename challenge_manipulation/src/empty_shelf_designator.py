@@ -144,11 +144,10 @@ class EmptyShelfDesignator(Designator):
                     rospy.logerr("Spacing of empty spot designator is too large!!!")
                     continue
 
-                frame_stamped = kdlFrameStampedFromXYZRPY()
-                frame_stamped.header.stamp = rospy.Time.now(x=box.max_corner.x() - self._edge_distance,
-                                                y=y,
-                                                z=box.min_corner.z() - 0.04,  # 0.04 is the usual offset)
-                                                frame_id=e.id)
+                frame_stamped = kdlFrameStampedFromXYZRPY(  x=box.max_corner.x() - self._edge_distance,
+                                                            y=y,
+                                                            z=box.min_corner.z() - 0.04,  # 0.04 is the usual offset)
+                                                            frame_id=e.id)
 
                 # e.convex_hull = []
                 # e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
