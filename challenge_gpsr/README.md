@@ -35,4 +35,4 @@ The robot goes back to the starting position, where it should meet the operator 
 
 Finally, the task log is reported to the user just before the robot returns back to idle state.
 
-![GPSR flow chart](/home/amigo/ros/kinetic/repos/https_/github.com/tue-robotics/tue_robocup.git/challenge_gpsr/doc/GPSR.jpeg)
+![GPSR flow chart](doc/GPSR.jpeg)
