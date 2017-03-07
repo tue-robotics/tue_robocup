@@ -17,10 +17,11 @@ import math
 
 # Messages
 import nav_msgs.msg
-import geometry_msgs.msg
+import PyKDL as kdl
 
 # Robot skills
 import transformations
+from robot_skills.util.kdl_conversions import pointMsgToKdlVector
 
 
 class NavAnalyzer:
@@ -86,9 +87,7 @@ class NavAnalyzer:
                 self.base_cmd += (topic + " ")
 
         ''' Initialize variables '''
-        self.previous_position = geometry_msgs.msg.Point()
-        self.previous_position.x = 0.0
-        self.previous_position.y = 0.0
+        self.previous_position = kdl.Vector(0.0, 0.0, 0.0)
         self.distance_traveled   = 0.0
         self.nr_plan             = 0
         self.nr_clear_costmap    = 0
@@ -116,7 +115,7 @@ class NavAnalyzer:
 
         ''' Log startpose '''
         startposeitem = ET.SubElement(self.logitem, "startpose")
-        self.poseStampedToSubElement(startpose, startposeitem)
+        self.kdlFrameToSubElement(startpose, startposeitem)
 
         ''' Start bagging '''
         # The os.setsid() is passed in the argument preexec_fn so
@@ -142,7 +141,7 @@ class NavAnalyzer:
 
         ''' Log endpose '''
         endposeitem = ET.SubElement(self.logitem, "endpose")
-        self.poseStampedToSubElement(endpose, endposeitem)
+        self.kdlFrameToSubElement(endpose, endposeitem)
 
         ''' Make inactive '''
         self.active = False
@@ -198,61 +197,20 @@ class NavAnalyzer:
     def abort_measurement(self):
         self.active = False
 
-    def count_plan(self, robot_pose, target_pose, plantime, distance):
-        self.nr_plan +=1
-        stamp    = self.getTimeStamp()
-        planitem = ET.SubElement(self.planitems, "plan")
-        planitem.set("id", "{0}".format(self.nr_plan))
-        planitem.set("stamp", stamp)
-        planitem.set("planning_time", "{0}".format(plantime))
-        planitem.set("planning_distance", "{0}".format(distance))
-        robotposeitem = ET.SubElement(planitem, "robot_pose")
-        self.poseStampedToSubElement(robot_pose, robotposeitem)
-        goalposeitem = ET.SubElement(planitem, "goal_pose")
-        self.poseStampedToSubElement(target_pose, goalposeitem)
-
-    def count_reset(self, pose):
-        self.nr_reset_costmap +=1
-        stamp    = self.getTimeStamp()
-        resetitem = ET.SubElement(self.resetitems, "reset")
-        resetitem.set("id", "{0}".format(self.nr_reset_costmap))
-        resetitem.set("stamp", stamp)
-        poseitem = ET.SubElement(resetitem, "pose")
-        self.poseStampedToSubElement(pose, poseitem)
-
-    def count_clear(self, pose):
-        self.nr_clear_costmap +=1
-        stamp    = self.getTimeStamp()
-        clearitem = ET.SubElement(self.clearitems, "clear")
-        clearitem.set("id", "{0}".format(self.nr_clear_costmap))
-        clearitem.set("stamp", stamp)
-        poseitem = ET.SubElement(clearitem, "pose")
-        self.poseStampedToSubElement(pose, poseitem)
-
     def odomCallback(self, odom_msg):
-
-        current_position = odom_msg.pose.pose.position
+        current_position = pointMsgToKdlVector(odom_msg.pose.pose.position)
         if self.active:
-            dx = current_position.x - self.previous_position.x
-            dy = current_position.y - self.previous_position.y
-            self.distance_traveled += math.sqrt( dx*dx + dy*dy)
+            self.distance_traveled += kdl.diff(current_position, self.previous_position).Norm()
 
         self.previous_position = current_position
 
-    def poseStampedToSubElement(self, pose_stamped, element):
-        x   = pose_stamped.pose.position.x
-        y   = pose_stamped.pose.position.y
-        phi = transformations.euler_z_from_quaternion(pose_stamped.pose.orientation)
+    def kdlFrameToSubElement(self, kdlFrame, element):
+        x   = kdlFrame.p.x()
+        y   = kdlFrame.p.y()
+        phi = kdlFrame.M.GetRPY()[2]  # Get the yaw
         element.set("x", "{0}".format(x))
         element.set("y", "{0}".format(y))
         element.set("phi", "{0}".format(phi))
-
-        #xitem = ET.SubElement(element, "x")
-        #xitem.text = "{0}".format(x)
-        #yitem = ET.SubElement(element, "y")
-        #yitem.text = "{0}".format(y)
-        #phiitem = ET.SubElement(element, "phi")
-        #phiitem.text = "{0}".format(phi)
 
     def getTimeStamp(self):
         stamp = datetime.datetime.now()

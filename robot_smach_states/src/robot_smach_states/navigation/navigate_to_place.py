@@ -5,6 +5,7 @@ from robot_smach_states.navigation import NavigateTo
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
+from robot_skills.util.kdl_conversions import FrameStamped
 
 from robot_smach_states.util.designators import Designator, check_resolve_type
 
@@ -23,7 +24,7 @@ class NavigateToPlace(NavigateTo):
         super(NavigateToPlace, self).__init__(robot)
 
         self.robot    = robot
-        check_resolve_type(place_pose_designator, PoseStamped) #Check that place_pose_designator actually returns a PoseStamped
+        check_resolve_type(place_pose_designator, FrameStamped) #Check that place_pose_designator actually returns a PoseStamped
         self.place_pose_designator = place_pose_designator
 
         self.arm_designator = arm_designator
@@ -43,17 +44,17 @@ class NavigateToPlace(NavigateTo):
             angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
-        place_pose = self.place_pose_designator.resolve()
+        place_fs = self.place_pose_designator.resolve()
 
-        if not place_pose:
+        if not place_fs:
             rospy.logerr("No such place_pose")
             return None
 
-        rospy.loginfo("Navigating to place at {0}".format(place_pose).replace('\n', ' '))
+        rospy.loginfo("Navigating to place at {0}".format(place_fs).replace('\n', ' '))
 
         try:
-            x = place_pose.pose.position.x
-            y = place_pose.pose.position.y
+            x = place_fs.frame.p.x()
+            y = place_fs.frame.p.y()
         except KeyError, ke:
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
@@ -63,7 +64,7 @@ class NavigateToPlace(NavigateTo):
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
         # pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
         # oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
-        pc = PositionConstraint(constraint=ri+" and "+ro, frame=place_pose.header.frame_id)
-        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame=place_pose.header.frame_id, angle_offset=angle_offset)
+        pc = PositionConstraint(constraint=ri+" and "+ro, frame=place_fs.frame_id)
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame=place_fs.frame_id, angle_offset=angle_offset)
 
         return pc, oc

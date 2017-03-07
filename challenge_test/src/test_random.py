@@ -5,7 +5,6 @@
 # Date: October 2015
 ################################################
 
-import roslib;
 import rospy
 import sys
 import smach

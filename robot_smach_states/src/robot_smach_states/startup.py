@@ -13,7 +13,7 @@ from sensor_msgs.msg import LaserScan
 from threading import Event
 
 import robot_skills.util.msg_constructors as msgs
-from robot_smach_states.util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator
 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""

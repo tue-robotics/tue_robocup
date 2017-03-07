@@ -6,7 +6,6 @@ import smach
 import thread
 from visualization_msgs.msg import Marker
 
-import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
 from robot_skills.util import transformations as tf
 import robot_smach_states.util.designators as ds

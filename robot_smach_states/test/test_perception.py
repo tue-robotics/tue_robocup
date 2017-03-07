@@ -4,7 +4,7 @@ import unittest
 
 # datatypes
 import PyKDL as kdl
-from geometry_msgs.msg import Point, PointStamped
+from robot_skills.util.kdl_conversions import VectorStamped
 
 #Robot Skills
 from robot_skills.mockbot import Mockbot
@@ -34,13 +34,9 @@ class TestLookAtEntity(unittest.TestCase):
 
         state.execute()
 
-        ps = PointStamped()
-        ps.header.frame_id = "/12345"  # The position of the entity is defined w.r.t. the map
-        ps.point.x = 0
-        ps.point.y = 0
-        ps.point.z = 0
+        vs = VectorStamped(0, 0, 0, "/12345")
 
-        self.robot.head.look_at_point.assert_called_with(ps)
+        self.robot.head.look_at_point.assert_called_with(vs)
 
 
 class TestLookAtArea(unittest.TestCase):
@@ -66,13 +62,9 @@ class TestLookAtArea(unittest.TestCase):
 
         state.execute()
 
-        ps = PointStamped()
-        ps.header.frame_id = "/12345"  # The ID
-        ps.point.x = 0.5
-        ps.point.y = 0.5
-        ps.point.z = 0.5
+        vs = VectorStamped(0.5, 0.5, 0.5, "/12345")
 
-        self.robot.head.look_at_point.assert_called_with(ps, timeout=0)
+        self.robot.head.look_at_point.assert_called_with(vs, timeout=0)
 
 class TestLookOnTopOfEntity(unittest.TestCase):
     def setUp(self):
@@ -95,13 +87,12 @@ class TestLookOnTopOfEntity(unittest.TestCase):
 
         state.execute()
 
-        ps = PointStamped()
-        ps.header.frame_id = "/12345"  # The ID
-        ps.point.x = 0
-        ps.point.y = 0
-        ps.point.z = 1  # This is the height of the object, as indicated by the z_max
+        vs = VectorStamped(0,
+                           0,
+                           1,         # This is the height of the object, as indicated by the z_max
+                           "/12345")  # The ID
 
-        self.robot.head.look_at_point.assert_called_with(ps)
+        self.robot.head.look_at_point.assert_called_with(vs)
 
 if __name__ == '__main__':
     unittest.main()

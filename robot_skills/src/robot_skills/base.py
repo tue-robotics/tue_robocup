@@ -16,6 +16,7 @@ from cb_planner_msgs_srvs.srv import GetPlan, CheckPlan
 
 from .util import nav_analyzer
 from .util import transformations
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame
 
 
 ###########################################################################################################################
@@ -39,7 +40,6 @@ class LocalPlanner():
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
         self._orientation_constraint = orientation_constraint
-        #self.analyzer.count_plan(plan[0], plan[-1], 0.0, computePathLength(plan))
         self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
         self._goal_handle = self._action_client.gh
         rospy.loginfo("Goal handle = {0}".format(self._goal_handle))
@@ -119,9 +119,6 @@ class GlobalPlanner():
         plan_time = (end_time-start_time).to_sec()
 
         path_length = self.computePathLength(resp.plan)
-
-        #if path_length > 0:
-        #    self.analyzer.count_plan(resp.plan[0], resp.plan[-1], plan_time, path_length)
 
         return resp.plan
 
@@ -266,13 +263,13 @@ def get_location(robot_name, tf_listener):
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         target_pose.header.stamp = time
-        return target_pose
+        return poseMsgToKdlFrame(target_pose.pose)
 
     except (tf.LookupException, tf.ConnectivityException):
         rospy.logerr("tf request failed!!!")
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
-        return target_pose
+        return poseMsgToKdlFrame(target_pose.pose)
 
 def computePathLength(path):
     distance = 0.0

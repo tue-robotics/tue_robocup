@@ -2,9 +2,10 @@
 import yaml
 
 # ROS
+import rospy
 import PyKDL as kdl
 
-from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, kdl_frame_to_pose_msg
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, kdlFrameToPoseMsg
 from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.shape import shape_from_entity_info
 
@@ -88,12 +89,12 @@ class Entity(object):
     @property
     def pose(self):
         """ Returns the pose (at this point, as a geometry_msgs.Pose, in the future as a kdl frame """
-        return kdl_frame_to_pose_msg(self._pose)
+        return kdlFrameToPoseMsg(self._pose)
 
     @pose.setter
     def pose(self, pose):
         """ Setter """
-        self._pose = pose_msg_to_kdl_frame(pose)
+        self._pose = poseMsgToKdlFrame(pose)
 
 
 def from_entity_info(e):
@@ -105,13 +106,14 @@ def from_entity_info(e):
     identifier = e.id
     object_type = e.type
     frame_id = "/map"  # ED has all poses in map
-    pose = pose_msg_to_kdl_frame(e.pose)
+    pose = poseMsgToKdlFrame(e.pose)
     shape = shape_from_entity_info(e)
 
     last_update_time = e.last_update_time.to_sec()
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
     volumes = volumes_from_entity_info_data(yaml.load(e.data))
+    rospy.logdebug("Entity(id={id}) has volumes {vols} ".format(id=identifier, vols=volumes.keys()))
 
     super_types = e.types
 
