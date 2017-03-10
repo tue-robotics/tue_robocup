@@ -2,6 +2,7 @@ import math
 import PyKDL as kdl
 
 import geometry_msgs.msg as gm
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector
 
 from ed.msg import EntityInfo
 
@@ -77,16 +78,6 @@ def onTopOffForDesignator(container_designator):
         container_entity = container_designator.resolve()
         return onTopOff(entity, container_entity)
     return on_top
-
-
-def pointMsgToKdlVector(point):
-    return kdl.Vector(point.x, point.y, point.z)
-
-
-def poseMsgToKdlFrame(pose):
-    rot = kdl.Rotation.Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
-    trans = kdl.Vector(pose.position.x ,pose.position.y, pose.position.z)
-    return kdl.Frame(rot, trans)
 
 
 def offsetConvexHull(input_ch, offset):

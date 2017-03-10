@@ -1,10 +1,8 @@
-Responsible: Sjoerd
+Responsible: Rokus
 
 # Start-up
 
-    amiddle
-
-    rosrun challenge_gpsr gpsr.py <robot-name>
+    <robot>-challenge-gpsr
 
 # Scenario
 
@@ -23,3 +21,18 @@ or to get multiple commands at once:
 ## Test recognition
 
     rosrun challenge_gpsr test_recognition.py <robot-name>
+
+# TODO:
+ - Implementation of state machine design
+
+# State machine design
+
+The state machine builds upon the action server to perform the given tasks. Actions are assembled into a task. These actions require input, but may also provide input for next actions. If required input is needed before the first action can be performed, the task is not feasible, so the robot will have to ask for the missing information.
+
+The task is performed (if possible) and the outcome is stored in a log. 
+
+The robot goes back to the starting position, where it should meet the operator again (maybe it should look for the operator?). 
+
+Finally, the task log is reported to the user just before the robot returns back to idle state.
+
+![GPSR flow chart](doc/GPSR.jpeg)

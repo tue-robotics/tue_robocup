@@ -17,6 +17,10 @@ target_door = "door_navigation"
 door_id = "door1"
 target_door_radius = 0.1
 
+target_door_1 = "door_navigation"
+reentry_door_1 = "door_navigation"
+reentry_door_2 = "door_navigation"
+
 target4 = "hallway"
 target4_radius1 = 0.1
 target4_radius2 = 0.7

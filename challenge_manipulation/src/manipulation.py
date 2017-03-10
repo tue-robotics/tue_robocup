@@ -24,7 +24,6 @@ import smach
 import random
 
 # ED
-from ed_gui_server.msg import EntityInfo
 from ed_robocup.srv import FitEntityInImageRequest
 
 # Robot Smach States
@@ -34,8 +33,10 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_smach_states.util.geometry_helpers import *
+from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg, VectorStamped
 
 # Robot Skills
+from robot_skills.util.entity import Entity
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 
@@ -54,6 +55,7 @@ if USE_SLAM:
     CABINET = challenge_knowledge.cabinet_slam
 else:
     CABINET = challenge_knowledge.cabinet_amcl
+
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
@@ -84,23 +86,22 @@ PLACE_HEIGHT = 1.0
 
 # Criteria
 not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
-size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+size = lambda entity: abs(entity.shape.z_max - entity.shape.z_min) < 0.4
 has_type = lambda entity: entity.type != ""
-min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+min_entity_height = lambda entity: abs(entity.shape.z_max - entity.shape.z_min) > 0.04
 
 def max_width(entity):
-    max_bb_x = max(ch.x for ch in entity.convex_hull)
-    min_bb_x = min(ch.x for ch in entity.convex_hull)
-    max_bb_y = max(ch.y for ch in entity.convex_hull)
-    min_bb_y = min(ch.y for ch in entity.convex_hull)
-
-    x_size = abs(max_bb_x - min_bb_x)
-    y_size = abs(max_bb_y - min_bb_y)
+    x_size = abs(entity.shape.x_max - entity.shape.x_min)
+    y_size = abs(entity.shape.y_max - entity.shape.y_min)
 
     x_ok = 0.02 < x_size < 0.15
     y_ok = 0.02 < y_size < 0.15
 
-    return x_ok and y_ok
+    ok = x_ok and y_ok
+
+    if not ok:
+        rospy.logwarn("Entity(id={id}: x_size={x}, y_size={y}".format(x=x_size, y=y_size, id=entity.id))
+    return ok
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -224,7 +225,7 @@ class FitEntity(smach.State):
 
         # Cancel the head goal and return
         self._robot.head.cancel_goal()
-        if result.error_msg:
+        if False: # result.error_msg:
             rospy.logerr("Fit entity: {0}".format(result))
             return 'failed'
         else:
@@ -254,40 +255,21 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for area in cabinet_entity.data['areas']:
+        for name, volume in cabinet_entity.volumes.iteritems():
             ''' See if the area is in the list of inspection areas '''
-            if area['name'] in OBJECT_SHELVES:
-                ''' Check if we have a shape '''
-                if 'shape' not in area:
-                    rospy.logwarn("No shape in area {0}".format(area['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(area['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(area['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in area['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(area['name']))
-                    continue
-                box = area['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(area['name']))
-                    continue
-
-                x = 0.5 * (box['min']['x'] + box['max']['x'])
-                y = 0.5 * (box['min']['y'] + box['max']['y'])
-                z = 0.5 * (box['min']['z'] + box['max']['z'])
-                shelves.append({'ps': geom.PointStamped(x, y, z, cabinet_entity.id), 'name': area['name']})
+            if name in OBJECT_SHELVES:
+                center_point = volume.center_point
+                shelves.append({'vs': VectorStamped(vector=center_point, frame_id=cabinet_entity.id), 'name': name})
             else:
-                rospy.loginfo("{0} not in object shelves".format(area['name']))
+                rospy.loginfo("Volume {0} not in object shelves for entity {1}".format(name, cabinet_entity.id))
 
         # rospy.loginfo("Inspection points: {0}".format(shelves))
         # ''' Loop over shelves '''
         # for shelf in self.object_shelves:
         for shelf in shelves:
 
-            ps = shelf['ps']
-            cp = ps.point
+            vector_stamped = shelf['vs']
+            center_vector = vector_stamped.vector
 
             # ''' Get entities '''
             # shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
@@ -298,14 +280,14 @@ class InspectShelves(smach.State):
             # cp = shelf_entity.pose.position
 
             ''' Look at target '''
-            self.robot.head.look_at_point(ps)
+            self.robot.head.look_at_point(vector_stamped)
 
             ''' Move spindle
                 Implemented only for AMIGO (hence the hardcoding)
                 Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
             # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
             # ToDo: do head and torso simultaneously
-            height = min(0.4, max(0.1, cp.z-0.55))
+            height = min(0.4, max(0.1, center_vector.z()-0.55))
             self.robot.torso._send_goal([height], timeout=5.0)
 
             ''' Sleep for 1 second '''
@@ -382,7 +364,8 @@ class RemoveSegmentedEntities(smach.State):
         entities = self.robot.ed.get_entities(parse=False)
 
         for e in entities:
-            if not e.has_shape and e.id != '_root':
+            if not e.is_a("furniture") and e.id != '_root':
+                # import ipdb; ipdb.set_trace()
                 self.robot.ed.remove_entity(e.id)
 
         return "done"
@@ -439,9 +422,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             :param entity:
             :return:
             """
-            if not entity.has_pose:
+            if not entity._pose:
                 return False
-            return MIN_GRASP_HEIGHT < entity.pose.position.z < MAX_GRASP_HEIGHT
+            return MIN_GRASP_HEIGHT < entity._pose.p.z() < MAX_GRASP_HEIGHT
 
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
@@ -697,7 +680,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [EntityInfo], name="placed_items"))
+            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [Entity], name="placed_items"))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM',
                                                 single_item,

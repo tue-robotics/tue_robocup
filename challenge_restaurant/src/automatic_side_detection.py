@@ -9,6 +9,7 @@ from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import PointStamped
 import robot_smach_states as states
 from robot_skills.util import transformations, msg_constructors
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 
 from robocup_knowledge import load_knowledge
 knowledge = load_knowledge("challenge_restaurant")
@@ -59,23 +60,19 @@ class AutomaticSideDetection(smach.State):
         self._min_area = min_area
 
     def _get_head_goal(self, spec):
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot.robot_name+"/base_link"
-        goal.point.x = spec["x"]
-        goal.point.y = spec["y"]
-        return goal
+        vs = VectorStamped(spec["x"], spec["y"], z=0, frame_id="/"+self._robot.robot_name+"/base_link")
+        return vs
 
     def _inspect_sides(self):
         for side, spec in self._sides.iteritems():
             # Look at the side
             rospy.loginfo("looking at side %s" % side)
-            goal = self._get_head_goal(spec)
-            self._robot.head.look_at_point(goal)
+            vs = self._get_head_goal(spec)
+            self._robot.head.look_at_point(vs)
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            base_position = self._robot.base.get_location().pose.position
+            base_position = self._robot.base.get_location().p
 
             # Update kinect
             try:
@@ -96,33 +93,33 @@ class AutomaticSideDetection(smach.State):
             self._sides[side]["score"]["area_sum"] = sum([ self._score_area(e) for e in self._sides[side]["entities"] ])
             self._sides[side]["score"]["min_distance"] = self._score_closest_point(base_position, self._sides[side]["entities"])
 
-            goal.point.z = 0.8
-            self._robot.head.look_at_point(goal)
+            vs.vector.z(0.8)
+            self._robot.head.look_at_point(vs)
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-			rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-			rospy.logerr("I will return an empty detection list!")
-			persons = []
+            rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+            rospy.logerr("I will return an empty detection list!")
+            persons = []
             self._sides[side]["score"]["face_found"] = False
             if persons:
                 for person in persons:
                     p = person.pose.pose.position
-                    if math.hypot(p.x - base_position.x, p.y - base_position.y) < self._max_radius:
+                    if math.hypot(p.x - base_position.x(), p.y - base_position.y()) < self._max_radius:
                         self._sides[side]["score"]["face_found"] = True
 
             if self._sides[side]["score"]["face_found"]:
                 self._robot.speech.speak("hi there")
 
     def _subset_selection(self, base_position, e):
-        distance = math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y)
+        distance = e.distance_to_2d(base_position)
         return distance < self._max_radius
 
     def _score_area(self, e):
         return _get_area(e.convex_hull)
 
     def _score_closest_point(self, base_position, entities):
-        distances = [ math.hypot(e.pose.position.x - base_position.x, e.pose.position.y - base_position.y) for e in entities ]
+        distances = [ e.distance_to_2d(base_position) for e in entities ]
         if distances:
             min_distance = min(distances)
         else:
@@ -210,18 +207,16 @@ class StoreWaypoint(smach.State):
         self._robot.head.cancel_goal()
 
         if side == "left":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+            base_pose.M.DoRotZ(math.pi / 2)
         elif side == "right":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+            base_pose.M.DoRotZ(-math.pi / 2)
 
         # Add to param server
-        loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
+        loc_dict = {'x':base_pose.p.x(), 'y':base_pose.p.y(), 'phi':base_pose.M.GetRPY()[2]}
         rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
 
         visualize_location(base_pose, location)
-        self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
+        self._robot.ed.update_entity(id=location, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
 
         return "done"
 

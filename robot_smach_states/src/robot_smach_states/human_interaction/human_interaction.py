@@ -9,7 +9,6 @@ from robot_smach_states.state import State
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
-import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 import time
@@ -76,32 +75,6 @@ class Say(smach.State):
 
         return "spoken"
 
-##########################################################################################################################################
-
-class Hear(smach.State):
-    def __init__(self, robot, spec, time_out = rospy.Duration(10), look_at_standing_person=True):
-        smach.State.__init__(self, outcomes=["heard", "not_heard"])
-        self.robot = robot
-        self.spec = spec
-        self.time_out = time_out
-        self.look_at_standing_person = look_at_standing_person
-
-    def execute(self, userdata=None):
-        if self.look_at_standing_person:
-            self.robot.head.look_at_standing_person()
-
-        answer = self.robot.ears.recognize(self.spec, {}, self.time_out)
-
-        if self.look_at_standing_person:
-            self.robot.head.cancel_goal()
-
-        if answer:
-            if answer.result:
-                return "heard"
-        else:
-            self.robot.speech.speak("Something is wrong with my ears, please take a look!")
-
-        return "not_heard"
 
 class HearOptions(smach.State):
     def __init__(self, robot, options, timeout = rospy.Duration(10), look_at_standing_person=True):
@@ -212,63 +185,6 @@ class HearOptionsExtra(smach.State):
 ##########################################################################################################################################
 
 
-class HearYesNo(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(   self,
-                                outcomes=['heard_yes', 'heard_no', 'heard_failed'])
-
-        self.robot = robot
-
-    def execute(self, userdata):
-        # define answer format
-        spec = ds.Designator("(<positive_answer>|<negative_answer>)")
-
-        # define choices
-        choices = ds.Designator({  "positive_answer": ["Yes", "Correct", "Right", "Yup"],
-                                "negative_answer": ["No", "Incorrect", "Wrong", "Nope"]})
-
-        answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
-
-        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
-
-        # execute listen
-        outcome = state.execute()
-
-        if not outcome == "heard":
-            # if there was no answer
-            print "HearYesNo: did not hear anything!"
-            return 'heard_failed'
-        else:
-            response_negative = ""
-            response_positive = ""
-
-            # test if the answer was positive, if its empty it will return excepton and continue to negative answer
-            try:
-                response_positive = answer.resolve().choices["positive_answer"]
-
-                print "HearYesNo: answer is positive, heard: '" + response_positive + "'"
-                return 'heard_yes'
-            except KeyError, ke:
-                print "KeyError resolving the answer heard: " + str(ke)
-                pass
-
-            try:
-                response_negative = answer.resolve().choices["negative_answer"]
-
-                print "HearYesNo: answer is negative, heard: '" + response_negative + "'"
-                return 'heard_no'
-            except KeyError, ke:
-                print "KeyError resolving the answer heard: " + str(ke)
-                pass
-
-        print "HearYesNo: could not resolve answer!"
-
-        return 'heard_failed'
-
-
-##########################################################################################################################################
-
-
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=rospy.Duration(10)):
         smach.StateMachine.__init__(self, outcomes=['continue','no_response'])
@@ -298,7 +214,6 @@ class WaitForPersonInFront(WaitForDesignator):
 
     def __init__(self, robot, attempts = 1, sleep_interval = 1):
         # TODO: add center_point in front of the robot and radius of the search on ds.EdEntityDesignator
-        # human_entity = ds.EdEntityDesignator(robot, center_point=gm.PointStamped(x=1.0, frame_id="base_link"), radius=1, id="human")
         human_entity = ds.EdEntityDesignator(robot, type="human")
         ds.WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
 
@@ -339,46 +254,6 @@ class LearnPerson(smach.State):
             return 'timeout_learning'
         else:
             return 'succeeded_learning'
-
-
-##########################################################################################################################################
-
-
-class LookAtPersonInFront(smach.State):
-    """
-        Look at the face of the person in front of the Robot. If no person is found just look forward.
-        Robot will look front and search for a face. Using the lookDown argument you can also
-            look down, to search for example of shorter or sitting down people
-    """
-    def __init__(self, robot, lookDown = False):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.robot = robot
-        self.lookDown = lookDown
-
-    def execute(self, userdata=None):
-	time.sleep(1.0) # infinite loop hack
-        self.robot.head.look_at_standing_person()
-        self.robot.head.wait_for_motion_done()
-
-        human_in_front = detect_human_in_front(self.robot)
-        if not human_in_front:
-            print "[LookAtPersonInFront] " + "Could not find a human while looking up"
-
-        # if no standing person was seen, look down, because the person might be sitting
-        if not human_in_front and self.lookDown:
-            # look front, 0 meters high
-            self.robot.head.look_at_ground_in_front_of_robot(distance=3.0)
-
-            human_in_front = detect_human_in_front(self.robot)
-            if not human_in_front:
-                print "[LookAtPersonInFront] " + "Could not find a human while looking down"
-                pass
-
-        if human_in_front:
-            return 'succeeded'
-        else:
-            print "[LookAtPersonInFront] " + "Could not find a face in front of the robot"
-            return 'failed'
 
 
 ##########################################################################################################################################

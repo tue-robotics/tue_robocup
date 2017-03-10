@@ -25,7 +25,7 @@ if __name__ == "__main__":
         ids = sys.argv[2:]
     else:
         robot.speech.speak("No ids specified, I will do them all", block=False)
-        ids = [e.id for e in robot.ed.get_entities() if e.has_shape and "amigo" not in e.id and "amigo" not in e.id and e.id is not "floor" and e.id is not "walls"]
+        ids = [e.id for e in robot.ed.get_entities() if e.is_a("furniture")]
         random.shuffle(ids)
 
     print "IDS:", ids

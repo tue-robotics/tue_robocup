@@ -69,8 +69,8 @@ class NavigateToExplore(NavigateTo):
 
         # Loop over visited list
         for i in range(len(self.visited_list)):
-            xe = self.visited_list[i].pose.position.x
-            ye = self.visited_list[i].pose.position.y
+            xe = self.visited_list[i].p.x()
+            ye = self.visited_list[i].p.y()
             rospy.loginfo('xe = {0}, ye = {1}'.format(xe,ye))
 
             pci = pci + ' and '

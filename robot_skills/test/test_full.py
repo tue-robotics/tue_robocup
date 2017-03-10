@@ -4,6 +4,7 @@ import rospy
 
 import robot_skills
 import robot_skills.amigo
+from robot_skills.util.kdl_conversions import VectorStamped
 
 import geometry_msgs
 import sensor_msgs
@@ -46,59 +47,44 @@ def test_head(amigo):
 
     max_err = 0.02
 
-    p = geometry_msgs.msg.PointStamped()
-    p.header.frame_id = '/amigo/torso'
-
     # straight
-    p.point.x = 0.4
-    p.point.y = 0
-    p.point.z = 10
-    amigo.head.look_at_point(p)
+    vs = VectorStamped(x=0.4, z=10, frame_id='/amigo/torso')
+    amigo.head.look_at_point(vs)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head straight",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                                 and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
 
     # up
-    p.point.x = 0.5
-    p.point.y = 0
-    p.point.z = 1
-    amigo.head.look_at_point(p)
+    vs = VectorStamped(x=0.5, z=1, frame_id='/amigo/torso')
+    amigo.head.look_at_point(vs)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head up",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                           and in_bounds(joint_positions['neck_tilt_joint'], -0.26, max_err))
 
     # down
-    p.point.x = -0.4
-    p.point.y = 0
-    p.point.z = 1
-    amigo.head.look_at_point(p)
+    vs = VectorStamped(x=-0.4, z=1, frame_id='/amigo/torso')
+    amigo.head.look_at_point(vs)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head down",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                             and in_bounds(joint_positions['neck_tilt_joint'], 0.54, max_err))
 
     # right
-    p.point.x = 0.4
-    p.point.y = 100
-    p.point.z = 1
-    amigo.head.look_at_point(p)
+    vs = VectorStamped(x=0.4, y=100, z=1, frame_id='/amigo/torso')
+    amigo.head.look_at_point(vs)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head right",      in_bounds(joint_positions['neck_pan_joint'], -1.547, max_err)
                             and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
 
     # left
-    p.point.x = 0.4
-    p.point.y = -100
-    p.point.z = 1
-    amigo.head.look_at_point(p)
+    vs = VectorStamped(x=0.4, y=-100, z=1, frame_id='/amigo/torso')
+    amigo.head.look_at_point(vs)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head left",      in_bounds(joint_positions['neck_pan_joint'], 1.547, max_err)
                              and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
 
     # straight
-    p.point.x = 0.4
-    p.point.y = 0
-    p.point.z = 10
-    amigo.head.look_at_point(p)
+    vs = VectorStamped(x=0.4, z=10, frame_id='/amigo/torso')
+    amigo.head.look_at_point(vs)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head straight",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                                 and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))

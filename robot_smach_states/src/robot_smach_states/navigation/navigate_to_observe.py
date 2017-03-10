@@ -7,7 +7,7 @@ from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
 from robot_smach_states.util.designators import check_resolve_type
-import ed.msg
+from robot_skills.util.entity import Entity
 
 import rospy
 import math
@@ -19,7 +19,7 @@ class NavigateToObserve(NavigateTo):
         super(NavigateToObserve, self).__init__(robot)
 
         self.robot    = robot
-        check_resolve_type(entity_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
+        check_resolve_type(entity_designator, Entity) #Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
         self.radius   = radius
 
@@ -33,14 +33,14 @@ class NavigateToObserve(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
-        ch = e.convex_hull
+        ch = e.shape.convex_hull
 
         #if len(ch) == 0:
         #    rospy.logerr("{0} has no convex hull so cannot NavigateToObserve there".format(e.id))
         #    return None
 
-        x = e.pose.position.x
-        y = e.pose.position.y
+        x = e._pose.p.x()
+        y = e._pose.p.y()
 
         if len(ch) > 0:
 
@@ -52,13 +52,13 @@ class NavigateToObserve(NavigateTo):
 
             for i in xrange(len(ch)):
                 j = (i+1)%len(ch)
-                dx = ch[j].x - ch[i].x
-                dy = ch[j].y - ch[i].y
+                dx = ch[j].x() - ch[i].x()
+                dy = ch[j].y() - ch[i].y()
 
                 length = (dx * dx + dy * dy)**.5
 
-                xs = x + ch[i].x + (dy/length)*self.radius
-                ys = y + ch[i].y - (dx/length)*self.radius
+                xs = x + ch[i].x() + (dy/length)*self.radius
+                ys = y + ch[i].y() - (dx/length)*self.radius
 
                 if i != 0:
                     pci = pci + ' and '
