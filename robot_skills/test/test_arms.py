@@ -32,6 +32,9 @@ if not robot.leftArm.send_goal(goal1):
     robot.speech.speak("Could not reach arm goal pose")
 robot.leftArm.wait_for_motion_done()
 
+# TODO: Now check that the hand frame is within some tolerance to the desired goal.
+# Kwin's AR comparison stuff may also come in handy here.
+
 if robot.leftArm.send_gripper_goal("open"):
     robot.speech.speak("My left hand is now open")
 else:
@@ -52,7 +55,5 @@ for config in robot.leftArm.default_configurations.keys():
     robot.leftArm.wait_for_motion_done()
     robot.leftArm.reset()
     robot.leftArm.wait_for_motion_done()
-
-# TODO: Now check that the hand frame is within some tolerance to the desired goal.
 
 robot.leftArm.reset()
