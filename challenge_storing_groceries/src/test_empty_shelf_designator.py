@@ -6,7 +6,7 @@ from robot_smach_states.util.designators import EntityByIdDesignator
 
 from empty_shelf_designator import EmptyShelfDesignator
 
-challenge_knowledge = load_knowledge('challenge_manipulation')
+challenge_knowledge = load_knowledge('challenge_storing_groceries')
 
 USE_SLAM = True  # Indicates whether or not to use SLAM for localization
 if USE_SLAM:
