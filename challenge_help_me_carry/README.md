@@ -1,5 +1,5 @@
 # Challenge Help Me Carry 2017
-Responsible: Tim Assman
+Responsible: Tim Assmann
 
 ## Test Log
 
