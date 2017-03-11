@@ -1,16 +1,20 @@
 #!/usr/bin/env python
+
 import sys
-from robot_smach_states.util.startup import startup
-import robot_skills.util.msg_constructors as msgs
-from robot_skills.util.kdl_conversions import VectorStamped
 import time
 import smach
-import robot_smach_states as states
-import robot_smach_states.util.designators as ds
-import rospy
-from robocup_knowledge import load_knowledge
 import math
 import random
+import rospy
+
+import robot_smach_states as states
+import robot_smach_states.util.designators as ds
+import robot_skills.util.msg_constructors as msgs
+
+from robot_smach_states.util.startup import startup
+from robot_skills.util.kdl_conversions import VectorStamped
+from robocup_knowledge import load_knowledge
+
 
 challenge_knowledge = load_knowledge("challenge_speech_recognition")
 
@@ -181,12 +185,11 @@ class DetectCrowd(smach.State):
 
         return 'succeeded'
 
+        # Standalone testing -----------------------------------------------------------------
 
 class TestDetectCrowd(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
-
-        #  -----------------------------------------------------------------
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -198,6 +201,7 @@ class TestDetectCrowd(smach.StateMachine):
                                    DetectCrowd(robot),
                                    transitions={'succeeded': 'Done',
                                                 'failed': 'Aborted'})
+            
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
 
