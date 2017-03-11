@@ -19,6 +19,8 @@ from std_srvs.srv import Empty
 import tf
 import visualization_msgs.msg
 
+import PyKDL as kdl
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, kdlVectorToPointMsg
 import os
 
 
@@ -26,10 +28,13 @@ import yaml
 
 from .classification_result import ClassificationResult
 
+from robot_skills.util.entity import from_entity_info
+
 def _create_service_proxy(service_name, service_type, wait_service):
     if wait_service:
         rospy.wait_for_service(service_name)
     return rospy.ServiceProxy(service_name, service_type)
+
 
 class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
@@ -70,64 +75,58 @@ class ED:
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
-
+    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
         self._publish_marker(center_point, radius)
 
-        query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
+        center_point_in_map = center_point.projectToFrame("/map", self._tf_listener)
+        query = SimpleQueryRequest(id=id, type=type, center_point=kdlVectorToPointMsg(center_point_in_map.vector), radius=radius)
 
         try:
-            entities = self._ed_simple_query_srv(query).entities
+            entity_infos= self._ed_simple_query_srv(query).entities
+            entities = map(from_entity_info, entity_infos)
         except Exception, e:
             rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (id, type, str(center_point), str(radius)))
             rospy.logerr("L____> [%s]" % e)
             return []
 
-        # Parse to data strings to yaml
-        if parse:
-            for e in entities:
-                e.data = yaml.load(e.data)
-
         return entities
 
-    def get_closest_entity(self, type="", center_point=Point(), radius=0):
+    def get_closest_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
             print "Failed to sort entities"
             return None
 
         return entities[0]
 
-    def get_closest_laser_entity(self, type="", center_point=Point(), radius=0):
+    def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and e.id.endswith("-laser") ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" and e.id.endswith("-laser") ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
             print "Failed to sort entities"
             return None
@@ -158,7 +157,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = [], action = None):
+    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=[], remove_flags=[], action=None):
         """
         Updates entity
         :param id: entity id
@@ -176,10 +175,13 @@ class ED:
         if action:
             json_entity += ', "action": "%s"' % action
 
-        if posestamped:
-            X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
-            t = posestamped.pose.position
-            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
+        if frame_stamped:
+            if frame_stamped.frame_id != "/map":
+                frame_stamped = frame_stamped.projectToFrame("/map", self._tf_listener)
+
+            Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
+            t = frame_stamped.frame.p
+            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:
             json_entity += ', "flags": ['
@@ -245,14 +247,14 @@ class ED:
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
+        entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
             print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
@@ -371,9 +373,9 @@ class ED:
         marker.header.frame_id = "/map"
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
-        marker.pose.position.x = center_point.x
-        marker.pose.position.y = center_point.y
-        marker.pose.position.z = center_point.z
+        marker.pose.position.x = center_point.vector.x()
+        marker.pose.position.y = center_point.vector.y()
+        marker.pose.position.z = center_point.vector.z()
         marker.lifetime = rospy.Duration(20.0)
         marker.scale.x = radius
         marker.scale.y = radius

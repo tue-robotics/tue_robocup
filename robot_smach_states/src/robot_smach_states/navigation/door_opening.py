@@ -4,7 +4,7 @@ import rospy
 import smach
 import numpy as np
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import PolygonStamped, PointStamped, Point, PoseStamped, Pose
+from geometry_msgs.msg import PolygonStamped, Point, PoseStamped, Pose
 from threading import Event
 from visualization_msgs.msg import Marker, MarkerArray
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -322,16 +322,10 @@ class CheckDoorPassable(smach.State):
             return None
 
         try:
-            pose = e.data["pose"]
-            x = pose["x"]
-            y = pose["y"]
-            rz = e.data["pose"]["rz"]
+            x = e.pose.position.x
+            y = e.pose.position.y
         except:
-            try:
-                x = e.pose.position.x
-                y = e.pose.position.y
-            except:
-                return None
+            return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="/map")
         plan = self.robot.base.global_planner.getPlan(pc)

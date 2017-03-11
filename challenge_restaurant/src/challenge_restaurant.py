@@ -26,6 +26,7 @@ from robot_smach_states.util.startup import startup
 
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
 from robot_skills.util import transformations, msg_constructors
+from robot_skills.util.kdl_conversions import FrameStamped
 
 from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
@@ -106,7 +107,7 @@ class StoreKitchen(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
+        self._robot.ed.update_entity(id="kitchen", kdlFrameStamped=FrameStamped(self._robot.base.get_location(), "/map"), type="waypoint")
 
         return "done"
 
@@ -125,15 +126,15 @@ class StoreBeverageSide(smach.State):
             result = self._robot.ears.recognize('<side>', {'side':['left','right']}, time_out = rospy.Duration(10)) # Wait 100 secs
 
         if result.result == "left":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+            base_pose.M.DoRotZ(math.pi / 2)
         elif result.result == "right":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+            base_pose.M.DoRotZ(-math.pi / 2)
         else:
             print "\n\n WHUT?? No left or right lol? \n\n"
             print result
             print "\n"
 
-        self._robot.ed.update_entity(id="beverages", posestamped=base_pose, type="waypoint")
+        self._robot.ed.update_entity(id="beverages", kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
         return "done"
 
 def load_waypoints(robot, filename="/param/locations.yaml"):
@@ -148,7 +149,7 @@ def load_waypoints(robot, filename="/param/locations.yaml"):
             base_pose.pose.orientation = transformations.euler_z_to_quaternion(location['phi'])
 
             visualize_location(base_pose, tablename)
-            robot.ed.update_entity(id=tablename, posestamped=base_pose, type="waypoint")
+            robot.ed.update_entity(id=tablename, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
 
 if "--custom" not in sys.argv:
     from automatic_side_detection import StoreWaypoint
@@ -191,16 +192,14 @@ else:
                     self._robot.head.cancel_goal()
 
                     if side == "left":
-                        base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                            transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+                        base_pose.M.DoRotZ(math.pi / 2)
                     elif side == "right":
-                        base_pose.pose.orientation = transformations.euler_z_to_quaternion(
-                            transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+                        base_pose.M.DoRotZ(-math.pi / 2)
 
-                    loc_dict = {'x':base_pose.pose.position.x, 'y':base_pose.pose.position.y, 'phi':transformations.euler_z_from_quaternion(base_pose.pose.orientation)}
+                    loc_dict = {'x':base_pose.p.x(), 'y':base_pose.p.y(), 'phi':base_pose.M.GetRPY()[2]}
                     rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
                     visualize_location(base_pose, location)
-                    self._robot.ed.update_entity(id=location, posestamped=base_pose, type="waypoint")
+                    self._robot.ed.update_entity(id=location, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
 
                     return "done"
 
@@ -229,7 +228,7 @@ class CheckInKitchen(smach.State):
         kitchen = self._robot.ed.get_entity(id="kitchen")
         if kitchen:
             current = self._robot.base.get_location()
-            if math.hypot(current.pose.position.x - kitchen.pose.position.x, current.pose.position.y - kitchen.pose.position.y) < knowledge.kitchen_radius:
+            if kitchen.distance_to_2d(current) < knowledge.kitchen_radius:
                 return "in_kitchen"
         else:
             print "NO KITCHEN IN ED???"
@@ -618,10 +617,10 @@ def setup_statemachine(robot):
 
 
 def test_delivery(robot):
-    from robot_skills.util.msg_constructors import PoseStamped
-    robot.ed.update_entity(id="one", posestamped=PoseStamped(x=1.0, y=0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="two", posestamped=PoseStamped(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="three", posestamped=PoseStamped(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
+    from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY
+    robot.ed.update_entity(id="one", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=1.0, y=0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="two", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="three", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
 
     global ORDERS
     ORDERS = {"beverage":{"name":"coke", "location":"one"}, "combo":{"name":"pringles and chocolate", "location":"two"}}

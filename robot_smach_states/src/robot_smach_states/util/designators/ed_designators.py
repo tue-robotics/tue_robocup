@@ -8,9 +8,8 @@ import copy
 import PyKDL as kdl
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
-from ed.msg import EntityInfo
+from robot_skills.util.entity import Entity
 from ed.srv import SimpleQuery, SimpleQueryRequest
-from geometry_msgs import msg as gm
 import rospy
 from std_msgs import msg as std
 from visualization_msgs.msg import MarkerArray, Marker
@@ -18,38 +17,14 @@ from visualization_msgs.msg import MarkerArray, Marker
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
-from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector
+from robot_smach_states.util.geometry_helpers import offsetConvexHull
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, kdlFrameStampedFromXYZRPY
 import robot_smach_states.util.geometry_helpers as geom
 
 import robot_skills.util.msg_constructors as msg_constructors
 
 
 __author__ = 'loy'
-
-class PointStampedOfEntityDesignator(Designator):
-    def __init__(self, entity_designator, name=None):
-        """Resolves to the PointStamped-part of the designated entity
-        :param entity_designator entity of which we want to know the position as a PointStamped
-        """
-        super(PointStampedOfEntityDesignator, self).__init__(resolve_type=gm.PointStamped, name=name)
-        self.entity_designator = entity_designator
-        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
-
-    def _resolve(self):
-        # type is a reserved keyword. Maybe unpacking a dict as kwargs is
-        # cleaner
-        query = SimpleQueryRequest(id=self.entity_designator.resolve())
-        entities = self.ed(query).entities
-        if entities:
-            entity = entities[0]
-            pointstamped = gm.PointStamped(point=entity.pose.position,
-                                           header=std.Header(
-                                               entity.id, rospy.get_rostime())
-                                           )  # ID is also the frame ID. Ed just works that way
-            self._current = pointstamped
-            return self.current
-        else:
-            return None
 
 
 class EdEntityCollectionDesignator(Designator):
@@ -59,7 +34,7 @@ class EdEntityCollectionDesignator(Designator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> entities = EdEntityCollectionDesignator(robot)
-    >>> check_resolve_type(entities, [EntityInfo]) #This is more a test for check_resolve_type to be honest :-/
+    >>> check_resolve_type(entities, [Entity]) #This is more a test for check_resolve_type to be honest :-/
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
@@ -75,14 +50,14 @@ class EdEntityCollectionDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[EntityInfo],name=name)
+        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[Entity],name=name)
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
         if center_point != None and center_point_designator != None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point == None and center_point_designator == None:
-            center_point = gm.Point()
+            center_point = VectorStamped()
         if id != "" and id_designator != None:
             raise TypeError("Specify either id or id_designator, not both")
 
@@ -96,7 +71,7 @@ class EdEntityCollectionDesignator(Designator):
         if type_designator: check_resolve_type(type_designator, str)
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator, gm.PointStamped)
+        if center_point_designator: check_resolve_type(center_point_designator, VectorStamped)
         self.center_point_designator = center_point_designator
 
         if id_designator: check_resolve_type(id_designator, str)
@@ -152,7 +127,7 @@ class EdEntityDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(EdEntityDesignator, self).__init__(resolve_type=Entity, name=name)
         self.robot = robot
         self.ed = robot.ed
         if type != "" and type_designator != None:
@@ -160,7 +135,7 @@ class EdEntityDesignator(Designator):
         if center_point != None and center_point_designator != None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point == None and center_point_designator == None:
-            center_point = gm.Point()
+            center_point = VectorStamped()
         if id != "" and id_designator != None:
             raise TypeError("Specify either id or id_designator, not both")
 
@@ -175,7 +150,7 @@ class EdEntityDesignator(Designator):
         if type_designator: check_resolve_type(type_designator, str, list) #the resolve type of type_designator can be either st or list
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator, gm.PointStamped) #the resolve type of type_designator can be either st or list
+        if center_point_designator: check_resolve_type(center_point_designator, VectorStamped) #the resolve type of type_designator can be either st or list
         self.center_point_designator = center_point_designator
 
         if id_designator: check_resolve_type(id_designator, str)
@@ -209,8 +184,16 @@ class EdEntityDesignator(Designator):
         entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
         if entities:
             for criterium in _criteria:
-                entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
+                filtered_entities = []
+                for entity in entities:
+                    try:
+                        if criterium(entity):
+                            filtered_entities += [entity]
+                    except Exception as exp:
+                        rospy.logerr("{id} cannot be filtered with criterum '{crit}': {exp}".format(id=entity.id, crit=criterium_code, exp=exp))
+
+                entities = filtered_entities
                 rospy.loginfo("Criterium {0} leaves {1} entities".format(criterium_code, len(entities)))
                 rospy.logdebug("Remaining entities: {}".format(pprint.pformat([ent.id for ent in entities])))
 
@@ -243,7 +226,7 @@ class EntityByIdDesignator(Designator):
         :param parse: Whether to parse the Entity's data-field
         :param name: Name of the designator for introspection purposes
         """
-        super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(EntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
         self.ed = robot.ed
         self.id_ = id
         self.parse = parse
@@ -264,7 +247,7 @@ class ReasonedEntityDesignator(Designator):
         :param query: query to the reasoner. The first answer is cast to string and used as ID
         :param name: Name of the designator for introspection purposes
         """
-        super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        super(ReasonedEntityDesignator, self).__init__(resolve_type=Entity, name=name)
         assert hasattr(robot, "reasoner")
         self.robot = robot
         self.querystring = query
@@ -309,7 +292,7 @@ class EmptySpotDesignator(Designator):
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """
-        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped, name=name)
+        super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
         self.robot = robot
 
         self.place_location_designator = place_location_designator
@@ -325,21 +308,21 @@ class EmptySpotDesignator(Designator):
 
         # points_of_interest = []
         if self._area:
-            points_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+            frames_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            points_of_interest = self.determinePointsOfInterest(place_location)
+            frames_of_interest = self.determine_points_of_interest(place_location)
 
-        def is_poi_occupied(poi):
-            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
+        def is_poi_occupied(frame_stamped):
+            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped, radius=self._spacing)
             return not any(entities_at_poi)
 
-        open_POIs = filter(is_poi_occupied, points_of_interest)
+        open_POIs = filter(is_poi_occupied, frames_of_interest)
 
-        def distance_to_poi_area(poi):
+        def distance_to_poi_area(frame_stamped):
             #Derived from navigate_to_place
             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-            x = poi.point.x
-            y = poi.point.y
+            x = frame_stamped.frame.p.x()
+            y = frame_stamped.frame.p.y()
             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
@@ -366,13 +349,11 @@ class EmptySpotDesignator(Designator):
         if any(feasible_POIs):
             feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
             best_poi = feasible_POIs[0][0] # Get the POI of the best match
-            placement = msg_constructors.PoseStamped(pointstamped=best_poi)
-            # rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
 
-            selection = self.create_selection_marker(placement)
+            selection = self.create_selection_marker(best_poi)
             self.marker_pub.publish(MarkerArray([selection]))
 
-            return placement
+            return best_poi
         else:
             rospy.logerr("Could not find an empty spot")
             return None
@@ -400,11 +381,11 @@ class EmptySpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
-        marker.header.frame_id = selected_pose.header.frame_id
+        marker.header.frame_id = selected_pose.frame_id
         marker.header.stamp = rospy.Time.now()
-        marker.pose.position.x = selected_pose.pose.position.x
-        marker.pose.position.y = selected_pose.pose.position.y
-        marker.pose.position.z = selected_pose.pose.position.z
+        marker.pose.position.x = selected_pose.frame.p.x()
+        marker.pose.position.y = selected_pose.frame.p.y()
+        marker.pose.position.z = selected_pose.frame.p.z()
         marker.pose.orientation.w = 1
         marker.scale.x = 0.1
         marker.scale.y = 0.1
@@ -421,96 +402,69 @@ class EmptySpotDesignator(Designator):
         :param area:
         :return:
         """
-        # Just to be sure, copy e
-        e = self.robot.ed.get_entity(id=e.id, parse=True)
 
         # We want to give it a convex hull using the designated area
-        for testarea in e.data['areas']:
-            ''' See if the area is in the list of inspection areas '''
-            if testarea['name'] == area:
-                ''' Check if we have a shape '''
-                if 'shape' not in testarea:
-                    rospy.logwarn("No shape in area {0}".format(testarea['name']))
-                    continue
-                ''' Check if length of shape equals one '''
-                if not len(testarea['shape']) == 1:
-                    rospy.logwarn("Shape of area {0} contains multiple entries, don't know what to do".format(testarea['name']))
-                    continue
-                ''' Check if the first entry is a box '''
-                if not 'box' in testarea['shape'][0]:
-                    rospy.logwarn("No box in {0}".format(testarea['name']))
-                    continue
-                box = testarea['shape'][0]['box']
-                if 'min' not in box or 'max' not in box:
-                    rospy.logwarn("Box in {0} either does not contain min or max".format(testarea['name']))
-                    continue
-                # Now we're sure to have the correct bounding box
-                e.convex_hull = []
-                e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
-                e.convex_hull.append(gm.Point(box['max']['x'], box['min']['y'], box['min']['z']))  # 2
-                e.convex_hull.append(gm.Point(box['max']['x'], box['max']['y'], box['min']['z']))  # 3
-                e.convex_hull.append(gm.Point(box['min']['x'], box['max']['y'], box['min']['z']))  # 4
 
-                # Make sure we overwrite the e.z_max
-                e.z_max = box['min']['z'] - 0.04  # 0.04 is the usual offset
-                return self.determinePointsOfInterest(e)
+        if not area in e.volumes:
+            return []
 
-        return []
+        box = e.volumes[area]
 
+        if not hasattr(box, "bottom_area"):
+            rospy.logerr("Entity {0} has no shape with a bottom_area".format(e.id))
 
-    def determinePointsOfInterest(self, e):
+        # Now we're sure to have the correct bounding box
+        # Make sure we offset the bottom of the box
+        top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
+        return self.determine_points_of_interest(e._pose, top_z, box.bottom_area)
+
+    def determine_points_of_interest(self, center_pose, z_max, convex_hull):
+        """
+        Determine candidates for place poses
+        :param center_pose: kdl.Frame, center pose of the Entity to place on top of
+        :param z_max: float, height of the entity to place on, w.r.t. the entity
+        :param convex_hull: [kdl.Vector], convex hull of the entity
+        :return: [FrameStamped] of candidates for placing
+        """
 
         points = []
 
-        x = e.pose.position.x
-        y = e.pose.position.y
-
-        if len(e.convex_hull) == 0:
-            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+        if len(convex_hull) == 0:
+            rospy.logerr('determine_points_of_interest: Empty convex hull')
             return []
 
-        ''' Convert convex hull to map frame '''
+        # Convert convex hull to map frame
+        ch = offsetConvexHull(convex_hull, center_pose)
 
-        center_pose = poseMsgToKdlFrame(e.pose)
-        ch = list()
-        for point in e.convex_hull:
-            p = pointMsgToKdlVector(point)
-            # p = center_pose * p
-            # p = p * center_pose
-            pf = kdl.Frame(kdl.Rotation(), p)
-            # pf = pf * center_pose  # Original
-            pf = center_pose * pf  # Test
-            p = pf.p
-            ch.append(copy.deepcopy(p))  # Needed to fix "RuntimeError: underlying C/C++ object has been deleted"
-
-        ''' Loop over hulls '''
+        # Loop over hulls
         self.marker_array.markers = []
 
-        ch.append(ch[0])
         for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x() - ch[i].x()
-                dy = ch[i+1].y() - ch[i].y()
-                length = math.hypot(dx, dy)
+            j = (i + 1) % len(ch)
 
-                d = self._edge_distance
-                while d < (length-self._edge_distance):
+            dx = ch[j].x() - ch[i].x()
+            dy = ch[j].y() - ch[i].y()
 
-                    ''' Point on edge '''
-                    xs = ch[i].x() + d/length*dx
-                    ys = ch[i].y() + d/length*dy
+            length = kdl.diff(ch[j], ch[i]).Norm()
 
-                    ''' Shift point inwards and fill message'''
-                    ps = gm.PointStamped()
-                    ps.header.frame_id = "/map"
-                    ps.point.x = xs - dy/length * self._edge_distance
-                    ps.point.y = ys + dx/length * self._edge_distance
-                    ps.point.z = e.pose.position.z + e.z_max
-                    points.append(ps)
+            d = self._edge_distance
+            while d < (length-self._edge_distance):
 
-                    self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+                # Point on edge
+                xs = ch[i].x() + d/length*dx
+                ys = ch[i].y() + d/length*dy
 
-                    # ToDo: check if still within hull???
-                    d += self._spacing
+                # Shift point inwards and fill message
+                fs = kdlFrameStampedFromXYZRPY(x=xs - dy/length * self._edge_distance,
+                                               y=ys + dx/length * self._edge_distance,
+                                               z=center_pose.p.z() + z_max,
+                                               frame_id="/map")
+                points += [fs]
+
+                self.marker_array.markers.append(self.create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
+
+                # ToDo: check if still within hull???
+                d += self._spacing
 
         self.marker_pub.publish(self.marker_array)
 

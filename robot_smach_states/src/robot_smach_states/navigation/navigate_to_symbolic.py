@@ -7,7 +7,7 @@ from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
 from robot_smach_states.util.designators import check_resolve_type
-import ed.msg
+from robot_skills.util.entity import Entity
 
 import rospy
 
@@ -20,10 +20,10 @@ class NavigateToSymbolic(NavigateTo):
         self.robot                 = robot
 
         #Check that the entity_designator_area_name_map's keys all resolve to EntityInfo's
-        assert(all(entity_desig.resolve_type == ed.msg.EntityInfo for entity_desig in entity_designator_area_name_map.keys()))
+        assert(all(entity_desig.resolve_type == Entity for entity_desig in entity_designator_area_name_map.keys()))
         self.entity_designator_area_name_map     = entity_designator_area_name_map
 
-        check_resolve_type(entity_lookat_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
+        check_resolve_type(entity_lookat_designator, Entity) #Check that the entity_designator resolves to an Entity
         self.entity_lookat_designator = entity_lookat_designator
 
     def generateConstraint(self):
