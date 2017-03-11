@@ -1,10 +1,12 @@
 #!/usr/bin/python
+
 import roslib;
 import rospy
 import smach
 import sys
 
 import robot_smach_states as states
+from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import Designator, EdEntityDesignator
 
 from robocup_knowledge import load_knowledge
@@ -32,3 +34,28 @@ class HearQuestion(smach.State):
                 self.robot.speech.speak("Sorry, I do not understand your question")
 
         return "answered"
+
+        # Standalone testing -----------------------------------------------------------------
+
+class TestRiddleGame(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+
+        with self:
+            smach.StateMachine.add('INITIALIZE',
+                                   states.Initialize(robot),
+                                   transitions={'initialized': 'HEAR_QUESTION',
+                                                'abort': 'Aborted'})
+
+            smach.StateMachine.add("HEAR_QUESTION",
+                                   HearQuestion(robot),
+                                   transitions={'answered': 'HEAR_QUESTION_2'})
+
+            smach.StateMachine.add("HEAR_QUESTION_2",
+                                   HearQuestion(robot),
+                                   transitions={'answered': 'Done'})
+
+if __name__ == "__main__":
+    rospy.init_node('speech_person_recognition_exec')
+
+    startup(TestRiddleGame, challenge_name="challenge_spr")
