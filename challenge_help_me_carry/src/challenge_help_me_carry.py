@@ -18,177 +18,6 @@ print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
 
-class checkTimeOut(smach.State):
-    def __init__(self, robot, time_out_seconds):
-        smach.State.__init__(self, outcomes=["not_yet", "time_out"])
-        self.robot = robot
-        self.time_out_seconds = time_out_seconds
-
-        self.start = None
-        self.last_say = None
-
-        self.turn = -1
-
-    def execute(self, userdata):
-        current_seconds = rospy.Time.now().to_sec()
-
-        radians = 0.15
-        vth = 0.5
-        if self.start is None:
-            self.robot.base.force_drive(0, 0, vth, radians / vth)
-            self.start = current_seconds
-
-        dt = current_seconds - self.start
-
-        if dt > self.time_out_seconds:
-            return "time_out"
-
-        if self.last_say is None or current_seconds - self.last_say > 10:
-            self.robot.speech.speak("Trying for another %d seconds .. wiggle wiggle" % int(self.time_out_seconds - dt), block=False)
-            self.last_say = current_seconds
-
-        self.robot.base.force_drive(0, 0, self.turn * vth, (2 * radians) / vth)
-        self.turn = -self.turn
-
-        return "not_yet"
-
-class Turn(smach.State):
-    def __init__(self, robot, radians):
-        smach.State.__init__(self, outcomes=["turned"])
-        self.robot = robot
-        self.radians = radians
-
-    def execute(self, userdata):
-        self.robot.head.close()
-
-        vth = 1.0
-        print "Turning %f radians with force drive" % self.radians
-        self.robot.base.force_drive(0, 0, vth, self.radians / vth)
-
-        return "turned"
-
-class DetermineDoor(smach.State):
-    def __init__(self, robot, door_id_designator):
-        smach.State.__init__(self, outcomes=["door_found","preempted"])
-        self._robot = robot
-        self._door_id_designator = door_id_designator
-
-    def execute(self, userdata):
-        door_1_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_1).pose.position
-        door_2_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_2).pose.position
-
-        door_1_constraint = PositionConstraint()
-        door_1_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (door_1_position.x, door_1_position.y, 0.7)
-
-        door_2_constraint = PositionConstraint()
-        door_2_constraint.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (door_2_position.x, door_2_position.y, 0.7)
-
-        # TODO: make sure that waypoints exist!!!
-        # TODO: make sure door id designator is writeable
-
-        while True:
-            plan1 = self._robot.base.global_planner.getPlan(door_1_constraint)
-            plan2 = self._robot.base.global_planner.getPlan(door_2_constraint)
-            print "Plan 1 length: %i" % len(plan1)
-            print "Plan 2 length: %i" % len(plan2)
-            if len(plan1) < 3:
-                self._door_id_designator.writeable.write(challenge_knowledge.target_door_1)
-                return "door_found"
-            elif len(plan2) < 3:
-                self._door_id_designator.writeable.write(challenge_knowledge.target_door_2)
-                return "door_found"
-
-            if self.preempt_requested():
-                return 'preempted'
-
-            time.sleep(1)
-
-class SelectWaypoints(smach.State):
-    def __init__(self, door_id_designator, wp_1_des, wp_2_des):
-        smach.State.__init__(self, outcomes=["done"])
-        self._door_id_designator = door_id_designator
-        self._wp_1_des = wp_1_des
-        self._wp_2_des = wp_2_des
-
-    def execute(self, userdata):
-        if self._door_id_designator.resolve() == challenge_knowledge.target_door_1:
-            self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_1)
-            self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_1)
-        elif self._door_id_designator.resolve() == challenge_knowledge.target_door_2:
-            self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_2)
-            self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_2)
-        else:
-            self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_1)
-            self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_1)
-        return 'done'
-
-
-class DetermineObject(smach.State):
-    def __init__(self, robot, entity_id, obstacle_radius):
-        smach.State.__init__(self, outcomes=["done", "timeout"])
-        self._robot = robot
-
-        try:
-            pose = robot.ed.get_entity(id=entity_id).pose
-        except Exception as e:
-            rospy.logerr(e)
-            sys.exit(1)
-
-        self.pc = PositionConstraint(frame="/map", constraint="(x-%f)^2+(y-%f)^2 < 0.05" % (pose.position.x, pose.position.y))
-        self.obstacle_radius = obstacle_radius
-
-    def execute(self, userdata):
-
-        self._robot.speech.speak("Waypoint 2 is occupied, what do we have here", block=False)
-
-        # Make sure you look where you would expect the person to stand
-        self._robot.head.look_at_standing_person()
-        self._robot.head.wait_for_motion_done()
-        time.sleep(1)
-
-        # Check if there is a human blocking the path
-        rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-        rospy.logerr("I will return an empty detection list!")
-        persons = []
-
-        if not persons:
-            persons = []
-
-        rospy.loginfo("Person detection result: %s" % persons)
-
-        block_is_person = False
-        for person in persons:
-#            pose_base_link = self._robot.tf_listener.transformPose(target_frame=self._robot.robot_name+'/base_link',
-#                                                                   pose=person.pose)
-#
-#            x = pose_base_link.pose.position.x
-#            y = pose_base_link.pose.position.y
-
-#            r = self.obstacle_radius  # Distance from the robot's base link in the x-direction
-#            if (x - r)*(x - r) + y*y < r*r:
-            block_is_person = True
-            break
-
-        # Stop looking at person
-        self._robot.head.cancel_goal()
-
-        if block_is_person:
-            self._robot.speech.speak("Hi there Human, please step aside")
-        else:
-            self._robot.speech.speak("Can somebody please remove the non-human object that is blocking waypoint 2?")
-
-        start_time = time.time()
-        while not self._robot.base.global_planner.getPlan(self.pc):
-            if time.time() - start_time > 30:
-                return "timeout"
-            time.sleep(1)
-
-        self._robot.speech.speak("Thank you")
-
-        time.sleep(3)
-
-        return "done"
-
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
@@ -581,12 +410,12 @@ def setup_statemachine(robot):
 
 
 
-    analyse_designators(sm, "navigation")
+    analyse_designators(sm, "help_me_carry")
     return sm
 
 
 ############################## initializing program ##############################
 if __name__ == '__main__':
-    rospy.init_node('navigation_exec')
+    rospy.init_node('help_me_carry_exec')
 
-    states.util.startup(setup_statemachine, challenge_name="navigation")
+    states.util.startup(setup_statemachine, challenge_name="help_me_carry")
