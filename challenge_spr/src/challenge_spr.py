@@ -2,19 +2,20 @@
 
 import rospy
 import smach
-from robot_smach_states import Initialize, Say, WaitForPersonInFront
 import time
 import os
 import datetime
+import math
 
+from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, WaitTime
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
-from challenge_spr.detect import DetectCrowd
 
+from challenge_spr.detect import DetectCrowd
 from challenge_spr import bluff_game
 from challenge_spr import riddle_game
 
-class ChallengePersonRecognition(smach.StateMachine):
+class ChallengeSpeechPersonRecognition(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
@@ -26,12 +27,16 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add("ANNOUNCEMENT",
                                    Say(robot, "I want to play a riddle game"),
-                                   transitions={"spoken": "WAIT_AND_TURN"})
+                                   transitions={"spoken": "WAIT"})
 
-            # TODO(sam): Implement wait and turn
-            smach.StateMachine.add("WAIT_AND_TURN",
-                                   Say(robot, "I'm now waiting and turning"),
-                                   transitions={"spoken": "DETECT_CROWD"})
+            smach.StateMachine.add("WAIT",
+                                   WaitTime(robot),
+                                   transitions={"waited": "TURN",
+                                                "preempted": "TURN"})
+
+            smach.StateMachine.add("TURN",
+                                   Turn(robot, math.pi),
+                                   transitions={"turned": "DETECT_CROWD"})
 
             smach.StateMachine.add("DETECT_CROWD",
                                    DetectCrowd(robot),
@@ -67,6 +72,6 @@ class ChallengePersonRecognition(smach.StateMachine):
             ds.analyse_designators(self, "person_recognition")
 
 if __name__ == "__main__":
-    rospy.init_node('person_recognition_exec')
+    rospy.init_node('speech_person_recognition_exec')
 
-    startup(ChallengePersonRecognition, challenge_name="person_recognition")
+    startup(ChallengeSpeechPersonRecognition, challenge_name="challenge_spr")
