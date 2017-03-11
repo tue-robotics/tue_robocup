@@ -22,6 +22,11 @@ import robot_smach_states as state_machine
 import robot_smach_states.util.designators as ds
 import robot_skills.util.msg_constructors as msgs
 
+# Load convenient data types (DO NOT REMOVE)
+import PyKDL as kdl
+from robot_skills.util.kdl_conversions import frame_stamped
+
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -41,7 +46,7 @@ def load_robot(robot_name, parts=None):
             constructor = module.__getattribute__(name.title())
 
             if parts:
-                instance = constructor(robot_name)
+                instance = constructor(robot_name, wait_services=True)
             else:
                 instance = constructor(wait_services=False)
 

@@ -8,13 +8,14 @@ import trajectory_msgs.msg
 from actionlib_msgs.msg import GoalStatus
 from sensor_msgs.msg import JointState
 
+from robot_part import RobotPart
 from .util import concurrent_util
 
 
-class Torso(object):
-    def __init__(self, robot_name, wait_service=False):
+class Torso(RobotPart):
+    def __init__(self, robot_name, tf_listener):
+        super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
-        self.robot_name  = robot_name
         self.joint_names = rospy.get_param('/'+self.robot_name+'/skills/torso/joint_names')
         self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/torso/default_configurations')
         self.default_tolerance = rospy.get_param('/'+self.robot_name+'/skills/torso/default_tolerance')
@@ -22,8 +23,8 @@ class Torso(object):
         self.upper_limit = self.default_configurations['upper_limit']
 
         # Init action client
-        #self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/torso_server', control_msgs.msg.FollowJointTrajectoryAction)
-        self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/body/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
+        self.ac_move_torso = self.create_simple_action_client('/'+self.robot_name+'/body/joint_trajectory_action',
+                                                              control_msgs.msg.FollowJointTrajectoryAction)
 
         # Init joint measurement subscriber
         self.torso_sub = rospy.Subscriber('/'+self.robot_name+'/sergio/torso/measurements', JointState, self._receive_torso_measurement)

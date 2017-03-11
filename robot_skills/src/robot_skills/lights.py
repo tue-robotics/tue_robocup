@@ -1,15 +1,18 @@
 #! /usr/bin/env python
 import rospy
-from amigo_msgs.msg import RGBLightCommand
 from std_msgs.msg import ColorRGBA
 
+from amigo_msgs.msg import RGBLightCommand
+from robot_part import RobotPart
 
-class Lights:
+
+class Lights(RobotPart):
     """
     Interface to amigo's lights.
     """
 
-    def __init__(self, robot_name):
+    def __init__(self, robot_name, tf_listener):
+        super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand, queue_size=10)
 
     def close(self):

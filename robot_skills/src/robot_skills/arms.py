@@ -13,6 +13,8 @@ from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
+from robot_part import RobotPart
+
 
 class ArmState:
     """Specifies a State either OPEN or CLOSE"""
@@ -20,7 +22,7 @@ class ArmState:
     CLOSE = "close"
 
 
-class Arm(object):
+class Arm(RobotPart):
     """
     A single arm can be either left or right, extends Arms:
     Use left or right to get arm while running from the python console
@@ -33,14 +35,13 @@ class Arm(object):
     #To open left gripper
     >>> left.send_gripper_goal_open(10)
     """
-    def __init__(self, robot_name, side, tf_listener):
-        self.robot_name = robot_name
+    def __init__(self, robot_name, tf_listener, side):
+        super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
         if (self.side is "left") or (self.side is "right"):
             pass
         else:
             raise Exception("Side should be either: left or right")
-        self.tf_listener = tf_listener
 
         self._occupied_by = None
         self._operational = True  # In simulation, there will be no hardware cb
@@ -63,29 +64,16 @@ class Arm(object):
         rospy.Subscriber("/amigo/hardware_status", DiagnosticArray, self.cb_hardware_status)
 
         # Init gripper actionlib
-        self._ac_gripper = SimpleActionClient(
+        self._ac_gripper = self.create_simple_action_client(
             "/" + robot_name + "/" + self.side + "_arm/gripper/action", GripperCommandAction)
 
         # Init graps precompute actionlib
-        self._ac_grasp_precompute = SimpleActionClient(
+        self._ac_grasp_precompute = self.create_simple_action_client(
             "/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
 
         # Init joint trajectory action server
-        self._ac_joint_traj = SimpleActionClient(
+        self._ac_joint_traj = self.create_simple_action_client(
             "/" + robot_name + "/body/joint_trajectory_action", FollowJointTrajectoryAction)
-
-        # ToDo: don't hardcode? // Comment from @reinzor, this always fails on
-        # startup of action server, why do we need this, who uses this info?
-        server_timeout = 0.25
-        self._ac_gripper_present = self._ac_gripper.wait_for_server(timeout=rospy.Duration(server_timeout))
-        if not self._ac_gripper_present:
-            rospy.loginfo("Cannot find gripper {0} server".format(self.side))
-        self._ac_grasp_precompute_present  = self._ac_grasp_precompute.wait_for_server(timeout=rospy.Duration(server_timeout))
-        if not self._ac_grasp_precompute_present:
-            rospy.loginfo("Cannot find grasp precompute {0} server".format(self.side))
-        self._ac_joint_traj_present = self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(server_timeout))
-        if not self._ac_joint_traj_present:
-            rospy.loginfo("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
@@ -358,14 +346,6 @@ class Arm(object):
         completion of the actionlib goal. It will return True as soon as possible when the goal
         succeeded. On timeout, it will return False.
         '''
-        # First: check if the actionlib is available
-        if not self._ac_joint_traj_present:
-            self._ac_joint_traj_present = self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(0.25))
-        # If still not available: return false
-        if not self._ac_joint_traj_present:
-            rospy.logwarn('Joint trajectory action is not present: joint goal not reached')
-            return False
-
         if not joints_references:
             return
 
