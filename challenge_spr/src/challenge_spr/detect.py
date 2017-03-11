@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+import sys
+from robot_smach_states.util.startup import startup
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.util.kdl_conversions import VectorStamped
 import time
@@ -12,7 +15,7 @@ import random
 challenge_knowledge = load_knowledge("challenge_speech_recognition")
 
 
-class RecognizePersons(smach.State):
+class DetectCrowd(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
@@ -179,17 +182,23 @@ class RecognizePersons(smach.State):
         return 'succeeded'
 
 
-class DetectCrowd(smach.StateMachine):
+class TestDetectCrowd(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
-        self.turned = False
+        #  -----------------------------------------------------------------
 
         with self:
+            smach.StateMachine.add('INITIALIZE',
+                                   states.Initialize(robot),
+                                   transitions={'initialized': 'DETECT_CROWD',
+                                                'abort': 'Aborted'})
 
-            smach.StateMachine.add('SAY_SEARCHING_CROWD',
-                                    states.Say(robot, "I'm looking for the crowd.", block=False),
-                                    transitions={'spoken': 'RECOGNIZE_PERSONS'})
+            smach.StateMachine.add("DETECT_CROWD",
+                                   DetectCrowd(robot),
+                                   transitions={'succeeded': 'Done',
+                                                'failed': 'Aborted'})
+if __name__ == "__main__":
+    rospy.init_node('speech_person_recognition_exec')
 
-            smach.StateMachine.add('RECOGNIZE_PERSONS', RecognizePersons(robot),
-                                   transitions={'succeeded': 'succeeded', 'failed': 'failed'})
+    startup(TestDetectCrowd, challenge_name="challenge_spr")
