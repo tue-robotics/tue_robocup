@@ -414,7 +414,7 @@ class EmptySpotDesignator(Designator):
 
         # We want to give it a convex hull using the designated area
 
-        if not area in entity.volumes:
+        if area not in entity.volumes:
             return []
 
         box = entity.volumes[area]
@@ -508,9 +508,6 @@ class LockToId(Designator):
                 entity = self.to_be_locked.resolve()  # Then find  out what we should remember
                 if entity:  # If we can find what to remember
                     self._locked_to_id = entity.id  # remember its ID.
-                else:
-                    pass  # If we cannot find what to remember, to_be_locked.resolve() return None and we return that too
-                    # rospy.loginfo("{0} locked to ID {1}".format(self, self._locked_to_id))
             else:  # If we do remember something already, recall that remembered ID:
                 return self.robot.ed.get_entities(id=self._locked_to_id)
         else:
