@@ -35,6 +35,23 @@ class FrameStamped(object):
         return VectorStamped(frame_id=self.frame_id, vector=self.frame.p)
 
 
+def frame_stamped(frame_id, x, y, z, roll=0, pitch=0, yaw=0):
+    """ Creates a FrameStamped object from the provided parameters
+
+    :param frame_id: string with frame id
+    :param x:
+    :param y:
+    :param z:
+    :param roll:
+    :param pitch:
+    :param yaw:
+    :return:
+    """
+    return FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw),
+                                        kdl.Vector(x, y, z)),
+                        frame_id=frame_id)
+
+
 class VectorStamped(object):
     def __init__(self, x=0, y=0, z=0, frame_id="/map", vector=None):
         if vector:

@@ -215,7 +215,7 @@ class WaitForPersonInFront(WaitForDesignator):
     def __init__(self, robot, attempts = 1, sleep_interval = 1):
         # TODO: add center_point in front of the robot and radius of the search on ds.EdEntityDesignator
         human_entity = ds.EdEntityDesignator(robot, type="human")
-        ds.WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
+        WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
 
 
 ##########################################################################################################################################

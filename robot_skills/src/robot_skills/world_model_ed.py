@@ -1,44 +1,35 @@
 #! /usr/bin/env python
+
+# System
+
+# ROS
+from geometry_msgs.msg import Point, PointStamped
+import PyKDL as kdl
 import rospy
+import visualization_msgs.msg
+
+# TU/e
+import ed.srv
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
-# from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
-import ed_perception.srv
 from ed_perception.srv import Classify
 from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
-from geometry_msgs.msg import Point, PointStamped
-from math import hypot
 
+# Robot skills
 from .util import transformations
-
-import ed.srv
-from std_srvs.srv import Empty
-
-import tf
-import visualization_msgs.msg
-
-import PyKDL as kdl
 from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, kdlVectorToPointMsg
-import os
-
-
-import yaml
-
 from .classification_result import ClassificationResult
-
 from robot_skills.util.entity import from_entity_info
-
-def _create_service_proxy(service_name, service_type, wait_service):
-    if wait_service:
-        rospy.wait_for_service(service_name)
-    return rospy.ServiceProxy(service_name, service_type)
+from robot_part import RobotPart
 
 
-class Navigation:
-    def __init__(self, robot_name, tf_listener, wait_service=False):
-        self._get_constraint_srv = _create_service_proxy('/%s/ed/navigation/get_constraint'%robot_name, GetGoalConstraint, wait_service)
+class Navigation(RobotPart):
+    def __init__(self, robot_name, tf_listener):
+        super(Navigation, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self._get_constraint_srv = self.create_service_client('/%s/ed/navigation/get_constraint' % robot_name,
+                                                              GetGoalConstraint)
 
     def get_position_constraint(self, entity_id_area_name_map):
         try:
@@ -53,23 +44,36 @@ class Navigation:
 
         return PositionConstraint(constraint=res.position_constraint_map_frame, frame="/map")
 
-class ED:
 
-    def __init__(self, robot_name, tf_listener, wait_service=False):
-        self._ed_simple_query_srv = _create_service_proxy('/%s/ed/simple_query'%robot_name, SimpleQuery, wait_service)
-        self._ed_entity_info_query_srv = _create_service_proxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo, wait_service)
-        self._ed_update_srv = _create_service_proxy('/%s/ed/update'%robot_name, UpdateSrv, wait_service)
-        self._ed_kinect_update_srv = _create_service_proxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update, wait_service)
-        self._ed_classify_srv = _create_service_proxy('/%s/ed/classify'%robot_name, Classify, wait_service)
-        self._ed_configure_srv = _create_service_proxy('/%s/ed/configure'%robot_name, Configure, wait_service)
-        self._ed_reset_srv = _create_service_proxy('/%s/ed/reset'%robot_name, ed.srv.Reset, wait_service)
-        self._ed_get_image_srv = _create_service_proxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage, wait_service)
+class ED(RobotPart):
+
+    def __init__(self, robot_name, tf_listener):
+        super(ED, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self._ed_simple_query_srv = self.create_service_client('/%s/ed/simple_query' % robot_name, SimpleQuery)
+        self._ed_entity_info_query_srv = self.create_service_client('/%s/ed/gui/get_entity_info' % robot_name,
+                                                                    GetEntityInfo)
+        self._ed_update_srv = self.create_service_client('/%s/ed/update' % robot_name, UpdateSrv)
+        self._ed_kinect_update_srv = self.create_service_client('/%s/ed/kinect/update' % robot_name,
+                                                                ed_sensor_integration.srv.Update)
+        self._ed_classify_srv = self.create_service_client('/%s/ed/classify' % robot_name, Classify)
+        self._ed_configure_srv = self.create_service_client('/%s/ed/configure' % robot_name, Configure)
+        self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed.srv.Reset)
+        self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
+                                                            ed_sensor_integration.srv.GetImage)
 
         self._tf_listener = tf_listener
 
-        self.navigation = Navigation(robot_name, tf_listener, wait_service)
+        self.navigation = Navigation(robot_name, tf_listener)
 
-        self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker, queue_size=10)
+        self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker,
+                                                 queue_size=10)
+
+    def wait_for_connections(self, timeout):
+        """ Waits for the connections until they are connected
+        :param timeout: timeout in seconds
+        :return: bool indicating whether all connections are connected
+        """
+        return super(ED, self).wait_for_connections(timeout) and self.navigation.wait_for_connections(timeout)
 
     # ----------------------------------------------------------------------------------------------------
     #                                             QUERYING
