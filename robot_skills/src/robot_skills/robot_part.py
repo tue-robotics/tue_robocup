@@ -50,7 +50,7 @@ class RobotPart(object):
                     rospy.logerr("Don't know what to do with a {}".format(type(v)))
                 # If connected, remove from the list
                 if connected:
-                    rospy.loginfo("Connected to {}".format(k))
+                    rospy.logdebug("Connected to {}".format(k))
                     # self.__ros_connections = {name: connection
                     #                           for name, connection in self.__ros_connections.iteritems() if name != k}
                 else:

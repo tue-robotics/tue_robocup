@@ -12,7 +12,7 @@ class EButton(RobotPart):
     def __init__(self, robot_name, tf_listener):
         super(EButton, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
-        rospy.loginfo("Initializing ebutton listener")
+        rospy.logdebug("Initializing ebutton listener")
         self._ebuttonstatus = True
         self._topic = rospy.Subscriber("/{}/emergency_switch".format(robot_name),
                                          Bool,

@@ -78,7 +78,7 @@ class Robot(object):
         for k, v in self.parts.iteritems():
             v.wait_for_connections(1.0)
         e = rospy.Time.now()
-        rospy.loginfo("Connecting took {} seconds".format((e-s).to_sec()))
+        rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
 
     def standby(self):
         if not self.robot_name == 'amigo':
