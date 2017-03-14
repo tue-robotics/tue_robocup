@@ -41,9 +41,12 @@ class DetectCrowd(smach.State):
         self.robot.head.wait_for_motion_done()
         time.sleep(1)
 
-        rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-        rospy.logerr("I will return an empty detection list!")
-        detections = []
+
+        # TODO: send the data to Rein's node
+
+        image = self.robot.head.get_image()
+
+
 
         if not detections:
             detections = []
@@ -84,6 +87,8 @@ class DetectCrowd(smach.State):
             # Get operator guess
             if operator:
                 operator_list.append(operator)
+
+        return None, None
 
         # 2) Get all other information with use of the external api, make sure that we have all persons here
         max_tries = 5
@@ -134,46 +139,7 @@ class DetectCrowd(smach.State):
         self.robot.speech.speak("I found %d people in the crowd" % num_ppl)
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
-    def _describe_operator(self, operator):
-        gender = "male"
-        if operator.gender == 2:
-            gender = "female"
-
-        z = operator.pose.pose.position.z
-        pose_str = "standing"
-        if z < 1.4:
-            pose_str = "sitting"
-        if z < 0.6:
-            pose_str = "lying"
-
-        self.robot.speech.speak("The operator is a %s" % gender)
-        self.robot.speech.speak("The operator is %s" % pose_str)
-
-        pose_base_link = self.robot.tf_listener.transformPose(target_frame=self.robot.robot_name + '/base_link', pose=operator.pose)
-        x = pose_base_link.pose.position.x
-        y = pose_base_link.pose.position.y
-
-        self.robot.speech.speak("The operator is at x %.1f and y %.1f in my base link, I will turn towards you" % (x, y))
-        th = math.atan2(y, x)
-        vth = 0.5
-
-        self.robot.head.cancel_goal()
-        self.robot.base.force_drive(0, 0, math.copysign(1, th) * vth, abs(th / vth))
-
-        self.robot.speech.speak("I will now point in your direction!")
-
-        self.robot.head.look_at_ground_in_front_of_robot(distance=100)
-        self.robot.rightArm._send_joint_trajectory([[0,1.0,0.3,0.8,0,0,0]])
-
-        self.robot.speech.speak("You are right there operator!")
-
-        self.robot.speech.speak("Cook cook!")
-
-        self.robot.rightArm.reset()
-        self.robot.rightArm.wait_for_motion_done()
-
     def execute(self, userdata=None):
-
         detections, operator = self._recognize()
 
         if not detections or not operator:
@@ -185,7 +151,7 @@ class DetectCrowd(smach.State):
 
         return 'succeeded'
 
-        # Standalone testing -----------------------------------------------------------------
+# Standalone testing -----------------------------------------------------------------
 
 class TestDetectCrowd(smach.StateMachine):
     def __init__(self, robot):
