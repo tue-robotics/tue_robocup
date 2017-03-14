@@ -311,7 +311,7 @@ class EmptySpotDesignator(Designator):
         if self._area:
             vectors_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            vectors_of_interest = self.determine_points_of_interest(place_frame.frame, z_max=0, convex_hull=place_location.shape.convex_hull)
+            vectors_of_interest = self.determine_points_of_interest(place_frame.frame, z_max=place_location.shape.z_max, convex_hull=place_location.shape.convex_hull)
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
