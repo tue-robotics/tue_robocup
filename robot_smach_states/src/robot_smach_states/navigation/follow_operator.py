@@ -16,7 +16,7 @@ from visualization_msgs.msg import Marker
 from cb_planner_msgs_srvs.msg import *
 
 from robot_skills.util import transformations, msg_constructors
-from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.kdl_conversions import VectorStamped, kdlFrameStampedFromPoseStampedMsg
 
 
 class FollowOperator(smach.State):
@@ -134,7 +134,7 @@ class FollowOperator(smach.State):
 
                 if answer and 'choice' in answer.choices:
                     if answer.choices['choice'] == "yes":
-                        operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                        operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
 
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
@@ -163,7 +163,7 @@ class FollowOperator(smach.State):
                     self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                     return False
             else:
-                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -211,7 +211,7 @@ class FollowOperator(smach.State):
         # This only happens when the operator was just registered, and never tracked
         print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
         self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
-                                                                                center_point=msg_constructors.PointStamped(
+                                                                                center_point=VectorStamped(
                                                                                     x=1.5, y=0, z=1,
                                                                                     frame_id="/%s/base_link" % self._robot.robot_name))
         if self._operator:
@@ -219,7 +219,7 @@ class FollowOperator(smach.State):
         else:
             print "Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1"
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-                                                                          center_point=msg_constructors.PointStamped(
+                                                                          center_point=VectorStamped(
                                                                               x=1.5, y=0, z=1,
                                                                               frame_id="/%s/base_link" % self._robot.robot_name)
                                                                           )
@@ -453,12 +453,13 @@ class FollowOperator(smach.State):
                 operator_pos.point = best_detection.pose.pose.position
                 self._face_pos_pub.publish(operator_pos)
 
+                center_point = kdlFrameStampedFromPoseStampedMsg(best_detection).extractVectorStamped()
                 recovered_operator = self._robot.ed.get_closest_possible_person_entity(radius=self._lost_distance,
-                                                                             center_point=best_detection.pose.pose.position)
+                                                                             center_point=center_point)
 
                 if not recovered_operator:
                     recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=best_detection.pose.pose.position)
+                                                                             center_point=center_point)
 
             if recovered_operator:
                 print "Found one!"

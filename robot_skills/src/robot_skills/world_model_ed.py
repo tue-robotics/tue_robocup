@@ -109,9 +109,7 @@ class ED:
 
         return entities[0]
 
-    def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
+    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0):
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
@@ -123,7 +121,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.vector))
         except:
             print "Failed to sort entities"
             return None
@@ -237,7 +235,7 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, type="", center_point=Point(), radius=0, room = ""):
+    def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room = ""):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
@@ -251,7 +249,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.vector))
             print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
