@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 import rospy
+from threading import Condition
 from actionlib import SimpleActionClient
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
+from sensor_msgs.msg import Image
 from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
@@ -123,6 +125,35 @@ class Head():
         self._goal = None
         self._at_setpoint = False
 
+    def get_image(self):
+        rospy.loginfo("Getting one image")
+
+        global cv_image
+        cv_image = None
+        cv = Condition()
+
+        def callback(data):
+            global cv_image
+
+            rospy.loginfo("Image data callback")
+            cv.acquire()
+            cv_image = data
+            cv.notify()
+            cv.release()
+
+        subscriber = rospy.Subscriber(self._robot_name + "/top_kinect/rgb/image", Image, callback)
+
+        cv.acquire()
+        while not cv_image:
+            rospy.loginfo('waiting...')
+            cv.wait()
+        subscriber.unregister()
+        image = cv_image
+        cv.release()
+
+        rospy.loginfo("Got data")
+
+        return None
 
 
 #######################################
