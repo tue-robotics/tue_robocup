@@ -9,7 +9,6 @@ import PyKDL as kdl
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.util.entity import Entity
-from ed.srv import SimpleQuery, SimpleQueryRequest
 import rospy
 from std_msgs import msg as std
 from visualization_msgs.msg import MarkerArray, Marker
@@ -19,9 +18,6 @@ from robot_smach_states.util.designators.checks import check_resolve_type
 
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
 from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, kdlFrameStampedFromXYZRPY
-import robot_smach_states.util.geometry_helpers as geom
-
-import robot_skills.util.msg_constructors as msg_constructors
 
 
 __author__ = 'loy'
