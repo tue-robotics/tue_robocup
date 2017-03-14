@@ -1,30 +1,15 @@
-target1 = "livingroom"
-target1_radius1 = 0.1
-target1_radius2 = 0.7
 
-target2_pre = "exit_pre"
-target2_pre_radius1 = 0.1
-target2 = "exit"
-target2_radius1 = 0.1
-target2_radius2 = 0.7
-target2_obstacle_radius = 0.6
+commands.follow             = ["follow"]    # 'Robot, follow me'
 
-target3 = "hallway"
-target3_radius1 = 0.1
-target3_radius2 = 0.7
+commands.follow_or_remember = ["follow",     # 'Robot, follow me'
+                               "remember"]   # 'Remember, this location is the car'
 
-target_door = "door_navigation"
-door_id = "door1"
-target_door_radius = 0.1
+commands.carry              = ["carry"]      # 'Carry this box'
 
-target4 = "hallway"
-target4_radius1 = 0.1
-target4_radius2 = 0.7
+commands.waypoint_for_room['kitchen'] = ('kitchen_table', 1) #TODO: update waypoint, target
 
-exit1 = "exit"
-exit2 = "exit"
-exit3 = "exit"
-exit4 = "exit"
+waypoints.car.id = "car"
+waypoints.car.radius = 1
 
 starting_point = "initial_pose"
 rotation = 0
