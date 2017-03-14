@@ -11,6 +11,7 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import robot_skills.util.msg_constructors as msgs
 
+from cv_bridge import CvBridge, CvBridgeError
 from robot_smach_states.util.startup import startup
 from robot_skills.util.kdl_conversions import VectorStamped
 from robocup_knowledge import load_knowledge
@@ -23,6 +24,7 @@ class DetectCrowd(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
+        self._bridge = CvBridge()
 
     def _shot_valid(self, number_of_people, operator_list, detections, operator):
         if not operator:
@@ -41,13 +43,17 @@ class DetectCrowd(smach.State):
         self.robot.head.wait_for_motion_done()
         time.sleep(1)
 
+        image = self.robot.head.get_image()
+        import ipdb; ipdb.set_trace()
+        rospy.loginfo('got %d bytes', len(image))
+
+        bgr_image = self._bridge.imgmsg_to_cv2(image, "bgr8")
+
 
         # TODO: send the data to Rein's node
 
-        image = self.robot.head.get_image()
 
-
-
+        detections = []
         if not detections:
             detections = []
 
