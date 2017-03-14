@@ -102,7 +102,7 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.vector))
         except:
             print "Failed to sort entities"
             return None
