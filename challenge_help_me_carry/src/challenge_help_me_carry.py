@@ -11,7 +11,7 @@ from robot_smach_states.util.designators import VariableDesignator, EdEntityDesi
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
-challenge_knowledge = load_knowledge('challenge_help_me_carry')
+#challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
 print "=============================================="
 print "==         CHALLENGE HELP ME CARRY          =="
@@ -168,4 +168,4 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('help_me_carry_exec')
 
-    states.util.startup(setup_statemachine, challenge_name="help_me_carry")
+    #states.util.startup(setup_statemachine, challenge_name="help_me_carry")
