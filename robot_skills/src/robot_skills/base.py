@@ -196,8 +196,8 @@ class Base(object):
         return True
 
     def get_location(self):
-        """ Returns a PoseStamped with the robot pose
-        :return: PoseStamped with robot pose
+        """ Returns a kdl.Frame with the robot pose
+        :return: kd.Frame with robot pose
         """
         return get_location(self._robot_name, self._tf_listener)
 

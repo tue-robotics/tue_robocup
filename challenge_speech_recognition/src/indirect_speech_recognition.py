@@ -7,8 +7,7 @@ import random
 import math
 import time
 
-from robot_skills.util import transformations as tf
-from robot_skills.util import transformations, msg_constructors
+from robot_skills.util.kdl_conversions import VectorStamped
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import Designator, EdEntityDesignator
@@ -53,7 +52,8 @@ class Turn(smach.State):
         operator = None
         while not operator:
             operator = self.robot.ed.get_closest_entity(self, radius=1.9,
-                                                        center_point=self.robot.base.get_location().p)
+                                                        center_point=VectorStamped(vector=self.robot.base.get_location().p,
+                                                                                   frame_id="/map"))
             print operator
             if not operator:
                 vth = 0.5

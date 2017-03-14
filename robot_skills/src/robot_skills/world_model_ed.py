@@ -91,10 +91,7 @@ class ED:
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=kdl.Vector(), radius=0):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
-
+    def get_closest_entity(self, type="", center_point=VectorStamped(), radius=0):
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
