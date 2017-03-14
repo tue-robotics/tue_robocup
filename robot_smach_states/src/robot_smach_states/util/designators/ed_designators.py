@@ -328,7 +328,7 @@ class EmptySpotDesignator(Designator):
             y = frame_stamped.frame.p.y()
             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame=frame_stamped.frame_id)
 
             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
