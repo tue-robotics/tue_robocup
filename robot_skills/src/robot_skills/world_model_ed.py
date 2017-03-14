@@ -95,10 +95,10 @@ class ED:
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
-        entities = self.get_entities(type="", center_point=center_point, radius=radius)
+        entities = self.get_entities(type="", center_point=VectorStamped(vector=center_point, frame_id="/map"), radius=radius)
 
         # HACK
-        entities = [ e for e in entities if e.convex_hull and e.type == "" ]
+        entities = [ e for e in entities if e.shape and e.type == "" ]
 
         if len(entities) == 0:
             return None

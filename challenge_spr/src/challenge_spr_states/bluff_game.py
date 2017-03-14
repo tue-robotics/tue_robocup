@@ -31,12 +31,12 @@ def _turn_to_closest_entity(robot):
             vth = 0.5
             th = 3.1415 / 10
             print "Turning %f radians with force drive" % th
-            self.robot.base.force_drive(0, 0, vth, th / vth)
+            robot.base.force_drive(0, 0, vth, th / vth)
 
-    self.robot.base.force_drive(0, 0, 0, 0.5)
+    robot.base.force_drive(0, 0, 0, 0.5)
 
     # Turn towards the operator
-    current = self.robot.base.get_location()
+    current = robot.base.get_location()
     robot_th = current.M.GetRPY()[2]  # Get the Yaw, rotation around Z
     desired_th = math.atan2(operator._pose.p.y() - current.p.y(),
                             operator._pose.p.x() - current.p.x())
@@ -50,7 +50,7 @@ def _turn_to_closest_entity(robot):
     vth = 0.5
 
     # Turn
-    self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
+    robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
 
 def turn_to_closest_entity(robot):
 
@@ -66,17 +66,17 @@ def turn_to_closest_entity(robot):
     _turn_to_closest_entity(robot)
 
 
-def answer(robot):
+def answer(robot, res):
     if res:
         if "question" in res.choices:
             rospy.loginfo("Question was: '%s'?"%res.result)
-            self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
+            robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
 
             return "answered"
         else:
-            self.robot.speech.speak("Sorry, I do not understand your question")
+            robot.speech.speak("Sorry, I do not understand your question")
     else:
-        self.robot.speech.speak("My ears are not working properly.")
+        robot.speech.speak("My ears are not working properly.")
 
     return "not_answered"
 
@@ -94,7 +94,7 @@ class HearQuestion(smach.State):
 
         turn_to_closest_entity(self.robot)
 
-        answer(self.robot, res)
+        return answer(self.robot, res)
 
 
 class HearQuestionRepeat(smach.State):
@@ -108,7 +108,7 @@ class HearQuestionRepeat(smach.State):
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
-        answer(self.robot, res)
+        return answer(self.robot, res)
 
 
 
@@ -125,18 +125,18 @@ class TestBluffGame(smach.StateMachine):
                                    transitions={'initialized': 'BLUFF_GAME_1',
                                                 'abort': 'Aborted'})
 
-            smach.StateMachine.add('BLUFF_GAME_1', 
-                                   HearQuestion(robot), 
-                                   transitions={'answered': 'Done', 
+            smach.StateMachine.add('BLUFF_GAME_1',
+                                   HearQuestion(robot),
+                                   transitions={'answered': 'Done',
                                                 'not_answered': 'BLUFF_GAME_1_ASK_REPEAT'})
-            
+
             smach.StateMachine.add("BLUFF_GAME_1_ASK_REPEAT",
                                    Say(robot, "Could you please repeat your question?"),
                                    transitions={"spoken": "BLUFF_GAME_1_REPEAT"})
 
-            smach.StateMachine.add('BLUFF_GAME_1_REPEAT', 
-                                   HearQuestionRepeat(robot), 
-                                   transitions={'answered' :'Done', 
+            smach.StateMachine.add('BLUFF_GAME_1_REPEAT',
+                                   HearQuestionRepeat(robot),
+                                   transitions={'answered' :'Done',
                                                 'not_answered': 'Done'})
 
 
