@@ -153,7 +153,7 @@ class Head():
 
         rospy.loginfo("Got data")
 
-        return None
+        return image
 
 
 #######################################
