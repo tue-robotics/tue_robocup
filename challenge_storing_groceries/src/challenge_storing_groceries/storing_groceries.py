@@ -61,7 +61,7 @@ class StoringGroceries(smach.StateMachine):
                                                 'goal_not_defined': 'INSPECT_SHELVES'})
 
             smach.StateMachine.add("INSPECT_SHELVES",
-                                   InspectShelves(robot, OBJECT_SHELVES),
+                                   InspectShelves(robot),
                                    transitions={'succeeded': 'EXPORT_PDF',
                                                 'nothing_found': 'EXPORT_PDF',
                                                 'failed': 'EXPORT_PDF'})

@@ -1,10 +1,9 @@
 # Entity where the shelves are part of
-cabinet_slam = "bookcase"
 cabinet_amcl = "bookcase"
 
 # Shelves where objects might be
 # object_shelves = ["bookcase/shelf2", "bookcase/shelf3"]
-object_shelves = ["shelf1", "shelf3", "shelf4"]
+object_shelves = ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 
 # Shelf where we will actually try to grasp
 # grasp_shelf = "bookcase/shelf2"
