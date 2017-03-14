@@ -10,10 +10,11 @@ import math
 import geometry_msgs.msg
 import rospy
 import tf
-from actionlib import SimpleActionClient
+
 from cb_planner_msgs_srvs.msg import LocalPlannerAction, OrientationConstraint, PositionConstraint, LocalPlannerGoal
 from cb_planner_msgs_srvs.srv import GetPlan, CheckPlan
 
+from robot_part import RobotPart
 from .util import nav_analyzer
 from .util import transformations
 from robot_skills.util.kdl_conversions import poseMsgToKdlFrame
@@ -21,12 +22,12 @@ from robot_skills.util.kdl_conversions import poseMsgToKdlFrame
 
 ###########################################################################################################################
 
-class LocalPlanner():
+class LocalPlanner(RobotPart):
     def __init__(self, robot_name, tf_listener, analyzer):
+        super(LocalPlanner, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.analyzer = analyzer
-        self._robot_name = robot_name
-        self._tf_listener = tf_listener
-        self._action_client = SimpleActionClient('/'+ robot_name +'/local_planner/action_server', LocalPlannerAction)
+        self._action_client = self.create_simple_action_client('/' + robot_name +'/local_planner/action_server',
+                                                               LocalPlannerAction)
 
         # Public members!
         self._status = "idle" # idle, controlling, blocked, arrived
@@ -87,14 +88,12 @@ class LocalPlanner():
 
 ###########################################################################################################################
 
-class GlobalPlanner():
+class GlobalPlanner(RobotPart):
     def __init__(self, robot_name, tf_listener, analyzer):
+        super(GlobalPlanner, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.analyzer = analyzer
-        self._robot_name = robot_name
-        self._tf_listener = tf_listener
-        self._get_plan_client = rospy.ServiceProxy("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
-        self._check_plan_client = rospy.ServiceProxy("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
-        rospy.loginfo("Waiting for the global planner services ...")
+        self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
+        self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
 
     def getPlan(self, position_constraint):
 
@@ -146,18 +145,25 @@ class GlobalPlanner():
 
 ###########################################################################################################################
 
-class Base(object):
-    def __init__(self, robot_name, tf_listener, wait_service=True, use_2d=None):
-        self._tf_listener = tf_listener
-        self._robot_name = robot_name
-        self._cmd_vel = rospy.Publisher('/' + self._robot_name + '/base/references', geometry_msgs.msg.Twist, queue_size=10)
-        self._initial_pose_publisher = rospy.Publisher('/' + self._robot_name + '/initialpose', geometry_msgs.msg.PoseWithCovarianceStamped, queue_size=10)
+class Base(RobotPart):
+    def __init__(self, robot_name, tf_listener):
+        super(Base, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self._cmd_vel = rospy.Publisher('/' + robot_name + '/base/references', geometry_msgs.msg.Twist, queue_size=10)
+        self._initial_pose_publisher = rospy.Publisher('/' + robot_name + '/initialpose', geometry_msgs.msg.PoseWithCovarianceStamped, queue_size=10)
 
-        self.analyzer = nav_analyzer.NavAnalyzer(self._robot_name)
+        self.analyzer = nav_analyzer.NavAnalyzer(robot_name)
 
         # The plannners
-        self.global_planner = GlobalPlanner(self._robot_name, self._tf_listener, self.analyzer)
-        self.local_planner = LocalPlanner(self._robot_name, self._tf_listener, self.analyzer)
+        self.global_planner = GlobalPlanner(robot_name, tf_listener, self.analyzer)
+        self.local_planner = LocalPlanner(robot_name, tf_listener, self.analyzer)
+
+    def wait_for_connections(self, timeout):
+        """ Waits for the connections until they are connected
+        :param timeout: timeout in seconds
+        :return: bool indicating whether all connections are connected
+        """
+        return self.global_planner.wait_for_connections(timeout=timeout) and \
+            self.local_planner.wait_for_connections(timeout=timeout)
 
     def move(self, position_constraint_string, frame):
         p = PositionConstraint()
@@ -199,7 +205,7 @@ class Base(object):
         """ Returns a PoseStamped with the robot pose
         :return: PoseStamped with robot pose
         """
-        return get_location(self._robot_name, self._tf_listener)
+        return get_location(self.robot_name, self.tf_listener)
 
     def set_initial_pose(self, x, y, phi):
 

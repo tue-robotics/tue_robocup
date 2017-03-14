@@ -2,15 +2,15 @@
 import rospy
 from text_to_speech.srv import Speak, SpeakRequest
 
+from robot_part import RobotPart
 
-class Speech(object):
+
+class Speech(RobotPart):
     """Interface to TTS-module"""
 
-    def __init__(self, robot_name, wait_service=True, pre_hook=None, post_hook=None):
-        if wait_service:
-            rospy.loginfo("Waiting for service /%s/text_to_speech/speak"%robot_name)
-            rospy.wait_for_service('/%s/text_to_speech/speak'%robot_name, timeout=2)
-        self._speech_service = rospy.ServiceProxy('/%s/text_to_speech/speak'%robot_name, Speak)
+    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
+        super(Speech, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self._speech_service = self.create_service_client('/%s/text_to_speech/speak' % robot_name, Speak)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 
