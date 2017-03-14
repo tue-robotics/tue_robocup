@@ -305,13 +305,13 @@ class EmptySpotDesignator(Designator):
 
     def _resolve(self):
         place_location = self.place_location_designator.resolve()
-        place_vector = VectorStamped(vector=place_location._pose.p, frame_id="/map")
+        place_frame = FrameStamped(frame=place_location._pose, frame_id="/map")
 
         # points_of_interest = []
         if self._area:
             vectors_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            vectors_of_interest = self.determine_points_of_interest(place_vector)
+            vectors_of_interest = self.determine_points_of_interest(place_frame.frame, z_max=0, convex_hull=place_location.shape.convex_hull)
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
@@ -334,7 +334,7 @@ class EmptySpotDesignator(Designator):
 
             if plan_to_poi:
                 distance = len(plan_to_poi)
-                print "Distance: %s"%distance
+                print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
             else:
                 distance = None
             return distance
@@ -421,10 +421,10 @@ class EmptySpotDesignator(Designator):
         top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
         return self.determine_points_of_interest(entity._pose, top_z, box.bottom_area)
 
-    def determine_points_of_interest(self, center_pose, z_max, convex_hull):
+    def determine_points_of_interest(self, center_frame, z_max, convex_hull):
         """
         Determine candidates for place poses
-        :param center_pose: kdl.Frame, center pose of the Entity to place on top of
+        :param center_frame: kdl.Frame, center of the Entity to place on top of
         :param z_max: float, height of the entity to place on, w.r.t. the entity
         :param convex_hull: [kdl.Vector], convex hull of the entity
         :return: [FrameStamped] of candidates for placing
@@ -437,7 +437,7 @@ class EmptySpotDesignator(Designator):
             return []
 
         # Convert convex hull to map frame
-        ch = offsetConvexHull(convex_hull, center_pose)
+        ch = offsetConvexHull(convex_hull, center_frame)
 
         # Loop over hulls
         self.marker_array.markers = []
@@ -460,7 +460,7 @@ class EmptySpotDesignator(Designator):
                 # Shift point inwards and fill message
                 fs = kdlFrameStampedFromXYZRPY(x=xs - dy/length * self._edge_distance,
                                                y=ys + dx/length * self._edge_distance,
-                                               z=center_pose.p.z() + z_max,
+                                               z=center_frame.p.z() + z_max,
                                                frame_id="/map")
                 points += [fs]
 
