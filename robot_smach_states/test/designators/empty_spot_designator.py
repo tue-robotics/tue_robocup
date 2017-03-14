@@ -13,4 +13,4 @@ if __name__ == "__main__":
                                  place_location_designator=furniture_designator,
                                  name=None,
                                  area="on_top_of")
-    esd.resolve()
+    print esd.resolve()

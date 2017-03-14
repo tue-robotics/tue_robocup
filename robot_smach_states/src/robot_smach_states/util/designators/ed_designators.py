@@ -305,18 +305,21 @@ class EmptySpotDesignator(Designator):
 
     def _resolve(self):
         place_location = self.place_location_designator.resolve()
+        place_vector = VectorStamped(vector=place_location._pose.p, frame_id="/map")
 
         # points_of_interest = []
         if self._area:
-            frames_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+            vectors_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            frames_of_interest = self.determine_points_of_interest(place_location)
+            vectors_of_interest = self.determine_points_of_interest(place_vector)
+
+        assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
         def is_poi_occupied(frame_stamped):
-            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped, radius=self._spacing)
+            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(), radius=self._spacing)
             return not any(entities_at_poi)
 
-        open_POIs = filter(is_poi_occupied, frames_of_interest)
+        open_POIs = filter(is_poi_occupied, vectors_of_interest)
 
         def distance_to_poi_area(frame_stamped):
             #Derived from navigate_to_place
@@ -396,27 +399,27 @@ class EmptySpotDesignator(Designator):
         marker.lifetime = rospy.Duration(30.0)
         return marker
 
-    def determine_points_of_interest_with_area(self, e, area):
+    def determine_points_of_interest_with_area(self, entity, area):
         """ Determines the points of interest using an area
-        :param e:
-        :param area:
-        :return:
+        :type entity: Entity
+        :param area: str indicating which volume of the entity to look at
+        :rtype: [FrameStamped]
         """
 
         # We want to give it a convex hull using the designated area
 
-        if not area in e.volumes:
+        if not area in entity.volumes:
             return []
 
-        box = e.volumes[area]
+        box = entity.volumes[area]
 
         if not hasattr(box, "bottom_area"):
-            rospy.logerr("Entity {0} has no shape with a bottom_area".format(e.id))
+            rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.id))
 
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box
         top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
-        return self.determine_points_of_interest(e._pose, top_z, box.bottom_area)
+        return self.determine_points_of_interest(entity._pose, top_z, box.bottom_area)
 
     def determine_points_of_interest(self, center_pose, z_max, convex_hull):
         """
