@@ -6,4 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
     robot_smach_states
     robot_skills)
 
+catkin_python_setup()
+
 catkin_package()

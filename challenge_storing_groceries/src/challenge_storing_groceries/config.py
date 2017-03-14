@@ -1,21 +1,17 @@
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge
 
-USE_SLAM = True  # Indicates whether or not to use SLAM for localization
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
-CABINET = challenge_knowledge.cabinet_slam
 
-if USE_SLAM:
-    pass
-else:
-    CABINET = challenge_knowledge.cabinet_amcl
+# Inspection
+CABINET = challenge_knowledge.cabinet_amcl
 OBJECT_SHELVES = challenge_knowledge.object_shelves
-PICK_SHELF = challenge_knowledge.grasp_surface
+# PICK_SHELF = challenge_knowledge.grasp_surface
 ROOM = challenge_knowledge.room
 OBJECT_TYPES = challenge_knowledge.object_types
-MAX_NUM_ENTITIES_IN_PDF = 10
-MIN_GRASP_HEIGHT = challenge_knowledge.min_grasp_height
-MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
+# MAX_NUM_ENTITIES_IN_PDF = 10
+# MIN_GRASP_HEIGHT = challenge_knowledge.min_grasp_height
+# MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
 SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities

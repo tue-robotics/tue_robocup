@@ -514,5 +514,13 @@ class LockToId(Designator):
         return "LockToId({})._locked = {}".format(self.to_be_locked, self._locked)
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    # import doctest
+    # doctest.testmod()
+
+    rospy.init_node("testdesignator")
+    from robot_skills.amigo import Amigo
+    robot = Amigo()
+    furniture_designator = EdEntityDesignator(robot, id="dinner_table")
+    esd = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator, name = None,
+                              area = "on_top_f")
+    esd.resolve()

@@ -1,3 +1,5 @@
+# ROS
+import rospy
 import smach
 
 from config import *
