@@ -70,7 +70,9 @@ class Torso(RobotPart):
 
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
 
-        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
+        import time; time.sleep(0.01)  # This is dangerous now we are change the Ts of the TrajectoryActionLib
+        
+                                        # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
                                         # means that if two goals are send approximately at the same
                                         # time (e.g. an arm goal and a torso goal), one of the two
