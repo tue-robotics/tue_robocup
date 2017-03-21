@@ -9,8 +9,7 @@ import smach
 from robot_skills.util.kdl_conversions import VectorStamped
 
 # Challenge storing groceries
-from config import *
-
+import config
 
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
@@ -18,26 +17,24 @@ class InspectShelves(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'nothing_found'])
         self.robot = robot
-        self.object_shelves = OBJECT_SHELVES
+        self.object_shelves = config.OBJECT_SHELVES
 
     def execute(self, userdata):
-
-        global SEGMENTED_ENTITIES
-        global DETECTED_OBJECTS_WITH_PROBS
 
         # Get cabinet entity
         # Sleep for a while to make sure that the robot is actually in ED
         rospy.sleep(rospy.Duration(0.25))
-        cabinet_entity = self.robot.ed.get_entity(id=CABINET, parse=True)
+        cabinet_entity = self.robot.ed.get_entity(id=config.CABINET, parse=True)
 
         # Get the pose of all shelves
         shelves = []
         for k, v in cabinet_entity.volumes.iteritems():
-            if k in OBJECT_SHELVES:
+            if k in config.OBJECT_SHELVES:
                 rospy.loginfo("Adding {} to shelves".format(k))
                 vector = 0.5 * (v.min_corner + v.max_corner)
                 shelves.append({'ps': VectorStamped(frame_id=cabinet_entity.id, vector=vector), 'name': k})
 
+        import ipdb;ipdb.set_trace()
         # Sort the list in ascending order
         shelves = sorted(shelves, key=lambda x: x['ps'].vector.z())
         for shelf in shelves:
@@ -59,7 +56,7 @@ class InspectShelves(smach.State):
                 rospy.sleep(3.0)  # ToDo: remove???
                 rospy.logwarn("Do we have to wait this long???")
 
-            if DEBUG:
+            if config.DEBUG:
                 rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
                 import ipdb;ipdb.set_trace()
                 continue
@@ -70,10 +67,9 @@ class InspectShelves(smach.State):
             for id_ in segmented_entities.new_ids:
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=id_, parse=False)
-                SEGMENTED_ENTITIES.append((entity, id_))
+                config.SEGMENTED_ENTITIES.append((entity, id_))
 
-            import ipdb;ipdb.set_trace()
-            entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+            entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
 
             # Recite entities
             for etp in entity_types_and_probs:
@@ -85,14 +81,14 @@ class InspectShelves(smach.State):
             for e in entity_types_and_probs:
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=e.id, parse=False)
-                DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+                config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
-            DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
+            config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
 
         # Reset the head goal
         self.robot.head.cancel_goal()
 
-        if not DETECTED_OBJECTS_WITH_PROBS:
+        if not config.DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
 
         # Sort based on probability
