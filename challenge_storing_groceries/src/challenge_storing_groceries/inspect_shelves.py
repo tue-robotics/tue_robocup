@@ -34,7 +34,6 @@ class InspectShelves(smach.State):
                 vector = 0.5 * (v.min_corner + v.max_corner)
                 shelves.append({'ps': VectorStamped(frame_id=cabinet_entity.id, vector=vector), 'name': k})
 
-        import ipdb;ipdb.set_trace()
         # Sort the list in ascending order
         shelves = sorted(shelves, key=lambda x: x['ps'].vector.z())
         for shelf in shelves:
@@ -63,13 +62,16 @@ class InspectShelves(smach.State):
 
             # Enable kinect segmentation plugin (only one image frame)
             segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
+            # print "Segmented new entities: {}".format(segmented_entities.new_ids)
 
             for id_ in segmented_entities.new_ids:
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=id_, parse=False)
                 config.SEGMENTED_ENTITIES.append((entity, id_))
+            # print "Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES)
 
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
+            # print  "Types and probs: {}".format(entity_types_and_probs)
 
             # Recite entities
             for etp in entity_types_and_probs:
