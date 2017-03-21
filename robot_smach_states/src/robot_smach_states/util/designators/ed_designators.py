@@ -448,7 +448,7 @@ class EmptySpotDesignator(Designator):
         # Loop over hulls
         self.marker_array.markers = []
 
-        for i in xrange(len(ch) - 1):
+        for i in xrange(len(ch)):
             j = (i + 1) % len(ch)
 
             dx = ch[j].x() - ch[i].x()
