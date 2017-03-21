@@ -112,7 +112,7 @@ class Torso(RobotPart):
                 rospy.logdebug("Torso target reached")
                 return True
             else:
-                rospy.loginfo("Reaching torso target failed")
+                rospy.logerr("Reaching torso target failed")
                 return False
 
     def wait(self, timeout=10):
