@@ -30,16 +30,15 @@ rosrun challenge_spr bluff_game.py amigo
 - riddle_game and bluff_game are ready for standalone testing
 - riddle game works in simulation, should be tested on robot
 - bluff game works in simulation, should be tested on robot
+- detectCrowd:
+	- create robot.perception.getImage() skill
+		- create image listener
+		- grab one image
+	- create robot.perception.detectFaces(image)
+		- send the image to /amigo/face_recognition/recognize
+		- process the results
 
 ## TODO
-
-detectCrowd:
-- create robot.perception.getImage() skill
-	- create image listener
-	- grab one image
-- create robot.perception.detectFaces(image)
-	- send the image to /amigo/face_recognition/recognize
-	- process the results
 
 Riddle / Bluff games:
 - send data for the inspected crowd to the library
@@ -47,3 +46,6 @@ Riddle / Bluff games:
 	- about the arena
 	- about the inspected crowd
 	- about list of official objects
+- detect.py
+	- use skybiometry node and service
+	- use face_recognition node and service

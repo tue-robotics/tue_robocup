@@ -88,7 +88,7 @@ class HearQuestion(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
-        self.robot.head.look_at_standing_person(100)
+        self.robot.head.look_at_standing_person()
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
@@ -104,7 +104,7 @@ class HearQuestionRepeat(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
-        self.robot.head.look_at_standing_person(100)
+        self.robot.head.look_at_standing_person()
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 

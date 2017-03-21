@@ -11,9 +11,9 @@ from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, Wait
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
-from challenge_spr.detect import DetectCrowd
-from challenge_spr import bluff_game
-from challenge_spr import riddle_game
+from challenge_spr_states import detect
+from challenge_spr_states import bluff_game
+from challenge_spr_states import riddle_game
 
 class ChallengeSpeechPersonRecognition(smach.StateMachine):
     def __init__(self, robot):
@@ -37,9 +37,9 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add("TURN",
                                    Turn(robot, math.pi),
                                    transitions={"turned": "DETECT_CROWD"})
-
+                                   
             smach.StateMachine.add("DETECT_CROWD",
-                                   DetectCrowd(robot),
+                                   detect.DetectCrowd(robot),
                                    transitions={"succeeded": "REQUEST_OPERATOR",
                                                 "failed": "REQUEST_OPERATOR"})
 

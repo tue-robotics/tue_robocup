@@ -141,7 +141,9 @@ class Head():
             cv.notify()
             cv.release()
 
-        subscriber = rospy.Subscriber(self._robot_name + "/top_kinect/rgb/image", Image, callback)
+        #subscriber = rospy.Subscriber("/camera/rgb/image_color", Image, callback)  # for test with tripod kinetic
+
+        subscriber = rospy.Subscriber("/amigo/top_kinect/rgb/image", Image, callback)  # for the robot
 
         cv.acquire()
         while not cv_image:
