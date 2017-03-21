@@ -198,7 +198,7 @@ class planBlocked(smach.State):
 
             if not self.robot.base.local_planner.getStatus() == "blocked":
                 self.robot.head.cancel_goal()
-                rospy.logwarn("Plan free again")
+                rospy.loginfo("Plan free again")
                 return "free"
 
         # Else: replan with same constraints
