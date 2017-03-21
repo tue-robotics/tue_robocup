@@ -11,7 +11,7 @@ from robot_smach_states.util.designators import VariableDesignator, EdEntityDesi
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
-#challenge_knowledge = load_knowledge('challenge_help_me_carry')
+challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
 print "=============================================="
 print "==         CHALLENGE HELP ME CARRY          =="
@@ -88,84 +88,83 @@ class NavigateToRoom(smach.State):
         return navigateToWaypoint.execute()
 
 
-def setup_statemachine(robot):
+class HelpMeCarry(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(outcomes=['Done','Aborted'])
 
-    sm = smach.StateMachine(outcomes=['Done','Aborted'])
+        with self:
+            smach.StateMachine.add('INITIALIZE',
+                                   states.Initialize(robot),
+                                   transitions={'initialized':    'WAIT_TO_FOLLOW',
+                                                'abort':          'aborted'})
 
-    with sm:
-        smach.StateMachine.add('INITIALIZE',
-                               states.Initialize(robot),
-                               transitions={'initialized':    'WAIT_TO_FOLLOW',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('WAIT_TO_FOLLOW',
+                                   WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands.follow),
+                                   transitions={'success':        'FOLLOW_OPERATOR',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('WAIT_TO_FOLLOW',
-                               WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands.follow),
-                               transitions={'success':        'FOLLOW_OPERATOR',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
+                                   WaitForOperatorCommand(robot,
+                                                          command_options=challenge_knowledge.commands.follow_or_remember,
+                                                          commands_as_outcomes=True),
+                                   transitions={'follow':         'FOLLOW_OPERATOR',
+                                                'remember':       'REMEMBER_CAR_LOCATION',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
-                               WaitForOperatorCommand(robot,
-                                                      command_options=challenge_knowledge.commands.follow_or_remember,
-                                                      commands_as_outcomes=True),
-                               transitions={'follow':         'FOLLOW_OPERATOR',
-                                            'remember':       'REMEMBER_CAR_LOCATION',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('FOLLOW_OPERATOR',
+                                   states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
+                                   transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
+                                                'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
+                                                'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
 
-        smach.StateMachine.add('FOLLOW_OPERATOR',
-                               states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
-                               transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
-                                            'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
-                                            'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
+            smach.StateMachine.add('REMEMBER_CAR_LOCATION',
+                                   StoreCarWaypoint(robot),
+                                   transitions={'success':        'WAIT_TO_CARRY',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('REMEMBER_CAR_LOCATION',
-                               StoreCarWaypoint(robot),
-                               transitions={'success':        'WAIT_TO_CARRY',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('WAIT_TO_GRAB',
+                                   WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands.carry),
+                                   transitions={'success':        'GRAB_ITEM',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('WAIT_TO_GRAB',
-                               WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands.carry),
-                               transitions={'success':        'GRAB_ITEM',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('GRAB_ITEM',
 
-        smach.StateMachine.add('GRAB_ITEM',
+                                   transitions={'success':        'WAIT_FOR_DESTINATION',
+                                                'abort':          'aborted'})
 
-                               transitions={'success':        'WAIT_FOR_DESTINATION',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('WAIT_FOR_DESTINATION',
+                                   WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands.waypoint_for_room.keys()),
+                                   transitions={'success':        'GOTO_DESTINATION',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('WAIT_FOR_DESTINATION',
-                               WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands.waypoint_for_room.keys()),
-                               transitions={'success':        'GOTO_DESTINATION',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('GOTO_DESTINATION',
+                                   NavigateToRoom(robot),
+                                   transitions={'success':        'PUTDOWN_ITEM',
+                                                'abort':          'aborted'},
+                                   remapping={  'target_room':    'command_recognized'})
 
-        smach.StateMachine.add('GOTO_DESTINATION',
-                               NavigateToRoom(robot),
-                               transitions={'success':        'PUTDOWN_ITEM',
-                                            'abort':          'aborted'},
-                               remapping={  'target_room':    'command_recognized'})
+            smach.StateMachine.add('PUTDOWN_ITEM',
+                                   states.Place(robot, self.current_item, self.place_position, self.arm_with_item_designator),
+                                   transitions={'success':        'GOTO_CAR',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('PUTDOWN_ITEM',
-                               states.Place(robot, self.current_item, self.place_position, self.arm_with_item_designator),
-                               transitions={'success':        'GOTO_CAR',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('GOTO_CAR',
+                                   states.NavigateToWaypoint(robot,
+                                                             EntityByIdDesignator(robot,
+                                                             id=challenge_knowledge.waypoints.car.id),
+                                                             challenge_knowledge.waypoints.car.radius),
+                                   transitions={'success':        'WAIT_TO_CARRY',
+                                                'abort':          'aborted'})
 
-        smach.StateMachine.add('GOTO_CAR',
-                               states.NavigateToWaypoint(robot,
-                                                         EntityByIdDesignator(robot,
-                                                         id=challenge_knowledge.waypoints.car.id),
-                                                         challenge_knowledge.waypoints.car.radius),
-                               transitions={'success':        'WAIT_TO_CARRY',
-                                            'abort':          'aborted'})
+            smach.StateMachine.add('AT_END',
+                                    states.Say(robot, "Goodbye"),
+                                    transitions={   'spoken'            :   'Done'})
 
-        smach.StateMachine.add('AT_END',
-                                states.Say(robot, "Goodbye"),
-                                transitions={   'spoken'            :   'Done'})
-
-    analyse_designators(sm, "help_me_carry")
-    return sm
+        analyse_designators(sm, "help_me_carry")
 
 
 ############################## initializing program ##############################
 if __name__ == '__main__':
     rospy.init_node('help_me_carry_exec')
 
-    #states.util.startup(setup_statemachine, challenge_name="help_me_carry")
+    states.util.startup(HelpMeCarry, challenge_name="help_me_carry")
