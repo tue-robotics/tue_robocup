@@ -30,7 +30,7 @@ class NavAnalyzer:
 
         self._robot_name = robot_name
         self.rosbag = False
-        rospy.loginfo("Nav_analyser: Bagging = {0}".format(self.rosbag))
+        rospy.logdebug("Nav_analyser: Bagging = {0}".format(self.rosbag))
 
         ''' Path '''
         # ToDo: make easier
