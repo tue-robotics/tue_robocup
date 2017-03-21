@@ -73,7 +73,13 @@ class DetectCrowd(smach.State):
             imgs.append(img)
 
         rospy.loginfo('Calling Skybiometry...')
-        face_properties = self._skybiometry.get_face_properties(imgs, timeout)
+        
+        try:
+            face_properties = self._skybiometry.get_face_properties(imgs, timeout)
+        except Exception as e:
+            rospy.logerr(str(e))
+            self.robot.speech.speak('API call failed, is there internet?')
+            return [None]*number_of_people
         
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
         rospy.loginfo('face_properties:%s', face_log)
@@ -102,11 +108,19 @@ class DetectCrowd(smach.State):
         num_females = 0
         num_males = 0
 
-        for d in detections:
-            if d.gender.value == 'male':
-                num_males += 1
+        if not all(detections):
+            rospy.loginfo('making a random guess for %d people', len(detections))
+            if len(detections) > 2:
+                num_males = 1 + random.randrange(len(detections) - 2) 
             else:
-                num_females += 1
+                num_males = 1
+            num_females = len(detections) - num_males
+        else:
+            for d in detections:
+                if d.gender.value == 'male':
+                    num_males += 1
+                else:
+                    num_females += 1
 
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
