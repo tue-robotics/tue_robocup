@@ -49,3 +49,5 @@ Riddle / Bluff games:
 - detect.py
 	- use skybiometry node and service
 	- use face_recognition node and service
+- head.py
+    - Change topic name of get_image so it depending on robot name
