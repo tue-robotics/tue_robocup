@@ -11,6 +11,7 @@ from robot_smach_states.util.designators import VariableDesignator, EdEntityDesi
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
+
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
 print "=============================================="
