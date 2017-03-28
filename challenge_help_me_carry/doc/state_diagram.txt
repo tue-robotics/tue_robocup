@@ -6,23 +6,21 @@ title Challenge Help-me-carry
 
 [*] --> Wait
 Wait --> Wait
-Wait --> Following_operator : "Robot, follow me"
+Wait --> Memorize_operator : "Robot, follow me"
+Memorize_operator --> Following_operator
 Following_operator --> Look_for_operator: lost operator
 Look_for_operator --> Following_operator: found operator
 Following_operator --> Arrive_at_car: "Remember, this location is the car"
-Following_operator --> Avoid_obstacle
-Avoid_obstacle --> Following_operator
-Arrive_at_car --> Pickup_groceries: "Carry this box"
-Pickup_groceries --> Go_inside_house : "Bring this to room X"
+Arrive_at_car --> Bag_pickup: "Carry this bag to room X"
+Bag_pickup --> Go_inside_house
 Go_inside_house --> Arrive_at_dropoff
-Go_inside_house --> Avoid_obstacle
-Go_inside_house --> Putdown_groceries: Cannot find dropoff
-Avoid_obstacle --> Go_inside_house
-Arrive_at_dropoff --> Putdown_groceries
-Putdown_groceries --> [*]: time is up
-Putdown_groceries --> Go_to_car
-Go_to_car --> Arrive_at_car
-Go_to_car --> Avoid_obstacle
-Avoid_obstacle --> Go_to_car
+Go_inside_house --> Bag_delivery: Cannot find dropoff
+Arrive_at_dropoff --> Bag_delivery
+Bag_delivery --> Asking_for_help
+Asking_for_help --> Memorize_new_operator
+Memorize_new_operator --> Guiding_operator
+Guiding_operator --> Open_door
+Open_door --> Guiding_operator
+Guiding_operator --> [*] : Arrive at car
 
 @enduml
