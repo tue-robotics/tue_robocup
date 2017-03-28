@@ -1,8 +1,12 @@
 commands = {
     'follow':               ["follow"],    # 'Robot, follow me'
     'follow_or_remember':   ["follow",     # 'Robot, follow me'
-                             "remember"],   # 'Remember, this location is the car'
-    'carry':                ["carry"]}      # 'Carry this box'
+                             "remember",   # 'Remember, this location is the car'
+                             "car",
+                             "stop"],
+    'carry':                ["carry",
+                             "bag",
+                             "bring"]}     # 'Carry this bag'
 
 waypoints = {
     'kitchen':              {'id':      "kitchen_table",
