@@ -108,8 +108,8 @@ class PickUp(smach.State):
             return 'failed'
 
         # Make sure the torso and the arm are done
-        self.robot.torso.wait_for_motion_done()
-        arm.wait_for_motion_done()
+        self.robot.torso.wait_for_motion_done(cancel=True)
+        arm.wait_for_motion_done(cancel=True)
 
         # This is needed because the head is not entirely still when the
         # look_at_point function finishes
@@ -175,7 +175,7 @@ class PickUp(smach.State):
         #     return 'failed'
 
         # Grasp
-        # rospy.loginfo('Start grasping')
+        rospy.loginfo('Start grasping')
         if not arm.send_goal(goal_bl,
                              timeout=20, pre_grasp=True,
                              allowed_touch_objects=[grab_entity.id]
@@ -200,6 +200,7 @@ class PickUp(smach.State):
 
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
+        rospy.loginfo("Start lift")
         if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed lift')
 
@@ -213,6 +214,7 @@ class PickUp(smach.State):
         goal_bl.frame.p.x(goal_bl.frame.p.x() -0.1)  # Retract 10 cm
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
+        rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed retract')
 
@@ -221,7 +223,7 @@ class PickUp(smach.State):
         # Update Kinect once again to make sure the object disappears from ED
         segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
 
-        arm.wait_for_motion_done()
+        arm.wait_for_motion_done(cancel=True)
 
         # Carrying pose
         # rospy.loginfo('start moving to carrying pose')
