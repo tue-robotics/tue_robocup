@@ -10,8 +10,6 @@ Wait --> Memorize_operator : "Robot, follow me"
 Memorize_operator --> Following_operator
 Following_operator --> Look_for_operator: lost operator
 Look_for_operator --> Following_operator: found operator
-Following_operator --> Asking_for_passage: Person obstacle
-Asking_for_passage --> Following_operator: Ask to step aside
 Following_operator --> Arrive_at_car: "Remember, this location is the car"
 Arrive_at_car --> Bag_pickup: "Carry this bag to room X"
 Bag_pickup --> Go_inside_house
@@ -22,8 +20,6 @@ Bag_delivery --> Asking_for_help
 Asking_for_help --> Memorize_new_operator
 Memorize_new_operator --> Guiding_operator
 Guiding_operator --> Open_door
-Guiding_operator --> Asking_for_passage: Person obstacle
-Asking_for_passage --> Guiding_operator: Ask to step aside
 Open_door --> Guiding_operator
 Guiding_operator --> [*] : Arive at car
 
