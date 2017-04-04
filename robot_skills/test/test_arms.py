@@ -22,6 +22,8 @@ else:
     print "Unknown robot '%s'"%robot_name
     sys.exit()
 
+failed_configuration_per_arm = {}
+
 for side, arm in robot.arms.items():
     robot.speech.speak("I will test my {} arm".format(side))
 
@@ -31,8 +33,9 @@ for side, arm in robot.arms.items():
 
     goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.192, 0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
 
+    robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):
-        robot.speech.speak("Could not reach arm {} dummy goal pose".format(side))
+        robot.speech.speak("{} arm could not reach dummy goal pose".format(side))
     arm.wait_for_motion_done()
 
     # TODO: Now check that the hand frame is within some tolerance to the desired goal.
@@ -50,13 +53,20 @@ for side, arm in robot.arms.items():
         robot.speech.speak("Could not close {} hand".format(side))
     arm.wait_for_motion_done()
 
+    failed_configs = []
 
     for config in arm.default_configurations.keys():
         robot.speech.speak("{} arm going to {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
         if not arm.send_joint_goal(config):
             robot.speech.speak("{} arm could not reach {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
+            failed_configs += [config]
         arm.wait_for_motion_done()
         arm.reset()
         arm.wait_for_motion_done()
 
+    failed_configuration_per_arm[side] = failed_configs
+
     arm.reset()
+
+for side, failed_configs in failed_configuration_per_arm.items():
+    rospy.logerr("{side} fails {count} poses: {configs}".format(side=side, count=len(failed_configs), configs=failed_configs))
