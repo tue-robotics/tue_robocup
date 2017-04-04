@@ -95,10 +95,10 @@ class ED:
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
-        entities = self.get_entities(type="", center_point=VectorStamped(vector=center_point, frame_id="/map"), radius=radius)
+        entities = self.get_entities(type=type, center_point=VectorStamped(vector=center_point, frame_id="/map"), radius=radius)
 
         # HACK
-        entities = [ e for e in entities if e.shape and e.type == "" ]
+        entities = [e for e in entities if e.shape is not None and e.type != ""]
 
         if len(entities) == 0:
             return None
@@ -107,7 +107,7 @@ class ED:
         try:
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
         except:
-            print "Failed to sort entities"
+            rospy.logerr("Failed to sort entities")
             return None
 
         return entities[0]
