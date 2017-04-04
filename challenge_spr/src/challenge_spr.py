@@ -41,7 +41,8 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add("DETECT_CROWD",
                                    detect.DetectCrowd(robot),
                                    transitions={"succeeded": "REQUEST_OPERATOR",
-                                                "failed": "REQUEST_OPERATOR"})
+                                                "failed": "REQUEST_OPERATOR"},
+                                    remapping={'crowd_data': 'crowd_data'})
 
             smach.StateMachine.add("REQUEST_OPERATOR",
                                    Say(robot, "Who wants to play riddles with me?"),

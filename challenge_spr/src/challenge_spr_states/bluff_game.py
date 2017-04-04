@@ -16,7 +16,9 @@ from robot_smach_states import Initialize, Say
 from robot_smach_states.util.designators import Designator, EdEntityDesignator
 
 from robocup_knowledge import load_knowledge
-data = load_knowledge('challenge_speech_recognition')
+
+from riddle_game import hear, answer
+
 
 
 def _turn_to_closest_entity(robot):
@@ -66,49 +68,38 @@ def turn_to_closest_entity(robot):
     _turn_to_closest_entity(robot)
 
 
-def answer(robot, res):
-    if res:
-        if "question" in res.choices:
-            rospy.loginfo("Question was: '%s'?"%res.result)
-            robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-
-            return "answered"
-        else:
-            robot.speech.speak("Sorry, I do not understand your question")
-    else:
-        robot.speech.speak("My ears are not working properly.")
-
-    return "not_answered"
-
-
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(15)):
-        smach.State.__init__(self, outcomes=["answered", "not_answered"])
+        smach.State.__init__(self, outcomes=["answered", "not_answered"],input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
 
     def execute(self, userdata):
+        crowd_data = userdata.crowd_data
+
         self.robot.head.look_at_standing_person()
 
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
+        res = hear(self.robot, time_out=self.time_out)
 
         turn_to_closest_entity(self.robot)
 
-        return answer(self.robot, res)
+        return answer(self.robot, res, crowd_data)
 
 
 class HearQuestionRepeat(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(15)):
-        smach.State.__init__(self, outcomes=["answered", "not_answered"])
+        smach.State.__init__(self, outcomes=["answered", "not_answered"], input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
 
     def execute(self, userdata):
+        crowd_data = userdata.crowd_data
+
         self.robot.head.look_at_standing_person()
 
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
+        res = hear(self.robot, time_out=self.time_out)
 
-        return answer(self.robot, res)
+        return answer(self.robot, res, crowd_data)
 
 
 
@@ -119,6 +110,11 @@ class TestBluffGame(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
+        self.userdata.crowd_data = {
+            'males': 2,
+            'females': 3
+        }
+
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    Initialize(robot),
@@ -128,7 +124,9 @@ class TestBluffGame(smach.StateMachine):
             smach.StateMachine.add('BLUFF_GAME_1',
                                    HearQuestion(robot),
                                    transitions={'answered': 'Done',
-                                                'not_answered': 'BLUFF_GAME_1_ASK_REPEAT'})
+                                                'not_answered': 'BLUFF_GAME_1_ASK_REPEAT'},
+                                   remapping={'crowd_data':'crowd_data'})
+
 
             smach.StateMachine.add("BLUFF_GAME_1_ASK_REPEAT",
                                    Say(robot, "Could you please repeat your question?"),
@@ -137,7 +135,8 @@ class TestBluffGame(smach.StateMachine):
             smach.StateMachine.add('BLUFF_GAME_1_REPEAT',
                                    HearQuestionRepeat(robot),
                                    transitions={'answered' :'Done',
-                                                'not_answered': 'Done'})
+                                                'not_answered': 'Done'},
+                                   remapping={'crowd_data':'crowd_data'})
 
 
 if __name__ == "__main__":

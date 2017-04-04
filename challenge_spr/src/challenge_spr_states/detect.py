@@ -20,9 +20,6 @@ from robot_skills.util.kdl_conversions import VectorStamped
 from robocup_knowledge import load_knowledge
 
 
-challenge_knowledge = load_knowledge("challenge_speech_recognition")
-
-
 timeout = 10
 
 
@@ -36,7 +33,7 @@ secret = '5fab420ca6cf4ff28e7780efcffadb6c'
 
 class DetectCrowd(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['crowd_data'])
         self.robot = robot
         self._bridge = CvBridge()
         self._face_recognizer = FaceRecognizer(align_path, net_path)
@@ -46,7 +43,8 @@ class DetectCrowd(smach.State):
         tries = 3
         detections = self.recognize(tries)
 
-        self.describe_crowd(detections)
+        crowd_data = self.describe_crowd(detections)
+        userdata.crowd_data = crowd_data
 
         return 'succeeded'
 
@@ -68,10 +66,11 @@ class DetectCrowd(smach.State):
                 best_detection = face_rois
 
         imgs = []
-        for face_recognition in best_detection:
-            img = best_image[face_recognition.roi.y_offset:face_recognition.roi.y_offset + face_recognition.roi.height,
-                             face_recognition.roi.x_offset:face_recognition.roi.x_offset + face_recognition.roi.width]
-            imgs.append(img)
+        if best_detection:
+            for face_recognition in best_detection:
+                img = best_image[face_recognition.roi.y_offset:face_recognition.roi.y_offset + face_recognition.roi.height,
+                                 face_recognition.roi.x_offset:face_recognition.roi.x_offset + face_recognition.roi.width]
+                imgs.append(img)
 
         rospy.loginfo('Calling Skybiometry...')
         
@@ -126,6 +125,12 @@ class DetectCrowd(smach.State):
                     num_females += 1
 
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
+
+        return {
+            'males': num_males,
+            "females": num_females
+        }
+
 
 
 # Standalone testing -----------------------------------------------------------------
