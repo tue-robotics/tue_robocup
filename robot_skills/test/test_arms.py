@@ -22,38 +22,41 @@ else:
     print "Unknown robot '%s'"%robot_name
     sys.exit()
 
-if not robot.leftArm.operational:
-    rospy.logerr("Arm is not operational")
-    sys.exit(-1)
+for side, arm in robot.arms.items():
+    robot.speech.speak("I will test my {} arm".format(side))
 
-goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.192, 0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+    if not arm.operational:
+        rospy.logerr("{} arm is not operational".format(side))
+        sys.exit(-1)
 
-if not robot.leftArm.send_goal(goal1):
-    robot.speech.speak("Could not reach arm goal pose")
-robot.leftArm.wait_for_motion_done()
+    goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.192, 0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
 
-# TODO: Now check that the hand frame is within some tolerance to the desired goal.
-# Kwin's AR comparison stuff may also come in handy here.
+    if not arm.send_goal(goal1):
+        robot.speech.speak("Could not reach arm {} dummy goal pose".format(side))
+    arm.wait_for_motion_done()
 
-if robot.leftArm.send_gripper_goal("open"):
-    robot.speech.speak("My left hand is now open")
-else:
-    robot.speech.speak("Could not open left hand")
-robot.leftArm.wait_for_motion_done()
+    # TODO: Now check that the hand frame is within some tolerance to the desired goal.
+    # Kwin's AR comparison stuff may also come in handy here.
 
-if robot.leftArm.send_gripper_goal("close"):
-    robot.speech.speak("Now my left hand is closed")
-else:
-    robot.speech.speak("Could not close left hand")
-robot.leftArm.wait_for_motion_done()
+    if arm.send_gripper_goal("open"):
+        robot.speech.speak("My {} hand is now open".format(side))
+    else:
+        robot.speech.speak("Could not open {} hand".format(side))
+    arm.wait_for_motion_done()
+
+    if arm.send_gripper_goal("close"):
+        robot.speech.speak("Now my {} hand is closed".format(side))
+    else:
+        robot.speech.speak("Could not close {} hand".format(side))
+    arm.wait_for_motion_done()
 
 
-for config in robot.leftArm.default_configurations.keys():
-    robot.speech.speak("Arm going to {p} {postfix}".format(p=config, postfix="pose" if "pose" not in config else ""))
-    if not robot.leftArm.send_joint_goal(config):
-        robot.speech.speak("Could not reach {p} {postfix}".format(p=config, postfix="pose" if "pose" not in config else ""))
-    robot.leftArm.wait_for_motion_done()
-    robot.leftArm.reset()
-    robot.leftArm.wait_for_motion_done()
+    for config in arm.default_configurations.keys():
+        robot.speech.speak("{} arm going to {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
+        if not arm.send_joint_goal(config):
+            robot.speech.speak("{} arm could not reach {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
+        arm.wait_for_motion_done()
+        arm.reset()
+        arm.wait_for_motion_done()
 
-robot.leftArm.reset()
+    arm.reset()
