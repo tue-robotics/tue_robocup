@@ -79,7 +79,8 @@ class ED:
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self._tf_listener)
-        query = SimpleQueryRequest(id=id, type=type, center_point=kdlVectorToPointMsg(center_point_in_map.vector), radius=radius)
+        query = SimpleQueryRequest(id=id, type=type,
+                                   center_point=kdlVectorToPointMsg(center_point_in_map.vector), radius=radius)
 
         try:
             entity_infos= self._ed_simple_query_srv(query).entities
@@ -95,7 +96,8 @@ class ED:
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
-        entities = self.get_entities(type=type, center_point=VectorStamped(vector=center_point, frame_id="/map"), radius=radius)
+        entities = self.get_entities(type=type,
+                                     center_point=VectorStamped(vector=center_point, frame_id="/map"), radius=radius)
 
         # HACK
         entities = [e for e in entities if e.shape is not None and e.type != ""]
@@ -105,7 +107,8 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities,
+                              key=lambda entity: entity.distance_to_2d(center_point))
         except:
             rospy.logerr("Failed to sort entities")
             return None
