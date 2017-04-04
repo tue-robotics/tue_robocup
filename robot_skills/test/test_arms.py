@@ -25,6 +25,10 @@ else:
 failed_actions_per_arm = {}
 
 for side, arm in robot.arms.items():
+    robot.speech.speak("I will first reset my {} arm".format(side))
+    arm.reset()
+
+for side, arm in robot.arms.items():
     failed_actions = []
     robot.speech.speak("I will test my {} arm".format(side))
 
@@ -32,7 +36,10 @@ for side, arm in robot.arms.items():
         rospy.logerr("{} arm is not operational".format(side))
         sys.exit(-1)
 
-    goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.192, 0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+    if arm == robot.leftArm:
+        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342, 0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+    if arm == robot.rightArm:
+        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342, -0.125, 0.748, 0, 0, 0, "/" + robot.robot_name + "/base_link")
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):
