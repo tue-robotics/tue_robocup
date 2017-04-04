@@ -1,5 +1,8 @@
 choice_answer_mapping = {
-	'How many males are there in the crowd?': 'ANSWER_NO_MALES',
+	"How many males are there in the crowd?": "Crowd_males",
+	"How many females are there in the crowd?": "Crowd_females",
+	"What is the size of the crowd?": "Crowd_size",
+	"How many children are there in the crowd?": "Crowd_children",
 	"What shape is this building" : " UFO",
 	# "Who was beaten by AlphaGo" : " Lee Sedol",
 	# "Which chess grand master was beaten by Deep Blue" : " Gary Kasparov",
@@ -31,7 +34,7 @@ choice_answer_mapping = {
 	# "Where does the president of the United States live" : " The White House",
 	# "Where does the prime minister of the UK live" : " 10 Downing Street",
 	# "Name a wizard in The Lord of the Rings" : " Gandalf",
-	# "Who is the prime ministor of the Netherlands" : " Mark Rutte",
+	# "Who is the prime minister of the Netherlands" : " Mark Rutte",
 	# "How many bits are in a byte" : " Eight",
 	# "What is the full name of DNA" : " Deoxyribonucleic acid",
 	# "What is the heavy breathing character of the original Star Wars trilogy" : " Darth Vader",

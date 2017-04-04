@@ -37,12 +37,13 @@ rosrun challenge_spr bluff_game.py amigo
 	- create robot.perception.detectFaces(image)
 		- send the image to /amigo/face_recognition/recognize
 		- process the results
+- send data for the inspected crowd to the library
 
 ## TODO
 
 Riddle / Bluff games:
-- send data for the inspected crowd to the library
-- make library with questions:
+
+- update library with questions:
 	- about the arena
 	- about the inspected crowd
 	- about list of official objects

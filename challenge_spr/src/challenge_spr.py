@@ -57,12 +57,17 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add('RIDDLE_GAME_1', 
                                    riddle_game.HearQuestion(robot), 
+                                   transitions={ 'answered':'RIDDLE_GAME_2'})
+
+            smach.StateMachine.add('RIDDLE_GAME_2', 
+                                   riddle_game.HearQuestion(robot), 
                                    transitions={ 'answered':'BLUFF_GAME_1'})
 
             # Bluff Game
+            
             smach.StateMachine.add('BLUFF_GAME_1', 
                                    bluff_game.HearQuestion(robot), 
-                                   transitions={'answered': 'END_CHALLENGE', 
+                                   transitions={'answered': 'BLUFF_GAME_2', 
                                                 'not_answered': 'BLUFF_GAME_1_ASK_REPEAT'})
             
             smach.StateMachine.add("BLUFF_GAME_1_ASK_REPEAT",
@@ -71,9 +76,23 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add('BLUFF_GAME_1_REPEAT', 
                                    bluff_game.HearQuestionRepeat(robot), 
+                                   transitions={'answered' :'BLUFF_GAME_2', 
+                                                'not_answered': 'BLUFF_GAME_2'})
+ 
+            smach.StateMachine.add('BLUFF_GAME_2', 
+                                   bluff_game.HearQuestion(robot), 
+                                   transitions={'answered': 'END_CHALLENGE', 
+                                                'not_answered': 'BLUFF_GAME_2_ASK_REPEAT'})
+            
+            smach.StateMachine.add("BLUFF_GAME_2_ASK_REPEAT",
+                                   Say(robot, "Could you please repeat your question?"),
+                                   transitions={"spoken": "BLUFF_GAME_2_REPEAT"})
+
+            smach.StateMachine.add('BLUFF_GAME_2_REPEAT', 
+                                   bluff_game.HearQuestionRepeat(robot), 
                                    transitions={'answered' :'END_CHALLENGE', 
                                                 'not_answered': 'END_CHALLENGE'})
-
+            
             # End
 
             smach.StateMachine.add('END_CHALLENGE',

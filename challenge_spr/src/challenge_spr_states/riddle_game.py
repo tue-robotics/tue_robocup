@@ -25,9 +25,18 @@ def answer(robot, res, crowd_data):
         if "question" in res.choices:
             answer = choice_answer_mapping[res.choices['question']]
             
-            # override crowd answers
-            if answer == 'ANSWER_NO_MALES':
+            # override for crowd answers
+            if answer == 'Crowd_males':
                 answer = 'In the crowd are %d males' % crowd_data['males']
+
+            if answer == 'Crowd_females':
+                answer = 'In the crowd are %d females' % crowd_data['females']
+
+            if answer == 'Crowd_children':
+                answer = 'In the crowd are %d children' % crowd_data['children']
+
+            if answer == 'Crowd_size':
+                answer = 'In the crowd are %d people' % crowd_data['crowd_size']
 
             rospy.loginfo("Question was: '%s'?"%res.result)
             robot.speech.speak("The answer is %s"%answer)
@@ -53,9 +62,7 @@ class HearQuestion(smach.State):
 
         res = hear(self.robot, time_out=self.time_out)
 
-        answer(self.robot, res, crowd_data)
-
-        return "answered"
+        return answer(self.robot, res, crowd_data)
 
         # Standalone testing -----------------------------------------------------------------
 
