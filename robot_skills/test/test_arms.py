@@ -66,7 +66,7 @@ for side, arm in robot.arms.items():
 
     for config in arm.default_configurations.keys():
         robot.speech.speak("{} arm going to {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
-        if not arm.send_joint_goal(config):
+        if not arm.send_joint_goal(config, timeout=10):
             robot.speech.speak("{} arm could not reach {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
             failed_actions += [config]
         arm.wait_for_motion_done()
