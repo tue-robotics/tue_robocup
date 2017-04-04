@@ -95,16 +95,19 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
+        # Tim
         smach.StateMachine.add('INITIALIZE',
                                states.Initialize(robot),
                                transitions={'initialized':    'WAIT_TO_FOLLOW',
                                             'abort':          'Aborted'})
 
+        # Tim
         smach.StateMachine.add('WAIT_TO_FOLLOW',
                                WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands['follow']),
                                transitions={'success':        'FOLLOW_OPERATOR',
                                             'abort':          'Aborted'})
 
+        # Tim
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
                                #TODO: add that robot should memorize operator
                                WaitForOperatorCommand(robot,
@@ -115,7 +118,7 @@ def setup_statemachine(robot):
                                             'stop':           'REMEMBER_CAR_LOCATION',
                                             'car':            'REMEMBER_CAR_LOCATION',
                                             'abort':          'Aborted'})
-
+        # Kwin
         smach.StateMachine.add('FOLLOW_OPERATOR',
                                #states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
                                states.Say(robot, "Following operator"),
@@ -124,16 +127,21 @@ def setup_statemachine(robot):
                                #             'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
                                #             'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
 
+
+        # Tim
         smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                StoreCarWaypoint(robot),
                                transitions={'success':        'WAIT_FOR_DESTINATION',
                                             'abort':          'Aborted'})
 
+
+        # Tim
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                WaitForOperatorCommand(robot, command_options=challenge_knowledge.waypoints.keys()),
                                transitions={'success':        'GRAB_ITEM',
                                             'abort':          'Aborted'})
 
+        # Kwin
         smach.StateMachine.add('GRAB_ITEM',
                                #TODO: reuse grab action to grab bag from operator
                                #states.ArmToJointConfig(robot, arm_designator, "carrying_pose"),
@@ -142,12 +150,15 @@ def setup_statemachine(robot):
                                #transitions={'success':        'GOTO_DESTINATION',
                                #             'abort':          'Aborted'})
 
+
+        # Tim
         smach.StateMachine.add('GOTO_DESTINATION',
                                NavigateToRoom(robot),
                                transitions={'success':        'PUTDOWN_ITEM',
                                             'abort':          'Aborted'},
                                remapping={  'target_room':    'command_recognized'})
 
+        # Kwin
         smach.StateMachine.add('PUTDOWN_ITEM',
                                #states.Place(robot, self.current_item, self.place_position, self.arm_with_item_designator),
                                states.Say(robot, "Putting down item"),
