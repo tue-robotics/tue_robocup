@@ -22,9 +22,10 @@ else:
     print "Unknown robot '%s'"%robot_name
     sys.exit()
 
-failed_configuration_per_arm = {}
+failed_actions_per_arm = {}
 
 for side, arm in robot.arms.items():
+    failed_actions = []
     robot.speech.speak("I will test my {} arm".format(side))
 
     if not arm.operational:
@@ -36,6 +37,7 @@ for side, arm in robot.arms.items():
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):
         robot.speech.speak("{} arm could not reach dummy goal pose".format(side))
+        failed_actions += [goal1]
     arm.wait_for_motion_done()
 
     # TODO: Now check that the hand frame is within some tolerance to the desired goal.
@@ -45,28 +47,28 @@ for side, arm in robot.arms.items():
         robot.speech.speak("My {} hand is now open".format(side))
     else:
         robot.speech.speak("Could not open {} hand".format(side))
+        failed_actions += ["open gripper"]
     arm.wait_for_motion_done()
 
     if arm.send_gripper_goal("close"):
         robot.speech.speak("Now my {} hand is closed".format(side))
     else:
         robot.speech.speak("Could not close {} hand".format(side))
+        failed_actions += ["close gripper"]
     arm.wait_for_motion_done()
-
-    failed_configs = []
 
     for config in arm.default_configurations.keys():
         robot.speech.speak("{} arm going to {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
         if not arm.send_joint_goal(config):
             robot.speech.speak("{} arm could not reach {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
-            failed_configs += [config]
+            failed_actions += [config]
         arm.wait_for_motion_done()
         arm.reset()
         arm.wait_for_motion_done()
 
-    failed_configuration_per_arm[side] = failed_configs
+    failed_actions_per_arm[side] = failed_actions
 
     arm.reset()
 
-for side, failed_configs in failed_configuration_per_arm.items():
-    rospy.logerr("{side} fails {count} poses: {configs}".format(side=side, count=len(failed_configs), configs=failed_configs))
+for side, failed_configs in failed_actions_per_arm.items():
+    rospy.logerr("{side} fails {count} actions: {configs}".format(side=side, count=len(failed_configs), configs=failed_configs))
