@@ -119,6 +119,7 @@ def setup_statemachine(robot):
                                             'car':            'REMEMBER_CAR_LOCATION',
                                             'abort':          'Aborted'})
         # Kwin
+        # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
                                #states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
                                states.Say(robot, "Following operator"),
@@ -142,6 +143,7 @@ def setup_statemachine(robot):
                                             'abort':          'Aborted'})
 
         # Kwin
+        # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
                                #TODO: reuse grab action to grab bag from operator
                                #states.ArmToJointConfig(robot, arm_designator, "carrying_pose"),
@@ -159,6 +161,7 @@ def setup_statemachine(robot):
                                remapping={  'target_room':    'command_recognized'})
 
         # Kwin
+        # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
                                #states.Place(robot, self.current_item, self.place_position, self.arm_with_item_designator),
                                states.Say(robot, "Putting down item"),
@@ -204,3 +207,6 @@ if __name__ == '__main__':
     rospy.init_node('help_me_carry_exec')
 
     states.util.startup(setup_statemachine, challenge_name="help_me_carry")
+
+# In order to start in a different initial state, start the challenge as following:
+# rosrun challenge_help_me_carry challenge_help_me_carry.py amigo --initial=<state name>
