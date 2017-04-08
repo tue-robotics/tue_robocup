@@ -14,6 +14,7 @@ import robot_skills.util.msg_constructors as msgs
 from cv_bridge import CvBridge, CvBridgeError
 from openface_ros.face_recognizer import FaceRecognizer
 from skybiometry_ros import Skybiometry
+from image_recognition_msgs.msg import FaceProperties
 from image_recognition_msgs.srv import GetFaceProperties
 from robot_smach_states.util.startup import startup
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -122,13 +123,13 @@ class DetectCrowd(smach.State):
             num_females = len(detections) - num_males
         else:
             for d in detections:
-                if d.gender.value == 'male':
+                if d.gender == FaceProperties.MALE:
                     num_males += 1
                 else:
                     num_females += 1
 
             for d in detections:
-                if d.age_est.value < 18:
+                if d.age < 18:
                     num_children += 1
 
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
