@@ -8,13 +8,14 @@ import trajectory_msgs.msg
 from actionlib_msgs.msg import GoalStatus
 from sensor_msgs.msg import JointState
 
+from robot_part import RobotPart
 from .util import concurrent_util
 
 
-class Torso(object):
-    def __init__(self, robot_name, wait_service=False):
+class Torso(RobotPart):
+    def __init__(self, robot_name, tf_listener):
+        super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
-        self.robot_name  = robot_name
         self.joint_names = rospy.get_param('/'+self.robot_name+'/skills/torso/joint_names')
         self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/torso/default_configurations')
         self.default_tolerance = rospy.get_param('/'+self.robot_name+'/skills/torso/default_tolerance')
@@ -22,8 +23,8 @@ class Torso(object):
         self.upper_limit = self.default_configurations['upper_limit']
 
         # Init action client
-        #self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/torso_server', control_msgs.msg.FollowJointTrajectoryAction)
-        self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/body/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
+        self.ac_move_torso = self.create_simple_action_client('/'+self.robot_name+'/body/joint_trajectory_action',
+                                                              control_msgs.msg.FollowJointTrajectoryAction)
 
         # Init joint measurement subscriber
         self.torso_sub = rospy.Subscriber('/'+self.robot_name+'/sergio/torso/measurements', JointState, self._receive_torso_measurement)
@@ -69,7 +70,9 @@ class Torso(object):
 
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
 
-        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
+        import time; time.sleep(0.01)  # This is dangerous now we are change the Ts of the TrajectoryActionLib
+        
+                                        # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
                                         # means that if two goals are send approximately at the same
                                         # time (e.g. an arm goal and a torso goal), one of the two
@@ -104,14 +107,24 @@ class Torso(object):
         self.ac_move_torso.cancel_goal()
         #return True
 
-    def wait_for_motion_done(self, timeout=10):
+    def wait_for_motion_done(self, timeout=10, cancel=False):
+        """ Waits until all action clients are done
+        :param timeout: double with time (defaults to 10.0 seconds)
+        :param cancel: bool specifying whether goals should be cancelled
+        if timeout is exceeded
+        :return bool indicates whether motion was done (True if reached,
+        False otherwise)
+        """
         if self.ac_move_torso.gh:
             self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
             if self.ac_move_torso.get_state() == GoalStatus.SUCCEEDED:
                 rospy.logdebug("Torso target reached")
                 return True
             else:
-                rospy.loginfo("Reaching torso target failed")
+                rospy.logerr("Reaching torso target failed")
+                if cancel:
+                    rospy.loginfo("Torso: cancelling all goals (1)")
+                    self.cancel_goal()
                 return False
 
     def wait(self, timeout=10):

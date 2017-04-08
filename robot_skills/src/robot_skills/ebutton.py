@@ -2,17 +2,19 @@
 import rospy
 from std_msgs.msg import Bool
 
+from robot_part import RobotPart
 
-class EButton:
+class EButton(RobotPart):
     """
     Interface to amigo emergency switch. Listens to /emergency_switch topic
     """
 
-    def __init__(self):
+    def __init__(self, robot_name, tf_listener):
+        super(EButton, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
-        rospy.loginfo("Initializing ebutton listener")
+        rospy.logdebug("Initializing ebutton listener")
         self._ebuttonstatus = True
-        self._topic = rospy.Subscriber("/amigo/emergency_switch",
+        self._topic = rospy.Subscriber("/{}/emergency_switch".format(robot_name),
                                          Bool,
                                          self._listen)
 
@@ -32,5 +34,5 @@ class EButton:
 
 
 if __name__ == "__main__":
-    rospy.init_node('amigo_ebutton_executioner', anonymous=True)
+    rospy.init_node('ebutton_executive', anonymous=True)
     ebutton = EButton()

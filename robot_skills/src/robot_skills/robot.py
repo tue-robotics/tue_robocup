@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import rospy
+import PyKDL as kdl
 
 # Body parts
 import base
@@ -9,7 +10,7 @@ import head
 
 # Human Robot Interaction
 import speech
-from hmi_server.api import Api
+import api
 import ears
 import ebutton
 import lights
@@ -32,37 +33,52 @@ class Robot(object):
     def __init__(self, robot_name="", wait_services=False):
 
         self.robot_name = robot_name
-
         self.tf_listener = tf_server.TFClient()
 
         # Body parts
-        self.base = base.Base(self.robot_name, self.tf_listener, wait_service=wait_services)
-        self.torso = torso.Torso(self.robot_name,wait_service=wait_services)
-        self.spindle = self.torso
-        self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)
-        self.rightArm = arms.Arm(self.robot_name, "right", self.tf_listener)
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
-
-        self.head = head.Head(self.robot_name)
+        self.parts = dict()
+        self.parts['base'] = base.Base(self.robot_name, self.tf_listener)
+        self.parts['torso'] = torso.Torso(self.robot_name, self.tf_listener)
+        self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
+        self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
+        self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
 
         # Human Robot Interaction
-        self.lights = lights.Lights(self.robot_name)
-        self.speech = speech.Speech(self.robot_name, wait_services, lambda: self.lights.set_color(1,0,0), lambda: self.lights.set_color(0,0,1))
-        self.hmi = Api("/" + self.robot_name + '/hmi')
-        self.ears = ears.Ears(self.robot_name, lambda: self.lights.set_color(0,1,0), lambda: self.lights.set_color(0,0,1))
-        self.ears._hmi = self.hmi # TODO: when ears is gone, remove this line
-        self.ebutton = ebutton.EButton()
+        self.parts['lights'] = lights.Lights(self.robot_name, self.tf_listener)
+        self.parts['speech'] = speech.Speech(self.robot_name, self.tf_listener,
+                                             lambda: self.lights.set_color(1, 0, 0),
+                                             lambda: self.lights.set_color(0, 0, 1))
+        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener)
+        self.parts['ears'] = ears.Ears(self.robot_name,
+                                       lambda: self.lights.set_color(0, 1, 0),
+                                       lambda: self.lights.set_color(0, 0, 1))
+
+        self.parts['ebutton'] = ebutton.EButton(self.robot_name, self.tf_listener)
 
         # Reasoning/world modeling
-        self.ed = world_model_ed.ED(self.robot_name, self.tf_listener, wait_service=wait_services)
+        self.parts['ed'] = world_model_ed.ED(self.robot_name, self.tf_listener)
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
 
-        #Grasp offsets
+        # Grasp offsets
         #TODO: Don't hardcode, load from parameter server to make robot independent.
         self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
+
+        # Create attributes from dict
+        for k, v in self.parts.iteritems():
+            setattr(self, k, v)
+        self.spindle = self.torso  # (ToDo: kind of ugly, why do we still have spindle???)
+        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # (ToDo: kind of ugly, why do we need this???)
+        self.ears._hmi = self.hmi  # ToDo: when ears is gone, remove this line
+
+        # Wait for connections
+        s = rospy.Time.now()
+        for k, v in self.parts.iteritems():
+            v.wait_for_connections(1.0)
+        e = rospy.Time.now()
+        rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
 
     def standby(self):
         if not self.robot_name == 'amigo':
@@ -79,7 +95,7 @@ class Robot(object):
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
-    def tf_transform_pose(self, ps,frame):
+    def tf_transform_pose(self, ps, frame):
         output_pose = geometry_msgs.msg.PointStamped
         self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
         output_pose = self.tf_listener.transformPose(frame, ps)
@@ -117,7 +133,6 @@ class Robot(object):
     def get_left_gripper_pose_map(self):
         """ Gets the pose of the left gripper in map frame"""
         (x, y, z), (rx, ry, rz, rw) = self.tf_listener.lookupTransform("/map", "amigo/grippoint_left")
-        import PyKDL as kdl
         result = kdl.Frame(kdl.Rotation.Quaternion(rx, ry, rz, rw), kdl.Vector(x, y, z))
         (roll, pitch, yaw) = result.M.GetRPY()
         print "x: {0}, y: {1}, z:{2}, roll: {3}. pitch: {4}, yaw: {5}".format(x, y, z, roll, pitch, yaw)
