@@ -41,13 +41,18 @@ class ManipulateMachine(smach.StateMachine):
         self._table_designator = EntityByIdDesignator(robot, id=TABLE)
 
         with self:
-            smach.StateMachine.add("NAV_TO_OBSERVE_TABLE",
-                                   states.NavigateToSymbolic(robot, {self._table_designator: "in_front_of",
-                                                                     EntityByIdDesignator(robot, id=ROOM): "in"},
-                                                             self._table_designator),
-                                   transitions={'arrived': 'succeeded',
-                                                'unreachable': 'succeeded',
-                                                'goal_not_defined': 'succeeded'}) #LOOKAT_TABLE
+            smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self._table_designator,
+                                                                   objectIDsDes=None, searchArea="on_top_of",
+                                                                   inspection_area="in_front_of"),
+                                   transitions={'done': 'succeeded',
+                                                'failed': 'failed'})
+            # smach.StateMachine.add("NAV_TO_OBSERVE_TABLE",
+            #                        states.NavigateToSymbolic(robot, {self._table_designator: "in_front_of",
+            #                                                          EntityByIdDesignator(robot, id=ROOM): "in"},
+            #                                                  self._table_designator),
+            #                        transitions={'arrived': 'succeeded',
+            #                                     'unreachable': 'succeeded',
+            #                                     'goal_not_defined': 'succeeded'}) #LOOKAT_TABLE
 
     # def __init__(self, robot, manipulated_items):
     #     """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
