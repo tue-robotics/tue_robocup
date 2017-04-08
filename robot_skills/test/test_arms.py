@@ -17,8 +17,10 @@ rospy.init_node("arm_test")
 
 robot = robot_constructor(robot_name)
 
+# Keep track of which errors occur per arm, so we can report them at the end
 failed_actions_per_arm = {}
 
+# First make sure the arms are in a known state
 for side, arm in robot.arms.items():
     robot.speech.speak("I will first reset my {} arm".format(side))
     arm.reset()
@@ -31,10 +33,11 @@ for side, arm in robot.arms.items():
         rospy.logerr("{} arm is not operational".format(side))
         sys.exit(-1)
 
+    # Notice the - for the right arm's Y position.
     if arm == robot.leftArm:
-        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342, 0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342,  0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
     if arm == robot.rightArm:
-        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342, -0.125, 0.748, 0, 0, 0, "/" + robot.robot_name + "/base_link")
+        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342, -0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):
@@ -56,10 +59,15 @@ for side, arm in robot.arms.items():
         failed_actions += ["close gripper"]
     arm.wait_for_motion_done()
 
+    # Iterate over the default configs of the arms. They are specified in <robot_name>_description/custom/skills.yaml
     for config in arm.default_configurations.keys():
-        robot.speech.speak("{} arm going to {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
+        # Some poses have ..._pose as name, this sounds nicer
+        postfix = "pose" if "pose" not in config else ""
+
+        robot.speech.speak("{} arm going to {p} {postfix}".format(side, p=config, postfix=postfix))
         if not arm.send_joint_goal(config, timeout=10):
-            robot.speech.speak("{} arm could not reach {p} {postfix}".format(side, p=config, postfix="pose" if "pose" not in config else ""))
+            # Some poses have ..._pose as name, this sounds nicer
+            robot.speech.speak("{} arm could not reach {p} {postfix}".format(side, p=config, postfix=postfix))
             failed_actions += [config]
         arm.wait_for_motion_done()
         arm.reset()
