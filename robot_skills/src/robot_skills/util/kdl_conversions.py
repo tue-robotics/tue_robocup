@@ -19,9 +19,9 @@ class FrameStamped(object):
 
     def __repr__(self):
         xyz = "(x={x}, y={y}, z={z})".format(x=self.frame.p.x(), y=self.frame.p.y(), z=self.frame.p.z())
-        r,p,y = self._pose.M.GetRPY()
+        r, p, y = self.frame.M.GetRPY()
         rpy = "(r={x}, p={y}, y={z})".format(x=r, y=p, z=y)
-        return "{pos} x {rot} @ {fid}".format(pos=xyz, rot=rpy, fid=self.frame_id)
+        return "pos:{pos}, rot:{rot} @ {fid}".format(pos=xyz, rot=rpy, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(1))
