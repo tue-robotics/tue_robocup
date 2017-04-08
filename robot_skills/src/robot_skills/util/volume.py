@@ -21,6 +21,13 @@ class Volume(object):
     def _calc_center_point(self):
         raise NotImplementedError("_get_center_point must be implemented by subclasses")
 
+    def contains(self, point):
+        """ Checks if the point is inside this volume
+        :param point: kdl Vector w.r.t. the same frame as this volume
+        :return: True if inside, False otherwise
+        """
+        raise NotImplementedError("contains must be implemented by subclasses")
+
 
 class BoxVolume(Volume):
     """ Represents a box shaped volume """
@@ -66,6 +73,15 @@ class BoxVolume(Volume):
         convex_hull.append(kdl.Vector(self.max_corner.x(), self.max_corner.y(), self.min_corner.z()))  # 3
         convex_hull.append(kdl.Vector(self.min_corner.x(), self.max_corner.y(), self.min_corner.z()))  # 4
         return convex_hull
+
+    def contains(self, point):
+        """ Checks if the point is inside this volume
+        :param point: kdl Vector w.r.t. the same frame as this volume
+        :return: True if inside, False otherwise
+        """
+        return self._min_corner.x() < point.x() < self._max_corner.x() and \
+               self._min_corner.y() < point.y() < self._max_corner.y() and \
+               self._min_corner.z() < point.z() < self._max_corner.z()
 
 
 class OffsetVolume(Volume):
