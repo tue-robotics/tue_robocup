@@ -88,21 +88,21 @@ class FollowOperator(smach.State):
         return False
 
     def _standing_still_for_x_seconds(self, timeout):
-        current_pose_stamped = self._robot.base.get_location().frame
+        current_pose = self._robot.base.get_location().frame
         now = rospy.Time.now()
 
         if not self._last_pose_stamped:
-            self._last_pose_stamped = current_pose_stamped
+            self._last_pose_stamped = current_pose
             self._last_pose_stamped_time = now
         else:
-            current_yaw = current_pose_stamped.M.GetRPY()[2]  # Get the Yaw
+            current_yaw = current_pose.M.GetRPY()[2]  # Get the Yaw
             last_yaw = self._last_pose_stamped.M.GetRPY()[2]  # Get the Yaw
 
             # Compare the pose with the last pose and update if difference is larger than x
-            if kdl.diff(current_pose_stamped.p, self._last_pose_stamped.p).Norm() > 0.05 or abs(current_yaw - last_yaw) > 0.3:
+            if kdl.diff(current_pose.p, self._last_pose_stamped.p).Norm() > 0.05 or abs(current_yaw - last_yaw) > 0.3:
                 # Update the last pose
           #      print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
-                self._last_pose_stamped = current_pose_stamped
+                self._last_pose_stamped = current_pose
                 self._last_pose_stamped_time = rospy.Time.now()
             else:
          #       print "Robot is standing still :/"
