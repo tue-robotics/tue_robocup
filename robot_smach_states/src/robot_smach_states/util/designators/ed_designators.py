@@ -9,7 +9,6 @@ import PyKDL as kdl
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.util.entity import Entity
-from ed.srv import SimpleQuery, SimpleQueryRequest
 import rospy
 from std_msgs import msg as std
 from visualization_msgs.msg import MarkerArray, Marker
@@ -18,11 +17,8 @@ from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, kdlFrameStampedFromXYZRPY
-import robot_smach_states.util.geometry_helpers as geom
-
-import robot_skills.util.msg_constructors as msg_constructors
-
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, \
+    kdlFrameStampedFromXYZRPY
 
 __author__ = 'loy'
 
@@ -38,7 +34,7 @@ class EdEntityCollectionDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
-        type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
+                 type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates a collection of entities of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -50,7 +46,7 @@ class EdEntityCollectionDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[Entity],name=name)
+        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[Entity], name=name)
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -87,7 +83,8 @@ class EdEntityCollectionDesignator(Designator):
 
         entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
         if self.debug:
-            import ipdb; ipdb.set_trace()
+            import ipdb;
+            ipdb.set_trace()
         if entities:
             for criterium in _criteria:
                 entities = filter(criterium, entities)
@@ -101,19 +98,19 @@ class EdEntityCollectionDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-    # def __repr__(self):
-    #     return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-    #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
+        # def __repr__(self):
+        #     return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+        #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
 
 
 class EdEntityDesignator(Designator):
-
     """
     Resolves to an entity from an Ed query
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None, weight_function=None,
-        type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
+    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
+                 weight_function=None,
+                 type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -147,10 +144,12 @@ class EdEntityDesignator(Designator):
         self.criteriafuncs = criteriafuncs or []
         self.weight_function = weight_function or (lambda entity: 0)
 
-        if type_designator: check_resolve_type(type_designator, str, list) #the resolve type of type_designator can be either st or list
+        if type_designator: check_resolve_type(type_designator, str,
+                                               list)  # the resolve type of type_designator can be either st or list
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator, VectorStamped) #the resolve type of type_designator can be either st or list
+        if center_point_designator: check_resolve_type(center_point_designator,
+                                                       VectorStamped)  # the resolve type of type_designator can be either st or list
         self.center_point_designator = center_point_designator
 
         if id_designator: check_resolve_type(id_designator, str)
@@ -163,7 +162,8 @@ class EdEntityDesignator(Designator):
 
     def _resolve(self):
         if self.debug:
-            import ipdb; ipdb.set_trace()
+            import ipdb;
+            ipdb.set_trace()
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
         _id = self.id_designator.resolve() if self.id_designator else self.id
@@ -172,12 +172,13 @@ class EdEntityDesignator(Designator):
         if self.type_designator and not _type:
             rospy.logwarn("type_designator {0} failed to resolve: {1}".format(self.type_designator, _type))
         if self.center_point_designator and not _center_point:
-            rospy.logwarn("center_point_designator {0} failed to resolve: {1}".format(self.center_point_designator, _center_point))
+            rospy.logwarn("center_point_designator {0} failed to resolve: {1}".format(self.center_point_designator,
+                                                                                      _center_point))
         if self.id_designator and not _id:
             rospy.logwarn("id_designator {0} failed to resolve: {1}".format(self.id_designator, _id))
 
         if isinstance(_type, list):
-            _type = "" #Do the check not in Ed but in code here
+            _type = ""  # Do the check not in Ed but in code here
             typechecker = lambda entity: entity.type in _type
             _criteria += [typechecker]
 
@@ -191,7 +192,9 @@ class EdEntityDesignator(Designator):
                         if criterium(entity):
                             filtered_entities += [entity]
                     except Exception as exp:
-                        rospy.logerr("{id} cannot be filtered with criterum '{crit}': {exp}".format(id=entity.id, crit=criterium_code, exp=exp))
+                        rospy.logerr("{id} cannot be filtered with criterum '{crit}': {exp}".format(id=entity.id,
+                                                                                                    crit=criterium_code,
+                                                                                                    exp=exp))
 
                 entities = filtered_entities
                 rospy.loginfo("Criterium {0} leaves {1} entities".format(criterium_code, len(entities)))
@@ -210,11 +213,11 @@ class EdEntityDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-    # def __repr__(self):
-    #     criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
+        # def __repr__(self):
+        #     criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
 
-    #     return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-    #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
+        #     return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+        #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
 
 
 class EntityByIdDesignator(Designator):
@@ -284,6 +287,7 @@ class EmptySpotDesignator(Designator):
     cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
     place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
     """
+
     def __init__(self, robot, place_location_designator, name=None, area=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
@@ -296,7 +300,7 @@ class EmptySpotDesignator(Designator):
         self.robot = robot
 
         self.place_location_designator = place_location_designator
-        self._edge_distance = 0.1                   # Distance to table edge
+        self._edge_distance = 0.1  # Distance to table edge
         self._spacing = 0.15
         self._area = area
 
@@ -305,33 +309,38 @@ class EmptySpotDesignator(Designator):
 
     def _resolve(self):
         place_location = self.place_location_designator.resolve()
+        place_frame = FrameStamped(frame=place_location._pose, frame_id="/map")
 
         # points_of_interest = []
         if self._area:
-            frames_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+            vectors_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
         else:
-            frames_of_interest = self.determine_points_of_interest(place_location)
+            vectors_of_interest = self.determine_points_of_interest(place_frame.frame, z_max=place_location.shape.z_max,
+                                                                    convex_hull=place_location.shape.convex_hull)
+
+        assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
         def is_poi_occupied(frame_stamped):
-            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped, radius=self._spacing)
+            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
+                                                         radius=self._spacing)
             return not any(entities_at_poi)
 
-        open_POIs = filter(is_poi_occupied, frames_of_interest)
+        open_POIs = filter(is_poi_occupied, vectors_of_interest)
 
         def distance_to_poi_area(frame_stamped):
-            #Derived from navigate_to_place
+            # Derived from navigate_to_place
             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
             x = frame_stamped.frame.p.x()
             y = frame_stamped.frame.p.y()
-            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
-            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+            ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
+            ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
+            pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.frame_id)
 
             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
             if plan_to_poi:
                 distance = len(plan_to_poi)
-                print "Distance: %s"%distance
+                print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
             else:
                 distance = None
             return distance
@@ -344,11 +353,11 @@ class EmptySpotDesignator(Designator):
         feasible_POIs = []
         for tup in open_POIs_dist:
             if tup[1]:
-                 feasible_POIs.append(tup)
+                feasible_POIs.append(tup)
 
         if any(feasible_POIs):
             feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
-            best_poi = feasible_POIs[0][0] # Get the POI of the best match
+            best_poi = feasible_POIs[0][0]  # Get the POI of the best match
 
             selection = self.create_selection_marker(best_poi)
             self.marker_pub.publish(MarkerArray([selection]))
@@ -396,32 +405,32 @@ class EmptySpotDesignator(Designator):
         marker.lifetime = rospy.Duration(30.0)
         return marker
 
-    def determine_points_of_interest_with_area(self, e, area):
+    def determine_points_of_interest_with_area(self, entity, area):
         """ Determines the points of interest using an area
-        :param e:
-        :param area:
-        :return:
+        :type entity: Entity
+        :param area: str indicating which volume of the entity to look at
+        :rtype: [FrameStamped]
         """
 
         # We want to give it a convex hull using the designated area
 
-        if not area in e.volumes:
+        if area not in entity.volumes:
             return []
 
-        box = e.volumes[area]
+        box = entity.volumes[area]
 
         if not hasattr(box, "bottom_area"):
-            rospy.logerr("Entity {0} has no shape with a bottom_area".format(e.id))
+            rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.id))
 
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box
         top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
-        return self.determine_points_of_interest(e._pose, top_z, box.bottom_area)
+        return self.determine_points_of_interest(entity._pose, top_z, box.bottom_area)
 
-    def determine_points_of_interest(self, center_pose, z_max, convex_hull):
+    def determine_points_of_interest(self, center_frame, z_max, convex_hull):
         """
         Determine candidates for place poses
-        :param center_pose: kdl.Frame, center pose of the Entity to place on top of
+        :param center_frame: kdl.Frame, center of the Entity to place on top of
         :param z_max: float, height of the entity to place on, w.r.t. the entity
         :param convex_hull: [kdl.Vector], convex hull of the entity
         :return: [FrameStamped] of candidates for placing
@@ -434,12 +443,12 @@ class EmptySpotDesignator(Designator):
             return []
 
         # Convert convex hull to map frame
-        ch = offsetConvexHull(convex_hull, center_pose)
+        ch = offsetConvexHull(convex_hull, center_frame)
 
         # Loop over hulls
         self.marker_array.markers = []
 
-        for i in xrange(len(ch) - 1):
+        for i in xrange(len(ch)):
             j = (i + 1) % len(ch)
 
             dx = ch[j].x() - ch[i].x()
@@ -448,16 +457,15 @@ class EmptySpotDesignator(Designator):
             length = kdl.diff(ch[j], ch[i]).Norm()
 
             d = self._edge_distance
-            while d < (length-self._edge_distance):
-
+            while d < (length - self._edge_distance):
                 # Point on edge
-                xs = ch[i].x() + d/length*dx
-                ys = ch[i].y() + d/length*dy
+                xs = ch[i].x() + d / length * dx
+                ys = ch[i].y() + d / length * dy
 
                 # Shift point inwards and fill message
-                fs = kdlFrameStampedFromXYZRPY(x=xs - dy/length * self._edge_distance,
-                                               y=ys + dx/length * self._edge_distance,
-                                               z=center_pose.p.z() + z_max,
+                fs = kdlFrameStampedFromXYZRPY(x=xs - dy / length * self._edge_distance,
+                                               y=ys + dx / length * self._edge_distance,
+                                               z=center_frame.p.z() + z_max,
                                                frame_id="/map")
                 points += [fs]
 
@@ -495,15 +503,12 @@ class LockToId(Designator):
         self._locked = False
 
     def _resolve(self):
-        if self._locked: # If we should resolve to a remembered thing
-            if not self._locked_to_id: # but we haven't remembered anything yet
-                entity = self.to_be_locked.resolve() # Then find  out what we should remember
-                if entity: # If we can find what to remember
-                    self._locked_to_id = entity.id # remember its ID.
-                else:
-                    pass # If we cannot find what to remember, to_be_locked.resolve() return None and we return that too
-                # rospy.loginfo("{0} locked to ID {1}".format(self, self._locked_to_id))
-            else: # If we do remember something already, recall that remembered ID:
+        if self._locked:  # If we should resolve to a remembered thing
+            if not self._locked_to_id:  # but we haven't remembered anything yet
+                entity = self.to_be_locked.resolve()  # Then find  out what we should remember
+                if entity:  # If we can find what to remember
+                    self._locked_to_id = entity.id  # remember its ID.
+            else:  # If we do remember something already, recall that remembered ID:
                 return self.robot.ed.get_entities(id=self._locked_to_id)
         else:
             entity = self.to_be_locked.resolve()
@@ -513,14 +518,9 @@ class LockToId(Designator):
     def __repr__(self):
         return "LockToId({})._locked = {}".format(self.to_be_locked, self._locked)
 
-if __name__ == "__main__":
-    # import doctest
-    # doctest.testmod()
 
-    rospy.init_node("testdesignator")
-    from robot_skills.amigo import Amigo
-    robot = Amigo()
-    furniture_designator = EdEntityDesignator(robot, id="dinner_table")
-    esd = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator, name = None,
-                              area = "on_top_f")
-    esd.resolve()
+if __name__ == "__main__":
+
+    import doctest
+
+    doctest.testmod()
