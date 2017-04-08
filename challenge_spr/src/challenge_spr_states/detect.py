@@ -14,7 +14,7 @@ import robot_skills.util.msg_constructors as msgs
 from cv_bridge import CvBridge, CvBridgeError
 from openface_ros.face_recognizer import FaceRecognizer
 from skybiometry_ros import Skybiometry
-# from image_recognition_msgs.srv import GetFaceProperties
+from image_recognition_msgs.srv import GetFaceProperties
 from robot_smach_states.util.startup import startup
 from robot_skills.util.kdl_conversions import VectorStamped
 from robocup_knowledge import load_knowledge
@@ -68,16 +68,18 @@ class DetectCrowd(smach.State):
         imgs = []
         if best_detection:
             for face_recognition in best_detection:
-                img = best_image[face_recognition.roi.y_offset:face_recognition.roi.y_offset + face_recognition.roi.height,
+                cv2_img = best_image[face_recognition.roi.y_offset:face_recognition.roi.y_offset + face_recognition.roi.height,
                                  face_recognition.roi.x_offset:face_recognition.roi.x_offset + face_recognition.roi.width]
-                imgs.append(img)
+                imgmsg = self._bridge.cv2_to_imgmsg(cv2_img, 'bgr8')
+                imgs.append(imgmsg)
 
         rospy.loginfo('Calling Skybiometry...')
         
         try:
-            face_properties = self._skybiometry.get_face_properties(imgs, timeout)
-            # face_object = rospy.ServiceProxy('get_face_properties', GetFaceProperties)
-            # face_properties = face_object(imgs)
+            #face_properties = self._skybiometry.get_face_properties(imgs, timeout)
+            get_face_properties = rospy.ServiceProxy('/get_face_properties', GetFaceProperties)
+            face_properties_response = get_face_properties(imgs)
+            face_properties = face_properties_response.properties_array
         except Exception as e:
             rospy.logerr(str(e))
             self.robot.speech.speak('API call failed, is there internet?')
