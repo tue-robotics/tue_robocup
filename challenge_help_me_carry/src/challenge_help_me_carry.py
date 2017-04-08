@@ -167,6 +167,7 @@ def setup_statemachine(robot):
         # Kwin
         # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
+                               #TODO: add that the robot can follow the operator.
                                #states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
                                states.Say(robot, "Following operator"),
                                transitions={'spoken': 'WAIT_TO_FOLLOW_OR_REMEMBER'})
@@ -195,8 +196,8 @@ def setup_statemachine(robot):
                                transitions={'succeeded':        'GOTO_DESTINATION',
                                             'timeout':          'GOTO_DESTINATION', # For now in simulation timeout is considered a succes.
                                             'failed':           'Aborted'},
-                               remapping = {'target_room_in': 'command_recognized',
-                                            'target_room_out': 'target_room'})
+                               remapping = {'target_room_in':   'command_recognized',
+                                            'target_room_out':  'target_room'})
 
 
         # Tim
@@ -209,16 +210,14 @@ def setup_statemachine(robot):
         # Kwin
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
-                               #states.Say(robot, "Putting down item"),
                                states.Place(robot, current_item, place_position, arm_with_item_designator),
-                               #transitions={'spoken': 'ASKING_FOR_HELP'})
-                               transitions={'done':           'ASKING_FOR_HELP',
-                                            'failed':         'Aborted'})
+                               transitions={'done':             'ASKING_FOR_HELP',
+                                            'failed':           'Aborted'})
 
         smach.StateMachine.add('ASKING_FOR_HELP',
                                #TODO: look and then face new operator
                                #TODO: add that robot should memorize new operator
-                               states.Say(robot, "Please help me carry groceries into the house"),
+                               states.Say(robot, "Please follow me and help me carry groceries into the house"),
                                transitions={'spoken': 'GOTO_CAR'})
                                #transitions={'success':        'GOTO_CAR',
                                #             'abort':          'Aborted'})
