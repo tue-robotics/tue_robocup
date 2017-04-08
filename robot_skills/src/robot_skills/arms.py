@@ -387,7 +387,6 @@ class Arm(RobotPart):
                                         # goals probably won't make it. This sleep makes sure the
                                         # goals will always arrive in different update hooks in the
                                         # hardware TrajectoryActionLib server.
-
         self._ac_joint_traj.send_goal(goal)
         if timeout != rospy.Duration(0):
             done = self._ac_joint_traj.wait_for_result(timeout*len(joints_references))
