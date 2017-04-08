@@ -16,6 +16,7 @@
   <run_depend>challenge_gpsr</run_depend>
   <run_depend>challenge_manipulation</run_depend>
   <run_depend>challenge_navigation</run_depend>
+  <run_depend>challenge_help_me_carry</run_depend>
   <run_depend>challenge_open</run_depend>
   <run_depend>challenge_person_recognition</run_depend>
   <run_depend>challenge_restaurant</run_depend>

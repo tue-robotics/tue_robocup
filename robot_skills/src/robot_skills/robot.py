@@ -95,7 +95,7 @@ class Robot(object):
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
-    def tf_transform_pose(self, ps,frame):
+    def tf_transform_pose(self, ps, frame):
         output_pose = geometry_msgs.msg.PointStamped
         self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
         output_pose = self.tf_listener.transformPose(frame, ps)

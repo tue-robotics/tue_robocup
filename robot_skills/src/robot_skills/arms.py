@@ -216,6 +216,15 @@ class Arm(RobotPart):
                 execute_timeout=rospy.Duration(timeout)
             )
             if result == GoalStatus.SUCCEEDED:
+                
+                result_pose = self.tf_listener.lookupTransform("amigo/base_link", "amigo/grippoint_{}".format(self.side))
+                dx = grasp_precompute_goal.goal.x - result_pose[0][0]
+                dy = grasp_precompute_goal.goal.y - result_pose[0][1]
+                dz = grasp_precompute_goal.goal.z - result_pose[0][2]
+                
+                if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
+                    rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(
+                                  dx, dy, dz))
                 return True
             else:
                 # failure
@@ -361,7 +370,6 @@ class Arm(RobotPart):
             if len(joints_reference) != len(joint_names):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
                               % (len(joint_names), len(joints_references)))
-
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
                 time_from_start=time_from_start))
@@ -379,7 +387,6 @@ class Arm(RobotPart):
                                         # goals probably won't make it. This sleep makes sure the
                                         # goals will always arrive in different update hooks in the
                                         # hardware TrajectoryActionLib server.
-
         self._ac_joint_traj.send_goal(goal)
         if timeout != rospy.Duration(0):
             done = self._ac_joint_traj.wait_for_result(timeout*len(joints_references))
@@ -389,11 +396,21 @@ class Arm(RobotPart):
         else:
             return None
 
-    def wait_for_motion_done(self, timeout=10.0):
+    def wait_for_motion_done(self, timeout=10.0, cancel=False):
+        """ Waits until all action clients are done
+        :param timeout: double with time (defaults to 10.0 seconds)
+        :param cancel: bool specifying whether goals should be cancelled
+        if timeout is exceeded
+        :return bool indicates whether motion was done (True if reached,
+        False otherwise)
+        """
         # rospy.loginfo('Waiting for ac_joint_traj')
         starttime = rospy.Time.now()
         if self._ac_joint_traj.gh:
-            self._ac_joint_traj.wait_for_result(rospy.Duration(10.0))
+            if not self._ac_joint_traj.wait_for_result(rospy.Duration(10.0)):
+                if cancel:
+                    rospy.loginfo("Arms: cancelling all goals (1)")
+                    self.cancel_goals()
 
         passed_time = (rospy.Time.now() - starttime).to_sec()
         if passed_time > timeout:
@@ -401,7 +418,10 @@ class Arm(RobotPart):
 
         # rospy.loginfo('Waiting for ac_grasp_precompute')
         if self._ac_grasp_precompute.gh:
-            self._ac_grasp_precompute.wait_for_result(rospy.Duration(timeout-passed_time))
+            if not self._ac_grasp_precompute.wait_for_result(rospy.Duration(timeout-passed_time)):
+                if cancel:
+                    rospy.loginfo("Arms: cancelling all goals (2)")
+                    self.cancel_goals()
 
         passed_time = (rospy.Time.now() - starttime).to_sec()
         if passed_time > timeout:
@@ -409,7 +429,7 @@ class Arm(RobotPart):
 
         # rospy.loginfo('Waiting for ac_gripper')
         if self._ac_gripper.gh:
-            rospy.logwarn('Not waiting for gripper action')
+            rospy.logdebug('Not waiting for gripper action')
             return True
             return self._ac_gripper.wait_for_result(rospy.Duration(timeout-passed_time))
 

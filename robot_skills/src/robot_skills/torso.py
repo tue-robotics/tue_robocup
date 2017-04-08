@@ -70,7 +70,9 @@ class Torso(RobotPart):
 
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
 
-        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
+        import time; time.sleep(0.01)  # This is dangerous now we are change the Ts of the TrajectoryActionLib
+        
+                                        # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
                                         # means that if two goals are send approximately at the same
                                         # time (e.g. an arm goal and a torso goal), one of the two
@@ -105,7 +107,14 @@ class Torso(RobotPart):
         self.ac_move_torso.cancel_goal()
         #return True
 
-    def wait_for_motion_done(self, timeout=10):
+    def wait_for_motion_done(self, timeout=10, cancel=False):
+        """ Waits until all action clients are done
+        :param timeout: double with time (defaults to 10.0 seconds)
+        :param cancel: bool specifying whether goals should be cancelled
+        if timeout is exceeded
+        :return bool indicates whether motion was done (True if reached,
+        False otherwise)
+        """
         if self.ac_move_torso.gh:
             self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
             if self.ac_move_torso.get_state() == GoalStatus.SUCCEEDED:
@@ -113,6 +122,9 @@ class Torso(RobotPart):
                 return True
             else:
                 rospy.logerr("Reaching torso target failed")
+                if cancel:
+                    rospy.loginfo("Torso: cancelling all goals (1)")
+                    self.cancel_goal()
                 return False
 
     def wait(self, timeout=10):
