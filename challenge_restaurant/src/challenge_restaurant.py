@@ -107,7 +107,7 @@ class StoreKitchen(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        self._robot.ed.update_entity(id="kitchen", kdlFrameStamped=self._robot.base.get_location().frame, type="waypoint")
+        self._robot.ed.update_entity(id="kitchen", frame_stamped=self._robot.base.get_location(), type="waypoint")
 
         return "done"
 
