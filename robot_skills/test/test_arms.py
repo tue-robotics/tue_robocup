@@ -11,7 +11,8 @@ if len(sys.argv) < 2:
 
 robot_name = sys.argv[1]
 
-rospy.init_node("audio_test")
+rospy.init_node("arm_test")
+
 if robot_name == "amigo":
     from robot_skills.amigo import Amigo
     robot = Amigo()
