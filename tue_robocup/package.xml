@@ -24,6 +24,7 @@
   <run_depend>challenge_robozoo</run_depend>
   <run_depend>challenge_speech_recognition</run_depend>
   <run_depend>challenge_storing_groceries</run_depend>
+  <run_depend>challenge_spr</run_depend>
   <run_depend>challenge_test</run_depend>
   <run_depend>test_tools</run_depend>
 

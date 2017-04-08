@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>challenge_spr</name>
+  <version>1.0.0</version>
+  <description>Speech and Person Recognition challenge from Robocup 2017 rulebook</description>
+
+  <maintainer email="alexandrov.samuil@gmail.com">Sam Alexandrov</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>robot_skills</build_depend>
+  <build_depend>robot_smach_states</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>tf</build_depend>
+
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>robot_skills</run_depend>
+  <run_depend>robot_smach_states</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>tf</run_depend>
+</package>
