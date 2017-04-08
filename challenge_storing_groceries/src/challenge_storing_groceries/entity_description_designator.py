@@ -1,5 +1,6 @@
 import robot_smach_states.util.designators as ds
 
+
 class EntityDescriptionDesignator(ds.Designator):
     """EntityDescriptionDesignator"""
     def __init__(self, entity_designator, name=None):
