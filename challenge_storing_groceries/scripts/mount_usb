@@ -1,0 +1,6 @@
+sudo mount /dev/sdb1 /home/amigo/usb -o umask=000
+echo ""
+echo "Files on usb stick:"
+ls -lah /home/amigo/usb
+echo ""
+echo "If everything went right, you should see the files on the usb above :)"
