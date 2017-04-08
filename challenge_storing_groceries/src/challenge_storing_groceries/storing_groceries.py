@@ -41,7 +41,7 @@ class StoringGroceries(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'INIT_WM',
+                                   transitions={'initialized': 'AWAIT_START',
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add("AWAIT_START",
@@ -62,49 +62,55 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES",
                                    InspectShelves(robot),
-                                   transitions={'succeeded': 'EXPORT_PDF',
-                                                'nothing_found': 'EXPORT_PDF',
-                                                'failed': 'EXPORT_PDF'})
+                                   transitions={'succeeded': 'Done',
+                                                'nothing_found': 'Done',
+                                                'failed': 'Done'})
 
-            @smach.cb_interface(outcomes=["exported"])
-            def export_to_pdf(userdata):
-                global DETECTED_OBJECTS_WITH_PROBS
+            # smach.StateMachine.add("INSPECT_SHELVES",
+            #                        InspectShelves(robot),
+            #                        transitions={'succeeded': 'EXPORT_PDF',
+            #                                     'nothing_found': 'EXPORT_PDF',
+            #                                     'failed': 'EXPORT_PDF'})
 
-                entities = [e[0] for e in DETECTED_OBJECTS_WITH_PROBS]
-
-                # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
-                # pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF],
-                # "tech_united_manipulation_challenge")
-
-                return "exported"
-            smach.StateMachine.add('EXPORT_PDF',
-                                   smach.CBState(export_to_pdf),
-                                   transitions={'exported': 'RANGE_ITERATOR'})
-
-            # Begin setup iterator
-            # The exhausted argument should be set to the prefered state machine outcome
-            range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
-                                            input_keys=[], output_keys=[],
-                                            it=lambda: range(5),
-                                            it_label='index',
-                                            exhausted_outcome='succeeded')
-
-            with range_iterator:
-                single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [Entity],
-                                                                                name="placed_items"))
-
-                smach.Iterator.set_contained_state('SINGLE_ITEM',
-                                                   single_item,
-                                                   loop_outcomes=['succeeded', 'failed'])
-
-            smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-                                   {'succeeded': 'AT_END',
-                                    'failed': 'Aborted'})
-            # End setup iterator
-
-            smach.StateMachine.add('AT_END',
-                                   states.Say(robot, "Goodbye"),
-                                   transitions={'spoken': 'Done'})
+            # @smach.cb_interface(outcomes=["exported"])
+            # def export_to_pdf(userdata):
+            #     global DETECTED_OBJECTS_WITH_PROBS
+            #
+            #     entities = [e[0] for e in DETECTED_OBJECTS_WITH_PROBS]
+            #
+            #     # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
+            #     # pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF],
+            #     # "tech_united_manipulation_challenge")
+            #
+            #     return "exported"
+            # smach.StateMachine.add('EXPORT_PDF',
+            #                        smach.CBState(export_to_pdf),
+            #                        transitions={'exported': 'RANGE_ITERATOR'})
+            #
+            # # Begin setup iterator
+            # # The exhausted argument should be set to the prefered state machine outcome
+            # range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
+            #                                 input_keys=[], output_keys=[],
+            #                                 it=lambda: range(5),
+            #                                 it_label='index',
+            #                                 exhausted_outcome='succeeded')
+            #
+            # with range_iterator:
+            #     single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [Entity],
+            #                                                                     name="placed_items"))
+            #
+            #     smach.Iterator.set_contained_state('SINGLE_ITEM',
+            #                                        single_item,
+            #                                        loop_outcomes=['succeeded', 'failed'])
+            #
+            # smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
+            #                        {'succeeded': 'AT_END',
+            #                         'failed': 'Aborted'})
+            # # End setup iterator
+            #
+            # smach.StateMachine.add('AT_END',
+            #                        states.Say(robot, "Goodbye"),
+            #                        transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "manipulation")
 
