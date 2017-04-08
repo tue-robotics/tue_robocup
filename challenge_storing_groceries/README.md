@@ -1,28 +1,26 @@
-# Manipulation and Object recognition
+# Storing groceries
 
-Responsible: Loy & Ramon
+Responsible: Janno
 
 ## Startup
 
 1. Place the robot near or in front of the bookcase, cabinet or closet it is supposed to grasp from. This is currently hardcoded into variable BOOKCASE.
-2. Place 5 items in the bookcase
-3. In this bookcase, there should be 1 empty shelve at height PLACE_HEIGHT.
+2. Place 5 items in the bookcase on various shelves
+3. Put a number of items on the table
 
 amigo1/sergio1:
 
-    astart/sstart # (if not already running)
+    amigo-start
 
-amigo2/sergio1:
+amigo2/sergio2:
 
-    ahardware/shardware: base, spindle, arms (left-arm is used) head
+    roslaunch amigo_bringup challenge_storing_groceries.launch
 
-amigo1/sergio1:
+amigo2:
 
-    amiddle/smiddle
+ToDo: update (so skip it at this point)
 
-amigo3:
-
-    Mount usb stick:
+    Mount usb stick: 
 
     rosrun challenge_manipulation mount_usb # usb dir in /home/amigo should be green
 
@@ -38,10 +36,6 @@ amigo3:
 
     hear continue #Don't press enter just yet
 
-Unplug the network cable in amigo.
-localhost:
-    sshamigo3 #This will not work because amigo is unplugged
-
 # Notes
 
 During the challenge
@@ -52,4 +46,4 @@ During the challenge
 After the challenge
 -------------------
 
-    - Get the USB stick and inspect the classes in the file manipulation.pdf
+    - Get the USB stick and inspect the classes in the file manipulation.pdf --> ToDo
