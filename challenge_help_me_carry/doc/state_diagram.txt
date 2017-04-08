@@ -1,0 +1,28 @@
+#create state diagram on https://www.planttext.com/
+
+@startuml
+
+title Challenge Help-me-carry
+
+[*] --> Wait
+Wait --> Wait
+Wait --> Following_operator : "Robot, follow me"
+Following_operator --> Look_for_operator: lost operator
+Look_for_operator --> Following_operator: found operator
+Following_operator --> Arrive_at_car: "Remember, this location is the car"
+Following_operator --> Avoid_obstacle
+Avoid_obstacle --> Following_operator
+Arrive_at_car --> Pickup_groceries: "Carry this box"
+Pickup_groceries --> Go_inside_house : "Bring this to room X"
+Go_inside_house --> Arrive_at_dropoff
+Go_inside_house --> Avoid_obstacle
+Go_inside_house --> Putdown_groceries: Cannot find dropoff
+Avoid_obstacle --> Go_inside_house
+Arrive_at_dropoff --> Putdown_groceries
+Putdown_groceries --> [*]: time is up
+Putdown_groceries --> Go_to_car
+Go_to_car --> Arrive_at_car
+Go_to_car --> Avoid_obstacle
+Avoid_obstacle --> Go_to_car
+
+@enduml
