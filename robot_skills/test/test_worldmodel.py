@@ -49,17 +49,14 @@ robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
 # Test Closest Entity #
 #######################
 
-closest = robot.ed.get_closest_entity()
-robot.speech.speak("The closest entity is {id}, of type {type}".format(id=closest.id[:6], type=closest.type))
-
 # TODO: center_point should also be a VectorStamped
-closest2 = robot.ed.get_closest_entity(center_point=kdl.Vector(0, 0, 0), radius=2.0)
+closest = robot.ed.get_closest_entity(center_point=kdl.Vector(0, 0, 0), radius=2.0)  # This is implicitly in /map
 robot.speech.speak("The closest entity to the center of the arena is {id}, of type {type}"
-                   .format(id=closest2.id[:6], type=closest2.type))
+                   .format(id=closest.id[:10], type=closest.type))
 
-closest3 = robot.ed.get_closest_entity(type=query_type, center_point=kdl.Vector(0, 0, 0), radius=10.0)
-robot.speech.speak("The closest {type} to the center of the arena is {id}".format(id=closest3.id, type=query_type))
-if closest3.type != query_type:
+closest2 = robot.ed.get_closest_entity(type=query_type, center_point=kdl.Vector(0, 0, 0), radius=10.0)
+robot.speech.speak("The closest {type} to the center of the arena is {id}".format(id=closest2.id, type=query_type))
+if closest2.type != query_type:
     failed_actions += ["get_closest_entity with type, center_point and radius"]
 
 
