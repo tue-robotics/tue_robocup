@@ -92,7 +92,7 @@ class StoreCarWaypoint(smach.State):
 class GrabItem(smach.State):
     def __init__(self, robot, empty_arm_designator, current_item):
         smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'],
+                             outcomes=['succeeded', 'failed', 'timeout'],
                              input_keys=['target_room_in'],
                              output_keys=['target_room_out'])
         self._robot = robot
@@ -193,6 +193,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GRAB_ITEM',
                                GrabItem(robot, empty_arm_designator, current_item),
                                transitions={'succeeded':        'GOTO_DESTINATION',
+                                            'timeout':          'GOTO_DESTINATION', # For now in simulation timeout is considered a succes.
                                             'failed':           'Aborted'},
                                remapping = {'target_room_in': 'command_recognized',
                                             'target_room_out': 'target_room'})
