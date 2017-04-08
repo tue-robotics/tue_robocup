@@ -29,7 +29,7 @@ from robot_smach_states.util.geometry_helpers import *
 # import pdf
 from config import *
 from inspect_shelves import InspectShelves
-from manipulate_single_item import ManipRecogSingleItem
+from manipulate_machine import ManipulateMachine
 
 
 class StoringGroceries(smach.StateMachine):

@@ -1,2 +1,2 @@
 from inspect_shelves import InspectShelves
-from manipulate_single_item import ManipulateMachine
+from manipulate_machine import ManipulateMachine
