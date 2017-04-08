@@ -6,6 +6,9 @@ challenge_knowledge = load_knowledge('challenge_storing_groceries')
 # Inspection
 CABINET = challenge_knowledge.cabinet_amcl
 OBJECT_SHELVES = challenge_knowledge.object_shelves
+OBJECT_TYPES = challenge_knowledge.object_types
+DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
+SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
 
 # Grasping
 TABLE = challenge_knowledge.grasp_surface
@@ -15,12 +18,15 @@ ROOM = challenge_knowledge.room
 DEFAULT_PLACE_ENTITY = challenge_knowledge.default_place_entity
 DEFAULT_PLACE_AREA = challenge_knowledge.default_place_area
 
-# OBJECT_TYPES = challenge_knowledge.object_types
+# Debug
+DEBUG = False
+
+
 # # MAX_NUM_ENTITIES_IN_PDF = 10
 # # MIN_GRASP_HEIGHT = challenge_knowledge.min_grasp_height
 # # MAX_GRASP_HEIGHT = challenge_knowledge.max_grasp_height
 #
-# DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
+
 # SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
 #
 # PREFERRED_ARM = "left"  # Must be "left" or "right"
