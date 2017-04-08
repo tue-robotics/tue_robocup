@@ -107,7 +107,7 @@ class StoreKitchen(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        self._robot.ed.update_entity(id="kitchen", kdlFrameStamped=FrameStamped(self._robot.base.get_location(), "/map"), type="waypoint")
+        self._robot.ed.update_entity(id="kitchen", kdlFrameStamped=self._robot.base.get_location().frame, type="waypoint")
 
         return "done"
 
@@ -120,7 +120,7 @@ class StoreBeverageSide(smach.State):
         self._robot.speech.speak("Is the bar on my left or on my right?")
 
         self._robot.head.look_at_standing_person()
-        base_pose = self._robot.base.get_location()
+        base_pose = self._robot.base.get_location().frame
         result = None
         while not result:
             result = self._robot.ears.recognize('<side>', {'side':['left','right']}, time_out = rospy.Duration(10)) # Wait 100 secs
@@ -164,7 +164,7 @@ else:
             # Stop the base
             self._robot.base.local_planner.cancelCurrentPlan()
 
-            base_pose = self._robot.base.get_location()
+            base_pose = self._robot.base.get_location().frame
 
             choices = knowledge.guiding_choices
 
@@ -227,7 +227,7 @@ class CheckInKitchen(smach.State):
         # Get the robot pose and compare if we are close enough to the kitchen waypoint
         kitchen = self._robot.ed.get_entity(id="kitchen")
         if kitchen:
-            current = self._robot.base.get_location()
+            current = self._robot.base.get_location().frame
             if kitchen.distance_to_2d(current) < knowledge.kitchen_radius:
                 return "in_kitchen"
         else:
