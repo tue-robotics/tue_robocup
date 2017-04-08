@@ -88,7 +88,7 @@ class FollowOperator(smach.State):
         return False
 
     def _standing_still_for_x_seconds(self, timeout):
-        current_pose_stamped = self._robot.base.get_location()
+        current_pose_stamped = self._robot.base.get_location().frame
         now = rospy.Time.now()
 
         if not self._last_pose_stamped:
@@ -194,7 +194,7 @@ class FollowOperator(smach.State):
                 self._breadcrumbs.append(self._operator)
 
         # Remove 'reached' breadcrumbs from breadcrumb path
-        robot_position = self._robot.base.get_location()
+        robot_position = self._robot.base.get_location().frame
         # robot_yaw = transformations.euler_z_from_quaternion(self._robot.base.pose.orientation)
         temp_crumbs = []
         for crumb in self._breadcrumbs:
@@ -259,11 +259,11 @@ class FollowOperator(smach.State):
             operator_pos.point.z = 0.0
             self._operator_pub.publish(operator_pos)
 
-            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().p))
+            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p))
 
             return True
         else:
-            robot_position = self._robot.base.get_location().pose.position
+            robot_position = self._robot.base.get_location().frame.pose.position
 
             if not self._last_operator:
                 if self._backup_register():
@@ -278,13 +278,13 @@ class FollowOperator(smach.State):
                     operator_pos.point.z = 0.0
                     self._operator_pub.publish(operator_pos)
 
-                    self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().p))
+                    self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p))
 
                     return True
                 else:
                     self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
 
-            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().p))
+            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p))
             # If the operator is lost, check if we still have an ID
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
@@ -333,7 +333,7 @@ class FollowOperator(smach.State):
     def _update_navigation(self):
         self._robot.head.cancel_goal()
 
-        robot_position = self._robot.base.get_location().p
+        robot_position = self._robot.base.get_location().frame.p
         operator_position = self._last_operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
@@ -477,7 +477,7 @@ class FollowOperator(smach.State):
         return False
 
     def _turn_towards_operator(self):
-        robot_position = self._robot.base.get_location().p
+        robot_position = self._robot.base.get_location().frame.p
         operator_position = self._last_operator.pose.position
 
         p = PositionConstraint()
