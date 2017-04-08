@@ -29,7 +29,7 @@ robot.speech.speak("There are {count} entities in my world".format(count=len(all
 
 robot_loc = robot.base.get_location()  # This is just Frame, TODO make this return a FrameStamped
 here_vs = kdl_conversions.FrameStamped(robot_loc, "/map").extractVectorStamped()
-radius = 2.0
+radius = 2
 close_entities = robot.ed.get_entities(center_point=here_vs, radius=radius)  # Get all the entities within radius of the robot
 robot.speech.speak("There are {count} entities within {radius} meters of my base".format(count=len(close_entities), radius=radius))
 
@@ -38,7 +38,7 @@ if not len(close_entities) < len(all_entities):
     failed_actions += ["get_entities with center_point and radius"]
 
 type = "trashbin"
-radius_2 = 10.0
+radius_2 = 10
 close_entities_of_type = robot.ed.get_entities(type=type, center_point=here_vs, radius=radius_2)  # Get all the entities of some type within radius of the robot
 robot.speech.speak("There are {count} {type}s within {radius} meters of my base".format(count=len(close_entities_of_type), radius=radius_2, type=type))
 
@@ -58,3 +58,14 @@ robot.speech.speak("The closest {type} to the center of the arena is {id}".forma
 if closest3.type != type:
     failed_actions += ["get_closest_entity with type, center_point and radius"]
 
+
+#######################
+# Test Get Entity #
+#######################
+
+id_ = "trashbin"
+trashbin = robot.ed.get_entity(id_)
+robot.speech.speak("Entity {id} is at {x}, {y} in the map".format(id=id_, x=trashbin._pose.p.x(), y=trashbin._pose.p.y()))
+if trashbin.id != id_:
+    failed_actions += ["get_entity with id {id}".format(id=id_)]
+    robot.speech.speak("I could not get entity with id {id}".format(id=id_))
