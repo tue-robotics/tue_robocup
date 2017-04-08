@@ -11,6 +11,7 @@ from robot_smach_states.util.designators import VariableDesignator, EdEntityDesi
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
+from robot_skills.util import kdl_conversions
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
@@ -19,44 +20,58 @@ print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
 class WaitForOperatorCommand(smach.State):
-    def __init__(self, robot, command_options, commands_as_outcomes=False):
 
-        if commands_as_outcomes:
-            # each possible command is a separate outcome
-            smach.State.__init__(self, outcomes=command_options + ['abort'])
-        else:
-            # outcome is success or abort, recognized command is returned using output_keys
-            smach.State.__init__(self, outcomes=['success', 'abort'],  output_keys=['command_recognized'])
+    def __init__(self, robot, possible_commands, commands_as_outcomes=False, commands_as_userdata=False):
 
         self._robot = robot
-        self._command_options = command_options
+        self._possible_commands = possible_commands
+        self._commands_as_outcomes = commands_as_outcomes
+        self._commands_as_userdata = commands_as_userdata
+
+        if commands_as_outcomes:  # each possible command is a separate outcome
+            _outcomes = possible_commands + ['abort']
+        else:                     # outcome is success or abort, recognized command is returned using output_keys
+            _outcomes = ['success', 'abort']
+
+        if commands_as_userdata:  # pass the recognized command to the next state
+            _output_keys = ['command_recognized']
+        else:                     # do not pass data to the next state
+            _output_keys = []
+
+        smach.State.__init__(self, outcomes=_outcomes,  output_keys=_output_keys)
 
     def _listen_for_commands(self, tries=3, time_out = rospy.Duration(30)):
         for i in range(0, tries):
-            result = self._robot.ears.recognize("<option>", {"option" : self._command_options}, time_out)
+            result = self._robot.ears.recognize("<option>", {"option" : self._possible_commands}, time_out)
             command_recognized = result.result
 
             if command_recognized == "":
                 self._robot.speech.speak("I am still waiting for a command and did not hear anything")
 
-            elif command_recognized in self._command_options:
+            elif command_recognized in self._possible_commands:
                 self._robot.speech.speak(command_recognized + " OK")
                 return "success", command_recognized
 
             else:
-                self._robot.speech.speak("I don't understand, I expected a command like " + self._command_options)
+                self._robot.speech.speak("I don't understand, I expected a command like " + ", ".join(self._possible_commands))
 
         self._robot.speech.speak("I did not recognize a command and will stop now")
-        return "abort", ""
+        return "abort", "abort"
 
     def execute(self, userdata):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
         self._robot.head.look_at_standing_person()
 
-        outcome, userdata.command_recognized = self._listen_for_commands()
+        outcome, command_recognized = self._listen_for_commands()
 
-        return outcome
+        if self._commands_as_userdata:
+            userdata.command_recognized = command_recognized
+
+        if self._commands_as_outcomes:
+            return command_recognized
+        else:
+            return outcome
 
 class StoreCarWaypoint(smach.State):
     def __init__(self, robot):
@@ -65,25 +80,44 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoints['car']['id'], posestamped=self._robot.base.get_location(), type="waypoint")
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
+                                               frame_stamped=kdl_conversions.FrameStamped(self._robot.base.get_location(), "/map"),
+                                               type="waypoint")
 
         if success:
             return "success"
         else:
             return "abort"
 
-class NavigateToRoom(smach.State):
+class GrabItem(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,
                              outcomes=['success', 'abort'],
+                             input_keys=['target_room_in'],
+                             output_keys=['target_room_out'])
+        self._robot = robot
+        robot.base.local_planner.cancelCurrentPlan()
+
+    def execute(self, userdata):
+        # TODO: reuse grab action to grab bag from operator
+        # states.ArmToJointConfig(robot, arm_designator, "carrying_pose"),
+        states.Say(self._robot, "Grabbing item")
+        userdata.target_room_out = userdata.target_room_in
+
+        return "success"
+
+class NavigateToRoom(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,
+                             outcomes=['unreachable','arrived','goal_not_defined'],
                              input_keys=['target_room'])
         self._robot = robot
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
 
-        target_waypoint = challenge_knowledge.waypoint[userdata.target_room]['id']
-        target_radius = challenge_knowledge.waypoint[userdata.target_room]['radius']
+        target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
+        target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
         navigateToWaypoint = states.NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=target_waypoint), target_radius)
 
@@ -103,7 +137,7 @@ def setup_statemachine(robot):
 
         # Tim
         smach.StateMachine.add('WAIT_TO_FOLLOW',
-                               WaitForOperatorCommand(robot, command_options=challenge_knowledge.commands['follow']),
+                               WaitForOperatorCommand(robot, possible_commands=challenge_knowledge.commands['follow']),
                                transitions={'success':        'FOLLOW_OPERATOR',
                                             'abort':          'Aborted'})
 
@@ -111,7 +145,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
                                #TODO: add that robot should memorize operator
                                WaitForOperatorCommand(robot,
-                                                      command_options=challenge_knowledge.commands['follow_or_remember'],
+                                                      possible_commands=challenge_knowledge.commands['follow_or_remember'],
                                                       commands_as_outcomes=True),
                                transitions={'follow':         'FOLLOW_OPERATOR',
                                             'remember':       'REMEMBER_CAR_LOCATION',
@@ -138,27 +172,26 @@ def setup_statemachine(robot):
 
         # Tim
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
-                               WaitForOperatorCommand(robot, command_options=challenge_knowledge.waypoints.keys()),
+                               WaitForOperatorCommand(robot, possible_commands=challenge_knowledge.waypoints.keys(), commands_as_userdata=True),
                                transitions={'success':        'GRAB_ITEM',
                                             'abort':          'Aborted'})
 
         # Kwin
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
-                               #TODO: reuse grab action to grab bag from operator
-                               #states.ArmToJointConfig(robot, arm_designator, "carrying_pose"),
-                               states.Say(robot, "Grabbing item"),
-                               transitions={'spoken': 'GOTO_DESTINATION'})
-                               #transitions={'success':        'GOTO_DESTINATION',
-                               #             'abort':          'Aborted'})
+                               GrabItem(robot),
+                               transitions={'success':        'GOTO_DESTINATION',
+                                            'abort':          'Aborted'},
+                               remapping = {'target_room_in': 'command_recognized',
+                                            'target_room_out': 'target_room'})
 
 
         # Tim
         smach.StateMachine.add('GOTO_DESTINATION',
                                NavigateToRoom(robot),
-                               transitions={'success':        'PUTDOWN_ITEM',
-                                            'abort':          'Aborted'},
-                               remapping={  'target_room':    'command_recognized'})
+                               transitions={'arrived':          'PUTDOWN_ITEM',
+                                            'unreachable':      'PUTDOWN_ITEM',  #implement avoid obstacle behaviour later
+                                            'goal_not_defined': 'Aborted'})
 
         # Kwin
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
@@ -180,8 +213,8 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GOTO_CAR',
                                states.NavigateToWaypoint(robot,
                                                          EntityByIdDesignator(robot,
-                                                         id=challenge_knowledge.waypoints['car']['id']),
-                                                         challenge_knowledge.waypoints['car']['radius']),
+                                                         id=challenge_knowledge.waypoint_car['id']),
+                                                         challenge_knowledge.waypoint_car['radius']),
                                # TODO: detect closed door
                                transitions={'unreachable':      'OPEN_DOOR',
                                             'arrived':          'AT_END',

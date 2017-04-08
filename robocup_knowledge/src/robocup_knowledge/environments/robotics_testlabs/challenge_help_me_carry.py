@@ -8,11 +8,13 @@ commands = {
                              "bag",
                              "bring"]}     # 'Carry this bag'
 
+# add or get from ~/ros/kinetic/system/src/ed_object_models/models/robotics_testlabs/model.yaml
 waypoints = {
-    'kitchen':              {'id':      "kitchen_table",
-                             'radius':  1}, #TODO: update waypoint, target
-    'car':                  {'id':      "car",
-                             'radius':  1}}
+    'kitchen':              {'id':      "explore1",
+                             'radius':  1}} #TODO: update waypoint, target
+
+waypoint_car = {'id':      "car",
+                'radius':  1}
 
 starting_point = "initial_pose"
 rotation = 0
