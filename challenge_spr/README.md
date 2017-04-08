@@ -50,5 +50,6 @@ Riddle / Bluff games:
 - detect.py
 	- use skybiometry node and service
 	- use face_recognition node and service
+	- change topic of local kinect to the same topic as robot kinect
 - head.py
     - Change topic name of get_image so it depending on robot name
