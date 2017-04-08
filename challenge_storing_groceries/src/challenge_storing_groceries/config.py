@@ -6,9 +6,14 @@ challenge_knowledge = load_knowledge('challenge_storing_groceries')
 # Inspection
 CABINET = challenge_knowledge.cabinet_amcl
 OBJECT_SHELVES = challenge_knowledge.object_shelves
+
+# Grasping
 TABLE = challenge_knowledge.grasp_surface
 ROOM = challenge_knowledge.room
 
+# Placing
+DEFAULT_PLACE_ENTITY = challenge_knowledge.default_place_entity
+DEFAULT_PLACE_AREA = challenge_knowledge.default_place_area
 
 # OBJECT_TYPES = challenge_knowledge.object_types
 # # MAX_NUM_ENTITIES_IN_PDF = 10
