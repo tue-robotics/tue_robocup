@@ -42,9 +42,6 @@ for side, arm in robot.arms.items():
         failed_actions += [goal1]
     arm.wait_for_motion_done()
 
-    # TODO: Now check that the hand frame is within some tolerance to the desired goal.
-    # Kwin's AR comparison stuff may also come in handy here.
-
     if arm.send_gripper_goal("open"):
         robot.speech.speak("My {} hand is now open".format(side))
     else:
