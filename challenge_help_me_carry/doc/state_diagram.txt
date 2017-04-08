@@ -4,19 +4,19 @@
 
 title Challenge Help-me-carry
 
-[*] --> Wait_to_follow : Initialize
-Wait_to_follow --> Follow_operator : "Robot, follow me"
-Follow_operator --> Wait_to_follow_or_remember
-Wait_to_follow_or_remember --> Follow_operator
-Wait_to_follow_or_remember --> Remember_car_location
-Remember_car_location --> Wait_for_destination
-Wait_for_destination --> Grab_item
-Grab_item --> Goto_destination
-Goto_destination --> Putdown_item
-Putdown_item --> Asking_for_help
-Asking_for_help --> Goto_car
-Goto_car --> Open_door
-Open_door --> Goto_car
-Goto_car --> [*] : At_end
+[*] --> WAIT_TO_FOLLOW : INITIALIZE
+WAIT_TO_FOLLOW --> FOLLOW_OPERATOR : "Robot, follow me"
+FOLLOW_OPERATOR --> WAIT_TO_FOLLOW_OR_REMEMBER
+WAIT_TO_FOLLOW_OR_REMEMBER --> FOLLOW_OPERATOR
+WAIT_TO_FOLLOW_OR_REMEMBER --> REMEMBER_CAR_LOCATION
+REMEMBER_CAR_LOCATION --> WAIT_FOR_DESTINATION
+WAIT_FOR_DESTINATION --> GRAB_ITEM
+GRAB_ITEM --> GOTO_DESTINATION
+GOTO_DESTINATION --> PUTDOWN_ITEM
+PUTDOWN_ITEM --> ASKING_FOR_HELP
+ASKING_FOR_HELP --> GOTO_CAR
+GOTO_CAR --> OPEN_DOOR
+OPEN_DOOR --> GOTO_CAR
+GOTO_CAR --> [*] : AT_END
 
 @enduml

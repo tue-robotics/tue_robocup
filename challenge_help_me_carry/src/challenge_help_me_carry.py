@@ -7,7 +7,7 @@ import time
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
-from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
+import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
@@ -90,21 +90,23 @@ class StoreCarWaypoint(smach.State):
             return "abort"
 
 class GrabItem(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, empty_arm_designator, current_item):
         smach.State.__init__(self,
-                             outcomes=['success', 'abort'],
+                             outcomes=['succeeded', 'failed'],
                              input_keys=['target_room_in'],
                              output_keys=['target_room_out'])
         self._robot = robot
+        self._empty_arm_designator = empty_arm_designator
+        self._current_item = current_item
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        # TODO: reuse grab action to grab bag from operator
-        # states.ArmToJointConfig(robot, arm_designator, "carrying_pose"),
-        states.Say(self._robot, "Grabbing item")
+        
+        handOverHuman = states.HandoverFromHuman(self._robot, self._empty_arm_designator, self._current_item)
+
         userdata.target_room_out = userdata.target_room_in
 
-        return "success"
+        return handOverHuman.execute()
 
 class NavigateToRoom(smach.State):
     def __init__(self, robot):
@@ -119,12 +121,22 @@ class NavigateToRoom(smach.State):
         target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
         target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
-        navigateToWaypoint = states.NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=target_waypoint), target_radius)
+        navigateToWaypoint = states.NavigateToWaypoint(self._robot, ds.EntityByIdDesignator(self._robot, id=target_waypoint), target_radius)
 
         return navigateToWaypoint.execute()
 
 
 def setup_statemachine(robot):
+
+    place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
+    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot,
+                                                                 place_name,
+                                                                 name="placement", 
+                                                                 area=challenge_knowledge.default_area),
+                                                                 name="place_position")
+    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.rightArm, name="empty_arm_designator")
+    current_item = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_item, name="current_item")
+    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, current_item, name="arm_with_item_designator")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -179,9 +191,9 @@ def setup_statemachine(robot):
         # Kwin
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
-                               GrabItem(robot),
-                               transitions={'success':        'GOTO_DESTINATION',
-                                            'abort':          'Aborted'},
+                               GrabItem(robot, empty_arm_designator, current_item),
+                               transitions={'succeeded':        'GOTO_DESTINATION',
+                                            'failed':           'Aborted'},
                                remapping = {'target_room_in': 'command_recognized',
                                             'target_room_out': 'target_room'})
 
@@ -196,11 +208,11 @@ def setup_statemachine(robot):
         # Kwin
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
-                               #states.Place(robot, self.current_item, self.place_position, self.arm_with_item_designator),
-                               states.Say(robot, "Putting down item"),
-                               transitions={'spoken': 'ASKING_FOR_HELP'})
-                               #transitions={'success':        'ASKING_FOR_HELP',
-                               #             'abort':          'Aborted'})
+                               #states.Say(robot, "Putting down item"),
+                               states.Place(robot, current_item, place_position, arm_with_item_designator),
+                               #transitions={'spoken': 'ASKING_FOR_HELP'})
+                               transitions={'done':           'ASKING_FOR_HELP',
+                                            'failed':         'Aborted'})
 
         smach.StateMachine.add('ASKING_FOR_HELP',
                                #TODO: look and then face new operator
@@ -212,9 +224,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GOTO_CAR',
                                states.NavigateToWaypoint(robot,
-                                                         EntityByIdDesignator(robot,
+                                                         ds.EntityByIdDesignator(robot,
                                                          id=challenge_knowledge.waypoint_car['id']),
                                                          challenge_knowledge.waypoint_car['radius']),
+
                                # TODO: detect closed door
                                transitions={'unreachable':      'OPEN_DOOR',
                                             'arrived':          'AT_END',
@@ -231,7 +244,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, "Goodbye"),
                                 transitions={'spoken':  'Done'})
 
-    analyse_designators(sm, "help_me_carry")
+    ds.analyse_designators(sm, "help_me_carry")
     return sm
 
 

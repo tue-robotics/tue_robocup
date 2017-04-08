@@ -16,6 +16,10 @@ waypoints = {
 waypoint_car = {'id':      "car",
                 'radius':  1}
 
+default_item = "coke"
+default_place = "dinner_table"
+default_area = "on_top_of"
+
 starting_point = "initial_pose"
 rotation = 0
 
