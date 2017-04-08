@@ -5,6 +5,8 @@ import rospy
 
 import robot_skills.util.kdl_conversions as kdl_conversions
 
+from robot_skills.util.robot_constructor import robot_constructor
+
 if len(sys.argv) < 2:
     print "Please specify a robot name"
     sys.exit()
@@ -13,15 +15,7 @@ robot_name = sys.argv[1]
 
 rospy.init_node("arm_test")
 
-if robot_name == "amigo":
-    from robot_skills.amigo import Amigo
-    robot = Amigo()
-elif robot_name == "sergio":
-    from robot_skills.sergio import Sergio
-    robot = Sergio()
-else:
-    print "Unknown robot '%s'"%robot_name
-    sys.exit()
+robot = robot_constructor(robot_name)
 
 failed_actions_per_arm = {}
 
