@@ -52,5 +52,5 @@ choice_answer_mapping = {
 }
 
 spec = '<question>'
-choices = {'question': [k for k,v in choice_answer_mapping.iteritems()]}
+choices = {'question': choice_answer_mapping.keys()}
 
