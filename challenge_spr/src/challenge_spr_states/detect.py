@@ -13,7 +13,7 @@ import robot_skills.util.msg_constructors as msgs
 
 from cv_bridge import CvBridge, CvBridgeError
 from openface_ros.face_recognizer import FaceRecognizer
-from skybiometry_ros import Skybiometry
+# from skybiometry_ros import Skybiometry
 from image_recognition_msgs.msg import FaceProperties
 from image_recognition_msgs.srv import GetFaceProperties
 from robot_smach_states.util.startup import startup
@@ -28,8 +28,8 @@ align_path = '~/openface/models/dlib/shape_predictor_68_face_landmarks.dat'
 net_path = '~/openface/models/openface/nn4.small2.v1.t7'
 
 
-key = '69efefc20c7f42d8af1f2646ce6742ec'
-secret = '5fab420ca6cf4ff28e7780efcffadb6c'
+# key = '69efefc20c7f42d8af1f2646ce6742ec'
+# secret = '5fab420ca6cf4ff28e7780efcffadb6c'
 
 
 class DetectCrowd(smach.State):
@@ -38,7 +38,7 @@ class DetectCrowd(smach.State):
         self.robot = robot
         self._bridge = CvBridge()
         self._face_recognizer = FaceRecognizer(align_path, net_path)
-        self._skybiometry = Skybiometry(key, secret)
+        # self._skybiometry = Skybiometry(key, secret)
 
     def execute(self, userdata=None):
         tries = 3
@@ -77,7 +77,7 @@ class DetectCrowd(smach.State):
         rospy.loginfo('Calling Skybiometry...')
         
         try:
-            #face_properties = self._skybiometry.get_face_properties(imgs, timeout)
+            # face_properties = self._skybiometry.get_face_properties(imgs, timeout)
             get_face_properties = rospy.ServiceProxy('/get_face_properties', GetFaceProperties)
             face_properties_response = get_face_properties(imgs)
             face_properties = face_properties_response.properties_array
