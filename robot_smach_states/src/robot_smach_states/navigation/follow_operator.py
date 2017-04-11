@@ -16,7 +16,7 @@ from visualization_msgs.msg import Marker
 from cb_planner_msgs_srvs.msg import *
 
 from robot_skills.util import transformations, msg_constructors
-from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util import kdl_conversions
 
 
 class FollowOperator(smach.State):
@@ -52,7 +52,7 @@ class FollowOperator(smach.State):
 
         self._last_pose_stamped = None
         self._last_pose_stamped_time = None
-        self._last_operator_pose_stamped = None
+        self._last_operator_fs = None
 
         self._replan_active = False
         self._last_operator = None
@@ -69,21 +69,21 @@ class FollowOperator(smach.State):
             return False
 
         operator_current_pose = self._operator.pose
-        operator_current_pose_stamped = msg_constructors.PoseStamped(x=operator_current_pose.position.x, y=operator_current_pose.position.y)
+        operator_current_fs = kdl_conversions.kdlFrameStampedFromXYZRPY(x=operator_current_pose.position.x, y=operator_current_pose.position.y)
         #print "Operator position: %s" % self._operator.pose.position
 
-        if not self._last_operator_pose_stamped:
-            self._last_operator_pose_stamped = operator_current_pose_stamped
+        if not self._last_operator_fs:
+            self._last_operator_fs = operator_current_fs
         else:
             # Compare the pose with the last pose and update if difference is larger than x
-            if math.hypot(operator_current_pose_stamped.pose.position.x - self._last_operator_pose_stamped.pose.position.x, operator_current_pose_stamped.pose.position.y - self._last_operator_pose_stamped.pose.position.y) > 0.15:
+            if math.hypot(operator_current_fs.pose.position.x - self._last_operator_fs.pose.position.x, operator_current_fs.pose.position.y - self._last_operator_fs.pose.position.y) > 0.15:
                 # Update the last pose
            #     print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped.pose.position.x, self._last_operator_pose_stamped.pose.position.y, self._last_operator_pose_stamped.header.stamp.secs)
-                self._last_operator_pose_stamped = operator_current_pose_stamped
+                self._last_operator_fs = operator_current_fs
             else:
-                print "Operator is standing still for %f seconds" % (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped.header.stamp).to_sec()
+                print "Operator is standing still for %f seconds" % (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec()
                 # Check whether we passed the timeout
-                if (operator_current_pose_stamped.header.stamp - self._last_operator_pose_stamped.header.stamp).to_sec() > timeout:
+                if (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec() > timeout:
                     return True
         return False
 
@@ -163,7 +163,7 @@ class FollowOperator(smach.State):
                     self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                     return False
             else:
-                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -211,7 +211,7 @@ class FollowOperator(smach.State):
         # This only happens when the operator was just registered, and never tracked
         print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
         self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
-                                                                                center_point=VectorStamped(
+                                                                                center_point=kdl_conversions.VectorStamped(
                                                                                     x=1.5, y=0, z=1,
                                                                                     frame_id="/%s/base_link" % self._robot.robot_name))
         if self._operator:
@@ -219,7 +219,7 @@ class FollowOperator(smach.State):
         else:
             print "Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1"
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-                                                                          center_point=VectorStamped(
+                                                                          center_point=kdl_conversions.VectorStamped(
                                                                               x=1.5, y=0, z=1,
                                                                               frame_id="/%s/base_link" % self._robot.robot_name)
                                                                           )
@@ -410,7 +410,7 @@ class FollowOperator(smach.State):
                        -math.pi/6,
                        -math.pi/4,
                        -math.pi/2.3]
-        head_goals = [VectorStamped(x=look_distance*math.cos(angle),
+        head_goals = [kdl_conversions.VectorStamped(x=look_distance*math.cos(angle),
                                     y=look_distance*math.sin(angle),
                                     z=1.7,
                                     frame_id="/%s/base_link" % self._robot.robot_name)
@@ -587,7 +587,7 @@ class FollowOperator(smach.State):
     def execute(self, userdata):
         # Reset robot and operator last pose
         self._last_pose_stamped = None
-        self._last_operator_pose_stamped = None
+        self._last_operator_fs = None
         self._breadcrumbs = []
         old_no_breadcrumbs = len(self._breadcrumbs)
 
