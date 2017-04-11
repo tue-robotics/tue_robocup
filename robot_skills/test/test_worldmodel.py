@@ -27,10 +27,9 @@ failed_actions = []
 all_entities = robot.ed.get_entities()
 robot.speech.speak("There are {count} entities in my world".format(count=len(all_entities)))
 
-robot_loc = robot.base.get_location()  # This is just Frame, TODO make this return a FrameStamped
-here_vs = kdl_conversions.FrameStamped(robot_loc, "/map").extractVectorStamped()
+robot_loc = robot.base.get_location().extractVectorStamped()
 radius = 2
-close_entities = robot.ed.get_entities(center_point=here_vs, radius=radius)  # Get all the entities within radius of the robot
+close_entities = robot.ed.get_entities(center_point=robot_loc, radius=radius)  # Get all the entities within radius of the robot
 robot.speech.speak("There are {count} entities within {radius} meters of my base"
                    .format(count=len(close_entities), radius=radius))
 
@@ -41,7 +40,7 @@ if not len(close_entities) < len(all_entities):
 # Get all the entities of some type within radius of the robot
 query_type = "trashbin"
 radius_2 = 10
-close_entities_of_type = robot.ed.get_entities(type=query_type, center_point=here_vs, radius=radius_2)
+close_entities_of_type = robot.ed.get_entities(type=query_type, center_point=robot_loc, radius=radius_2)
 robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
                    .format(count=len(close_entities_of_type), radius=radius_2, type=query_type))
 
