@@ -121,6 +121,9 @@ class Entity(object):
         """ Setter """
         self._pose = poseMsgToKdlFrame(pose)
 
+    def __repr__(self):
+        return "Entity(id='{id}', type='{type}', frame={frame}".format(id=self.id, type=self.type, frame=self._pose)
+
 
 def from_entity_info(e):
     """ Converts ed.msg.EntityInfo to an Entity
