@@ -76,7 +76,7 @@ class FollowOperator(smach.State):
             self._last_operator_fs = operator_current_fs
         else:
             # Compare the pose with the last pose and update if difference is larger than x
-            if math.hypot(operator_current_fs.pose.position.x - self._last_operator_fs.pose.position.x, operator_current_fs.pose.position.y - self._last_operator_fs.pose.position.y) > 0.15:
+            if (operator_current_fs.frame.p - self._last_operator_fs.frame.p).Norm() > 0.15:
                 # Update the last pose
            #     print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped.pose.position.x, self._last_operator_pose_stamped.pose.position.y, self._last_operator_pose_stamped.header.stamp.secs)
                 self._last_operator_fs = operator_current_fs
