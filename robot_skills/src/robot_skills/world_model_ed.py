@@ -244,7 +244,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, type="", center_point=Point(), radius=0, room = ""):
+    def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room = ""):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
