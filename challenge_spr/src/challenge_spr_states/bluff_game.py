@@ -27,7 +27,7 @@ def _turn_to_closest_entity(robot):
 
     operator = None
     while not operator:
-        operator = robot.ed.get_closest_entity(radius=1.9, center_point=robot.base.get_location().p)
+        operator = robot.ed.get_closest_entity(radius=1.9, center_point=robot.base.get_location().extractVectorStamped())
         print operator
         if not operator:
             vth = 0.5
@@ -39,9 +39,9 @@ def _turn_to_closest_entity(robot):
 
     # Turn towards the operator
     current = robot.base.get_location()
-    robot_th = current.M.GetRPY()[2]  # Get the Yaw, rotation around Z
-    desired_th = math.atan2(operator._pose.p.y() - current.p.y(),
-                            operator._pose.p.x() - current.p.x())
+    robot_th = current.frame.M.GetRPY()[2]  # Get the Yaw, rotation around Z
+    desired_th = math.atan2(operator._pose.p.y() - current.frame.p.y(),
+                            operator._pose.p.x() - current.frame.p.x())
 
     # Calculate params
     th = desired_th - robot_th
