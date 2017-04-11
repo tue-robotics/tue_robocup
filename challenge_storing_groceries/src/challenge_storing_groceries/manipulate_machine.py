@@ -9,7 +9,7 @@ import robot_smach_states.util.designators as ds
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
-from config import TABLE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA
+from config import TABLE, GRAB_SURFACE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA
 
 
 class DefaultGrabDesignator(ds.Designator):
@@ -117,7 +117,7 @@ class GrabSingleItem(smach.StateMachine):
             #                        transitions={'unlocked': 'failed'})
 
 
-class PlaceSingleItem(smach.StateMachine):
+class PlaceSingleItem(smach.State):
     """ Tries to place an object. A 'place' statemachine is constructed dynamically since this makes it easier to
      build a statemachine (have we succeeded in grasping the objects?)"""
     def __init__(self, robot, place_designator=None):
@@ -126,7 +126,7 @@ class PlaceSingleItem(smach.StateMachine):
         :param robot: robot object
         :param place_designator: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         """
-        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
 
         self._robot = robot
         if place_designator is not None:

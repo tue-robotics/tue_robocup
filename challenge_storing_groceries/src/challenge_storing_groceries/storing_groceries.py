@@ -19,17 +19,19 @@ Afterwards, a PDF report has to be made:
     - the bounding box of the object.'
 """
 
+# ROS
+import smach
+
+# TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-import rospy
-import smach
-from robot_skills.util.entity import Entity
 from robot_smach_states.util.geometry_helpers import *
 
-# import pdf
+# Challenge storing groceries
 from config import *
 from inspect_shelves import InspectShelves
 from manipulate_machine import ManipulateMachine
+from pdf import WritePdf
 
 
 class StoringGroceries(smach.StateMachine):
@@ -37,6 +39,8 @@ class StoringGroceries(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
         placed_items = []
+
+        pdf_writer = WritePdf(robot=robot)
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -62,11 +66,11 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES",
                                    InspectShelves(robot),
-                                   transitions={'succeeded': 'RANGE_ITERATOR',
-                                                'nothing_found': 'RANGE_ITERATOR',
-                                                'failed': 'RANGE_ITERATOR'})
+                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
+                                                'nothing_found': 'WRITE_PDF_SHELVES',
+                                                'failed': 'WRITE_PDF_SHELVES'})
 
-            # ToDo: add pdf stuff
+            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
 
             # Begin setup iterator
             # The exhausted argument should be set to the prefered state machine outcome
@@ -77,7 +81,7 @@ class StoringGroceries(smach.StateMachine):
                                             exhausted_outcome='succeeded')
 
             with range_iterator:
-                single_item = ManipulateMachine(robot)
+                single_item = ManipulateMachine(robot)  # ToDo: add more pdf stuff
 
                 smach.Iterator.set_contained_state('SINGLE_ITEM',
                                                    single_item,

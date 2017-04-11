@@ -3,15 +3,20 @@ from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
 
+# ToDo: move everything environment specific to challenge knowledge
+
 # Inspection
 CABINET = challenge_knowledge.cabinet_amcl
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 OBJECT_TYPES = challenge_knowledge.object_types
-DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
+DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF. # ToDo: no global?!
 SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
+CLASSIFICATION_THRESHOLD = 0.5  # Threshold for perception. If classification below threshold, the type is not added
+# to the world model and further on considered unknown.
 
 # Grasping
 TABLE = challenge_knowledge.grasp_surface
+GRAB_SURFACE = "on_top_of"
 ROOM = challenge_knowledge.room
 
 # Placing
