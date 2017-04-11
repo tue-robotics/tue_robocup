@@ -34,7 +34,7 @@ class NavigateToExplore(NavigateTo):
     def generateConstraint(self):
 
         # Add current pose to visited list
-        current_pose = self.robot.base.get_location()
+        current_pose = self.robot.base.get_location().frame
         self.visited_list.append(current_pose)
 
         e = self.constraint_designator.resolve()

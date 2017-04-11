@@ -26,7 +26,7 @@ class StartAnalyzer(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.base.analyzer.start_measurement(self.robot.base.get_location())
+        self.robot.base.analyzer.start_measurement(self.robot.base.get_location().frame)
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ class StopAnalyzer(smach.State):
         self.result = result
 
     def execute(self, userdata):
-        self.robot.base.analyzer.stop_measurement(self.robot.base.get_location(), self.result)
+        self.robot.base.analyzer.stop_measurement(self.robot.base.get_location().frame, self.result)
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
@@ -365,3 +365,16 @@ def navigate_with_constraints(robot=None, constraint="x^2+y^2<1", frame="/map"):
 
     nwc = NavigateWithConstraints(robot, p, o)
     nwc.execute()
+
+class Turn(smach.State):
+    def __init__(self, robot, radians, vth=1):
+        smach.State.__init__(self, outcomes=["turned"])
+        self.robot = robot
+        self.radians = radians
+        self.vth = vth
+
+    def execute(self, userdata):
+        print "Turning %f radians with force drive at %f rad/s" % (self.radians, self.vth)
+        self.robot.base.force_drive(0, 0, self.vth, self.radians / self.vth)
+
+        return "turned"

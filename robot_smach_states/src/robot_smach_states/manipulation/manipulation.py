@@ -63,7 +63,7 @@ class HandoverFromHuman(smach.StateMachine):
     as id.
     '''
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
-        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed','timeout'])
 
         check_type(arm_designator, Arm)
         if not grabbed_entity_designator and grabbed_entity_label == "":
@@ -86,6 +86,7 @@ class HandoverFromHuman(smach.StateMachine):
                                                                                         grabbed_entity_designator=grabbed_entity_designator,
                                                                                         timeout=timeout),
                                 transitions={'succeeded'    :   'succeeded',
+                                             'timeout'      :   'timeout',
                                              'failed'       :   'failed'})
 
 
@@ -172,7 +173,7 @@ class OpenGripperOnHandoverToHuman(smach.State):
 
 class CloseGripperOnHandoverToRobot(smach.State):
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        smach.State.__init__(self, outcomes=['succeeded','failed','timeout'])
         self.robot = robot
         self.arm_designator = arm_designator
         self.timeout = timeout
@@ -197,7 +198,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
             return "succeeded"
         else:
-            return "failed"
+            return "timeout"
 
 
 

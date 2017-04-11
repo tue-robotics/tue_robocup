@@ -19,6 +19,7 @@ import traceback
 from docopt import docopt
 import os
 import ast
+from robot_skills.util.robot_constructor import robot_constructor
 
 
 def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
@@ -44,21 +45,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     initial_pose = arguments["--initial_pose"]
     no_execute = arguments["--no_execute"]
 
-    robot = None
-    if robot_name == "amigo":
-        import robot_skills.amigo
-        robot = robot_skills.amigo.Amigo(wait_services=True)
-    elif robot_name == "sergio":
-        import robot_skills.sergio
-        robot = robot_skills.sergio.Sergio(wait_services=True)
-    elif robot_name == "mockbot":
-        import robot_skills.mockbot
-        robot = robot_skills.mockbot.Mockbot(wait_services=True)
-    else:
-        rospy.logerr(
-            "No robot named '{}'. Options: {}"\
-                .format(robot_name, available_robots))
-        exit(-1)
+    robot = robot_constructor(robot_name)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
 
