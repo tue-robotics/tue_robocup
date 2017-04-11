@@ -38,10 +38,10 @@ def _turn_to_closest_entity(robot):
     robot.base.force_drive(0, 0, 0, 0.5)
 
     # Turn towards the operator
-    current = robot.base.get_location().extractVectorStamped()
-    robot_th = current.M.GetRPY()[2]  # Get the Yaw, rotation around Z
-    desired_th = math.atan2(operator._pose.p.y() - current.p.y(),
-                            operator._pose.p.x() - current.p.x())
+    current = robot.base.get_location()
+    robot_th = current.frame.M.GetRPY()[2]  # Get the Yaw, rotation around Z
+    desired_th = math.atan2(operator._pose.p.y() - current.frame.p.y(),
+                            operator._pose.p.x() - current.frame.p.x())
 
     # Calculate params
     th = desired_th - robot_th
