@@ -29,7 +29,7 @@ from robot_smach_states.util.geometry_helpers import *
 # import pdf
 from config import *
 from inspect_shelves import InspectShelves
-from manipulate_single_item import ManipRecogSingleItem
+from manipulate_machine import ManipulateMachine
 
 
 class StoringGroceries(smach.StateMachine):
@@ -62,15 +62,39 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES",
                                    InspectShelves(robot),
-                                   transitions={'succeeded': 'Done',
-                                                'nothing_found': 'Done',
-                                                'failed': 'Done'})
+                                   transitions={'succeeded': 'RANGE_ITERATOR',
+                                                'nothing_found': 'RANGE_ITERATOR',
+                                                'failed': 'RANGE_ITERATOR'})
 
-            # smach.StateMachine.add("INSPECT_SHELVES",
-            #                        InspectShelves(robot),
-            #                        transitions={'succeeded': 'EXPORT_PDF',
-            #                                     'nothing_found': 'EXPORT_PDF',
-            #                                     'failed': 'EXPORT_PDF'})
+            # ToDo: add pdf stuff
+
+            # Begin setup iterator
+            # The exhausted argument should be set to the prefered state machine outcome
+            range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
+                                            input_keys=[], output_keys=[],
+                                            it=lambda: range(5),
+                                            it_label='index',
+                                            exhausted_outcome='succeeded')
+
+            with range_iterator:
+                single_item = ManipulateMachine(robot)
+
+                smach.Iterator.set_contained_state('SINGLE_ITEM',
+                                                   single_item,
+                                                   loop_outcomes=['succeeded', 'failed'])
+
+            smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
+                                   {'succeeded': 'AT_END',
+                                    'failed': 'Aborted'})
+            # End setup iterator
+
+            # ToDo: add pdf stuff
+
+            smach.StateMachine.add('AT_END',
+                                   states.Say(robot, "Goodbye"),
+                                   transitions={'spoken': 'Done'})
+
+            # ToDo: add pdf stuff
 
             # @smach.cb_interface(outcomes=["exported"])
             # def export_to_pdf(userdata):
@@ -87,30 +111,6 @@ class StoringGroceries(smach.StateMachine):
             #                        smach.CBState(export_to_pdf),
             #                        transitions={'exported': 'RANGE_ITERATOR'})
             #
-            # # Begin setup iterator
-            # # The exhausted argument should be set to the prefered state machine outcome
-            # range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
-            #                                 input_keys=[], output_keys=[],
-            #                                 it=lambda: range(5),
-            #                                 it_label='index',
-            #                                 exhausted_outcome='succeeded')
-            #
-            # with range_iterator:
-            #     single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, [Entity],
-            #                                                                     name="placed_items"))
-            #
-            #     smach.Iterator.set_contained_state('SINGLE_ITEM',
-            #                                        single_item,
-            #                                        loop_outcomes=['succeeded', 'failed'])
-            #
-            # smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-            #                        {'succeeded': 'AT_END',
-            #                         'failed': 'Aborted'})
-            # # End setup iterator
-            #
-            # smach.StateMachine.add('AT_END',
-            #                        states.Say(robot, "Goodbye"),
-            #                        transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "manipulation")
 

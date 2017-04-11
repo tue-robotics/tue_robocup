@@ -20,8 +20,15 @@ if __name__ == "__main__":
         Y = [2.56, 2.71, 2.86]
         Z = [0.75]
 
-        for index, (model, x,y,z) in enumerate(list(itertools.product(models, X, Y, Z))[:6]):
+        for index, (model, x, y, z) in enumerate(list(itertools.product(models, X, Y, Z))[:6]):
             W.add_object(model+"-"+str(index), model, x, y, z)
+
+        # Put coke, milk and fanta on the table
+        X = [0.915, 0.926, 0.908]
+        Y = [1.699, 1.954, 2.238]
+        Z = [0.85]
+        for index, (model, x, y, z) in enumerate(list(itertools.product(models, X, Y, Z))[:6]):
+            W.add_object("grab-" + model + "-" + str(index), model, x, y, z)
 
     if env == "rwc2015":
 

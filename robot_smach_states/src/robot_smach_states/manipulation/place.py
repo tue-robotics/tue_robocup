@@ -11,13 +11,15 @@ from robot_smach_states.util.designators import check_type
 from robot_skills.util.entity import Entity
 from robot_skills.arms import Arm
 
+
 class PreparePlace(smach.State):
     def __init__(self, robot, placement_pose, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
         :param robot: Robot to execute state with
         :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via ArmHoldingEntityDesignator
+        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
+        ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -60,6 +62,7 @@ class PreparePlace(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+
 class Put(smach.State):
 
     def __init__(self, robot, item_to_place, placement_pose, arm):
@@ -68,7 +71,8 @@ class Put(smach.State):
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via ArmHoldingEntityDesignator
+        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
+        ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -83,11 +87,11 @@ class Put(smach.State):
         self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
-    def execute(self, userdata): #robot, item_to_place, placement_pose, arm):
+    def execute(self, userdata):
         item_to_place = self._item_to_place_designator.resolve()
         if not item_to_place:
             rospy.logerr("Could not resolve item_to_place")
-            #return "failed"
+            # return "failed"
 
         placement_fs = self._placement_pose_designator.resolve()
         if not placement_fs:
@@ -102,7 +106,8 @@ class Put(smach.State):
         rospy.loginfo("Placing")
 
         # placement_pose is a PyKDL.Frame
-        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link', tf_listener=self._robot.tf_listener)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+                                                    tf_listener=self._robot.tf_listener)
 
         # Wait for torso and arm to finish their motions
         self._robot.torso.wait_for_motion_done()
@@ -119,14 +124,20 @@ class Put(smach.State):
             place_pose_bl.frame.p.x(place_pose_bl.frame.p.x() - 0.05)
 
             rospy.loginfo("Retrying preplace")
-            if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(), height+0.2, 0.0, 0.0, 0.0, frame_id="/{0}/base_link".format(self._robot.robot_name)),
-                             timeout=10, pre_grasp=False):
+            if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
+                                                           place_pose_bl.frame.p.y(),
+                                                           height+0.2, 0.0, 0.0, 0.0,
+                                                           frame_id="/{0}/base_link".format(self._robot.robot_name)),
+                                 timeout=10, pre_grasp=False):
                 rospy.logwarn("Cannot pre-place the object")
                 arm.cancel_goals()
                 return 'failed'
 
         # Place
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(), place_pose_bl.frame.p.y(), height+0.15, 0.0, 0.0, 0.0, frame_id="/{0}/base_link".format(self._robot.robot_name)),
+        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
+                                                       place_pose_bl.frame.p.y(),
+                                                       height+0.15, 0.0, 0.0, 0.0,
+                                                       frame_id="/{0}/base_link".format(self._robot.robot_name)),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
@@ -144,8 +155,11 @@ class Put(smach.State):
         arm.occupied_by = None
 
         # Retract
-        arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x() - 0.1, place_pose_bl.frame.p.y(), place_pose_bl.frame.p.z() + 0.05, 0.0, 0.0, 0.0, frame_id='/'+self._robot.robot_name+'/base_link'),
-                             timeout=0.0)
+        arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x() - 0.1,
+                                                place_pose_bl.frame.p.y(),
+                                                place_pose_bl.frame.p.z() + 0.05, 0.0, 0.0, 0.0,
+                                                frame_id='/'+self._robot.robot_name+'/base_link'),
+                      timeout=0.0)
 
         self._robot.base.force_drive(-0.125, 0, 0, 1.5)
 
@@ -162,33 +176,36 @@ class Put(smach.State):
 
         return 'succeeded'
 
+
 class Place(smach.StateMachine):
 
     def __init__(self, robot, item_to_place, place_pose, arm):
         """
-        Drive the robot to be close to the designated place_pose and move the designated arm to place the designated item there
+        Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
+        item there
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param place_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via ArmHoldingEntityDesignator
+        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
+        ArmHoldingEntityDesignator
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
-        #Check types or designator resolve types
+        # Check types or designator resolve types
         assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
         assert(place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped)
         assert(arm.resolve_type == Arm or type(arm) == Arm)
 
         with self:
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_pose, arm),
-                transitions={ 'succeeded' : 'NAVIGATE_TO_PLACE',
-                              'failed' : 'failed'})
+                                   transitions={'succeeded': 'NAVIGATE_TO_PLACE',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_pose, arm),
-                transitions={ 'unreachable' : 'failed',
-                              'goal_not_defined' : 'failed',
-                              'arrived' : 'PUT'})
+                                   transitions={'unreachable': 'failed',
+                                                'goal_not_defined': 'failed',
+                                                'arrived': 'PUT'})
 
             smach.StateMachine.add('PUT', Put(robot, item_to_place, place_pose, arm),
-                transitions={'succeeded' :   'done',
-                             'failed' :   'failed'})
+                                   transitions={'succeeded': 'done',
+                                                'failed': 'failed'})
