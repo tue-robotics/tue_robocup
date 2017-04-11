@@ -26,7 +26,7 @@ class StartAnalyzer(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.base.analyzer.start_measurement(self.robot.base.get_location())
+        self.robot.base.analyzer.start_measurement(self.robot.base.get_location().frame)
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ class StopAnalyzer(smach.State):
         self.result = result
 
     def execute(self, userdata):
-        self.robot.base.analyzer.stop_measurement(self.robot.base.get_location(), self.result)
+        self.robot.base.analyzer.stop_measurement(self.robot.base.get_location().frame, self.result)
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
