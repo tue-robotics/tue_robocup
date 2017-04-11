@@ -38,6 +38,7 @@ if not len(close_entities) < len(all_entities):
     failed_actions += ["get_entities with center_point and radius"]
 
 # Get all the entities of some type within radius of the robot
+robot_loc = robot.base.get_location().extractVectorStamped()
 query_type = "trashbin"
 radius_2 = 10
 close_entities_of_type = robot.ed.get_entities(type=query_type, center_point=robot_loc, radius=radius_2)
@@ -47,13 +48,12 @@ robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
 #######################
 # Test Closest Entity #
 #######################
-
 # TODO: center_point should also be a VectorStamped
-closest = robot.ed.get_closest_entity(center_point=kdl.Vector(0, 0, 0), radius=2.0)  # This is implicitly in /map
+closest = robot.ed.get_closest_entity(center_point=kdl_conversions.VectorStamped(), radius=2.0)  # This is implicitly in /map
 robot.speech.speak("The closest entity to the center of the arena is {id}, of type {type}"
                    .format(id=closest.id[:10], type=closest.type))
 
-closest2 = robot.ed.get_closest_entity(type=query_type, center_point=kdl.Vector(0, 0, 0), radius=10.0)
+closest2 = robot.ed.get_closest_entity(type=query_type, center_point=kdl_conversions.VectorStamped(), radius=10.0)
 robot.speech.speak("The closest {type} to the center of the arena is {id}".format(id=closest2.id, type=query_type))
 if closest2.type != query_type:
     failed_actions += ["get_closest_entity with type, center_point and radius"]
