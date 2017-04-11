@@ -165,14 +165,10 @@ def setup_statemachine(robot):
         # Kwin
         # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
-                               #TODO: add that the robot can follow the operator.
-                               #states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
-                               states.Say(robot, "Following operator"),
-                               transitions={'spoken': 'WAIT_TO_FOLLOW_OR_REMEMBER'})
-                               #transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
-                               #             'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
-                               #             'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
-
+                               states.FollowOperator(robot, operator_timeout=30, ask_follow=False, learn_face=False, replan=True),
+                               transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
+                                            'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
+                                            'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
 
         # Tim
         smach.StateMachine.add('REMEMBER_CAR_LOCATION',

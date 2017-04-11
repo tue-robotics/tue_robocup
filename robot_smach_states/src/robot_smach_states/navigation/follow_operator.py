@@ -163,7 +163,7 @@ class FollowOperator(smach.State):
                     self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                     return False
             else:
-                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -357,8 +357,8 @@ class FollowOperator(smach.State):
         else:
             breadcrumbs = self._breadcrumbs + [self._last_operator]
         for crumb in breadcrumbs:
-            dx = crumb.pose.position.x - previous_point.x
-            dy = crumb.pose.position.y - previous_point.y
+            dx = crumb.pose.position.x - previous_point.x()
+            dy = crumb.pose.position.y - previous_point.y()
 
             length = crumb.distance_to_2d(previous_point)
 
@@ -371,8 +371,8 @@ class FollowOperator(smach.State):
                 end = int(length / res)
 
                 for i in range(start, end):
-                    x = previous_point.x + i * dx_norm * res
-                    y = previous_point.y + i * dy_norm * res
+                    x = previous_point.x() + i * dx_norm * res
+                    y = previous_point.y() + i * dy_norm * res
                     plan.append(msg_constructors.PoseStamped(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = crumb.pose.position
@@ -490,11 +490,11 @@ class FollowOperator(smach.State):
             o.frame = 'map'
             o.look_at = self._last_operator.pose.position
 
-        dx = operator_position.x - robot_position.x
-        dy = operator_position.y - robot_position.y
+        dx = operator_position.x - robot_position.x()
+        dy = operator_position.y - robot_position.y()
 
         yaw = math.atan2(dy, dx)
-        plan = [msg_constructors.PoseStamped(x=robot_position.x, y=robot_position.y, z=0, yaw=yaw)]
+        plan = [msg_constructors.PoseStamped(x=robot_position.x(), y=robot_position.y(), z=0, yaw=yaw)]
         print "Operator within self._lookat_radius"
 
         self._robot.base.local_planner.setPlan(plan, p, o)
