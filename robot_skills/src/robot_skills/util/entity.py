@@ -38,6 +38,31 @@ class Entity(object):
     def volumes(self):
         return self._volumes
 
+    def in_volume(self, point, volume_id):
+        """ Checks if the point is in the volume identified by the volume id
+
+        :param point: VectorStamped with the point to check
+        :param volume_id: string with the volume
+        :return boolean indicating whether the point is in the designated volume. If an error occurs, False is returned
+        """
+        # Check if the volume exists
+        if volume_id not in self._volumes:
+            rospy.logdebug("{} not a volume of {}".format(volume_id, self.id))
+            return False
+
+        # Transform the point
+        fid1 = point.frame_id if point.frame_id[0] != "/" else point.frame_id[1:]  # Remove slash for comparison
+        fid2 = self.frame_id if self.frame_id[0] != "/" else self.frame_id[1:]  # Remove slash for comparison
+        if fid1 != fid2:
+            rospy.logerr("Cannot compute with volume and entity defined w.r.t. different frame: {} and {}".format(
+                point.frame_id, self.frame_id
+            ))
+            return False
+        vector = self._pose.Inverse() * point.vector
+
+        # Check if the point is inside of the volume
+        return self._volumes[volume_id].contains(vector)
+
     @property
     def last_update_time(self):
         return self._last_update_time

@@ -4,7 +4,7 @@ import rospy
 import smach
 from robot_skills.util.kdl_conversions import VectorStamped
 
-from robot_smach_states.navigation import NavigateToObserve
+from robot_smach_states.navigation import NavigateToObserve, NavigateToSymbolic
 import robot_smach_states.util.designators as ds
 from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
@@ -16,14 +16,18 @@ def _color_info(string):
     rospy.loginfo('\033[92m' + string + '\033[0m')
 
 
-'''
-    Look at an entiy and segment objects whithin the area desired
-     - entity: entity that holds the objects, for example on top
-     - searchArea: where are the objects wrt the entity, default = on_top_of
-'''
 class SegmentObjects(smach.State):
+    """ Look at an entiy and segment objects within the area desired.
+    """
     def __init__(self, robot, segmented_entity_ids_designator, entity_to_inspect_designator,
                  segmentation_area="on_top_of"):
+        """ Constructor
+
+        :param robot: robot object
+        :param segmented_entity_ids_designator: designator that is used to store the segmented objects
+        :param entity_to_inspect_designator: EdEntityDesignator indicating the (furniture) object to inspect
+        :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
+        """
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
@@ -98,18 +102,38 @@ class SegmentObjects(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+
 class Inspect(smach.StateMachine):
-    def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of"):
+    """ Class to navigate to a(n) (furniture) object and segment the objects on top of it.
+
+    """
+    def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", inspection_area=""):
+        """ Constructor
+
+        :param robot: robot object
+        :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
+        :param objectIDsDes: designator that is used to store the segmented objects
+        :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
+        :param inspection_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
+        If left empty, NavigateToObserve is used.
+        """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         if not objectIDsDes:
             objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
-                                   transitions={'unreachable':      'failed',
-                                                'goal_not_defined': 'failed',
-                                                'arrived':          'SEGMENT'})
+            if inspection_area:
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: inspection_area},
+                                                                                 entityDes),
+                                       transitions={'unreachable': 'failed',
+                                                    'goal_not_defined': 'failed',
+                                                    'arrived': 'SEGMENT'})
+            else:
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
+                                       transitions={'unreachable': 'failed',
+                                                    'goal_not_defined': 'failed',
+                                                    'arrived': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea),
-                                   transitions={'done':      'done'})
+                                   transitions={'done': 'done'})
