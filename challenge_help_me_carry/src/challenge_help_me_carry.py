@@ -80,9 +80,7 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
-                                               frame_stamped=kdl_conversions.FrameStamped(self._robot.base.get_location(), "/map"),
-                                               type="waypoint")
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoints.car, frame_stamped=self._robot.base.get_location(), type="waypoint")
 
         if success:
             return "success"
@@ -101,7 +99,7 @@ class GrabItem(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        
+
         handOverHuman = states.HandoverFromHuman(self._robot, self._empty_arm_designator, self._current_item)
 
         userdata.target_room_out = userdata.target_room_in
@@ -131,7 +129,7 @@ def setup_statemachine(robot):
     place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
     place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot,
                                                                  place_name,
-                                                                 name="placement", 
+                                                                 name="placement",
                                                                  area=challenge_knowledge.default_area),
                                                                  name="place_position")
     empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.rightArm, name="empty_arm_designator")

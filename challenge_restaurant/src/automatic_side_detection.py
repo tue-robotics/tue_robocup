@@ -72,7 +72,7 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            base_position = self._robot.base.get_location().p
+            base_position = self._robot.base.get_location().frame.p
 
             # Update kinect
             try:
@@ -194,7 +194,7 @@ class StoreWaypoint(smach.State):
             return "continue"
 
         # Store current base position
-        base_pose = self._robot.base.get_location()
+        base_pose = self._robot.base.get_location().frame
 
         # Create automatic side detection state and execute
         self._robot.speech.speak("I am now going to look for the table", block=False)

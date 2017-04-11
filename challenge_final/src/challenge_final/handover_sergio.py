@@ -107,7 +107,7 @@ def move_sergio_to_handover_pose(sergio, x_gripper_map, y_gripper_map, yaw_gripp
         # rot = kdl.Rotation.Quaternion(r[0], r[1], r[2], r[3])
         # (roll, pitch, yaw) = rot.GetRPY()
 
-        # base_pose_map_msg = sergio.base.get_location()  #
+        # base_pose_map_msg = sergio.base.get_location().frame  #
         # base_pose_map = kdl.Frame(kdl.Rotation.Quaternion(base_pose_map_msg.pose.orientation.x,
         #                                                   base_pose_map_msg.pose.orientation.y,
         #                                                   base_pose_map_msg.pose.orientation.z,
