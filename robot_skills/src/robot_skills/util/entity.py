@@ -122,7 +122,11 @@ class Entity(object):
         self._pose = poseMsgToKdlFrame(pose)
 
     def __repr__(self):
-        return "Entity(id='{id}', type='{type}', frame={frame}".format(id=self.id, type=self.type, frame=self._pose)
+        xyz = "(x={x}, y={y}, z={z})".format(x=self._pose.p.x(), y=self._pose.p.y(), z=self._pose.p.z())
+        r, p, y = self._pose.M.GetRPY()
+        rpy = "(r={x}, p={y}, y={z})".format(x=r, y=p, z=y)
+        frame = "pos:{pos}, rot:{rot}".format(pos=xyz, rot=rpy)
+        return "Entity(id='{id}', type='{type}', frame={frame})".format(id=self.id, type=self.type, frame=frame)
 
 
 def from_entity_info(e):
