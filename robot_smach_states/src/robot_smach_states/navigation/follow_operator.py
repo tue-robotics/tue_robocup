@@ -163,7 +163,7 @@ class FollowOperator(smach.State):
                                 learn_person_timeout = 10.0 # TODO: Parameterize
                                 num_detections = 0
                                 while num_detections < 5:
-                                    rospy.logerr("self._robot.ed.learn _person(self._operator_name) method disappeared!, returning False")
+                                    rospy.logerr("self._robot.ed.learn_person(self._operator_name) method disappeared!, returning False")
                                     if False:
                                         num_detections+=1
                                     elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
