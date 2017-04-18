@@ -80,7 +80,7 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoints.car, 
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car, 
                                                frame_stamped=self._robot.base.get_location(), 
                                                type="waypoint")
 
