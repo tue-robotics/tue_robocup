@@ -17,6 +17,7 @@ from visualization_msgs.msg import Marker
 from cb_planner_msgs_srvs.msg import *
 
 from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
 
 
 class FollowOperator(smach.State):
@@ -249,6 +250,7 @@ class FollowOperator(smach.State):
         return False
 
     def _track_operator(self):
+        """Sets self._operator_distance if we have an operator and otherwise set self._operator_distance to the distance to the last operator"""
         if self._operator_id:
             self._operator = self._robot.ed.get_entity( id=self._operator_id )
         else:
@@ -269,12 +271,10 @@ class FollowOperator(smach.State):
             operator_pos.point.z = 0.0
             self._operator_pub.publish(operator_pos)
 
-            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p))
+            self._operator_distance = self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p)
 
             return True
         else:
-            robot_position = self._robot.base.get_location().frame.pose.position
-
             if not self._last_operator:
                 if self._backup_register():
                     # If the operator is still tracked, it is also the last_operator
@@ -288,13 +288,13 @@ class FollowOperator(smach.State):
                     operator_pos.point.z = 0.0
                     self._operator_pub.publish(operator_pos)
 
-                    self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p))
+                    self._operator_distance = self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p)
 
                     return True
                 else:
                     self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
 
-            self._operator_distance = (self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p))
+            self._operator_distance = self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p)
             # If the operator is lost, check if we still have an ID
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
@@ -341,6 +341,8 @@ class FollowOperator(smach.State):
         self._plan_marker_pub.publish(line_strip)
 
     def _update_navigation(self):
+        """Set the navigation plan to match the breadcrumbs collected into self._breadcrumbs.
+        This list has all the Entity's of where the operator has been"""
         self._robot.head.cancel_goal()
 
         robot_position = self._robot.base.get_location().frame.p
@@ -367,8 +369,9 @@ class FollowOperator(smach.State):
         else:
             breadcrumbs = self._breadcrumbs + [self._last_operator]
         for crumb in breadcrumbs:
-            dx = crumb.pose.position.x - previous_point.x()
-            dy = crumb.pose.position.y - previous_point.y()
+            assert isinstance(crumb, Entity)
+            diff = crumb._pose.p - previous_point
+            dx, dy = diff.x(), diff.y()
 
             length = crumb.distance_to_2d(previous_point)
 
@@ -385,7 +388,7 @@ class FollowOperator(smach.State):
                     y = previous_point.y() + i * dy_norm * res
                     plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
 
-            previous_point = crumb.pose.position
+            previous_point = crumb._pose.p
 
         # Delete the elements from the plan within the operator radius from the robot
         cutoff = int(self._operator_radius/(2.0*res))
@@ -488,10 +491,10 @@ class FollowOperator(smach.State):
 
     def _turn_towards_operator(self):
         robot_position = self._robot.base.get_location().frame.p
-        operator_position = self._last_operator.pose.position
+        operator_position = self._last_operator._pose.p
 
         p = PositionConstraint()
-        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x, operator_position.y, self._operator_radius)
+        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2"% (operator_position.x(), operator_position.y(), self._operator_radius)
 
         o = OrientationConstraint()
         if self._operator_id:
@@ -500,8 +503,8 @@ class FollowOperator(smach.State):
             o.frame = 'map'
             o.look_at = self._last_operator.pose.position
 
-        dx = operator_position.x - robot_position.x()
-        dy = operator_position.y - robot_position.y()
+        dx = operator_position.x() - robot_position.x()
+        dy = operator_position.y() - robot_position.y()
 
         yaw = math.atan2(dy, dx)
         plan = [kdl_conversions.kdlFrameStampedFromXYZRPY(x=robot_position.x(), y=robot_position.y(), z=0, yaw=yaw)]
