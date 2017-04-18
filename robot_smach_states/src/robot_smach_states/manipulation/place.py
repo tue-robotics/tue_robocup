@@ -49,11 +49,11 @@ class PreparePlace(smach.State):
 
         # Torso up (non-blocking)
         self._robot.torso.high()
-        # self._robot.torso.low()
+        
         # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
         # Hence, we want the torso to go to the place height - 0.6
         # Note: this is awefully hardcoded for AMIGO
-        # import ipdb;ipdb.set_trace()
+        # Sending it to 'high' seems to work much better...
         # torso_goal = placement_fs.frame.p.z() - 0.6
         # torso_goal = max(0.09, min(0.4, torso_goal))
         # rospy.logwarn("Torso goal before placing: {0}".format(torso_goal))
@@ -121,14 +121,19 @@ class Put(smach.State):
             height = 0.8
 
         # Pre place
-        if not arm.send_goal(place_pose_bl, timeout=10, pre_grasp=True):
+        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
+                                                       place_pose_bl.frame.p.y(),
+                                                       height+0.15, 0.0, 0.0, 0.0,
+                                                       frame_id="/{0}/base_link".format(self._robot.robot_name)),
+                                                       timeout=10,
+                                                       pre_grasp=True):
             # If we can't place, try a little closer
-            place_pose_bl.frame.p.x(place_pose_bl.frame.p.x() - 0.05)
+            place_pose_bl.frame.p.x(place_pose_bl.frame.p.x() - 0.025)
 
             rospy.loginfo("Retrying preplace")
             if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
-                                                           height+0.2, 0.0, 0.0, 0.0,
+                                                           height+0.15, 0.0, 0.0, 0.0,
                                                            frame_id="/{0}/base_link".format(self._robot.robot_name)),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
@@ -138,7 +143,7 @@ class Put(smach.State):
         # Place
         if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
                                                        place_pose_bl.frame.p.y(),
-                                                       height+0.15, 0.0, 0.0, 0.0,
+                                                       height+0.1, 0.0, 0.0, 0.0,
                                                        frame_id="/{0}/base_link".format(self._robot.robot_name)),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
@@ -159,7 +164,7 @@ class Put(smach.State):
         # Retract
         arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x() - 0.1,
                                                 place_pose_bl.frame.p.y(),
-                                                place_pose_bl.frame.p.z() + 0.05, 0.0, 0.0, 0.0,
+                                                place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
                                                 frame_id='/'+self._robot.robot_name+'/base_link'),
                       timeout=0.0)
 
