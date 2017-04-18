@@ -48,15 +48,16 @@ class PreparePlace(smach.State):
         arm.send_joint_trajectory('prepare_place', timeout=0)
 
         # Torso up (non-blocking)
-        # self._robot.torso.high()
+        self._robot.torso.high()
         # self._robot.torso.low()
         # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
         # Hence, we want the torso to go to the place height - 0.6
         # Note: this is awefully hardcoded for AMIGO
-        torso_goal = placement_fs.frame.p.z() - 0.6
-        torso_goal = max(0.09, min(0.4, torso_goal))
-        rospy.logwarn("Torso goal before placing: {0}".format(torso_goal))
-        self._robot.torso._send_goal(torso_pos=[torso_goal])
+        # import ipdb;ipdb.set_trace()
+        # torso_goal = placement_fs.frame.p.z() - 0.6
+        # torso_goal = max(0.09, min(0.4, torso_goal))
+        # rospy.logwarn("Torso goal before placing: {0}".format(torso_goal))
+        # self._robot.torso._send_goal(torso_pos=[torso_goal])
 
         return 'succeeded'
 
@@ -88,6 +89,7 @@ class Put(smach.State):
         self._arm_designator = arm
 
     def execute(self, userdata):
+
         item_to_place = self._item_to_place_designator.resolve()
         if not item_to_place:
             rospy.logerr("Could not resolve item_to_place")
@@ -119,7 +121,7 @@ class Put(smach.State):
             height = 0.8
 
         # Pre place
-        if not arm.send_goal(place_pose_bl, timeout=10, pre_grasp=False):
+        if not arm.send_goal(place_pose_bl, timeout=10, pre_grasp=True):
             # If we can't place, try a little closer
             place_pose_bl.frame.p.x(place_pose_bl.frame.p.x() - 0.05)
 
@@ -128,7 +130,7 @@ class Put(smach.State):
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.2, 0.0, 0.0, 0.0,
                                                            frame_id="/{0}/base_link".format(self._robot.robot_name)),
-                                 timeout=10, pre_grasp=False):
+                                 timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
                 arm.cancel_goals()
                 return 'failed'
