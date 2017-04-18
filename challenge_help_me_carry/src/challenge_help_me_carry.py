@@ -104,7 +104,7 @@ class GrabItem(smach.State):
 
         handOverHuman = states.HandoverFromHuman(self._robot, 
                                                  self._empty_arm_designator, 
-                                                 self._current_item)
+                                                 grabbed_entity_designator=self._current_item)
 
         userdata.target_room_out = userdata.target_room_in
 
