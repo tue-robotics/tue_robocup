@@ -22,6 +22,9 @@ from robot_skills.util.entity import Entity
 def vector_stampeds_to_point_stampeds(vector_stampeds):
     return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
 
+def frame_stampeds_to_pose_stampeds(frame_stampeds):
+    return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
+
 
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
@@ -76,7 +79,7 @@ class FollowOperator(smach.State):
         if not self._operator:
             return False
 
-        operator_current_fs = self._operator._pose
+        operator_current_fs = kdl_conversions.FrameStamped(self._operator._pose, "/map", stamp=rospy.Time.now())
         #print "Operator position: %s" % self._operator.pose.position
 
         if not self._last_operator_fs:
@@ -397,7 +400,7 @@ class FollowOperator(smach.State):
         if len(kdl_plan) > cutoff:
             del kdl_plan[-cutoff:]
 
-        ros_plan = vector_stampeds_to_point_stampeds(kdl_plan)
+        ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             print "Breadcrumb plan is blocked, removing blocked points"
@@ -408,7 +411,7 @@ class FollowOperator(smach.State):
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
 
     def _recover_operator(self):
-        print "Trying to recover the operator"
+        rospy.loginfo( "Trying to recover the operator")
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
@@ -442,7 +445,7 @@ class FollowOperator(smach.State):
 
             self._robot.head.wait_for_motion_done()
             print "Trying to detect faces..."
-            rospy.logerr("ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+            rospy.logerr("ed.detect_persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
             rospy.logerr("I will return an empty detection list!")
             detections = []
             if not detections:
