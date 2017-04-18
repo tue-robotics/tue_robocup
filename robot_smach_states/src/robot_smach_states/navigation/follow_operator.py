@@ -65,11 +65,14 @@ class FollowOperator(smach.State):
         self._period = 0.5
 
     def _operator_standing_still_for_x_seconds(self, timeout):
+        """Check whether the operator is standing still for X seconds
+        :param timeout how many seconds must th operator be standing still before returning True
+        :type timeout float
+        :returns bool indicating whether the operator has been standing still for longer than timeout seconds"""
         if not self._operator:
             return False
 
-        operator_current_pose = self._operator.pose
-        operator_current_fs = kdl_conversions.kdlFrameStampedFromXYZRPY(x=operator_current_pose.position.x, y=operator_current_pose.position.y)
+        operator_current_fs = self._operator._pose
         #print "Operator position: %s" % self._operator.pose.position
 
         if not self._last_operator_fs:
@@ -81,9 +84,9 @@ class FollowOperator(smach.State):
            #     print "Last pose stamped operator (%f,%f) at %f secs"%(self._last_operator_pose_stamped.pose.position.x, self._last_operator_pose_stamped.pose.position.y, self._last_operator_pose_stamped.header.stamp.secs)
                 self._last_operator_fs = operator_current_fs
             else:
-                print "Operator is standing still for %f seconds" % (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec()
+                print "Operator is standing still for %f seconds" % (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec()
                 # Check whether we passed the timeout
-                if (operator_current_fs.header.stamp - self._last_operator_fs.header.stamp).to_sec() > timeout:
+                if (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec() > timeout:
                     return True
         return False
 
