@@ -32,7 +32,7 @@ class FollowOperator(smach.State):
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
         self._start_timeout = start_timeout
-        self._breadcrumbs = []
+        self._breadcrumbs = []  # List of Entity's
         self._breadcrumb_distance = 0.1  # meters between dropped breadcrumbs
         self._operator_timeout = operator_timeout
         self._ask_follow = ask_follow
@@ -122,6 +122,9 @@ class FollowOperator(smach.State):
         return False
 
     def _register_operator(self):
+        """Robots looks at the operator and asks whether the operator should follow.
+        If he says yes, then set self._operator.
+        Also adds the operator to the breadcrumb list"""
         start_time = rospy.Time.now()
 
         self._robot.head.look_at_standing_person()
