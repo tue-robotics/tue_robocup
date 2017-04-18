@@ -9,13 +9,13 @@ import threading
 import time
 import itertools
 import PyKDL as kdl
+import geometry_msgs  # Only used for publishing markers
 
 import math
 from visualization_msgs.msg import Marker
 
 from cb_planner_msgs_srvs.msg import *
 
-from robot_skills.util import transformations, msg_constructors
 from robot_skills.util import kdl_conversions
 
 
@@ -134,7 +134,7 @@ class FollowOperator(smach.State):
 
                 if answer and 'choice' in answer.choices:
                     if answer.choices['choice'] == "yes":
-                        operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                        operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
 
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
@@ -373,7 +373,7 @@ class FollowOperator(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    plan.append(msg_constructors.PoseStamped(x=x, y=y, z=0, yaw=yaw))
+                    plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = crumb.pose.position
 
@@ -494,7 +494,7 @@ class FollowOperator(smach.State):
         dy = operator_position.y - robot_position.y()
 
         yaw = math.atan2(dy, dx)
-        plan = [msg_constructors.PoseStamped(x=robot_position.x(), y=robot_position.y(), z=0, yaw=yaw)]
+        plan = [kdl_conversions.kdlFrameStampedFromXYZRPY(x=robot_position.x(), y=robot_position.y(), z=0, yaw=yaw)]
         print "Operator within self._lookat_radius"
 
         self._robot.base.local_planner.setPlan(plan, p, o)
