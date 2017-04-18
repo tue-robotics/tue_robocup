@@ -19,6 +19,9 @@ from cb_planner_msgs_srvs.msg import *
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 
+def vector_stampeds_to_point_stampeds(vector_stampeds):
+    return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+
 
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
@@ -142,7 +145,6 @@ class FollowOperator(smach.State):
             if self._ask_follow:
                 self._robot.speech.speak("Should I follow you?", block=True)
                 answer = self._robot.ears.recognize("<choice>", {"choice" : ["yes", "no"]})
-
                 if answer and 'choice' in answer.choices:
                     if answer.choices['choice'] == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
@@ -361,7 +363,7 @@ class FollowOperator(smach.State):
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
-        plan = []
+        kdl_plan = []
         previous_point = robot_position
 
         if self._operator:
@@ -386,23 +388,24 @@ class FollowOperator(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
+                    kdl_plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = crumb._pose.p
 
         # Delete the elements from the plan within the operator radius from the robot
         cutoff = int(self._operator_radius/(2.0*res))
-        if len(plan) > cutoff:
-            del plan[-cutoff:]
+        if len(kdl_plan) > cutoff:
+            del kdl_plan[-cutoff:]
 
+        ros_plan = vector_stampeds_to_point_stampeds(kdl_plan)
         # Check if plan is valid. If not, remove invalid points from the path
-        if not self._robot.base.global_planner.checkPlan(plan):
+        if not self._robot.base.global_planner.checkPlan(ros_plan):
             print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
-            plan = [point for point in plan if self._robot.base.global_planner.checkPlan([point])]
+            kdl_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
-        self._visualize_plan(plan)
-        self._robot.base.local_planner.setPlan(plan, p, o)
+        self._visualize_plan(ros_plan)
+        self._robot.base.local_planner.setPlan(ros_plan, p, o)
 
     def _recover_operator(self):
         print "Trying to recover the operator"
@@ -515,12 +518,12 @@ class FollowOperator(smach.State):
     def _replan(self):
         self._replan_attempts += 1
         print "Trying to get a global plan"
-        operator_position = self._last_operator.pose.position
+        operator_position = self._last_operator._pose.p
         # Define end goal constraint, solely based on the (old) operator position
         self._replan_pc = PositionConstraint()
-        self._replan_pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x, operator_position.y, self._operator_radius)
-        plan = self._robot.base.global_planner.getPlan(self._replan_pc)
-        if not plan or not self._robot.base.global_planner.checkPlan(plan):
+        self._replan_pc.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(), self._operator_radius)
+        ros_plan = self._robot.base.global_planner.getPlan(self._replan_pc)
+        if not ros_plan or not self._robot.base.global_planner.checkPlan(ros_plan):
             print "No global plan possible"
         else:
             self._robot.speech.speak("Just a sec, let me try this way.")
@@ -528,8 +531,8 @@ class FollowOperator(smach.State):
             self._replan_time = rospy.Time.now()
             self._replan_active = True
             oc = self._robot.base.local_planner.getCurrentOrientationConstraint()
-            self._visualize_plan(plan)
-            self._robot.base.local_planner.setPlan(plan, self._replan_pc, oc)
+            self._visualize_plan(ros_plan)
+            self._robot.base.local_planner.setPlan(ros_plan, self._replan_pc, oc)
             self._breadcrumbs = []
 
     def _check_end_criteria(self):
