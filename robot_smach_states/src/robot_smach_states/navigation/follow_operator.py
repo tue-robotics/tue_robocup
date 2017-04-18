@@ -218,7 +218,7 @@ class FollowOperator(smach.State):
         self._visualize_breadcrumbs()
 
     def _backup_register(self):
-        # This only happens when the operator was just registered, and never tracked
+        """This only happens when the operator was just registered, and never tracked"""
         print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
         self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
                                                                                 center_point=kdl_conversions.VectorStamped(
