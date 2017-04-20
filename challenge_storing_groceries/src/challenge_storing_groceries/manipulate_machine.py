@@ -53,7 +53,7 @@ class DefaultGrabDesignator(ds.Designator):
             return None
 
         # Sort the entities and return the closest one
-        base_pose = self._robot.base.get_location()
+        base_pose = self._robot.base.get_location().frame
         entities = sorted(entities, key=lambda e: e.distance_to_2d(base_pose.p))
         return entities[0]
 
