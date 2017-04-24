@@ -194,6 +194,8 @@ class ED(object):
 
         self._person_names = []
 
+        self.learn_person = lambda name: True
+
     @property
     def _entities(self):
         return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())

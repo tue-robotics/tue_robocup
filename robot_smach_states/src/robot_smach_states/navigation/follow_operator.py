@@ -151,7 +151,6 @@ class FollowOperator(smach.State):
                 if answer:
                     if ('choice' in answer.choices and answer.choices['choice'] == "yes") or answer.result == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
-
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
                         else:
@@ -163,8 +162,8 @@ class FollowOperator(smach.State):
                                 learn_person_timeout = 10.0 # TODO: Parameterize
                                 num_detections = 0
                                 while num_detections < 5:
-                                    rospy.logerr("self._robot.ed.learn_person(self._operator_name) method disappeared!, returning False")
-                                    if False:
+                                    rospy.logerr("self._robot.ed.learn_person(self._operator_name) method is only mocked")
+                                    if self._robot.ed.learn_person(self._operator_name):
                                         num_detections+=1
                                     elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
                                         self._robot.speech.speak("Please stand in front of me and look at me")
