@@ -69,6 +69,7 @@ class ED(RobotPart):
                                                  queue_size=10)
 
         self.learn_person = lambda name: True
+        self.robot_name = robot_name
 
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
@@ -123,14 +124,14 @@ class ED(RobotPart):
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if e.convex_hull and e.type == "" and e.id.endswith("-laser") ]
+        entities = [ e for e in entities if e.shape and e.type == "" and e.id.endswith("-laser") ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.projectToFrame("/%s/base_link"%self.robot_name, self._tf_listener).vector)) # TODO: adjust for robot
         except:
             print "Failed to sort entities"
             return None
