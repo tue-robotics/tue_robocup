@@ -177,6 +177,8 @@ class CloseGripperOnHandoverToRobot(smach.State):
         self.robot = robot
         self.arm_designator = arm_designator
         self.timeout = timeout
+        self.item_label = grabbed_entity_label
+        self.item_designator = grabbed_entity_designator
 
     def execute(self,userdata):
         arm = self.arm_designator.resolve()
@@ -186,11 +188,11 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
         if arm.handover_to_robot(self.timeout):
 
-            if grabbed_entity_designator:
-                arm.occupied_by = grabbed_entity_designator
+            if self.item_designator:
+                arm.occupied_by = self.item_designator
             else:
-                if grabbed_entity_label != "":
-                    handed_entity = EntityInfo(id=grabbed_entity_label)
+                if self.item_label != "":
+                    handed_entity = EntityInfo(id=self.item_label)
                     arm.occupied = handed_entity
                 else:
                     rospy.logerr("No grabbed entity designator and no label for dummy entity given")
@@ -198,9 +200,18 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
             return "succeeded"
         else:
+
+            if self.item_designator:
+                arm.occupied_by = self.item_designator
+            else:
+                if self.item_label != "":
+                    handed_entity = EntityInfo(id=self.item_label)
+                    arm.occupied = handed_entity
+                else:
+                    rospy.logerr("No grabbed entity designator and no label for dummy entity given")
+                    return "failed"
+
             return "timeout"
-
-
 
 
 class SetGripper(smach.State):
