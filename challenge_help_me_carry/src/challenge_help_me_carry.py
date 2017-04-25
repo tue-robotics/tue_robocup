@@ -104,7 +104,8 @@ class GrabItem(smach.State):
 
         handOverHuman = states.HandoverFromHuman(self._robot, 
                                                  self._empty_arm_designator, 
-                                                 grabbed_entity_designator=self._current_item)
+                                                 "current_item", 
+                                                 self._current_item)
 
         userdata.target_room_out = userdata.target_room_in
 
@@ -159,6 +160,7 @@ def setup_statemachine(robot):
                                             'abort':          'Aborted'})
 
         # Tim
+        # TODO: Should also recognize operator infront of the robot and store it.
         smach.StateMachine.add('WAIT_TO_FOLLOW',
                                WaitForOperatorCommand(robot, possible_commands=challenge_knowledge.commands['follow']),
                                transitions={'success':        'FOLLOW_OPERATOR',
