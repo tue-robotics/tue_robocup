@@ -152,6 +152,7 @@ class FollowOperator(smach.State):
                     if ('choice' in answer.choices and answer.choices['choice'] == "yes") or answer.result == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                         if not operator:
+                            log.info("No operator yet")
                             self._robot.speech.speak("Please stand in front of me")
                         else:
                             if self._learn_face:
