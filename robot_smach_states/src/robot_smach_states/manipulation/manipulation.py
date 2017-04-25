@@ -186,7 +186,6 @@ class CloseGripperOnHandoverToRobot(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-
         if self.item_designator:
             arm.occupied_by = self.item_designator
         else:
