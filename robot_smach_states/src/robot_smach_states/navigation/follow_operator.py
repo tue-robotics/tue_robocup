@@ -353,7 +353,7 @@ class FollowOperator(smach.State):
         This list has all the Entity's of where the operator has been"""
         self._robot.head.cancel_goal()
 
-        robot_position = self._robot.base.get_location().frame.p
+        robot_position = copy.copy(self._robot.base.get_location().frame.p)
         operator_position = self._last_operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
