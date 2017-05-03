@@ -184,7 +184,7 @@ class NavAnalyzer:
         #output.write(tree)
 
         ''' Display results '''
-        rospy.loginfo("\n\nNavigation summary:\nCovered {0} meters in {1} seconds ({2}) m/s avg.\nResult = {3} with {4} plans, {5} clears and {6} resets\n\n".format(self.distance_traveled,
+        rospy.logdebug("\n\nNavigation summary:\nCovered {0} meters in {1} seconds ({2}) m/s avg.\nResult = {3} with {4} plans, {5} clears and {6} resets\n\n".format(self.distance_traveled,
         duration,
         self.distance_traveled/duration,
         result,

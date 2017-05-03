@@ -340,7 +340,7 @@ class EmptySpotDesignator(Designator):
 
             if plan_to_poi:
                 distance = len(plan_to_poi)
-                print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
+                # print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
             else:
                 distance = None
             return distance
