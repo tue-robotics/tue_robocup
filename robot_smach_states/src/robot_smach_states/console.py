@@ -56,7 +56,7 @@ def load_robot(robot_name, parts=None):
             # register as global
             globals()[name] = instance
             print bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC
-        except (ImportError, AttributeError, TypeError) as e:
+        except:
             msg = '\n"%s" could not be found!!!\n' % name
             print bcolors.WARNING + msg + bcolors.ENDC
             traceback.print_exc()
