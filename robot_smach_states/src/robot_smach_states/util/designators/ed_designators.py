@@ -357,6 +357,12 @@ class EmptySpotDesignator(Designator):
 
         if any(feasible_POIs):
             feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
+
+            # We don't care about small differences
+            nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
+            feasible_POIs = [f for f in feasible_POIs if (f[1]-feasible_POIs[0][1]) < nav_threshold]
+
+            feasible_POIs.sort(key=lambda tup: tup[0].edge_score, reverse=True)
             best_poi = feasible_POIs[0][0]  # Get the POI of the best match
 
             selection = self.create_selection_marker(best_poi)
@@ -396,10 +402,10 @@ class EmptySpotDesignator(Designator):
         marker.pose.position.y = selected_pose.frame.p.y()
         marker.pose.position.z = selected_pose.frame.p.z()
         marker.pose.orientation.w = 1
-        marker.scale.x = 0.1
-        marker.scale.y = 0.1
-        marker.scale.z = 0.1
-        marker.color.r = 1
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
+        marker.color.g = 1
         marker.color.a = 0.7
 
         marker.lifetime = rospy.Duration(30.0)
@@ -467,6 +473,12 @@ class EmptySpotDesignator(Designator):
                                                y=ys + dx / length * self._edge_distance,
                                                z=center_frame.p.z() + z_max,
                                                frame_id="/map")
+
+                # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
+                # prevent the robot from hitting the cabinet edges
+                # print "Length: {}, edge score: {}".format(length, min(d, length-d))
+                setattr(fs, 'edge_score', min(d, length-d))
+
                 points += [fs]
 
                 self.marker_array.markers.append(self.create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
