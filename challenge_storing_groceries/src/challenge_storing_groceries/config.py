@@ -1,3 +1,6 @@
+# TU/e
+from robot_skills.util.kdl_conversions import FrameStamped
+
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge
 
@@ -19,6 +22,7 @@ MIN_OBJECT_HEIGHT = 0.1
 
 # Grasping
 TABLE = challenge_knowledge.grasp_surface
+TABLE_POSE = FrameStamped(frame=challenge_knowledge.table_pose, frame_id="map")
 GRAB_SURFACE = "on_top_of"
 ROOM = challenge_knowledge.room
 MIN_GRAB_OBJECT_HEIGHT = 0.075

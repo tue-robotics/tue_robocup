@@ -25,8 +25,20 @@ class StoringGroceries(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'AWAIT_START',
+                                   transitions={'initialized': 'MOVE_TABLE',
                                                 'abort': 'Aborted'})
+
+            @smach.cb_interface(outcomes=["done"])
+            def move_table(userdata):
+                """ 'Locks' a locking designator """
+                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
+                robot.ed.update_entity(id=TABLE, frame_stamped=TABLE_POSE)
+
+                return "done"
+
+            smach.StateMachine.add("MOVE_TABLE",
+                                   smach.CBState(move_table),
+                                   transitions={'done': 'AWAIT_START'})
 
             smach.StateMachine.add("AWAIT_START",
                                    states.AskContinue(robot),
