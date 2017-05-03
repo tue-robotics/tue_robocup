@@ -14,11 +14,16 @@ from ed_sensor_integration.srv import UpdateResponse
 
 import arms
 from robot_skills import robot
-from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
 import robot_skills.util.msg_constructors as msgs
+import PyKDL as kdl
 
 from robot_skills.util.entity import from_entity_info
+
+def random_kdl_frame():
+    return kdl.Frame(kdl.Rotation.RPY(random.random(), random.random(), random.random()),
+                                     kdl.Vector(random.random(), random.random(), random.random()))
 
 
 class Arm(arms.Arm):
@@ -50,7 +55,7 @@ class Base(object):
     def __init__(self, *args, **kwargs):
         self.move = mock.MagicMock()
         self.force_drive = mock.MagicMock()
-        self.get_location = mock.MagicMock()
+        self.get_location = lambda: FrameStamped(random_kdl_frame(), "/map")
         self.set_initial_pose = mock.MagicMock()
         self.go = mock.MagicMock()
         self.reset_costmap = mock.MagicMock()
@@ -158,16 +163,17 @@ class Torso(object):
 class ED(object):
     @staticmethod
     def generate_random_entity(id=None):
-            entity = EntityInfo()
+            entity_info = EntityInfo()
 
             if not id:
-                entity.id = str(hash(entity))
-            entity.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
+                entity_info.id = str(hash(entity_info))
+            entity_info.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             # entity.data = mock.MagicMock()
-            entity.pose = mock.MagicMock()
-            entity.data = ""
+            entity_info.data = ""
 
-            return from_entity_info(entity)
+            entity = from_entity_info(entity_info)
+            entity._pose = random_kdl_frame()
+            return entity
 
     def __init__(self, *args, **kwargs):
         self._dynamic_entities = defaultdict(ED.generate_random_entity,
@@ -183,9 +189,12 @@ class ED(object):
         self.navigation.get_position_constraint = mock.MagicMock()
         self.update_entity = mock.MagicMock()
         self.get_closest_possible_person_entity = lambda *args, **kwargs: ED.generate_random_entity()
+        self.get_closest_laser_entity = lambda *args, **kwargs: ED.generate_random_entity()
         self.get_entity_info = mock.MagicMock()
 
         self._person_names = []
+
+        self.learn_person = lambda name: True
 
     @property
     def _entities(self):

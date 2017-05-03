@@ -5,21 +5,13 @@ Responsible: Tim Assman
 
 
 ## Setup
-amigo1/sergio1:
+amigo2/sergio2:
 
-    astart/sstart # (if not already running)
+    amigo-start/sergio-start # (if not already running)
 
-amigo2/sergio1:
+amigo2/sergio2:
 
-    ahardware/shardware: base, spindle, arms (left-arm is used) head
-
-amigo1/sergio1:
-
-    amiddle/smiddle
-
-amigo3:
-
-    rosrun challenge_help_me_carry challenge_help_me_carry.py [robot_name]
+    amigo-challenge-help-me-carry/sergio-challenge-help-me-carry
 
 ### During a real competition
 On the dev PC:
