@@ -14,6 +14,8 @@ Examples:
 
 import sys
 import importlib
+import traceback
+
 import rospy
 from docopt import docopt, DocoptExit
 
@@ -56,8 +58,8 @@ def load_robot(robot_name, parts=None):
             print bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC
         except (ImportError, AttributeError, TypeError) as e:
             msg = '\n"%s" could not be found!!!\n' % name
-            msg += '\n%s:\n%s\n' % (type(e), str(e))
-            print bcolors.WARNING+msg+bcolors.ENDC
+            print bcolors.WARNING + msg + bcolors.ENDC
+            traceback.print_exc()
 
     if not len(loaded):
         raise DocoptExit("error: no robots or parts loaded")
