@@ -3,7 +3,8 @@ import rospy
 from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
-from image_recognition_msgs.srv import Annotate
+from image_recognition_msgs.srv import Annotate, Recognize
+from image_recognition_msgs.msg import Annotation
 
 from sensor_msgs.msg import Image
 from robot_part import RobotPart
@@ -17,6 +18,11 @@ class Head(RobotPart):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
+        # self._annotate_srv = self.create_service_client('/' + robot_name + '/annotate', Annotate)
+        # self._recognize_srv = self.create_service_client('/' + robot_name + '/recognize', Recognize)
+        self._annotate_srv = self.create_service_client('/annotate', Annotate)
+        self._recognize_srv = self.create_service_client('/recognize', Recognize)
+
         self._goal = None
         self._at_setpoint = False
 
@@ -129,7 +135,7 @@ class Head(RobotPart):
         self._at_setpoint = False
 
     def get_image(self):
-        rospy.loginfo("Getting one image")
+        rospy.loginfo("getting one image...")
 
         global cv_image
         cv_image = None
@@ -138,40 +144,46 @@ class Head(RobotPart):
         def callback(data):
             global cv_image
 
-            rospy.loginfo("Image data callback")
             cv.acquire()
             cv_image = data
             cv.notify()
             cv.release()
 
-        #subscriber = rospy.Subscriber("/camera/rgb/image_color", Image, callback)  # for test with tripod kinetic
-
-        subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
+        subscriber = rospy.Subscriber("/camera/rgb/image_rect_color", Image, callback)  # for test with tripod kinetic
+        # subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
 
         cv.acquire()
         while not cv_image:
-            rospy.loginfo('waiting...')
             cv.wait()
         subscriber.unregister()
         image = cv_image
         cv.release()
 
-        rospy.loginfo("Got data")
-
+        rospy.loginfo("got %d bytes of image data", len(image.data))
         return image
 
-    def learn_person(self, name='operator'):
-        annotate_srv_name = '/annotate'
-        rospy.wait_for_service(annotate_srv_name)
+    def get_faces(self, image):
+        rospy.loginfo('_recognize_srv')
+        r = self._recognize_srv(image=image)
+        rospy.loginfo('_recognize_srv done')
+        return r
 
-        annotate = rospy.ServiceProxy(annotate_srv_name, Annotate)
+    def learn_person(self, name='operator'):
+        HEIGHT_TRESHOLD = 88
+        WIDTH_TRESHOLD = 88
 
         image = self.get_image()
 
-        # TODO: loop get_faces until a 'close' face is found
+        recognitions = self.get_faces(image).recognitions
+        rospy.loginfo('found %d face(s) in the image', len(recognitions))
+        recognitions = [r for r in recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
+        rospy.loginfo('found %d valid face(s)', len(recognitions))
 
-        return annotate(image=image, annotations=[])
+        if len(recognitions) != 1:
+            return False
 
+        recognition = recognitions[0]
+        return self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
 
 #######################################
     # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
