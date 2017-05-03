@@ -51,7 +51,7 @@ def answer(robot, res, crowd_data):
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(15)):
-        smach.State.__init__(self, outcomes=["answered"], input_keys=['crowd_data'])
+        smach.State.__init__(self, outcomes=["answered", "not answered"], input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
 
