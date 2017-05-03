@@ -150,7 +150,6 @@ class FollowOperator(smach.State):
             if self._ask_follow:
                 self._robot.speech.speak("Should I follow you?", block=True)
                 answer = self._robot.ears.recognize("<choice>", {"choice" : ["yes", "no"]})
-                print answer
                 if answer:
                     if ('choice' in answer.choices and answer.choices['choice'] == "yes") or answer.result == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
@@ -174,7 +173,7 @@ class FollowOperator(smach.State):
                                         operator = None
                                         break
 
-                    elif answer.choices['choice'] == "no":
+                    elif 'choice' in answer.choices and answer.choices['choice'] == "no":
                         return False
                     else:
                         rospy.sleep(2)
