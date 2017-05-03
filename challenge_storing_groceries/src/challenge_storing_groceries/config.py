@@ -13,6 +13,7 @@ DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used t
 SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
 CLASSIFICATION_THRESHOLD = 0.5  # Threshold for perception. If classification below threshold, the type is not added
 # to the world model and further on considered unknown.
+MAX_KNOWN_OBJECTS = 10  # Maximum number of known objects to store in the PDF
 
 # Grasping
 TABLE = challenge_knowledge.grasp_surface

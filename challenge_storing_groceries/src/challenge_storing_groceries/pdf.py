@@ -64,8 +64,13 @@ class WritePdf(smach.State):
                                     last_update_time=rospy.Time.now())
                     self._items[entity.id] = (entity, result.probability, image)
 
-        # For now, write everything to file. ToDo: filter
-        entities_to_pdf(self._items.values(), "tech_united_eindhoven", directory="/home/amigo/usb")
+        # Filter and sort based on probabilities
+        items = [item for item in self._items.values() if item[1] >= config.CLASSIFICATION_THRESHOLD]
+        items = sorted(items, key=lambda item: item[1], reverse=True)
+        items = items[:config.MAX_KNOWN_OBJECTS]
+
+        # Write to file
+        entities_to_pdf(items, "tech_united_eindhoven", directory="/home/amigo/usb")
 
         return "done"
 
