@@ -5,11 +5,13 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import VariableDesignator
 import robot_smach_states as states
 
+import copy
 import threading
 import time
 import itertools
 import PyKDL as kdl
 import geometry_msgs  # Only used for publishing markers
+import geometry_msgs.msg
 
 import math
 from visualization_msgs.msg import Marker
@@ -148,6 +150,7 @@ class FollowOperator(smach.State):
             if self._ask_follow:
                 self._robot.speech.speak("Should I follow you?", block=True)
                 answer = self._robot.ears.recognize("<choice>", {"choice" : ["yes", "no"]})
+                print answer
                 if answer:
                     if ('choice' in answer.choices and answer.choices['choice'] == "yes") or answer.result == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
@@ -393,7 +396,7 @@ class FollowOperator(smach.State):
                     y = previous_point.y() + i * dy_norm * res
                     kdl_plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
 
-            previous_point = crumb._pose.p
+            previous_point = copy.copy(crumb._pose.p)
 
         # Delete the elements from the plan within the operator radius from the robot
         cutoff = int(self._operator_radius/(2.0*res))
@@ -513,7 +516,18 @@ class FollowOperator(smach.State):
         dy = operator_position.y() - robot_position.y()
 
         yaw = math.atan2(dy, dx)
-        plan = [kdl_conversions.kdlFrameStampedFromXYZRPY(x=robot_position.x(), y=robot_position.y(), z=0, yaw=yaw)]
+        # ToDo: make nice!
+        pose = geometry_msgs.msg.PoseStamped()
+        pose.header.frame_id = "/map"
+        pose.header.stamp = rospy.Time.now()
+        pose.pose.position.x = robot_position.x()
+        pose.pose.position.y = robot_position.y()
+        xx, yy, zz, ww = kdl.Rotation.RPY(0, 0, yaw).GetQuaternion()
+        pose.pose.orientation.x = xx
+        pose.pose.orientation.y = yy
+        pose.pose.orientation.z = zz
+        pose.pose.orientation.w = ww
+        plan = [pose]
         print "Operator within self._lookat_radius"
 
         self._robot.base.local_planner.setPlan(plan, p, o)
