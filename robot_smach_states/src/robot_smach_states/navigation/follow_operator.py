@@ -163,7 +163,7 @@ class FollowOperator(smach.State):
                     self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                     return False
             else:
-                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -211,7 +211,7 @@ class FollowOperator(smach.State):
         # This only happens when the operator was just registered, and never tracked
         print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
         self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
-                                                                                center_point=msg_constructors.PointStamped(
+                                                                                center_point=VectorStamped(
                                                                                     x=1.5, y=0, z=1,
                                                                                     frame_id="/%s/base_link" % self._robot.robot_name))
         if self._operator:
@@ -219,7 +219,7 @@ class FollowOperator(smach.State):
         else:
             print "Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1"
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
-                                                                          center_point=msg_constructors.PointStamped(
+                                                                          center_point=VectorStamped(
                                                                               x=1.5, y=0, z=1,
                                                                               frame_id="/%s/base_link" % self._robot.robot_name)
                                                                           )

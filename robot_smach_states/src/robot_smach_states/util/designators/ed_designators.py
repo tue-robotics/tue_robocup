@@ -300,7 +300,7 @@ class EmptySpotDesignator(Designator):
         self.robot = robot
 
         self.place_location_designator = place_location_designator
-        self._edge_distance = 0.1  # Distance to table edge
+        self._edge_distance = 0.05  # Distance to table edge
         self._spacing = 0.15
         self._area = area
 
