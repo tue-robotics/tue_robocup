@@ -3,6 +3,7 @@ import rospy
 from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
+from image_recognition_msgs.srv import Annotate
 
 from sensor_msgs.msg import Image
 from robot_part import RobotPart
@@ -145,7 +146,7 @@ class Head(RobotPart):
 
         #subscriber = rospy.Subscriber("/camera/rgb/image_color", Image, callback)  # for test with tripod kinetic
 
-        subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
+        subscriber = rospy.Subscriber("/camera/rgb/image_color", Image, callback)  # for the robot
 
         cv.acquire()
         while not cv_image:
@@ -158,6 +159,18 @@ class Head(RobotPart):
         rospy.loginfo("Got data")
 
         return image
+
+    def learn_person(self, name='operator'):
+        annotate_srv_name = '/annotate'
+        rospy.wait_for_service(annotate_srv_name)
+
+        annotate = rospy.ServiceProxy(annotate_srv_name, Annotate)
+
+        image = self.get_image()
+
+        # TODO: loop get_faces until a 'close' face is found
+
+        return annotate(image=image, annotations=[])
 
 
 #######################################
