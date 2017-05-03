@@ -194,8 +194,16 @@ class ManipulateMachine(smach.StateMachine):
 
         with self:
             if pdf_writer:
+                # Designator to store the classificationresults
+                class_designator = ds.VariableDesignator(
+                    [], resolve_type=[robot_skills.classification_result.ClassificationResult])
+
+                # Add the designator to the pdf writer state
+                pdf_writer.set_designator(class_designator)
+
                 smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self._table_designator,
-                                                                       objectIDsDes=None, searchArea="on_top_of",
+                                                                       objectIDsDes=class_designator,
+                                                                       searchArea="on_top_of",
                                                                        inspection_area="in_front_of"),
                                        transitions={"done": "WRITE_PDF",
                                                     "failed": "failed"})

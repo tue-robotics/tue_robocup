@@ -8,11 +8,13 @@ from PIL import Image
 from xhtml2pdf import pisa
 
 # ROS
+import PyKDL as kdl
 import rospy
 import smach
 
 # TU/e Robotics
 from robot_skills import world_model_ed
+from robot_skills.util.entity import Entity
 
 # Challenge storing groceries
 from challenge_storing_groceries import config
@@ -31,6 +33,7 @@ class WritePdf(smach.State):
 
         self._robot = robot
         self._items = {}  # Dict mapping entity id to tuples: entity, probability, and filename of images
+        self._designator = None
 
     def execute(self, userdata):
 
@@ -50,10 +53,27 @@ class WritePdf(smach.State):
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
                 self._items[entity.id] = (entity, probability, image)
 
+        # Try to get stuff from the designator if available
+        if self._designator is not None:
+            results = self._designator.resolve()
+            for result in results:
+                if result.id not in self._items:
+                    image = save_entity_image_to_file(self._robot.ed, result.id)
+                    entity = Entity(identifier=result.id, object_type=result.type, frame_id="map",
+                                    pose=kdl.Frame(), shape=None, volumes=[], super_types=[],
+                                    last_update_time=rospy.Time.now())
+                    self._items[entity.id] = (entity, result.probability, image)
+
         # For now, write everything to file. ToDo: filter
         entities_to_pdf(self._items.values(), "tech_united_eindhoven", directory="/home/amigo/usb")
 
         return "done"
+
+    def set_designator(self, designator):
+        """ Sets a designator that can be used to add to the internal list.
+        :param designator: designator with list of ClassificationResults as resolve type
+        """
+        self._designator = designator
 
 
 def html2pdf(source_html, output_filename):
