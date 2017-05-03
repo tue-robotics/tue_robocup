@@ -158,7 +158,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
     html += "</body>"
     html += "</html>"
 
-    date_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
+    date_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     filename = "%s_%s.pdf" % (name, date_str)
 
     try:

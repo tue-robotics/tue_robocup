@@ -81,7 +81,7 @@ class StoringGroceries(smach.StateMachine):
                                             exhausted_outcome='succeeded')
 
             with range_iterator:
-                single_item = ManipulateMachine(robot)  # ToDo: add more pdf stuff
+                single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)  # ToDo: add more pdf stuff
 
                 smach.Iterator.set_contained_state('SINGLE_ITEM',
                                                    single_item,
