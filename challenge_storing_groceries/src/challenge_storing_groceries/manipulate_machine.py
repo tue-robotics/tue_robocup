@@ -46,6 +46,7 @@ class DefaultGrabDesignator(ds.Designator):
         for e in all_entities:
             point = robot_skills.util.kdl_conversions.VectorStamped(frame_id=e.frame_id, vector=e._pose.p)
             if surface.in_volume(point=point, volume_id=self._area_description):
+                print "\nItem {} on {} w.r.t. {} on table?!\n".format(e.id, e._pose.p, e.frame_id)
                 entities.append(e)
 
         # Check if there are any
@@ -96,25 +97,24 @@ class GrabSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("GRAB_ITEM",
                                    states.Grab(robot, self.grab_designator, self.empty_arm_designator),
-                                   transitions={'done': 'succeeded',
-                                                'failed': 'failed'})
+                                   transitions={'done': 'UNLOCK_ITEM_SUCCEED',
+                                                'failed': 'UNLOCK_ITEM_FAIL'})
 
-            # ToDo: see if this is desired/required
-            # @smach.cb_interface(outcomes=["unlocked"])
-            # def lock(userdata):
-            #     """ 'Locks' a locking designator """
-            #     # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
-            #     self.grab_designator.unlock()
-            #
-            #     return "unlocked"
-            #
-            # smach.StateMachine.add("UNLOCK_ITEM_SUCCEED",
-            #                        smach.CBState(lock),
-            #                        transitions={'unlocked': 'succeeded'})
-            #
-            # smach.StateMachine.add("UNLOCK_ITEM_FAIL",
-            #                        smach.CBState(lock),
-            #                        transitions={'unlocked': 'failed'})
+            @smach.cb_interface(outcomes=["unlocked"])
+            def lock(userdata):
+                """ 'Locks' a locking designator """
+                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
+                self.grab_designator.unlock()
+
+                return "unlocked"
+
+            smach.StateMachine.add("UNLOCK_ITEM_SUCCEED",
+                                   smach.CBState(lock),
+                                   transitions={'unlocked': 'succeeded'})
+
+            smach.StateMachine.add("UNLOCK_ITEM_FAIL",
+                                   smach.CBState(lock),
+                                   transitions={'unlocked': 'failed'})
 
 
 class PlaceSingleItem(smach.State):
