@@ -58,7 +58,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add('RIDDLE_GAME_1', 
                                    riddle_game.HearQuestion(robot), 
                                    transitions={ 'answered':'RIDDLE_GAME_2',
-                                                 'not answered':'RIDDLE_GAME_1_MISSED'})
+                                                 'not_answered':'RIDDLE_GAME_1_MISSED'})
 
             smach.StateMachine.add("RIDDLE_GAME_1_MISSED",
                                    Say(robot, "Please ask next question!"),
@@ -67,7 +67,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add('RIDDLE_GAME_2', 
                                    riddle_game.HearQuestion(robot), 
                                    transitions={ 'answered':'RIDDLE_GAME_3',
-                                                 'not answered':'RIDDLE_GAME_2_MISSED'})
+                                                 'not_answered':'RIDDLE_GAME_2_MISSED'})
 
             smach.StateMachine.add("RIDDLE_GAME_2_MISSED",
                                    Say(robot, "Please ask next question!"),
@@ -76,7 +76,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add('RIDDLE_GAME_3', 
                                    riddle_game.HearQuestion(robot), 
                                    transitions={ 'answered':'RIDDLE_GAME_4',
-                                                 'not answered':'RIDDLE_GAME_3_MISSED'})
+                                                 'not_answered':'RIDDLE_GAME_3_MISSED'})
 
             smach.StateMachine.add("RIDDLE_GAME_3_MISSED",
                                    Say(robot, "Please ask next question!"),
@@ -85,7 +85,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add('RIDDLE_GAME_4', 
                                    riddle_game.HearQuestion(robot), 
                                    transitions={ 'answered':'RIDDLE_GAME_5',
-                                                 'not answered':'RIDDLE_GAME_4_MISSED'})
+                                                 'not_answered':'RIDDLE_GAME_4_MISSED'})
 
             smach.StateMachine.add("RIDDLE_GAME_4_MISSED",
                                    Say(robot, "Please ask next question!"),
@@ -94,12 +94,12 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             smach.StateMachine.add('RIDDLE_GAME_5', 
                                    riddle_game.HearQuestion(robot), 
                                    transitions={ 'answered':'TRANSITION',
-                                                 'not answered':'TRANSITION'})
+                                                 'not_answered':'TRANSITION'})
 
             # Transition:
 
             smach.StateMachine.add("TRANSITION",
-                                   Say(robot, "Now let's play the blind man’s bluff game"),
+                                   Say(robot, "Now lets play the blind mans bluff game"),
                                    transitions={"spoken": "BLUFF_GAME_1"})
 
             # Bluff Games:
