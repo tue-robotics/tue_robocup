@@ -14,6 +14,8 @@ SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also gr
 CLASSIFICATION_THRESHOLD = 0.5  # Threshold for perception. If classification below threshold, the type is not added
 # to the world model and further on considered unknown.
 MAX_KNOWN_OBJECTS = 10  # Maximum number of known objects to store in the PDF
+MAX_UNKNOWN_OBJECTS = 5  # Maximum number of unknown objects to store in the PDF
+MIN_OBJECT_HEIGHT = 0.1
 
 # Grasping
 TABLE = challenge_knowledge.grasp_surface

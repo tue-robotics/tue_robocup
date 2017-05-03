@@ -59,15 +59,25 @@ class WritePdf(smach.State):
             for result in results:
                 if result.id not in self._items:
                     image = save_entity_image_to_file(self._robot.ed, result.id)
-                    entity = Entity(identifier=result.id, object_type=result.type, frame_id="map",
-                                    pose=kdl.Frame(), shape=None, volumes=[], super_types=[],
-                                    last_update_time=rospy.Time.now())
+                    entity = self._robot.ed.get_entity(id=result.id)
                     self._items[entity.id] = (entity, result.probability, image)
 
         # Filter and sort based on probabilities
         items = [item for item in self._items.values() if item[1] >= config.CLASSIFICATION_THRESHOLD]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
+
+        # Filter to get the unknowns
+        # Based on classfication threshold
+        unknown_items = [item for item in self._items.values() if item[1] < config.CLASSIFICATION_THRESHOLD]
+        # Based on minimum height
+        unknown_items = [i for i in unknown_items if (i[0].shape.z_max - i[0].shape.z_min) > config.MIN_OBJECT_HEIGHT]
+        # Sort
+        unknown_items = sorted(unknown_items, key=lambda item: item[1])
+        # Get the worst five
+        unknown_items = unknown_items[:config.MAX_UNKNOWN_OBJECTS]
+        for item in unknown_items:
+            item.type = "unknown"
 
         # Write to file
         entities_to_pdf(items, "tech_united_eindhoven", directory="/home/amigo/usb")
