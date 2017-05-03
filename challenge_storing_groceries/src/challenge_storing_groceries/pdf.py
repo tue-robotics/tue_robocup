@@ -47,11 +47,11 @@ class WritePdf(smach.State):
         # Get DETECTED_OBJECTS_WITH_PROBS, i.e., the detections resulting from inspection
         for entity, probability in config.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
-                image = save_entity_image_to_file(world_model_ed, entity.id)
-                self._items.append((entity, probability, image))
+                image = save_entity_image_to_file(self._robot.ed, entity.id)
+                self._items[entity.id] = (entity, probability, image)
 
         # For now, write everything to file. ToDo: filter
-        entities_to_pdf(self._items, "tech_united_eindhoven", directory="/home/amigo/usb")
+        entities_to_pdf(self._items.values(), "tech_united_eindhoven", directory="/home/amigo/usb")
 
         return "done"
 
