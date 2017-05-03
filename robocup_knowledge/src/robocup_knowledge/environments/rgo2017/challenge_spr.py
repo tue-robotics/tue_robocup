@@ -11,7 +11,7 @@ choice_answer_mapping = {
 	"Who is the main charcater of The Matrix": "Neo",
 	"Name the two RoboCup@Home standart platforms.": "Pepper and HSR",
 	"Where do you store your memories": "In my SSD",
-	"Where is your team located?": "In Eindhoven The Netherlands"
+	"Where is your team located?": "In Eindhoven The Netherlands",
 
 	# Crowd questions:
 
@@ -37,7 +37,7 @@ choice_answer_mapping = {
 	"How many males are there in the crowd?": "Crowd_males",
 	"How many females are there in the crowd?": "Crowd_females",
 	"What is the size of the crowd?": "Crowd_size",
-	"How many children are there in the crowd?": "Crowd_children",
+	"How many children are there in the crowd?": "Crowd_children"
 
 	# Object questions:
 
