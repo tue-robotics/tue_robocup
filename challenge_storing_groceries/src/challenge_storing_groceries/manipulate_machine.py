@@ -151,12 +151,16 @@ class PlaceSingleItem(smach.State):
         if arm is None:
             return "failed"
 
+        # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
         arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
         sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self._place_designator, arm=arm_designator)
         result = sm.execute()
 
-        # ToDo: if failed: do handover
+        # If failed, do handover to human in order to continue
+        if result != "done":
+            sm = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
+            sm.execute()
 
         return "succeeded" if result == "done" else "failed"
 
