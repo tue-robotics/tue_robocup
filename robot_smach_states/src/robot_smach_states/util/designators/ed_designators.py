@@ -489,6 +489,12 @@ class LockToId(Designator):
     This is done by remembering the Entity's ID"""
 
     def __init__(self, robot, to_be_locked, name=None):
+        """ Constructor
+
+        :param robot: robot object
+        :param to_be_locked: designator to be locked
+        :param name: (optional) might come in handy for debugging
+        """
         super(LockToId, self).__init__(resolve_type=to_be_locked.resolve_type, name=name)
         self.robot = robot
         self.to_be_locked = to_be_locked
@@ -509,7 +515,7 @@ class LockToId(Designator):
                 if entity:  # If we can find what to remember
                     self._locked_to_id = entity.id  # remember its ID.
             else:  # If we do remember something already, recall that remembered ID:
-                return self.robot.ed.get_entities(id=self._locked_to_id)
+                return self.robot.ed.get_entity(id=self._locked_to_id)
         else:
             entity = self.to_be_locked.resolve()
             rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity.id))
@@ -520,6 +526,7 @@ class LockToId(Designator):
 
 
 if __name__ == "__main__":
+
     import doctest
 
     doctest.testmod()

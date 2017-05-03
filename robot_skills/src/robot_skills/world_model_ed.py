@@ -95,11 +95,11 @@ class ED(RobotPart):
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=kdl.Vector(), radius=0):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
+    def get_closest_entity(self, type="", center_point=None, radius=0):
+        if not center_point:
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/"+self.robot_name+"/base_link")
 
-        entities = self.get_entities(type=type, center_point=VectorStamped(vector=center_point, frame_id="/map"), radius=radius)
+        entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
         # HACK
         entities = [e for e in entities if e.shape is not None and e.type != ""]
@@ -109,12 +109,19 @@ class ED(RobotPart):
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            center_in_map = center_point.projectToFrame("/map", self._tf_listener)
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_in_map.vector))
         except:
             rospy.logerr("Failed to sort entities")
             return None
 
         return entities[0]
+
+    def get_closest_room(self, center_point=None, radius=0):
+        if not center_point:
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/"+self.robot_name+"/base_link")
+
+        return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
     def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):
@@ -244,7 +251,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, type="", center_point=Point(), radius=0, room = ""):
+    def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room = ""):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
@@ -374,9 +381,10 @@ class ED(RobotPart):
 
     def _publish_marker(self, center_point, radius):
         marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = "/map"
+        marker.header.frame_id = center_point.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
+
         marker.pose.position.x = center_point.vector.x()
         marker.pose.position.y = center_point.vector.y()
         marker.pose.position.z = center_point.vector.z()

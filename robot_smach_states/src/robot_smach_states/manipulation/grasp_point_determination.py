@@ -47,7 +47,7 @@ class GraspPointDeterminant(object):
         # import ipdb;ipdb.set_trace()
 
         ''' Get robot pose as a kdl frame (is required later on) '''
-        robot_frame = FrameStamped(self._robot.base.get_location(), frame_id="/map")
+        robot_frame = self._robot.base.get_location()
         robot_frame_inv = robot_frame.frame.Inverse()
 
         ''' Loop over lines of chull '''
