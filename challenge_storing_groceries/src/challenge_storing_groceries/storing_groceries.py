@@ -1,24 +1,5 @@
 #!/usr/bin/python
 
-"""This challenge is defined in https://raw.githubusercontent.com/RoboCupAtHome/RuleBook/master/Manipulation.tex
-
-In short, the robot starts at 1-1.5m from a bookcase and must wait until started by an operator (by voice or a start button)
-
-This bookcase has a couple of shelves on which some items are placed.
-**The middle shelve starts empty**, this is where the objects need to be placed.
-
-The robot must take objects form the shelves and place them on the middle shelve and indicate the class of each grasped object.
-
-After the robot is started by voice or a button,
-    the ManipRecogSingleItem state machine is repeated at least 5 times (for 5 objects).
-Afterwards, a PDF report has to be made:
-'After the test is completed or the time has run out,
-    the robot may upload a single PDF report file including the list of recognized objects with a picture showing:
-    - the object,
-    - the object name,
-    - the bounding box of the object.'
-"""
-
 # ROS
 import smach
 
@@ -37,8 +18,7 @@ from pdf import WritePdf
 class StoringGroceries(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
-        start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
-        placed_items = []
+        # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
         pdf_writer = WritePdf(robot=robot)
 
@@ -92,29 +72,9 @@ class StoringGroceries(smach.StateMachine):
                                     'failed': 'Aborted'})
             # End setup iterator
 
-            # ToDo: add pdf stuff
-
             smach.StateMachine.add('AT_END',
                                    states.Say(robot, "Goodbye"),
                                    transitions={'spoken': 'Done'})
-
-            # ToDo: add pdf stuff
-
-            # @smach.cb_interface(outcomes=["exported"])
-            # def export_to_pdf(userdata):
-            #     global DETECTED_OBJECTS_WITH_PROBS
-            #
-            #     entities = [e[0] for e in DETECTED_OBJECTS_WITH_PROBS]
-            #
-            #     # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
-            #     # pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF],
-            #     # "tech_united_manipulation_challenge")
-            #
-            #     return "exported"
-            # smach.StateMachine.add('EXPORT_PDF',
-            #                        smach.CBState(export_to_pdf),
-            #                        transitions={'exported': 'RANGE_ITERATOR'})
-            #
 
             ds.analyse_designators(self, "manipulation")
 
