@@ -21,8 +21,8 @@ class NavigateToSymbolic(NavigateTo):
         """ Constructor
 
         :param robot: robot object
-        :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string representing the
-        area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+        :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
+        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
         """
@@ -42,6 +42,10 @@ class NavigateToSymbolic(NavigateTo):
         entity_id_area_name_map = {}
         for desig, area_name in self.entity_designator_area_name_map.iteritems():
             entity = desig.resolve()
+            try:
+                area_name = area_name.resolve()
+            except:
+                pass
             if entity:
                 entity_id_area_name_map[entity.id] = area_name
             else:

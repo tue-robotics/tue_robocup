@@ -2,13 +2,14 @@
 State machine startup
 
 Usage:
-  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--no_execute] [--initial_pose=<init_pose>]
+  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no_execute]
 
 Options:
-  -h --help     Show this screen.
-  --initial=<init>  Initial state
-  --initial_pose=<init_pose>  Initial state
-  --no-execute Only construct state machine, do not execute it, i.e. only do checks.
+  -h --help                     Show this screen.
+  --initial=<init>              Initial state
+  --initial_pose=<init_pose>    Initial state
+  --debug                       Run the IntrospectionServer
+  --no-execute                  Only construct state machine, do not execute it, i.e. only do checks.
 """
 
 
@@ -43,6 +44,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
     initial_pose = arguments["--initial_pose"]
+    enable_debug = arguments["--debug"]
     no_execute = arguments["--no_execute"]
 
     robot = robot_constructor(robot_name)
@@ -70,8 +72,9 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
                 "Overriding initial state with {}".format(initial_state))
             executioner.set_initial_state(initial_state)
 
-        introserver = smach_ros.IntrospectionServer(robot_name, executioner, '/SM_ROOT_PRIMARY')
-        introserver.start()
+        if enable_debug:
+            introserver = smach_ros.IntrospectionServer(robot_name, executioner, '/SM_ROOT_PRIMARY')
+            introserver.start()
 
         if not no_execute:
             # Run the statemachine

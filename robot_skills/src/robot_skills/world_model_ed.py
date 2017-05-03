@@ -95,7 +95,10 @@ class ED(RobotPart):
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=VectorStamped(), radius=0):
+    def get_closest_entity(self, type="", center_point=None, radius=0):
+        if not center_point:
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/"+self.robot_name+"/base_link")
+
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
         # HACK
@@ -113,6 +116,12 @@ class ED(RobotPart):
             return None
 
         return entities[0]
+
+    def get_closest_room(self, center_point=None, radius=0):
+        if not center_point:
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/"+self.robot_name+"/base_link")
+
+        return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
     def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
         if isinstance(center_point, PointStamped):

@@ -24,7 +24,7 @@ class FrameStamped(object):
         return "pos:{pos}, rot:{rot} @ {fid}".format(pos=xyz, rot=rpy, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
-        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(1))
+        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
         transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
         return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
 
@@ -67,7 +67,7 @@ class VectorStamped(object):
         return "{vector} @ {fid}".format(vector=self.vector, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
-        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time.now(), timeout=rospy.Duration(1))
+        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
         transformed_point = tf_listener.transformPoint(frame_id, kdlVectorStampedToPointStamped(self))
         return kdlVectorStampedFromPointStampedMsg(transformed_point)
 

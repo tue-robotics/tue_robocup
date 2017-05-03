@@ -140,6 +140,9 @@ def get_room(location):
             return loc["room"]
     return None
 
+def is_room(entity_id):
+    return (entity_id in rooms)
+
 def get_inspect_areas(location):
     if location in inspect_areas:
         return inspect_areas[location]
