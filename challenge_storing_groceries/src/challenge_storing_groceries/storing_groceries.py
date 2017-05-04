@@ -27,8 +27,13 @@ class StoringGroceries(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'MOVE_TABLE',
+                                   transitions={'initialized': 'AWAIT_START',
                                                 'abort': 'Aborted'})
+
+            smach.StateMachine.add("AWAIT_START",
+                                   states.AskContinue(robot),
+                                   transitions={'continue': "MOVE_TABLE",
+                                                'no_response': 'AWAIT_START'})
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata):
@@ -51,12 +56,7 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_TABLE",
                                    smach.CBState(move_table),
-                                   transitions={'done': 'AWAIT_START'})
-
-            smach.StateMachine.add("AWAIT_START",
-                                   states.AskContinue(robot),
-                                   transitions={'continue': "NAV_TO_START",
-                                                'no_response': 'AWAIT_START'})
+                                   transitions={'done': 'NAV_TO_START'})
 
             cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
             room = ds.EntityByIdDesignator(robot, id=ROOM)

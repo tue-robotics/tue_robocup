@@ -111,8 +111,16 @@ class TestBluffGame(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         self.userdata.crowd_data = {
-            'males': 2,
-            'females': 3
+            "males": 1,
+            "men": 2,
+            "females": 3,
+            "women": 4,
+            "children": 5,
+            "boys": 6,
+            "girls": 7,
+            "adults": 8,
+            "elders": 9,
+            "crowd_size": 10
         }
 
         with self:

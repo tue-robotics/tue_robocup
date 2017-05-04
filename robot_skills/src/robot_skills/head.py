@@ -138,7 +138,7 @@ class Head(RobotPart):
         self._goal = None
         self._at_setpoint = False
 
-    def get_image(self):
+    def get_image(self, timeout=5):
         rospy.loginfo("getting one image...")
 
         global cv_image
@@ -157,8 +157,14 @@ class Head(RobotPart):
         subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
 
         cv.acquire()
-        while not cv_image:
-            cv.wait()
+        for i in range(timeout):
+            if cv_image:
+                break
+            if rospy.is_shutdown():
+                return
+            cv.wait(timeout=1)
+        else:
+            raise Exception('no image received from %s' % subscriber.name)
         subscriber.unregister()
         image = cv_image
         cv.release()
