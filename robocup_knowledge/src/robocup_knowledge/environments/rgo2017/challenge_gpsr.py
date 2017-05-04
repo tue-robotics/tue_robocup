@@ -15,7 +15,7 @@ starting_pose = ["gpsr_meeting_point_1",
 exit_waypoint = ["gpsr_exit_door_1",
                  "gpsr_exit_door_2"] # Door through which to exit the arena
 
-rooms = common.rooms + ["entrance", "exit"]
+# rooms = common.rooms + ["entrance", "exit"]
 
 # translations = { "bookcase" : "bocase" }
 

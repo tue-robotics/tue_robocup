@@ -29,7 +29,7 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
 
-rooms = location_rooms + ["workshop"]
+# rooms = location_rooms + ["workshop"]
 
 objects = [
     {'category': 'food',                'name': 'apple'             },
