@@ -111,9 +111,13 @@ class DetectCrowd(smach.State):
 
     def describe_crowd(self, detections):
         num_females = 0
+        num_women = 0
+        num_girls = 0
         num_males = 0
-        num_children = 0
-
+        num_men = 0
+        num_boys = 0
+        num_elders = 0
+  
         if not all(detections):
             rospy.loginfo('making a random guess for %d people', len(detections))
             if len(detections) > 2:
@@ -124,21 +128,32 @@ class DetectCrowd(smach.State):
         else:
             for d in detections:
                 if d.gender == FaceProperties.MALE:
-                    num_males += 1
+                    if d.age < 18:
+                        num_boys +=1
+                    else:
+                        num_men += 1
                 else:
-                    num_females += 1
+                    if d.age < 18:
+                        num_girls +=1
+                    else:
+                        num_women += 1
 
-            for d in detections:
-                if d.age < 18:
-                    num_children += 1
-
+            num_males = num_boys + num_men
+            num_females = num_girls + num_women
+            
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
         return {
             "males": num_males,
+            "men": num_men,
             "females": num_females,
-            "children": num_children,
-            "crowd_size": num_females+num_males
+            "women": num_women,
+            "children": num_boys + num_girls,
+            "boys": num_boys,
+            "girls": num_girls,
+            "adults": num_men + num_women,
+            "elders": num_elders,
+            "crowd_size": num_females + num_males
         }
 
 
