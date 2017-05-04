@@ -144,6 +144,8 @@ def is_location(location):
 
 
 def get_room(location):
+    if location in location_rooms:
+        return location
     for loc in locations:
         if loc["name"] == location:
             return loc["room"]

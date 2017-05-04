@@ -27,7 +27,11 @@ Q['answer': "fork"] -> which is the smallest cutlery
 
 CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tell me COUNT PEOPLE[P] in the crowd
 
+APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
+
 COUNT -> how many | the number of
+
+SEARCH -> where is | in which room is
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # D A T A
@@ -46,7 +50,18 @@ PEOPLE['women'] -> women
 PEOPLE['boys'] -> boys
 PEOPLE['girls'] -> girls
 
-T[X] -> Q[X] | CP[X]
+PLACEMENT['bookshelf'] -> bookshelf | bookshelfs
+PLACEMENT['couch_table'] -> couch table | couch tables
+PLACEMENT['side_table'] -> side table | side_table
+PLACEMENT['kitchencounter'] -> kitchen counter | kitchen counters
+PLACEMENT['stove'] -> stove | stoves
+PLACEMENT['desk'] -> desk |desks
+PLACEMENT['bar'] -> bar | bars
+PLACEMENT['closet'] -> closet | closets
+PLACEMENT['dinner_table'] -> dinner table | dinner tables
+PLACEMENT['cabinet'] -> cabinet | cabinets
+
+T[X] -> Q[X] | CP[X] | APLACEM[X]
 '''
 
 
