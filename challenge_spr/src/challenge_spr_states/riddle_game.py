@@ -83,12 +83,12 @@ class TestRiddleGame(smach.StateMachine):
 
             smach.StateMachine.add("HEAR_QUESTION",
                                    HearQuestion(robot),
-                                   transitions={'answered': 'HEAR_QUESTION_2'},
+                                   transitions={'answered': 'HEAR_QUESTION_2', 'not_answered': 'Done'},
                                    remapping={'crowd_data':'crowd_data'})
 
             smach.StateMachine.add("HEAR_QUESTION_2",
                                    HearQuestion(robot),
-                                   transitions={'answered': 'Done'})
+                                   transitions={'answered': 'Done', 'not_answered': 'Done'})
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
