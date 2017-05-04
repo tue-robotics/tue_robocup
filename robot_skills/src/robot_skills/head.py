@@ -10,6 +10,9 @@ from image_recognition_msgs.msg import Annotation
 from sensor_msgs.msg import Image
 from robot_part import RobotPart
 
+# TU/e
+from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
+
 from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
@@ -26,6 +29,9 @@ class Head(RobotPart):
         # self._recognize_srv = self.create_service_client('/recognize', Recognize)
         # self._clear_srv = self.create_service_client('/clear', Empty)
 
+
+        self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
+                                                          Project2DTo3D)
 
         self._goal = None
         self._at_setpoint = False
@@ -171,6 +177,27 @@ class Head(RobotPart):
 
         rospy.loginfo("got %d bytes of image data", len(image.data))
         return image
+
+    def project_roi(self, roi, frame_id=None):
+        """ Projects a region of interest of a depth image to a 3D Point. Hereto, a service is used
+
+        :param roi: sensor_msgs/RegionOfInterest
+        :param frame_id: if specified, the result is transformed into this frame id
+        :return: VectorStamped object
+        """
+        # Call the service with the provided Region of Interest
+        response = self._projection_srv(roi=roi)
+
+        # Convert to VectorStamped
+        result = VectorStamped(x=response.point.point.x, y=response.point.point.y, z=response.point.point.z,
+                               frame_id=response.point.header.frame_id)
+
+        # If necessary, transform the point
+        if frame_id is not None:
+            result.projectToFrame(frame_id=frame_id, tf_listener=self.tf_listener)
+
+        # Return the result
+        return result
 
     def _get_faces(self, image):
         r = self._recognize_srv(image=image)

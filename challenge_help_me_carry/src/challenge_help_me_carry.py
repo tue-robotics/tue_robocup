@@ -178,7 +178,7 @@ def setup_statemachine(robot):
                                states.FollowOperator(robot,
                                                      operator_timeout=30,
                                                      ask_follow=False,
-                                                     learn_face=False,
+                                                     learn_face=True,
                                                      replan=True),
                                transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
                                             'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
