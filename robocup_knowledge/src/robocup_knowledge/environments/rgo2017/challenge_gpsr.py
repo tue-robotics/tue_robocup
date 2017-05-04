@@ -8,10 +8,13 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again"
     ]
 
-initial_pose = "initial_pose"  # initial pose
-starting_pose = "gpsr_meeting_point"  # Designated pose to wait for commands
-exit_waypoint = "exit_door_B1"
+initial_pose = ["initial_pose",
+                "initial_pose_2"] # initial pose
+starting_pose = ["gpsr_meeting_point_1",
+                 "gpsr_meeting_point_2"] # Designated pose to wait for commands
+exit_waypoint = ["gpsr_exit_door_1",
+                 "gpsr_exit_door_2"] # Door through which to exit the arena
 
 rooms = common.rooms + ["entrance", "exit"]
 
-translations = { "bookcase" : "bocase" }
+# translations = { "bookcase" : "bocase" }
