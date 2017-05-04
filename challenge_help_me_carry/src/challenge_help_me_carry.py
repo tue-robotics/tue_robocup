@@ -43,8 +43,8 @@ class WaitForOperatorCommand(smach.State):
 
     def _listen_for_commands(self, tries=3, time_out = rospy.Duration(30)):
         for i in range(0, tries):
-            result = self._robot.ears.recognize("<option>", {"option" : self._possible_commands}, time_out)
-            command_recognized = result.result
+            result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T', timeout=time_out)
+            command_recognized = result.sentence
 
             if command_recognized == "":
                 self._robot.speech.speak("I am still waiting for a command and did not hear anything")
