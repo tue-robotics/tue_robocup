@@ -69,11 +69,11 @@ class InspectShelves(smach.State):
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=id_, parse=False)
                 config.SEGMENTED_ENTITIES.append((entity, id_))
-            print "Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES)
+            # print "Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES)
 
             # ToDo: classification threshold
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
-            print "Types and probs: {}".format(entity_types_and_probs)
+            # print "Types and probs: {}".format(entity_types_and_probs)
 
             # Recite entities
             for etp in entity_types_and_probs:
