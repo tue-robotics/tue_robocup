@@ -73,6 +73,19 @@ def answer(robot, res, crowd_data):
                 else:
                     answer = 'I dont know that object'
 
+            # Count placements or beacons in the room
+            if res.semantics['action'] == 'a_count':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                if len(locations) == 1:
+                    loc = locations[0]['room']
+                    if loc == res.semantics['location']:
+                        answer = 'There is one %s in the %s' % (entity, loc)
+                    else:
+                        answer = 'There are no %s in the %s' % (entity, loc)
+                else:
+                    answer = 'I dont know that object'
+
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
             return 'answered'

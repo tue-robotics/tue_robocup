@@ -34,6 +34,8 @@ CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tel
 
 APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
 ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
+APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
+ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] are in the ROOM[R]
 
 COUNT -> how many | the number of
 
@@ -67,14 +69,19 @@ PLACEMENT['closet'] -> closet | closets
 PLACEMENT['dinner_table'] -> dinner table | dinner tables
 PLACEMENT['cabinet'] -> cabinet | cabinets
 
-BEACON['tv_stand'] -> tv stand
-BEACON['bed'] -> bed
-BEACON['sofa'] -> sofa
+BEACON['tv_stand'] -> tv stand | tv stands
+BEACON['bed'] -> bed | beds
+BEACON['sofa'] -> sofa | sofas
 BEACON['cupboard'] -> cupboard | cupboards
 BEACON['sink'] -> sink | sinks
 BEACON['counter'] -> counter | counters
 
-T[X] -> Q[X] | CP[X] | APLACEM[X] | ABEACON[X]
+ROOM['dining'] -> dining room
+ROOM['living'] -> living room
+ROOM['kitchen'] -> kitchen
+ROOM['bedroom'] -> bedroom
+
+T[X] -> Q[X] | CP[X] | APLACEM[X] | ABEACON[X] | APLROOM[X] | ABEROOM[X]
 '''
 
 
@@ -108,7 +115,7 @@ PC[{"action" : "c_count", "entity" : L}] -> tell me how many people were wearing
 
 	APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
 	ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
-AROOM[{"action" : "a_count", "entity" : R}] -> how many doors has the ROOM[R]
+		AROOM[{"action" : "a_count", "entity" : R}] -> how many doors has the ROOM[R]
 APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
 ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[AB] are in the ROOM[R]
 
