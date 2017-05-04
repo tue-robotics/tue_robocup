@@ -83,10 +83,10 @@ VP["action": "navigate-to", "entity": {"id": X}] -> V_GOPL the LOCATIONS[X]
 """
 
 for room in common.rooms:
-    grammar += '\nROOMS[%s] -> the %s' % (room, room)
+    grammar += '\nROOMS[%s] -> %s' % (room, room)
 
 for loc in common.get_locations():
-    grammar += '\nLOCATIONS[%s] -> the %s' % (loc, loc)
+    grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
 
 grammar += """
 ##############################################################################
