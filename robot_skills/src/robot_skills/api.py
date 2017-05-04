@@ -18,6 +18,7 @@ class Api(RobotPart):
         """
         Perform a HMI query, returns a HMIResult
         """
+        return self._client.query(description, grammar, target)
 
 
     def old_query(self, spec, choices, timeout=10):
