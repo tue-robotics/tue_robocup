@@ -16,7 +16,7 @@ knowledge = load_knowledge('challenge_spr')
 
 def hear(robot, time_out):
     try:
-        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=time_out)    
+        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=time_out)
     except TimeoutException:
         return None
 
@@ -25,37 +25,40 @@ def answer(robot, res, crowd_data):
     if res:
         if 'answer' in res.semantics:
             answer = res.semantics['answer']
+        elif 'action' in res.semantics:
+            if res.semantics['action'] == 'count':
+                if res.semantics['entity'] == 'children':
+                    answer = 'In the crowd are %d children' % crowd_data['children']
 
-            # override for crowd answers
-            if answer == 'Crowd_size':
-                answer = 'In the crowd are %d people' % crowd_data['crowd_size']
-
-            if answer == 'Crowd_males':
-                answer = 'In the crowd are %d males' % crowd_data['males']
-
-            if answer == 'Crowd_females':
-                answer = 'In the crowd are %d females' % crowd_data['females']
-
-            if answer == 'Crowd_children':
-                answer = 'In the crowd are %d children' % crowd_data['children']
-
-            if answer == 'Crowd_adults':
-                answer = 'In the crowd are %d adults' % crowd_data['adults']
-
-            if answer == 'Crowd_men':
-                answer = 'In the crowd are %d men' % crowd_data['men']
-
-            if answer == 'Crowd_women':
-                answer = 'In the crowd are %d women' % crowd_data['women']
-
-            if answer == 'Crowd_boys':
-                answer = 'In the crowd are %d boys' % crowd_data['boys']
-
-            if answer == 'Crowd_girls':
-                answer = 'In the crowd are %d girls' % crowd_data['girls']
-
-            if answer == 'Crowd_elders':
-                answer = 'In the crowd are %d elders' % crowd_data['elders']
+            # # override for crowd answers
+            # if answer == 'Crowd_size':
+            #     answer = 'In the crowd are %d people' % crowd_data['crowd_size']
+            #
+            # if answer == 'Crowd_males':
+            #     answer = 'In the crowd are %d males' % crowd_data['males']
+            #
+            # if answer == 'Crowd_females':
+            #     answer = 'In the crowd are %d females' % crowd_data['females']
+            #
+            # if answer == 'Crowd_children':
+            #
+            # if answer == 'Crowd_adults':
+            #     answer = 'In the crowd are %d adults' % crowd_data['adults']
+            #
+            # if answer == 'Crowd_men':
+            #     answer = 'In the crowd are %d men' % crowd_data['men']
+            #
+            # if answer == 'Crowd_women':
+            #     answer = 'In the crowd are %d women' % crowd_data['women']
+            #
+            # if answer == 'Crowd_boys':
+            #     answer = 'In the crowd are %d boys' % crowd_data['boys']
+            #
+            # if answer == 'Crowd_girls':
+            #     answer = 'In the crowd are %d girls' % crowd_data['girls']
+            #
+            # if answer == 'Crowd_elders':
+            #     answer = 'In the crowd are %d elders' % crowd_data['elders']
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
@@ -63,7 +66,7 @@ def answer(robot, res, crowd_data):
         else:
             robot.speech.speak("Sorry, I do not understand your question")
     else:
-        robot.speech.speak("My ears are not working properly.")    
+        robot.speech.speak("My ears are not working properly.")
 
     return 'not_answered'
 
@@ -90,8 +93,16 @@ class TestRiddleGame(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         self.userdata.crowd_data = {
-            'males': 2,
-            'females': 3
+            "males": 1,
+            "men": 2,
+            "females": 3,
+            "women": 4,
+            "children": 5,
+            "boys": 6,
+            "girls": 7,
+            "adults": 8,
+            "elders": 9,
+            "crowd_size": 10
         }
 
         with self:

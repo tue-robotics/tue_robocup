@@ -10,11 +10,6 @@ Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms.
 Q['answer': "In my SSD"] -> where do you store your memories
 Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
 
-Q['answer': "Crowd_males"] -> how many males are there in the crowd
-Q['answer': "Crowd_females"] -> how many females are there in the crowd
-Q['answer': "Crowd_size"] -> what is the size of the crowd
-Q['answer': "Crowd_children"] -> how many children are there in the crowd
-
 Q['answer': "basket"] -> which is the biggest object
 Q['answer': "egg"] -> which is the smallest object
 Q['answer': "pringles"] -> which is the biggest food
@@ -28,7 +23,30 @@ Q['answer': "sponge"] -> which is the smallest cleaning stuff
 Q['answer': "knife"] -> which is the biggest cutlery
 Q['answer': "fork"] -> which is the smallest cutlery
 
-T[x] -> Q[x]
+# Counting People
+
+CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tell me COUNT PEOPLE[P] in the crowd
+
+COUNT -> how many | the number of
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# D A T A
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# People
+
+PEOPLE['people'] -> people
+PEOPLE['children'] -> children
+PEOPLE['adults'] -> adults
+PEOPLE['elders'] -> elders
+PEOPLE['males'] -> males
+PEOPLE['females'] -> females
+PEOPLE['men'] -> men
+PEOPLE['women'] -> women
+PEOPLE['boys'] -> boys
+PEOPLE['girls'] -> girls
+
+T[X] -> Q[X] | CP[X]
 '''
 
 
@@ -39,20 +57,16 @@ big_grammar = """
 
 
 
-# Counting People
-
-CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tell me COUNT PEOPLE[P] in the crowd
-
-COUNT -> how many | the number of
-
 # People Positions/Gestures/Genders
 
 PP[{"action" : "c_count", "entity" : X}] -> how many people in the crowd are POSITION[X]
 PG[{"action" : "c_count", "entity" : W}] -> how many people in the crowd are GESTURE[W]
-PPG[{"action" : "return_gender", "entity" : X}] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
-PPGG[{"action" : "return_gender", "entity" : X}] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
-PGG[{"action" : "return_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER
-PGGG[{"action" : "return_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER or GENDER
+PPG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
+PPGG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
+PGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER
+PGGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER or GENDER
+
+
 
 # People Color
 
@@ -110,42 +124,7 @@ ADJR -> smaller | bigger
 # D A T A
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# People
 
-PEOPLE['people'] -> people
-PEOPLE['children'] -> children
-PEOPLE['adults'] -> adults
-PEOPLE['elders'] -> elders
-PEOPLE['males'] -> males
-PEOPLE['females'] -> females
-PEOPLE['men'] -> men
-PEOPLE['women'] -> women
-PEOPLE['boys'] -> boys
-PEOPLE['girls'] -> girls
-
-POSITION['standing'] -> standing
-POSITION['sitting'] -> sitting
-POSITION['lying'] -> lying
-
-GENDER['male'] -> male
-GENDER['female'] -> female
-GENDER['man'] -> man
-GENDER['woman'] -> woman
-GENDER['boy'] -> boy
-GENDER['girl'] -> girl
-
-GESTURE['waving'] -> waving
-GESTURE['rise_l_arm'] -> rising left arm
-GESTURE['rise_r_arm'] -> rising rigth arm
-GESTURE['left'] -> pointing left
-GESTURE['right'] -> pointing right
-
-COLOR['red'] -> red
-COLOR['blue'] -> blue
-COLOR['white'] -> white
-COLOR['black'] -> black
-COLOR['green'] -> green
-COLOR['yellow'] -> yellow
 
 # Arena
 
@@ -216,6 +195,30 @@ CATEGORY['container'] -> container | containers
 CATEGORY['drink'] -> drink | drinks
 CATEGORY['cleaning_stuff'] -> cleaning stuff | cleaning stuffs
 CATEGORY['cutlery'] -> cutlery | cutleries
+
+POSITION['standing'] -> standing
+POSITION['sitting'] -> sitting
+POSITION['lying'] -> lying
+
+GENDER['male'] -> male
+GENDER['female'] -> female
+GENDER['man'] -> man
+GENDER['woman'] -> woman
+GENDER['boy'] -> boy
+GENDER['girl'] -> girl
+
+GESTURE['waving'] -> waving
+GESTURE['rise_l_arm'] -> rising left arm
+GESTURE['rise_r_arm'] -> rising rigth arm
+GESTURE['left'] -> pointing left
+GESTURE['right'] -> pointing right
+
+COLOR['red'] -> red
+COLOR['blue'] -> blue
+COLOR['white'] -> white
+COLOR['black'] -> black
+COLOR['green'] -> green
+COLOR['yellow'] -> yellow
 
 T[X] -> CP[X] | PP[X] | PG[X] | PPG[X] | PPGG[X] | PGG[X] | PGGG[X] | PC[X] | APLACEM[X] | ABEACON[X] | AROOM[X] | APLROOM[X] | ABEROOM[X] | OFIND[X] | CFIND[X] | CCOUNT[X] | OCOLOR[X] | OCAT[X] | CATPLACE[X] | OBJPLACE[X] | CATLOC[X] | OBJCOMP[X]
 """
