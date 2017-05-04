@@ -161,17 +161,19 @@ class FollowOperator(smach.State):
                                 self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
                                 self._robot.speech.speak("Just in case...",block=False)
                                 self._robot.head.look_at_standing_person()
-                                learn_person_start_time = rospy.Time.now()
-                                learn_person_timeout = 10.0 # TODO: Parameterize
-                                num_detections = 0
-                                while num_detections < 5:
-                                    rospy.logerr("self._robot.ed.learn_person(self._operator_name) method is only mocked")
-                                    if self._robot.ed.learn_person(self._operator_name):
-                                        num_detections+=1
-                                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
-                                        self._robot.speech.speak("Please stand in front of me and look at me")
-                                        operator = None
-                                        break
+                                self._robot.head.learn_person()
+
+                                # learn_person_start_time = rospy.Time.now()
+                                # learn_person_timeout = 10.0 # TODO: Parameterize
+                                # num_detections = 0
+                                # while num_detections < 5:
+                                #     rospy.logerr("self._robot.ed.learn_person(self._operator_name) method is only mocked")
+                                #     if self._robot.ed.learn_person(self._operator_name):
+                                #         num_detections+=1
+                                #     elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
+                                #         self._robot.speech.speak("Please stand in front of me and look at me")
+                                #         operator = None
+                                #         break
 
                     elif 'choice' in answer.choices and answer.choices['choice'] == "no":
                         return False
@@ -446,40 +448,88 @@ class FollowOperator(smach.State):
                 i = 0
 
             self._robot.head.wait_for_motion_done()
-            print "Trying to detect faces..."
-            rospy.logerr("ed.detect_persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-            rospy.logerr("I will return an empty detection list!")
-            detections = []
-            if not detections:
-                detections = []
-            best_score = -0.5 # TODO: magic number
-            best_detection = None
-            for d in detections:
-                print "name: %s" % d.name
-                print "score: %f" % d.name_score
-                if d.name == self._operator_name and d.name_score > best_score:
-                    best_score = d.name_score
-                    best_detection = d
+            # print "Trying to detect faces..."
+            # rospy.logerr("ed.detect_persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+            # rospy.logerr("I will return an empty detection list!")
 
-                if not d.name:
-                    best_detection = None
-                    break
+            # detections is a list of Recognitions
+            # a recognition constains a CategoricalDistribution
+            # a CategoricalDistribution is a list of CategoryProbabilities
+            # a CategoryProbability has a label and a float
+            raw_detections = self._robot.head.detect_persons()
+
+            # Only take detections with operator
+            detections = []
+            for d in raw_detections:
+                for cp in d.categorical_distribution.probabilities:
+                    if cp.label == "operator":
+                        detections.append((d, cp.probability))
+
+            # Sort based on probability
+            if detections:
+                detections = detections.sort(key=lambda det: det[1])
+                best_detection = detections[0][0]
+            else:
+                best_detection = None
+                recovered_operator = None
+            # if not detections:
+            #     detections = []
+            # best_score = -0.5 # TODO: magic number
+            # best_detection = None
+            # for d in detections:
+            #     print "name: %s" % d.name
+            #     print "score: %f" % d.name_score
+            #     if d.name == self._operator_name and d.name_score > best_score:
+            #         best_score = d.name_score
+            #         best_detection = d
+            #
+            #     if not d.name:
+            #         best_detection = None
+            #         break
 
             if best_detection:
-                print "Trying to find closest laser entity to face"
-                print "best detection frame id: %s"%best_detection.pose.header.frame_id
-                operator_pos = geometry_msgs.msg.PointStamped()
-                operator_pos.header.stamp = best_detection.pose.header.stamp
-                operator_pos.header.frame_id = best_detection.pose.header.frame_id
-                operator_pos.point = best_detection.pose.pose.position
-                self._face_pos_pub.publish(operator_pos)
+
+                depth_image = self._robot.head.get_depth_image()
+                roi = best_detection.roi
+                # # Resolution of depth image is half of the resolution of the rgb image
+                # x_min = roi.x_offset / 2
+                # x_width = roi.width / 2
+                # y_min = roi.y_offset / 2
+                # y_width = roi.height / 2
+                #
+                # # Take the inner part of the ROI
+                # xdmin = x_min + x_width / 3
+                # xdmax = x_min + 2 * x_width / 3
+                # ydmin = y_min + y_width / 3
+                # ydmax = y_min + 2 * y_width / 3
+                #
+                # # Get the average depth
+                # t = 0.0  # Total
+                # c = 0.0  # Counter
+                # for x in range(xdmin, xdmax):
+                #     for y in range(ydmin, ydmax):
+                #         t += depth_image.data[y * depth_image.width + x]
+                #         c += 1.0
+                # depth = t/c
+
+
+                # print "Trying to find closest laser entity to face"
+                # print "best detection frame id: %s"%best_detection.pose.header.frame_id
+                # operator_pos = geometry_msgs.msg.PointStamped()
+                # operator_pos.header.stamp = best_detection.pose.header.stamp
+                # operator_pos.header.frame_id = best_detection.pose.header.frame_id
+                # operator_pos.point = best_detection.pose.pose.position
+                operator_pos_kdl = self._robot.head.project_roi(roi=roi)
+                operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
+
+                self._face_pos_pub.publish(operator_pos_ros)
 
                 recovered_operator = self._robot.ed.get_closest_possible_person_entity(radius=self._lost_distance,
-                                                                             center_point=best_detection.pose.pose.position)
+                                                                                       center_point=operator_pos_kdl)
 
                 if not recovered_operator:
                     recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=best_detection.pose.pose.position)
+                                                                                 center_point=operator_pos_kdl)
 
             if recovered_operator:
                 print "Found one!"
