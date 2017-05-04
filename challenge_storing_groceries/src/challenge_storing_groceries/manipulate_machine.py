@@ -202,6 +202,15 @@ class ManipulateMachine(smach.StateMachine):
                                                       area_description=GRAB_SURFACE)
 
         with self:
+
+            smach.StateMachine.add("MOVE_TO_TABLE1",
+                                   states.NavigateToSymbolic(robot,
+                                                             {self._table_designator: "in_front_of"},
+                                                             self._table_designator),
+                                   transitions={'arrived': 'INSPECT_TABLE',
+                                                'unreachable': 'INSPECT_TABLE',
+                                                'goal_not_defined': 'INSPECT_TABLE'})
+
             if pdf_writer:
                 # Designator to store the classificationresults
                 class_designator = ds.VariableDesignator(

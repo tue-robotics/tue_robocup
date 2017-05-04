@@ -21,6 +21,9 @@ MAX_KNOWN_OBJECTS = 10  # Maximum number of known objects to store in the PDF
 MAX_UNKNOWN_OBJECTS = 5  # Maximum number of unknown objects to store in the PDF
 MIN_OBJECT_HEIGHT = 0.1
 
+# List to skip: these won't be written to the pdf
+SKIP_LIST = ["cloth", "towel", "bag", "fork", "spoon", "knife", "plate"]
+
 # Grasping
 TABLE = challenge_knowledge.grasp_surface
 # TABLE_POSE = FrameStamped(frame=challenge_knowledge.table_pose, frame_id="map")

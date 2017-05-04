@@ -48,12 +48,16 @@ class WritePdf(smach.State):
         # ToDo: store probabilities in the world model
 
         # Get DETECTED_OBJECTS_WITH_PROBS, i.e., the detections resulting from inspection
+        import ipdb;
+        ipdb.set_trace()
         for entity, probability in config.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
                 self._items[entity.id] = (entity, probability, image)
 
         # Try to get stuff from the designator if available
+        import ipdb;
+        ipdb.set_trace()
         if self._designator is not None:
             results = self._designator.resolve()
             for result in results:
@@ -63,7 +67,9 @@ class WritePdf(smach.State):
                     self._items[entity.id] = (entity, result.probability, image)
 
         # Filter and sort based on probabilities
+        import ipdb;ipdb.set_trace()
         items = [item for item in self._items.values() if item[1] >= config.CLASSIFICATION_THRESHOLD]
+        # items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
 
@@ -187,6 +193,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
             html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>" % (entity._pose.p.x(),
                                                                           entity._pose.p.y(),
                                                                           entity._pose.p.z())
+            html += "<p><b>Probability: </b>%.2f</p>" % item[1]
             html += "</center></td>"
             html += "</tr></table>"
             html += "<br />"
