@@ -9,10 +9,6 @@ from hmi import TimeoutException
 knowledge = load_knowledge('challenge_gpsr')
 
 
-def task_result_to_report(task_result):
-    return "I should be telling you about the task I just performed, but I cannot do that yet."
-
-
 def main():
     rospy.init_node("test_gpsr_recognition", anonymous=True)
     random.seed()
