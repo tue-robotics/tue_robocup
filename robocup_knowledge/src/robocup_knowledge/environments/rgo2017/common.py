@@ -1,7 +1,7 @@
 # COMMON KNOWLEDGE FILE RGO2017
 
-female_names = ["Emma","Olivia","Sophia","Ava","Isabella","Mia","Abigail","Emily","Charlotte","Harper"]
-male_names = ["Noah","Liam","Mason","Jacob","William","Ethan","James","Alexander","Michael","Benjamin"]
+female_names = ["emma","olivia","sophia","ava","isabella","mia","abigail","emily","charlotte","harper"]
+male_names = ["noah","liam","mason","jacob","william","ethan","james","alexander","michael","benjamin"]
 names = female_names + male_names
 
 # This dict holds all locations
@@ -29,7 +29,7 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
 
-rooms = location_rooms + ["workshop"]
+# rooms = location_rooms + ["workshop"]
 
 objects = [
     {'category': 'food',                'name': 'apple'             },

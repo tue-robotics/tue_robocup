@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import rospy
-from dragonfly_speech_recognition.srv import GetSpeechResponse
 from hmi_msgs.msg import QueryAction
 from hmi import Client
 

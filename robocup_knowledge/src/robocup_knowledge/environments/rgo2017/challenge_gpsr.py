@@ -15,97 +15,146 @@ starting_pose = ["gpsr_meeting_point_1",
 exit_waypoint = ["gpsr_exit_door_1",
                  "gpsr_exit_door_2"] # Door through which to exit the arena
 
-rooms = common.rooms + ["entrance", "exit"]
+# rooms = common.rooms + ["entrance", "exit"]
 
 # translations = { "bookcase" : "bocase" }
 
 grammar_target = "T"
 
-grammar = """
 ##############################################################################
 #
 # Actions
 #
 ##############################################################################
+
+grammar = """
 T[{actions : <A1>}] -> C[A1]
 #T[{actions : <A1, A2>}] -> C[A1] and C[A2]
 #T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> VP[A]
+"""
 
 ##############################################################################
 #
 # Verbs & shared stuff
 #
 ##############################################################################
-V_SAY -> tell | say | speak
-V_TAKE -> bring | take
-V_PLACE -> put | place
+
+grammar += """
 V_BRING -> give | bring | hand | deliver | take | carry | transport
-V_TAKE -> get | grasp | take | pick up
-V_SPEAK -> tell | say
-V_FIND -> find | locate | look for
 V_GUIDE -> guide | escort | take | lead | accompany
-V_FOLLOW -> follow | go after | come after
 
 DET -> the | a
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in
 """
 
-grammar += """
-##############################################################################
-#
-# Bring
-#
-##############################################################################
-# VP = V_TAKE BRING_ENTITIES to the BRING_LOCATIONS
-# VP = V_PLACE the BRING_ENTITIES on the {placement 2}
-# VP = $V_bring me the $object
-# VP = $V_deliver the $object to $someone
-# VP = $takefrom to the {placement 2}
-# VP = $goplace, $V_find the $object, and ($delivme | $delivat)
-# VP = $goplace, $V_find the $object, and $place
+for room in common.location_rooms:
+    grammar += '\nROOMS[%s] -> %s' % (room, room)
+for loc in common.get_locations():
+    grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
+grammar += '\n ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]'
+for obj in common.object_names:
+    grammar += '\nOBJECT_NAMES[%s] -> %s' % (obj, obj)
+for loc in common.get_locations(pick_location=True, place_location=True):
+    grammar += '\nMANIPULATION_AREA_LOCATIONS[%s] -> MANIPULATION_AREA_DESCRIPTIONS the %s' % (loc, loc)
 
-# TO BE FILLED IN BY THE KNOWLEDGE / SEMANTICS
-BRING_ENTITIES -> coke | fanta
+###############################################################################
+#
+# FIND
+#
+###############################################################################
+
+grammar += """
+V_FIND -> find | locate | look for
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] in the ROOMS[Y]
+VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS in the ROOMS[Y]
+VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS near the LOCATIONS[Y]
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
 """
 
-grammar += """
-##############################################################################
+grammar += '\nFIND_PERSONS -> DET person'
+grammar += '\nFIND_PERSONS -> DET women'
+grammar += '\nFIND_PERSONS -> DET man'
+for name in common.names:
+    grammar += '\nFIND_PERSONS -> %s' % name
+
+###############################################################################
 #
 # Navigate
 #
-##############################################################################
+###############################################################################
+
+grammar += """
 V_GOPL -> go to | navigate to
 V_GOR -> V_GOPL | enter
 
-VP["action": "navigate-to", "entity": {"id": X}] -> V_GOR the ROOMS[X]
-VP["action": "navigate-to", "entity": {"id": X}] -> V_GOPL the LOCATIONS[X]
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOMS[X]
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
 """
 
-for room in common.rooms:
-    grammar += '\nROOMS[%s] -> %s' % (room, room)
-
-for loc in common.get_locations():
-    grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
+###############################################################################
+#
+# Pick-up
+#
+###############################################################################
 
 grammar += """
+V_PICKUP -> get | grasp | take | pick up
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+"""
+
+###############################################################################
+#
+# Place
+#
+###############################################################################
+
+grammar += """
+V_PLACE -> put | place
+
+VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+"""
+
+###############################################################################
+#
+# Follow
+#
+###############################################################################
+
+grammar += """
+V_FOLLOW -> follow | go after | come after
+
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
+"""
+
 ##############################################################################
 #
 # SAY
 #
 ##############################################################################
-VP["action": "say", "sentence": X] -> SAY_SENTENCE[X]
 
-SAY_SENTENCE["ROBOT_NAME"] -> V_SAY your name
-SAY_SENTENCE["TIME"] -> V_SAY the time | V_SAY what time it is | V_SAY what time is it
-SAY_SENTENCE["my team is tech united"] -> V_SAY the name of your team
-SAY_SENTENCE["DAY_OF_MONTH"] -> V_SAY the day of the month
-SAY_SENTENCE["DAY_OF_WEEK"] -> V_SAY the day of the week
-SAY_SENTENCE["TODAY"] -> V_SAY what day is today | V_SAY me what day it is | V_SAY the date
-SAY_SENTENCE["TOMORROW"] -> V_SAY what day is tomorrow
+grammar += """
+V_SAY -> tell | say | speak
+
+VP["action": "say", "sentence": X] -> V_SAY SAY_SENTENCE[X]
 """
 
+grammar += '\nSAY_SENTENCE["ROBOT_NAME"] -> your name'
+grammar += '\nSAY_SENTENCE["TIME"] -> the time | what time it is | what time is it'
+grammar += '\nSAY_SENTENCE["my team is tech united"] -> the name of your team'
+grammar += '\nSAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month'
+grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
+grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
+grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
+
 if __name__ == "__main__":
+    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+
     from grammar_parser.cfgparser import CFGParser
     grammar_parser = CFGParser.fromstring(grammar)
     sentence = grammar_parser.get_random_sentence("T")
@@ -115,3 +164,6 @@ if __name__ == "__main__":
     result = grammar_parser.parse("T", sentence)
 
     print "Result:\n\n{}".format(result)
+
+
+follow_acton = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
