@@ -12,6 +12,8 @@ from robot_smach_states.util.designators import Designator, EdEntityDesignator
 from robocup_knowledge import load_knowledge
 choice_answer_mapping = load_knowledge('challenge_spr').choice_answer_mapping
 
+knowledge = load_knowledge('challenge_spr')
+
 
 def hear(robot, time_out):
     spec = '<question>'
@@ -24,8 +26,11 @@ def answer(robot, res, crowd_data):
     if res:
         if "question" in res.choices:
             answer = choice_answer_mapping[res.choices['question']]
-            
+
             # override for crowd answers
+            if answer == 'Crowd_size':
+                answer = 'In the crowd are %d people' % crowd_data['crowd_size']
+
             if answer == 'Crowd_males':
                 answer = 'In the crowd are %d males' % crowd_data['males']
 
@@ -35,8 +40,23 @@ def answer(robot, res, crowd_data):
             if answer == 'Crowd_children':
                 answer = 'In the crowd are %d children' % crowd_data['children']
 
-            if answer == 'Crowd_size':
-                answer = 'In the crowd are %d people' % crowd_data['crowd_size']
+            if answer == 'Crowd_adults':
+                answer = 'In the crowd are %d adults' % crowd_data['adults']
+
+            if answer == 'Crowd_men':
+                answer = 'In the crowd are %d men' % crowd_data['men']
+
+            if answer == 'Crowd_women':
+                answer = 'In the crowd are %d women' % crowd_data['women']
+
+            if answer == 'Crowd_boys':
+                answer = 'In the crowd are %d boys' % crowd_data['boys']
+
+            if answer == 'Crowd_girls':
+                answer = 'In the crowd are %d girls' % crowd_data['girls']
+
+            if answer == 'Crowd_elders':
+                answer = 'In the crowd are %d elders' % crowd_data['elders']
 
             rospy.loginfo("Question was: '%s'?"%res.result)
             robot.speech.speak("The answer is %s"%answer)
