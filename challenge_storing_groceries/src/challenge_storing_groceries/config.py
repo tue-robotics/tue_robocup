@@ -6,7 +6,8 @@ from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
 
-# ToDo: move everything environment specific to challenge knowledge
+# Location
+ENTITY_POSES = challenge_knowledge.entity_poses
 
 # Inspection
 CABINET = challenge_knowledge.cabinet_amcl
@@ -22,7 +23,7 @@ MIN_OBJECT_HEIGHT = 0.1
 
 # Grasping
 TABLE = challenge_knowledge.grasp_surface
-TABLE_POSE = FrameStamped(frame=challenge_knowledge.table_pose, frame_id="map")
+# TABLE_POSE = FrameStamped(frame=challenge_knowledge.table_pose, frame_id="map")
 GRAB_SURFACE = "on_top_of"
 ROOM = challenge_knowledge.room
 MIN_GRAB_OBJECT_HEIGHT = 0.075

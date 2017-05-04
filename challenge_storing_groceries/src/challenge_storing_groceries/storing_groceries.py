@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 # ROS
+import PyKDL as kdl
 import smach
 
 # TU/e Robotics
+from robot_skills.util.kdl_conversions import FrameStamped
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.geometry_helpers import *
@@ -31,8 +33,19 @@ class StoringGroceries(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata):
                 """ 'Locks' a locking designator """
-                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
-                robot.ed.update_entity(id=TABLE, frame_stamped=TABLE_POSE)
+                # Move away the cabinet
+                robot.ed.update_entity(id="cabinet",
+                                       frame_stamped=FrameStamped(frame=kdl.Frame(kdl.Rotation(),
+                                                                                  kdl.Vector(12.0, 0, 0)),
+                                                                  frame_id="map"))
+
+                # Determine where to perform the challenge
+                robot_pose = robot.base.get_location()
+                ENTITY_POSES.sort(key=lambda tup: (tup[0].frame.p - robot_pose.frame.p).Norm())
+
+                # Update the world model
+                robot.ed.update_entity(id=CABINET, frame_stamped=ENTITY_POSES[0][0])
+                robot.ed.update_entity(id=TABLE, frame_stamped=ENTITY_POSES[0][1])
 
                 return "done"
 
