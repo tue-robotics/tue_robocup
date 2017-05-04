@@ -4,6 +4,7 @@ import smach, rospy, sys
 from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import VariableDesignator
 import robot_smach_states as states
+from hmi import TimeoutException
 
 import copy
 import threading
@@ -148,10 +149,15 @@ class FollowOperator(smach.State):
                 return False
 
             if self._ask_follow:
-                self._robot.speech.speak("Should I follow you?", block=True)
-                answer = self._robot.ears.recognize("<choice>", {"choice" : ["yes", "no"]})
-                if answer:
-                    if ('choice' in answer.choices and answer.choices['choice'] == "yes") or answer.result == "yes":
+                sentence = "Should I follow you?"
+                self._robot.speech.speak(sentence, block=True)
+                try:
+                    answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+                except TimeoutException as e:
+                    self._robot.speech.speak("I did not hear you!")
+                    rospy.sleep(2)
+                else:
+                    if answer.sentence == "yes":
                         operator = self._robot.ed.get_closest_laser_entity(radius=0.5, center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                         rospy.loginfo("Operator: {op}".format(op=operator))
                         if not operator:
@@ -161,27 +167,18 @@ class FollowOperator(smach.State):
                                 self._robot.speech.speak("Please look at me while I learn to recognize you.", block=True)
                                 self._robot.speech.speak("Just in case...",block=False)
                                 self._robot.head.look_at_standing_person()
-                                self._robot.head.learn_person()
-
-                                # learn_person_start_time = rospy.Time.now()
-                                # learn_person_timeout = 10.0 # TODO: Parameterize
-                                # num_detections = 0
-                                # while num_detections < 5:
-                                #     rospy.logerr("self._robot.ed.learn_person(self._operator_name) method is only mocked")
-                                #     if self._robot.ed.learn_person(self._operator_name):
-                                #         num_detections+=1
-                                #     elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
-                                #         self._robot.speech.speak("Please stand in front of me and look at me")
-                                #         operator = None
-                                #         break
-
-                    elif 'choice' in answer.choices and answer.choices['choice'] == "no":
-                        return False
+                                learn_person_start_time = rospy.Time.now()
+                                learn_person_timeout = 10.0 # TODO: Parameterize
+                                num_detections = 0
+                                while num_detections < 5:
+                                    if self._robot.head.learn_person(self._operator_name):
+                                        num_detections+=1
+                                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > learn_person_timeout:
+                                        self._robot.speech.speak("Please stand in front of me and look at me")
+                                        operator = None
+                                        break
                     else:
-                        rospy.sleep(2)
-                else:
-                    self._robot.speech.speak("Something is wrong with my ears, please take a look!")
-                    return False
+                        return False
             else:
                 operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
