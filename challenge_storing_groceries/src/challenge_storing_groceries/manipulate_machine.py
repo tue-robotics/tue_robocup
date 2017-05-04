@@ -208,6 +208,14 @@ class ManipulateMachine(smach.StateMachine):
                                                              {self._table_designator: "in_front_of"},
                                                              self._table_designator),
                                    transitions={'arrived': 'INSPECT_TABLE',
+                                                'unreachable': 'MOVE_TO_TABLE2',
+                                                'goal_not_defined': 'INSPECT_TABLE'})
+
+            smach.StateMachine.add("MOVE_TO_TABLE2",
+                                   states.NavigateToSymbolic(robot,
+                                                             {self._table_designator: "large_in_front_of"},
+                                                             self._table_designator),
+                                   transitions={'arrived': 'INSPECT_TABLE',
                                                 'unreachable': 'INSPECT_TABLE',
                                                 'goal_not_defined': 'INSPECT_TABLE'})
 
