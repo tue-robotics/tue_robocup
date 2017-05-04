@@ -1,7 +1,7 @@
 # COMMON KNOWLEDGE FILE RGO2017
 
-female_names = ["Emma","Olivia","Sophia","Ava","Isabella","Mia","Abigail","Emily","Charlotte","Harper"]
-male_names = ["Noah","Liam","Mason","Jacob","William","Ethan","James","Alexander","Michael","Benjamin"]
+female_names = ["emma","olivia","sophia","ava","isabella","mia","abigail","emily","charlotte","harper"]
+male_names = ["noah","liam","mason","jacob","william","ethan","james","alexander","michael","benjamin"]
 names = female_names + male_names
 
 # This dict holds all locations
