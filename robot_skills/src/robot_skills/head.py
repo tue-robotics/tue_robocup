@@ -25,10 +25,6 @@ class Head(RobotPart):
         self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
-        # self._annotate_srv = self.create_service_client('/annotate', Annotate)
-        # self._recognize_srv = self.create_service_client('/recognize', Recognize)
-        # self._clear_srv = self.create_service_client('/clear', Empty)
-
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
