@@ -64,6 +64,7 @@ class WritePdf(smach.State):
 
         # Filter and sort based on probabilities
         items = [item for item in self._items.values() if item[1] >= config.CLASSIFICATION_THRESHOLD]
+        items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
 
@@ -187,6 +188,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
             html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>" % (entity._pose.p.x(),
                                                                           entity._pose.p.y(),
                                                                           entity._pose.p.z())
+            html += "<p><b>Probability: </b>%.2f</p>" % item[1]
             html += "</center></td>"
             html += "</tr></table>"
             html += "<br />"

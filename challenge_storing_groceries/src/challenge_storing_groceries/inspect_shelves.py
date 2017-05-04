@@ -73,7 +73,7 @@ class InspectShelves(smach.State):
 
             # ToDo: classification threshold
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
-            # print  "Types and probs: {}".format(entity_types_and_probs)
+            # print "Types and probs: {}".format(entity_types_and_probs)
 
             # Recite entities
             for etp in entity_types_and_probs:
