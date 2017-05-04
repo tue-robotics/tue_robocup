@@ -68,8 +68,13 @@ class ED(RobotPart):
         self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker,
                                                  queue_size=10)
 
-        self.learn_person = lambda name: True
         self.robot_name = robot_name
+
+
+
+    def learn_person(self, name):
+        rospy.logerr('robot.ed.learn_person IS DEPRECATED!!! Replace by robot.head.learn_person')
+        return True
 
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
