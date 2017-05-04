@@ -16,6 +16,7 @@ class FrameStamped(object):
         assert isinstance(frame, kdl.Frame)
         self.frame = frame
         self.frame_id = frame_id
+        self.stamp = stamp
 
     def __repr__(self):
         xyz = "(x={x}, y={y}, z={z})".format(x=self.frame.p.x(), y=self.frame.p.y(), z=self.frame.p.z())
@@ -223,7 +224,8 @@ def kdlFrameStampedFromPoseStampedMsg(pose_stamped):
     :returns FrameStamped"""
     assert isinstance(pose_stamped, gm.PoseStamped)
     return FrameStamped(frame=poseMsgToKdlFrame(pose_stamped.pose),
-                        frame_id=pose_stamped.header.frame_id)
+                        frame_id=pose_stamped.header.frame_id,
+                        stamp=pose_stamped.header.stamp)
 
 def kdlFrameStampedFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
     """

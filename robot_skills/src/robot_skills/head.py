@@ -38,9 +38,9 @@ class Head(RobotPart):
         Optionally, keep tracking can be disabled (keep_tracking=False)
         """
         if side == "left":
-            return self.look_at_point(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"))
+            return self.look_at_point(VectorStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"))
         elif side == "right":
-            return self.look_at_point(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"))
+            return self.look_at_point(VectorStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"))
         else:
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
             return False
