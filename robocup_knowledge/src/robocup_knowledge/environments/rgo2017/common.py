@@ -9,12 +9,12 @@ locations = [
     { 'name':'bookshelf',       'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
     { 'name':'sofa',            'room':'livingroom', 'category': 'seat',    'manipulation':'no'  },
     { 'name':'couch_table',     'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'livingroom', 'category': 'table',   'manipulation':'no'  },
+    { 'name':'side_table',      'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
 
     { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'stove',           'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'desk',            'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'no'  },
+    { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
 
     { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
     { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },

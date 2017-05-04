@@ -19,6 +19,7 @@ print "=============================================="
 print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
+
 class WaitForOperatorCommand(smach.State):
 
     def __init__(self, robot, possible_commands, commands_as_outcomes=False, commands_as_userdata=False):
@@ -42,8 +43,8 @@ class WaitForOperatorCommand(smach.State):
 
     def _listen_for_commands(self, tries=3, time_out = rospy.Duration(30)):
         for i in range(0, tries):
-            result = self._robot.ears.recognize("<option>", {"option" : self._possible_commands}, time_out)
-            command_recognized = result.result
+            result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T', timeout=time_out)
+            command_recognized = result.sentence
 
             if command_recognized == "":
                 self._robot.speech.speak("I am still waiting for a command and did not hear anything")
@@ -80,8 +81,8 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car, 
-                                               frame_stamped=self._robot.base.get_location(), 
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car,
+                                               frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
 
         if success:
@@ -102,9 +103,9 @@ class GrabItem(smach.State):
 
     def execute(self, userdata):
 
-        handOverHuman = states.HandoverFromHuman(self._robot, 
-                                                 self._empty_arm_designator, 
-                                                 "current_item", 
+        handOverHuman = states.HandoverFromHuman(self._robot,
+                                                 self._empty_arm_designator,
+                                                 "current_item",
                                                  self._current_item)
 
         userdata.target_room_out = userdata.target_room_in
@@ -124,9 +125,9 @@ class NavigateToRoom(smach.State):
         target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
         target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
-        navigateToWaypoint = states.NavigateToWaypoint(self._robot, 
-                                                       ds.EntityByIdDesignator(self._robot, 
-                                                                               id=target_waypoint), 
+        navigateToWaypoint = states.NavigateToWaypoint(self._robot,
+                                                       ds.EntityByIdDesignator(self._robot,
+                                                                               id=target_waypoint),
                                                        target_radius)
 
         return navigateToWaypoint.execute()
@@ -140,35 +141,30 @@ def setup_statemachine(robot):
                                                                  name="placement",
                                                                  area=challenge_knowledge.default_area),
                                                                  name="place_position")
-    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, 
-                                                      robot.rightArm, 
+    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms,
+                                                      robot.rightArm,
                                                       name="empty_arm_designator")
-    current_item = ds.EntityByIdDesignator(robot, 
-                                           id=challenge_knowledge.default_item, 
+    current_item = ds.EntityByIdDesignator(robot,
+                                           id=challenge_knowledge.default_item,
                                            name="current_item")
-    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, 
-                                                             current_item, 
+    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
+                                                             current_item,
                                                              name="arm_with_item_designator")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-        # Tim
         smach.StateMachine.add('INITIALIZE',
                                states.Initialize(robot),
                                transitions={'initialized':    'WAIT_TO_FOLLOW',
                                             'abort':          'Aborted'})
 
-        # Tim
-        # TODO: Should also recognize operator infront of the robot and store it.
         smach.StateMachine.add('WAIT_TO_FOLLOW',
                                WaitForOperatorCommand(robot, possible_commands=challenge_knowledge.commands['follow']),
                                transitions={'success':        'FOLLOW_OPERATOR',
                                             'abort':          'Aborted'})
 
-        # Tim
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
-                               #TODO: add that robot should memorize operator
                                WaitForOperatorCommand(robot,
                                                       possible_commands=challenge_knowledge.commands['follow_or_remember'],
                                                       commands_as_outcomes=True),
@@ -177,34 +173,29 @@ def setup_statemachine(robot):
                                             'stop':           'REMEMBER_CAR_LOCATION',
                                             'car':            'REMEMBER_CAR_LOCATION',
                                             'abort':          'Aborted'})
-        # Kwin
         # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
-                               states.FollowOperator(robot, 
-                                                     operator_timeout=30, 
-                                                     ask_follow=False, 
-                                                     learn_face=False, 
+                               states.FollowOperator(robot,
+                                                     operator_timeout=30,
+                                                     ask_follow=False,
+                                                     learn_face=False,
                                                      replan=True),
                                transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
                                             'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
                                             'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
 
-        # Tim
         smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                StoreCarWaypoint(robot),
                                transitions={'success':        'WAIT_FOR_DESTINATION',
                                             'abort':          'Aborted'})
 
-
-        # Tim
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
-                               WaitForOperatorCommand(robot, 
-                                                      possible_commands=challenge_knowledge.waypoints.keys(), 
+                               WaitForOperatorCommand(robot,
+                                                      possible_commands=challenge_knowledge.waypoints.keys(),
                                                       commands_as_userdata=True),
                                transitions={'success':        'GRAB_ITEM',
                                             'abort':          'Aborted'})
 
-        # Kwin
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
                                GrabItem(robot, empty_arm_designator, current_item),
@@ -215,14 +206,12 @@ def setup_statemachine(robot):
                                             'target_room_out':  'target_room'})
 
 
-        # Tim
         smach.StateMachine.add('GOTO_DESTINATION',
                                NavigateToRoom(robot),
                                transitions={'arrived':          'PUTDOWN_ITEM',
                                             'unreachable':      'PUTDOWN_ITEM',  #implement avoid obstacle behaviour later
                                             'goal_not_defined': 'Aborted'})
 
-        # Kwin
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
                                states.Place(robot, current_item, place_position, arm_with_item_designator),
@@ -231,7 +220,6 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('ASKING_FOR_HELP',
                                #TODO: look and then face new operator
-                               #TODO: add that robot should memorize new operator
                                states.Say(robot, "Please follow me and help me carry groceries into the house"),
                                transitions={'spoken': 'GOTO_CAR'})
                                #transitions={'success':        'GOTO_CAR',
