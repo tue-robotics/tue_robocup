@@ -49,7 +49,7 @@ DET -> the | a
 MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in
 """
 
-for room in common.rooms:
+for room in common.location_rooms:
     grammar += '\nROOMS[%s] -> %s' % (room, room)
 for loc in common.get_locations():
     grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
