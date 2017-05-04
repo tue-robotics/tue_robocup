@@ -3,6 +3,7 @@ import rospy
 from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
+from std_srvs.srv import Empty
 from image_recognition_msgs.srv import Annotate, Recognize
 from image_recognition_msgs.msg import Annotation
 
@@ -20,8 +21,11 @@ class Head(RobotPart):
                                                                     HeadReferenceAction)
         self._annotate_srv = self.create_service_client('/' + robot_name + '/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/recognize', Recognize)
+        self._recognize_srv = self.create_service_client('/' + robot_name + '/clear', Empty)
         # self._annotate_srv = self.create_service_client('/annotate', Annotate)
         # self._recognize_srv = self.create_service_client('/recognize', Recognize)
+        # self._clear_srv = self.create_service_client('/clear', Empty)
+
 
         self._goal = None
         self._at_setpoint = False
@@ -162,8 +166,9 @@ class Head(RobotPart):
         rospy.loginfo("got %d bytes of image data", len(image.data))
         return image
 
-    def get_faces(self, image):
+    def _get_faces(self, image):
         r = self._recognize_srv(image=image)
+        rospy.loginfo('found %d face(s) in the image', len(r.recognitions))
         return r
 
     def learn_person(self, name='operator'):
@@ -172,8 +177,7 @@ class Head(RobotPart):
 
         image = self.get_image()
 
-        recognitions = self.get_faces(image).recognitions
-        rospy.loginfo('found %d face(s) in the image', len(recognitions))
+        recognitions = self._get_faces(image).recognitions
         recognitions = [r for r in recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
         rospy.loginfo('found %d valid face(s)', len(recognitions))
 
@@ -186,6 +190,15 @@ class Head(RobotPart):
         self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
 
         return True
+
+    def detect_persons(self):
+        image = self.get_image()
+        return self._get_faces(image).recognitions
+
+    def clear_persons(self):
+        rospy.loginfo('clearing all learned persons')
+        self._clear_srv()
+
 
 #######################################
     # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
