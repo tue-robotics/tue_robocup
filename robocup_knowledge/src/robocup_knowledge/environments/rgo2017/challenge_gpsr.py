@@ -18,3 +18,50 @@ exit_waypoint = ["gpsr_exit_door_1",
 rooms = common.rooms + ["entrance", "exit"]
 
 # translations = { "bookcase" : "bocase" }
+
+grammar_target = "T"
+
+grammar = """
+T[{actions : <A1>}] -> C[A1]
+#T[{actions : <A1, A2>}] -> C[A1] and C[A2]
+#T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+
+C[{A}] -> VP[A]
+
+##############################################################################
+#
+# Verbs
+#
+##############################################################################
+VBTAKE -> bring | take
+VBPLACE -> put | place
+VBBRING -> bring | give
+VBDELIVER -> VBBRING | deliver
+VBTAKE -> get | grasp | take | pick up
+VBSPEAK -> tell | say
+VBGOPL -> go | navigate
+VBGOR -> VBGOPL| enter
+VBFIND -> find | locate | look for
+VBGUIDE -> guide | escort | take | lead | accompany
+VBFOLLOW -> follow | go after | come after
+
+##############################################################################
+#
+# Bring
+#
+##############################################################################
+VP = VBTAKE BRING_ENTITIES to the BRING_LOCATIONS
+VP = VBPLACE the BRING_ENTITIES on the {placement 2}
+VP = $vbbring me the $object
+VP = $vbdeliver the $object to $someone
+VP = $takefrom to the {placement 2}
+VP = $goplace, $vbfind the $object, and ($delivme | $delivat)
+VP = $goplace, $vbfind the $object, and $place
+
+# TO BE FILLED IN BY THE KNOWLEDGE / SEMANTICS
+BRING_ENTITIES -> coke | fanta
+
+"""
+
+for room in common.rooms:
+    grammar += "\n BRING_LOCATIONS -> {}".format(room)
