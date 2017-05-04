@@ -1,76 +1,27 @@
-choice_answer_mapping = {
+grammar = '''
+Q['answer': "Magdeburg"] -> what city are we in
+Q['answer': "Tech United"] -> what is the name of your team
+Q['answer': "Chewbacca"] -> name the big hairy creature in star wars.
+Q['answer': "Isaac Asimov"] -> who wrote the three laws of robotics
+Q['answer': "The Jetsons"] -> from what series do you know rosie the robot
+Q['answer': "The Flintstones"] -> from what series do you know the baby bam bam
+Q['answer': "Neo"] -> who is the main charcater of the matrix
+Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms.
+Q['answer': "In my SSD"] -> where do you store your memories
+Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
 
-	# Predefined questions:
+Q['answer': "Crowd_males"] -> how many males are there in the crowd
+Q['answer': "Crowd_females"] -> how many females are there in the crowd
+Q['answer': "Crowd_size"] -> what is the size of the crowd
+Q['answer': "Crowd_children"] -> how many children are there in the crowd
 
-	"What city are we in?": "Magdeburg",
-	"What is the name of your team?": "Tech United",
-	"Name the big hairy creature in Star Wars.": "Chewbacca",
-	"Who wrote the three laws of robotics?": "Isaac Asimov",
-	"From what series do you know Rosie the robot?": "The Jetsons",
-	"From what series do you know the baby Bam Bam": "The Flintstones",
-	"Who is the main charcater of The Matrix": "Neo",
-	"Name the two RoboCup@Home standart platforms.": "Peper and HSR",
-	"Where do you store your memories": "In my SSD",
-	"Where is your team located?": "In Eindhoven The Netherlands",
+Q['answer': "basket"] -> which is the biggest object
 
-	# Crowd questions:
+T[x] -> Q[x]
+'''
 
-	# "How many PEOPLE are in the crowd?" | "Tell me the number of PEOPLE in the crowd"
-	# "How many people in the crowd are POSITION | GESTURE?"
-	# "The POSITION person was GENPPL?"
-	# "Tell me if the (POSPRS	| GESTURE) person was a GENPPL?"
-	# "Tell me how many people were wearing COLOR"
-	
-	"How many males are there in the crowd?": "Crowd_males",
-	"How many females are there in the crowd?": "Crowd_females",
-	"What is the size of the crowd?": "Crowd_size",
-	"How many children are there in the crowd?": "Crowd_children",
 
-	# Arena questions:
-
-	# "Where is the {placement}?"
-	# "Where is the {beacon}?"
-	# "In which room is the {placement}?"
-	# "In which room is the {beacon}?"
-	# "How many doors has the {room}?"
-	# "How many ({placement} | {beacon}) are in the {room}?"
-
-	# Object questions:
-
-	"Which is the biggest object?": "",
-	"Which is the smallest object?": "",
-
-	"Which is the biggest food?": "",
-	"Which is the smallest food?": "",
-
-	"Which is the biggest container?": "",
-	"Which is the smallest container?": "",
-
-	"Which is the biggest drink?": "",
-	"Which is the smallest drink?": "",
-
-	"Which is the biggest cleaning stuff?": "",
-	"Which is the smallest cleaning stuff?": "",
-
-	"Which is the biggest cutlery?": "",
-	"Which is the smallest cutlery?": ""
-
-	# "Where can I find a {object}?"
-	# "How many {category} there are?"
-	# "Whats the colour of the {kobject}?"
-	# "How many ({category} | objects) are in the {placement}?"
-	# "What objects are stored in the {placement}?"
-	# "Where can I find a ({object} | {category})?"
-	# "To which category belong the {object}?"
-	# "Do the {object 1} and {object 2} belong to the same category?"
-	# "Between the {object 1} and {object 2}, which one is $adjr?"
-
-	# $adja = heaviest | smallest | biggest | lightest
-	# $adjr = heavier | smaller | bigger | lighter
-
-}
-
-grammar = """
+big_grammar = """
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Crowd questions
 # - - - - - - - - - - - - - - - - - - - - - - - - -

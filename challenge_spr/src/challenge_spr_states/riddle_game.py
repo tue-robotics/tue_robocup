@@ -8,24 +8,23 @@ import sys
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import Designator, EdEntityDesignator
-
+from hmi import TimeoutException
 from robocup_knowledge import load_knowledge
-choice_answer_mapping = load_knowledge('challenge_spr').choice_answer_mapping
 
 knowledge = load_knowledge('challenge_spr')
 
 
 def hear(robot, time_out):
-    spec = '<question>'
-    choices = {'question': [k for k,v in choice_answer_mapping.iteritems()]}
-    
-    return robot.ears.recognize(spec=spec, choices=choices, time_out=time_out)
+    try:
+        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=time_out)    
+    except TimeoutException:
+        return None
 
 
 def answer(robot, res, crowd_data):
     if res:
-        if "question" in res.choices:
-            answer = choice_answer_mapping[res.choices['question']]
+        if 'answer' in res.semantics:
+            answer = res.semantics['answer']
 
             # override for crowd answers
             if answer == 'Crowd_size':
@@ -58,7 +57,7 @@ def answer(robot, res, crowd_data):
             if answer == 'Crowd_elders':
                 answer = 'In the crowd are %d elders' % crowd_data['elders']
 
-            rospy.loginfo("Question was: '%s'?"%res.result)
+            rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
             return 'answered'
         else:
@@ -103,7 +102,7 @@ class TestRiddleGame(smach.StateMachine):
 
             smach.StateMachine.add("HEAR_QUESTION",
                                    HearQuestion(robot),
-                                   transitions={'answered': 'HEAR_QUESTION_2', 'not_answered': 'Done'},
+                                   transitions={'answered': 'HEAR_QUESTION_2', 'not_answered': 'HEAR_QUESTION_2'},
                                    remapping={'crowd_data':'crowd_data'})
 
             smach.StateMachine.add("HEAR_QUESTION_2",
