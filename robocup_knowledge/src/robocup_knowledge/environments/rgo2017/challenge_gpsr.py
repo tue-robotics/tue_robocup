@@ -39,7 +39,7 @@ VBBRING -> bring | give
 VBDELIVER -> VBBRING | deliver
 VBTAKE -> get | grasp | take | pick up
 VBSPEAK -> tell | say
-VBGOPL -> go | navigate
+VBGOPL["navigate-to"] -> go to | navigate to
 VBGOR -> VBGOPL| enter
 VBFIND -> find | locate | look for
 VBGUIDE -> guide | escort | take | lead | accompany
@@ -61,7 +61,16 @@ VP = $goplace, $vbfind the $object, and $place
 # TO BE FILLED IN BY THE KNOWLEDGE / SEMANTICS
 BRING_ENTITIES -> coke | fanta
 
+##############################################################################
+#
+# Navigate
+#
+##############################################################################
+VP["action": A, "entity": X] -> VBGOPL[A] the NAV_LOCATIONS[X]
+
 """
 
-for room in common.rooms:
-    grammar += "\n BRING_LOCATIONS -> {}".format(room)
+for loc in common.get_locations():
+    grammar += '\nNAV_LOCATIONS[{"id": %s}] -> %s' % (loc, loc)
+
+print grammar
