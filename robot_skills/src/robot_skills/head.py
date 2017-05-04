@@ -18,10 +18,10 @@ class Head(RobotPart):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
-        # self._annotate_srv = self.create_service_client('/' + robot_name + '/annotate', Annotate)
-        # self._recognize_srv = self.create_service_client('/' + robot_name + '/recognize', Recognize)
-        self._annotate_srv = self.create_service_client('/annotate', Annotate)
-        self._recognize_srv = self.create_service_client('/recognize', Recognize)
+        self._annotate_srv = self.create_service_client('/' + robot_name + '/annotate', Annotate)
+        self._recognize_srv = self.create_service_client('/' + robot_name + '/recognize', Recognize)
+        # self._annotate_srv = self.create_service_client('/annotate', Annotate)
+        # self._recognize_srv = self.create_service_client('/recognize', Recognize)
 
         self._goal = None
         self._at_setpoint = False
@@ -149,8 +149,8 @@ class Head(RobotPart):
             cv.notify()
             cv.release()
 
-        subscriber = rospy.Subscriber("/camera/rgb/image_rect_color", Image, callback)  # for test with tripod kinetic
-        # subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
+        # subscriber = rospy.Subscriber("/camera/rgb/image_rect_color", Image, callback)  # for test with tripod kinetic
+        subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
 
         cv.acquire()
         while not cv_image:
@@ -163,9 +163,7 @@ class Head(RobotPart):
         return image
 
     def get_faces(self, image):
-        rospy.loginfo('_recognize_srv')
         r = self._recognize_srv(image=image)
-        rospy.loginfo('_recognize_srv done')
         return r
 
     def learn_person(self, name='operator'):
@@ -183,7 +181,11 @@ class Head(RobotPart):
             return False
 
         recognition = recognitions[0]
-        return self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
+
+        rospy.loginfo('annotating that face as %s', name)
+        self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
+
+        return True
 
 #######################################
     # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
