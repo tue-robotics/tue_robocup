@@ -19,6 +19,10 @@ class Api(RobotPart):
         """
         return self._client.query(description, grammar, target)
 
+    @property
+    def last_talker_id(self):
+        return self._client.last_talker_id
+
     def old_query(self, spec, choices, timeout=10):
         msg = 'robot.ears.recognize IS REMOVED. Use `robot.hmi.query`'
         rospy.logerr(msg)
