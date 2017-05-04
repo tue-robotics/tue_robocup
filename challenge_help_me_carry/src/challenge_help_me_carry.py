@@ -19,6 +19,7 @@ print "=============================================="
 print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
+
 class WaitForOperatorCommand(smach.State):
 
     def __init__(self, robot, possible_commands, commands_as_outcomes=False, commands_as_userdata=False):
@@ -80,8 +81,8 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car, 
-                                               frame_stamped=self._robot.base.get_location(), 
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car,
+                                               frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
 
         if success:
@@ -102,9 +103,9 @@ class GrabItem(smach.State):
 
     def execute(self, userdata):
 
-        handOverHuman = states.HandoverFromHuman(self._robot, 
-                                                 self._empty_arm_designator, 
-                                                 "current_item", 
+        handOverHuman = states.HandoverFromHuman(self._robot,
+                                                 self._empty_arm_designator,
+                                                 "current_item",
                                                  self._current_item)
 
         userdata.target_room_out = userdata.target_room_in
@@ -124,9 +125,9 @@ class NavigateToRoom(smach.State):
         target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
         target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
-        navigateToWaypoint = states.NavigateToWaypoint(self._robot, 
-                                                       ds.EntityByIdDesignator(self._robot, 
-                                                                               id=target_waypoint), 
+        navigateToWaypoint = states.NavigateToWaypoint(self._robot,
+                                                       ds.EntityByIdDesignator(self._robot,
+                                                                               id=target_waypoint),
                                                        target_radius)
 
         return navigateToWaypoint.execute()
@@ -140,14 +141,14 @@ def setup_statemachine(robot):
                                                                  name="placement",
                                                                  area=challenge_knowledge.default_area),
                                                                  name="place_position")
-    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, 
-                                                      robot.rightArm, 
+    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms,
+                                                      robot.rightArm,
                                                       name="empty_arm_designator")
-    current_item = ds.EntityByIdDesignator(robot, 
-                                           id=challenge_knowledge.default_item, 
+    current_item = ds.EntityByIdDesignator(robot,
+                                           id=challenge_knowledge.default_item,
                                            name="current_item")
-    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, 
-                                                             current_item, 
+    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
+                                                             current_item,
                                                              name="arm_with_item_designator")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
@@ -180,10 +181,10 @@ def setup_statemachine(robot):
         # Kwin
         # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
-                               states.FollowOperator(robot, 
-                                                     operator_timeout=30, 
-                                                     ask_follow=False, 
-                                                     learn_face=False, 
+                               states.FollowOperator(robot,
+                                                     operator_timeout=30,
+                                                     ask_follow=False,
+                                                     learn_face=False,
                                                      replan=True),
                                transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
                                             'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
@@ -198,8 +199,8 @@ def setup_statemachine(robot):
 
         # Tim
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
-                               WaitForOperatorCommand(robot, 
-                                                      possible_commands=challenge_knowledge.waypoints.keys(), 
+                               WaitForOperatorCommand(robot,
+                                                      possible_commands=challenge_knowledge.waypoints.keys(),
                                                       commands_as_userdata=True),
                                transitions={'success':        'GRAB_ITEM',
                                             'abort':          'Aborted'})

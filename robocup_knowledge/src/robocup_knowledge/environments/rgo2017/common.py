@@ -9,19 +9,19 @@ locations = [
     { 'name':'bookshelf',       'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
     { 'name':'sofa',            'room':'livingroom', 'category': 'seat',    'manipulation':'no'  },
     { 'name':'couch_table',     'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'livingroom', 'category': 'table',   'manipulation':'no'  },
+    { 'name':'side_table',      'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
 
     { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'stove',           'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'desk',            'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'no'  },
+    { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
 
     { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
     { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
 
     { 'name':'dinner_table',    'room':'diningroom', 'category': 'table',   'manipulation':'yes' },
     { 'name':'cabinet',         'room':'diningroom', 'category': 'shelf',   'manipulation':'yes' }
-    
+
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -97,8 +97,9 @@ inspect_positions = {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-''' colors from printing on screen '''
+
 class bcolors:
+    ''' colors from printing on screen '''
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -116,6 +117,8 @@ class bcolors:
 
 	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
 '''
+
+
 def make_prints(name):
 
     prefix = bcolors.HEADER + name + bcolors.ENDC
@@ -132,11 +135,13 @@ def make_prints(name):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+
 def is_location(location):
     for loc in locations:
         if loc["name"] == location:
             return True
     return False
+
 
 def get_room(location):
     for loc in locations:
@@ -144,11 +149,13 @@ def get_room(location):
             return loc["room"]
     return None
 
+
 def get_inspect_areas(location):
     if location in inspect_areas:
         return inspect_areas[location]
     else:
         return ["on_top_of"]
+
 
 def get_inspect_position(location, area=""):
     if location in inspect_positions and area in inspect_positions[location]:
@@ -156,11 +163,13 @@ def get_inspect_position(location, area=""):
     else:
         return "in_front_of"
 
+
 def is_pick_location(location):
     for loc in locations:
         if loc["name"] == location and loc["manipulation"] == "yes":
             return True
     return False
+
 
 def is_place_location(location):
     for loc in locations:
@@ -168,15 +177,18 @@ def is_place_location(location):
             return True
     return False
 
+
 def get_locations(room=None, pick_location=None, place_location=None):
     return [loc["name"] for loc in locations
                 if (room == None or loc["room"] == room) and \
                    (pick_location == None or pick_location == is_pick_location(loc["name"])) and \
                    (place_location == None or place_location == is_place_location(loc["name"]))]
 
+
 def get_objects(category=None):
     return [obj["name"] for obj in objects
                 if category == None or category == obj["category"]]
+
 
 def get_object_category(obj):
     for o in objects:
@@ -184,8 +196,9 @@ def get_object_category(obj):
             return o["category"]
     return None
 
-# Returns (location, area_name)
+
 def get_object_category_location(obj_cat):
+    # Returns (location, area_name)
     location = category_locations[obj_cat].keys()[0]
     area_name = category_locations[obj_cat].values()[0]
     return (location, area_name)
@@ -214,7 +227,6 @@ if __name__ == "__main__":
     print "Place locations:"
     for loc in get_locations(place_location=True):
         print "    {}".format(loc)
-
 
     print "\n-----------------------------------------------------------------------------"
     print "None-manipulation locations:"
