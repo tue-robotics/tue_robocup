@@ -15,7 +15,7 @@ OBJECT_SHELVES = challenge_knowledge.object_shelves
 OBJECT_TYPES = challenge_knowledge.object_types
 DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF. # ToDo: no global?!
 SEGMENTED_ENTITIES = []  # List with segmented entities such that we can also grasp unknown entities
-CLASSIFICATION_THRESHOLD = 0.5  # Threshold for perception. If classification below threshold, the type is not added
+CLASSIFICATION_THRESHOLD = 0.1  # Threshold for perception. If classification below threshold, the type is not added
 # to the world model and further on considered unknown.
 MAX_KNOWN_OBJECTS = 10  # Maximum number of known objects to store in the PDF
 MAX_UNKNOWN_OBJECTS = 5  # Maximum number of unknown objects to store in the PDF
