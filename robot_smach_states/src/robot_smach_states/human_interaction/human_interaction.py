@@ -6,6 +6,7 @@ import random
 import ed_perception.msg
 import actionlib
 from robot_smach_states.state import State
+from hmi import TimeoutException
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
@@ -77,7 +78,9 @@ class Say(smach.State):
 
 
 class HearOptions(smach.State):
-    def __init__(self, robot, options, timeout = rospy.Duration(10), look_at_standing_person=True):
+    """Hear one of the options
+    """
+    def __init__(self, robot, options, timeout=rospy.Duration(10), look_at_standing_person=True):
         outcomes = list(options) # make a copy
         outcomes.append("no_result")
         smach.State.__init__(self, outcomes=outcomes)
@@ -90,18 +93,16 @@ class HearOptions(smach.State):
         if self.look_at_standing_person:
             self._robot.head.look_at_standing_person()
 
-        answer = self._robot.ears.recognize("<option>", {"option":self._options}, self._timeout)
+        try:
+            answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T', timeout=self._timeout)
+        except TimeoutException:
+            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+            return 'no_result'
 
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
 
-        if answer:
-            if "option" in answer.choices:
-                return answer.choices["option"]
-        else:
-            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
-
-        return "no_result"
+        return answer.sentence
 
 class HearOptionsExtra(smach.State):
     """Listen to what the user said, based on a pre-constructed sentence
