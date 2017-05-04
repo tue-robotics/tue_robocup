@@ -1,48 +1,57 @@
 #!/usr/bin/python
 
-"""This challenge is defined in https://raw.githubusercontent.com/RoboCupAtHome/RuleBook/master/Manipulation.tex
+# ROS
+import PyKDL as kdl
+import smach
 
-In short, the robot starts at 1-1.5m from a bookcase and must wait until started by an operator (by voice or a start button)
-
-This bookcase has a couple of shelves on which some items are placed.
-**The middle shelve starts empty**, this is where the objects need to be placed.
-
-The robot must take objects form the shelves and place them on the middle shelve and indicate the class of each grasped object.
-
-After the robot is started by voice or a button,
-    the ManipRecogSingleItem state machine is repeated at least 5 times (for 5 objects).
-Afterwards, a PDF report has to be made:
-'After the test is completed or the time has run out,
-    the robot may upload a single PDF report file including the list of recognized objects with a picture showing:
-    - the object,
-    - the object name,
-    - the bounding box of the object.'
-"""
-
+# TU/e Robotics
+from robot_skills.util.kdl_conversions import FrameStamped
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-import rospy
-import smach
-from robot_skills.util.entity import Entity
 from robot_smach_states.util.geometry_helpers import *
 
-# import pdf
+# Challenge storing groceries
 from config import *
 from inspect_shelves import InspectShelves
 from manipulate_machine import ManipulateMachine
+from pdf import WritePdf
 
 
 class StoringGroceries(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
-        start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
-        placed_items = []
+        # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
+
+        pdf_writer = WritePdf(robot=robot)
 
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'AWAIT_START',
+                                   transitions={'initialized': 'MOVE_TABLE',
                                                 'abort': 'Aborted'})
+
+            @smach.cb_interface(outcomes=["done"])
+            def move_table(userdata):
+                """ 'Locks' a locking designator """
+                # Move away the cabinet
+                robot.ed.update_entity(id="cabinet",
+                                       frame_stamped=FrameStamped(frame=kdl.Frame(kdl.Rotation(),
+                                                                                  kdl.Vector(12.0, 0, 0)),
+                                                                  frame_id="map"))
+
+                # Determine where to perform the challenge
+                robot_pose = robot.base.get_location()
+                ENTITY_POSES.sort(key=lambda tup: (tup[0].frame.p - robot_pose.frame.p).Norm())
+
+                # Update the world model
+                robot.ed.update_entity(id=CABINET, frame_stamped=ENTITY_POSES[0][0])
+                robot.ed.update_entity(id=TABLE, frame_stamped=ENTITY_POSES[0][1])
+
+                return "done"
+
+            smach.StateMachine.add("MOVE_TABLE",
+                                   smach.CBState(move_table),
+                                   transitions={'done': 'AWAIT_START'})
 
             smach.StateMachine.add("AWAIT_START",
                                    states.AskContinue(robot),
@@ -62,11 +71,11 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES",
                                    InspectShelves(robot),
-                                   transitions={'succeeded': 'RANGE_ITERATOR',
-                                                'nothing_found': 'RANGE_ITERATOR',
-                                                'failed': 'RANGE_ITERATOR'})
+                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
+                                                'nothing_found': 'WRITE_PDF_SHELVES',
+                                                'failed': 'WRITE_PDF_SHELVES'})
 
-            # ToDo: add pdf stuff
+            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
 
             # Begin setup iterator
             # The exhausted argument should be set to the prefered state machine outcome
@@ -77,7 +86,7 @@ class StoringGroceries(smach.StateMachine):
                                             exhausted_outcome='succeeded')
 
             with range_iterator:
-                single_item = ManipulateMachine(robot)
+                single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)  # ToDo: add more pdf stuff
 
                 smach.Iterator.set_contained_state('SINGLE_ITEM',
                                                    single_item,
@@ -88,29 +97,9 @@ class StoringGroceries(smach.StateMachine):
                                     'failed': 'Aborted'})
             # End setup iterator
 
-            # ToDo: add pdf stuff
-
             smach.StateMachine.add('AT_END',
                                    states.Say(robot, "Goodbye"),
                                    transitions={'spoken': 'Done'})
-
-            # ToDo: add pdf stuff
-
-            # @smach.cb_interface(outcomes=["exported"])
-            # def export_to_pdf(userdata):
-            #     global DETECTED_OBJECTS_WITH_PROBS
-            #
-            #     entities = [e[0] for e in DETECTED_OBJECTS_WITH_PROBS]
-            #
-            #     # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
-            #     # pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF],
-            #     # "tech_united_manipulation_challenge")
-            #
-            #     return "exported"
-            # smach.StateMachine.add('EXPORT_PDF',
-            #                        smach.CBState(export_to_pdf),
-            #                        transitions={'exported': 'RANGE_ITERATOR'})
-            #
 
             ds.analyse_designators(self, "manipulation")
 
