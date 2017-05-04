@@ -76,8 +76,9 @@ class WritePdf(smach.State):
         unknown_items = sorted(unknown_items, key=lambda item: item[1])
         # Get the worst five
         unknown_items = unknown_items[:config.MAX_UNKNOWN_OBJECTS]
+
         for item in unknown_items:
-            item.type = "unknown"
+            item[0].type = "unknown"
 
         # Write to file
         entities_to_pdf(items, "tech_united_eindhoven", directory="/home/amigo/usb")

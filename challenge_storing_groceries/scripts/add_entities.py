@@ -56,3 +56,17 @@ if __name__ == "__main__":
         # SERGIO force drive example
         W.add_object("testthingie", "sim-coke", 2, 0, 0)
 
+    if env == "rgo2017":
+
+        W.add_object("grab_table1", "rgo2017/table_salon", 1.0, 4.5, 0.0)
+        W.add_object("coke11", "sim-coke", 0.6, 4.3, 0.5)
+        W.add_object("coke12", "sim-coke", 0.8, 4.3, 0.5)
+        W.add_object("coke13", "sim-coke", 1.0, 4.3, 0.5)
+
+        W.add_object("grab_table2", "rgo2017/table_salon", 3.5, 0.0, 0.0)
+        W.add_object("coke21", "sim-coke", 3.3, -0.2, 0.5)
+        W.add_object("coke22", "sim-coke", 3.3, 0.0, 0.5)
+        W.add_object("coke23", "sim-coke", 3.3, 0.2, 0.5)
+
+
+
