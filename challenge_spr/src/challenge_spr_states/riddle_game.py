@@ -12,6 +12,7 @@ from hmi import TimeoutException
 from robocup_knowledge import load_knowledge
 
 knowledge = load_knowledge('challenge_spr')
+common_knowledge = load_knowledge('common')
 
 
 def hear(robot, time_out):
@@ -26,6 +27,7 @@ def answer(robot, res, crowd_data):
         if 'answer' in res.semantics:
             answer = res.semantics['answer']
         elif 'action' in res.semantics:
+
             if res.semantics['action'] == 'count':
                 if res.semantics['entity'] == 'children':
                     answer = 'In the crowd are %d children' % crowd_data['children']
@@ -59,6 +61,13 @@ def answer(robot, res, crowd_data):
             #
             # if answer == 'Crowd_elders':
             #     answer = 'In the crowd are %d elders' % crowd_data['elders']
+
+            if res.semantics['action'] == 'a_find':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                if len(locations) == 1:
+                    loc = locations[0]['room']
+                    answer = 'The %s can be found in the %s' % (entity, loc)
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
