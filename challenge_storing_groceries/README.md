@@ -20,7 +20,7 @@ amigo2:
 
 ToDo: update (so skip it at this point)
 
-    Mount usb stick: 
+    Mount usb stick:
 
     rosrun challenge_manipulation mount_usb # usb dir in /home/amigo should be green
 
@@ -47,3 +47,9 @@ After the challenge
 -------------------
 
     - Get the USB stick and inspect the classes in the file manipulation.pdf --> ToDo
+
+Installation
+------------
+
+If you encounter an error when importing Pisa, install the broken dependency
+sudo pip install html5lib==1.0b8
