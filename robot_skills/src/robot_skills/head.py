@@ -19,9 +19,9 @@ class Head(RobotPart):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
-        self._annotate_srv = self.create_service_client('/' + robot_name + '/annotate', Annotate)
-        self._recognize_srv = self.create_service_client('/' + robot_name + '/recognize', Recognize)
-        self._recognize_srv = self.create_service_client('/' + robot_name + '/clear', Empty)
+        self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
+        self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
+        self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
         # self._annotate_srv = self.create_service_client('/annotate', Annotate)
         # self._recognize_srv = self.create_service_client('/recognize', Recognize)
         # self._clear_srv = self.create_service_client('/clear', Empty)
