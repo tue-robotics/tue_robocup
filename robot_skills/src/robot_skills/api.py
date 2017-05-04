@@ -22,7 +22,6 @@ class Api(RobotPart):
 
 
     def old_query(self, spec, choices, timeout=10):
-        """
-        Convert old queries to a HMI query
-        """
-        return self._client.old_query(spec=spec, choices=choices, timeout=timeout)
+    	msg = 'robot.ears.recognise IS REMOVED. Use `robot.hmi.query`'
+    	rospy.logerr(msg)
+    	raise Exception(msg)
