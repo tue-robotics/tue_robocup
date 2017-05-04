@@ -16,6 +16,17 @@ Q['answer': "Crowd_size"] -> what is the size of the crowd
 Q['answer': "Crowd_children"] -> how many children are there in the crowd
 
 Q['answer': "basket"] -> which is the biggest object
+Q['answer': "egg"] -> which is the smallest object
+Q['answer': "pringles"] -> which is the biggest food
+Q['answer': "egg"] -> which is the smallest food
+Q['answer': "basket"] -> which is the biggest container
+Q['answer': "coffecup"] -> which is the smallest container
+Q['answer': "water"] -> which is the biggest drink
+Q['answer': "orange drink"] -> which is the smallest drink
+Q['answer': "paper"] -> which is the biggest cleaning stuff
+Q['answer': "sponge"] -> which is the smallest cleaning stuff
+Q['answer': "knife"] -> which is the biggest cutlery
+Q['answer': "fork"] -> which is the smallest cutlery
 
 T[x] -> Q[x]
 '''
