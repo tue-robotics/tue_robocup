@@ -25,7 +25,8 @@ from robocup_knowledge import load_knowledge
 class ActionClient(object):
     def __init__(self, robot_name):
         self._robot_name = robot_name
-        self._action_client = actionlib.SimpleActionClient(self._robot_name + "/task", action_server.msg.TaskAction)
+        action_name = self._robot_name + "/action_server/task"
+        self._action_client = actionlib.SimpleActionClient(action_name, action_server.msg.TaskAction)
         rospy.loginfo("Waiting for task action server to come online...")
         self._action_client.wait_for_server()
         rospy.loginfo("Connected to task action server")
