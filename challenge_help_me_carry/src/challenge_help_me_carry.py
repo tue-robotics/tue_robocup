@@ -154,22 +154,17 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-        # Tim
         smach.StateMachine.add('INITIALIZE',
                                states.Initialize(robot),
                                transitions={'initialized':    'WAIT_TO_FOLLOW',
                                             'abort':          'Aborted'})
 
-        # Tim
-        # TODO: Should also recognize operator infront of the robot and store it.
         smach.StateMachine.add('WAIT_TO_FOLLOW',
                                WaitForOperatorCommand(robot, possible_commands=challenge_knowledge.commands['follow']),
                                transitions={'success':        'FOLLOW_OPERATOR',
                                             'abort':          'Aborted'})
 
-        # Tim
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
-                               #TODO: add that robot should memorize operator
                                WaitForOperatorCommand(robot,
                                                       possible_commands=challenge_knowledge.commands['follow_or_remember'],
                                                       commands_as_outcomes=True),
@@ -178,7 +173,6 @@ def setup_statemachine(robot):
                                             'stop':           'REMEMBER_CAR_LOCATION',
                                             'car':            'REMEMBER_CAR_LOCATION',
                                             'abort':          'Aborted'})
-        # Kwin
         # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
                                states.FollowOperator(robot,
@@ -190,14 +184,11 @@ def setup_statemachine(robot):
                                             'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
                                             'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
 
-        # Tim
         smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                StoreCarWaypoint(robot),
                                transitions={'success':        'WAIT_FOR_DESTINATION',
                                             'abort':          'Aborted'})
 
-
-        # Tim
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                WaitForOperatorCommand(robot,
                                                       possible_commands=challenge_knowledge.waypoints.keys(),
@@ -205,7 +196,6 @@ def setup_statemachine(robot):
                                transitions={'success':        'GRAB_ITEM',
                                             'abort':          'Aborted'})
 
-        # Kwin
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
                                GrabItem(robot, empty_arm_designator, current_item),
@@ -216,14 +206,12 @@ def setup_statemachine(robot):
                                             'target_room_out':  'target_room'})
 
 
-        # Tim
         smach.StateMachine.add('GOTO_DESTINATION',
                                NavigateToRoom(robot),
                                transitions={'arrived':          'PUTDOWN_ITEM',
                                             'unreachable':      'PUTDOWN_ITEM',  #implement avoid obstacle behaviour later
                                             'goal_not_defined': 'Aborted'})
 
-        # Kwin
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
                                states.Place(robot, current_item, place_position, arm_with_item_designator),
@@ -232,7 +220,6 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('ASKING_FOR_HELP',
                                #TODO: look and then face new operator
-                               #TODO: add that robot should memorize new operator
                                states.Say(robot, "Please follow me and help me carry groceries into the house"),
                                transitions={'spoken': 'GOTO_CAR'})
                                #transitions={'success':        'GOTO_CAR',
