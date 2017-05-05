@@ -180,7 +180,7 @@ class FollowOperator(smach.State):
                     else:
                         return False
             else:
-                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_laser_entity(radius=1, center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -227,7 +227,7 @@ class FollowOperator(smach.State):
     def _backup_register(self):
         """This only happens when the operator was just registered, and never tracked"""
         print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
-        self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
+        self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                                 center_point=kdl_conversions.VectorStamped(
                                                                                     x=1.5, y=0, z=1,
                                                                                     frame_id="/%s/base_link" % self._robot.robot_name))
@@ -351,7 +351,8 @@ class FollowOperator(smach.State):
         This list has all the Entity's of where the operator has been"""
         self._robot.head.cancel_goal()
 
-        robot_position = copy.copy(self._robot.base.get_location().frame.p)
+        f = self._robot.base.get_location().frame
+        robot_position = f.p
         operator_position = self._last_operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
@@ -394,7 +395,7 @@ class FollowOperator(smach.State):
                     y = previous_point.y() + i * dy_norm * res
                     kdl_plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
 
-            previous_point = copy.copy(crumb._pose.p)
+            previous_point = copy.deepcopy(crumb._pose.p)
 
         # Delete the elements from the plan within the operator radius from the robot
         cutoff = int(self._operator_radius/(2.0*res))
@@ -519,27 +520,29 @@ class FollowOperator(smach.State):
                 # operator_pos.header.frame_id = best_detection.pose.header.frame_id
                 # operator_pos.point = best_detection.pose.pose.position
 
-                operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
+                try:
+                    operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
+                except Exception as e:
+                    rospy.logerr("head.project_roi failed: %s", e)
+                    return False
                 operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
 
                 self._face_pos_pub.publish(operator_pos_ros)
 
-                recovered_operator = self._robot.ed.get_closest_possible_person_entity(radius=self._lost_distance,
+                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
                                                                                        center_point=operator_pos_kdl)
 
-                if not recovered_operator:
-                    recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                                 center_point=operator_pos_kdl)
-
-            if recovered_operator:
-                print "Found one!"
-                self._operator_id = recovered_operator.id
-                print "Recovered operator id: %s" % self._operator_id
-                self._operator = recovered_operator
-                self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
-                self._robot.head.close()
-                self._time_started = rospy.Time.now()
-                return True
+                if recovered_operator:
+                    print "Found one!"
+                    self._operator_id = recovered_operator.id
+                    print "Recovered operator id: %s" % self._operator_id
+                    self._operator = recovered_operator
+                    self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
+                    self._robot.head.close()
+                    self._time_started = rospy.Time.now()
+                    return True
+                else:
+                    print "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
 
         self._robot.head.close()
         self._turn_towards_operator()
