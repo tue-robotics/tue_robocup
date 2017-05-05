@@ -45,7 +45,7 @@ class TakeOrder(smach.State):
         """
         try:
             speech_result = self._robot.hmi.query(description="Is this correct?",
-                                                 grammar=cgrammar, target="C")
+                                                  grammar=cgrammar, target="C")
         except TimeoutException:
             return False
         return speech_result.semantics == "yes"
@@ -58,15 +58,6 @@ class TakeOrder(smach.State):
         order = None
         while not order:
 
-            # #### TEMP: before speech recognition is there
-            # self._robot.speech.speak("I'm sorry, but I'm not able to understand your order")
-            #
-            # self._orders["beverage"] = {"location": "table1", "name": "beer"}
-            # self._orders["combo"] = {"location": "table2", "name": "nuts and bolts"}
-            #
-            # return "succeeded"
-            #####
-
             self._robot.speech.speak("Hello there, can I please take your order")
             count = 0
             while not rospy.is_shutdown():
@@ -74,14 +65,14 @@ class TakeOrder(smach.State):
 
                 try:
                     speech_result = self._robot.hmi.query(description="Can I please take your order",
-                                                         grammar=knowledge.order_grammar, target="O")
+                                                          grammar=knowledge.order_grammar, target="O")
                     break
                 except TimeoutException:
                     if count < 5:
                         self._robot.speech.speak(random.choice(["I'm sorry, can you repeat",
-                                                               "Please repeat your order, I didn't hear you",
-                                                               "I didn't get your order, can you repeat it",
-                                                               "Please speak up, as I didn't hear your order"]))
+                                                                "Please repeat your order, I didn't hear you",
+                                                                "I didn't get your order, can you repeat it",
+                                                                "Please speak up, as I didn't hear your order"]))
                     else:
                         self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
                         self._robot.head.cancel_goal()
@@ -97,7 +88,9 @@ class TakeOrder(smach.State):
                                                                    speech_result.semantics['food2']))
 
             if self._confirm():
-                self._order = speech_result.semantics
+                # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
+                for k, v in speech_result.semantics.iteritems():
+                    self._orders[k] = v
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
@@ -128,24 +121,15 @@ class ReciteOrders(smach.State):
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("Mr. Barman I have some orders.")
 
-        sentence_combo = ""
-        sentence_beverage = ""
-        sentence_final = ""
+        sentence = ""
 
         if "beverage" in self._orders:
-            sentence_beverage = "Table %s would like to have the beverage %s" % (self._orders["beverage"]["location"],
-                                                                                 self._orders["beverage"]["name"])
-            sentence_final = sentence_beverage
-        if "combo" in self._orders:
-            sentence_combo = "Table %s wants the combo %s" % (self._orders["combo"]["location"],
-                                                              self._orders["combo"]["name"])
-            sentence_final = sentence_combo
+            sentence = "Table 1 would like to have {}".format(self._orders["beverage"])
+        if "food1" in self._orders:
+            sentence = "Table 1 wants the combo {} and {}".format(self._orders["food1"],
+                                                                        self._orders["food2"])
 
-        ''' add a COMA and an AND abetween sentences better understanding '''
-        if "combo" in self._orders and "beverage" in self._orders:
-            sentence_final = sentence_beverage + ", and " + sentence_combo
-
-        self._robot.speech.speak(sentence_final)
+        self._robot.speech.speak(sentence)
 
         self._robot.head.cancel_goal()
 
