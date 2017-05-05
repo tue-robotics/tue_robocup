@@ -10,18 +10,20 @@ Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms
 Q['answer': "In my SSD"] -> where do you store your memories
 Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
 
-Q['answer': "basket"] -> which is the biggest object
-Q['answer': "egg"] -> which is the smallest object
-Q['answer': "pringles"] -> which is the biggest food
-Q['answer': "egg"] -> which is the smallest food
-Q['answer': "basket"] -> which is the biggest container
-Q['answer': "coffecup"] -> which is the smallest container
-Q['answer': "water"] -> which is the biggest drink
-Q['answer': "orange drink"] -> which is the smallest drink
-Q['answer': "paper"] -> which is the biggest cleaning stuff
-Q['answer': "sponge"] -> which is the smallest cleaning stuff
-Q['answer': "knife"] -> which is the biggest cutlery
-Q['answer': "fork"] -> which is the smallest cutlery
+WHATWHICH -> what | which
+
+Q['answer': "basket"] -> WHATWHICH is the biggest object
+Q['answer': "egg"] -> WHATWHICH is the smallest object
+Q['answer': "pringles"] -> WHATWHICH is the biggest food
+Q['answer': "egg"] -> WHATWHICH is the smallest food
+Q['answer': "basket"] -> WHATWHICH is the biggest container
+Q['answer': "coffecup"] -> WHATWHICH is the smallest container
+Q['answer': "water"] -> WHATWHICH is the biggest drink
+Q['answer': "orange drink"] -> WHATWHICH is the smallest drink
+Q['answer': "paper"] -> WHATWHICH is the biggest cleaning stuff
+Q['answer': "sponge"] -> WHATWHICH is the smallest cleaning stuff
+Q['answer': "knife"] -> WHATWHICH is the biggest cutlery
+Q['answer': "fork"] -> WHATWHICH is the smallest cutlery
 
 Q['answer': "the bedroom has two doors"] -> how many doors has the bedroom
 Q['answer': "the dining room has two doors"] -> how many doors has the dining room
@@ -39,7 +41,7 @@ ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON
 
 COUNT -> how many | the number of
 
-SEARCH -> where is | in which room is
+SEARCH -> where is | in WHATWHICH room is
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # D A T A
@@ -119,7 +121,7 @@ PC[{"action" : "c_count", "entity" : L}] -> tell me how many people were wearing
 APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
 ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[AB] are in the ROOM[R]
 
-SEARCH -> where is | in which room is
+SEARCH -> where is | in WHATWHICH room is
 
 
 
@@ -134,17 +136,17 @@ CFIND[{"action" : "o_find", "entity" : C}] -> where can i find a CATEGORY[C]
 CCOUNT[{"action" : "o_count", "entity" : C}] -> how many CATEGORY[C] there are
 
 OCOLOR[{"action" : "find_color", "entity" : O}] -> whats the colour of the OBJECT[O]
-OTYPE[{"action" : "return_category", "entity" : O}] -> to which category belong the OBJECT[O]
+OTYPE[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong the OBJECT[O]
 OCAT[{"action" : "compare_category", "entity_a" : O, "entity_b" : A}] -> do the OBJECT[O] and OBJECT[A] belong to the same category
 
 CATPLACE[{"action" : "o_count", "entity" : C, "location" : PL}] -> how many CATEGORY[C] are in the PLACEMENT[PL]
 OBJPLACE[{"action" : "o_count", "entity" : O, "location" : PL}] -> how many OBJECT[O] are in the PLACEMENT[PL]
 CATLOC[{"action" : "category_at_loc", "location" : PL}] -> what objects are stored in the PLACEMENT[PL]
 
-CATSIZE[{"action" : "hardcoded"}] -> which is the ADJA CATEGORY[C]
-OBJSIZE[{"action" : "hardcoded"}] -> which is the ADJA object
+CATSIZE[{"action" : "hardcoded"}] -> WHATWHICH is the ADJA CATEGORY[C]
+OBJSIZE[{"action" : "hardcoded"}] -> WHATWHICH is the ADJA object
 
-OBJCOMP[{"action" : "compare", "entity_a" : O, "entity_b" : A}] -> between the OBJECT[O] and OBJECT[A] which one is ADJR
+OBJCOMP[{"action" : "compare", "entity_a" : O, "entity_b" : A}] -> between the OBJECT[O] and OBJECT[A] WHATWHICH one is ADJR
 
 
 ADJA -> smallest | biggest
