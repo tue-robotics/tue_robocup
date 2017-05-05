@@ -204,8 +204,11 @@ class Head(RobotPart):
     def learn_person(self, name='operator'):
         HEIGHT_TRESHOLD = 88
         WIDTH_TRESHOLD = 88
-
-        image = self.get_image()
+        try:
+            image = self.get_image()
+        except:
+            rospy.logerr("Cannot get image")
+            return False
 
         recognitions = self._get_faces(image).recognitions
         recognitions = [r for r in recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
