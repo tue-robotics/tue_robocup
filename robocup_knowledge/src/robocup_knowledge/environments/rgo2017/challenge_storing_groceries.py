@@ -28,8 +28,8 @@ default_place_entity = "bookshelf"  # "cabinet"
 default_place_area = "shelf3"
 
 # Table pose
-table_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, -0.5 * math.pi), kdl.Vector(1.0, 4.5, 0.0)),
+table_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, -0.5 * math.pi), kdl.Vector(1.0, 4.0, 0.0)),
                             frame_id="map"),
-               FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi), kdl.Vector(3.5, 0.0, 0.0)),
+               FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi), kdl.Vector(3.0, 0.0, 0.0)),
                             frame_id="map")]
 entity_poses = zip(cabinet_poses, table_poses)
