@@ -63,7 +63,7 @@ class DetermineWhatToCleanInspect(smach.State):
             else:
                 for place in challenge_knowledge.inspection_places:
                     if response.semantics == place["entity_id"]:
-                        self._robot.speech.speak("Let's clean the {}".format(response.sentence))
+                        self._robot.speech.speak("Let's clean the {}".format(response.sentence), block=False)
                         return place["entity_id"]
                 else:
                     self._robot.speech.speak("I dont know what you mean with {}".format(response.sentence))
