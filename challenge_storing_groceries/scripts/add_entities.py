@@ -68,7 +68,7 @@ if __name__ == "__main__":
         W.add_object("coke12", "sim-coke", 0.8 + ux, 4.3 + uy, 0.5)
         W.add_object("coke13", "sim-coke", 1.0 + ux, 4.3 + uy, 0.5)
 
-        W.add_object("grab_table2", "rgo2017/table_salon", 3.5, 0.0, 0.0)
+        W.add_object("grab_table2", "rgo2017/table_salon", 3.5, 0.0 + uy, 0.0)
         W.add_object("coke21", "sim-coke", 3.3 + ux, -0.2 + uy, 0.5)
         W.add_object("coke22", "sim-coke", 3.3 + ux, 0.0 + uy, 0.5)
         W.add_object("coke23", "sim-coke", 3.4 + ux, 0.2 + uy, 0.5)
