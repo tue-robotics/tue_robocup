@@ -45,21 +45,30 @@ class SegmentObjects(smach.State):
         self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
     def _look_at_segmentation_area(self, entity, segmentation_area):
-        # Make sure the head looks at the entity
-        pos = entity.pose.position
-        try:
-            look_at_point_z = pos.z + entity.shape.z_max
-        except:
-            look_at_point_z = 0.7
-        self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
-        # Check if we have areas
+        # Determine the height of the head target
+        # Start with a default
+        pos = entity.pose.position
+        look_at_point_z = 0.7
+
+        # Check if we have areas: use these
         if segmentation_area in entity.volumes:
             search_volume = entity.volumes[segmentation_area]
             try:
                 look_at_point_z = search_volume.min_corner.z()
-            except:
-                pass
+            except Exception as e:
+                rospy.logerr("Cannot get z_min of volume {} of entity {}: {}".format(segmentation_area,
+                                                                                     e.id, e.message))
+        else:
+            # Look at the top of the entity to inspect
+            pos = entity.pose.position
+            try:
+                look_at_point_z = pos.z + entity.shape.z_max
+            except Exception as e:
+                rospy.logerr("Cannot get z_max of entity {}: {}".format(e.id, e.message))
+
+        # Point the head at the right direction
+        self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
         # Make sure the spindle is at the appropriate height if we are AMIGO
         if self.robot.robot_name == "amigo":
@@ -145,3 +154,16 @@ class Inspect(smach.StateMachine):
 
             smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea),
                                    transitions={'done': 'done'})
+
+
+if __name__ == "__main__":
+
+    from robot_skills.amigo import Amigo
+    from robot_smach_states.util.designators import EdEntityDesignator
+
+    rospy.init_node('state_machine')
+
+    robot = Amigo()
+
+    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="closet"))
+    print sm.execute()
