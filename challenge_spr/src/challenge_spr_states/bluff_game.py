@@ -81,7 +81,7 @@ class HearQuestion(smach.State):
 
         res = hear(self.robot, time_out=self.time_out)
 
-        turn_to_closest_entity(self.robot)
+        # turn_to_closest_entity(self.robot)
 
         return answer(self.robot, res, crowd_data)
 
