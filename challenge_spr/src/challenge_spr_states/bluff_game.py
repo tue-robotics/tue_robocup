@@ -62,10 +62,10 @@ def turn_to_closest_entity(robot):
     if "dragonfly_speech_recognition" not in robot.hmi.last_talker_id:
         # TUrn
         vth = 0.5
-        th = 3.1415
+        th = 3.1415 * 2 / 5
         robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
 
-    _turn_to_closest_entity(robot)
+    # _turn_to_closest_entity(robot)
 
 
 class HearQuestion(smach.State):
@@ -81,7 +81,7 @@ class HearQuestion(smach.State):
 
         res = hear(self.robot, time_out=self.time_out)
 
-        # turn_to_closest_entity(self.robot)
+        turn_to_closest_entity(self.robot)
 
         return answer(self.robot, res, crowd_data)
 
