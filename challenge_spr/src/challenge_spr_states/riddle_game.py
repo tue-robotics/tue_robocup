@@ -26,48 +26,65 @@ def answer(robot, res, crowd_data):
     if res:
         if 'answer' in res.semantics:
             answer = res.semantics['answer']
+            rospy.loginfo("Question was: '%s'?"%res.sentence)
+            robot.speech.speak("The answer is %s"%answer)
+            return 'answered'
         elif 'action' in res.semantics:
-
+            # Counting people
             if res.semantics['action'] == 'count':
+
+                if res.semantics['entity'] == 'people':
+                    answer = 'In the crowd are %d people' % crowd_data['crowd_size']
+
                 if res.semantics['entity'] == 'children':
                     answer = 'In the crowd are %d children' % crowd_data['children']
 
-            # # override for crowd answers
-            # if answer == 'Crowd_size':
-            #     answer = 'In the crowd are %d people' % crowd_data['crowd_size']
-            #
-            # if answer == 'Crowd_males':
-            #     answer = 'In the crowd are %d males' % crowd_data['males']
-            #
-            # if answer == 'Crowd_females':
-            #     answer = 'In the crowd are %d females' % crowd_data['females']
-            #
-            # if answer == 'Crowd_children':
-            #
-            # if answer == 'Crowd_adults':
-            #     answer = 'In the crowd are %d adults' % crowd_data['adults']
-            #
-            # if answer == 'Crowd_men':
-            #     answer = 'In the crowd are %d men' % crowd_data['men']
-            #
-            # if answer == 'Crowd_women':
-            #     answer = 'In the crowd are %d women' % crowd_data['women']
-            #
-            # if answer == 'Crowd_boys':
-            #     answer = 'In the crowd are %d boys' % crowd_data['boys']
-            #
-            # if answer == 'Crowd_girls':
-            #     answer = 'In the crowd are %d girls' % crowd_data['girls']
-            #
-            # if answer == 'Crowd_elders':
-            #     answer = 'In the crowd are %d elders' % crowd_data['elders']
+                if res.semantics['entity'] == 'adults':
+                    answer = 'In the crowd are %d adults' % crowd_data['adults']
 
+                if res.semantics['entity'] == 'elders':
+                    answer = 'In the crowd are %d elders' % crowd_data['elders']
+
+                if res.semantics['entity'] == 'males':
+                    answer = 'In the crowd are %d males' % crowd_data['males']
+
+                if res.semantics['entity'] == 'females':
+                    answer = 'In the crowd are %d females' % crowd_data['females']
+
+                if res.semantics['entity'] == 'men':
+                    answer = 'In the crowd are %d men' % crowd_data['men']
+
+                if res.semantics['entity'] == 'women':
+                    answer = 'In the crowd are %d women' % crowd_data['women']
+
+                if res.semantics['entity'] == 'boys':
+                    answer = 'In the crowd are %d boys' % crowd_data['boys']
+
+                if res.semantics['entity'] == 'girls':
+                    answer = 'In the crowd are %d girls' % crowd_data['girls']
+
+            # Location of placements or beacons
             if res.semantics['action'] == 'a_find':
                 entity = res.semantics['entity']
                 locations = [l for l in common_knowledge.locations if l['name'] == entity]
                 if len(locations) == 1:
                     loc = locations[0]['room']
                     answer = 'The %s can be found in the %s' % (entity, loc)
+                else:
+                    answer = 'I dont know that object'
+
+            # Count placements or beacons in the room
+            if res.semantics['action'] == 'a_count':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                if len(locations) == 1:
+                    loc = locations[0]['room']
+                    if loc == res.semantics['location']:
+                        answer = 'There is one %s in the %s' % (entity, loc)
+                    else:
+                        answer = 'There are no %s in the %s' % (entity, loc)
+                else:
+                    answer = 'I dont know that object'
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
@@ -75,7 +92,7 @@ def answer(robot, res, crowd_data):
         else:
             robot.speech.speak("Sorry, I do not understand your question")
     else:
-        robot.speech.speak("My ears are not working properly.")
+        pass
 
     return 'not_answered'
 

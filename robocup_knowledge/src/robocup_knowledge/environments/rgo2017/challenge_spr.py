@@ -1,12 +1,12 @@
 grammar = '''
 Q['answer': "Magdeburg"] -> what city are we in
 Q['answer': "Tech United"] -> what is the name of your team
-Q['answer': "Chewbacca"] -> name the big hairy creature in star wars.
+Q['answer': "Chewbacca"] -> name the big hairy creature in star wars
 Q['answer': "Isaac Asimov"] -> who wrote the three laws of robotics
 Q['answer': "The Jetsons"] -> from what series do you know rosie the robot
 Q['answer': "The Flintstones"] -> from what series do you know the baby bam bam
 Q['answer': "Neo"] -> who is the main charcater of the matrix
-Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms.
+Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms
 Q['answer': "In my SSD"] -> where do you store your memories
 Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
 
@@ -23,11 +23,19 @@ Q['answer': "sponge"] -> which is the smallest cleaning stuff
 Q['answer': "knife"] -> which is the biggest cutlery
 Q['answer': "fork"] -> which is the smallest cutlery
 
+Q['answer': "the bedroom has two doors"] -> how many doors has the bedroom
+Q['answer': "the dining room has two doors"] -> how many doors has the dining room
+Q['answer': "in the living room there are no doors"] -> how many doors has the living room
+Q['answer': "in the kitchen there are no doors"] -> how many doors has the kitchen
+
 # Counting People
 
 CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tell me COUNT PEOPLE[P] in the crowd
 
 APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
+ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
+APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
+ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] are in the ROOM[R]
 
 COUNT -> how many | the number of
 
@@ -61,7 +69,19 @@ PLACEMENT['closet'] -> closet | closets
 PLACEMENT['dinner_table'] -> dinner table | dinner tables
 PLACEMENT['cabinet'] -> cabinet | cabinets
 
-T[X] -> Q[X] | CP[X] | APLACEM[X]
+BEACON['tv_stand'] -> tv stand | tv stands
+BEACON['bed'] -> bed | beds
+BEACON['sofa'] -> sofa | sofas
+BEACON['cupboard'] -> cupboard | cupboards
+BEACON['sink'] -> sink | sinks
+BEACON['counter'] -> counter | counters
+
+ROOM['dining'] -> dining room
+ROOM['living'] -> living room
+ROOM['kitchen'] -> kitchen
+ROOM['bedroom'] -> bedroom
+
+T[X] -> Q[X] | CP[X] | APLACEM[X] | ABEACON[X] | APLROOM[X] | ABEROOM[X]
 '''
 
 
@@ -81,8 +101,6 @@ PPGG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was G
 PGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER
 PGGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER or GENDER
 
-
-
 # People Color
 
 PC[{"action" : "c_count", "entity" : L}] -> tell me how many people were wearing COLOR[L]
@@ -95,9 +113,9 @@ PC[{"action" : "c_count", "entity" : L}] -> tell me how many people were wearing
 
 
 
-APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
-ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
-AROOM[{"action" : "a_count", "entity" : R}] -> how many doors has the ROOM[R]
+	APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
+	ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
+		AROOM[{"action" : "a_count", "entity" : R}] -> how many doors has the ROOM[R]
 APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
 ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[AB] are in the ROOM[R]
 
