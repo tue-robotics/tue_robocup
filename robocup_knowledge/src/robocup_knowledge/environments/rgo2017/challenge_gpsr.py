@@ -132,7 +132,7 @@ VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "ta
 VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
 VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
 
-VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z, "type"}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X]
 VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
 """
