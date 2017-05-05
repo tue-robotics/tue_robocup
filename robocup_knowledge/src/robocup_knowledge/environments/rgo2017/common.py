@@ -13,11 +13,9 @@ locations = [
     { 'name':'tv_stand',        'room':'living_room', 'category': 'beacon',  'manipulation':'no'  },
 
     { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'counter',         'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'stove',           'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'desk',            'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'sink',            'room':'kitchen',    'category': 'sink',    'manipulation':'no'  },
 
     { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
     { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
