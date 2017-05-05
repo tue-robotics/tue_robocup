@@ -98,18 +98,31 @@ def main():
 
         # Report to the user and ask for a new task
         robot.speech.speak(report, block=True)
-        robot.speech.speak(user_instruction, block=True)
 
-        # Listen for the new task
-        try:
-            sentence, semantics = robot.hmi.query(description="",
-                                                  grammar=knowledge.grammar,
-                                                  target=knowledge.grammar_target)
-        except hmi.TimeoutException:
-            robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
-            continue
+        while True:
+            robot.speech.speak(user_instruction, block=True)
+            # Listen for the new task
+            try:
+                sentence, semantics = robot.hmi.query(description="",
+                                                      grammar=knowledge.grammar,
+                                                      target=knowledge.grammar_target)
+            except hmi.TimeoutException:
+                robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
+                continue
 
-        # TODO: Verify task!
+            # check if we have heard this correctly
+            robot.speech.speak('I heard %s, is this correct?' % sentence)
+            try:
+                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                    robot.speech.speak('Sorry')
+                    continue
+            except hmi.TimeoutException:
+                # robot did not hear the confirmation, so lets assume its correct
+                break
+
+            break
+
+        robot.speech.speak('Lets rock and roll!')
 
         # Dump the output json object to a string
         task_specification = json.dumps(semantics)
