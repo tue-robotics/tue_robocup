@@ -33,14 +33,18 @@ class SegmentObjects(smach.State):
 
         ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
-        self.segmentation_area = segmentation_area
+
+        if isinstance(segmentation_area, str):
+            self.segmentation_area_des = ds.VariableDesignator(segmentation_area)
+        else:
+            # ds.check_resolve_type(segmentation_area, "str")
+            self.segmentation_area_des = segmentation_area
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.is_writeable(segmented_entity_ids_designator)
         self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
-    def _look_at_segmentation_area(self, entity):
-
+    def _look_at_segmentation_area(self, entity, segmentation_area):
         # Make sure the head looks at the entity
         pos = entity.pose.position
         try:
@@ -50,8 +54,8 @@ class SegmentObjects(smach.State):
         self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
         # Check if we have areas
-        if self.segmentation_area in entity.volumes:
-            search_volume = entity.volumes[self.segmentation_area]
+        if segmentation_area in entity.volumes:
+            search_volume = entity.volumes[segmentation_area]
             try:
                 look_at_point_z = search_volume.min_corner.z()
             except:
@@ -72,14 +76,15 @@ class SegmentObjects(smach.State):
 
     def execute(self, userdata=None):
         entity_to_inspect = self.entity_to_inspect_designator.resolve()
+        segmentation_area = self.segmentation_area_des.resolve()
 
-        self._look_at_segmentation_area(entity_to_inspect)
+        self._look_at_segmentation_area(entity_to_inspect, segmentation_area)
 
         # This is needed because the head is not entirely still when the look_at_point function finishes
         time.sleep(0.5)
 
         # Inspect 'on top of' the entity
-        res = self.robot.ed.update_kinect("{} {}".format(self.segmentation_area, entity_to_inspect.id))
+        res = self.robot.ed.update_kinect("{} {}".format(segmentation_area, entity_to_inspect.id))
         segmented_object_ids = res.new_ids + res.updated_ids
 
         if segmented_object_ids:
@@ -110,14 +115,14 @@ class Inspect(smach.StateMachine):
     """ Class to navigate to a(n) (furniture) object and segment the objects on top of it.
 
     """
-    def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", inspection_area=""):
+    def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area=""):
         """ Constructor
 
         :param robot: robot object
         :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
         :param objectIDsDes: designator that is used to store the segmented objects
         :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param inspection_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
+        :param navigatoin_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
         If left empty, NavigateToObserve is used.
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
@@ -126,8 +131,8 @@ class Inspect(smach.StateMachine):
             objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
-            if inspection_area:
-                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: inspection_area},
+            if navigation_area:
+                smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToSymbolic(robot, {entityDes: navigation_area},
                                                                                  entityDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',

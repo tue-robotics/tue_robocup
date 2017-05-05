@@ -156,28 +156,36 @@ def setup_statemachine(robot):
     with sm:
         smach.StateMachine.add('INITIALIZE',
                                states.Initialize(robot),
-                               transitions={'initialized':    'WAIT_TO_FOLLOW',
+                               transitions={'initialized':    'FOLLOW_OPERATOR',
                                             'abort':          'Aborted'})
 
-        smach.StateMachine.add('WAIT_TO_FOLLOW',
-                               WaitForOperatorCommand(robot, possible_commands=challenge_knowledge.commands['follow']),
-                               transitions={'success':        'FOLLOW_OPERATOR',
-                                            'abort':          'Aborted'})
+        # TODO: learn operator state needs to be added before follow
+        # smach.StateMachine.add('WAIT_TO_FOLLOW',
+        #                        WaitForOperatorCommand(robot, possible_commands=['follow', 'follow me']),
+        #                        transitions={'success':        'FOLLOW_OPERATOR',
+        #                                     'abort':          'Aborted'})
 
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
                                WaitForOperatorCommand(robot,
-                                                      possible_commands=challenge_knowledge.commands['follow_or_remember'],
+                                                      possible_commands=[
+                                                          "follow",
+                                                          'follow me',
+                                                          "here is the car",
+                                                          "stop following",
+                                                          "stop following me",
+                                                      ],
                                                       commands_as_outcomes=True),
-                               transitions={'follow':         'FOLLOW_OPERATOR',
-                                            'remember':       'REMEMBER_CAR_LOCATION',
-                                            'stop':           'REMEMBER_CAR_LOCATION',
-                                            'car':            'REMEMBER_CAR_LOCATION',
-                                            'abort':          'Aborted'})
+                               transitions={'follow':            'FOLLOW_OPERATOR',
+                                            'follow me':         'FOLLOW_OPERATOR',
+                                            'here is the car':   'REMEMBER_CAR_LOCATION',
+                                            'stop following':    'REMEMBER_CAR_LOCATION',
+                                            'stop following me': 'REMEMBER_CAR_LOCATION',
+                                            'abort':             'Aborted'})
         # Follow the operator until (s)he states that you have arrived at the "car".
         smach.StateMachine.add('FOLLOW_OPERATOR',
                                states.FollowOperator(robot,
                                                      operator_timeout=30,
-                                                     ask_follow=False,
+                                                     ask_follow=True,
                                                      learn_face=True,
                                                      replan=True),
                                transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',

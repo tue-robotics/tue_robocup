@@ -13,11 +13,9 @@ locations = [
     { 'name':'tv_stand',        'room':'living_room', 'category': 'beacon',  'manipulation':'no'  },
 
     { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'counter',         'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'stove',           'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'desk',            'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'sink',            'room':'kitchen',    'category': 'sink',    'manipulation':'no'  },
 
     { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
     { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
@@ -31,7 +29,7 @@ locations = [
 location_rooms = list(set([ o["room"] for o in locations ]))
 location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
-location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
+manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
 # rooms = location_rooms + ["workshop"]
 

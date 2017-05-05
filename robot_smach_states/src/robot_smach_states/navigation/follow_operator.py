@@ -406,7 +406,7 @@ class FollowOperator(smach.State):
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
-            kdl_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
+            ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
         self._visualize_plan(ros_plan)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
@@ -417,7 +417,7 @@ class FollowOperator(smach.State):
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
         # Wait for the operator and find his/her face
-        operator_recovery_timeout = 60.0 #TODO: parameterize
+        operator_recovery_timeout = 60.0  # TODO: parameterize
         start_time = rospy.Time.now()
         recovered_operator = None
 
@@ -464,7 +464,7 @@ class FollowOperator(smach.State):
 
             # Sort based on probability
             if detections:
-                detections = detections.sort(key=lambda det: det[1])
+                detections = sorted(detections, key=lambda det: det[1])
                 best_detection = detections[0][0]
             else:
                 best_detection = None
@@ -486,7 +486,9 @@ class FollowOperator(smach.State):
 
             if best_detection:
 
-                depth_image = self._robot.head.get_depth_image()
+                print "Best detection: {}".format(best_detection)
+
+                #depth_image = self._robot.head.get_depth_image()
                 roi = best_detection.roi
                 # # Resolution of depth image is half of the resolution of the rgb image
                 # x_min = roi.x_offset / 2
@@ -516,7 +518,8 @@ class FollowOperator(smach.State):
                 # operator_pos.header.stamp = best_detection.pose.header.stamp
                 # operator_pos.header.frame_id = best_detection.pose.header.frame_id
                 # operator_pos.point = best_detection.pose.pose.position
-                operator_pos_kdl = self._robot.head.project_roi(roi=roi)
+
+                operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
                 operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
 
                 self._face_pos_pub.publish(operator_pos_ros)
@@ -728,11 +731,13 @@ class FollowOperator(smach.State):
 
             rospy.sleep(self._period) # Loop at 2Hz
 
+
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:
         smach.StateMachine.add('TEST', FollowOperator(robot), transitions={"stopped":"TEST",'lost_operator':"TEST", "no_operator":"TEST"})
         return sm
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
