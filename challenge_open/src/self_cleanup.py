@@ -40,6 +40,15 @@ class ArmFree(smach.State):
             return "yes"
         return "no"
 
+class ForceDriveBackwards(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.base.force_drive(-0.25, 0, 0, 2.0)    # x, y, z, time in seconds
+        return "done"
+
 class ArmOccupied(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["yes", "no"])
@@ -69,9 +78,11 @@ class Speak(smach.State):
     def execute(self, userdata):
         e = self._selected_entity_designator.resolve()
 
-        e_type = e.type if e.type else random.choice(["item", "object", "trash"])
-
-        self._robot.speech.speak(random.choice(self._sentences) % e_type, block=False)
+        if e:
+            e_type = e.type if e.type else random.choice(["item", "object", "trash"])
+            self._robot.speech.speak(random.choice(self._sentences) % e_type, block=False)
+        else:
+            self._robot.speech.speak("For some reason I could not resolve the entity, bug?", block=False)
 
         return "done"
 
@@ -133,4 +144,7 @@ class SelfCleanup(smach.StateMachine):
                                    robot_smach_states.Say(robot, ["I could not cleanup the item.",
                                                                   "I cannot put the item in the trashbin",
                                                                   "Item cleanup failed"], block=False),
-                                   transitions={"spoken": "CHECK_ARM_OCCUPIED"})
+                                   transitions={"spoken": "FORCE_DRIVE_BACKWARDS"})
+
+            smach.StateMachine.add('FORCE_DRIVE_BACKWARDS', ForceDriveBackwards(robot),
+                                   transitions={"done": "CHECK_ARM_OCCUPIED"})
