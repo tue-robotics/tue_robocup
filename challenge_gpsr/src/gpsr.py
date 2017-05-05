@@ -99,6 +99,7 @@ def main():
         # Report to the user and ask for a new task
         robot.speech.speak(report, block=True)
 
+        robot.head.look_at_standing_person()
         while True:
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
