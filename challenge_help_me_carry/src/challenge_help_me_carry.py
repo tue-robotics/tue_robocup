@@ -156,13 +156,14 @@ def setup_statemachine(robot):
     with sm:
         smach.StateMachine.add('INITIALIZE',
                                states.Initialize(robot),
-                               transitions={'initialized':    'WAIT_TO_FOLLOW',
+                               transitions={'initialized':    'FOLLOW_OPERATOR',
                                             'abort':          'Aborted'})
 
-        smach.StateMachine.add('WAIT_TO_FOLLOW',
-                               WaitForOperatorCommand(robot, possible_commands=['follow', 'follow me']),
-                               transitions={'success':        'FOLLOW_OPERATOR',
-                                            'abort':          'Aborted'})
+        # TODO: learn operator state needs to be added before follow
+        # smach.StateMachine.add('WAIT_TO_FOLLOW',
+        #                        WaitForOperatorCommand(robot, possible_commands=['follow', 'follow me']),
+        #                        transitions={'success':        'FOLLOW_OPERATOR',
+        #                                     'abort':          'Aborted'})
 
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
                                WaitForOperatorCommand(robot,
@@ -184,7 +185,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('FOLLOW_OPERATOR',
                                states.FollowOperator(robot,
                                                      operator_timeout=30,
-                                                     ask_follow=False,
+                                                     ask_follow=True,
                                                      learn_face=True,
                                                      replan=True),
                                transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
