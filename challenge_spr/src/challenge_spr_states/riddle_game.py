@@ -92,7 +92,7 @@ def answer(robot, res, crowd_data):
         else:
             robot.speech.speak("Sorry, I do not understand your question")
     else:
-        robot.speech.speak("My ears are not working properly.")
+        pass
 
     return 'not_answered'
 
