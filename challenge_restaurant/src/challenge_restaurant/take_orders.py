@@ -44,7 +44,7 @@ class TakeOrder(smach.State):
             self._orders["beverage"] = {"location": "table1", "name": "beer"}
             self._orders["combo"] = {"location": "table2", "name": "nuts and bolts"}
 
-            return "orders_done"
+            return "succeeded"
             #####
 
             result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
@@ -74,9 +74,9 @@ class TakeOrder(smach.State):
         print self._orders
 
         if "combo" in self._orders and "beverage" in self._orders:
-            return "orders_done"
+            return "succeeded"
         else:
-            return "next_order"
+            return "succeeded"
 
 
 class ReciteOrders(smach.State):

@@ -11,32 +11,15 @@ from visualization_msgs.msg import Marker
 
 # TU/e
 import robot_smach_states as states
-from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
-from robocup_knowledge import load_knowledge
-
-knowledge = load_knowledge("challenge_restaurant")
+from robot_skills.util.shape import RightPrism
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdlFrameToPoseMsg
 
 
 def _get_area(convex_hull):
-    pts = [[c.x, c.y] for c in convex_hull]
+    pts = [[c.x(), c.y()] for c in convex_hull]
     lines = np.hstack([pts, np.roll(pts, -1, axis=0)])
     area = 0.5 * abs(sum(x1 * y2 - x2 * y1 for x1, y1, x2, y2 in lines))
     return area
-
-
-class WaitSay(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
-        self._robot = robot
-
-    def execute(self, userdata):
-        self._robot.head.look_at_standing_person()
-        answer = None
-        while not answer or answer.result != "side detection":
-            answer = self._robot.ears.recognize('<option>', {'option': ['side detection']})
-        self._robot.head.cancel_goal()
-
-        return "done"
 
 
 class AutomaticSideDetection(smach.State):
@@ -84,25 +67,28 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            base_position = self._robot.base.get_location().frame.p
+            base_loc = self._robot.base.get_location()
+            base_position = base_loc.frame.p
 
             # Update kinect
             try:
                 rospy.loginfo("Updating kinect for side %s" % side)
+                # kinect_update = self._robot.ed.update_kinect(background_padding=self._background_padding)
                 kinect_update = self._robot.ed.update_kinect(background_padding=self._background_padding)
             except:
                 rospy.logerr("Could not update_kinect")
                 continue
 
             ents = [self._robot.ed.get_entity(id=id_) for id_ in set(kinect_update.new_ids + kinect_update.updated_ids)]
+            ents = [e for e in ents if e is not None]
 
-            rospy.loginfo("Found %d entities for side %s" % (len(ents, side)))
+            rospy.loginfo("Found %d entities for side %s" % (len(ents), side))
 
             # Filter subset
             self._sides[side]["entities"] = [e for e in ents if self._subset_selection(base_position, e)]
 
             # Score entities
-            self._sides[side]["score"]["area_sum"] = sum([ self._score_area(e) for e in self._sides[side]["entities"]])
+            self._sides[side]["score"]["area_sum"] = sum([self._score_area(e) for e in self._sides[side]["entities"]])
             self._sides[side]["score"]["min_distance"] = self._score_closest_point(base_position,
                                                                                    self._sides[side]["entities"])
 
@@ -111,27 +97,19 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            rospy.logerr("ed.detect _persons() method disappeared! "
-                         "This was only calling the face recognition module and we are using a new one now!")
-            rospy.logerr("I will return an empty detection list!")
-            persons = []
-            self._sides[side]["score"]["face_found"] = False
-            if persons:
-                for person in persons:
-                    p = person.pose.pose.position
-                    if math.hypot(p.x - base_position.x(), p.y - base_position.y()) < self._max_radius:
-                        self._sides[side]["score"]["face_found"] = True
-
-            if self._sides[side]["score"]["face_found"]:
-                self._robot.speech.speak("hi there")
-
     def _subset_selection(self, base_position, e):
         distance = e.distance_to_2d(base_position)
         return distance < self._max_radius
 
     @staticmethod
     def _score_area(e):
-        return _get_area(e.convex_hull)
+        """ Scores the area of an entity. If the shape is not a convex hull, it's not what were looking for and 0
+        is returned
+        """
+        if isinstance(e.shape, RightPrism):
+            return _get_area(e.shape.convex_hull)
+        else:
+            return 0.0
 
     def _score_closest_point(self, base_position, entities):
         distances = [e.distance_to_2d(base_position) for e in entities]
@@ -146,7 +124,8 @@ class AutomaticSideDetection(smach.State):
 
         best_side = None
         for side, spec in self._sides.iteritems():
-            end_score = self._sides[side]["score"]["area_sum"] + self._sides[side]["score"]["min_distance"] + 1 * self._sides[side]["score"]["face_found"]
+            end_score = self._sides[side]["score"]["area_sum"] + \
+                        self._sides[side]["score"]["min_distance"]
             rospy.loginfo("Side %s scoring (%f): %s" % (side, end_score, self._sides[side]["score"]))
 
             if best_side is None or self._sides[side]["score"] > self._sides[best_side]["score"]:
@@ -165,54 +144,18 @@ class AutomaticSideDetection(smach.State):
 
 class StoreWaypoint(smach.State):
     """ Stores a waypoint """
-    def __init__(self, robot):
+    def __init__(self, robot, location_id):
         """ Constructor
 
         :param robot: robot object
+        :param location_id: string identifying the location to store
         """
-        smach.State.__init__(self, outcomes=["done", "continue"])
+        smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
+        self._location_id = location_id
         self._waypoint_pub = rospy.Publisher("/restaurant_waypoints", Marker, queue_size=10)
 
-    def _confirm(self, tries=3):
-        for i in range(0, tries):
-            result = self._robot.ears.recognize('<option>', {'option': ['yes', 'no']})
-            if result and result.result != "":
-                answer = result.result
-                return answer == "yes"
-
-            if i != tries - 1:
-                self._robot.speech.speak("Please say yes or no")
-        return False
-
     def execute(self, userdata):
-        # Stop the base
-        self._robot.base.local_planner.cancelCurrentPlan()
-
-        self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("You stopped, can you confirm that we are at a table?")
-
-        if not self._confirm():
-            self._robot.head.cancel_goal()
-            return "continue"
-
-        location = None
-        for i in range(0, 3):
-            self._robot.speech.speak("Which table number is this?")
-            result = self._robot.ears.recognize(knowledge.professional_guiding_spec,
-                                                knowledge.professional_guiding_choices,
-                                                time_out=rospy.Duration(5))  # Wait 100 secs
-
-            if result and "location" in result.choices:
-                heard_location = result.choices["location"]
-                self._robot.speech.speak("Table %s, is this correct?" % heard_location)
-
-                if self._confirm():
-                    location = heard_location
-                    break
-
-        if not location:
-            return "continue"
 
         # Store current base position
         base_pose = self._robot.base.get_location().frame
@@ -223,7 +166,7 @@ class StoreWaypoint(smach.State):
         side = automatic_side_detection.execute({})
         self._robot.head.look_at_standing_person()
 
-        self._robot.speech.speak("The table is to my %s" % side)
+        self._robot.speech.speak("The {} is to my {}".format(self._location_id, side))
 
         self._robot.head.cancel_goal()
 
@@ -234,10 +177,11 @@ class StoreWaypoint(smach.State):
 
         # Add to param server
         loc_dict = {'x': base_pose.p.x(), 'y': base_pose.p.y(), 'phi': base_pose.M.GetRPY()[2]}
-        rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
+        rospy.set_param("/restaurant_locations/{name}".format(name=self._location_id), loc_dict)
 
-        visualize_location(base_pose, location)
-        self._robot.ed.update_entity(id=location, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
+        self._visualize_location(base_pose, self._location_id)
+        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, "/map"),
+                                     type="waypoint")
 
         return "done"
 
@@ -248,19 +192,29 @@ class StoreWaypoint(smach.State):
         :param location: The name of the location as a label
         :return:
         """
+        # Convert KDL object to geometry message
+        base_pose = kdlFrameToPoseMsg(base_pose)
+
+        # Create the marker
         m = Marker()
         if location == "one":
             m.id = 1
             m.color.r = 1
-        if location == "two":
+        elif location == "two":
             m.id = 2
             m.color.g = 1
-        if location == "three":
+        elif location == "three":
             m.id = 3
             m.color.b = 1
+        else:
+            m.id = 4
+            m.color.r = 1
+            m.color.g = 1
+            m.color.b = 1
         m.color.a = 1
-        m.pose = base_pose.pose
-        m.header = "map"
+        m.pose = base_pose
+        m.header.frame_id = "map"
+        m.header.stamp = rospy.Time.now()
         m.type = 0  # Arrow
         m.scale.x = 1.0
         m.scale.y = 0.2
@@ -281,7 +235,6 @@ def setup_statemachine(robot):
     robot.ed.reset()
 
     with sm:
-        smach.StateMachine.add('WAIT_SAY', WaitSay(robot), transitions={'done': 'STORE_WAYPOINT'})
         smach.StateMachine.add('STORE_WAYPOINT', StoreWaypoint(robot), transitions={'done': 'RESET',
                                                                                     'continue': 'RESET'})
         smach.StateMachine.add('RESET', states.ResetED(robot), transitions={'done': 'WAIT_SAY'})
@@ -291,25 +244,16 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('automatic_side_detection')
 
-    states.startup(setup_statemachine, challenge_name="automatic_side_detection")
+    from robot_skills.amigo import Amigo
+    robot = Amigo()
+    robot.ed.reset()
 
+    sm = smach.StateMachine(outcomes=['done', 'aborted'])
+    with sm:
+        smach.StateMachine.add('STORE_WAYPOINT', StoreWaypoint(robot, "kitchen"), transitions={'done': 'RESET',
+                                                                                               'continue': 'RESET'})
+        smach.StateMachine.add('RESET', states.ResetED(robot), transitions={'done': 'done'})
 
-# class StoreWaypoint(smach.State):
-#     """ Smach state to store the current location as a waypoint in ED. """
-#     def __init__(self, robot, waypoint_id):
-#         """ Constructor
-#
-#         :param robot: robot object
-#         :param waypoint_id: string designating the id of the waypoint to store
-#         """
-#         smach.State.__init__(self, outcomes=["done"])
-#         self._robot = robot
-#         self._waypoint_id = waypoint_id
-#
-#     def execute(self, userdata):
-#         """ Performs the actual work """
-#
-#         self._robot.ed.update_entity(id=self._waypoint_id, frame_stamped=self._robot.base.get_location(),
-#                                      type="waypoint")
-#
-#         return "done"
+    # states.startup(setup_statemachine, challenge_name="automatic_side_detection")
+    sm.execute()
+

@@ -26,7 +26,7 @@ class Restaurant(smach.StateMachine):
         kitchen_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
                                                                                        id=kitchen_id)
 
-        caller_id = "caller"
+        caller_id = "customer"
         caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
                                                                                       id=caller_id)
 
@@ -35,12 +35,11 @@ class Restaurant(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'WAIT_FOR_CUSTOMER',
+                                   transitions={'initialized': 'STORE_KITCHEN',
                                                 'abort': 'Aborted'})
 
-            # ToDo: detect the side where the bar is
             smach.StateMachine.add('STORE_KITCHEN',
-                                   StoreWaypoint(robot=robot, waypoint_id=kitchen_id),
+                                   StoreWaypoint(robot=robot, location_id=kitchen_id),
                                    transitions={'done': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
