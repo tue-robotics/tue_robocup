@@ -69,9 +69,11 @@ class Speak(smach.State):
     def execute(self, userdata):
         e = self._selected_entity_designator.resolve()
 
-        e_type = e.type if e.type else random.choice(["item", "object", "trash"])
-
-        self._robot.speech.speak(random.choice(self._sentences) % e_type, block=False)
+        if e:
+            e_type = e.type if e.type else random.choice(["item", "object", "trash"])
+            self._robot.speech.speak(random.choice(self._sentences) % e_type, block=False)
+        else:
+            self._robot.speech.speak("For some reason I could not resolve the entity, bug?", block=False)
 
         return "done"
 
