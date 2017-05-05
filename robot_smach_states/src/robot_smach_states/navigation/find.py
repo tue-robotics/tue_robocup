@@ -87,7 +87,7 @@ class Find(smach.StateMachine):
     have resolve type dict and it should contain at least a 'type' field
     """
     def __init__(self, robot, source_entity_designator, description_designator, area_name_designator,
-                 found_entity_designator):
+                 navigation_area_designator, found_entity_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
@@ -98,7 +98,7 @@ class Find(smach.StateMachine):
                                                                entityDes=source_entity_designator,
                                                                objectIDsDes=segmented_entities_designator,
                                                                searchArea=area_name_designator,
-                                                               inspection_area=area_name_designator),
+                                                               navigation_area=navigation_area_designator),
                                     transitions={'done'         : 'CHECK_IF_ENTITY_FOUND',
                                                  'failed'       : 'failed'})
 
