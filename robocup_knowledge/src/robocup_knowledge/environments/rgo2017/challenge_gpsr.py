@@ -42,7 +42,6 @@ C[{A}] -> VP[A]
 ##############################################################################
 
 grammar += """
-V_BRING -> give | bring | hand | deliver | take | carry | transport
 V_GUIDE -> guide | escort | take | lead | accompany
 
 DET -> the | a
@@ -136,6 +135,23 @@ VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -
 VP["action": "follow", "target": {"id": "name"}] -> V_FOLLOW FIND_PERSONS
 VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
 """
+
+###############################################################################
+#
+# BRING
+#
+###############################################################################
+
+grammar += """
+V_BRING -> bring | deliver | take | carry | transport
+V_BRING_PERSON -> V_BRING | give | hand | hand over
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING_PERSON DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS[Y]
+"""
+
+for name in common.names:
+    grammar += '\nBRING_PERSONS -> %s' % name
 
 ##############################################################################
 #
