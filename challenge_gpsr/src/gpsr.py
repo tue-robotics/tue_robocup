@@ -41,8 +41,8 @@ def main():
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
     if skip:
         rospy.loginfo("[GPSR] skip = {}".format(skip))
-    if entrance_no not in [1, 2]:
-        rospy.logerr("[GPSR] entrance_number should be 1 or 2. You set it to {}".format(entrance_no))
+    if entrance_no not in [1]:
+        rospy.logerr("[GPSR] entrance_number should be 1. You set it to {}".format(entrance_no))
     else:
         rospy.loginfo("[GPSR] entrance_number = {}".format(entrance_no))
         entrance_no -= 1  # to transform to a 0-based index
@@ -106,7 +106,7 @@ def main():
                                                   grammar=knowledge.grammar,
                                                   target=knowledge.grammar_target)
         except hmi.TimeoutException:
-            robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1))
+            robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
             continue
 
         # TODO: Verify task!
@@ -120,14 +120,18 @@ def main():
         # Write a report to bring to the operator
         report = task_result_to_report(task_result)
 
-        # Keep track of the number of performed tasks
-        no_of_tasks_performed += 1
-        if no_of_tasks_performed == no_of_tasks:
-            finished = True
-
-        # If we succeeded, we can say something optimistic after reporting to the operator
         if task_result.succeeded:
-            report += " I performed {} tasks so far, still going strong!".format(no_of_tasks_performed)
+            # Keep track of the number of performed tasks
+            no_of_tasks_performed += 1
+            if no_of_tasks_performed == no_of_tasks:
+                finished = True
+
+            # If we succeeded, we can say something optimistic after reporting to the operator
+            if no_of_tasks_performed == 1:
+                task_word = "task"
+            else:
+                task_word = "tasks"
+            report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
 
         if finished and not skip:
             nwc = NavigateToWaypoint(robot=robot,

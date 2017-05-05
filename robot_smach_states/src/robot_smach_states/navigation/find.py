@@ -97,6 +97,7 @@ class Find(smach.StateMachine):
                                     states.world_model.Inspect(robot=robot,
                                                                entityDes=source_entity_designator,
                                                                objectIDsDes=segmented_entities_designator,
+                                                               searchArea=area_name_designator,
                                                                inspection_area=area_name_designator),
                                     transitions={'done'         : 'CHECK_IF_ENTITY_FOUND',
                                                  'failed'       : 'failed'})
