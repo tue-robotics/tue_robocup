@@ -48,7 +48,8 @@ SEARCH -> where is | in WHATWHICH room is
 # Object questions
 
 OFIND[{"action" : "o_find", "entity" : O}] -> where can i find a OBJECT[O]
-CFIND[{"action" : "o_find", "entity" : C}] -> where can i find a CATEGORY[C]
+CFIND[{"action" : "c_find", "entity" : C}] -> where can i find a CATEGORY[C]
+OTYPE[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong the OBJECT[O]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # D A T A
@@ -133,7 +134,7 @@ CATEGORY['drink'] -> drink | drinks
 CATEGORY['cleaning_stuff'] -> cleaning stuff | cleaning stuffs
 CATEGORY['cutlery'] -> cutlery | cutleries
 
-T[X] -> Q[X] | CP[X] | APLACEM[X] | ABEACON[X] | APLROOM[X] | ABEROOM[X] | OFIND[X] | CFIND[X]
+T[X] -> Q[X] | CP[X] | APLACEM[X] | ABEACON[X] | APLROOM[X] | ABEROOM[X] | OFIND[X] | CFIND[X] | OTYPE[X]
 '''
 
 

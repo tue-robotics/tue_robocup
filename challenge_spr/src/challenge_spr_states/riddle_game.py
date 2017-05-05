@@ -99,6 +99,23 @@ def answer(robot, res, crowd_data):
                 else:
                     answer = 'I dont know that object'
 
+            # Find category
+            if res.semantics['action'] == 'c_find':
+                entity = res.semantics['entity']
+                loc, area_name = common_knowledge.get_object_category_location(entity)
+                answer = 'You can find the %s on the %s' % (entity, loc)
+                
+            # Return objects category
+            if res.semantics['action'] == 'return_category':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                if len(locations) == 1:
+                    cat = locations[0]['category']
+                    answer = 'The %s belongs to %s' % (entity, cat)
+                    
+                else:
+                    answer = 'I dont know that object'
+
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
             return 'answered'
