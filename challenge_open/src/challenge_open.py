@@ -44,10 +44,37 @@ class DetermineWhatToCleanInspect(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=[place["entity_id"] for place in challenge_knowledge.inspection_places])
         self._robot = robot
+        self._served = []
 
     def execute(self, userdata):
         while not rospy.is_shutdown():
-            self._robot.head.look_at_standing_person()
+            self._robot.head.reset()
+
+            best_p = 0
+            best_roi = None
+            best_label = None
+            for face in self._robot.head.detect_persons():
+                for p in face.categorical_distribution.probabilities:
+                    if p.label in self._served:
+                        continue
+                    if p.probability > best_p:
+                        best_p = p.probability
+                        best_roi = face.roi
+                        best_label = p.label
+
+            if best_label:
+                rospy.loginfo('best face is the face of %s with p=%f and roi=%s', best_label, best_p, best_roi)
+                self._served.append(best_label)
+
+                face_location = self._robot.head.project_roi(best_roi, frame_id='map')
+                rospy.loginfo('looking at face at %s', face_location)
+                self._robot.head.look_at_point(face_location)
+
+                self._robot.speech.speak('Hello %s, I recognized you from a photo on facebook' % best_label)
+            else:
+                self._robot.speech.speak('Can somebody stand in front of me?')
+                self._robot.head.look_at_standing_person()
+
             sentence = random.choice([
                 "What should I clean?",
                 "Where should I look for trash?",
