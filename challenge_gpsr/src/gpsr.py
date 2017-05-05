@@ -25,7 +25,7 @@ def task_result_to_report(task_result):
     for message in task_result.messages:
         output += message + ". "
     if not task_result.succeeded:
-        output += ". I am truly sorry, let's try this again!"
+        output += " I am truly sorry, let's try this again! "
     return output
 
 def main():
@@ -106,7 +106,6 @@ def main():
         # Report to the user
         robot.head.look_at_standing_person()
         robot.speech.speak(report, block=True)
-        robot.head.close()
 
         while True:
             robot.speech.speak(user_instruction, block=True)
@@ -130,8 +129,6 @@ def main():
                 break
 
             break
-
-        robot.speech.speak('Lets rock and roll!')
 
         # Dump the output json object to a string
         task_specification = json.dumps(semantics)

@@ -69,4 +69,32 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('RECITE_ORDER',
                                    ReciteOrders(robot=robot, orders=orders),
+                                   transitions={'spoken': 'SAY_CANNOT_GRASP'})
+
+            smach.StateMachine.add('SAY_CANNOT_GRASP',
+                                   states.Say(robot, "I am terribly sorry but I am unable to grasp my own order,"
+                                                     "could you please put it in my basket"),
+                                   transitions={'spoken': 'WAIT_FOR_OBJECTS'})
+
+            smach.StateMachine.add('WAIT_FOR_OBJECTS',
+                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   transitions={'waited': 'BRING_OBJECTS',
+                                                'preempted': 'Aborted'})
+
+            smach.StateMachine.add('BRING_OBJECTS',
+                                   states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                                            radius=0.7),
+                                   transitions={'arrived': 'RETURN_TO_KITCHEN',
+                                                'unreachable': 'RETURN_TO_KITCHEN',
+                                                'goal_not_defined': 'Aborted'})
+
+            smach.StateMachine.add('RETURN_TO_KITCHEN',
+                                   states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
+                                                             radius=0.15),
+                                   transitions={'arrived': 'SAY_DONE',
+                                                'unreachable': 'SAY_DONE',
+                                                'goal_not_defined': 'SAY_DONE'})
+
+            smach.StateMachine.add('SAY_DONE',
+                                   states.Say(robot, "That's it for today, I'm done"),
                                    transitions={'spoken': 'Done'})
