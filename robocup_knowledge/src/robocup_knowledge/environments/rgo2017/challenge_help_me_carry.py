@@ -1,5 +1,5 @@
 default_item = "coke"
-default_place = "cabinet"
+default_place = "couch_table"
 default_area = "on_top_of"
 
 commands = {
