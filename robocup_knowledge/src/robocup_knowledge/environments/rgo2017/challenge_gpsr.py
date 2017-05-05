@@ -46,7 +46,7 @@ V_BRING -> give | bring | hand | deliver | take | carry | transport
 V_GUIDE -> guide | escort | take | lead | accompany
 
 DET -> the | a
-MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
 """
 
 for room in common.location_rooms:
