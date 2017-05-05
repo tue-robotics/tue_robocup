@@ -102,9 +102,11 @@ def main():
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
-            robot.speech.speak(report, block=True)
 
+        # Report to the user
         robot.head.look_at_standing_person()
+        robot.speech.speak(report, block=True)
+        robot.head.close()
 
         while True:
             robot.speech.speak(user_instruction, block=True)
