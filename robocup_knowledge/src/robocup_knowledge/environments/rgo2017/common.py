@@ -29,7 +29,7 @@ locations = [
 location_rooms = list(set([ o["room"] for o in locations ]))
 location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
-location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
+manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
 # rooms = location_rooms + ["workshop"]
 
