@@ -6,11 +6,11 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'bookshelf',       'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'sofa',            'room':'livingroom', 'category': 'seat',    'manipulation':'no'  },
-    { 'name':'couch_table',     'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'tv_stand',        'room':'livingroom', 'category': 'beacon',  'manipulation':'no'  },
+    { 'name':'bookshelf',       'room':'living_room', 'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'sofa',            'room':'living_room', 'category': 'seat',    'manipulation':'no'  },
+    { 'name':'couch_table',     'room':'living_room', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'side_table',      'room':'living_room', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'tv_stand',        'room':'living_room', 'category': 'beacon',  'manipulation':'no'  },
 
     { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
     { 'name':'counter',         'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
@@ -23,8 +23,8 @@ locations = [
     { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
     { 'name':'cupboard',        'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
 
-    { 'name':'dinner_table',    'room':'diningroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'cabinet',         'room':'diningroom', 'category': 'shelf',   'manipulation':'yes' }
+    { 'name':'dinner_table',    'room':'dining_room', 'category': 'table',   'manipulation':'yes' },
+    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',   'manipulation':'yes' }
 
 ]
 
