@@ -16,6 +16,80 @@ def _color_info(string):
     rospy.loginfo('\033[92m' + string + '\033[0m')
 
 
+def look_at_segmentation_area(robot, entity, volume=None):
+    """ Has a robot look at a certain object and possibly a volume
+
+    :param robot: robot object
+    :param entity: entity to look at
+    :param volume: string indicating the specific volume to look at (e.g., 'on_top_on' or 'shelf3')
+    """
+
+    # Determine the height of the head target
+    # Start with a default
+    pos = entity.pose.position
+    look_at_point_z = 0.7
+
+    # Check if we have areas: use these
+    if volume in entity.volumes:
+        search_volume = entity.volumes[volume]
+        try:
+            look_at_point_z = search_volume.min_corner.z()
+        except Exception as e:
+            rospy.logerr("Cannot get z_min of volume {} of entity {}: {}".format(volume,
+                                                                                 e.id, e.message))
+    else:
+        # Look at the top of the entity to inspect
+        pos = entity.pose.position
+        try:
+            look_at_point_z = pos.z + entity.shape.z_max
+        except Exception as e:
+            rospy.logerr("Cannot get z_max of entity {}: {}".format(e.id, e.message))
+
+    # Point the head at the right direction
+    robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
+
+    # Make sure the spindle is at the appropriate height if we are AMIGO
+    if robot.robot_name == "amigo":
+        # Send spindle goal to bring head to a suitable location
+        # Correction for standard height: with a table heigt of 0.76 a spindle position
+        # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
+        # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
+        spindle_target = max(0.15, min(look_at_point_z - 0.41, robot.torso.upper_limit[0]))
+
+        robot.torso._send_goal([spindle_target], timeout=0)
+        robot.torso.wait_for_motion_done()
+
+    robot.head.wait_for_motion_done()
+
+
+class UpdateEntityPose(smach.State):
+    """ Look at an entity and updates its pose. This assumes the robot is already in front of the object """
+    def __init__(self, robot, entity_designator):
+        """ Constructor
+
+        :param robot: robot object
+        :param entity_designator: EdEntityDesignator indicating the object for which the pose should be updated
+        """
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+        self._entity_designator = entity_designator
+
+    def execute(self, userdata):
+        """ Looks at the entity and updates its pose using the update kinect service """
+        # Start by looking at the entity
+        entity_to_inspect = self._entity_designator.resolve()
+        look_at_segmentation_area(self._robot, entity_to_inspect)
+
+        # This is needed because the head is not entirely still when the look_at_point function finishes
+        time.sleep(0.5)
+
+        # Inspect 'on top of' the entity
+        res = self._robot.ed.update_kinect("{}".format(entity_to_inspect.id))
+
+        # Return
+        return "done"
+
+
 class SegmentObjects(smach.State):
     """ Look at an entiy and segment objects within the area desired.
     """
@@ -44,50 +118,11 @@ class SegmentObjects(smach.State):
         ds.is_writeable(segmented_entity_ids_designator)
         self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
-    def _look_at_segmentation_area(self, entity, segmentation_area):
-
-        # Determine the height of the head target
-        # Start with a default
-        pos = entity.pose.position
-        look_at_point_z = 0.7
-
-        # Check if we have areas: use these
-        if segmentation_area in entity.volumes:
-            search_volume = entity.volumes[segmentation_area]
-            try:
-                look_at_point_z = search_volume.min_corner.z()
-            except Exception as e:
-                rospy.logerr("Cannot get z_min of volume {} of entity {}: {}".format(segmentation_area,
-                                                                                     e.id, e.message))
-        else:
-            # Look at the top of the entity to inspect
-            pos = entity.pose.position
-            try:
-                look_at_point_z = pos.z + entity.shape.z_max
-            except Exception as e:
-                rospy.logerr("Cannot get z_max of entity {}: {}".format(e.id, e.message))
-
-        # Point the head at the right direction
-        self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
-
-        # Make sure the spindle is at the appropriate height if we are AMIGO
-        if self.robot.robot_name == "amigo":
-            # Send spindle goal to bring head to a suitable location
-            # Correction for standard height: with a table heigt of 0.76 a spindle position
-            # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
-            # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
-            spindle_target = max(0.15, min(look_at_point_z - 0.41, self.robot.torso.upper_limit[0]))
-
-            self.robot.torso._send_goal([spindle_target], timeout=0)
-            self.robot.torso.wait_for_motion_done()
-
-        self.robot.head.wait_for_motion_done()
-
     def execute(self, userdata=None):
         entity_to_inspect = self.entity_to_inspect_designator.resolve()
         segmentation_area = self.segmentation_area_des.resolve()
 
-        self._look_at_segmentation_area(entity_to_inspect, segmentation_area)
+        look_at_segmentation_area(self.robot, entity_to_inspect, segmentation_area)
 
         # This is needed because the head is not entirely still when the look_at_point function finishes
         time.sleep(0.5)
