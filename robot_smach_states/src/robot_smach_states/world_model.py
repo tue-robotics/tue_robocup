@@ -40,10 +40,13 @@ class SegmentObjects(smach.State):
         self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
     def _look_at_segmentation_area(self, entity):
-        look_at_point_z = 0.7   # Where does this come from?
 
         # Make sure the head looks at the entity
         pos = entity.pose.position
+        try:
+            look_at_point_z = pos.z + entity.shape.z_max
+        except:
+            look_at_point_z = 0.7
         self.robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
 
         # Check if we have areas
