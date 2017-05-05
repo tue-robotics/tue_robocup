@@ -180,7 +180,7 @@ class FollowOperator(smach.State):
                     else:
                         return False
             else:
-                operator = self._robot.ed.get_closest_possible_person_entity(radius=1, center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                operator = self._robot.ed.get_closest_laser_entity(radius=1, center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
                 if not operator:
                     rospy.sleep(1)
 
@@ -227,7 +227,7 @@ class FollowOperator(smach.State):
     def _backup_register(self):
         """This only happens when the operator was just registered, and never tracked"""
         print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
-        self._operator = self._robot.ed.get_closest_possible_person_entity(radius=1,
+        self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                                 center_point=kdl_conversions.VectorStamped(
                                                                                     x=1.5, y=0, z=1,
                                                                                     frame_id="/%s/base_link" % self._robot.robot_name))
@@ -520,12 +520,16 @@ class FollowOperator(smach.State):
                 # operator_pos.header.frame_id = best_detection.pose.header.frame_id
                 # operator_pos.point = best_detection.pose.pose.position
 
-                operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
+                try:
+                    operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
+                except Exception as e:
+                    rospy.logerr("head.project_roi failed: %s", e)
+                    return False
                 operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
 
                 self._face_pos_pub.publish(operator_pos_ros)
 
-                recovered_operator = self._robot.ed.get_closest_possible_person_entity(radius=self._lost_distance,
+                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
                                                                                        center_point=operator_pos_kdl)
 
                 if recovered_operator:
