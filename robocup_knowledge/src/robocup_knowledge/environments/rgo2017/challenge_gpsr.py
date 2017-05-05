@@ -57,6 +57,8 @@ for obj in common.object_names:
     grammar += '\nOBJECT_NAMES[%s] -> %s' % (obj, obj)
 for loc in common.get_locations(pick_location=True, place_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATIONS[%s] -> MANIPULATION_AREA_DESCRIPTIONS the %s' % (loc, loc)
+for cat in common.object_categories:
+    grammar += '\nOBJECT_NAMES[%s] -> %s' % (cat, cat)
 
 ###############################################################################
 #
@@ -142,7 +144,8 @@ V_BRING -> bring | deliver | take | carry | transport
 V_BRING_PERSON -> V_BRING | give | hand | hand over
 
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING_PERSON DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS[Y]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me
 """
 
 for name in common.names:
