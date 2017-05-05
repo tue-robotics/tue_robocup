@@ -29,8 +29,8 @@ grammar_target = "T"
 
 grammar = """
 T[{actions : <A1>}] -> C[A1]
-#T[{actions : <A1, A2>}] -> C[A1] and C[A2]
-#T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+T[{actions : <A1, A2>}] -> C[A1] and C[A2]
+T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> VP[A]
 """
@@ -131,7 +131,17 @@ V_FOLLOW -> follow | go after | come after
 VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
 VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
+
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z, "type"}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
 """
+
+grammar += '\nFOLLOW_PERSONS[the person] -> DET person'
+grammar += '\nFOLLOW_PERSONS[the woman] -> DET woman'
+grammar += '\nFOLLOW_PERSONS[the man] -> DET man'
+for name in common.names:
+    grammar += '\nFOLLOW_PERSONS[%s] -> %s' % (name, name)
 
 ###############################################################################
 #
