@@ -11,7 +11,6 @@ from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
 from smach_ros import SimpleActionState
-from dragonfly_speech_recognition.srv import GetSpeechResponse
 import time
 import math
 
