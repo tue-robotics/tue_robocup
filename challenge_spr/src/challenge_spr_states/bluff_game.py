@@ -62,10 +62,10 @@ def turn_to_closest_entity(robot):
     if "dragonfly_speech_recognition" not in robot.hmi.last_talker_id:
         # TUrn
         vth = 0.5
-        th = 3.1415
+        th = 3.1415 * 2 / 5
         robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
 
-    _turn_to_closest_entity(robot)
+    # _turn_to_closest_entity(robot)
 
 
 class HearQuestion(smach.State):
@@ -111,8 +111,16 @@ class TestBluffGame(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         self.userdata.crowd_data = {
-            'males': 2,
-            'females': 3
+            "males": 1,
+            "men": 2,
+            "females": 3,
+            "women": 4,
+            "children": 5,
+            "boys": 6,
+            "girls": 7,
+            "adults": 8,
+            "elders": 9,
+            "crowd_size": 10
         }
 
         with self:
