@@ -31,6 +31,20 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
+# hack
+most_probable_location_in_room_map = {
+    'dining_room': 'dinner_table',
+    'bedroom': 'closet',
+    'living_room': 'couch_table',
+    'kitchen': 'kitchencounter'
+}
+
+
+def get_location_from_room(room_id):
+    if room_id in most_probable_location_in_room_map:
+        return most_probable_location_in_room_map[room_id]
+    return None
+
 # rooms = location_rooms + ["workshop"]
 
 objects = [
