@@ -1,7 +1,18 @@
 #!/usr/bin/python
 
+# System
+import random
+
 # ROS
+import rospy
 import smach
+
+# TU/e Robotics
+from hmi import TimeoutException
+from robocup_knowledge import knowledge_loader
+
+# Knowledge
+knowledge = knowledge_loader.load_knowledge("challenge_restaurant")
 
 
 class TakeOrder(smach.State):
@@ -13,25 +24,34 @@ class TakeOrder(smach.State):
         :param robot: robot object
         :param location: string indicating the location
         :param orders: Python dict in which the orders will be stored
+        :return:
+        succeeded: understood correctly
+        failed: didn't hear anything or exceeded maximum number of tries
+        misunderstood: misunderstood, might try again
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'misunderstood'])
 
         self._robot = robot
         self._location = location
         self._orders = orders
+        self._nr_tries = 0
+        self._max_tries = 5
 
-    def _confirm(self, tries=3):
-        for i in range(0, tries):
-            result = self._robot.ears.recognize("<option>", {"option": ["yes", "no"]})
-            if result and result.result:
-                answer = result.result
-                return answer == "yes"
-
-            if i != tries - 1:
-                self._robot.speech.speak("Please say yes or no")
-        return False
+    def _confirm(self):
+        cgrammar = """
+        C[P] -> A[P]
+        A['yes'] -> yes
+        A['no'] -> no
+        """
+        try:
+            speech_result = self._robot.hmi.query(description="Is this correct?",
+                                                 grammar=cgrammar, target="C")
+        except TimeoutException:
+            return False
+        return speech_result.semantics == "yes"
 
     def execute(self, userdata):
+        self._nr_tries += 1
         self._robot.head.look_at_ground_in_front_of_robot(3)
         self._robot.speech.speak("Which combo or beverage do you want?")
 
@@ -39,44 +59,56 @@ class TakeOrder(smach.State):
         while not order:
 
             # #### TEMP: before speech recognition is there
-            self._robot.speech.speak("I'm sorry, but I'm not able to understand your order")
-
-            self._orders["beverage"] = {"location": "table1", "name": "beer"}
-            self._orders["combo"] = {"location": "table2", "name": "nuts and bolts"}
-
-            return "succeeded"
+            # self._robot.speech.speak("I'm sorry, but I'm not able to understand your order")
+            #
+            # self._orders["beverage"] = {"location": "table1", "name": "beer"}
+            # self._orders["combo"] = {"location": "table2", "name": "nuts and bolts"}
+            #
+            # return "succeeded"
             #####
 
-            result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
-            if result and result.result:
+            self._robot.speech.speak("Hello there, can I please take your order")
+            count = 0
+            while not rospy.is_shutdown():
+                count += 1
 
-                self._robot.speech.speak("I heard %s, is this correct?" % result.result)
-                if not self._confirm():
-                    continue
-
-                if "beverage" in result.choices:
-                    order = result.choices["beverage"]
-                    self._orders["beverage"] = {"location": self._location, "name": order}
-                elif "food1" and "food2" in result.choices:
-                    if result.choices["food1"] == result.choices["food2"]:
-                        self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
+                try:
+                    speech_result = self._robot.hmi.query(description="Can I please take your order",
+                                                         grammar=knowledge.order_grammar, target="O")
+                    break
+                except TimeoutException:
+                    if count < 5:
+                        self._robot.speech.speak(random.choice(["I'm sorry, can you repeat",
+                                                               "Please repeat your order, I didn't hear you",
+                                                               "I didn't get your order, can you repeat it",
+                                                               "Please speak up, as I didn't hear your order"]))
                     else:
-                        order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
-                        self._orders["combo"] = {"location": self._location, "name": order}
+                        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+                        self._robot.head.cancel_goal()
+                        return "failed"
+
+            # Now: confirm
+            if "beverage" in speech_result.semantics:
+                self._robot.speech.speak("I understood that you would like {}, "
+                                         "is this correct?".format(speech_result.semantics['beverage']))
+            elif "food1" and "food2" in speech_result.semantics:
+                self._robot.speech.speak("I understood that you would like {} and {}, "
+                                         "is this correct?".format(speech_result.semantics['food1'],
+                                                                   speech_result.semantics['food2']))
+
+            if self._confirm():
+                self._order = speech_result.semantics
+                self._robot.head.cancel_goal()
+                self._robot.speech.speak("Ok, I will get your order", block=False)
+                return "succeeded"
             else:
-                self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
-
-        self._robot.head.cancel_goal()
-
-        self._robot.speech.speak("Ok, I will get you %s" % order, block=False)
-
-        print "\n\n Current orders: \n\n"
-        print self._orders
-
-        if "combo" in self._orders and "beverage" in self._orders:
-            return "succeeded"
-        else:
-            return "succeeded"
+                if self._nr_tries < self._max_tries:
+                    self._robot.head.cancel_goal()
+                    return "misunderstood"
+                else:
+                    self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+                    self._robot.head.cancel_goal()
+                    return "failed"
 
 
 class ReciteOrders(smach.State):
