@@ -190,7 +190,8 @@ class Head(RobotPart):
 
         # If necessary, transform the point
         if frame_id is not None:
-            result.projectToFrame(frame_id=frame_id, tf_listener=self.tf_listener)
+            print "Transforming roi to {}".format(frame_id)
+            result = result.projectToFrame(frame_id=frame_id, tf_listener=self.tf_listener)
 
         # Return the result
         return result
