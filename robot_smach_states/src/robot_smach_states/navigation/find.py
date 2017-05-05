@@ -4,6 +4,7 @@ import smach, rospy
 import robot_smach_states as states
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator
 from robot_skills.classification_result import ClassificationResult
+from robocup_knowledge import load_knowledge
 
 def entities_from_description(robot, entity_description, list_of_entity_ids=None ):
     '''
@@ -17,6 +18,8 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
         entities  - list of entities that fulfill the description
                     (each element has type Entity)
     '''
+    knowledge = load_knowledge('common')
+
     if not isinstance(list_of_entity_ids, list):
         return []
 
@@ -33,7 +36,14 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
         entities = [e for e in entities if e.is_a('possible_human')]
     else:
         # Select entities based on the description (only type for now)
-        entities = [e for e in entities if e.type == entity_description['type']]
+        try:
+            if entity_description['type'] in knowledge.object_categories:
+                entities = [e for e in entities if knowledge.object_category(e.type) == entity_description['type']]
+            else:
+                entities = [e for e in entities if e.type == entity_description['type']]
+        except:
+            entities = [e for e in entities if e.type == entity_description['type']]
+
 
         # If we have a list of entities to choose from, select based on that list
         if list_of_entity_ids:
