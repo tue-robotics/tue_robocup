@@ -9,7 +9,7 @@ import robot_smach_states as states
 
 # Challenge restaurant
 from store_waypoint import StoreWaypoint
-from take_orders import TakeOrder
+from take_orders import TakeOrder, ReciteOrders
 from wait_for_customer import WaitForCustomer
 
 
@@ -29,6 +29,8 @@ class Restaurant(smach.StateMachine):
         caller_id = "caller"
         caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
                                                                                       id=caller_id)
+
+        orders = {}
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -55,13 +57,17 @@ class Restaurant(smach.StateMachine):
                                                 'goal_not_defined': 'Aborted'})
 
             smach.StateMachine.add('TAKE_ORDER',
-                                   TakeOrder(robot=robot),
+                                   TakeOrder(robot=robot, location=caller_id, orders=orders),
                                    transitions={'succeeded': 'NAVIGATE_TO_KITCHEN',
                                                 'failed': 'Aborted'})
 
             smach.StateMachine.add('NAVIGATE_TO_KITCHEN',
                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
                                                              radius=0.15),
-                                   transitions={'arrived': 'Done',
-                                                'unreachable': 'Done',
-                                                'goal_not_defined': 'Aborted'})
+                                   transitions={'arrived': 'RECITE_ORDER',
+                                                'unreachable': 'RECITE_ORDER',
+                                                'goal_not_defined': 'RECITE_ORDER'})
+
+            smach.StateMachine.add('RECITE_ORDER',
+                                   ReciteOrders(robot=robot, orders=orders),
+                                   transitions={'spoken': 'Done'})
