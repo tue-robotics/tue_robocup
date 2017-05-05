@@ -99,6 +99,7 @@ def main():
         # Report to the user and ask for a new task
         robot.speech.speak(report, block=True)
 
+        robot.head.look_at_standing_person()
         while True:
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
@@ -132,6 +133,15 @@ def main():
 
         # Write a report to bring to the operator
         report = task_result_to_report(task_result)
+
+        robot.lights.set_color(0,0,1)  #be sure lights are blue
+
+        robot.head.look_at_standing_person()
+        robot.leftArm.reset()
+        robot.leftArm.send_gripper_goal('close',0.0)
+        robot.rightArm.reset()
+        robot.rightArm.send_gripper_goal('close',0.0)
+        robot.torso.reset()
 
         if task_result.succeeded:
             # Keep track of the number of performed tasks
