@@ -28,6 +28,10 @@ def task_result_to_report(task_result):
     #     output += " I am truly sorry, let's try this again! "
     return output
 
+def request_missing_field(grammar, grammar_target, semantics, missing_field):
+    return semantics
+
+
 def main():
     rospy.init_node("gpsr")
     random.seed()
@@ -124,8 +128,8 @@ def main():
             while True:
                 try:
                     sentence, semantics = robot.hmi.query(description="",
-                                                        grammar=knowledge.grammar,
-                                                        target=knowledge.grammar_target)
+                                                          grammar=knowledge.grammar,
+                                                          target=knowledge.grammar_target)
                     break
                 except hmi.TimeoutException:
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
@@ -148,6 +152,12 @@ def main():
 
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
+
+        print task_result.missing_field
+        # # Ask for missing information
+        # while task_result.missing_field:
+        #     request_missing_field(knowledge.task_result.missing_field)
+        #     task_result = action_client.send_task(task_specification)
 
         # Write a report to bring to the operator
         report = task_result_to_report(task_result)
