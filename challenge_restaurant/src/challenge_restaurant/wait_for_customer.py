@@ -6,7 +6,7 @@ import smach
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import frame_stamped
-
+from hmi import TimeoutException
 
 class WaitForCustomer(smach.State):
     """ Wait for the waiving person """
