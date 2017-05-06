@@ -247,7 +247,11 @@ class Head(RobotPart):
         recognition = recognitions[0]
 
         rospy.loginfo('annotating that face as %s', name)
-        self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
+        try:
+            self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
+        except rospy.ServiceException as e:
+            rospy.logerr('annotate failed:', e)
+            return False
 
         return True
 
