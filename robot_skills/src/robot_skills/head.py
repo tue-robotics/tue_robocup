@@ -199,16 +199,12 @@ class Head(RobotPart):
         :param frame_id: if specified, the result is transformed into this frame id
         :return: VectorStamped object
         """
-        # Call the service with the provided Region of Interest
-        try:
-            response = self._projection_srv(rois=[roi])
-            rospy.loginfo('project_roi response: %s', response)
-        except rospy.ServiceException as e:
-            raise ValueError('project_roi failed', e)
+        response = self.project_rois(rois=[roi])
+        point = response.points[0]
 
         # Convert to VectorStamped
-        result = VectorStamped(x=response.point.point.x, y=response.point.point.y, z=response.point.point.z,
-                               frame_id=response.point.header.frame_id)
+        result = VectorStamped(x=point.x, y=point.y, z=point.z,
+                               frame_id=response.header.frame_id)
         result.vector.y(-result.vector.y())
         result.vector.z(-result.vector.z())
 
@@ -219,6 +215,16 @@ class Head(RobotPart):
 
         # Return the result
         return result
+
+    def project_rois(self, rois):
+        # Call the service with the provided Region of Interest
+        try:
+            points = self._projection_srv(rois=rois)
+        except rospy.ServiceException as e:
+            raise ValueError('project_roi failed', e)
+        else:
+            rospy.loginfo('project_rois response: %s', points)
+            return points
 
     def _get_faces(self, image):
         r = self._recognize_srv(image=image)
