@@ -49,6 +49,7 @@ class DetermineWhatToCleanInspect(smach.State):
     def execute(self, userdata):
         while not rospy.is_shutdown():
             self._robot.head.reset()
+            rospy.sleep(rospy.Duration(1.0))
 
             best_p = 0
             best_roi = None
@@ -72,10 +73,17 @@ class DetermineWhatToCleanInspect(smach.State):
                 rospy.loginfo('looking at face at %s', face_location)
                 self._robot.head.look_at_point(face_location)
 
-                self._robot.speech.speak('Hello %s, I recognized you from a photo on facebook' % best_label)
+                self._robot.speech.speak('Hello %s' % best_label)
             else:
                 self._robot.speech.speak('Can somebody stand in front of me?')
                 self._robot.head.look_at_standing_person()
+
+            sentence = random.choice([
+                "What a mess here, let's clean this room!",
+                "Let's see if I can find some garbage here",
+                "All I want to do is clean this mess up!"
+            ])
+            self._robot.speech.speak(sentence, block=True)
 
             sentence = random.choice([
                 "What should I clean?",
@@ -126,18 +134,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('VERIFY',
                                VerifyWorldModelInfo(robot),
-                               transitions={"done": "SAY_START_CHALLENGE", "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
+                               transitions={"done": "NAVIGATE_TO_ASK_WAYPOINT", "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
 
         smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE',
                                robot_smach_states.Say(robot, ["My knowledge of the world is not complete!",
                                                               "Please give me some more information!"], block=False),
                                transitions={"spoken": "SAY_WAITING_FOR_TRIGGER"})
-
-        smach.StateMachine.add('SAY_START_CHALLENGE',
-                               robot_smach_states.Say(robot, ["What a mess here, let's clean this room!",
-                                                              "Let's see if I can find some garbage here",
-                                                              "All I want to do is clean this mess up!"], block=False),
-                               transitions={"spoken": "NAVIGATE_TO_ASK_WAYPOINT"})
 
         smach.StateMachine.add("NAVIGATE_TO_ASK_WAYPOINT",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
