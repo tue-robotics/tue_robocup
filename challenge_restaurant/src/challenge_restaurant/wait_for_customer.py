@@ -50,3 +50,19 @@ class WaitForCustomer(smach.State):
         # ToDo: add the speech: do we wan't to continue???
 
         return 'succeeded'
+
+    def _confirm(self):
+        cgrammar = """
+        C[True] -> amigo take the order
+        C[False] -> amigo wait
+        """
+        for i in range(5):
+            try:
+                speech_result = self._robot.hmi.query(description="Should I get the order?",
+                                                      grammar=cgrammar, target="C")
+                break
+            except TimeoutException:
+                pass
+        else:
+            return speech_result.semantics
+        return False
