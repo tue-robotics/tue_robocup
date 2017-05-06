@@ -67,9 +67,7 @@ class WaitForCustomer(smach.State):
             try:
                 speech_result = self._robot.hmi.query(description="Should I get the order?",
                                                       grammar=cgrammar, target="C")
-                break
+                return speech_result.semantics
             except TimeoutException:
                 pass
-        else:
-            return speech_result.semantics
         return False

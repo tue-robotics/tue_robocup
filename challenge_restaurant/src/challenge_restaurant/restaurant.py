@@ -20,7 +20,7 @@ class Restaurant(smach.StateMachine):
 
         :param robot: robot object
         """
-        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done', 'WAIT_FOR_CUSTOMER'])
 
         kitchen_id = "kitchen"
         kitchen_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
@@ -36,7 +36,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
                                    transitions={'initialized': 'STORE_KITCHEN',
-                                                'abort': 'Aborted'})
+                                                'abort': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('STORE_KITCHEN',
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
@@ -45,8 +45,8 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    WaitForCustomer(robot, caller_id),
                                    transitions={'succeeded': 'NAVIGATE_TO_CUSTOMER',
-                                                'failed': 'Aborted',
-                                                'aborted': 'Aborted',
+                                                'failed': 'WAIT_FOR_CUSTOMER',
+                                                'aborted': 'WAIT_FOR_CUSTOMER',
                                                 'rejected': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
@@ -54,12 +54,12 @@ class Restaurant(smach.StateMachine):
                                                             radius=0.7),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'TAKE_ORDER',
-                                                'goal_not_defined': 'Aborted'})
+                                                'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('TAKE_ORDER',
                                    TakeOrder(robot=robot, location=caller_id, orders=orders),
                                    transitions={'succeeded': 'NAVIGATE_TO_KITCHEN',
-                                                'failed': 'Aborted',
+                                                'failed': 'WAIT_FOR_CUSTOMER',
                                                 'misunderstood': 'TAKE_ORDER'})
 
             smach.StateMachine.add('NAVIGATE_TO_KITCHEN',
@@ -81,14 +81,14 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
                                    states.WaitTime(robot=robot, waittime=5.0),
                                    transitions={'waited': 'BRING_OBJECTS',
-                                                'preempted': 'Aborted'})
+                                                'preempted': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('BRING_OBJECTS',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
                                                             radius=0.7),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_OBJECTS',
-                                                'goal_not_defined': 'Aborted'})
+                                                'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('SAY_OBJECTS',
                                    states.Say(robot, "Dear mister, here are your objects, "
@@ -98,14 +98,14 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
                                    states.WaitTime(robot=robot, waittime=5.0),
                                    transitions={'waited': 'RETURN_TO_KITCHEN',
-                                                'preempted': 'Aborted'})
+                                                'preempted': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('RETURN_TO_KITCHEN',
                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
                                                              radius=0.15),
-                                   transitions={'arrived': 'SAY_DONE',
-                                                'unreachable': 'SAY_DONE',
-                                                'goal_not_defined': 'SAY_DONE'})
+                                   transitions={'arrived': 'WAIT_FOR_CUSTOMER',
+                                                'unreachable': 'WAIT_FOR_CUSTOMER',
+                                                'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('SAY_DONE',
                                    states.Say(robot, "That's it for today, I'm done"),
