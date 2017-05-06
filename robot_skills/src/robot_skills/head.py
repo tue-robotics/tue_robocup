@@ -4,7 +4,7 @@ from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from std_srvs.srv import Empty
-from image_recognition_msgs.srv import Annotate, Recognize
+from image_recognition_msgs.srv import Annotate, Recognize, GetPersons
 from image_recognition_msgs.msg import Annotation
 
 from sensor_msgs.msg import Image
@@ -25,6 +25,7 @@ class Head(RobotPart):
         self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
+        self._get_persons_srv = self.create_service_client('/' + robot_name + '/person_detection/recognize', GetPersons)
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
@@ -237,6 +238,15 @@ class Head(RobotPart):
     def clear_persons(self):
         rospy.loginfo('clearing all learned persons')
         self._clear_srv()
+
+    def _get_persons(self, image):
+        r = self._get_persons_srv(image=image)
+        rospy.loginfo('found %d persons(s) in the image', len(r.recognitions))
+        return r
+
+    def detect_persons(self):
+        image = self.get_image()
+        return self._get_persons(image).detections
 
 
 #######################################
