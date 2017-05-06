@@ -44,7 +44,8 @@ C[{A}] -> VP[A]
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany
 
-DET -> the | a
+DET -> the | a | an
+DET_I -> DET | some
 MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
 """
 
@@ -162,7 +163,8 @@ V_BRING_PERSON -> V_BRING | give | hand | hand over
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
+
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
 VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z]
 VP["action": "bring", "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z]
