@@ -271,9 +271,12 @@ class Head(RobotPart):
 
         return True
 
-    def detect_faces(self):
+    def detect_faces(self, stamp=True):
         image = self.get_image()
-        return self._get_faces(image).recognitions
+        if stamp:
+            return self._get_faces(image).recognitions, image.header.stamp
+        else:
+            return self._get_faces(image).recognitions
 
     def clear_face(self):
         rospy.loginfo('clearing all learned faces')
