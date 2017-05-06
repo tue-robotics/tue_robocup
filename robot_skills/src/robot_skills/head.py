@@ -325,8 +325,9 @@ class Head(RobotPart):
 
         persons = self.detect_persons()
 
-        person_slot_rois = []
+        skeletons = []
         for person in persons:
+            bodyparts = {}
             for slot in person.__slots__:
                 detection = getattr(person, slot)
                 if detection.x == 0 or detection.y == 0:
@@ -337,18 +338,15 @@ class Head(RobotPart):
                 height = height
 
                 roi = RegionOfInterest(x_offset=x_offset, y_offset=y_offset, width=width, height=height)
-                person_slot_rois.append((person, slot, roi))
 
-        points = self.project_rois([roi for _, _, roi in person_slot_rois]).points
-
-        skeletons = []
-        for point, (person, slot, roi) in zip(points, person_slot_rois):
-            bodyparts = {}
-            for slot in person.__slots__:
-                bodyparts[slot] = point
-
+                try:
+                    ps = self.project_rois([roi]).points[0]
+                except ValueError:
+                    rospy.loginfo('skipping %s because of invalid projection to 3d', slot)
+                    continue
+                else:
+                    bodyparts[slot] = ps
             skeletons.append(Skeleton(bodyparts))
-
         return skeletons
 
     def visualize_skeletons(self, skeletons):
