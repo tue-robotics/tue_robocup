@@ -49,6 +49,10 @@ class TrackFace(smach.State):
         controller_thread = threading.Thread(self._control_base)
         controller_thread.start()
 
+        # Start the breakout thread
+        breakout_thread = threading.Thread(self._breakout_checker)
+        breakout_thread.start()
+
         rate = rospy.Rate(5.0)
 
         # For now, set a timeout for 60 seconds
@@ -137,7 +141,7 @@ class TrackFace(smach.State):
 
         # Loop until stop requested
         rate = rospy.Rate(20.0)
-        while not self._stop_requested:
+        while not self._stop_requested and not rospy.is_shutdown():
             msg = Twist()
             # Threshold (approximately 30 degrees)
             if abs(self._angle) > 0.5:
@@ -151,3 +155,14 @@ class TrackFace(smach.State):
         msg = Twist()
         self._cmd_vel_pub.publish(msg)
 
+    def _breakout_checker(self):
+        """ Continuously queries hmi so that the operator can ask the robot to stop
+        """
+        # Loop forever until
+        while not self._stop_requested and not rospy.is_shutdown():
+            try:
+                speech_result = self._robot.hmi.query(description="Do you want me to stop stalking you?",
+                                                      grammar="C -> amigo stop", target="C")
+                self.stop()
+            except TimeoutException:
+                pass
