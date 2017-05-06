@@ -246,6 +246,7 @@ class LearnPerson(smach.State):
     def execute(self, userdata=None):
 
         # Look up
+        self._robot.speech.speak("Please look at me while I admire your beauty", block=False)
         self._robot.head.look_at_standing_person()
         self._robot.head.wait_for_motion_done()
 
@@ -268,6 +269,7 @@ class LearnPerson(smach.State):
                 return "succeeded"
 
         # If we end up here, learning failed
+        self._robot.speech.speak("There's something in my eyes, I might not be able to remember you")
         self._robot.head.reset()
         return "failed"
 
