@@ -97,7 +97,7 @@ def main():
 
     while True:
         # Navigate to the GPSR meeting point
-        if not skip and not restart and not finished:
+        if not skip and not finished:
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
