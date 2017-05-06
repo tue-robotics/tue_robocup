@@ -23,9 +23,9 @@ from robocup_knowledge import load_knowledge
 def task_result_to_report(task_result):
     output = ""
     for message in task_result.messages:
-        output += message + ". "
-    if not task_result.succeeded:
-        output += " I am truly sorry, let's try this again! "
+        output += message
+    # if not task_result.succeeded:
+    #     output += " I am truly sorry, let's try this again! "
     return output
 
 def main():
