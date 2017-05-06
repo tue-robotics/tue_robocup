@@ -325,21 +325,27 @@ class Head(RobotPart):
 
         persons = self.detect_persons()
 
-        rois = []
+        person_slot_rois = []
         for person in persons:
             for slot in person.__slots__:
                 detection = getattr(person, slot)
-                rois.append(RegionOfInterest(x_offset=detection.x - width//2, y_offset=detection.y - height//2, width=width, height=height))
+                if detection.x == 0 or detection.y == 0:
+                    continue
+                x_offset = max(0, detection.x - width // 2)
+                y_offset = max(0, detection.y - height // 2)
+                width = width
+                height = height
 
-        points = self.project_rois(rois, frame_id='map').points
+                roi = RegionOfInterest(x_offset=x_offset, y_offset=y_offset, width=width, height=height)
+                person_slot_rois.append((person, slot, roi))
 
-        i = 0
+        points = self.project_rois([roi for _, _, roi in person_slot_rois]).points
+
         skeletons = []
-        for person in persons:
+        for point, (person, slot, roi) in zip(points, person_slot_rois):
             bodyparts = {}
             for slot in person.__slots__:
-                bodyparts[slot] = points[i]
-                i += 1
+                bodyparts[slot] = point
 
             skeletons.append(Skeleton(bodyparts))
 
