@@ -266,9 +266,9 @@ class Head(RobotPart):
                 wrist = getattr(person, '%s_wrist' % side)
                 shoulder = getattr(person, '%s_shoulder' % side)
 
-                if math.isnan(elbow.confidence) or elbow.confidence == 0 or\
-                        math.isnan(wrist.confidence) or wrist.confidence == 0 or\
-                        math.isnan(shoulder.confidence) or shoulder.confidence == 0:
+                if math.isnan(elbow.confidence) or elbow.confidence < 0.4 or\
+                        math.isnan(wrist.confidence) or wrist.confidence < 0.4 or\
+                        math.isnan(shoulder.confidence) or shoulder.confidence < 0.4:
                     continue
 
                 dx = elbow.x - wrist.x
