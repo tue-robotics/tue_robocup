@@ -7,6 +7,8 @@ from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from std_srvs.srv import Empty
+from std_msgs import ColorRGBA
+from visualization_msgs import Marker, MarkerArray
 from image_recognition_msgs.srv import Annotate, Recognize, GetPersons
 from image_recognition_msgs.msg import Annotation
 
@@ -46,6 +48,8 @@ class Head(RobotPart):
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
+
+        self._skeleton_pub = rospy.Publisher("skeleton_markers", )
 
         self._goal = None
         self._at_setpoint = False
@@ -350,18 +354,53 @@ class Head(RobotPart):
         return skeletons
 
     def visualize_skeletons(self, skeletons):
-        raise NotImplementedError()
+        """
+        Publish a MarkerArray for the given skeletons
+        :param skeletons: [Skeleton]
+        :return: MarkerArray
+        """
+        skeleton_markers = MarkerArray()
 
-#######################################
-    # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
-    # def take_snapshot(self, distance=10, timeout = 1.0):
+        for index, skeleton in enumerate(skeletons):
+            skeleton_markers.markers += self.markers_for_skeleton(skeleton, index)
 
-    #     self.look_at_ground_in_front_of_robot(distance)
-    #     rospy.sleep(timeout)
-    #     rospy.loginfo("Taking snapshot")
-    #     res = self.snapshot_srv()
+        self._skeleton_pub.publish(skeleton_markers)
 
-    #     return res
+    def markers_for_skeleton(self, skeleton, index=0):
+        blue = ColorRGBA(0, 0, 1, 1)
+        red = ColorRGBA(1, 0, 0, 1)
+        bodypart_colormap = {"neck":blue,
+                             "nose":red}
+        links = [("neck", "nose")]
+
+        joints_marker = Marker()
+        joints_marker.id = hash("skeleton}_{}_joints".format(index))
+        joints_marker.type = Marker.SPHERE_LIST
+        joints_marker.action = Marker.ADD
+        joints_marker.header = skeleton["nose"].pointstamped.header  # Nose is a good as any to do this with
+        joints_marker.points = [joint.point for name, joint in skeleton.items()]
+        joints_marker.colors = [blue for _, _ in skeleton.items()]
+
+        links_marker = Marker()
+        links_marker.id = hash("skeleton_{}_links".format(index))
+        links_marker.type = Marker.SPHERE_LIST
+        links_marker.action = Marker.ADD
+        links_marker.header = skeleton["nose"].pointstamped.header  # Nose is a good as any to do this with
+        links_marker.lines = [[skeleton[from_], skeleton[to_]] for (from_, to_) in links]
+        links_marker.colors = [blue for _ in links]
+
+        return [joints_marker, links_marker]
+
+            #######################################
+            # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
+            # def take_snapshot(self, distance=10, timeout = 1.0):
+
+            #     self.look_at_ground_in_front_of_robot(distance)
+            #     rospy.sleep(timeout)
+            #     rospy.loginfo("Taking snapshot")
+            #     res = self.snapshot_srv()
+
+            #     return res
 
 #######################################
 
