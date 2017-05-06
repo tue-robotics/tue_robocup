@@ -19,7 +19,6 @@ locations = [
 
     { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
     { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'cupboard',        'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
 
     { 'name':'dinner_table',    'room':'dining_room', 'category': 'table',   'manipulation':'yes' },
     { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',   'manipulation':'yes' }
