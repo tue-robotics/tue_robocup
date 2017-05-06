@@ -222,38 +222,47 @@ class WaitForPersonInFront(WaitForDesignator):
 
 
 class LearnPerson(smach.State):
-    """
+    """ Smach state to learn a person
 
     """
-    def __init__(self, robot, person_name="", name_designator=None, n_samples=5):
-        smach.State.__init__(self, outcomes=['succeeded_learning', 'failed_learning', 'timeout_learning'])
+    def __init__(self, robot, person_name="", name_designator=None, nr_tries=5):
+        """ Constructor
 
-        self.robot = robot
-        self.person_name = person_name
+        :param robot: robot object
+        :param person_name: string indicating the name that will be given
+        :param name_designator: designator returning a string with the name of the person. This will be used if no
+        person name is provided
+        :param nr_tries: maximum number of tries
+        """
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+
+        self._robot = robot
+        self._person_name = person_name
         if name_designator:
             ds.check_resolve_type(name_designator, str)
-        self.name_designator = name_designator
-        self.n_samples = n_samples
+        self._name_designator = name_designator
+        self._nr_tries = nr_tries
 
     def execute(self, userdata=None):
 
         # if person_name is empty then try to get it from designator
-        if not self.person_name:
-            person_name = self.name_designator.resolve()
+        if not self._person_name:
+            person_name = self._name_designator.resolve()
 
             # if there is still no name, quit the learning
             if not person_name:
-                print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
-                return
-
-        samples_completed = learn_person_procedure(self.robot, person_name=person_name, n_samples=self.n_samples)
-
-        if samples_completed == 0:
-            return 'failed_learning'
-        if samples_completed < self.n_samples:
-            return 'timeout_learning'
+                rospy.logerr("[LearnPerson] No name was provided. Quitting the learning")
+                return "failed"
         else:
-            return 'succeeded_learning'
+            person_name = self._person_name
+
+        # Learn the face (try for a maximum of nr_tries times
+        for i in range(self._nr_tries):
+            if self._robot.head.learn_person(name=person_name):
+                return "succeeded"
+
+        # If we end up here, learning failed
+        return "failed"
 
 
 ##########################################################################################################################################
