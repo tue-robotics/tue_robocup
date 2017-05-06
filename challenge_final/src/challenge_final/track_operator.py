@@ -53,12 +53,11 @@ class TrackFace(smach.State):
         # controller_thread = threading.Thread(target=self._control_base)
         # controller_thread.start()
 
-        rate = rospy.Rate(15.0)
-
         # Start the breakout thread
         breakout_thread = threading.Thread(self._breakout_checker)
         breakout_thread.start()
-
+        
+        rate = rospy.Rate(15.0)
 
         # For now, set a timeout for 60 seconds
         # This should be replaced by a decent break out condition
