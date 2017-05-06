@@ -23,6 +23,16 @@ from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 WavingResult = namedtuple('WavingResult', ['side', 'roi'])
 
 
+class Skeleton(object):
+    """
+    nose
+    neck
+    {left,right}_{shoulder,elbow,wrist}
+    """
+    def __init__(self, bodyparts):
+        pass
+
+
 class Head(RobotPart):
     def __init__(self, robot_name, tf_listener):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
@@ -242,8 +252,8 @@ class Head(RobotPart):
         image = self.get_image()
         return self._get_faces(image).recognitions
 
-    def clear_persons(self):
-        rospy.loginfo('clearing all learned persons')
+    def clear_face(self):
+        rospy.loginfo('clearing all learned faces')
         self._clear_srv()
 
     def _get_persons(self, image):
@@ -299,6 +309,14 @@ class Head(RobotPart):
         rospy.loginfo('found %d waving persons', len(persons))
         return persons
 
+    def detect_persons_3d(self):
+        """
+        :return: [Skeleton]
+        """
+        raise NotImplementedError()
+
+    def visualize_skeletons(self, skeletons):
+        raise NotImplementedError()
 
 #######################################
     # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
@@ -312,7 +330,6 @@ class Head(RobotPart):
     #     return res
 
 #######################################
-
 
 
 if __name__ == "__main__":
