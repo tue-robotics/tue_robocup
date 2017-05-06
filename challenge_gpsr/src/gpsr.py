@@ -121,13 +121,15 @@ def main():
 
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
-            try:
-                sentence, semantics = robot.hmi.query(description="",
-                                                      grammar=knowledge.grammar,
-                                                      target=knowledge.grammar_target)
-            except hmi.TimeoutException:
-                robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
-                continue
+            while True:
+                try:
+                    sentence, semantics = robot.hmi.query(description="",
+                                                        grammar=knowledge.grammar,
+                                                        target=knowledge.grammar_target)
+                    break
+                except hmi.TimeoutException:
+                    robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
+                    continue
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
