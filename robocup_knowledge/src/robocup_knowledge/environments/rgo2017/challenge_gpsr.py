@@ -44,8 +44,7 @@ C[{A}] -> VP[A]
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany
 
-DET -> the | a | an
-DET_I -> DET | some
+DET -> the | a | an | some
 MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
 """
 
@@ -160,16 +159,15 @@ grammar += """
 V_BRING -> bring | deliver | take | carry | transport
 V_BRING_PERSON -> V_BRING | give | hand | hand over
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
-VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y] | V_BRING OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y] | V_BRING OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
-VP["action": "bring", "target-location": {"id": X}, "source-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] from BRING_PERSONS to the ROOMS_AND_LOCATIONS[X]
-VP["action": "bring", "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X] | V_BRING OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS | V_BRING OBJECT_NAMES[Z] to BRING_PERSONS
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
-VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z]
-VP["action": "bring", "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] | V_BRING OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z] | V_BRING OBJECT_NAMES[Z] to me | V_BRING me OBJECT_NAMES[Z]
+VP["action": "bring", "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] | V_BRING OBJECT_NAMES[Z]
 """
 
 for name in common.names:
@@ -194,19 +192,6 @@ grammar += '\nSAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month'
 grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
-
-if __name__ == "__main__":
-    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
-
-    from grammar_parser.cfgparser import CFGParser
-    grammar_parser = CFGParser.fromstring(grammar)
-    sentence = grammar_parser.get_random_sentence("T")
-
-    print "Parsing sentence:\n\n{}\n\n".format(sentence)
-
-    result = grammar_parser.parse("T", sentence)
-
-    print "Result:\n\n{}".format(result)
 
 
 follow_acton = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
@@ -238,4 +223,40 @@ for name in common.names:
 # meet PERSON(F) and GUIDE her : (PERSON is at the BEACON) && (guide her to BEACON)
 # NAVIGATE-TO BEACON, meet PERSON(M), and GUIDE him : (guide him to BEACON) && (keep him not lost)
 # NAVIGATE-TO BEACON, meet PERSON(F), and GUIDE her : (guide her to BEACON) && (keep him not lost)
+
+loc_grammar = """
+
+HE_SHE -> he | she | it | him | her
+
+VP["object": {"id": X}] -> HE_SHE is in the ROOMS_AND_LOCATIONS[X] | in the ROOMS_AND_LOCATIONS[X] | you could find HE_SHE in the ROOMS_AND_LOCATIONS[X]
+"""
+
+obj_grammar = """
+
+VP["object": {"id": Y}] -> the OBJECT_NAMES[Z] is DET OBJECT_NAMES[Y] | the OBJECT_NAMES[Z] is OBJECT_NAMES[Y] | OBJECT_NAMES[Y] | DET OBJECT_NAMES[Y]
+"""
+
+if __name__ == "__main__":
+    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+
+    from grammar_parser.cfgparser import CFGParser
+
+    import sys
+    if sys.argv[1] == "object":
+        grammar_parser = CFGParser.fromstring(obj_grammar)
+    elif sys.argv[1] == "location":
+        grammar_parser = CFGParser.fromstring(loc_grammar)
+    elif sys.argv[1] == "full":
+        grammar_parser = CFGParser.fromstring(grammar)
+
+    if len(sys.argv) > 2:
+        sentence = " ".join(sys.argv[2:])
+    else:
+        sentence = grammar_parser.get_random_sentence("T")
+
+    print "Parsing sentence:\n\n{}\n\n".format(sentence)
+
+    result = grammar_parser.parse("T", sentence)
+
+    print "Result:\n\n{}".format(result)
 
