@@ -1,4 +1,9 @@
+# System
+import math
+import threading
+
 # ROS
+from geometry_msgs.msg import Twist
 import rospy
 import smach
 
@@ -16,10 +21,33 @@ class TrackFace(smach.State):
 
         self._robot = robot
         self._name = name
+        self._cmd_vel_pub = rospy.Publisher("/{}/base/references".format(self._robot.robot_name),
+                                            Twist, queue_size=1)
+        self._stop_requested = False
+        self._angle = 0.0
 
     def execute(self, userdata):
+        result = None
+        try:
+            result = self._execute()
+        except Exception as e:
+            rospy.logerr("{}".format(e))
+            result = "lost"
+        finally:
+            self.stop()
+            return result
 
-        rate = rospy.Rate(0.5)
+    def _execute(self):
+        """ Does the execute but can be wrapped in a try-except for safety reasons """
+
+        self._stop_requested = False
+        self._angle = 0.0
+
+        # Start the controller thread
+        controller_thread = threading.Thread(self._control_base)
+        controller_thread.start()
+
+        rate = rospy.Rate(5.0)
 
         # For now, set a timeout for 60 seconds
         # This should be replaced by a decent break out condition
@@ -28,6 +56,7 @@ class TrackFace(smach.State):
 
             # Check the breakout condition
             if (rospy.Time.now() - starttime).to_sec() > 60.0:
+                self.stop()
                 return "aborted"
 
             # Look for the face. Do a maximum of 5 tries
@@ -39,12 +68,20 @@ class TrackFace(smach.State):
 
             # If we still haven't found the operator, he's lost
             if face is None:
+                self.stop()
                 return "lost"
 
             # Otherwise, send a head goal
             self._robot.head.look_at_point(vector_stamped=face, end_time=0)
 
+            # Also: add the base controller
+            face.projectToFrame(frame_id="/{}/base_link".format(self._robot.robot_name),
+                                tf_listener=self._robot.tf_listener)
+            self._angle = math.atan2(face.vector.y(), face.vector.x())
+
             rate.sleep()
+
+        self.stop()
 
     def _detect_face(self, name, threshold=None):
         """ Tries to detect the face that is associated with the provided name
@@ -84,3 +121,27 @@ class TrackFace(smach.State):
             return None
 
         return operator_pos_kdl
+
+    def stop(self):
+        """ Sets stop requested to True
+        """
+        self._stop_requested = True
+
+    def _control_base(self):
+        """ Base controller function that should be run in a separate thread
+        """
+        # Hardcoded controller gain
+        gain = 0.5
+
+        # Loop forever
+        rate = rospy.Rate(20.0)
+        while not self._stop_requested:
+            msg = Twist()
+            # Threshold (approximately 30 degrees)
+            if abs(self._angle) > 0.5:
+
+                msg.angular.z = gain * self._angle
+
+            self._cmd_vel_pub.publish(msg)
+            rate.sleep()
+
