@@ -374,7 +374,10 @@ class Head(RobotPart):
         skeleton_markers = MarkerArray()
 
         for index, skeleton in enumerate(skeletons):
-            skeleton_markers.markers += self.markers_for_skeleton(skeleton, index)
+            try:
+                skeleton_markers.markers += self.markers_for_skeleton(skeleton, index)
+            except Exception as e:
+                rospy.logerr("Could not visualize skeleton {}".format(skeleton))
 
         self._skeleton_pub.publish(skeleton_markers)
 
@@ -383,12 +386,26 @@ class Head(RobotPart):
         red = ColorRGBA(1, 0, 0, 1)
         bodypart_colormap = {"neck":blue,
                              "nose":red}
-        links = [("neck", "nose")]
+        links = [('left_ear', 'left_eye'),
+                    ('left_elbow', 'left_wrist'),
+                    ('left_eye', 'nose'),
+                    ('left_hip', 'neck'),
+                    ('left_shoulder', 'left_elbow'),
+                    ('left_wrist', 'left_elbow'),
+                    ('nose','neck'),
+                    ('right_ear', 'right_eye'),
+                    ('right_elbow', 'right_wrist'),
+                    ('right_eye', 'nose'),
+                    ('right_hip', 'neck'),
+                    ('right_shoulder', 'right_elbow'),
+                    ('right_wrist', 'right_elbow')]
+
 
         joints_marker = Marker()
         joints_marker.id = index
+        joints_marker.lifetime = rospy.Duration(5)
         joints_marker.type = Marker.SPHERE_LIST
-        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.1, 0.1, 0.1
+        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.05, 0.05, 0.05
         joints_marker.action = Marker.ADD
         joints_marker.ns = "skeleton_spheres"
         joints_marker.header = skeleton.bodyparts.values()[0].header  # Nose is a good as any to do this with
@@ -398,14 +415,20 @@ class Head(RobotPart):
 
         links_marker = Marker()
         links_marker.id = index
+        links_marker.lifetime = rospy.Duration(5)
         links_marker.type = Marker.LINE_LIST
-        joints_marker.ns = "skeleton_lines"
+        links_marker.ns = "skeleton_lines"
+        links_marker.scale.x = 0.01
         links_marker.action = Marker.ADD
         links_marker.header = skeleton.bodyparts.values()[0].header  # Nose is a good as any to do this with
         # links_marker.points = [[skeleton[from_], skeleton[to_]] for (from_, to_) in links]
-        links_marker.colors = [blue for _ in links]
+        links_marker.colors = [red for _ in links]
         for (from_, to_) in links:
-            links_marker.points += [skeleton[from_].point, skeleton[to_].point]
+            try:
+                links_marker.points += [skeleton[from_].point, skeleton[to_].point]
+                rospy.loginfo("Add link {}".format((from_, to_)))
+            except KeyError as ke:
+                rospy.logwarn("Not all bodyparts of link {} found".format((from_, to_)))
 
 
         return [joints_marker, links_marker]
