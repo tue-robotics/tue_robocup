@@ -10,7 +10,7 @@ from std_srvs.srv import Empty
 from image_recognition_msgs.srv import Annotate, Recognize, GetPersons
 from image_recognition_msgs.msg import Annotation
 
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, RegionOfInterest
 from robot_part import RobotPart
 
 # TU/e
@@ -20,7 +20,7 @@ from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
 
-WavingResult = namedtuple('WavingResult', ['side'])
+WavingResult = namedtuple('WavingResult', ['side', 'roi'])
 
 
 class Head(RobotPart):
@@ -258,6 +258,8 @@ class Head(RobotPart):
     def detect_waving_persons(self):
         persons = []
         for person in self.detect_persons():
+            height = person.neck.y - person.nose.y
+            roi = RegionOfInterest(x_offset=person.nose.x - 10, y_offset=person.nose.y, width=20, height=height)
             sides = []
             for side in ['left', 'right']:
                 elbow = getattr(person, '%s_elbow' % side)
@@ -292,7 +294,7 @@ class Head(RobotPart):
                     sides.append(side)
 
             if sides:
-                persons.append(WavingResult(side=sides))
+                persons.append(WavingResult(side=sides, roi=roi))
 
         rospy.loginfo('found %d waving persons', len(persons))
         return persons
