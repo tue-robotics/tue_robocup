@@ -67,12 +67,18 @@ class DetermineWhatToCleanInspect(smach.State):
                 self._served.append(best_label)
 
                 rospy.loginfo('best_roi: %s', best_roi)
-                face_location = self._robot.head.project_roi(best_roi, frame_id='/' + self._robot.robot_name + '/base_link')
-                rospy.loginfo('face_location: %s', face_location)
-                rospy.loginfo('looking at face at %s', face_location)
-                self._robot.head.look_at_point(face_location)
+                try:
+                    face_location = self._robot.head.project_roi(best_roi, frame_id='/' + self._robot.robot_name + '/base_link')
+                except ValueError:
+                    self._robot.speech.speak('Something went wrong, can somebody stand in front of me?')
+                    self._robot.head.look_at_standing_person()
+                else:
+                    # success, we have a face_location
+                    rospy.loginfo('face_location: %s', face_location)
+                    rospy.loginfo('looking at face at %s', face_location)
+                    self._robot.head.look_at_point(face_location)
 
-                self._robot.speech.speak('Hello %s, I recognized you from a photo on facebook' % best_label)
+                    self._robot.speech.speak('Hello %s, I recognized you from a photo on facebook' % best_label)
             else:
                 self._robot.speech.speak('Can somebody stand in front of me?')
                 self._robot.head.look_at_standing_person()

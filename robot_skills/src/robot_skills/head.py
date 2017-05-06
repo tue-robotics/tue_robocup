@@ -182,8 +182,11 @@ class Head(RobotPart):
         :return: VectorStamped object
         """
         # Call the service with the provided Region of Interest
-        response = self._projection_srv(roi=roi)
-        rospy.loginfo('project_roi response: %s', response)
+        try:
+            response = self._projection_srv(roi=roi)
+            rospy.loginfo('project_roi response: %s', response)
+        except rospy.ServiceException as e:
+            raise ValueError('project_roi failed', e)
 
         # Convert to VectorStamped
         result = VectorStamped(x=response.point.point.x, y=response.point.point.y, z=response.point.point.z,
