@@ -127,13 +127,14 @@ VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE D
 
 grammar += """
 V_FOLLOW -> follow | go after | come after
+TO_FROM -> to | from
 
 VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
 VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
 
-VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
-VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] TO_FROM the ROOMS_AND_LOCATIONS[X] TO_FROM the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] TO_FROM the ROOMS_AND_LOCATIONS[X]
 VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
 """
 
@@ -156,6 +157,8 @@ V_BRING_PERSON -> V_BRING | give | hand | hand over
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me
+# bring the OBJECT semantics - VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me
+
 """
 
 for name in common.names:
@@ -196,3 +199,18 @@ if __name__ == "__main__":
 
 
 follow_acton = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
+
+##############################################################################
+#
+# INCOMPLETE QUESTIONS
+#
+##############################################################################
+
+# FOLLOW PERSON : (PERSON is at the BEACON)
+# BRING me (a | some) CATEGORY : (which object of this category)
+# DELIVER CATEGORY to PERSON : (which object of this category) && (PERSON is at the BEACON)
+# meet PERSON(M) and GUIDE him : (PERSON is at the BEACON) && (guide him to BEACON)
+# meet PERSON(F) and GUIDE her : (PERSON is at the BEACON) && (guide her to BEACON)
+# NAVIGATE-TO BEACON, meet PERSON(M), and GUIDE him : (guide him to BEACON) && (keep him not lost)
+# NAVIGATE-TO BEACON, meet PERSON(F), and GUIDE her : (guide her to BEACON) && (keep him not lost)
+#
