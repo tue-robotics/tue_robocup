@@ -328,9 +328,9 @@ class Head(RobotPart):
 
         i = 0
         skeletons = []
-        for _ in persons:
+        for person in persons:
             bodyparts = {}
-            for slot in d.__slots__:
+            for slot in person.__slots__:
                 bodyparts[slot] = points[i]
                 i += 1
 
