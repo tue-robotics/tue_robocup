@@ -76,17 +76,17 @@ def main():
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Start
 
-    if not skip:
+    if not skip and not restart:
 
         # Wait for door, enter arena
         s = StartChallengeRobust(robot, knowledge.initial_pose[entrance_no])
         s.execute()
 
-        # Move to the start location
-        if restart:
-            robot.speech.speak("Performing a restart. So sorry about that last time!", block=True)
-        else:
-            robot.speech.speak("Let's see if my operator has a task for me! Moving to the meeting point.", block=False)
+    # Move to the start location
+    if restart:
+        robot.speech.speak("Performing a restart. So sorry about that last time!", block=True)
+    else:
+        robot.speech.speak("Let's see if my operator has a task for me! Moving to the meeting point.", block=False)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -95,7 +95,7 @@ def main():
 
     while True:
         # Navigate to the GPSR meeting point
-        if not (skip or restart) and not finished:
+        if not skip and not restart and not finished:
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
                                                                               id=knowledge.starting_pose[entrance_no]),
