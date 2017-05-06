@@ -23,6 +23,15 @@ class PointingDetector(smach.State):
     def execute(self, userdata):
 
         # Point head in the right direction
+        self._robot.head.look_at_standing_person()
+
+        # Wait until a face has been detected near the robot
+        rate = rospy.Rate(1.0)
+        while not rospy.is_shutdown():
+            if self._face_within_range(threshold=2.0):
+                break
+            else:
+                rospy.loginfo("PointingDetector: waiting for someone to come into view")
 
         # Get RayTraceResult from Reins function
 
@@ -46,9 +55,30 @@ class PointingDetector(smach.State):
             return "failed"
 
         # If we have entities, sort them according to distance
-        # ToDO: this assumes the result is given in map frame
+        assert result.intersection_point.header.frame_id in ["/map", "map"]
         raypos = kdl.Vector(result.intersection_point.point.x, result.intersection_point.point.y, 0.0)
         entities.sort(key=lambda e: e.distance_to_2d(raypos))
         self._designator.set_id(identifier=entities[0].id)
         rospy.loginfo("Object pointed at: {}".format(entities[0].id))
         return "succeeded"
+
+    def _face_within_range(self, threshold):
+        """ Gets the closest face. If the distance from the camera is too large, None will be returned.
+
+        :param threshold: threshold fro mthe camera in meters
+        :return: bool indicating if the closest face is within the threshold
+        """
+        raw_detections = self._robot.head.detect_faces()
+        if not raw_detections:
+            return None
+
+        # Only take detections with operator
+        detections = []
+        for d in raw_detections:
+            vs = self._robot.head.project_roi(roi=d.roi)
+            detections.append((d, vs.vector.Norm()))
+
+        # Sort the detectiosn
+        detections = sorted(detections, key=lambda det: det[1])
+
+        return detections[0][1] < threshold
