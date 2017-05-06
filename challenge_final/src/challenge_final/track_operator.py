@@ -66,26 +66,21 @@ class TrackFace(smach.State):
                     detections.append((d, cp.probability))
 
         # Sort based on probability
-        if detections:
-            detections = sorted(detections, key=lambda det: det[1])
-            best_detection = detections[0][0]
-        else:
-            best_detection = None
+        if not detections:
+            return None
+
+        detections = sorted(detections, key=lambda det: det[1])
+        best_detection = detections[0][0]
+        rospy.loginfo("Detection probability/l2distance: {}".format(detections[0][1]))
 
         # ToDo: threshold
 
-        if best_detection:
-
-            # print "Best detection: {}".format(best_detection)
-            roi = best_detection.roi
-
-            try:
-                operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
-            except Exception as e:
-                rospy.logerr("head.project_roi failed: %s", e)
-                return None
-        else:
+        # print "Best detection: {}".format(best_detection)
+        roi = best_detection.roi
+        try:
+            operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
+        except Exception as e:
+            rospy.logerr("head.project_roi failed: %s", e)
             return None
 
         return operator_pos_kdl
-
