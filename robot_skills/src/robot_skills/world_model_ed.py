@@ -60,6 +60,7 @@ class ED(RobotPart):
         self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed.srv.Reset)
         self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
                                                             ed_sensor_integration.srv.GetImage)
+        self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name, ed_sensor_integration.srv.RayTrace)
 
         self._tf_listener = tf_listener
 
@@ -380,6 +381,9 @@ class ED(RobotPart):
         all_entities = self.get_entities(parse=False)
         matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
         return matches
+
+    def ray_trace(self, pose):
+        return self._ed_ray_trace_srv(raytrace_pose=pose)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
