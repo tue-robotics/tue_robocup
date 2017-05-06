@@ -245,6 +245,10 @@ class LearnPerson(smach.State):
 
     def execute(self, userdata=None):
 
+        # Look up
+        self._robot.head.look_at_standing_person()
+        self._robot.head.wait_for_motion_done()
+
         # if person_name is empty then try to get it from designator
         if not self._person_name:
             person_name = self._name_designator.resolve()
@@ -252,6 +256,7 @@ class LearnPerson(smach.State):
             # if there is still no name, quit the learning
             if not person_name:
                 rospy.logerr("[LearnPerson] No name was provided. Quitting the learning")
+                self._robot.head.reset()
                 return "failed"
         else:
             person_name = self._person_name
@@ -259,9 +264,11 @@ class LearnPerson(smach.State):
         # Learn the face (try for a maximum of nr_tries times
         for i in range(self._nr_tries):
             if self._robot.head.learn_person(name=person_name):
+                self._robot.head.reset()
                 return "succeeded"
 
         # If we end up here, learning failed
+        self._robot.head.reset()
         return "failed"
 
 
