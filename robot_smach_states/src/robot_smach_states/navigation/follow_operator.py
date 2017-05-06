@@ -17,22 +17,25 @@ import geometry_msgs.msg
 import math
 from visualization_msgs.msg import Marker
 
-from cb_planner_msgs_srvs.msg import *
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 
+
 def vector_stampeds_to_point_stampeds(vector_stampeds):
     return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+
 
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
     return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0, start_timeout=10, operator_timeout=20,
-                 distance_threshold=None, lost_timeout=5, lost_distance=0.8,
-                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20, operator_standing_still_timeout=3.0, replan=False):
+    def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0,
+                 start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=5, lost_distance=0.8,
+                 operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
+                 operator_standing_still_timeout=3.0, replan=False):
         """ Constructor
 
         :param robot: robot object
@@ -305,7 +308,8 @@ class FollowOperator(smach.State):
             operator_pos.point.z = 0.0
             self._operator_pub.publish(operator_pos)
 
-            self._operator_distance = self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p)
+            f = self._robot.base.get_location().frame
+            self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
             return True
         else:
@@ -322,13 +326,15 @@ class FollowOperator(smach.State):
                     operator_pos.point.z = 0.0
                     self._operator_pub.publish(operator_pos)
 
-                    self._operator_distance = self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p)
+                    f = self._robot.base.get_location().frame
+                    self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
                     return True
                 else:
                     self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
 
-            self._operator_distance = self._last_operator.distance_to_2d(self._robot.base.get_location().frame.p)
+            f = self._robot.base.get_location().frame
+            self._operator_distance = self._last_operator.distance_to_2d(f.p)
             # If the operator is lost, check if we still have an ID
             if self._operator_id:
                 # At the moment when the operator is lost, tell him to slow down and clear operator ID
@@ -531,7 +537,8 @@ class FollowOperator(smach.State):
         return False
 
     def _turn_towards_operator(self):
-        robot_position = self._robot.base.get_location().frame.p
+        f = self._robot.base.get_location().frame
+        robot_position = f.p
         operator_position = self._last_operator._pose.p
 
         p = PositionConstraint()
