@@ -68,7 +68,7 @@ for cat in common.object_categories:
 ###############################################################################
 
 grammar += """
-V_FIND -> find | locate | look for
+V_FIND -> find | locate | look for | meet
 
 VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] in the ROOMS[Y]
 VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS in the ROOMS[Y]
@@ -114,11 +114,11 @@ VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP D
 #
 ###############################################################################
 
-grammar += """
-V_PLACE -> put | place
-
-VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
-"""
+# grammar += """
+# V_PLACE -> put | place
+#
+# VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+# """
 
 ###############################################################################
 #
@@ -215,6 +215,20 @@ follow_acton = "follow", {"location-from": {""}, "location-to": {}, "target": {}
 #
 ##############################################################################
 
+grammar += """
+
+HIM_HER -> him | her
+
+VP["action": "find", "object": {"type": "person"}, "target": {"id": Z}] -> V_FIND MEET_PERSON[Z]
+VP["action": "navigate-to"] -> V_GUIDE HIM_HER
+"""
+
+grammar += '\nMEET_PERSON[the person] -> DET person'
+grammar += '\nMEET_PERSON[the woman] -> DET woman'
+grammar += '\nMEET_PERSON[the man] -> DET man'
+for name in common.names:
+    grammar += '\nMEET_PERSON[%s] -> %s' % (name, name)
+
 # FOLLOW PERSON : (PERSON is at the BEACON)
 # BRING me (a | some) CATEGORY : (which object of this category)
 # DELIVER CATEGORY to PERSON : (which object of this category) && (PERSON is at the BEACON)
@@ -222,4 +236,4 @@ follow_acton = "follow", {"location-from": {""}, "location-to": {}, "target": {}
 # meet PERSON(F) and GUIDE her : (PERSON is at the BEACON) && (guide her to BEACON)
 # NAVIGATE-TO BEACON, meet PERSON(M), and GUIDE him : (guide him to BEACON) && (keep him not lost)
 # NAVIGATE-TO BEACON, meet PERSON(F), and GUIDE her : (guide her to BEACON) && (keep him not lost)
-#
+
