@@ -26,11 +26,20 @@ class WaitForCustomer(smach.State):
         :param userdata:
         :return:
         """
-        self._robot.speech.speak("I can't really detect waving persons, but I'll try anyway")
-        # ToDo: fill in a pose
 
-        dummy_pose = frame_stamped("map", 3.0, 0.0, 0.0)
-        self._robot.ed.update_entity(id="customer", frame_stamped=dummy_pose, type="waypoint")
+        while True:
+            self._robot.speech.speak("I'm looking for waving persons")
+            persons = self._robot.head.detect_waving_persons()
+            if persons:
+                break
+
+        self._robot.speech.speak("I found a waving person")
+
+        person = persons[0]
+
+        point = self.head.project_roi(person.roi, frame_id="map")
+        pose = frame_stamped("map", point.vector.x(), point.vector.y(), 0.0)
+        self._robot.ed.update_entity(id="customer", frame_stamped=pose, type="waypoint")
 
         # ToDo: add the speech: do we wan't to continue???
 
