@@ -35,6 +35,8 @@ class TrackFace(smach.State):
             result = "lost"
         finally:
             self.stop()
+            if abs(self._angle) > 0.25:
+                rospy.sleep(rospy.Duration(0.5))  # Give the base controller half a second
             return result
 
     def _execute(self):
@@ -131,9 +133,9 @@ class TrackFace(smach.State):
         """ Base controller function that should be run in a separate thread
         """
         # Hardcoded controller gain
-        gain = 0.5
+        gain = -0.5
 
-        # Loop forever
+        # Loop until stop requested
         rate = rospy.Rate(20.0)
         while not self._stop_requested:
             msg = Twist()
@@ -144,4 +146,8 @@ class TrackFace(smach.State):
 
             self._cmd_vel_pub.publish(msg)
             rate.sleep()
+
+        # Finally: twist a zero message to make the robot stop
+        msg = Twist()
+        self._cmd_vel_pub.publish(msg)
 
