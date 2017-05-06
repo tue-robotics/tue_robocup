@@ -201,7 +201,7 @@ class Head(RobotPart):
         """
         # Call the service with the provided Region of Interest
         try:
-            response = self._projection_srv(roi=roi)
+            response = self._projection_srv(rois=[roi])
             rospy.loginfo('project_roi response: %s', response)
         except rospy.ServiceException as e:
             raise ValueError('project_roi failed', e)
