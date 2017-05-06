@@ -46,7 +46,7 @@ class ForceDriveBackwards(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-        self._robot.base.force_drive(-0.25, 0, 0, 2.0)    # x, y, z, time in seconds
+        self._robot.base.force_drive(0, 0, 1.57, 2.0)    # x, y, z, time in seconds
         return "done"
 
 class ArmOccupied(smach.State):
