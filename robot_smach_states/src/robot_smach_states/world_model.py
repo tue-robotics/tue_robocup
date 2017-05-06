@@ -36,14 +36,14 @@ def look_at_segmentation_area(robot, entity, volume=None):
             look_at_point_z = search_volume.min_corner.z()
         except Exception as e:
             rospy.logerr("Cannot get z_min of volume {} of entity {}: {}".format(volume,
-                                                                                 e.id, e.message))
+                                                                                 entity.id, e.message))
     else:
         # Look at the top of the entity to inspect
         pos = entity.pose.position
         try:
             look_at_point_z = pos.z + entity.shape.z_max
         except Exception as e:
-            rospy.logerr("Cannot get z_max of entity {}: {}".format(e.id, e.message))
+            rospy.logerr("Cannot get z_max of entity {}: {}".format(entity.id, e.message))
 
     # Point the head at the right direction
     robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
