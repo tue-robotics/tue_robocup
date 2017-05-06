@@ -27,6 +27,7 @@ class TrackFace(smach.State):
         self._angle = 0.0
 
     def execute(self, userdata):
+        return self._execute()
         result = None
         try:
             result = self._execute()
@@ -45,15 +46,22 @@ class TrackFace(smach.State):
         self._stop_requested = False
         self._angle = 0.0
 
-        # Start the controller thread
-        controller_thread = threading.Thread(self._control_base)
-        controller_thread.start()
+        # Start by looking at a standing person
+        self._robot.head.look_at_standing_person()
 
+        # Start the controller thread
+        # controller_thread = threading.Thread(target=self._control_base)
+        # controller_thread.start()
+
+<<<<<<< HEAD
+        rate = rospy.Rate(15.0)
+=======
         # Start the breakout thread
         breakout_thread = threading.Thread(self._breakout_checker)
         breakout_thread.start()
 
         rate = rospy.Rate(5.0)
+>>>>>>> 2cd2279e7d81d0e70d3b658ffc6ed9def1ac6af1
 
         # For now, set a timeout for 60 seconds
         # This should be replaced by a decent break out condition
@@ -78,13 +86,13 @@ class TrackFace(smach.State):
                 return "lost"
 
             # Otherwise, send a head goal
-            self._robot.head.look_at_point(vector_stamped=face, end_time=0)
+            self._robot.head.look_at_point(vector_stamped=face, end_time=0, pan_vel=0.2, tilt_vel=0.2)
 
             # Also: add the base controller
-            face.projectToFrame(frame_id="/{}/base_link".format(self._robot.robot_name),
-                                tf_listener=self._robot.tf_listener)
-            self._angle = math.atan2(face.vector.y(), face.vector.x())
-
+            face_bl = face.projectToFrame(frame_id="/{}/base_link".format(self._robot.robot_name),
+                                          tf_listener=self._robot.tf_listener)
+            self._angle = math.atan2(face_bl.vector.y(), face_bl.vector.x())
+            rospy.loginfo("Angle: {}".format(self._angle))
             rate.sleep()
 
         self.stop()
@@ -105,7 +113,8 @@ class TrackFace(smach.State):
         detections = []
         for d in raw_detections:
             for cp in d.categorical_distribution.probabilities:
-                if cp.label == name:
+                # if cp.label == name:
+                if cp.label == "operator":
                     detections.append((d, cp.probability))
 
         # Sort based on probability
@@ -137,7 +146,7 @@ class TrackFace(smach.State):
         """ Base controller function that should be run in a separate thread
         """
         # Hardcoded controller gain
-        gain = -0.5
+        gain = 0.5
 
         # Loop until stop requested
         rate = rospy.Rate(20.0)
