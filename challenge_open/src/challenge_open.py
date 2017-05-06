@@ -66,7 +66,9 @@ class DetermineWhatToCleanInspect(smach.State):
                 rospy.loginfo('best face is the face of %s with p=%f and roi=%s', best_label, best_p, best_roi)
                 self._served.append(best_label)
 
-                face_location = self._robot.head.project_roi(best_roi, frame_id='map')
+                rospy.loginfo('best_roi: %s', best_roi)
+                face_location = self._robot.head.project_roi(best_roi, frame_id='/' + self._robot.robot_name + '/base_link')
+                rospy.loginfo('face_location: %s', face_location)
                 rospy.loginfo('looking at face at %s', face_location)
                 self._robot.head.look_at_point(face_location)
 
