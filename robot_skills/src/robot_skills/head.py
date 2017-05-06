@@ -205,8 +205,6 @@ class Head(RobotPart):
         # Convert to VectorStamped
         result = VectorStamped(x=point.x, y=point.y, z=point.z,
                                frame_id=response.header.frame_id)
-        result.vector.y(-result.vector.y())
-        result.vector.z(-result.vector.z())
 
         # If necessary, transform the point
         if frame_id is not None:
