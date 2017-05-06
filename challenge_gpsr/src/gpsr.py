@@ -111,6 +111,14 @@ def main():
         robot.speech.speak(report, block=True)
 
         while True:
+            while True:
+                try:
+                    robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
+                except hmi.TimeoutException:
+                    continue
+                else:
+                    break
+
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
             try:
