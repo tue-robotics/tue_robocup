@@ -54,7 +54,7 @@ class DetermineWhatToCleanInspect(smach.State):
             best_p = 0
             best_roi = None
             best_label = None
-            for face in self._robot.head.detect_persons():
+            for face in self._robot.head.detect_faces():
                 for p in face.categorical_distribution.probabilities:
                     if p.label in self._served:
                         continue

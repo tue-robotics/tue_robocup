@@ -230,7 +230,7 @@ class Head(RobotPart):
 
         return True
 
-    def detect_persons(self):
+    def detect_faces(self):
         image = self.get_image()
         return self._get_faces(image).recognitions
 
