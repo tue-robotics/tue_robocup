@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+import math
+from collections import namedtuple
+
 import rospy
 from threading import Condition
 from geometry_msgs.msg import PointStamped
@@ -17,6 +20,9 @@ from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
 
+WavingResult = namedtuple('WavingResult', ['side'])
+
+
 class Head(RobotPart):
     def __init__(self, robot_name, tf_listener):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
@@ -25,7 +31,8 @@ class Head(RobotPart):
         self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
-        self._get_persons_srv = self.create_service_client('/' + robot_name + '/person_detection/recognize', GetPersons)
+        # self._get_persons_srv = self.create_service_client('/detect_persons', GetPersons)
+        self._get_persons_srv = self.create_service_client('/' + robot_name + '/person_detection/detect_persons', GetPersons)
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
@@ -241,12 +248,54 @@ class Head(RobotPart):
 
     def _get_persons(self, image):
         r = self._get_persons_srv(image=image)
-        rospy.loginfo('found %d persons(s) in the image', len(r.recognitions))
+        rospy.loginfo('found %d persons(s) in the image', len(r.detections))
         return r
 
     def detect_persons(self):
         image = self.get_image()
         return self._get_persons(image).detections
+
+    def detect_waving_persons(self):
+        persons = []
+        for person in self.detect_persons():
+            sides = []
+            for side in ['left', 'right']:
+                elbow = getattr(person, '%s_elbow' % side)
+                wrist = getattr(person, '%s_wrist' % side)
+                shoulder = getattr(person, '%s_shoulder' % side)
+
+                if math.isnan(elbow.confidence) or elbow.confidence == 0 or\
+                        math.isnan(wrist.confidence) or wrist.confidence == 0 or\
+                        math.isnan(shoulder.confidence) or shoulder.confidence == 0:
+                    continue
+
+                dx = elbow.x - wrist.x
+                dy = elbow.y - wrist.y
+                rospy.loginfo('%s arm: dx=%f dy=%f', side, dx, dy)
+
+                angle = math.atan2(dy, dx)
+                angle = math.degrees(angle)
+
+                rospy.loginfo('arm angle: %f', angle)
+
+                if angle < 45 or angle > 180 - 45:
+                    rospy.loginfo('skipping %s arm because its not pointing upwards', side)
+                    continue
+
+                if wrist.y < shoulder.y:
+                    rospy.loginfo('skipping %s arm because its not above the shoulder', side)
+
+                if dy < 50:
+                    rospy.loginfo('skipping %s arm because its not big enough', side)
+
+                if person not in persons:
+                    sides.append(side)
+
+            if sides:
+                persons.append(WavingResult(side=sides))
+
+        rospy.loginfo('found %d waving persons', len(persons))
+        return persons
 
 
 #######################################
