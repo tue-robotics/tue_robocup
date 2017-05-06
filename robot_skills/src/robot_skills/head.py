@@ -199,11 +199,10 @@ class Head(RobotPart):
         :param frame_id: if specified, the result is transformed into this frame id
         :return: VectorStamped object
         """
-        response = self.project_rois(rois=[roi])
-        point = response.points[0]
+        response = self.project_rois(rois=[roi]).points[0]
 
         # Convert to VectorStamped
-        result = VectorStamped(x=point.x, y=point.y, z=point.z,
+        result = VectorStamped(x=response.point.x, y=response.point.y, z=response.point.z,
                                frame_id=response.header.frame_id)
 
         # If necessary, transform the point
