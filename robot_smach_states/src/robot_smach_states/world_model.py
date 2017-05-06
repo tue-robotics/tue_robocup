@@ -122,10 +122,11 @@ class SegmentObjects(smach.State):
         entity_to_inspect = self.entity_to_inspect_designator.resolve()
         segmentation_area = self.segmentation_area_des.resolve()
 
-        look_at_segmentation_area(self.robot, entity_to_inspect, segmentation_area)
+        if not entity_to_inspect.is_a('room'):
+            look_at_segmentation_area(self.robot, entity_to_inspect, segmentation_area)
 
-        # This is needed because the head is not entirely still when the look_at_point function finishes
-        time.sleep(0.5)
+            # This is needed because the head is not entirely still when the look_at_point function finishes
+            time.sleep(0.5)
 
         # Inspect 'on top of' the entity
         res = self.robot.ed.update_kinect("{} {}".format(segmentation_area, entity_to_inspect.id))
