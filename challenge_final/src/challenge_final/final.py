@@ -22,15 +22,15 @@ class ChallengeFinal(smach.StateMachine):
 
         with self:
             # Start challenge
-            smach.StateMachine.add("START_CHALLENGE",
-                                   states.StartChallengeRobust(robot=robot, initial_pose=knowledge.initial_pose),
-                                   transitions={"Done": "LEARN_OPERATOR",
-                                                "Aborted": "Aborted",
-                                                "Failed": "Aborted"})
+            #smach.StateMachine.add("START_CHALLENGE",
+            #                       states.StartChallengeRobust(robot=robot, initial_pose=knowledge.initial_pose),
+            #                       transitions={"Done": "LEARN_OPERATOR",
+            #                                    "Aborted": "Aborted",
+            #                                    "Failed": "Aborted"})
 
             # Learn operator
             smach.StateMachine.add("LEARN_OPERATOR",
-                                   states.LearnOperator(robot, person_name="operator", nr_tries=5),
+                                   states.LearnPerson(robot, person_name="operator", nr_tries=5),
                                    transitions={"succeeded": "TRACK_OPERATOR",
                                                 "failed": "Done"})
 

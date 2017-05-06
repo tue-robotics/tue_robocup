@@ -12,7 +12,7 @@ class TrackFace(smach.State):
         :param robot: robot object
         :param name: name of the person whose face should be tracked
         """
-        smach.StateMachine.__init__(self, outcomes=["aborted", "lost"])
+        smach.State.__init__(self, outcomes=["aborted", "lost"])
 
         self._robot = robot
         self._name = name
@@ -84,6 +84,8 @@ class TrackFace(smach.State):
             except Exception as e:
                 rospy.logerr("head.project_roi failed: %s", e)
                 return None
+        else:
+            return None
 
         return operator_pos_kdl
 
