@@ -313,7 +313,30 @@ class Head(RobotPart):
         """
         :return: [Skeleton]
         """
-        raise NotImplementedError()
+        width = 10 # px
+        height = 10 # px
+
+        persons = self.detect_persons()
+
+        rois = []
+        for person in persons:
+            for slot in person.__slots__:
+                detection = getattr(person, slot)
+                rois.append(RegionOfInterest(x_offset=detection.x - width//2, y_offset=detection.y - height//2, width=width, height=height))
+
+        points = self.project_rois(rois, frame_id='map').points
+
+        i = 0
+        skeletons = []
+        for _ in persons:
+            bodyparts = {}
+            for slot in d.__slots__:
+                bodyparts[slot] = points[i]
+                i += 1
+
+            skeletons.append(Skeleton(bodyparts))
+
+        return skeletons
 
     def visualize_skeletons(self, skeletons):
         raise NotImplementedError()
