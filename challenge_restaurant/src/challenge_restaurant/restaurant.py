@@ -46,7 +46,8 @@ class Restaurant(smach.StateMachine):
                                    WaitForCustomer(robot, caller_id),
                                    transitions={'succeeded': 'NAVIGATE_TO_CUSTOMER',
                                                 'failed': 'Aborted',
-                                                'aborted': 'Aborted'})
+                                                'aborted': 'Aborted',
+                                                'rejected': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,

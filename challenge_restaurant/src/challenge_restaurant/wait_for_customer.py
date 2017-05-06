@@ -17,7 +17,7 @@ class WaitForCustomer(smach.State):
         :param robot: robot object
         :param location_id: string with which the location of the caller will be designated
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted', 'rejected'])
         self._robot = robot
         self._location_id = location_id
 
@@ -27,7 +27,6 @@ class WaitForCustomer(smach.State):
         :param userdata:
         :return:
         """
-
         while True:
             self._robot.speech.speak("I'm looking for waving persons")
             persons = self._robot.head.detect_waving_persons()
@@ -45,18 +44,22 @@ class WaitForCustomer(smach.State):
                 rospy.logerr('project failed: %s', e)
 
         pose = frame_stamped("map", point.vector.x(), point.vector.y(), 0.0)
-        self._robot.ed.update_entity(id="customer", frame_stamped=pose, type="waypoint")
 
-        # ToDo: add the speech: do we wan't to continue???
+        self._robot.speech.speak("I have seen a waving person, should I continue?")
 
-        return 'succeeded'
+        if self._confirm():
+            self._robot.ed.update_entity(id="customer", frame_stamped=pose, type="waypoint")
+            return 'succeeded'
+        else:
+            return 'rejected'
 
     def _confirm(self):
         cgrammar = """
         C[True] -> amigo take the order
         C[False] -> amigo wait
         """
-        for i in range(5):
+        self._robot.head.look_at_standing_person()
+        for i in range(3):
             try:
                 speech_result = self._robot.hmi.query(description="Should I get the order?",
                                                       grammar=cgrammar, target="C")
