@@ -183,6 +183,7 @@ class Head(RobotPart):
         """
         # Call the service with the provided Region of Interest
         response = self._projection_srv(roi=roi)
+        rospy.loginfo('project_roi response: %s', response)
 
         # Convert to VectorStamped
         result = VectorStamped(x=response.point.point.x, y=response.point.point.y, z=response.point.point.z,
