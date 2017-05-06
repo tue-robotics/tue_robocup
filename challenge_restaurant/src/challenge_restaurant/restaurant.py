@@ -73,7 +73,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'SAY_CANNOT_GRASP'})
 
             smach.StateMachine.add('SAY_CANNOT_GRASP',
-                                   states.Say(robot, "I am terribly sorry but I am unable to grasp my own order,"
+                                   states.Say(robot, "I am unable to grasp my own order,"
                                                      "could you please put it in my basket"),
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
@@ -85,9 +85,19 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('BRING_OBJECTS',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
                                                             radius=0.7),
-                                   transitions={'arrived': 'RETURN_TO_KITCHEN',
-                                                'unreachable': 'RETURN_TO_KITCHEN',
+                                   transitions={'arrived': 'SAY_OBJECTS',
+                                                'unreachable': 'SAY_OBJECTS',
                                                 'goal_not_defined': 'Aborted'})
+
+            smach.StateMachine.add('SAY_OBJECTS',
+                                   states.Say(robot, "Dear mister, here are your objects, "
+                                                     "please take them from my basket"),
+                                   transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
+
+            smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
+                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   transitions={'waited': 'RETURN_TO_KITCHEN',
+                                                'preempted': 'Aborted'})
 
             smach.StateMachine.add('RETURN_TO_KITCHEN',
                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
