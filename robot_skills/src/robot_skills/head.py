@@ -7,8 +7,8 @@ from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from std_srvs.srv import Empty
-from std_msgs import ColorRGBA
-from visualization_msgs import Marker, MarkerArray
+from std_msgs.msg import ColorRGBA
+from visualization_msgs.msg import Marker, MarkerArray
 from image_recognition_msgs.srv import Annotate, Recognize, GetPersons
 from image_recognition_msgs.msg import Annotation
 
@@ -32,7 +32,19 @@ class Skeleton(object):
     {left,right}_{shoulder,elbow,wrist}
     """
     def __init__(self, bodyparts):
-        pass
+        self.bodyparts = bodyparts
+
+    def __iter__(self):
+        return self.bodyparts.__iter__()
+
+    def __index__(self, value):
+        return self.bodyparts.__index__(value)
+
+    def __getitem__(self, key):
+        return self.bodyparts.__getitem__(key)
+
+    def items(self):
+        return self.bodyparts.items()
 
 
 class Head(RobotPart):
@@ -49,7 +61,7 @@ class Head(RobotPart):
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
 
-        self._skeleton_pub = rospy.Publisher("skeleton_markers", )
+        self._skeleton_pub = rospy.Publisher("skeleton_markers", MarkerArray, queue_size=100)
 
         self._goal = None
         self._at_setpoint = False
@@ -374,20 +386,27 @@ class Head(RobotPart):
         links = [("neck", "nose")]
 
         joints_marker = Marker()
-        joints_marker.id = hash("skeleton}_{}_joints".format(index))
+        joints_marker.id = index
         joints_marker.type = Marker.SPHERE_LIST
+        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.1, 0.1, 0.1
         joints_marker.action = Marker.ADD
-        joints_marker.header = skeleton["nose"].pointstamped.header  # Nose is a good as any to do this with
+        joints_marker.ns = "skeleton_spheres"
+        joints_marker.header = skeleton["nose"].header  # Nose is a good as any to do this with
+        # joints_marker.header.frame_id = "/amigo/neck_tilt"
         joints_marker.points = [joint.point for name, joint in skeleton.items()]
         joints_marker.colors = [blue for _, _ in skeleton.items()]
 
         links_marker = Marker()
-        links_marker.id = hash("skeleton_{}_links".format(index))
-        links_marker.type = Marker.SPHERE_LIST
+        links_marker.id = index
+        links_marker.type = Marker.LINE_LIST
+        joints_marker.ns = "skeleton_lines"
         links_marker.action = Marker.ADD
-        links_marker.header = skeleton["nose"].pointstamped.header  # Nose is a good as any to do this with
-        links_marker.lines = [[skeleton[from_], skeleton[to_]] for (from_, to_) in links]
+        links_marker.header = skeleton["nose"].header  # Nose is a good as any to do this with
+        # links_marker.points = [[skeleton[from_], skeleton[to_]] for (from_, to_) in links]
         links_marker.colors = [blue for _ in links]
+        for (from_, to_) in links:
+            links_marker.points += [skeleton[from_].point, skeleton[to_].point]
+
 
         return [joints_marker, links_marker]
 
