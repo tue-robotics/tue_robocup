@@ -114,11 +114,11 @@ VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP D
 #
 ###############################################################################
 
-# grammar += """
-# V_PLACE -> put | place
-#
-# VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
-# """
+grammar += """
+V_PLACE -> put | place
+
+VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+"""
 
 ###############################################################################
 #
