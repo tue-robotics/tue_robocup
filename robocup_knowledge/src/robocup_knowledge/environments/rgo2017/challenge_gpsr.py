@@ -127,7 +127,7 @@ VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE D
 ###############################################################################
 
 grammar += """
-V_FOLLOW -> follow | go after | come after
+V_FOLLOW -> follow | go after | come after | V_GUIDE
 
 VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
