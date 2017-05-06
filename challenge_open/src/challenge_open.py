@@ -49,6 +49,7 @@ class DetermineWhatToCleanInspect(smach.State):
     def execute(self, userdata):
         while not rospy.is_shutdown():
             self._robot.head.reset()
+            rospy.sleep(rospy.Duration(1.0))
 
             best_p = 0
             best_roi = None
@@ -78,7 +79,7 @@ class DetermineWhatToCleanInspect(smach.State):
                     rospy.loginfo('looking at face at %s', face_location)
                     self._robot.head.look_at_point(face_location)
 
-                    self._robot.speech.speak('Hello %s, I recognized you from a photo on facebook' % best_label)
+                self._robot.speech.speak('Hello %s' % best_label)
             else:
                 self._robot.speech.speak('Can somebody stand in front of me?')
                 self._robot.head.look_at_standing_person()
