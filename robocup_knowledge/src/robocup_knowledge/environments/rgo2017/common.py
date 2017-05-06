@@ -35,7 +35,7 @@ most_probable_location_in_room_map = {
     'dining_room': 'dinner_table',
     'bedroom': 'closet',
     'living_room': 'couch_table',
-    'kitchen': 'kitchencounter'
+    'kitchen': 'desk'
 }
 
 
