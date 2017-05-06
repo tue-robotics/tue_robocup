@@ -127,7 +127,7 @@ VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE D
 ###############################################################################
 
 grammar += """
-V_FOLLOW -> follow | go after | come after
+V_FOLLOW -> follow | go after | come after | V_GUIDE
 
 VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
 VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
@@ -164,6 +164,8 @@ VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}
 VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
 
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"id": X}, "source-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] from BRING_PERSONS to the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS
 
 VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
 VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z]

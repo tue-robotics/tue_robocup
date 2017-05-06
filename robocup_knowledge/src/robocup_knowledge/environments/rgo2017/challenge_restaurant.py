@@ -7,10 +7,17 @@ common = knowledge_loader.load_knowledge("common")
 order_grammar = """
 O[P] -> ORDER[P] | can i have a ORDER[P] | i would like ORDER[P] | can i get ORDER[P] | could i have ORDER[P] | may i get ORDER[P] | bring me ORDER[P]
 ORDER[OO] -> COMBO[OO] | BEVERAGE[OO]
+BEVERAGE[{"beverage": B}] -> BEV[B]
 BEVERAGE[{"beverage": B}] -> DET BEV[B]
+COMBO[{"food1": F1, "food2": F2}] -> FOOD[F1] and FOOD[F2] | FOOD[F1] with FOOD[F2]
+COMBO[{"food1": F1, "food2": F2}] -> DET FOOD[F1] and FOOD[F2] | DET FOOD[F1] with FOOD[F2]
+COMBO[{"food1": F1, "food2": F2}] -> FOOD[F1] and DET FOOD[F2] | FOOD[F1] with DET FOOD[F2]
 COMBO[{"food1": F1, "food2": F2}] -> DET FOOD[F1] and DET FOOD[F2] | DET FOOD[F1] with DET FOOD[F2]
-DET -> a | | an
+DET -> a | an
 """
+
+# COMBO[{"food1": F1, "food2": F2}] -> DET FOOD[F1] and DET FOOD[F2] | DET FOOD[F1] with DET FOOD[F2]
+# BEVERAGE[{"beverage": B}] -> DET BEV[B]
 
 # Add drinks
 for d in common.objects:

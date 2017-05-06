@@ -53,12 +53,11 @@ class TakeOrder(smach.State):
     def execute(self, userdata):
         self._nr_tries += 1
         self._robot.head.look_at_ground_in_front_of_robot(3)
-        self._robot.speech.speak("Which combo or beverage do you want?")
 
         order = None
         while not order:
 
-            self._robot.speech.speak("Hello there, can I please take your order")
+            self._robot.speech.speak("Which combo or beverage do you want?")
             count = 0
             while not rospy.is_shutdown():
                 count += 1
