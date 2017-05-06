@@ -27,6 +27,10 @@ class WaitForCustomer(smach.State):
         :param userdata:
         :return:
         """
+
+        self._robot.head.reset()
+        rospy.sleep(1)
+
         while True:
             self._robot.speech.speak("I'm looking for waving persons")
             persons = self._robot.head.detect_waving_persons()
