@@ -52,6 +52,10 @@ class Head(RobotPart):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
+        self._camera_lazy_sub = None
+        self._camera_cv = Condition()
+        self._camera_last_image = None
+
         self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
@@ -174,36 +178,40 @@ class Head(RobotPart):
         self._goal = None
         self._at_setpoint = False
 
+    def _image_cb(self, image):
+        self._camera_cv.acquire()
+        self._camera_last_image = image
+        self._camera_cv.notify()
+        self._camera_cv.release()
+
     def get_image(self, timeout=5):
+        # self._camera_lazy_sub
+        # self._camera_cv
+        # self._camera_last_image
+
+        # lazy subscribe to the kinect
+        if not self._camera_lazy_sub:
+            # for test with tripod kinect
+            # self._camera_lazy_sub = rospy.Subscriber("/camera/rgb/image_rect_color", Image, self._image_cb)
+            # for the robot
+            self._camera_lazy_sub = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, self._image_cb)
+            rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
+
+
         rospy.loginfo("getting one image...")
-
-        global cv_image
-        cv_image = None
-        cv = Condition()
-
-        def callback(data):
-            global cv_image
-
-            cv.acquire()
-            cv_image = data
-            cv.notify()
-            cv.release()
-
-        # subscriber = rospy.Subscriber("/camera/rgb/image_rect_color", Image, callback)  # for test with tripod kinetic
-        subscriber = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, callback)  # for the robot
-
-        cv.acquire()
+        self._camera_cv.acquire()
+        self._camera_last_image = None
         for i in range(timeout):
-            if cv_image:
+            if self._camera_last_image:
                 break
             if rospy.is_shutdown():
                 return
-            cv.wait(timeout=1)
+            self._camera_cv.wait(timeout=1)
         else:
-            raise Exception('no image received from %s' % subscriber.name)
-        subscriber.unregister()
-        image = cv_image
-        cv.release()
+            raise Exception('no image received from %s' % self._camera_lazy_sub.name)
+
+        image = self._camera_last_image
+        self._camera_cv.release()
 
         rospy.loginfo("got %d bytes of image data", len(image.data))
         return image
