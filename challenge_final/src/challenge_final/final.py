@@ -106,7 +106,7 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
 
     # Optimize
     if left_arm_valid and right_arm_valid:
-        if left_arm_norm > right_arm_norm
+        if left_arm_norm > right_arm_norm:
             rospy.loginfo("Right arm is pointing the most, using this one")
             frame = right_frame
         else:
