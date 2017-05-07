@@ -415,6 +415,15 @@ class Head(RobotPart):
             rospy.loginfo('adding point to person {}: {} at slot {}'.format(person, p.point, slot).replace('\n', ' '))
             skeletons[person][slot] = p
 
+        for skeleton in skeletons:
+            zmin = float('inf')
+            for slot, point in skeleton.items():
+                if point.z < zmin:
+                    zmin = point.z
+
+            for slot, point in skeleton.items():
+                point.z = zmin
+
         skeletons = [Skeleton(bodyparts) for bodyparts in skeletons]
         self.visualize_skeletons(skeletons)
         return skeletons
