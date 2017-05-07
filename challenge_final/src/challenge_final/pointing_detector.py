@@ -25,7 +25,7 @@ def get_frame_from_vector(x_vector, origin):
 
 
 def get_ray_trace_from_closest_person_dummy(robot,
-                                            arm_norm_threshold=0.1,
+                                            arm_norm_threshold=0.3,
                                             upper_arm_norm_threshold=0.7,
                                             entity_id=None,
                                             operator_pos=None,
@@ -92,10 +92,10 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         right_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_shoulder"]).projectToFrame("/map",
                                                                                                                      robot.tf_listener)
 
-        right_lower_arm_vector = (right_wrist - right_elbow) / (right_wrist - right_elbow).Norm()
-        right_upper_arm_vector = (right_elbow - right_shoulder) / (right_elbow - right_shoulder).Norm()
+        right_lower_arm_vector = (right_wrist.vector - right_elbow.vector) / (right_wrist.vector - right_elbow.vector).Norm()
+        right_upper_arm_vector = (right_elbow.vector - right_shoulder.vector) / (right_elbow.vector - right_shoulder.vector).Norm()
 
-        right_frame = get_frame_from_vector(right_lower_arm_vector, right_wrist.vector)
+        right_frame = get_frame_from_vector(right_lower_arm_vector, right_wrist)
         right_arm_norm = (right_lower_arm_vector * right_upper_arm_vector).Norm()
         right_upper_arm_norm = (right_upper_arm_vector * kdl.Vector(0, 0, 1)).Norm()
 
@@ -141,7 +141,7 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         rospy.loginfo("No valid arms found ...")
         return None
 
-    return robot.head.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(frame))
+    return robot.ed.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(frame))
 
 
 class PointingDetector(smach.State):
@@ -279,7 +279,7 @@ def setup_state_machine(robot):
 
 	with sm:
 		smach.StateMachine.add('DETECT_POINTING',
-							   PointingDetector(robot, pointing_des),
+							   PointingDetector(robot, pointing_des, ""),
 							   transitions={'succeeded': 'Done',
 											'failed': 'Aborted'})
 	return sm
