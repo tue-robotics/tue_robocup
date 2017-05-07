@@ -63,11 +63,11 @@ class Skeleton(object):
 
     def generate_links(self):
         for (a, b) in self.links:
-            try:
+            if a in self.bodyparts and b in self.bodyparts:
                 yield self.bodyparts[a].point
                 yield self.bodyparts[b].point
                 rospy.loginfo("Add link {}".format((a, b)))
-            except KeyError as ke:
+            else:
                 rospy.logwarn("Not all bodyparts of link {} found".format((a, b)))
 
 
@@ -419,9 +419,12 @@ class Head(RobotPart):
 
         for index, skeleton in enumerate(skeletons):
             try:
-                skeleton_markers.markers += self.markers_for_skeleton(skeleton, index)
+                if skeleton.bodyparts:
+                    skeleton_markers.markers += self.markers_for_skeleton(skeleton, index)
+                else:
+                    rospy.logerr("No bodyparts at index {}".format(index))
             except Exception as e:
-                rospy.logerr("Could not visualize skeleton {}".format(skeleton))
+                rospy.logerr("Could not visualize skeleton {}: {}".format(skeleton, e))
 
         self._skeleton_pub.publish(skeleton_markers)
 
@@ -434,12 +437,12 @@ class Head(RobotPart):
         joints_marker.id = index
         # joints_marker.lifetime = rospy.Duration(5)
         joints_marker.type = Marker.SPHERE_LIST
-        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.05, 0.05, 0.05
+        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.02, 0.02, 0.02
         joints_marker.action = Marker.ADD
         joints_marker.ns = "skeleton_spheres"
         joints_marker.header = skeleton.bodyparts.values()[0].header  # Nose is a good as any to do this with
         # joints_marker.header.frame_id = "/amigo/neck_tilt"
-        joints_marker.points = [joint.point for name, joint in skeleton.items()]
+        joints_marker.points = [joint_ps.point for joint_name, joint_ps in skeleton.items()]
         joints_marker.colors = [colors.next() for _, _ in skeleton.items()]
 
         links_marker = Marker()
