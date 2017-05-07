@@ -177,7 +177,7 @@ class PointingDetector(smach.State):
                 rospy.loginfo("PointingDetector: waiting for someone to come into view")
 
         self._robot.speech.speak("Hi there", block=True)
-        self._robot.set_color(r=1.0, g=0.0, b=0.0, a=1.0)
+        self._robot.lights.set_color(r=1.0, g=0.0, b=0.0, a=1.0)
 
         # Get RayTraceResult
         start = rospy.Time.now()
@@ -204,9 +204,9 @@ class PointingDetector(smach.State):
             e_pos_msg = PointStamped()
             e_pos_msg.header.frame_id = "map"
             e_pos_msg.header.stamp = rospy.Time.now()
-            e_pos_msg.point.x = e._pose.frame.p.x()
-            e_pos_msg.point.y = e._pose.frame.p.y()
-            e_pos_msg.point.z = e._pose.frame.p.z()
+            e_pos_msg.point.x = e._pose.p.x()
+            e_pos_msg.point.y = e._pose.p.y()
+            e_pos_msg.point.z = e._pose.p.z()
 
             result = get_ray_trace_from_closest_person_dummy(robot=self._robot,
                                                              arm_norm_threshold=0.1,
@@ -215,7 +215,7 @@ class PointingDetector(smach.State):
                                                              operator_pos=face_pos_msg,
                                                              furniture_pos=e_pos_msg)
 
-        self._robot.set_color(r=0.0, g=0.0, b=1.0, a=1.0)
+        self._robot.lights.set_color(r=0.0, g=0.0, b=1.0, a=1.0)
 
         # Query the entity from ED
         entity = self._robot.ed.get_entity(id=result.entity_id)
@@ -256,7 +256,7 @@ class PointingDetector(smach.State):
             raw_detections = None
 
         if not raw_detections:
-            return None
+            return False, None
 
         # Only take detections with operator
         detections = []
@@ -266,12 +266,12 @@ class PointingDetector(smach.State):
             except Exception as e:
                 rospy.logwarn("ROI Projection failed: {}".format(e))
                 continue
-            detections.append((d, vs.vector))
+            detections.append((d, vs))
 
         # Sort the detectiosn
-        detections = sorted(detections, key=lambda det: det[1].Norm())
+        detections = sorted(detections, key=lambda det: det[1].vector.Norm())
 
-        return detections[0][1].Norm() < threshold, detections[0][1]
+        return detections[0][1].vector.Norm() < threshold, detections[0][1]
 
 def setup_state_machine(robot):
 	sm = smach.StateMachine(outcomes=['Done','Aborted'])
