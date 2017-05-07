@@ -22,6 +22,7 @@ class PickupItem(smach.StateMachine):
 
             # ToDo: move GrabSingleItem to robot smach states
             smach.StateMachine.add("PICKUP_FROM_FURNITURE",  # Pickup the thing standing on the furniture
-                                   GrabSingleItem(robot, DefaultGrabDesignator(furniture_designator, "on_top_of")),
+                                   GrabSingleItem(robot, DefaultGrabDesignator(robot,
+                                       furniture_designator, "on_top_of")),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
