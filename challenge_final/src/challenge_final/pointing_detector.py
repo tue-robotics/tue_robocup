@@ -133,10 +133,11 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
 class PointingDetector(smach.State):
     """ State to fill an EdEntityDesignator depending on the direction of an operator pointing at the entity
      """
-    def __init__(self, robot, designator, super_type="furniture"):
+    def __init__(self, robot, designator, default_entity_id, super_type="furniture"):
         """ Constructor
         :param robot: robot object
         :param designator: Pointing designator to fill
+        :param default_entity_id: entity id for fallback scenario
         :param super_type: string indicating the required super type. If the RayTraceResult does not provide an entity
         of the desired super type, the closest entity with that desired supertype will be computed.
         """
@@ -145,6 +146,7 @@ class PointingDetector(smach.State):
         self._robot = robot
         self._designator = designator
         self._super_type = super_type
+        self._default_entity_id = default_entity_id
 
     def execute(self, userdata):
 
@@ -160,15 +162,33 @@ class PointingDetector(smach.State):
                 rospy.loginfo("PointingDetector: waiting for someone to come into view")
 
         self._robot.speech.speak("Hi there", block=True)
+        self._robot.set_color(r=1.0, g=0.0, b=0.0, a=1.0)
 
         # Get RayTraceResult
-        while not rospy.is_shutdown():
+        start = rospy.Time.now()
+        result = None
+        while not rospy.is_shutdown() and (rospy.Time.now() - start).to_sec() < 10.0:
             try:
                 result = get_ray_trace_from_closest_person(robot=self._robot)
                 if result is not None:
                     break
             except Exception as e:
                 rospy.loginfo("Could not get ray trace from closest person: {}".format(e))
+
+        # If result is None: fallback scenario
+        # result = RayTraceResponse()
+        # result.entity_id = self._default_entity_id
+        if result is None:
+            result = RayTraceResponse()
+            result.entity_id = self._default_entity_id
+        #     operator_msg = kdl_conversions.kdlVectorStampedToPointStamped()
+        #     result = get_ray_trace_from_closest_person_dummy(robot=self._robot,
+        #                                                      arm_norm_threshold=0.1,
+        #                                                      upper_arm_norm_threshold=0.7,
+        #                                                      entity_id=self._default_entity_id,
+        #                                                      )
+
+        self._robot.set_color(r=0.0, g=0.0, b=1.0, a=1.0)
 
         # Query the entity from ED
         entity = self._robot.ed.get_entity(id=result.entity_id)

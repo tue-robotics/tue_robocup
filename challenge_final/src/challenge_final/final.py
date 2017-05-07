@@ -58,6 +58,7 @@ class ChallengeFinal(smach.StateMachine):
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("DETECT_POINTING0",
                                    PointingDetector(robot=robot, designator=furniture_move_designator,
+                                                    default_entity_id="couch_table",
                                                     super_type="furniture"),
                                    transitions={"succeeded": "MOVE_TO_ITEM",
                                                 "failed": "DETECT_POINTING0"})
@@ -85,6 +86,7 @@ class ChallengeFinal(smach.StateMachine):
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("DETECT_POINTING1",
                                    PointingDetector(robot=robot, designator=furniture_pick_designator,
+                                                    default_entity_id="desk",
                                                     super_type="furniture"),
                                    transitions={"succeeded": "PICKUP_ITEM",
                                                 "failed": "DETECT_POINTING1"})
@@ -108,6 +110,7 @@ class ChallengeFinal(smach.StateMachine):
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("DETECT_POINTING2",
                                    PointingDetector(robot=robot, designator=furniture_place_designator,
+                                                    default_entity_id="side_table",
                                                     super_type="furniture"),
                                    transitions={"succeeded": "PLACE_ITEM",
                                                 "failed": "DETECT_POINTING2"})
