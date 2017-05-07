@@ -256,6 +256,10 @@ class PickUp(smach.State):
         else:
             return original_entity
 
+    def distance(self, e1, e2):
+        """ Computes the distance between two entities """
+        return e1.distance_to_3d(e2._pose.p)
+
 
 class ResetOnFailure(smach.StateMachine):
     """ Class to reset the robot after a grab has failed """
