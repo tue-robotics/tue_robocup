@@ -71,9 +71,9 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         left_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame(
             "/map",
             robot.tf_listener)
-        left_lower_arm_vector = (left_wrist - left_elbow) / (left_wrist - left_elbow).Norm()
-        left_upper_arm_vector = (left_elbow - left_shoulder) / (left_elbow - left_shoulder).Norm()
-        left_frame = get_frame_from_vector(left_lower_arm_vector, left_wrist.vector)
+        left_lower_arm_vector = (left_wrist.vector - left_elbow.vector) / (left_wrist.vector - left_elbow.vector).Norm()
+        left_upper_arm_vector = (left_elbow.vector - left_shoulder.vector) / (left_elbow.vector - left_shoulder.vector).Norm()
+        left_frame = get_frame_from_vector(left_lower_arm_vector, left_wrist)
         left_arm_norm = (left_lower_arm_vector * left_upper_arm_vector).Norm()
         left_upper_arm_norm = (left_upper_arm_vector * kdl.Vector(0, 0, 1)).Norm()
 
