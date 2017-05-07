@@ -8,6 +8,7 @@ from robot_skills.util import kdl_conversions
 from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import Designator
 from ed_sensor_integration.srv import RayTraceResponse
+from geometry_msgs.msg import PoseStamped
 
 
 def get_frame_from_vector(x_vector, origin):
@@ -23,15 +24,28 @@ def get_frame_from_vector(x_vector, origin):
     return frame_stamped
 
 
-def get_ray_trace_from_closest_person_dummy(robot, arm_norm_threshold=0.1, upper_arm_norm_threshold=0.7):
-    furnitures = [e for e in robot.ed.get_entities() if e.is_a("furniture")]
-    random_furniture = random.choice(furnitures)
+def get_ray_trace_from_closest_person_dummy(robot,
+                                            arm_norm_threshold=0.1,
+                                            upper_arm_norm_threshold=0.7,
+                                            entity_id=None,
+                                            operator_pos=None,
+                                            furniture_pos=None):
+    try:
+        operator_vec = kdl_conversions.kdlVectorStampedFromPointStampedMsg(operator_pos)
+        furniture_vec = kdl_conversions.kdlVectorStampedFromPointStampedMsg(furniture_pos)
+
+        diff = (furniture_vec - operator_vec) / (furniture_vec - operator_vec).Norm()
+        ray_trace_frame = get_frame_from_vector(diff, operator_vec)
+
+        # This is purely for visualization
+        robot.head.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(ray_trace_frame))
+    except Exception as e:
+        rospy.logerr(e)
+        pass
 
     res = RayTraceResponse()
-    res.entity_id = random_furniture.id
-    res.intersection_point.point = random_furniture.pose.position
-    res.intersection_point.header.frame_id = "/map"
-    res.intersection_point.header.stamp = rospy.Time.now()
+    res.entity_id = entity_id
+    res.intersection_point = furniture_pos
 
     return res
 
@@ -156,7 +170,8 @@ class PointingDetector(smach.State):
         # Wait until a face has been detected near the robot
         rate = rospy.Rate(1.0)
         while not rospy.is_shutdown():
-            if self._face_within_range(threshold=2.0):
+            in_range, face_pos = self._face_within_range(threshold=2.0)
+            if in_range:
                 break
             else:
                 rospy.loginfo("PointingDetector: waiting for someone to come into view")
@@ -181,12 +196,24 @@ class PointingDetector(smach.State):
         if result is None:
             result = RayTraceResponse()
             result.entity_id = self._default_entity_id
-        #     operator_msg = kdl_conversions.kdlVectorStampedToPointStamped()
-        #     result = get_ray_trace_from_closest_person_dummy(robot=self._robot,
-        #                                                      arm_norm_threshold=0.1,
-        #                                                      upper_arm_norm_threshold=0.7,
-        #                                                      entity_id=self._default_entity_id,
-        #                                                      )
+            face_pos_map = face_pos.projectToFrame("map", self._robot.tf_listener)
+            face_pos_msg = kdl_conversions.kdlVectorStampedToPointStamped(face_pos_map)
+
+            e = self._robot.ed.get_entity(id=self._default_entity_id)
+            from geometry_msgs.msg import PointStamped
+            e_pos_msg = PointStamped()
+            e_pos_msg.header.frame_id = "map"
+            e_pos_msg.header.stamp = rospy.Time.now()
+            e_pos_msg.point.x = e._pose.frame.p.x()
+            e_pos_msg.point.y = e._pose.frame.p.y()
+            e_pos_msg.point.z = e._pose.frame.p.z()
+
+            result = get_ray_trace_from_closest_person_dummy(robot=self._robot,
+                                                             arm_norm_threshold=0.1,
+                                                             upper_arm_norm_threshold=0.7,
+                                                             entity_id=self._default_entity_id,
+                                                             operator_pos=face_pos_msg,
+                                                             furniture_pos=e_pos_msg)
 
         self._robot.set_color(r=0.0, g=0.0, b=1.0, a=1.0)
 
@@ -220,7 +247,7 @@ class PointingDetector(smach.State):
         """ Gets the closest face. If the distance from the camera is too large, None will be returned.
 
         :param threshold: threshold fro mthe camera in meters
-        :return: bool indicating if the closest face is within the threshold
+        :return: tuple with bool indicating if the closest face is within the threshold and vectorstamped of the face location
         """
         # ToDo: catch the exceptiono in the detect_faces and return an empty list
         try:
@@ -239,12 +266,12 @@ class PointingDetector(smach.State):
             except Exception as e:
                 rospy.logwarn("ROI Projection failed: {}".format(e))
                 continue
-            detections.append((d, vs.vector.Norm()))
+            detections.append((d, vs.vector))
 
         # Sort the detectiosn
-        detections = sorted(detections, key=lambda det: det[1])
+        detections = sorted(detections, key=lambda det: det[1].Norm())
 
-        return detections[0][1] < threshold
+        return detections[0][1].Norm() < threshold, detections[0][1]
 
 def setup_state_machine(robot):
 	sm = smach.StateMachine(outcomes=['Done','Aborted'])
