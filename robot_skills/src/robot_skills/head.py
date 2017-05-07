@@ -366,6 +366,8 @@ class Head(RobotPart):
                 else:
                     bodyparts[slot] = ps
             skeletons.append(Skeleton(bodyparts))
+
+        self.visualize_skeletons(skeletons)
         return skeletons
 
     def visualize_skeletons(self, skeletons):
