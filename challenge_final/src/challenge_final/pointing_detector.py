@@ -136,6 +136,8 @@ class PointingDetector(smach.State):
             else:
                 rospy.loginfo("PointingDetector: waiting for someone to come into view")
 
+        self._robot.speech.speak("Hi there", block=True)
+
         # Get RayTraceResult
         while not rospy.is_shutdown():
             try:
@@ -152,6 +154,7 @@ class PointingDetector(smach.State):
         if entity.is_a(self._super_type):
             self._designator.set_id(identifier=entity.id)
             rospy.loginfo("Object pointed at: {}".format(entity.id))
+            self._robot.speech.speak("Okay, here we go")
             return "succeeded"
 
         # Otherwise, try to get the closest one
@@ -167,6 +170,7 @@ class PointingDetector(smach.State):
         entities.sort(key=lambda e: e.distance_to_2d(raypos))
         self._designator.set_id(identifier=entities[0].id)
         rospy.loginfo("Object pointed at: {}".format(entities[0].id))
+        self._robot.speech.speak("Okay, here we go")
         return "succeeded"
 
     def _face_within_range(self, threshold):
