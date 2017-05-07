@@ -110,7 +110,7 @@ class ChallengeFinal(smach.StateMachine):
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("DETECT_POINTING2",
                                    PointingDetector(robot=robot, designator=furniture_place_designator,
-                                                    default_entity_id="side_table",
+                                                    default_entity_id="trashbin",
                                                     super_type="furniture"),
                                    transitions={"succeeded": "PLACE_ITEM",
                                                 "failed": "DETECT_POINTING2"})
