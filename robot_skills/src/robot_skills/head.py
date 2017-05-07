@@ -399,17 +399,20 @@ class Head(RobotPart):
                 person_slot_rois.append((i, slot, roi))
 
         try:
-            ps = self.project_rois([roi for _, _, roi in person_slot_rois]).points
+            input = [r for _, _, r in person_slot_rois]
+            rospy.loginfo('project input: %s', str(input))
+            ps = self.project_rois(input).points
         except ValueError as e:
             rospy.loginfo('project_rois failed: %s', e)
             return []
 
-        skeletons = [{} for _ in range(len(persons))]
-        for person, slot, roi in person_slot_rois:
-            p = ps[person]
+        skeletons = [dict() for _ in range(len(persons))]
+        for j, (person, slot, _) in enumerate(person_slot_rois):
+            p = ps[j]
             if math.isnan(p.point.x) or math.isnan(p.point.y) or math.isnan(p.point.z):
                 rospy.loginfo('skipping %s because of invalid projection to 3d', slot)
                 continue
+            rospy.loginfo('adding point to person {}: {} at slot {}'.format(person, p.point, slot).replace('\n', ' '))
             skeletons[person][slot] = p
 
         skeletons = [Skeleton(bodyparts) for bodyparts in skeletons]
