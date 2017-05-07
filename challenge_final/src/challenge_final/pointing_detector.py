@@ -185,7 +185,12 @@ class PointingDetector(smach.State):
         :param threshold: threshold fro mthe camera in meters
         :return: bool indicating if the closest face is within the threshold
         """
-        raw_detections = self._robot.head.detect_faces()
+        # ToDo: catch the exceptiono in the detect_faces and return an empty list
+        try:
+            raw_detections = self._robot.head.detect_faces()
+        except Exception as e:
+            raw_detections = None
+
         if not raw_detections:
             return None
 
