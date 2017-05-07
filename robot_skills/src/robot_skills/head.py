@@ -61,6 +61,9 @@ class Skeleton(object):
     def items(self):
         return self.bodyparts.items()
 
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.bodyparts)
+
     def generate_links(self):
         for (a, b) in self.links:
             if a in self.bodyparts and b in self.bodyparts:
