@@ -396,6 +396,7 @@ class Head(RobotPart):
                 height = height
 
                 roi = RegionOfInterest(x_offset=x_offset, y_offset=y_offset, width=width, height=height)
+                print((i, slot, roi))
                 person_slot_rois.append((i, slot, roi))
 
         try:
@@ -441,7 +442,8 @@ class Head(RobotPart):
         self._skeleton_pub.publish(skeleton_markers)
 
     def markers_for_skeleton(self, skeleton, index=0, sphere_color=None, line_color=None):
-        red = ColorRGBA(1, 0, 0, 1)
+        sphere_color = ColorRGBA(1, 0, 0, 1) if not sphere_color else sphere_color
+        line_color = ColorRGBA(0, 0, 1, 1) if not line_color else line_color
 
         joints_marker = Marker()
         joints_marker.id = index
@@ -454,19 +456,21 @@ class Head(RobotPart):
         joints_marker.header.stamp = rospy.Time.now()
         joints_marker.points = [joint_ps.point for joint_name, joint_ps in skeleton.items()]
         joints_marker.colors = [sphere_color for _, _ in skeleton.items()]
+        rospy.loginfo("Added {} joints for skeleton {}".format(len(joints_marker.points), skeleton))
 
         links_marker = Marker()
         links_marker.id = index
         # links_marker.lifetime = rospy.Duration(30)
         links_marker.type = Marker.LINE_LIST
         links_marker.ns = "skeleton_lines"
-        links_marker.scale.x = 0.01
+        links_marker.scale.x = 0.02
         links_marker.action = Marker.ADD
         links_marker.header.frame_id = skeleton.bodyparts.values()[0].header.frame_id  # Just take the first one
         links_marker.header.stamp = rospy.Time.now()
         links_marker.points = list(skeleton.generate_links())
         links_marker.colors = [line_color for _ in links_marker.points]  # TODO: not in sync, whould iterate over pairs of points here
 
+        rospy.loginfo("Added {} links for skeleton {}".format(len(links_marker.points)/2, skeleton))  # /2 because lines are pairs of points
 
         return [joints_marker, links_marker]
 
