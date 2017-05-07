@@ -33,17 +33,17 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
     person = persons[0]
 
     left_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_wrist"]).projectToFrame("/map",
-                                                                                                          robot.tf_listeners)
+                                                                                                          robot.tf_listener)
     right_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_wrist"]).projectToFrame("/map",
-                                                                                                            robot.tf_listeners)
+                                                                                                            robot.tf_listener)
     left_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
-                                                                                                          robot.tf_listeners)
+                                                                                                          robot.tf_listener)
     right_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
-                                                                                                           robot.tf_listeners)
+                                                                                                           robot.tf_listener)
     left_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame("/map",
-                                                                                                                robot.tf_listeners)
+                                                                                                                robot.tf_listener)
     right_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame("/map",
-                                                                                                                 robot.tf_listeners)
+                                                                                                                 robot.tf_listener)
 
     left_lower_arm_vector = (left_wrist - left_elbow) / (left_wrist - left_elbow).Norm()
     left_upper_arm_vector = (left_elbow - left_shoulder) / (left_elbow - left_shoulder).Norm()
@@ -125,8 +125,8 @@ class PointingDetector(smach.State):
 
     def execute(self, userdata):
 
-        # Point head in the right direction
-        self._robot.head.look_at_standing_person()
+        # Point head in the right direction (look at the ground 100 m in front of the robot
+        self._robot.head.look_at_ground_in_front_of_robot(distance=100.0)
 
         # Wait until a face has been detected near the robot
         rate = rospy.Rate(1.0)
@@ -137,7 +137,13 @@ class PointingDetector(smach.State):
                 rospy.loginfo("PointingDetector: waiting for someone to come into view")
 
         # Get RayTraceResult
-        result = get_ray_trace_from_closest_person(robot=self._robot)
+        while not rospy.is_shutdown():
+            try:
+                result = get_ray_trace_from_closest_person(robot=self._robot)
+                if result is not None:
+                    break
+            except Exception as e:
+                rospy.loginfo("Could not get ray trace from closest person: {}".format(e))
 
         # Query the entity from ED
         entity = self._robot.ed.get_entity(id=result.entity_id)
