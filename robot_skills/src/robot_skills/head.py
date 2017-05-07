@@ -419,11 +419,11 @@ class Head(RobotPart):
         for skeleton in skeletons:
             zmin = float('inf')
             for slot, point in skeleton.items():
-                if point.z < zmin:
-                    zmin = point.z
+                if point.point.z < zmin:
+                    zmin = point.point.z
 
             for slot, point in skeleton.items():
-                point.z = zmin
+                point.point.z = zmin
 
         skeletons = [Skeleton(bodyparts) for bodyparts in skeletons]
         self.visualize_skeletons(skeletons)
