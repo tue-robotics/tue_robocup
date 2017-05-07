@@ -2,10 +2,12 @@
 import PyKDL as kdl
 import rospy
 import smach
+import random
 
 from robot_skills.util import kdl_conversions
 from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import Designator
+from ed_sensor_integration.srv import RayTraceResponse
 
 
 def get_frame_from_vector(x_vector, origin):
@@ -19,6 +21,19 @@ def get_frame_from_vector(x_vector, origin):
 
     frame_stamped = kdl_conversions.FrameStamped(kdl.Frame(rotation, translation), origin.frame_id)
     return frame_stamped
+
+
+def get_ray_trace_from_closest_person_dummy(robot, arm_norm_threshold=0.1, upper_arm_norm_threshold=0.7):
+    furnitures = [e for e in robot.ed.get_entities() if e.is_a("furniture")]
+    random_furniture = random.choice(furnitures)
+
+    res = RayTraceResponse()
+    res.entity_id = random_furniture.id
+    res.intersection_point.point = random_furniture.pose.position
+    res.intersection_point.header.frame_id = "/map"
+    res.intersection_point.header.stamp = rospy.Time.now()
+
+    return res
 
 
 def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_norm_threshold=0.7):
@@ -210,11 +225,11 @@ class PointingDetector(smach.State):
         detections = sorted(detections, key=lambda det: det[1])
 
         return detections[0][1] < threshold
-        
+
 def setup_state_machine(robot):
 	sm = smach.StateMachine(outcomes=['Done','Aborted'])
 	pointing_des = Designator()
-	
+
 	with sm:
 		smach.StateMachine.add('DETECT_POINTING',
 							   PointingDetector(robot, pointing_des),
