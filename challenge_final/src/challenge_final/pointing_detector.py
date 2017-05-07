@@ -19,69 +19,73 @@ def get_frame_from_vector(x_vector, origin):
     return frame_stamped
 
 
-def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_norm_threshold = 0.7):
-    persons = []
-    while not rospy.is_shutdown() and not persons:
-        persons = robot.head.detect_persons_3d()
+def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_norm_threshold=0.7):
+    persons = robot.head.detect_persons_3d()
+    valid_persons = [person for person in persons if "right_shoulder" in person]
 
-        # TODO: Constraints on the detected person!
+    if not valid_persons:
+        return None
 
-        rospy.sleep(1)
-
-    # Take the first person
-    # TODO: Optimization
-    person = persons[0]
-
-    left_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_wrist"]).projectToFrame("/map",
-                                                                                                          robot.tf_listeners)
-    right_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_wrist"]).projectToFrame("/map",
-                                                                                                            robot.tf_listeners)
-    left_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
-                                                                                                          robot.tf_listeners)
-    right_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
-                                                                                                           robot.tf_listeners)
-    left_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame("/map",
-                                                                                                                robot.tf_listeners)
-    right_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame("/map",
-                                                                                                                 robot.tf_listeners)
-
-    left_lower_arm_vector = (left_wrist - left_elbow) / (left_wrist - left_elbow).Norm()
-    left_upper_arm_vector = (left_elbow - left_shoulder) / (left_elbow - left_shoulder).Norm()
-
-    right_lower_arm_vector = (right_wrist - right_elbow) / (right_wrist - right_elbow).Norm()
-    right_upper_arm_vector = (right_elbow - right_shoulder) / (right_elbow - right_shoulder).Norm()
-
-    right_frame = get_frame_from_vector(right_lower_arm_vector, right_wrist.vector)
-    left_frame = get_frame_from_vector(left_lower_arm_vector, left_wrist.vector)
-
-    left_arm_norm = (left_lower_arm_vector * left_upper_arm_vector).Norm()
-    right_arm_norm = (right_lower_arm_vector * right_upper_arm_vector).Norm()
-
-    rospy.loginfo("Arn norm threshold: %.2f", arm_norm_threshold)
-    rospy.loginfo("Left arm norm: %.2f", left_arm_norm)
-    rospy.loginfo("Right arm norm: %.2f", right_arm_norm)
-
-    left_upper_arm_norm = (left_upper_arm_vector * kdl.Vector(0, 0, 1)).Norm()
-    right_upper_arm_norm = (right_upper_arm_vector * kdl.Vector(0, 0, 1)).Norm()
-
-    rospy.loginfo("Upper arm norm threshold: %.2f", upper_arm_norm_threshold)
-    rospy.loginfo("Upper left arm norm: %.2f", left_upper_arm_norm)
-    rospy.loginfo("Upper right arm norm: %.2f", right_upper_arm_norm)
+    person = sorted(valid_persons, key=lambda x: x["right_shoulder"].point.z)[0]
 
     # Check if arms are pointing
-    left_arm_valid = True
-    right_arm_valid = True
+    left_arm_valid = "left_wrist" in person and "left_elbow" in person and "left_shoulder" in person
+    right_arm_valid = "right_wrist" in person and "right_elbow" in person and "right_shoulder" in person
+
+    if left_arm_valid:
+        left_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_wrist"]).projectToFrame("/map",
+                                                                                                          robot.tf_listeners)
+        left_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
+                                                                                                              robot.tf_listeners)
+        left_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame(
+            "/map",
+            robot.tf_listeners)
+        left_lower_arm_vector = (left_wrist - left_elbow) / (left_wrist - left_elbow).Norm()
+        left_upper_arm_vector = (left_elbow - left_shoulder) / (left_elbow - left_shoulder).Norm()
+        left_frame = get_frame_from_vector(left_lower_arm_vector, left_wrist.vector)
+        left_arm_norm = (left_lower_arm_vector * left_upper_arm_vector).Norm()
+        left_upper_arm_norm = (left_upper_arm_vector * kdl.Vector(0, 0, 1)).Norm()
+
+        rospy.loginfo("Left arm norm: %.2f", left_arm_norm)
+        rospy.loginfo("Upper left arm norm: %.2f", left_upper_arm_norm)
+    else:
+        rospy.loginfo("Left arm not valid because it does not contain all required bodyparts")
+
+    if right_arm_valid:
+        right_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_wrist"]).projectToFrame("/map",
+                                                                                                                robot.tf_listeners)
+
+        right_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_elbow"]).projectToFrame("/map",
+                                                                                                               robot.tf_listeners)
+
+        right_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_shoulder"]).projectToFrame("/map",
+                                                                                                                     robot.tf_listeners)
+
+        right_lower_arm_vector = (right_wrist - right_elbow) / (right_wrist - right_elbow).Norm()
+        right_upper_arm_vector = (right_elbow - right_shoulder) / (right_elbow - right_shoulder).Norm()
+
+        right_frame = get_frame_from_vector(right_lower_arm_vector, right_wrist.vector)
+        right_arm_norm = (right_lower_arm_vector * right_upper_arm_vector).Norm()
+        right_upper_arm_norm = (right_upper_arm_vector * kdl.Vector(0, 0, 1)).Norm()
+
+        rospy.loginfo("Right arm norm: %.2f", right_arm_norm)
+        rospy.loginfo("Upper right arm norm: %.2f", right_upper_arm_norm)
+    else:
+        rospy.loginfo("Right arm not valid because it does not contain all required bodyparts")
+
+    rospy.loginfo("Arm norm threshold: %.2f", arm_norm_threshold)
+    rospy.loginfo("Upper arm norm threshold: %.2f", upper_arm_norm_threshold)
 
     # Constraint based on pointing sideways
-    if left_upper_arm_norm < upper_arm_norm_threshold:
+    if left_arm_valid and left_upper_arm_norm < upper_arm_norm_threshold:
         rospy.loginfo("Rejecting left arm because of not pointing sideways ..")
         left_arm_valid = False
-    if right_upper_arm_norm < upper_arm_norm_threshold:
+    if right_arm_valid and right_upper_arm_norm < upper_arm_norm_threshold:
         rospy.loginfo("Rejecting right arm because of not pointing sideways ..")
         right_arm_valid = False
 
     # Constraint based on parralelliness
-    if left_arm_valid and left_arm_norm > right_arm_norm:
+    if left_arm_valid and left_arm_norm > arm_norm_threshold:
         rospy.loginfo("Rejecting left arm because of norm threshold ...")
         left_arm_valid = False
     if right_arm_valid and right_arm_norm > arm_norm_threshold:
@@ -89,6 +93,7 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         right_arm_valid = False
 
     # Optimize
+    frame = None
     if left_arm_valid and right_arm_valid:
         if left_arm_norm > right_arm_norm:
             rospy.loginfo("Right arm is pointing the most, using this one")
@@ -100,7 +105,8 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         frame = left_frame
     if right_arm_valid:
         frame = right_frame
-    else:
+
+    if frame is None:
         rospy.loginfo("No valid arms found ...")
         return None
 
