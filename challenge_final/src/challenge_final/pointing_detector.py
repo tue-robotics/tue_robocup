@@ -4,6 +4,8 @@ import rospy
 import smach
 
 from robot_skills.util import kdl_conversions
+from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import Designator
 
 
 def get_frame_from_vector(x_vector, origin):
@@ -208,3 +210,19 @@ class PointingDetector(smach.State):
         detections = sorted(detections, key=lambda det: det[1])
 
         return detections[0][1] < threshold
+        
+def setup_state_machine(robot):
+	sm = smach.StateMachine(outcomes=['Done','Aborted'])
+	pointing_des = Designator()
+	
+	with sm:
+		smach.StateMachine.add('DETECT_POINTING',
+							   PointingDetector(robot, pointing_des),
+							   transitions={'succeeded': 'Done',
+											'failed': 'Aborted'})
+	return sm
+
+if __name__ == "__main__":
+    rospy.init_node('state_machine')
+
+    startup(setup_state_machine)
