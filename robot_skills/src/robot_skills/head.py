@@ -436,19 +436,18 @@ class Head(RobotPart):
 
         joints_marker = Marker()
         joints_marker.id = index
-        # joints_marker.lifetime = rospy.Duration(5)
+        joints_marker.lifetime = rospy.Duration(10)
         joints_marker.type = Marker.SPHERE_LIST
         joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.02, 0.02, 0.02
         joints_marker.action = Marker.ADD
         joints_marker.ns = "skeleton_spheres"
         joints_marker.header = skeleton.bodyparts.values()[0].header  # Nose is a good as any to do this with
-        # joints_marker.header.frame_id = "/amigo/neck_tilt"
         joints_marker.points = [joint_ps.point for joint_name, joint_ps in skeleton.items()]
         joints_marker.colors = [colors.next() for _, _ in skeleton.items()]
 
         links_marker = Marker()
         links_marker.id = index
-        # links_marker.lifetime = rospy.Duration(5)
+        links_marker.lifetime = rospy.Duration(10)
         links_marker.type = Marker.LINE_LIST
         links_marker.ns = "skeleton_lines"
         links_marker.scale.x = 0.01
