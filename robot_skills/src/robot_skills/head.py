@@ -403,7 +403,8 @@ class Head(RobotPart):
             p = ps[i]
             if math.isnan(p.point.x) or math.isnan(p.point.y) or math.isnan(p.point.z):
                 rospy.loginfo('skipping %s because of invalid projection to 3d', slot)
-                bodyparts[slot] = ps
+                continue
+            bodyparts[slot] = ps
             skeletons.append(Skeleton(bodyparts))
 
         self.visualize_skeletons(skeletons)
