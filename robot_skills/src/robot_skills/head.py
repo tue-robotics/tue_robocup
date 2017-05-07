@@ -442,9 +442,9 @@ class Head(RobotPart):
 
         joints_marker = Marker()
         joints_marker.id = index
-        joints_marker.lifetime = rospy.Duration(30)
+        # joints_marker.lifetime = rospy.Duration(30)
         joints_marker.type = Marker.SPHERE_LIST
-        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.02, 0.02, 0.02
+        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.05, 0.05, 0.05
         joints_marker.action = Marker.ADD
         joints_marker.ns = "skeleton_spheres"
         joints_marker.header.frame_id = skeleton.bodyparts.values()[0].header.frame_id  # Just take the first one
@@ -454,7 +454,7 @@ class Head(RobotPart):
 
         links_marker = Marker()
         links_marker.id = index
-        links_marker.lifetime = rospy.Duration(30)
+        # links_marker.lifetime = rospy.Duration(30)
         links_marker.type = Marker.LINE_LIST
         links_marker.ns = "skeleton_lines"
         links_marker.scale.x = 0.01
