@@ -34,12 +34,12 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
 
     if left_arm_valid:
         left_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_wrist"]).projectToFrame("/map",
-                                                                                                          robot.tf_listeners)
+                                                                                                          robot.tf_listener)
         left_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
-                                                                                                              robot.tf_listeners)
+                                                                                                              robot.tf_listener)
         left_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame(
             "/map",
-            robot.tf_listeners)
+            robot.tf_listener)
         left_lower_arm_vector = (left_wrist - left_elbow) / (left_wrist - left_elbow).Norm()
         left_upper_arm_vector = (left_elbow - left_shoulder) / (left_elbow - left_shoulder).Norm()
         left_frame = get_frame_from_vector(left_lower_arm_vector, left_wrist.vector)
@@ -53,13 +53,13 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
 
     if right_arm_valid:
         right_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_wrist"]).projectToFrame("/map",
-                                                                                                                robot.tf_listeners)
+                                                                                                                robot.tf_listener)
 
         right_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_elbow"]).projectToFrame("/map",
-                                                                                                               robot.tf_listeners)
+                                                                                                               robot.tf_listener)
 
         right_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_shoulder"]).projectToFrame("/map",
-                                                                                                                     robot.tf_listeners)
+                                                                                                                     robot.tf_listener)
 
         right_lower_arm_vector = (right_wrist - right_elbow) / (right_wrist - right_elbow).Norm()
         right_upper_arm_vector = (right_elbow - right_shoulder) / (right_elbow - right_shoulder).Norm()
@@ -131,8 +131,8 @@ class PointingDetector(smach.State):
 
     def execute(self, userdata):
 
-        # Point head in the right direction
-        self._robot.head.look_at_standing_person()
+        # Point head in the right direction (look at the ground 100 m in front of the robot
+        self._robot.head.look_at_ground_in_front_of_robot(distance=100.0)
 
         # Wait until a face has been detected near the robot
         rate = rospy.Rate(1.0)
@@ -142,8 +142,16 @@ class PointingDetector(smach.State):
             else:
                 rospy.loginfo("PointingDetector: waiting for someone to come into view")
 
+        self._robot.speech.speak("Hi there", block=True)
+
         # Get RayTraceResult
-        result = get_ray_trace_from_closest_person(robot=self._robot)
+        while not rospy.is_shutdown():
+            try:
+                result = get_ray_trace_from_closest_person(robot=self._robot)
+                if result is not None:
+                    break
+            except Exception as e:
+                rospy.loginfo("Could not get ray trace from closest person: {}".format(e))
 
         # Query the entity from ED
         entity = self._robot.ed.get_entity(id=result.entity_id)
@@ -152,6 +160,7 @@ class PointingDetector(smach.State):
         if entity.is_a(self._super_type):
             self._designator.set_id(identifier=entity.id)
             rospy.loginfo("Object pointed at: {}".format(entity.id))
+            self._robot.speech.speak("Okay, here we go")
             return "succeeded"
 
         # Otherwise, try to get the closest one
@@ -167,6 +176,7 @@ class PointingDetector(smach.State):
         entities.sort(key=lambda e: e.distance_to_2d(raypos))
         self._designator.set_id(identifier=entities[0].id)
         rospy.loginfo("Object pointed at: {}".format(entities[0].id))
+        self._robot.speech.speak("Okay, here we go")
         return "succeeded"
 
     def _face_within_range(self, threshold):
@@ -182,7 +192,11 @@ class PointingDetector(smach.State):
         # Only take detections with operator
         detections = []
         for d in raw_detections:
-            vs = self._robot.head.project_roi(roi=d.roi)
+            try:
+                vs = self._robot.head.project_roi(roi=d.roi)
+            except Exception as e:
+                rospy.logwarn("ROI Projection failed: {}".format(e))
+                continue
             detections.append((d, vs.vector.Norm()))
 
         # Sort the detectiosn
