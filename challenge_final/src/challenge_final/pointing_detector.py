@@ -4,6 +4,8 @@ import rospy
 import smach
 
 from robot_skills.util import kdl_conversions
+from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import Designator
 
 
 def get_frame_from_vector(x_vector, origin):
@@ -185,7 +187,12 @@ class PointingDetector(smach.State):
         :param threshold: threshold fro mthe camera in meters
         :return: bool indicating if the closest face is within the threshold
         """
-        raw_detections = self._robot.head.detect_faces()
+        # ToDo: catch the exceptiono in the detect_faces and return an empty list
+        try:
+            raw_detections = self._robot.head.detect_faces()
+        except Exception as e:
+            raw_detections = None
+
         if not raw_detections:
             return None
 
@@ -203,3 +210,19 @@ class PointingDetector(smach.State):
         detections = sorted(detections, key=lambda det: det[1])
 
         return detections[0][1] < threshold
+        
+def setup_state_machine(robot):
+	sm = smach.StateMachine(outcomes=['Done','Aborted'])
+	pointing_des = Designator()
+	
+	with sm:
+		smach.StateMachine.add('DETECT_POINTING',
+							   PointingDetector(robot, pointing_des),
+							   transitions={'succeeded': 'Done',
+											'failed': 'Aborted'})
+	return sm
+
+if __name__ == "__main__":
+    rospy.init_node('state_machine')
+
+    startup(setup_state_machine)
