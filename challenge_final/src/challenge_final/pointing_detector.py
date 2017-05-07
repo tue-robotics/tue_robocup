@@ -34,11 +34,11 @@ def get_ray_trace_from_closest_person_dummy(robot,
         operator_vec = kdl_conversions.kdlVectorStampedFromPointStampedMsg(operator_pos)
         furniture_vec = kdl_conversions.kdlVectorStampedFromPointStampedMsg(furniture_pos)
 
-        diff = (furniture_vec - operator_vec) / (furniture_vec - operator_vec).Norm()
+        diff = (furniture_vec.vector - operator_vec.vector) / (furniture_vec.vector - operator_vec.vector).Norm()
         ray_trace_frame = get_frame_from_vector(diff, operator_vec)
 
         # This is purely for visualization
-        robot.head.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(ray_trace_frame))
+        robot.ed.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(ray_trace_frame))
     except Exception as e:
         rospy.logerr(e)
         pass
@@ -188,7 +188,7 @@ class PointingDetector(smach.State):
                 if result is not None:
                     break
             except Exception as e:
-                rospy.loginfo("Could not get ray trace from closest person: {}".format(e))
+                rospy.logerr("Could not get ray trace from closest person: {}".format(e))
 
         # If result is None: fallback scenario
         # result = RayTraceResponse()
