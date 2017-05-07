@@ -5,3 +5,4 @@ from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
 initial_pose = "initial_pose"
+meeting_point = "final_meeting_point"
