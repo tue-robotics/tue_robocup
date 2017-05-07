@@ -71,7 +71,7 @@ class ChallengeFinal(smach.StateMachine):
                                                 "goal_not_defined": "SAY_HI_TO_JURY"})
 
             smach.StateMachine.add("SAY_HI_TO_JURY",
-                                   states.Say("Hi guys, I'm glad you're here", block=False),
+                                   states.Say(robot, "Hi guys, I'm glad you're here", block=False),
                                    transitions={"spoken": "NAVIGATE_TO_MEETING_POINT1"})
 
             smach.StateMachine.add("NAVIGATE_TO_MEETING_POINT1",
@@ -109,7 +109,7 @@ class ChallengeFinal(smach.StateMachine):
             smach.StateMachine.add("DETECT_POINTING2",
                                    PointingDetector(robot=robot, designator=furniture_place_designator,
                                                     super_type="furniture"),
-                                   transitions={"succeeded": "Done",
+                                   transitions={"succeeded": "PLACE_ITEM",
                                                 "failed": "DETECT_POINTING2"})
 
             # Place the object
