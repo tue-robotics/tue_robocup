@@ -72,7 +72,7 @@ class ChallengeFinal(smach.StateMachine):
                                                 "goal_not_defined": "SAY_HI_TO_JURY"})
 
             smach.StateMachine.add("SAY_HI_TO_JURY",
-                                   states.Say(robot, "Hi guys, I'm glad you're here", block=False),
+                                   states.Say(robot, "Hi guys, I'm glad you're here", block=True),
                                    transitions={"spoken": "NAVIGATE_TO_MEETING_POINT1"})
 
             smach.StateMachine.add("NAVIGATE_TO_MEETING_POINT1",
@@ -118,9 +118,24 @@ class ChallengeFinal(smach.StateMachine):
             # Place the object
             smach.StateMachine.add("PLACE_ITEM",
                                    PlaceSingleItem(robot=robot, place_designator=furniture_place_designator),
-                                   transitions={"succeeded": "Done",
-                                                "failed": "Done"})
+                                   transitions={"succeeded": "SAY_DONE",
+                                                "failed": "SAY_DONE"})
 
+            # Say that we're done
+            smach.StateMachine.add("SAY_DONE",
+                                   states.Say(robot, "That's it for today, you can have a closer look at my"
+                                                     "skills on the screen", block=False),
+                                   transitions={"spoken": "RESET_HEAD"})
+
+            @smach.cb_interface(outcomes=["done"])
+            def reset_head(userdata):
+                """ Resets the head """
+                robot.head.reset()
+                return "done"
+
+            smach.StateMachine.add("RESET_HEAD",
+                                   smach.CBState(reset_head),
+                                   transitions={"done": "Done"})
 
             # # Learn operator
             # smach.StateMachine.add("LEARN_OPERATOR",
