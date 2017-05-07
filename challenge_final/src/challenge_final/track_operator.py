@@ -52,7 +52,6 @@ class TrackFace(smach.State):
         # Start the controller thread
         # controller_thread = threading.Thread(target=self._control_base)
         # controller_thread.start()
-
         rate = rospy.Rate(15.0)
 
         # Start the breakout thread
