@@ -130,7 +130,9 @@ class ChallengeFinal(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def reset_head(userdata):
                 """ Resets the head """
+                print "Resetting head"
                 robot.head.reset()
+                rospy.sleep(rospy.Duration(1.0))
                 return "done"
 
             smach.StateMachine.add("RESET_HEAD",
