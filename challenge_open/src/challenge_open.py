@@ -5,6 +5,8 @@ import robot_smach_states
 import rospy
 import smach
 import random
+import threading
+
 from hmi import TimeoutException
 from robocup_knowledge import load_knowledge
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
@@ -13,6 +15,8 @@ from clean_inspect import CleanInspect
 
 challenge_knowledge = load_knowledge('challenge_open')
 
+g_thread = threading.Thread()
+g_run_event = threading.Event()
 
 class VerifyWorldModelInfo(smach.State):
     def __init__(self, robot):
@@ -39,6 +43,27 @@ class VerifyWorldModelInfo(smach.State):
 
         return "done"
 
+
+class StartDetectingSkeletonsForever(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['started'])
+        self._robot = robot
+
+    def _detect_skeletons_forever(self, name, delay, run_event):
+        while run_event.is_set():
+            try:
+                self._robot.head.detect_persons_3d()
+            except rospy.ServiceException as e:
+                rospy.logerr(e.message)
+            rospy.sleep(0.5)
+        rospy.loginfo("Stopped detecting skeletons forever")
+
+    def execute(self, userdata):
+        g_run_event.set()
+        d = 0
+        g_thread = threading.Thread(target=self._detect_skeletons_forever, args=("detect-skeletons-forever", d, g_run_event))
+        g_thread.start()
+        return 'started'
 
 class DetermineWhatToCleanInspect(smach.State):
     def __init__(self, robot):
@@ -118,7 +143,10 @@ def setup_statemachine(robot):
 
     with sm:
         smach.StateMachine.add("INITIALIZE", robot_smach_states.Initialize(robot),
-                               transitions={"initialized": "SAY_WAITING_FOR_TRIGGER", "abort": "Aborted"})
+                               transitions={"initialized": "START_DETECTING_SKELETONS", "abort": "Aborted"})
+
+        smach.StateMachine.add("START_DETECTING_SKELETONS", StartDetectingSkeletonsForever(robot),
+                               transitions={"started": "SAY_WAITING_FOR_TRIGGER"})
 
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("START_CHALLENGE_ROBUST",
@@ -179,3 +207,6 @@ if __name__ == '__main__':
         sys.exit(1)
 
     robot_smach_states.util.startup(setup_statemachine, challenge_name="challenge_open")
+
+    # Stop thread detecting skeletons
+    g_run_event.clear()
