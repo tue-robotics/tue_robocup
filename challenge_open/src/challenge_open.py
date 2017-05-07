@@ -55,7 +55,6 @@ class StartDetectingSkeletonsForever(smach.State):
                 self._robot.head.detect_persons_3d()
             except rospy.ServiceException as e:
                 rospy.logerr(e.message)
-            rospy.sleep(0.5)
         rospy.loginfo("Stopped detecting skeletons forever")
 
     def execute(self, userdata):
