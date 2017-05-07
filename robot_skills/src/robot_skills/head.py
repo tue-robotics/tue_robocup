@@ -271,7 +271,7 @@ class Head(RobotPart):
 
         return True
 
-    def detect_faces(self, stamp=True):
+    def detect_faces(self, stamp=False):
         image = self.get_image()
         if stamp:
             return self._get_faces(image).recognitions, image.header.stamp

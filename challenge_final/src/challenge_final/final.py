@@ -40,7 +40,7 @@ class ChallengeFinal(smach.StateMachine):
             # Start challenge
             smach.StateMachine.add("START_CHALLENGE",
                                    states.StartChallengeRobust(robot=robot, initial_pose=knowledge.initial_pose),
-                                   transitions={"Done": "LEARN_OPERATOR",
+                                   transitions={"Done": "NAVIGATE_TO_MEETING_POINT1",
                                                 "Aborted": "Aborted",
                                                 "Failed": "Aborted"})
 

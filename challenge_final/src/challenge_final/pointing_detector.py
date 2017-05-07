@@ -176,7 +176,11 @@ class PointingDetector(smach.State):
         # Only take detections with operator
         detections = []
         for d in raw_detections:
-            vs = self._robot.head.project_roi(roi=d.roi)
+            try:
+                vs = self._robot.head.project_roi(roi=d.roi)
+            except Exception as e:
+                rospy.logwarn("ROI Projection failed: {}".format(e))
+                continue
             detections.append((d, vs.vector.Norm()))
 
         # Sort the detectiosn
