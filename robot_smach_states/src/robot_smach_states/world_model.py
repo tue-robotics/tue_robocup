@@ -26,7 +26,7 @@ def look_at_segmentation_area(robot, entity, volume=None):
 
     # Determine the height of the head target
     # Start with a default
-    pos = entity.pose.position
+    pos = entity.pose.frame.p
     look_at_point_z = 0.7
 
     # Check if we have areas: use these
@@ -39,14 +39,14 @@ def look_at_segmentation_area(robot, entity, volume=None):
                                                                                  entity.id, e.message))
     else:
         # Look at the top of the entity to inspect
-        pos = entity.pose.position
+        pos = entity.pose.frame.p
         try:
             look_at_point_z = pos.z + entity.shape.z_max
         except Exception as e:
             rospy.logerr("Cannot get z_max of entity {}: {}".format(entity.id, e.message))
 
     # Point the head at the right direction
-    robot.head.look_at_point(VectorStamped(pos.x, pos.y, look_at_point_z, "/map"), timeout=0)
+    robot.head.look_at_point(VectorStamped(pos.x(), pos.y(), look_at_point_z, "/map"), timeout=0)
 
     # Make sure the spindle is at the appropriate height if we are AMIGO
     if robot.robot_name == "amigo":
