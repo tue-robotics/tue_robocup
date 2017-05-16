@@ -132,7 +132,7 @@ class RecognizePersons(smach.State):
         if operator.gender == 2:
             gender = "female"
 
-        z = operator.pose.pose.position.z
+        z = operator.pose.pose.frame.p.z()
         pose_str = "standing"
         if z < 1.4:
             pose_str = "sitting"
@@ -143,8 +143,9 @@ class RecognizePersons(smach.State):
         self.robot.speech.speak("The operator is %s" % pose_str)
 
         pose_base_link = self.robot.tf_listener.transformPose(target_frame=self.robot.robot_name + '/base_link', pose=operator.pose)
-        x = pose_base_link.pose.position.x
-        y = pose_base_link.pose.position.y
+        pose_base_link = operator.pose.projectToFrame(self.robot.robot_name + '/base_link', self.robot.tf_listener)
+        x = pose_base_link.pose.frame.p.x()
+        y = pose_base_link.pose.frame.p.y()
 
         self.robot.speech.speak("The operator is at x %.1f and y %.1f in my base link, I will turn towards you" % (x, y))
         th = math.atan2(y, x)
