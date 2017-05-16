@@ -38,6 +38,9 @@ class StoringGroceries(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata):
                 """ 'Locks' a locking designator """
+                # For now, don't do anything
+                return "done"
+
                 # Move away the cabinet
                 robot.ed.update_entity(id="cabinet",
                                        frame_stamped=FrameStamped(frame=kdl.Frame(kdl.Rotation(),
