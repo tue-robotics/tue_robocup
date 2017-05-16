@@ -230,7 +230,7 @@ class ManipulateMachine(smach.StateMachine):
                 smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self._table_designator,
                                                                        objectIDsDes=class_designator,
                                                                        searchArea=GRAB_SURFACE,
-                                                                       inspection_area="in_front_of"),
+                                                                       navigation_area="in_front_of"),
                                        transitions={"done": "WRITE_PDF",
                                                     "failed": "failed"})
 
