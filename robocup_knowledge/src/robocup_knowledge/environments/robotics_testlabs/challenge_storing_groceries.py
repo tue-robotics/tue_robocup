@@ -1,28 +1,35 @@
-# Entity where the shelves are part of
+# System
+import math
+
+# ROS
+import PyKDL as kdl
+
+# TU/e Robotics
+from robot_skills.util.kdl_conversions import FrameStamped
+from robocup_knowledge import knowledge_loader
+
+# Common knowledge
+common = knowledge_loader.load_knowledge("common")
+
+# Detection
 cabinet_amcl = "bookcase"
+cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation(), kdl.Vector(0.144, 3.574, 0.0)), frame_id="map"),
+                 FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 1.570796), kdl.Vector(2.271, -1.258, 0.0)),
+                              frame_id="map")]
+object_shelves = ["shelf2", "shelf3", "shelf4", "shelf5"]
+object_types = [obj["name"] for obj in common.objects]
 
-# Shelves where objects might be
-# object_shelves = ["bookcase/shelf2", "bookcase/shelf3"]
-object_shelves = ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
+# Grasping
+grasp_surface = "cabinet"
+room = "dining_room"
 
-# Shelf where we will actually try to grasp
-grasp_surface = "dinner_table"
+# Placing
+default_place_entity = cabinet_amcl
+default_place_area = "shelf2"
 
-# place_area = "shelf2"
-
-# Room where everything will take place
-room = "livingroom"
-
-# Object types that can be recognized
-object_types = ['beer', 'bifrutas', 'coffee_pads', 'coke',
-                'deodorant', 'fanta', 'ice_tea', 'mentos',
-                'sprite', 'tea', 'teddy_bear', 'water',
-                'xylit24_spearmint', 'xylit24_white']
-
-# Default place poses (only for testing)
-default_place_entity = "bookcase"
-default_place_area = "shelf3"
-
-# # Minimum and maximum height from which to grab an object
-# min_grasp_height = 0.0  # ToDo
-# max_grasp_height = 1.5  # ToDo
+# Table pose
+table_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, -0.5 * math.pi), kdl.Vector(1.0, 4.0, 0.0)),
+                            frame_id="map"),
+               FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi), kdl.Vector(3.0, 0.0, 0.0)),
+                            frame_id="map")]
+entity_poses = zip(cabinet_poses, table_poses)
