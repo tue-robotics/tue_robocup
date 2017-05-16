@@ -128,9 +128,9 @@ class PickUp(smach.State):
             grab_entity = self.associate(original_entity=grab_entity)
         else:
             rospy.loginfo("Updated pose of entity (dx, dy, dz) : (%f, %f, %f)" %
-                          (updated_grab_entity.pose.position.x - grab_entity.pose.position.x,
-                           updated_grab_entity.pose.position.y - grab_entity.pose.position.y,
-                           updated_grab_entity.pose.position.z - grab_entity.pose.position.z))
+                          (updated_grab_entity.pose.frame.p.x() - grab_entity.pose.frame.p.x(),
+                           updated_grab_entity.pose.frame.p.y() - grab_entity.pose.frame.p.y(),
+                           updated_grab_entity.pose.frame.p.z() - grab_entity.pose.frame.p.z()))
             grab_entity = updated_grab_entity
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
