@@ -17,8 +17,6 @@ grammar_target = "T"
 
 grammar = """
 T[{actions : <A1>}] -> C[A1]
-T[{actions : <A1, A2>}] -> C[A1] and C[A2]
-T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> Q[A]
 """
@@ -60,36 +58,36 @@ for place in common.location_names:
 ##############################################################################
 
 grammar += '''
-Q['answer': "Magdeburg"] -> what city are we in
-Q['answer': "Tech United"] -> what is the name of your team
-Q['answer': "Chewbacca"] -> name the big hairy creature in star wars
-Q['answer': "Isaac Asimov"] -> who wrote the three laws of robotics
-Q['answer': "The Jetsons"] -> from what series do you know rosie the robot
-Q['answer': "The Flintstones"] -> from what series do you know the baby bam bam
-Q['answer': "Neo"] -> who is the main character of the matrix
-Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms
-Q['answer': "In my SSD"] -> where do you store your memories
-Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
+Q["action" : "answer", "solution": "Magdeburg"] -> what city are we in
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Chewbacca"] -> name the big hairy creature in star wars
+Q["action" : "answer", "solution": "Isaac Asimov"] -> who wrote the three laws of robotics
+Q["action" : "answer", "solution": "The Jetsons"] -> from what series do you know rosie the robot
+Q["action" : "answer", "solution": "The Flintstones"] -> from what series do you know the baby bam bam
+Q["action" : "answer", "solution": "Neo"] -> who is the main character of the matrix
+Q["action" : "answer", "solution": "Peper and HSR"] -> name the two robocupathome standart platforms
+Q["action" : "answer", "solution": "In my SSD"] -> where do you store your memories
+Q["action" : "answer", "solution": "In Eindhoven The Netherlands"] -> where is your team located
 
 WHATWHICH -> what | which
 
-Q['answer': "basket"] -> WHATWHICH is the biggest object
-Q['answer': "egg"] -> WHATWHICH is the smallest object
-Q['answer': "pringles"] -> WHATWHICH is the biggest food
-Q['answer': "egg"] -> WHATWHICH is the smallest food
-Q['answer': "basket"] -> WHATWHICH is the biggest container
-Q['answer': "coffecup"] -> WHATWHICH is the smallest container
-Q['answer': "water"] -> WHATWHICH is the biggest drink
-Q['answer': "orange drink"] -> WHATWHICH is the smallest drink
-Q['answer': "paper"] -> WHATWHICH is the biggest cleaning stuff
-Q['answer': "sponge"] -> WHATWHICH is the smallest cleaning stuff
-Q['answer': "knife"] -> WHATWHICH is the biggest cutlery
-Q['answer': "fork"] -> WHATWHICH is the smallest cutlery
+Q["action" : "answer", "solution": "basket"] -> WHATWHICH is the biggest object
+Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest object
+Q["action" : "answer", "solution": "pringles"] -> WHATWHICH is the biggest food
+Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest food
+Q["action" : "answer", "solution": "basket"] -> WHATWHICH is the biggest container
+Q["action" : "answer", "solution": "coffecup"] -> WHATWHICH is the smallest container
+Q["action" : "answer", "solution": "water"] -> WHATWHICH is the biggest drink
+Q["action" : "answer", "solution": "orange drink"] -> WHATWHICH is the smallest drink
+Q["action" : "answer", "solution": "paper"] -> WHATWHICH is the biggest cleaning stuff
+Q["action" : "answer", "solution": "sponge"] -> WHATWHICH is the smallest cleaning stuff
+Q["action" : "answer", "solution": "knife"] -> WHATWHICH is the biggest cutlery
+Q["action" : "answer", "solution": "fork"] -> WHATWHICH is the smallest cutlery
 
-Q['answer': "the bedroom has two doors"] -> how many doors has the bedroom
-Q['answer': "the dining room has two doors"] -> how many doors has the dining room
-Q['answer': "in the living room there are no doors"] -> how many doors has the living room
-Q['answer': "in the kitchen there are no doors"] -> how many doors has the kitchen
+Q["action" : "answer", "solution":  "the bedroom has two doors"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "the dining room has two doors"] -> how many doors has the dining room
+Q["action" : "answer", "solution": "in the living room there are no doors"] -> how many doors has the living room
+Q["action" : "answer", "solution": "in the kitchen there are no doors"] -> how many doors has the kitchen
 '''
 
 ##############################################################################
