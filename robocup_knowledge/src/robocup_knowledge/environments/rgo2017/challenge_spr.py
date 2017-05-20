@@ -1,11 +1,67 @@
-grammar = '''
+from robocup_knowledge import knowledge_loader
+common = knowledge_loader.load_knowledge("common")
+
+not_understood_sentences = [
+        "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
+        "I am deeply sorry. Please try again, but wait for the ping!",
+        "You and I have communication issues. Speak up!",
+        "All this noise is messing with my audio. Try again"
+    ]
+grammar_target = "T"
+
+##############################################################################
+#
+# Actions
+#
+##############################################################################
+
+grammar = """
+T[{actions : <A1>}] -> C[A1]
+T[{actions : <A1, A2>}] -> C[A1] and C[A2]
+T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+
+C[{A}] -> Q[A]
+"""
+
+##############################################################################
+#
+# Verbs & shared stuff
+#
+##############################################################################
+
+grammar += """
+V_GUIDE -> guide | escort | take | lead | accompany
+
+DET -> the | a | an | some
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
+"""
+
+for room in common.location_rooms:
+    grammar += '\nROOMS[%s] -> %s' % (room, room)
+for loc in common.get_locations():
+    grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
+grammar += '\n ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]'
+for obj in common.object_names:
+    grammar += '\nOBJECT_NAMES[%s] -> %s' % (obj, obj)
+for loc in common.get_locations(pick_location=True, place_location=True):
+    grammar += '\nMANIPULATION_AREA_LOCATIONS[%s] -> MANIPULATION_AREA_DESCRIPTIONS the %s' % (loc, loc)
+for cat in common.object_categories:
+    grammar += '\nOBJECT_CATEGORIES[%s] -> %s' % (cat, cat)
+
+##############################################################################
+#
+# Predefined questions
+#
+##############################################################################
+
+grammar += '''
 Q['answer': "Magdeburg"] -> what city are we in
 Q['answer': "Tech United"] -> what is the name of your team
 Q['answer': "Chewbacca"] -> name the big hairy creature in star wars
 Q['answer': "Isaac Asimov"] -> who wrote the three laws of robotics
 Q['answer': "The Jetsons"] -> from what series do you know rosie the robot
 Q['answer': "The Flintstones"] -> from what series do you know the baby bam bam
-Q['answer': "Neo"] -> who is the main charcater of the matrix
+Q['answer': "Neo"] -> who is the main character of the matrix
 Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms
 Q['answer': "In my SSD"] -> where do you store your memories
 Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
@@ -29,33 +85,53 @@ Q['answer': "the bedroom has two doors"] -> how many doors has the bedroom
 Q['answer': "the dining room has two doors"] -> how many doors has the dining room
 Q['answer': "in the living room there are no doors"] -> how many doors has the living room
 Q['answer': "in the kitchen there are no doors"] -> how many doors has the kitchen
+'''
 
+##############################################################################
+#
 # Counting People
+#
+##############################################################################
 
+grammar += '''
 CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tell me COUNT PEOPLE[P] in the crowd
+'''
 
+##############################################################################
+#
 # Arena questions
+#
+##############################################################################
 
-APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
-ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
-APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
-ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] are in the ROOM[R]
-
+grammar += '''
 COUNT -> how many | the number of
-
 SEARCH -> where is | in WHATWHICH room is
 
-# Object questions
+Q[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
+Q[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
+Q[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
+Q[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] are in the ROOM[R]
+'''
 
-OFIND[{"action" : "o_find", "entity" : O}] -> where can i find a OBJECT[O]
-CFIND[{"action" : "c_find", "entity" : C}] -> where can i find a CATEGORY[C]
-OTYPE[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong the OBJECT[O]
+##############################################################################
+#
+# Object / Category questions
+#
+##############################################################################
 
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# D A T A
-# - - - - - - - - - - - - - - - - - - - - - - - - -
+grammar += '''
+Q[{"action" : "o_find", "entity" : O}] -> where can i find a OBJECT[O]
+Q[{"action" : "c_find", "entity" : C}] -> where can i find a CATEGORY[C]
+Q[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong the OBJECT[O]
+'''
 
-# People
+##############################################################################
+#
+# Data
+#
+##############################################################################
+
+grammar +='''
 
 PEOPLE['people'] -> people
 PEOPLE['children'] -> children
@@ -71,7 +147,7 @@ PEOPLE['girls'] -> girls
 PLACEMENT['bookshelf'] -> bookshelf | bookshelfs
 PLACEMENT['couch_table'] -> couch table | couch tables
 PLACEMENT['side_table'] -> side table | side_table
-PLACEMENT['kitchencounter'] -> kitchen counter | kitchen counters
+PLACEMENT['kitchencounter'] -> kitchen counter | kitchen counters | kitchencounter | kitchencounters
 PLACEMENT['stove'] -> stove | stoves
 PLACEMENT['desk'] -> desk |desks
 PLACEMENT['bar'] -> bar | bars
@@ -133,17 +209,9 @@ CATEGORY['container'] -> container | containers
 CATEGORY['drink'] -> drink | drinks
 CATEGORY['cleaning_stuff'] -> cleaning stuff | cleaning stuffs
 CATEGORY['cutlery'] -> cutlery | cutleries
-
-T[X] -> Q[X] | CP[X] | APLACEM[X] | ABEACON[X] | APLROOM[X] | ABEROOM[X] | OFIND[X] | CFIND[X] | OTYPE[X]
 '''
 
-
-big_grammar = """
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Crowd questions
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
+old_grammar = """
 
 # People Positions/Gestures/Genders
 
@@ -153,58 +221,25 @@ PPG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was GE
 PPGG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
 PGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER
 PGGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER or GENDER
-
-# People Color
-
 PC[{"action" : "c_count", "entity" : L}] -> tell me how many people were wearing COLOR[L]
-
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Arena questions
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-
-	APLACEM[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
-	ABEACON[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
-		AROOM[{"action" : "a_count", "entity" : R}] -> how many doors has the ROOM[R]
-	APLROOM[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
-	ABEROOM[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[AB] are in the ROOM[R]
-
-SEARCH -> where is | in WHATWHICH room is
-
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Object questions
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-
-OFIND[{"action" : "o_find", "entity" : O}] -> where can i find a OBJECT[O]
-CFIND[{"action" : "o_find", "entity" : C}] -> where can i find a CATEGORY[C]
 CCOUNT[{"action" : "o_count", "entity" : C}] -> how many CATEGORY[C] there are
 
 OCOLOR[{"action" : "find_color", "entity" : O}] -> whats the colour of the OBJECT[O]
-OTYPE[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong the OBJECT[O]
 OCAT[{"action" : "compare_category", "entity_a" : O, "entity_b" : A}] -> do the OBJECT[O] and OBJECT[A] belong to the same category
 
 CATPLACE[{"action" : "o_count", "entity" : C, "location" : PL}] -> how many CATEGORY[C] are in the PLACEMENT[PL]
 OBJPLACE[{"action" : "o_count", "entity" : O, "location" : PL}] -> how many OBJECT[O] are in the PLACEMENT[PL]
 CATLOC[{"action" : "category_at_loc", "location" : PL}] -> what objects are stored in the PLACEMENT[PL]
 
-	CATSIZE[{"action" : "hardcoded"}] -> WHATWHICH is the ADJA CATEGORY[C]
-	OBJSIZE[{"action" : "hardcoded"}] -> WHATWHICH is the ADJA object
-
 OBJCOMP[{"action" : "compare", "entity_a" : O, "entity_b" : A}] -> between the OBJECT[O] and OBJECT[A] WHATWHICH one is ADJR
-
 
 ADJA -> smallest | biggest
 ADJR -> smaller | bigger
-
-
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # D A T A
@@ -223,7 +258,7 @@ GENDER['girl'] -> girl
 
 GESTURE['waving'] -> waving
 GESTURE['rise_l_arm'] -> rising left arm
-GESTURE['rise_r_arm'] -> rising rigth arm
+GESTURE['rise_r_arm'] -> rising right arm
 GESTURE['left'] -> pointing left
 GESTURE['right'] -> pointing right
 
