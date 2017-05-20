@@ -45,8 +45,8 @@ class NavigateToExplore(NavigateTo):
 
         ch = e.convex_hull
 
-        x = e.pose.position.x
-        y = e.pose.position.y
+        x = e.pose.frame.p.x()
+        y = e.pose.frame.p.y()
 
         ch.append(ch[0])
 

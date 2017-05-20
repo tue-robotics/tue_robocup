@@ -1,0 +1,35 @@
+[INFO] [1491663263.286183]: State machine transitioning 'SAY1':'spoken'-->'CLOSE_AFTER_INSERT'
+/amigo/handoverdetector_right/result
+[ERROR] [1491663270.915934]: InvalidUserCodeError: Could not execute state 'CLOSE_AFTER_INSERT' of type '<robot_smach_states.manipulation.manipulation.CloseGripperOnHandoverToRobot object at 0x7f5419c84a10>': Traceback (most recent call last):
+  File "/home/amigo/ros/kinetic/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/kinetic/system/src/robot_smach_states/src/robot_smach_states/manipulation/manipulation.py", line 189, in execute
+    if grabbed_entity_designator:
+NameError: global name 'grabbed_entity_designator' is not defined
+
+[ERROR] [1491663270.916342]: State 'GRAB_ITEM' failed to execute.
+[ERROR] [1491663270.916702]: Robot exited with <class 'smach.exceptions.InvalidUserCodeError'>,Could not execute state 'CLOSE_AFTER_INSERT' of type '<robot_smach_states.manipulation.manipulation.CloseGripperOnHandoverToRobot object at 0x7f5419c84a10>': Traceback (most recent call last):
+  File "/home/amigo/ros/kinetic/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/kinetic/system/src/robot_smach_states/src/robot_smach_states/manipulation/manipulation.py", line 189, in execute
+    if grabbed_entity_designator:
+NameError: global name 'grabbed_entity_designator' is not defined
+,<traceback object at 0x7f541a5dae18>
+[INFO] [1491663270.917063]: Torso cancelling all goals on close
+[INFO] [1491663270.917359]: left arm cancelling all goals on all arm-related ACs on close
+[INFO] [1491663270.917865]: right arm cancelling all goals on all arm-related ACs on close
+Traceback (most recent call last):
+  File "/home/amigo/ros/kinetic/system/src/challenge_help_me_carry/src/challenge_help_me_carry.py", line 255, in <module>
+    states.util.startup(setup_statemachine, challenge_name="help_me_carry")
+  File "/home/amigo/ros/kinetic/system/src/robot_smach_states/src/robot_smach_states/util/startup.py", line 91, in startup
+    outcome = executioner.execute()
+  File "/home/amigo/ros/kinetic/system/src/smach/src/smach/state_machine.py", line 359, in execute
+    container_outcome = self._update_once()
+  File "/home/amigo/ros/kinetic/system/src/smach/src/smach/state_machine.py", line 250, in _update_once
+    raise ex
+smach.exceptions.InvalidUserCodeError: Could not execute state 'CLOSE_AFTER_INSERT' of type '<robot_smach_states.manipulation.manipulation.CloseGripperOnHandoverToRobot object at 0x7f5419c84a10>': Traceback (most recent call last):
+  File "/home/amigo/ros/kinetic/system/src/smach/src/smach/state_machine.py", line 247, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/kinetic/system/src/robot_smach_states/src/robot_smach_states/manipulation/manipulation.py", line 189, in execute
+    if grabbed_entity_designator:
+NameError: global name 'grabbed_entity_designator' is not defined

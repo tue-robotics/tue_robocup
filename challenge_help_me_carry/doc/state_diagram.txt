@@ -4,25 +4,19 @@
 
 title Challenge Help-me-carry
 
-[*] --> Wait
-Wait --> Wait
-Wait --> Following_operator : "Robot, follow me"
-Following_operator --> Look_for_operator: lost operator
-Look_for_operator --> Following_operator: found operator
-Following_operator --> Arrive_at_car: "Remember, this location is the car"
-Following_operator --> Avoid_obstacle
-Avoid_obstacle --> Following_operator
-Arrive_at_car --> Pickup_groceries: "Carry this box"
-Pickup_groceries --> Go_inside_house : "Bring this to room X"
-Go_inside_house --> Arrive_at_dropoff
-Go_inside_house --> Avoid_obstacle
-Go_inside_house --> Putdown_groceries: Cannot find dropoff
-Avoid_obstacle --> Go_inside_house
-Arrive_at_dropoff --> Putdown_groceries
-Putdown_groceries --> [*]: time is up
-Putdown_groceries --> Go_to_car
-Go_to_car --> Arrive_at_car
-Go_to_car --> Avoid_obstacle
-Avoid_obstacle --> Go_to_car
+[*] --> WAIT_TO_FOLLOW : INITIALIZE
+WAIT_TO_FOLLOW --> FOLLOW_OPERATOR : "Robot, follow me"
+FOLLOW_OPERATOR --> WAIT_TO_FOLLOW_OR_REMEMBER
+WAIT_TO_FOLLOW_OR_REMEMBER --> FOLLOW_OPERATOR
+WAIT_TO_FOLLOW_OR_REMEMBER --> REMEMBER_CAR_LOCATION
+REMEMBER_CAR_LOCATION --> WAIT_FOR_DESTINATION
+WAIT_FOR_DESTINATION --> GRAB_ITEM
+GRAB_ITEM --> GOTO_DESTINATION
+GOTO_DESTINATION --> PUTDOWN_ITEM
+PUTDOWN_ITEM --> ASKING_FOR_HELP
+ASKING_FOR_HELP --> GOTO_CAR
+GOTO_CAR --> OPEN_DOOR
+OPEN_DOOR --> GOTO_CAR
+GOTO_CAR --> [*] : AT_END
 
 @enduml

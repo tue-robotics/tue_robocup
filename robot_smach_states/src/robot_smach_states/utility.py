@@ -63,9 +63,9 @@ class SetInitialPose(smach.State):
 
         print e_loc
 
-        rz = tf.euler_z_from_quaternion(e_loc.pose.orientation)
+        rz, _, _ = e_loc.pose.frame.M.GetEulerZYX()
 
-        return e_loc.pose.position.x, e_loc.pose.position.y, rz
+        return e_loc.pose.frame.p.x(), e_loc.pose.frame.p.y(), rz
 
     def execute(self, userdata):
         if isinstance(self.initial_position, str):

@@ -6,11 +6,11 @@ import random
 import ed_perception.msg
 import actionlib
 from robot_smach_states.state import State
+from hmi import TimeoutException
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
 from smach_ros import SimpleActionState
-from dragonfly_speech_recognition.srv import GetSpeechResponse
 import time
 import math
 
@@ -77,7 +77,9 @@ class Say(smach.State):
 
 
 class HearOptions(smach.State):
-    def __init__(self, robot, options, timeout = rospy.Duration(10), look_at_standing_person=True):
+    """Hear one of the options
+    """
+    def __init__(self, robot, options, timeout=rospy.Duration(10), look_at_standing_person=True):
         outcomes = list(options) # make a copy
         outcomes.append("no_result")
         smach.State.__init__(self, outcomes=outcomes)
@@ -90,18 +92,16 @@ class HearOptions(smach.State):
         if self.look_at_standing_person:
             self._robot.head.look_at_standing_person()
 
-        answer = self._robot.ears.recognize("<option>", {"option":self._options}, self._timeout)
+        try:
+            answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T', timeout=self._timeout)
+        except TimeoutException:
+            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+            return 'no_result'
 
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
 
-        if answer:
-            if "option" in answer.choices:
-                return answer.choices["option"]
-        else:
-            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
-
-        return "no_result"
+        return answer.sentence
 
 class HearOptionsExtra(smach.State):
     """Listen to what the user said, based on a pre-constructed sentence
@@ -222,38 +222,56 @@ class WaitForPersonInFront(WaitForDesignator):
 
 
 class LearnPerson(smach.State):
-    """
+    """ Smach state to learn a person
 
     """
-    def __init__(self, robot, person_name="", name_designator=None, n_samples=5):
-        smach.State.__init__(self, outcomes=['succeeded_learning', 'failed_learning', 'timeout_learning'])
+    def __init__(self, robot, person_name="", name_designator=None, nr_tries=5):
+        """ Constructor
 
-        self.robot = robot
-        self.person_name = person_name
+        :param robot: robot object
+        :param person_name: string indicating the name that will be given
+        :param name_designator: designator returning a string with the name of the person. This will be used if no
+        person name is provided
+        :param nr_tries: maximum number of tries
+        """
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+
+        self._robot = robot
+        self._person_name = person_name
         if name_designator:
             ds.check_resolve_type(name_designator, str)
-        self.name_designator = name_designator
-        self.n_samples = n_samples
+        self._name_designator = name_designator
+        self._nr_tries = nr_tries
 
     def execute(self, userdata=None):
 
+        # Look up
+        self._robot.speech.speak("Please look at me while I admire your beauty", block=False)
+        self._robot.head.look_at_standing_person()
+        self._robot.head.wait_for_motion_done()
+
         # if person_name is empty then try to get it from designator
-        if not self.person_name:
-            person_name = self.name_designator.resolve()
+        if not self._person_name:
+            person_name = self._name_designator.resolve()
 
             # if there is still no name, quit the learning
             if not person_name:
-                print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
-                return
-
-        samples_completed = learn_person_procedure(self.robot, person_name=person_name, n_samples=self.n_samples)
-
-        if samples_completed == 0:
-            return 'failed_learning'
-        if samples_completed < self.n_samples:
-            return 'timeout_learning'
+                rospy.logerr("[LearnPerson] No name was provided. Quitting the learning")
+                self._robot.head.reset()
+                return "failed"
         else:
-            return 'succeeded_learning'
+            person_name = self._person_name
+
+        # Learn the face (try for a maximum of nr_tries times
+        for i in range(self._nr_tries):
+            if self._robot.head.learn_person(name=person_name):
+                self._robot.head.reset()
+                return "succeeded"
+
+        # If we end up here, learning failed
+        self._robot.speech.speak("There's something in my eyes, I might not be able to remember you")
+        self._robot.head.reset()
+        return "failed"
 
 
 ##########################################################################################################################################
@@ -334,10 +352,10 @@ def detect_human_in_front(robot):
         return False
 
     for detection in result:
-        pose_base_link = robot.tf_listener.transformPose(target_frame=robot.robot_name+'/base_link', pose=detection.pose)
+        pose_base_link = detection.pose.projectToFrame(robot.robot_name+'/base_link', robot.tf_listener)
 
-        x = pose_base_link.pose.position.x
-        y = pose_base_link.pose.position.y
+        x = pose_base_link.pose.frame.p.x()
+        y = pose_base_link.pose.frame.p.y()
 
         print "Detection (x,y) in base link: (%f,%f)" % (x,y)
 

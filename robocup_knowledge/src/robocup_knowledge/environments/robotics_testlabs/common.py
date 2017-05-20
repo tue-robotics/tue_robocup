@@ -1,4 +1,4 @@
-# COMMON KNOWLEDGE FILE RGO2015
+# COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
 
 female_names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
 male_names = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
@@ -33,46 +33,48 @@ location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
 rooms = location_rooms + ["workshop"]
 
 objects = [
-    {'category': 'decoration',  'group': 'known',       'name': 'candle'},
-    {'category': 'food',        'group': 'known',       'name': 'bubblegum'},
-    {'category': 'leisure',     'group': 'known',       'name': 'cup'},
-    {'category': 'leisure',     'group': 'known',       'name': 'deodorant',          'sub-category': 'medicine'},
-    {'category': 'leisure',     'group': 'known',       'name': 'cigarettes'},
-    {'category': 'drink',       'group': 'known',       'name': 'beer'},
-    {'category': 'tool',        'group': 'known',       'name': 'wd40'},
-    {'category': 'tool',        'group': 'known',       'name': 'filler'},
-    {'category': 'food',        'group': 'known',       'name': 'chocolate_cereals',  'sub-category': 'cereal'},
-    {'category': 'drink',       'group': 'known',       'name': 'coke',               'sub-category': 'medicine'},
-    {'category': 'food',        'group': 'known',       'name': 'chocosticks'},
-    {'category': 'food',        'group': 'known',       'name': 'noodles'},
-    {'category': 'drink',       'group': 'known',       'name': 'coffee'},
-    {'category': 'food',        'group': 'known',       'name': 'cranberry_cereals',  'sub-category': 'cereal'},
-    {'category': 'food',        'group': 'known',       'name': 'muesli_cereals',     'sub-category': 'cereal'},
-    {'category': 'food',        'group': 'known',       'name': 'bubblemint',         'sub-category': 'medicine'},
-    {'category': 'tool',        'group': 'known',       'name': 'brush'},
-    {'category': 'drink',       'group': 'known',       'name': 'red_bull'},
-    {'category': 'drink',       'group': 'known',       'name': 'meadow_milk',        'sub-category': 'milk'},
-    {'category': 'drink',       'group': 'known',       'name': 'ice-tea'},
-    {'category': 'food',        'group': 'known',       'name': 'mints',              'sub-category': 'medicine'},
-    {'category': 'food',        'group': 'known',       'name': 'pringles'},
-    {'category': 'drink',       'group': 'known',       'name': 'fresh_milk',         'sub-category': 'milk'},
-    {'category': 'food',        'group': 'known',       'name': 'oblates'},
-    {'category': 'drink',       'group': 'known',       'name': 'coffeepads'},
-    {'category': 'food',        'group': 'known',       'name': 'peanut'},
-    {'category': 'food',        'group': 'alike',       'name': 'mandarine',          'sub-category': 'fruit'},
-    {'category': 'tool',        'group': 'alike',       'name': 'tape'},
-    {'category': 'food',        'group': 'alike',       'name': 'lemon',              'sub-category': 'fruit'},
-    {'category': 'tool',        'group': 'alike',       'name': 'twine'},
-    {'category': 'drink',       'group': 'alike',       'name': 'fanta'},
-    {'category': 'food',        'group': 'alike',       'name': 'apple',              'sub-category': 'fruit'},
-    {'category': 'bowl',        'group': 'containers',  'name': 'bowl'},
-    {'category': 'tray',        'group': 'containers',  'name': 'tray'}
+    {'category': 'food',                'name': 'apple'             },
+    {'category': 'food',                'name': 'bread'             },
+    {'category': 'food',                'name': 'cereals'           },
+    {'category': 'food',                'name': 'cornflakes'        },
+    {'category': 'food',                'name': 'crackers'          },
+    {'category': 'food',                'name': 'lemon'             },
+    {'category': 'food',                'name': 'noodles'           },
+    {'category': 'food',                'name': 'paprika'           },
+    {'category': 'food',                'name': 'peas'              },
+    {'category': 'food',                'name': 'pepper'            },
+    {'category': 'food',                'name': 'potato'            },
+    {'category': 'food',                'name': 'potato_soup'       },
+    {'category': 'food',                'name': 'salt'              },
+    {'category': 'food',                'name': 'tomato_pasta'      },
+    {'category': 'container',           'name': 'bag'               },
+    {'category': 'container',           'name': 'basket'            },
+    {'category': 'container',           'name': 'coffecup'          },
+    {'category': 'container',           'name': 'plate'             },
+    {'category': 'container',           'name': 'red_bowl'          },
+    {'category': 'container',           'name': 'white_bowl'        },
+    {'category': 'drink',               'name': 'banana_milk'       },
+    {'category': 'drink',               'name': 'cappucino'         },
+    {'category': 'drink',               'name': 'coke'              },
+    {'category': 'drink',               'name': 'orange_drink'      },
+    {'category': 'drink',               'name': 'water'             },
+    {'category': 'snack',               'name': 'chocolate_cookies' },
+    {'category': 'snack',               'name': 'egg'               },
+    {'category': 'snack',               'name': 'party_cracker'     },
+    {'category': 'snack',               'name': 'pringles'          },
+    {'category': 'cleaning_stuff',      'name': 'cloth'             },
+    {'category': 'cleaning_stuff',      'name': 'paper'             },
+    {'category': 'cleaning_stuff',      'name': 'sponge'            },
+    {'category': 'cleaning_stuff',      'name': 'towel'             },
+    {'category': 'cutlery',             'name': 'fork'              },
+    {'category': 'cutlery',             'name': 'spoon'             },
+    {'category': 'cutlery',             'name': 'knife'             }
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
-object_groups = list(set([ o["group"] for o in objects ]))
-object_known_objects = list(set([ o["name"] for o in objects ]))
+# object_groups = list(set([ o["group"] for o in objects ]))
+# object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
     "food": {"bookcase": "shelf3"},
@@ -139,6 +141,9 @@ def get_room(location):
         if loc["name"] == location:
             return loc["room"]
     return None
+
+def is_room(entity_id):
+    return (entity_id in rooms)
 
 def get_inspect_areas(location):
     if location in inspect_areas:

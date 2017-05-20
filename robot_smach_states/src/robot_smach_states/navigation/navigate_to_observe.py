@@ -33,7 +33,11 @@ class NavigateToObserve(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
-        ch = e.shape.convex_hull
+        try:
+            ch = e.shape.convex_hull
+        except NotImplementedError:
+            # In case of an entity without convex hull, we might not want to use this
+            ch = []
 
         #if len(ch) == 0:
         #    rospy.logerr("{0} has no convex hull so cannot NavigateToObserve there".format(e.id))

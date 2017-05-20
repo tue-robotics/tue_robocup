@@ -5,6 +5,7 @@ from robot_smach_states.navigation import NavigateTo
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
+from robot_skills.util.kdl_conversions import kdlVectorToPointMsg
 
 from robot_smach_states.util.designators import check_resolve_type
 from robot_skills.util.entity import Entity
@@ -21,8 +22,8 @@ class NavigateToSymbolic(NavigateTo):
         """ Constructor
 
         :param robot: robot object
-        :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string representing the
-        area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+        :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
+        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
         """
@@ -42,6 +43,10 @@ class NavigateToSymbolic(NavigateTo):
         entity_id_area_name_map = {}
         for desig, area_name in self.entity_designator_area_name_map.iteritems():
             entity = desig.resolve()
+            try:
+                area_name = area_name.resolve()
+            except:
+                pass
             if entity:
                 entity_id_area_name_map[entity.id] = area_name
             else:
@@ -61,6 +66,7 @@ class NavigateToSymbolic(NavigateTo):
             rospy.logerr("Could not resolve entity_lookat_designator".format(self.entity_lookat_designator))
             return None
 
-        oc = OrientationConstraint(look_at=entity_lookat.pose.position, frame="/map")
+        look_at = kdlVectorToPointMsg(entity_lookat.pose.extractVectorStamped().vector)
+        oc = OrientationConstraint(look_at=look_at, frame=entity_lookat.pose.frame_id)
 
         return pc, oc

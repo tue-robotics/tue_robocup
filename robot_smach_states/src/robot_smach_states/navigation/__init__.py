@@ -9,3 +9,4 @@ from navigate_to_waypoint import *
 from navigate_to_symbolic import *
 from follow_operator import *
 from door_opening import *
+from find import Find

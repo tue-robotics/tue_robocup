@@ -60,6 +60,7 @@ class ED(RobotPart):
         self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed.srv.Reset)
         self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
                                                             ed_sensor_integration.srv.GetImage)
+        self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name, ed_sensor_integration.srv.RayTrace)
 
         self._tf_listener = tf_listener
 
@@ -67,6 +68,14 @@ class ED(RobotPart):
 
         self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker,
                                                  queue_size=10)
+
+        self.robot_name = robot_name
+
+
+
+    def learn_person(self, name):
+        rospy.logerr('robot.ed.learn_person IS DEPRECATED!!! Replace by robot.head.learn_person')
+        return True
 
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
@@ -130,14 +139,14 @@ class ED(RobotPart):
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if e.convex_hull and e.type == "" and e.id.endswith("-laser") ]
+        entities = [ e for e in entities if e.shape and e.type == "" and e.id.endswith("-laser") ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.projectToFrame("/%s/base_link"%self.robot_name, self._tf_listener).vector)) # TODO: adjust for robot
         except:
             print "Failed to sort entities"
             return None
@@ -252,20 +261,22 @@ class ED(RobotPart):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room = ""):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
+        #if isinstance(center_point, PointStamped):
+        #    center_point = self._transform_center_point_to_map(center_point)
+        # ToDo: check frame ids
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
+        # entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
+        entities = [ e for e in entities if e.is_a('possible_human') ]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point))
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.vector))
             print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
@@ -370,6 +381,9 @@ class ED(RobotPart):
         all_entities = self.get_entities(parse=False)
         matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
         return matches
+
+    def ray_trace(self, pose):
+        return self._ed_ray_trace_srv(raytrace_pose=pose)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

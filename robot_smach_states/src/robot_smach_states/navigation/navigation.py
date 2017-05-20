@@ -90,7 +90,6 @@ class getPlan(smach.State):
         self.robot.base.local_planner.setPlan(plan, pc, oc)
 
         if self.speak:
-            print "SPEAKING!!!!"
             self.robot.speech.speak(choice(["Affirmative!","I'm on my way!","Getting there!","I will be there in a sec!", "I'm coming!"]), block=False)
 
         return "goal_ok"

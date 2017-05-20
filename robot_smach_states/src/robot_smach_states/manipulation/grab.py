@@ -128,9 +128,9 @@ class PickUp(smach.State):
             grab_entity = self.associate(original_entity=grab_entity)
         else:
             rospy.loginfo("Updated pose of entity (dx, dy, dz) : (%f, %f, %f)" %
-                          (updated_grab_entity.pose.position.x - grab_entity.pose.position.x,
-                           updated_grab_entity.pose.position.y - grab_entity.pose.position.y,
-                           updated_grab_entity.pose.position.z - grab_entity.pose.position.z))
+                          (updated_grab_entity.pose.frame.p.x() - grab_entity.pose.frame.p.x(),
+                           updated_grab_entity.pose.frame.p.y() - grab_entity.pose.frame.p.y(),
+                           updated_grab_entity.pose.frame.p.z() - grab_entity.pose.frame.p.z()))
             grab_entity = updated_grab_entity
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -249,12 +249,16 @@ class PickUp(smach.State):
             if e.is_a("furniture"):
                 entities.remove(e)
         entities = sorted(entities,
-                          key=lambda entity: entity.distance_to_3d(original_entity.pose.p))
+                          key=lambda entity: entity.distance_to_3d(original_entity._pose.p))
 
         if self.distance(entities[0], original_entity) < 0.05:  # Objects Less than 5 cm apart might be associated
             return entities[0]
         else:
             return original_entity
+
+    def distance(self, e1, e2):
+        """ Computes the distance between two entities """
+        return e1.distance_to_3d(e2._pose.p)
 
 
 class ResetOnFailure(smach.StateMachine):

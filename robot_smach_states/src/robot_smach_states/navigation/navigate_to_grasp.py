@@ -52,14 +52,14 @@ class NavigateToGrasp(NavigateTo):
 
         try:
             pose = entity.pose #TODO Janno: Not all entities have pose information
-            x = pose.position.x
-            y = pose.position.y
+            x = pose.frame.p.x()
+            y = pose.frame.p.y()
         except KeyError, ke:
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
 
         try:
-            rz = entity.pose.orientation.z
+            rz, _, _ = entity.pose.frame.M.GetEulerZYX()
         except KeyError, ke:
             rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0

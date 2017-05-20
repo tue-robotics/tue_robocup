@@ -11,6 +11,7 @@ from robot_skills.util.kdl_conversions import VectorStamped
 # Challenge storing groceries
 import config
 
+
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
 
@@ -57,7 +58,7 @@ class InspectShelves(smach.State):
 
             if config.DEBUG:
                 rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
-                import ipdb;ipdb.set_trace()
+                import ipdb; ipdb.set_trace()
                 continue
 
             # Enable kinect segmentation plugin (only one image frame)
@@ -70,8 +71,9 @@ class InspectShelves(smach.State):
                 config.SEGMENTED_ENTITIES.append((entity, id_))
             # print "Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES)
 
+            # ToDo: classification threshold
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
-            # print  "Types and probs: {}".format(entity_types_and_probs)
+            # print "Types and probs: {}".format(entity_types_and_probs)
 
             # Recite entities
             for etp in entity_types_and_probs:
@@ -85,7 +87,8 @@ class InspectShelves(smach.State):
                 entity = self.robot.ed.get_entity(id=e.id, parse=False)
                 config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
-            config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
+            config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1],
+                                                        reverse=True)
 
         # Reset the head goal
         self.robot.head.cancel_goal()
@@ -97,4 +100,3 @@ class InspectShelves(smach.State):
         # DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
 
         return 'succeeded'
-

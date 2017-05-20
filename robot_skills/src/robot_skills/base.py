@@ -43,7 +43,7 @@ class LocalPlanner(RobotPart):
         self._orientation_constraint = orientation_constraint
         self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
         self._goal_handle = self._action_client.gh
-        rospy.loginfo("Goal handle = {0}".format(self._goal_handle))
+        rospy.logdebug("Goal handle = {0}".format(self._goal_handle))
         self.__setState("controlling", None, None, plan)
 
     def cancelCurrentPlan(self):

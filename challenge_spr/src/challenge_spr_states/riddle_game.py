@@ -8,50 +8,128 @@ import sys
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import Designator, EdEntityDesignator
-
+from hmi import TimeoutException
 from robocup_knowledge import load_knowledge
-choice_answer_mapping = load_knowledge('challenge_spr').choice_answer_mapping
+
+knowledge = load_knowledge('challenge_spr')
+common_knowledge = load_knowledge('common')
 
 
 def hear(robot, time_out):
-    spec = '<question>'
-    choices = {'question': [k for k,v in choice_answer_mapping.iteritems()]}
-    
-    return robot.ears.recognize(spec=spec, choices=choices, time_out=time_out)
+    try:
+        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=time_out)
+    except TimeoutException:
+        return None
 
 
 def answer(robot, res, crowd_data):
     if res:
-        if "question" in res.choices:
-            answer = choice_answer_mapping[res.choices['question']]
-            
-            # override for crowd answers
-            if answer == 'Crowd_males':
-                answer = 'In the crowd are %d males' % crowd_data['males']
+        if 'answer' in res.semantics:
+            answer = res.semantics['answer']
+            rospy.loginfo("Question was: '%s'?"%res.sentence)
+            robot.speech.speak("The answer is %s"%answer)
+            return 'answered'
+        elif 'action' in res.semantics:
+            # Counting people
+            if res.semantics['action'] == 'count':
 
-            if answer == 'Crowd_females':
-                answer = 'In the crowd are %d females' % crowd_data['females']
+                if res.semantics['entity'] == 'people':
+                    answer = 'In the crowd are %d people' % crowd_data['crowd_size']
 
-            if answer == 'Crowd_children':
-                answer = 'In the crowd are %d children' % crowd_data['children']
+                if res.semantics['entity'] == 'children':
+                    answer = 'In the crowd are %d children' % crowd_data['children']
 
-            if answer == 'Crowd_size':
-                answer = 'In the crowd are %d people' % crowd_data['crowd_size']
+                if res.semantics['entity'] == 'adults':
+                    answer = 'In the crowd are %d adults' % crowd_data['adults']
 
-            rospy.loginfo("Question was: '%s'?"%res.result)
+                if res.semantics['entity'] == 'elders':
+                    answer = 'In the crowd are %d elders' % crowd_data['elders']
+
+                if res.semantics['entity'] == 'males':
+                    answer = 'In the crowd are %d males' % crowd_data['males']
+
+                if res.semantics['entity'] == 'females':
+                    answer = 'In the crowd are %d females' % crowd_data['females']
+
+                if res.semantics['entity'] == 'men':
+                    answer = 'In the crowd are %d men' % crowd_data['men']
+
+                if res.semantics['entity'] == 'women':
+                    answer = 'In the crowd are %d women' % crowd_data['women']
+
+                if res.semantics['entity'] == 'boys':
+                    answer = 'In the crowd are %d boys' % crowd_data['boys']
+
+                if res.semantics['entity'] == 'girls':
+                    answer = 'In the crowd are %d girls' % crowd_data['girls']
+
+            # Location of placements or beacons
+            if res.semantics['action'] == 'a_find':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                if len(locations) == 1:
+                    loc = locations[0]['room']
+                    answer = 'The %s can be found in the %s' % (entity, loc)
+                else:
+                    answer = 'I dont know that object'
+
+            # Count placements or beacons in the room
+            if res.semantics['action'] == 'a_count':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                if len(locations) == 1:
+                    loc = locations[0]['room']
+                    if loc == res.semantics['location']:
+                        answer = 'There is one %s in the %s' % (entity, loc)
+                    else:
+                        answer = 'There are no %s in the %s' % (entity, loc)
+                else:
+                    answer = 'I dont know that object'
+
+            # Find objects
+            if res.semantics['action'] == 'o_find':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                if len(locations) == 1:
+                    cat = locations[0]['category']
+                    print cat
+                    loc, area_name = common_knowledge.get_object_category_location(cat)
+                    answer = 'You can find the %s %s %s' % (entity, area_name, loc)
+                    
+                else:
+                    answer = 'I dont know that object'
+
+            # Find category
+            if res.semantics['action'] == 'c_find':
+                entity = res.semantics['entity']
+                loc, area_name = common_knowledge.get_object_category_location(entity)
+                answer = 'You can find the %s on the %s' % (entity, loc)
+                
+            # Return objects category
+            if res.semantics['action'] == 'return_category':
+                entity = res.semantics['entity']
+                locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                if len(locations) == 1:
+                    cat = locations[0]['category']
+                    answer = 'The %s belongs to %s' % (entity, cat)
+                    
+                else:
+                    answer = 'I dont know that object'
+
+            rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
             return 'answered'
         else:
             robot.speech.speak("Sorry, I do not understand your question")
     else:
-        robot.speech.speak("My ears are not working properly.")    
+        pass
 
     return 'not_answered'
 
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(15)):
-        smach.State.__init__(self, outcomes=["answered"], input_keys=['crowd_data'])
+        smach.State.__init__(self, outcomes=["answered", "not_answered"], input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
 
@@ -71,8 +149,16 @@ class TestRiddleGame(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         self.userdata.crowd_data = {
-            'males': 2,
-            'females': 3
+            "males": 1,
+            "men": 2,
+            "females": 3,
+            "women": 4,
+            "children": 5,
+            "boys": 6,
+            "girls": 7,
+            "adults": 8,
+            "elders": 9,
+            "crowd_size": 10
         }
 
         with self:
@@ -83,12 +169,12 @@ class TestRiddleGame(smach.StateMachine):
 
             smach.StateMachine.add("HEAR_QUESTION",
                                    HearQuestion(robot),
-                                   transitions={'answered': 'HEAR_QUESTION_2'},
+                                   transitions={'answered': 'HEAR_QUESTION_2', 'not_answered': 'HEAR_QUESTION_2'},
                                    remapping={'crowd_data':'crowd_data'})
 
             smach.StateMachine.add("HEAR_QUESTION_2",
                                    HearQuestion(robot),
-                                   transitions={'answered': 'Done'})
+                                   transitions={'answered': 'Done', 'not_answered': 'Done'})
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')

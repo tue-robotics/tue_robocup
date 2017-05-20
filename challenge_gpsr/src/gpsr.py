@@ -1,123 +1,201 @@
 #! /usr/bin/python
 
 # ------------------------------------------------------------------------------------------------------------------------
-# By Sjoerd van den Dries, 2016
+# By Rokus Ottervanger, 2017
 # ------------------------------------------------------------------------------------------------------------------------
 
-import os
 import sys
 import rospy
-import argparse
-import time
+import random
+import json
 
-import robot_smach_states
+import hmi
+
+from action_server import Client as ActionClient
+
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
 
 from robocup_knowledge import load_knowledge
 
-import action_server
-from action_server.command_center import CommandCenter
 
-# ------------------------------------------------------------------------------------------------------------------------
+def task_result_to_report(task_result):
+    output = ""
+    for message in task_result.messages:
+        output += message
+    # if not task_result.succeeded:
+    #     output += " I am truly sorry, let's try this again! "
+    return output
+
+def request_missing_field(grammar, grammar_target, semantics, missing_field):
+    return semantics
+
 
 def main():
-    rospy.init_node("ee_gpsr")
+    rospy.init_node("gpsr")
+    random.seed()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('robot', help='Robot name')
-    parser.add_argument('--once', action='store_true', help='Turn on infinite loop')
-    parser.add_argument('--skip', action='store_true', help='Skip enter/exit')
-    parser.add_argument('sentence', nargs='*', help='Optional sentence')
-    args = parser.parse_args()
-    rospy.loginfo('args: %s', args)
+    skip        = rospy.get_param('~skip', False)
+    restart     = rospy.get_param('~restart', False)
+    robot_name  = rospy.get_param('~robot_name')
+    entrance_no = rospy.get_param('~entrance_number', 0)
+    no_of_tasks = rospy.get_param('~number_of_tasks', 0)
 
-    mock_sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+    rospy.loginfo("[GPSR] Parameters:")
+    rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
+    if skip:
+        rospy.loginfo("[GPSR] skip = {}".format(skip))
+    if entrance_no not in [1]:
+        rospy.logerr("[GPSR] entrance_number should be 1. You set it to {}".format(entrance_no))
+    else:
+        rospy.loginfo("[GPSR] entrance_number = {}".format(entrance_no))
+        entrance_no -= 1  # to transform to a 0-based index
+    if no_of_tasks:
+        rospy.loginfo("[GPSR] number_of_tasks = {}".format(no_of_tasks))
+    if restart:
+        rospy.loginfo("[GPSR] running a restart")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    if args.robot == 'amigo':
+    if robot_name == 'amigo':
         from robot_skills.amigo import Amigo as Robot
-    elif args.robot == 'sergio':
+    elif robot_name == 'sergio':
         from robot_skills.sergio import Sergio as Robot
     else:
         raise ValueError('unknown robot')
 
     robot = Robot()
 
-    # Sleep for 1 second to make sure everything is connected
-    time.sleep(1)
+    action_client = ActionClient(robot.robot_name)
 
-    command_center = CommandCenter(robot)
+    knowledge = load_knowledge('challenge_gpsr')
 
-    challenge_knowledge = load_knowledge('challenge_gpsr')
+    no_of_tasks_performed = 0
 
-    command_center.set_grammar(os.path.dirname(sys.argv[0]) + "/grammar.fcfg", challenge_knowledge)
+    user_instruction = "What can I do for you?"
+    report = ""
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Start
 
-    if not args.skip:
+    if not skip and not restart:
 
         # Wait for door, enter arena
-        s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
+        s = StartChallengeRobust(robot, knowledge.initial_pose[entrance_no])
         s.execute()
 
         # Move to the start location
-        nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
-        nwc.execute()
+        robot.speech.speak("Let's see if my operator has a task for me!", block=False)
+
+
+    if restart:
+        robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    sentence = " ".join([word for word in args.sentence if word[0] != '_'])
+    finished = False
+    start_time = rospy.get_time()
 
-    first = True
+    while True:
+        # Navigate to the GPSR meeting point
+        if not skip and not finished:
+            robot.speech.speak("Moving to the meeting point.", block=False)
+            nwc = NavigateToWaypoint(robot=robot,
+                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                              id=knowledge.starting_pose[entrance_no]),
+                                     radius=0.3)
+            nwc.execute()
+            # Report to the user and ask for a new task
 
-    if sentence:
-        semantics = command_center.parse_command(sentence)
-        if not semantics:
-            rospy.logerr("Cannot parse \"{}\"".format(sentence))
-            return
+        # Report to the user
+        robot.head.look_at_standing_person()
+        robot.speech.speak(report, block=True)
 
-        command_center.execute_command(semantics)
-    else:
         while True:
+            while True:
+                try:
+                    robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
+                except hmi.TimeoutException:
+                    continue
+                else:
+                    break
 
-            if first:
-                # First sentence robot says
-                sentences = ["Hello there! Welcome to the GPSR. You can give me an order, but wait for the ping."]
-            else:
-                # Sentence robot says after completing a task
-                sentences = ["Hello there, you look lovely! I'm here to take a new order, but wait for the ping!"] 
+            robot.speech.speak(user_instruction, block=True)
+            # Listen for the new task
+            while True:
+                try:
+                    sentence, semantics = robot.hmi.query(description="",
+                                                          grammar=knowledge.grammar,
+                                                          target=knowledge.grammar_target)
+                    break
+                except hmi.TimeoutException:
+                    robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
+                    continue
 
-            # These sentences are for when the first try fails
-            # (Robot says "Do you want me to ...?", you say "No", then robot says sentence below)
-            sentences += [
-                "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
-                "Again, I am deeply sorry. Bad robot! Please try again, but wait for the ping!",
-                "You and I have communication issues. Speak up! Tell me what you want, but wait for the ping"
-                ]
-
-            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600, sentences=sentences)           
-
-            if not res:
-                continue
-
-            first = False
-
-            (sentence, semantics) = res
-
-            if not command_center.execute_command(semantics):
-                robot.speech.speak("I am truly sorry, let's try this again")
-                continue
-
-            if args.once:
+            # check if we have heard this correctly
+            robot.speech.speak('I heard %s, is this correct?' % sentence)
+            try:
+                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                    robot.speech.speak('Sorry')
+                    continue
+            except hmi.TimeoutException:
+                # robot did not hear the confirmation, so lets assume its correct
                 break
 
-            if not args.skip:
-                nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
-                nwc.execute()
+            break
+
+        # Dump the output json object to a string
+        task_specification = json.dumps(semantics)
+
+        # Send the task specification to the action server
+        task_result = action_client.send_task(task_specification)
+
+        print task_result.missing_field
+        # # Ask for missing information
+        # while task_result.missing_field:
+        #     request_missing_field(knowledge.task_result.missing_field)
+        #     task_result = action_client.send_task(task_specification)
+
+        # Write a report to bring to the operator
+        report = task_result_to_report(task_result)
+
+        robot.lights.set_color(0,0,1)  #be sure lights are blue
+
+        robot.head.look_at_standing_person()
+        robot.leftArm.reset()
+        robot.leftArm.send_gripper_goal('close',0.0)
+        robot.rightArm.reset()
+        robot.rightArm.send_gripper_goal('close',0.0)
+        robot.torso.reset()
+
+        if task_result.succeeded:
+            # Keep track of the number of performed tasks
+            no_of_tasks_performed += 1
+            if no_of_tasks_performed == no_of_tasks:
+                finished = True
+
+            # If we succeeded, we can say something optimistic after reporting to the operator
+            if no_of_tasks_performed == 1:
+                task_word = "task"
+            else:
+                task_word = "tasks"
+            report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
+
+        if rospy.get_time() - start_time > 60 * 15:
+            finished = True
+
+        if finished and not skip:
+            nwc = NavigateToWaypoint(robot=robot,
+                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                              id=knowledge.exit_waypoint[entrance_no]),
+                                     radius = 0.3)
+            nwc.execute()
+            robot.speech.speak("Thank you very much, and goodbye!", block=True)
+            break
+
 
 # ------------------------------------------------------------------------------------------------------------------------
 
