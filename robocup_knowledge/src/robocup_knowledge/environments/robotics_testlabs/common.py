@@ -1,4 +1,4 @@
-# COMMON KNOWLEDGE FILE RGO2015
+# COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
 
 female_names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
 male_names = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
