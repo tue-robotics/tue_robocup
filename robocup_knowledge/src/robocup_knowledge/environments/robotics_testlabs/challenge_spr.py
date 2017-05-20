@@ -23,6 +23,9 @@ T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 C[{A}] -> Q[A]
 """
 
+# Q questions are implemented already in the challenge.
+# NQ questions are still not implemented, so the robot should not understand them. Future tasks! :)
+
 ##############################################################################
 #
 # Verbs & shared stuff
