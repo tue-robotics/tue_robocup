@@ -20,7 +20,6 @@ from robot_smach_states.util.startup import startup
 from robot_skills.util.kdl_conversions import VectorStamped
 from robocup_knowledge import load_knowledge
 
-
 timeout = 10
 
 
@@ -110,10 +109,9 @@ class DetectCrowd(smach.State):
 
 
     def describe_crowd(self, detections):
-        num_females = 0
+        
         num_women = 0
         num_girls = 0
-        num_males = 0
         num_men = 0
         num_boys = 0
         num_elders = 0
@@ -130,30 +128,31 @@ class DetectCrowd(smach.State):
                 if d.gender == FaceProperties.MALE:
                     if d.age < 18:
                         num_boys +=1
+                    elif d.age > 60:
+                        num_elders +=1
                     else:
                         num_men += 1
                 else:
                     if d.age < 18:
                         num_girls +=1
+                    elif d.age > 60:
+                        num_elders +=1
                     else:
                         num_women += 1
-
-            num_males = num_boys + num_men
-            num_females = num_girls + num_women
             
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
         return {
-            "males": num_males,
+            "males": num_boys + num_men,
             "men": num_men,
-            "females": num_females,
-            "women": num_women,
-            "children": num_boys + num_girls,
             "boys": num_boys,
+            "females": num_girls + num_women,
+            "women": num_women,
             "girls": num_girls,
+            "children": num_boys + num_girls,
             "adults": num_men + num_women,
             "elders": num_elders,
-            "crowd_size": num_females + num_males
+            "crowd_size": num_females + num_males + num_elders
         }
 
 
