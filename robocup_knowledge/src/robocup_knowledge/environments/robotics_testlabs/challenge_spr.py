@@ -150,9 +150,9 @@ NQ["action" : "o_count", "entity" : C] -> how many OBJECT_CATEGORIES[C] there ar
 NQ["action" : "find_color", "entity" : O] -> whats the colour of the OBJECT_NAMES[O]
 NQ["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
 
-NQ["action" : "o_count", "entity" : C, "location" : PL] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENT[PL]
-NQ["action" : "o_count", "entity" : O, "location" : PL] -> how many OBJECT_NAMES[O] are in the PLACEMENT[PL]
-NQ["action" : "category_at_loc", "location" : PL] -> what objects are stored in the PLACEMENT[PL]
+NQ["action" : "o_count", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "o_count", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
 
 NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] WHATWHICH one is ADJR
 '''
