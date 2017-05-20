@@ -11,10 +11,10 @@ commands = {
 # add or get from ~/ros/kinetic/system/src/ed_object_models/models/robotics_testlabs/model.yaml
 waypoints = {
     'bedroom':              {'id':      "explore6",
-                             'radius':  1}i
+                             'radius':  1},
     'livingroom':              {'id':   "operator_pose",
-                             'radius':  1}i
-    } #TODO: update waypoint, target
+                             'radius':  1},
+    }
 
 waypoint_car = {'id':      "car",
                 'radius':  1}
