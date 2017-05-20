@@ -38,15 +38,15 @@ rosrun challenge_spr bluff_game.py amigo
 		- send the image to /amigo/face_recognition/recognize
 		- process the results
 - send data for the inspected crowd to the library
+- updated library with questions for crowd, arena and objects
 
 ## TODO
 
 Riddle / Bluff games:
 
-- update library with questions:
-	- about the arena
-	- about the inspected crowd
-	- about list of official objects
+- update library with predefined questions
+- remove WaitForPersonInFront state, substitute it with timeout and Say state
+- implement the sound localization into Bluff game
 - detect.py
 	- use skybiometry node and service
 	- use face_recognition node and service
