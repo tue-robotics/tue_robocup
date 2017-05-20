@@ -74,7 +74,7 @@ class DetectCrowd(smach.State):
                 imgs.append(imgmsg)
 
         rospy.loginfo('Calling Skybiometry...')
-        
+
         try:
             # face_properties = self._skybiometry.get_face_properties(imgs, timeout)
             get_face_properties = rospy.ServiceProxy('/get_face_properties', GetFaceProperties)
@@ -84,7 +84,7 @@ class DetectCrowd(smach.State):
             rospy.logerr(str(e))
             self.robot.speech.speak('API call failed, is there internet?')
             return [None]*number_of_people
-        
+
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
         rospy.loginfo('face_properties:%s', face_log)
         return face_properties
@@ -100,7 +100,7 @@ class DetectCrowd(smach.State):
         return self._bridge.imgmsg_to_cv2(image, 'bgr8')
 
     def get_faces(self, image):
-        
+
         faces = self._face_recognizer.recognize(image)
 
         rospy.loginfo("Faces: %s", faces)
@@ -109,17 +109,18 @@ class DetectCrowd(smach.State):
 
 
     def describe_crowd(self, detections):
-        
+        num_males = 0
+        num_females = 0
         num_women = 0
         num_girls = 0
         num_men = 0
         num_boys = 0
         num_elders = 0
-  
+
         if not all(detections):
             rospy.loginfo('making a random guess for %d people', len(detections))
             if len(detections) > 2:
-                num_males = 1 + random.randrange(len(detections) - 2) 
+                num_males = 1 + random.randrange(len(detections) - 2)
             else:
                 num_males = 1
             num_females = len(detections) - num_males
@@ -139,14 +140,17 @@ class DetectCrowd(smach.State):
                         num_elders +=1
                     else:
                         num_women += 1
-            
+
+            num_males = num_boys + num_men
+            num_females = num_girls + num_women
+
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
         return {
-            "males": num_boys + num_men,
+            "males": num_males,
             "men": num_men,
             "boys": num_boys,
-            "females": num_girls + num_women,
+            "females": num_females,
             "women": num_women,
             "girls": num_girls,
             "children": num_boys + num_girls,
@@ -173,7 +177,7 @@ class TestDetectCrowd(smach.StateMachine):
                                    DetectCrowd(robot),
                                    transitions={'succeeded': 'Done',
                                                 'failed': 'Aborted'})
-            
+
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
 
