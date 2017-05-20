@@ -40,7 +40,8 @@ class NavigateToWaypoint(NavigateTo):
             x = e.pose.frame.p.x()
             y = e.pose.frame.p.y()
             rz, _, _ = e.pose.frame.M.GetEulerZYX()
-        except:
+        except Exception as e:
+            rospy.logerr(e)
             return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
