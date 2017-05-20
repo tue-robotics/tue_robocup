@@ -37,9 +37,9 @@ class NavigateToWaypoint(NavigateTo):
             return None
 
         try:
-            x = e.pose.frame.p.x
-            y = e.pose.frame.p.y
-            rz, _, _ = e.pose.frame.M.GetEurlerZYX()
+            x = e.pose.frame.p.x()
+            y = e.pose.frame.p.y()
+            rz, _, _ = e.pose.frame.M.GetEulerZYX()
         except:
             return None
 
