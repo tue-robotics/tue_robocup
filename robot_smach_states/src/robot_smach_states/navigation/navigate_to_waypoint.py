@@ -37,9 +37,9 @@ class NavigateToWaypoint(NavigateTo):
             return None
 
         try:
-            x = e.pose.position.x
-            y = e.pose.position.y
-            rz = tf.euler_z_from_quaternion(e.pose.orientation)
+            x = e.pose.frame.p.x
+            y = e.pose.frame.p.y
+            rz, _, _ = e.pose.frame.M.GetEurlerZYX()
         except:
             return None
 

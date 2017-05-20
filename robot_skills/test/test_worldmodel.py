@@ -66,7 +66,7 @@ if closest2.type != query_type:
 
 id_ = "trashbin"
 trashbin = robot.ed.get_entity(id_)
-robot.speech.speak("Entity {id} is at {x}, {y} in the map".format(id=id_, x=trashbin._pose.p.x(), y=trashbin._pose.p.y()))
+robot.speech.speak("Entity {id} is at {x}, {y} in the map".format(id=id_, x=trashbin.pose.frame.p.x(), y=trashbin.pose.frame.p.y()))
 if trashbin.id != id_:
     failed_actions += ["get_entity with id {id}".format(id=id_)]
     robot.speech.speak("I could not get entity with id {id}".format(id=id_))

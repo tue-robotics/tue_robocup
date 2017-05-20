@@ -429,8 +429,8 @@ class ManipRecogSingleItem(smach.StateMachine):
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
             # TODO: return x coordinate of entity.center_point in base_link frame
-            p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
-            return p.x*p.x
+            p = entity.pose.projectToFrame(robot.robot_name+"/base_link", robot.tf_listener).frame.p  # Get position in base_link
+            return p.x()**2
 
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
                                                                        criteriafuncs=[not_ignored, size,

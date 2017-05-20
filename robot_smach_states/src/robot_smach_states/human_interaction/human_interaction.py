@@ -352,10 +352,10 @@ def detect_human_in_front(robot):
         return False
 
     for detection in result:
-        pose_base_link = robot.tf_listener.transformPose(target_frame=robot.robot_name+'/base_link', pose=detection.pose)
+        pose_base_link = detection.pose.projectToFrame(robot.robot_name+'/base_link', robot.tf_listener)
 
-        x = pose_base_link.pose.position.x
-        y = pose_base_link.pose.position.y
+        x = pose_base_link.pose.frame.p.x()
+        y = pose_base_link.pose.frame.p.y()
 
         print "Detection (x,y) in base link: (%f,%f)" % (x,y)
 

@@ -102,7 +102,7 @@ class GraspPointDeterminant(object):
             # Divide width in two
              # * kdl.Vector(0.5 * (wmin+wmax, 0, 0)
             tvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
-                                kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.position.z)),
+                                kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.frame.p.z())),
                                 frame_id="/map") # Helper frame
 
             cvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),

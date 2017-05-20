@@ -5,7 +5,7 @@ import yaml
 import rospy
 import PyKDL as kdl
 
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, kdlFrameToPoseMsg
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, kdlFrameToPoseMsg, FrameStamped
 from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.shape import shape_from_entity_info
 
@@ -113,8 +113,8 @@ class Entity(object):
 
     @property
     def pose(self):
-        """ Returns the pose (at this point, as a geometry_msgs.Pose, in the future as a kdl frame """
-        return kdlFrameToPoseMsg(self._pose)
+        """ Returns the pose of the Entity as a FrameStamped"""
+        return FrameStamped(frame=self._pose, frame_id=self.frame_id)
 
     @pose.setter
     def pose(self, pose):
