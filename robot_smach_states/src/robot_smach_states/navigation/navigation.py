@@ -71,11 +71,12 @@ class getPlan(smach.State):
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'
 
+        #import ipdb; ipdb.set_trace()
         constraint = self.constraint_function()
 
         # Perform some typechecks
         if not constraint:
-            rospy.logwarn("Invalid constraints given to getPlan()")
+            rospy.logwarn("Invalid constraints given to getPlan(). constraint: {}".format(constraint))
             return "goal_not_defined"
 
         pc, oc = constraint
