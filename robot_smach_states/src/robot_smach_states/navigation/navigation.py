@@ -71,7 +71,6 @@ class getPlan(smach.State):
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'
 
-        #import ipdb; ipdb.set_trace()
         constraint = self.constraint_function()
 
         # Perform some typechecks
