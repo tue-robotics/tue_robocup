@@ -32,5 +32,5 @@ class NotifyEButton(smach.StateMachine):
                                                     "released"  :"succeeded"})
 
             smach.StateMachine.add("SAY_PRESSED",
-                                    Say(robot, ["My Emergency button is still pressed", "EButton still pressed"], block=False),
+                                    Say(robot, ["My Emergency button is still pressed", "E-Button still pressed"], block=False),
                                     transitions={   "spoken":"succeeded"})
