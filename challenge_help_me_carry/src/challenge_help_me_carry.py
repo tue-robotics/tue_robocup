@@ -4,6 +4,7 @@ import rospy
 import smach
 import sys
 import time
+import datetime
 from hmi import TimeoutException
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -13,6 +14,7 @@ import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
 from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
@@ -147,9 +149,18 @@ def setup_statemachine(robot):
     empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms,
                                                       robot.rightArm,
                                                       name="empty_arm_designator")
-    current_item = ds.EntityByIdDesignator(robot,
-                                           id=challenge_knowledge.default_item,
-                                           name="current_item")
+
+    # We don't actually grab something, so there is no need for an actual thing to grab
+    current_item = ds.VariableDesignator(Entity("dummy",
+                                                "dummy",
+                                                "/{}/base_link".format(robot.robot_name),
+                                                kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5),
+                                                None,
+                                                {},
+                                                [],
+                                                datetime.datetime.now()),
+                                         name="current_item")
+
     arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
                                                              current_item,
                                                              name="arm_with_item_designator")
