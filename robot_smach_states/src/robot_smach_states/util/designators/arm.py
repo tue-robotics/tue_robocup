@@ -52,7 +52,9 @@ class ArmDesignator(Designator):
             rospy.loginfo("Found {} operational arms: {}".format(len(operational_arms), [arm2name[arm] for arm in operational_arms]))
 
             if any(operational_arms):
-                return operational_arms[0]
+                selected_arm = operational_arms[0]
+                rospy.loginfo("Selected arm: {arm}".format(arm=selected_arm))
+                return selected_arm
             else:
                 rospy.logerr("ArmDesignator {0} could not resolve to an arm".format(self))
                 return None
