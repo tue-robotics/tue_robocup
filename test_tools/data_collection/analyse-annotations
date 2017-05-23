@@ -7,6 +7,16 @@ import os
 from robocup_knowledge import knowledge_loader
 
 
+""" 
+Counts the images in the subdirectories of 
+~/MEGA/data<ROBOT_ENV>/training_data/annotated. Both the verified and 
+unverified annotations are checked and a summary is printed to screen.
+This contains:
+- Per object that is present in the database: the amount of images present in the directory
+- If images are not present in the database, a warning is printed
+"""
+
+
 # Colors from printing on screen
 class BColors:
     HEADER = "\033[95m"
