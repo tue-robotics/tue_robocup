@@ -1,7 +1,7 @@
 # COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
 
-female_names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
-male_names = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+female_names = ["anna","beth","carmen","jennifer","jessica","kimberly","kristina","laura","mary","sarah"]
+male_names = ["alfred","charles","daniel","james","john","luis","paul","richard","robert","steve"]
 names = female_names + male_names
 
 # This dict holds all locations
