@@ -168,6 +168,10 @@ def setup_statemachine(robot):
         #                        transitions={'success':        'FOLLOW_OPERATOR',
         #                                     'abort':          'Aborted'})
 
+        smach.StateMachine.add('ASK_FOLLOW_OR_REMEMBER',
+                                states.Say(robot, ["Are we at the car or should I follow you?"], block=True),
+                                transitions={'spoken':  'WAIT_TO_FOLLOW_OR_REMEMBER'})
+
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
                                WaitForOperatorCommand(robot,
                                                       possible_commands=[
@@ -191,14 +195,18 @@ def setup_statemachine(robot):
                                                      ask_follow=True,
                                                      learn_face=True,
                                                      replan=True),
-                               transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
-                                            'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
-                                            'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
+                               transitions={'stopped':        'ASK_FOLLOW_OR_REMEMBER',
+                                            'lost_operator':  'ASK_FOLLOW_OR_REMEMBER',
+                                            'no_operator':    'ASK_FOLLOW_OR_REMEMBER'})
 
         smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                StoreCarWaypoint(robot),
-                               transitions={'success':        'WAIT_FOR_DESTINATION',
+                               transitions={'success':        'ASK_DESTINATION',
                                             'abort':          'Aborted'})
+
+        smach.StateMachine.add('ASK_DESTINATION',
+                                states.Say(robot, ["Where should I bring the groceries?"], block=True),
+                                transitions={'spoken':  'WAIT_FOR_DESTINATION'})
 
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                WaitForOperatorCommand(robot,
@@ -259,7 +267,7 @@ def setup_statemachine(robot):
                                #             'abort':          'Aborted'})
 
         smach.StateMachine.add('AT_END',
-                                states.Say(robot, "Goodbye"),
+                                states.Say(robot, ["We arrived at the car, goodbye", "You have reached your destination, goodbye", "The car is right here, see you later!"], block=True),
                                 transitions={'spoken':  'Done'})
 
     ds.analyse_designators(sm, "help_me_carry")
