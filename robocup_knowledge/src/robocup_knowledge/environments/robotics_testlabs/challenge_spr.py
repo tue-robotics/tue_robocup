@@ -142,21 +142,20 @@ ADJR -> smaller | bigger
 Q["action" : "o_find", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
 Q["action" : "c_find", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
 Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
+Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAMES[O]
+Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
 
 NQ["action" : "o_count", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
-
-NQ["action" : "find_color", "entity" : O] -> whats the colour of the OBJECT_NAMES[O]
-NQ["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
 
 NQ["action" : "o_count", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
 NQ["action" : "o_count", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
 NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
 
-NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] WHATWHICH one is ADJR
+NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] which one is ADJR
 '''
 
 ##############################################################################
-#
+#https://www.datacamp.com/courses/free-introduction-to-r?utm_source=fb_paid&utm_medium=fb_desktop&utm_campaign=statmethods_visitors
 # Data
 #
 ##############################################################################
