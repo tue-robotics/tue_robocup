@@ -486,6 +486,8 @@ class FollowOperator(smach.State):
             # a CategoryProbability has a label and a float
             raw_detections = self._robot.head.detect_faces()
 
+            rospy.loginfo("_recover_operator: raw_detections: {}".format(raw_detections))
+
             # Only take detections with operator
             detections = []
             for d in raw_detections:
