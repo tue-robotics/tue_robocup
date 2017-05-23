@@ -145,8 +145,15 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         self.entity_designator = entity_designator
 
     def available(self, arm):
-        """Check that the arm is occupied by the entity refered to by the entity_designator"""
-        return arm.occupied_by == self.entity_designator.resolve()
+        """Check that the arm is occupied by the entity referred to by the entity_designator"""
+        # Check that the designator actually resolved to anything.
+        # Otherwise, the check could become None == None, which is also True
+        entity = self.entity_designator.resolve()
+        if entity:
+            return arm.occupied_by == entity
+        else:
+            rospy.logwarn("Entity is None and {arm} is {un}occupied".format(arm=arm, un="un" if arm.occupied_by == None else ""))
+            return False
 
 if __name__ == "__main__":
     import doctest
