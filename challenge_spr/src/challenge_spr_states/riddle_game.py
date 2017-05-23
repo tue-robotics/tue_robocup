@@ -118,6 +118,33 @@ def answer(robot, res, crowd_data):
                     else:
                         answer = 'I dont know that object'
 
+                # Return objects color
+                if action['action'] == 'return_color':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                    if len(locations) == 1:
+                        col = locations[0]['color']
+                        answer = 'The color of %s is %s' % (entity, col)
+        
+                    else:
+                        answer = 'I dont know that object'    
+
+                # Compare objects categories
+                if action['action'] == 'compare_category':
+                    entity_a = action['entity_a']
+                    entity_b = action['entity_b']
+                    locations_a = [l for l in common_knowledge.objects if l['name'] == entity_a]
+                    locations_b = [l for l in common_knowledge.objects if l['name'] == entity_b]
+                    if len(locations_a) == 1 & len(locations_b) == 1:
+                        cat_a = locations_a[0]['category']
+                        cat_b = locations_b[0]['category']
+                        if cat_a == cat_b:
+                            answer = 'Both objects belong to the same category %s' % (cat_a)
+                        else:
+                            answer = 'These objects belong to different categories'
+                    else:
+                        answer = 'I dont know these objects'                    
+
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
             return 'answered'
