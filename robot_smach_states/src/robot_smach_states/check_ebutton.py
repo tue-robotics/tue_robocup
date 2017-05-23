@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import os
 import rospy
 import smach
 
@@ -12,7 +13,7 @@ class CheckEButton(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        if self.robot.ebutton.read_ebutton():
+        if self.robot.ebutton.read_ebutton() and bool(os.environ.get("ROBOT_REAL", False)):
             return "pressed"
         else:
             return "released"
