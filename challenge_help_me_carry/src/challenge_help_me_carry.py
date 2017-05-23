@@ -42,7 +42,7 @@ class WaitForOperatorCommand(smach.State):
 
         smach.State.__init__(self, outcomes=_outcomes,  output_keys=_output_keys)
 
-    def _listen_for_commands(self, tries=3, time_out = rospy.Duration(30)):
+    def _listen_for_commands(self, tries=3, time_out=30):
         for i in range(0, tries):
             try:
                 result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T', timeout=time_out)
