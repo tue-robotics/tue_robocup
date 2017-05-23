@@ -13,9 +13,13 @@ class CheckEButton(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        if self.robot.ebutton.read_ebutton() and bool(os.environ.get("ROBOT_REAL", False)):
-            return "pressed"
+        if bool(os.environ.get("ROBOT_REAL", False)):
+            if self.robot.ebutton.read_ebutton():
+                return "pressed"
+            else:
+                return "released"
         else:
+            rospy.logwarn("Ignoring e-button because this robot is simulated")
             return "released"
 
 class NotifyEButton(smach.StateMachine):
