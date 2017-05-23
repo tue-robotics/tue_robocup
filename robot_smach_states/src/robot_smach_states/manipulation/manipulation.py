@@ -187,7 +187,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
             return "failed"
 
         if self.item_designator:
-            arm.occupied_by = self.item_designator
+            arm.occupied_by = self.item_designator.resolve()
         else:
             if self.item_label != "":
                 handed_entity = EntityInfo(id=self.item_label)
