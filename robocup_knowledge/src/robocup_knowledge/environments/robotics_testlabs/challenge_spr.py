@@ -65,7 +65,7 @@ Q["action" : "answer", "solution": "Isaac Asimov"] -> who wrote the three laws o
 Q["action" : "answer", "solution": "The Jetsons"] -> from what series do you know rosie the robot
 Q["action" : "answer", "solution": "The Flintstones"] -> from what series do you know the baby bam bam
 Q["action" : "answer", "solution": "Neo"] -> who is the main character of the matrix
-Q["action" : "answer", "solution": "Peper and HSR"] -> name the two robocupathome standart platforms
+Q["action" : "answer", "solution": "Peper and HSR"] -> name the two robocupathome standard platforms
 Q["action" : "answer", "solution": "In my SSD"] -> where do you store your memories
 Q["action" : "answer", "solution": "In Eindhoven The Netherlands"] -> where is your team located
 
