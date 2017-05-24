@@ -95,6 +95,22 @@ inspect_positions = {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+most_probable_location_in_room_map = {
+    'livingroom': 'dinner_table',
+    'bedroom': 'nightstand',
+    'workshop': 'workbench',
+    'kitchen': 'desk',
+    'hallway': 'hallway_table'
+}
+
+
+def get_location_from_room(room_id):
+    if room_id in most_probable_location_in_room_map:
+        return most_probable_location_in_room_map[room_id]
+    return None
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 ''' colors from printing on screen '''
 class bcolors:
     HEADER = '\033[95m'
