@@ -154,7 +154,7 @@ NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_N
 '''
 
 ##############################################################################
-#https://www.datacamp.com/courses/free-introduction-to-r?utm_source=fb_paid&utm_medium=fb_desktop&utm_campaign=statmethods_visitors
+#
 # Data
 #
 ##############################################################################
