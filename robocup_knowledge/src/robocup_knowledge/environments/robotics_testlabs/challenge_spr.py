@@ -144,8 +144,7 @@ Q["action" : "c_find", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C
 Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
 Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAMES[O]
 Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
-
-NQ["action" : "o_count", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
+Q["action" : "o_count", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
 
 NQ["action" : "o_count", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
 NQ["action" : "o_count", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
