@@ -143,7 +143,17 @@ def answer(robot, res, crowd_data):
                         else:
                             answer = 'These objects belong to different categories'
                     else:
-                        answer = 'I dont know these objects'                    
+                        answer = 'I dont know these objects'    
+
+                # Count how many objects belong to category
+                if action['action'] == 'o_count':
+                    entity = action['entity']
+                    objects_count = [l for l in common_knowledge.objects if l['category'] == entity]
+                    if len(objects_count) > 0:
+                        count = len(objects_count)
+                        answer = 'The number of objects in category %s is %i' % (entity, count)
+                    else:
+                        answer = 'I dont know this category' 
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
