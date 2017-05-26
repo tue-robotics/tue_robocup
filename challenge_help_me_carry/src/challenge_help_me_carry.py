@@ -150,6 +150,12 @@ def setup_statemachine(robot):
                                                       robot.rightArm,
                                                       name="empty_arm_designator")
 
+
+    # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm (first resolve is cached), unless it is unlocked
+    # For this challenge, unlocking is not needed
+    bag_arm_designator = empty_arm_designator.lockable()
+    bag_arm_designator.lock()
+
     # We don't actually grab something, so there is no need for an actual thing to grab
     current_item = ds.VariableDesignator(Entity("dummy",
                                                 "dummy",
@@ -161,9 +167,9 @@ def setup_statemachine(robot):
                                                 datetime.datetime.now()),
                                          name="current_item")
 
-    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
-                                                             current_item,
-                                                             name="arm_with_item_designator")
+    # arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
+    #                                                          current_item,
+    #                                                          name="arm_with_item_designator")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -220,7 +226,7 @@ def setup_statemachine(robot):
 
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
-                               GrabItem(robot, empty_arm_designator, current_item),
+                               GrabItem(robot, bag_arm_designator, current_item),
                                transitions={'succeeded':        'SAY_GOING_TO_ROOM',
                                             'timeout':          'SAY_GOING_TO_ROOM', # For now in simulation timeout is considered a succes.
                                             'failed':           'Aborted'},
@@ -240,9 +246,9 @@ def setup_statemachine(robot):
 
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
-                               states.Place(robot, current_item, place_position, arm_with_item_designator),
-                               transitions={'done':             'ASKING_FOR_HELP',
-                                            'failed':           'Aborted'})
+                               DropBagOnGround(robot, bag_arm_designator, current_item),
+                               transitions={'succeeded':        'ASKING_FOR_HELP',
+                                            'failed':           'ASKING_FOR_HELP'})
 
         smach.StateMachine.add('ASKING_FOR_HELP',
                                #TODO: look and then face new operator

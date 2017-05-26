@@ -80,6 +80,9 @@ class LockingDesignator(Designator):
     def __repr__(self):
         return "LockingDesignator({})".format(str(self.to_be_locked.name))
 
+    def _get_name(self):
+        return "lockable({})".format(self.to_be_locked.name)
+
 
 class AttrDesignator(Designator):
 
