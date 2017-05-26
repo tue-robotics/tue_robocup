@@ -10,6 +10,9 @@ from hmi import TimeoutException
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
 import robot_smach_states.util.designators as ds
+from robot_smach_states.util.designators import check_type
+from robot_skills.arms import Arm
+
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
@@ -111,7 +114,8 @@ class GrabItem(smach.State):
         handOverHuman = states.HandoverFromHuman(self._robot,
                                                  self._empty_arm_designator,
                                                  "current_item",
-                                                 self._current_item)
+                                                 self._current_item,
+                                                 arm_configuration="carrying_bag_pose")
 
         userdata.target_room_out = userdata.target_room_in
 
@@ -137,6 +141,22 @@ class NavigateToRoom(smach.State):
 
         return navigateToWaypoint.execute()
 
+class DropBagOnGround(smach.StateMachine):
+    '''
+    Put a bag in the robot's gripper on the ground
+    '''
+    def __init__(self, robot, arm_designator, current_item_designator):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        check_type(arm_designator, Arm)
+
+        with self:
+            smach.StateMachine.add( 'OPEN_BEFORE_DROP', states.SetGripper(robot, arm_designator, gripperstate='open'),
+                                transitions={'succeeded'    :   'DROP_POSE',
+                                             'failed'       :   'DROP_POSE'})
+
+            smach.StateMachine.add("DROP_POSE", states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
+                            transitions={'succeeded':'succeeded','failed':'failed'})
 
 def setup_statemachine(robot):
 

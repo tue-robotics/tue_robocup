@@ -62,7 +62,7 @@ class HandoverFromHuman(smach.StateMachine):
     CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
     as id.
     '''
-    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10, arm_configuration="handover_to_human"):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed','timeout'])
 
         check_type(arm_designator, Arm)
@@ -70,7 +70,7 @@ class HandoverFromHuman(smach.StateMachine):
             rospy.logerr("No grabbed entity label or grabbed entity designator given")
 
         with self:
-            smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, "handover_to_human"),
+            smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, arm_configuration),
                             transitions={'succeeded':'OPEN_BEFORE_INSERT','failed':'OPEN_BEFORE_INSERT'})
 
             smach.StateMachine.add( 'OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator, gripperstate='open'),
