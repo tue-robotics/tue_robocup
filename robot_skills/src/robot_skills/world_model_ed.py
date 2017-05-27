@@ -127,7 +127,7 @@ class ED(RobotPart):
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
-    def get_closest_laser_entity(self, type="", center_point=kdl.Vector(), radius=0):
+    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
