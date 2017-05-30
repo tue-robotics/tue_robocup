@@ -14,7 +14,7 @@ import robot_smach_states.util.designators as ds
 from challenge_set_a_table_states import detect
 
 
-class ChallengeSetATable.StateMachine):
+class ChallengeSetATable(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
