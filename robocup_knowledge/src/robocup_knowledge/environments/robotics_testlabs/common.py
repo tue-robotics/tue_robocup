@@ -34,57 +34,57 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 rooms = location_rooms + ["workshop"]
 
 objects = [
-    {'category': 'food',                'name': 'apple'             },
-    {'category': 'food',                'name': 'bread'             },
-    {'category': 'food',                'name': 'cereals'           },
-    {'category': 'food',                'name': 'cornflakes'        },
-    {'category': 'food',                'name': 'crackers'          },
-    {'category': 'food',                'name': 'lemon'             },
-    {'category': 'food',                'name': 'noodles'           },
-    {'category': 'food',                'name': 'paprika'           },
-    {'category': 'food',                'name': 'peas'              },
-    {'category': 'food',                'name': 'pepper'            },
-    {'category': 'food',                'name': 'potato'            },
-    {'category': 'food',                'name': 'potato_soup'       },
-    {'category': 'food',                'name': 'salt'              },
-    {'category': 'food',                'name': 'tomato_pasta'      },
-    {'category': 'container',           'name': 'bag'               },
-    {'category': 'container',           'name': 'basket'            },
-    {'category': 'container',           'name': 'coffecup'          },
-    {'category': 'container',           'name': 'plate'             },
-    {'category': 'container',           'name': 'red_bowl'          },
-    {'category': 'container',           'name': 'white_bowl'        },
-    {'category': 'drink',               'name': 'banana_milk'       },
-    {'category': 'drink',               'name': 'cappucino'         },
-    {'category': 'drink',               'name': 'coke'              },
-    {'category': 'drink',               'name': 'orange_drink'      },
-    {'category': 'drink',               'name': 'water'             },
-    {'category': 'snack',               'name': 'chocolate_cookies' },
-    {'category': 'snack',               'name': 'egg'               },
-    {'category': 'snack',               'name': 'party_cracker'     },
-    {'category': 'snack',               'name': 'pringles'          },
-    {'category': 'cleaning_stuff',      'name': 'cloth'             },
-    {'category': 'cleaning_stuff',      'name': 'paper'             },
-    {'category': 'cleaning_stuff',      'name': 'sponge'            },
-    {'category': 'cleaning_stuff',      'name': 'towel'             },
-    {'category': 'cutlery',             'name': 'fork'              },
-    {'category': 'cutlery',             'name': 'spoon'             },
-    {'category': 'cutlery',             'name': 'knife'             }
+    {'category': 'food',                'name': 'apple',                'color': 'red'},
+    {'category': 'food',                'name': 'bread',                'color': 'brown'},
+    {'category': 'food',                'name': 'cereals',              'color': 'green'},
+    {'category': 'food',                'name': 'cornflakes',           'color': 'yellow'},
+    {'category': 'food',                'name': 'crackers',             'color': 'red'},
+    {'category': 'food',                'name': 'lemon',                'color': 'yellow'},
+    {'category': 'food',                'name': 'noodles',              'color': 'yellow'},
+    {'category': 'food',                'name': 'paprika',              'color': 'red'},
+    {'category': 'food',                'name': 'peas',                 'color': 'green'},
+    {'category': 'food',                'name': 'pepper',               'color': 'red'},
+    {'category': 'food',                'name': 'potato',               'color': 'brown'},
+    {'category': 'food',                'name': 'potato_soup',          'color': 'yellowish'},
+    {'category': 'food',                'name': 'salt',                 'color': 'white'},
+    {'category': 'food',                'name': 'tomato_pasta',         'color': 'red'},
+    {'category': 'container',           'name': 'bag',                  'color': 'brown'},
+    {'category': 'container',           'name': 'basket',               'color': 'black'},
+    {'category': 'container',           'name': 'coffecup',             'color': 'white'},
+    {'category': 'container',           'name': 'plate',                'color': 'white'},
+    {'category': 'container',           'name': 'red_bowl',             'color': 'red'},
+    {'category': 'container',           'name': 'white_bowl',           'color': 'white'},
+    {'category': 'drink',               'name': 'banana_milk',          'color': 'yellow'},
+    {'category': 'drink',               'name': 'cappucino',            'color': 'creamy'},
+    {'category': 'drink',               'name': 'coke',                 'color': 'black'},
+    {'category': 'drink',               'name': 'orange_drink',         'color': 'orange'},
+    {'category': 'drink',               'name': 'water',                'color': 'transparent'},
+    {'category': 'snack',               'name': 'chocolate_cookies',    'color': 'brownish'},
+    {'category': 'snack',               'name': 'egg',                  'color': 'white'},
+    {'category': 'snack',               'name': 'party_cracker',        'color': 'yellow'},
+    {'category': 'snack',               'name': 'pringles',             'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'cloth',                'color': 'blue'},
+    {'category': 'cleaning_stuff',      'name': 'paper',                'color': 'white'},
+    {'category': 'cleaning_stuff',      'name': 'sponge',               'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'towel',                'color': 'pink'},
+    {'category': 'cutlery',             'name': 'fork',                 'color': 'green'},
+    {'category': 'cutlery',             'name': 'spoon',                'color': 'blue'},
+    {'category': 'cutlery',             'name': 'knife',                'color': 'pink'}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
+object_color = list(set([ o["color"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
     "food": {"bookcase": "shelf3"},
-    "drink": {"cabinet": "on_top_of"},
-    "tool": {"workbench": "on_top_of"},
-    "decoration": {"dinner_table": "on_top_of"},
-    "leisure": {"bar": "on_top_of"},
-    "bowl": {"dinner_table": "on_top_of"},
-    "tray": {"dinner_table": "on_top_of"}
+    "container": {"flight_case": "in"},
+    "drink": {"dinner_table": "on_top_of"},
+    "snack": {"bookcase": "on_top_of"},
+    "cleaning_stuff": {"cabinet": "on_top_of"},
+    "cutlery": {"bar": "on_top_of"}
 }
 
 inspect_areas = {
@@ -214,6 +214,11 @@ def get_object_category(obj):
             return o["category"]
     return None
 
+def get_object_color(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["color"]
+    return None
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):

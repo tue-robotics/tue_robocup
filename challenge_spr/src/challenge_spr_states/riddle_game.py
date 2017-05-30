@@ -66,7 +66,7 @@ def answer(robot, res, crowd_data):
                         answer = 'In the crowd are %d girls' % crowd_data['girls']
 
                 # Location of placements or beacons
-                if action['action'] == 'a_find':
+                if action['action'] == 'find_placement':
                     entity = action['entity']
                     locations = [l for l in common_knowledge.locations if l['name'] == entity]
                     if len(locations) == 1:
@@ -76,7 +76,7 @@ def answer(robot, res, crowd_data):
                         answer = 'I dont know that object'
 
                 # Count placements or beacons in the room
-                if action['action'] == 'a_count':
+                if action['action'] == 'count_placement':
                     entity = action['entity']
                     locations = [l for l in common_knowledge.locations if l['name'] == entity]
                     if len(locations) == 1:
@@ -89,7 +89,7 @@ def answer(robot, res, crowd_data):
                         answer = 'I dont know that object'
 
                 # Find objects
-                if action['action'] == 'o_find':
+                if action['action'] == 'find_object':
                     entity = action['entity']
                     locations = [l for l in common_knowledge.objects if l['name'] == entity]
                     if len(locations) == 1:
@@ -102,7 +102,7 @@ def answer(robot, res, crowd_data):
                         answer = 'I dont know that object'
 
                 # Find category
-                if action['action'] == 'c_find':
+                if action['action'] == 'find_category':
                     entity = action['entity']
                     loc, area_name = common_knowledge.get_object_category_location(entity)
                     answer = 'You can find the %s on the %s' % (entity, loc)
@@ -117,6 +117,43 @@ def answer(robot, res, crowd_data):
         
                     else:
                         answer = 'I dont know that object'
+
+                # Return objects color
+                if action['action'] == 'return_color':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                    if len(locations) == 1:
+                        col = locations[0]['color']
+                        answer = 'The color of %s is %s' % (entity, col)
+        
+                    else:
+                        answer = 'I dont know that object'    
+
+                # Compare objects categories
+                if action['action'] == 'compare_category':
+                    entity_a = action['entity_a']
+                    entity_b = action['entity_b']
+                    locations_a = [l for l in common_knowledge.objects if l['name'] == entity_a]
+                    locations_b = [l for l in common_knowledge.objects if l['name'] == entity_b]
+                    if len(locations_a) == 1 & len(locations_b) == 1:
+                        cat_a = locations_a[0]['category']
+                        cat_b = locations_b[0]['category']
+                        if cat_a == cat_b:
+                            answer = 'Both objects belong to the same category %s' % (cat_a)
+                        else:
+                            answer = 'These objects belong to different categories'
+                    else:
+                        answer = 'I dont know these objects'    
+
+                # Count how many objects belong to category
+                if action['action'] == 'count_object':
+                    entity = action['entity']
+                    objects_count = [l for l in common_knowledge.objects if l['category'] == entity]
+                    if len(objects_count) > 0:
+                        count = len(objects_count)
+                        answer = 'The number of objects in category %s is %i' % (entity, count)
+                    else:
+                        answer = 'I dont know this category' 
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
