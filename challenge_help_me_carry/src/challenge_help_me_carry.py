@@ -84,7 +84,7 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car,
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
                                                frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
 
@@ -210,11 +210,15 @@ def setup_statemachine(robot):
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
                                GrabItem(robot, empty_arm_designator, current_item),
-                               transitions={'succeeded':        'GOTO_DESTINATION',
-                                            'timeout':          'GOTO_DESTINATION', # For now in simulation timeout is considered a succes.
+                               transitions={'succeeded':        'SAY_GOING_TO_ROOM',
+                                            'timeout':          'SAY_GOING_TO_ROOM', # For now in simulation timeout is considered a succes.
                                             'failed':           'Aborted'},
                                remapping = {'target_room_in':   'command_recognized',
                                             'target_room_out':  'target_room'})
+
+        smach.StateMachine.add('SAY_GOING_TO_ROOM',
+                                states.Say(robot, ["Let me bring in your groceries", "Helping you carry stuff", "I'm going back inside"], block=True),
+                                transitions={'spoken':  'GOTO_DESTINATION'})
 
 
         smach.StateMachine.add('GOTO_DESTINATION',

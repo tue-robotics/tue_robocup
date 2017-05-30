@@ -72,11 +72,6 @@ class ED(RobotPart):
         self.robot_name = robot_name
 
 
-
-    def learn_person(self, name):
-        rospy.logerr('robot.ed.learn_person IS DEPRECATED!!! Replace by robot.head.learn_person')
-        return True
-
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
         :param timeout: timeout in seconds

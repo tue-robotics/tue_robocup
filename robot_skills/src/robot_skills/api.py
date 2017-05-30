@@ -17,7 +17,7 @@ class Api(RobotPart):
         """
         Perform a HMI query, returns a HMIResult
         """
-        return self._client.query(description, grammar, target)
+        return self._client.query(description, grammar, target, timeout)
 
     @property
     def last_talker_id(self):

@@ -75,7 +75,7 @@ class getPlan(smach.State):
 
         # Perform some typechecks
         if not constraint:
-            rospy.logwarn("Invalid constraints given to getPlan()")
+            rospy.logwarn("Invalid constraints given to getPlan(). constraint: {}".format(constraint))
             return "goal_not_defined"
 
         pc, oc = constraint
