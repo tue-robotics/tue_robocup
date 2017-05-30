@@ -7,6 +7,8 @@ import smach
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import frame_stamped
 from hmi import TimeoutException
+from geometry_msgs.msg import PointStamped
+
 
 class WaitForCustomer(smach.State):
     """ Wait for the waiving person """
@@ -71,3 +73,41 @@ class WaitForCustomer(smach.State):
             except TimeoutException:
                 pass
         return False
+
+
+class WaitForClickedCustomer(smach.State):
+    """ Wait for the waiving person """
+
+    def __init__(self, robot, location_id):
+        """ Constructor
+
+        :param robot: robot object
+        :param location_id: string with which the location of the caller will be designated
+        """
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted', 'rejected'])
+        self._robot = robot
+        self._location_id = location_id
+        self._sub = rospy.Subscriber("/clicked_point", PointStamped, self.callback)
+        self.rate = 10
+        self._point = None
+
+    def callback(self, data):
+        self._point = data
+
+    def execute(self, userdata):
+        self._robot.speech.speak("I'm waiting for a customer")
+        rospy.loginfo("You can click in rviz")
+
+        self._point = False
+        #rospy.logwarn("Waiting for trigger (any of {0}) on topic /trigger".format(self.triggers))
+        while not rospy.is_shutdown() and not self._point:
+            rospy.sleep(1/self.rate)
+
+        if not self._point:
+            return 'aborted'
+
+        print self._point
+        # TODO, get data from point into ED
+        pose = frame_stamped("map", 0, 0, 0.0)
+        self._robot.ed.update_entity(id="customer", frame_stamped=self._point, type="waypoint")
+        return 'succeeded'
