@@ -11,7 +11,7 @@ from robot_smach_states import Initialize, Say, WaitTime
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
-from challenge_set_a_table_states import detect
+#from challenge_set_a_table_states import detect
 
 
 class ChallengeSetATable(smach.StateMachine):
