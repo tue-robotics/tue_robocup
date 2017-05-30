@@ -2,6 +2,7 @@
 
 female_names = ["anna", "beth", "carmen", "jennifer", "jessica", "kimberly", "kristina", "laura", "mary", "sarah"]
 male_names = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
+
 names = female_names + male_names
 
 # This dict holds all locations
@@ -92,6 +93,22 @@ inspect_areas = {
 
 inspect_positions = {
 }
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+most_probable_location_in_room_map = {
+    'livingroom': 'dinner_table',
+    'bedroom': 'nightstand',
+    'workshop': 'workbench',
+    'kitchen': 'desk',
+    'hallway': 'hallway_table'
+}
+
+
+def get_location_from_room(room_id):
+    if room_id in most_probable_location_in_room_map:
+        return most_probable_location_in_room_map[room_id]
+    return None
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

@@ -8,6 +8,7 @@ from robot_smach_states.state import State
 
 import utility
 import human_interaction
+import check_ebutton
 from sensor_msgs.msg import LaserScan
 
 from threading import Event
@@ -24,6 +25,10 @@ class StartChallengeRobust(smach.StateMachine):
         assert hasattr(robot, "speech")
 
         with self:
+            smach.StateMachine.add( "NOTIFY_EBUTTON",
+                                    check_ebutton.NotifyEButton(robot),
+                                    transitions={   "succeeded"     :"INITIALIZE"})
+
             smach.StateMachine.add( "INITIALIZE",
                                     utility.Initialize(robot),
                                     transitions={   "initialized"   :"INSTRUCT_WAIT_FOR_DOOR" if door else "INIT_POSE",

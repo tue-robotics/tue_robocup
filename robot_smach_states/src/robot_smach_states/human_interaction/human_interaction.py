@@ -93,7 +93,7 @@ class HearOptions(smach.State):
             self._robot.head.look_at_standing_person()
 
         try:
-            answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T', timeout=self._timeout)
+            answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T', timeout=self._timeout.to_sec())
         except TimeoutException:
             self._robot.speech.speak("Something is wrong with my ears, please take a look!")
             return 'no_result'
