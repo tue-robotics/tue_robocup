@@ -39,18 +39,12 @@ def main():
     skip        = rospy.get_param('~skip', False)
     restart     = rospy.get_param('~restart', False)
     robot_name  = rospy.get_param('~robot_name')
-    entrance_no = rospy.get_param('~entrance_number', 0)
     no_of_tasks = rospy.get_param('~number_of_tasks', 0)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
     if skip:
         rospy.loginfo("[GPSR] skip = {}".format(skip))
-    if entrance_no not in [1]:
-        rospy.logerr("[GPSR] entrance_number should be 1. You set it to {}".format(entrance_no))
-    else:
-        rospy.loginfo("[GPSR] entrance_number = {}".format(entrance_no))
-        entrance_no -= 1  # to transform to a 0-based index
     if no_of_tasks:
         rospy.loginfo("[GPSR] number_of_tasks = {}".format(no_of_tasks))
     if restart:
@@ -83,7 +77,7 @@ def main():
     if not skip and not restart:
 
         # Wait for door, enter arena
-        s = StartChallengeRobust(robot, knowledge.initial_pose[entrance_no])
+        s = StartChallengeRobust(robot, knowledge.initial_pose)
         s.execute()
 
         # Move to the start location
@@ -105,7 +99,7 @@ def main():
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.starting_pose[entrance_no]),
+                                                                              id=knowledge.starting_pose),
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
@@ -190,7 +184,7 @@ def main():
         if finished and not skip:
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.exit_waypoint[entrance_no]),
+                                                                              id=knowledge.exit_waypoint),
                                      radius = 0.3)
             nwc.execute()
             robot.speech.speak("Thank you very much, and goodbye!", block=True)
