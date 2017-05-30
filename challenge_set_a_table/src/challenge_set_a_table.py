@@ -21,7 +21,7 @@ class ChallengeSetATable(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    Initialize(robot),
-                                   transitions={'initialized': 'ANNOUNCEMENT',
+                                   transitions={'initialized': 'END_CHALLENGE',
                                                 'abort': 'Aborted'})
        
             # End
