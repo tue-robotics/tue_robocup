@@ -1,9 +1,9 @@
 import sys
 
-def robot_constructor(robot_name=None):
-    """Construct a robot by it's name. Choices are amigo, sergio, mockbot"""
-    if not robot_name:
-        robot_name = sys.argv[1]
+def robot_constructor(robot_name):
+    """Construct a robot by it's name. Choices are amigo, sergio, mockbot
+    :param robot_name str of robot name. Current options are amigo, sergio, mockbot
+    :returns a Robot-instance"""
 
     if robot_name == "amigo":
         import robot_skills.amigo
