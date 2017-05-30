@@ -126,8 +126,8 @@ NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing C
 grammar += '''
 SEARCH -> where is | in WHATWHICH room is
 
-Q["action" : "a_find", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
-Q["action" : "a_count", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
+Q["action" : "find_placement", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
+Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
 '''
 
 ##############################################################################
@@ -139,15 +139,15 @@ Q["action" : "a_count", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND
 grammar += '''
 ADJR -> smaller | bigger
 
-Q["action" : "o_find", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
-Q["action" : "c_find", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
+Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
+Q["action" : "find_category", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
 Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
 Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAMES[O]
 Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
-Q["action" : "o_count", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
+Q["action" : "count_object", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
 
-NQ["action" : "o_count", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "o_count", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_object", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_object", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
 NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
 
 NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] which one is ADJR
