@@ -1,28 +1,28 @@
 # COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
 
-female_names = ["anna","beth","carmen","jennifer","jessica","kimberly","kristina","laura","mary","sarah"]
-male_names = ["alfred","charles","daniel","james","john","luis","paul","richard","robert","steve"]
+female_names = ["anna", "beth", "carmen", "jennifer", "jessica", "kimberly", "kristina", "laura", "mary", "sarah"]
+male_names = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'couch_table',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'dinner_table',  'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'bar',           'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'bookcase',      'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
+    {'name': 'couch_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'bar',           'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'bookcase',      'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
 
-    { 'name':'cabinet',       'room':'kitchen',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'trashbin',      'room':'kitchen',    'category': 'utility', 'manipulation':'no'  },
-    { 'name':'plant',         'room':'kitchen',    'category': 'plant',   'manipulation':'no'  },
+    {'name': 'cabinet',       'room': 'kitchen',    'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'trashbin',      'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'plant',         'room': 'kitchen',    'category': 'plant',   'manipulation': 'no'},
 
-    { 'name':'bed',           'room':'bedroom',    'category': 'seat',    'manipulation':'yes' },
-    { 'name':'nightstand',    'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
+    {'name': 'bed',           'room': 'bedroom',    'category': 'seat',    'manipulation': 'yes'},
+    {'name': 'nightstand',    'room': 'bedroom',    'category': 'table',   'manipulation': 'yes'},
 
-    { 'name':'flight_case',   'room':'workshop',   'category': 'table',   'manipulation':'no'  },
-    { 'name':'battery_table', 'room':'workshop',   'category': 'table',   'manipulation':'no' },
-    { 'name':'workbench',     'room':'workshop',   'category': 'table',   'manipulation':'yes' },
+    {'name': 'flight_case',   'room': 'workshop',   'category': 'table',   'manipulation': 'no'},
+    {'name': 'battery_table', 'room': 'workshop',   'category': 'table',   'manipulation': 'no'},
+    {'name': 'workbench',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
 
-    { 'name':'hallway_table', 'room':'hallway',    'category': 'table',   'manipulation':'yes' }
+    {'name': 'hallway_table', 'room': 'hallway',    'category': 'table',   'manipulation': 'yes'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -87,7 +87,7 @@ category_locations = {
 }
 
 inspect_areas = {
-    "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
+    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 }
 
 inspect_positions = {
@@ -108,15 +108,18 @@ class bcolors:
 
 
 '''
-	General function for printing shortcuts
-	name: name of the progam that instanciates make_prints
-	sentence: sentence to be displayed
+General function for printing shortcuts
+name: name of the program that instantiates make_prints
+sentence: sentence to be displayed
 
-	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
+Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
 '''
+
+
 def make_prints(name):
 
     prefix = bcolors.HEADER + name + bcolors.ENDC
+
     def printOk(sentence):
         print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
 
@@ -136,14 +139,17 @@ def is_location(location):
             return True
     return False
 
+
 def get_room(location):
     for loc in locations:
         if loc["name"] == location:
             return loc["room"]
     return None
 
+
 def is_room(entity_id):
     return (entity_id in rooms)
+
 
 def get_inspect_areas(location):
     if location in inspect_areas:
@@ -151,11 +157,13 @@ def get_inspect_areas(location):
     else:
         return ["on_top_of"]
 
+
 def get_inspect_position(location, area=""):
     if location in inspect_positions and area in inspect_positions[location]:
         return inspect_positions[location][area]
     else:
         return "in_front_of"
+
 
 def is_pick_location(location):
     for loc in locations:
@@ -163,11 +171,13 @@ def is_pick_location(location):
             return True
     return False
 
+
 def is_place_location(location):
     for loc in locations:
         if loc["name"] == location and (loc["manipulation"] == "yes" or loc["manipulation"] == "only_putting"):
             return True
     return False
+
 
 def get_locations(room=None, pick_location=None, place_location=None):
     return [loc["name"] for loc in locations
@@ -175,15 +185,18 @@ def get_locations(room=None, pick_location=None, place_location=None):
                    (pick_location == None or pick_location == is_pick_location(loc["name"])) and \
                    (place_location == None or place_location == is_place_location(loc["name"]))]
 
+
 def get_objects(category=None):
     return [obj["name"] for obj in objects
                 if category == None or category == obj["category"]]
+
 
 def get_object_category(obj):
     for o in objects:
         if o["name"] == obj:
             return o["category"]
     return None
+
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
