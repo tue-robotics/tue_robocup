@@ -27,6 +27,7 @@
   <run_depend>challenge_spr</run_depend>
   <run_depend>challenge_set_a_table</run_depend>
   <run_depend>challenge_test</run_depend>
+  <run_depend>challenge_demo</run_depend>
   <run_depend>test_tools</run_depend>
   <run_depend>audio_capture</run_depend>
 
