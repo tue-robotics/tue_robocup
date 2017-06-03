@@ -27,5 +27,7 @@
   <run_depend>python-graphviz</run_depend>
   <run_depend>python-psutil</run_depend>
   <run_depend>python-numpy</run_depend>
+  <run_depend>orocos_kdl</run_depend>
+  <run_depend>python_orocos_kdl</run_depend>
 
 </package>
