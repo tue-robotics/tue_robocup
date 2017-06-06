@@ -136,8 +136,6 @@ class ED(RobotPart):
         :param radius: how far from the center_point to look (in meters)
         :return: list of Entity
         """
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
