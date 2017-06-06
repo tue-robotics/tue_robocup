@@ -199,10 +199,6 @@ def setup_statemachine(robot):
                                                 datetime.datetime.now()),
                                          name="current_item")
 
-    # arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
-    #                                                          current_item,
-    #                                                          name="arm_with_item_designator")
-
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
