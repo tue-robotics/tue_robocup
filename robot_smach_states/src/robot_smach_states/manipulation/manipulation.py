@@ -63,6 +63,15 @@ class HandoverFromHuman(smach.StateMachine):
     as id.
     '''
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10, arm_configuration="handover_to_human"):
+        """
+        Hold up hand to accept an object and close hand once something is inserted
+        :param robot: Robot with which to execute this behavior
+        :param arm_designator: ArmDesignator resolving to arm accept item into
+        :param grabbed_entity_label: What ID to give a dummy item in case no grabbed_entity_designator is supplied
+        :param grabbed_entity_designator: EntityDesignator resolving to the accepted item. Can be a dummy
+        :param timeout: How long to hold hand over before closing without anything
+        :param arm_configuration: Which pose to put arm in when holding hand up for the item.
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed','timeout'])
 
         check_type(arm_designator, Arm)
