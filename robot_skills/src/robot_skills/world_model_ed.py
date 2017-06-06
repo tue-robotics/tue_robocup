@@ -128,6 +128,14 @@ class ED(RobotPart):
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
     def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0):
+        """
+        Get the closest entity detected by the laser. The ID's of such entities are postfixed with '-laser'
+        For the rest, this works exactly like get_closest_entity
+        :param type: What type of entities to filter on
+        :param center_point: combined with radius. Around which point to search for entities
+        :param radius: how far from the center_point to look (in meters)
+        :return: list of Entity
+        """
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
