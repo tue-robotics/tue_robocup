@@ -142,10 +142,15 @@ class NavigateToRoom(smach.State):
         return navigateToWaypoint.execute()
 
 class DropBagOnGround(smach.StateMachine):
-    '''
+    """
     Put a bag in the robot's gripper on the ground
-    '''
-    def __init__(self, robot, arm_designator, current_item_designator):
+    """
+    def __init__(self, robot, arm_designator):
+        """
+        :param robot: the robot with which to execute this state machine
+        :param arm_designator: ArmDesignator resolving to Arm holding the bag to drop
+
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         check_type(arm_designator, Arm)
@@ -273,7 +278,7 @@ def setup_statemachine(robot):
 
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
-                               DropBagOnGround(robot, bag_arm_designator, current_item),
+                               DropBagOnGround(robot, bag_arm_designator),
                                transitions={'succeeded':        'ASKING_FOR_HELP',
                                             'failed':           'ASKING_FOR_HELP'})
 
