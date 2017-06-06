@@ -156,7 +156,14 @@ class DropBagOnGround(smach.StateMachine):
                                              'failed'       :   'DROP_POSE'})
 
             smach.StateMachine.add("DROP_POSE", states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
-                            transitions={'succeeded':'succeeded','failed':'failed'})
+                            transitions={'succeeded'        :'RESET_ARM_OK',
+                                         'failed'           :'RESET_ARM_FAIL'})
+
+            smach.StateMachine.add( 'RESET_ARM_OK', states.ResetArms(robot),
+                                transitions={'done'         :   'succeeded'})
+
+            smach.StateMachine.add( 'RESET_ARM_FAIL', states.ResetArms(robot),
+                                transitions={'done'         :   'failed'})
 
 def setup_statemachine(robot):
 
