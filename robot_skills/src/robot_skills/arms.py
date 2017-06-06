@@ -216,12 +216,12 @@ class Arm(RobotPart):
                 execute_timeout=rospy.Duration(timeout)
             )
             if result == GoalStatus.SUCCEEDED:
-                
+
                 result_pose = self.tf_listener.lookupTransform("amigo/base_link", "amigo/grippoint_{}".format(self.side))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
                 dy = grasp_precompute_goal.goal.y - result_pose[0][1]
                 dz = grasp_precompute_goal.goal.z - result_pose[0][2]
-                
+
                 if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
                     rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(
                                   dx, dy, dz))
@@ -453,6 +453,9 @@ class Arm(RobotPart):
         marker.color.b = color[2]
 
         self._marker_publisher.publish(marker)
+
+    def __repr__(self):
+        return "Arm(side='{side}')".format(side=self.side)
 
 
 if __name__ == "__main__":
