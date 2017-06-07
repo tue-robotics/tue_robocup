@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
-# ROS
 import rospy
 import smach
-
-# TU/e Robotics
-from robot_skills.util.kdl_conversions import frame_stamped
+import PyKDL as kdl
 from hmi import TimeoutException
+from robot_skills.util.kdl_conversions import FrameStamped
+
 
 class WaitForCustomer(smach.State):
     """ Wait for the waiving person """
@@ -33,7 +32,7 @@ class WaitForCustomer(smach.State):
 
         while True:
             self._robot.speech.speak("I'm looking for waving persons")
-            persons = self._robot.head.detect_waving_persons()
+            persons = self._robot.head.detect_waving_persons_3d()
             if not persons:
                 continue
 
@@ -42,12 +41,12 @@ class WaitForCustomer(smach.State):
             person = persons[0]
 
             try:
-                point = self._robot.head.project_roi(person.roi, frame_id="map")
+                point = person.kdl_point
+                pose = FrameStamped(frame=kdl.Frame(kdl.Rotation(), point.vector), frame_id=point.frame_id)
                 break
             except ValueError as e:
                 rospy.logerr('project failed: %s', e)
 
-        pose = frame_stamped("map", point.vector.x(), point.vector.y(), 0.0)
 
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
