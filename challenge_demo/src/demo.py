@@ -6,6 +6,7 @@
 
 import sys
 import rospy
+import smach
 import random
 import json
 
@@ -14,7 +15,7 @@ import hmi
 from action_server import Client as ActionClient
 
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import StartChallengeRobust
+from robot_smach_states import StartChallengeRobust, WaitForTrigger
 from robot_smach_states.util.designators import EntityByIdDesignator
 
 from robocup_knowledge import load_knowledge
@@ -83,7 +84,6 @@ def main():
         # Move to the start location
         robot.speech.speak("Let's see if my operator has a task for me!", block=False)
 
-
     if restart:
         robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
 
@@ -92,6 +92,9 @@ def main():
 
     finished = False
     start_time = rospy.get_time()
+
+    trigger = WaitForTrigger(robot, ["gpsr"], "/amigo/trigger")
+    trigger.execute()
 
     while True:
         # Navigate to the GPSR meeting point
@@ -156,7 +159,7 @@ def main():
         # Write a report to bring to the operator
         report = task_result_to_report(task_result)
 
-        robot.lights.set_color(0,0,1)  #be sure lights are blue
+        robot.lights.set_color(0, 0, 1)  # be sure lights are blue
 
         robot.head.look_at_standing_person()
         robot.leftArm.reset()
@@ -178,14 +181,14 @@ def main():
                 task_word = "tasks"
             report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
 
-        if rospy.get_time() - start_time > 60 * 15:
+        if rospy.get_time() - start_time > 60 * 8:
             finished = True
 
         if finished and not skip:
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
                                                                               id=knowledge.exit_waypoint),
-                                     radius = 0.3)
+                                     radius=0.3)
             nwc.execute()
             robot.speech.speak("Thank you very much, and goodbye!", block=True)
             break
