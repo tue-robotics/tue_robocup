@@ -22,7 +22,7 @@ class Initialize(smach.State):
                                              'abort'])
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.robot.lights.set_color(0,0,1)  #be sure lights are blue
 
         self.robot.head.reset()
@@ -67,7 +67,7 @@ class SetInitialPose(smach.State):
 
         return e_loc.pose.frame.p.x(), e_loc.pose.frame.p.y(), rz
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if isinstance(self.initial_position, str):
             x,y,phi = self.location_2d(self.initial_position)
         elif len(self.initial_position) == 3: #Tuple or list
@@ -101,7 +101,7 @@ class Trigger(smach.State):
 
         self.pub = rospy.Publisher(topic, std_msgs.msg.String, queue_size=10)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.pub.publish(std_msgs.String(data=trigger))
         return 'triggered'
 
@@ -135,7 +135,7 @@ class WaitForTrigger(smach.State):
         rospy.loginfo('topic: /%s', topic)
         rospy.loginfo('rate:  %d Hz', self.rate)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.trigger_received = False
         #rospy.logwarn("Waiting for trigger (any of {0}) on topic /trigger".format(self.triggers))
         while not rospy.is_shutdown() and not self.trigger_received:
@@ -251,7 +251,7 @@ class WaitForDesignator(smach.State):
         self.attempts = attempts
         self.sleep_interval = sleep_interval
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         counter = 0
 
         while counter < self.attempts:
