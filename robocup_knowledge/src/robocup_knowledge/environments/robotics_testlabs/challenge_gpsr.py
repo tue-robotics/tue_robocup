@@ -38,7 +38,7 @@ grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany
 
 DET -> the | a | an | some
-MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on | from
 """
 
 for room in common.location_rooms:
@@ -95,9 +95,9 @@ VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
 ###############################################################################
 
 grammar += """
-V_PICKUP -> get | grasp | take | pick up
+V_PICKUP -> get | grasp | take | pick up | grab
 
-VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+VP["action": "pick-up", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
 """
 
 ###############################################################################
