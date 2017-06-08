@@ -25,7 +25,7 @@ class StartAnalyzer(smach.State):
         smach.State.__init__(self,outcomes=['done'])
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.robot.base.analyzer.start_measurement(self.robot.base.get_location().frame)
         return 'done'
 
@@ -37,7 +37,7 @@ class StopAnalyzer(smach.State):
         self.robot  = robot
         self.result = result
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.robot.base.analyzer.stop_measurement(self.robot.base.get_location().frame, self.result)
         return 'done'
 
@@ -48,7 +48,7 @@ class AbortAnalyzer(smach.State):
         smach.State.__init__(self,outcomes=['done'])
         self.robot  = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.robot.base.analyzer.abort_measurement()
         return 'done'
 
@@ -62,7 +62,7 @@ class getPlan(smach.State):
         self.constraint_function = constraint_function
         self.speak = speak
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         # Sleep for 0.1 s (breakOut sleep) to prevent synchronization errors between monitor state and nav state
         rospy.sleep(rospy.Duration(0.1))
@@ -105,7 +105,7 @@ class executePlan(smach.State):
         self.breakout_function = breakout_function
         self.reset_head = reset_head
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         '''
         Possible outcomes (when overloading)
         - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
@@ -180,7 +180,7 @@ class planBlocked(smach.State):
        smach.State.__init__(self,outcomes=['blocked', 'free'])
        self.robot = robot
 
-   def execute(self, userdata):
+   def execute(self, userdata=None):
 
         rospy.loginfo("Plan blocked");
 
@@ -336,7 +336,7 @@ class constraintGenerator(smach.State):
                             input_keys=['position_constraint', 'orientation_constraint'],
                             output_keys=['position_constraint', 'orientation_constraint'])
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         return 'failed'
 
 class Navigate(smach.StateMachine):
@@ -372,7 +372,7 @@ class Turn(smach.State):
         self.radians = radians
         self.vth = vth
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         print "Turning %f radians with force drive at %f rad/s" % (self.radians, self.vth)
         self.robot.base.force_drive(0, 0, self.vth, self.radians / self.vth)
 
