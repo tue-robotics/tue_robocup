@@ -18,7 +18,7 @@ class ForceDrive(smach.State):
         self._vth = vth
         self._duration = duration
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Executes the state """
         self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
         return 'done'
@@ -44,7 +44,7 @@ class ForceRotate(smach.State):
         self._timeout = timeout
         self._first_stamp = None
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Executes the state """
         if self._first_stamp is None:
             self._first_stamp = rospy.Time.now()
