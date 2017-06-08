@@ -21,7 +21,7 @@ class WaitForCustomer(smach.State):
         self._robot = robot
         self._location_id = location_id
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Does the actual work
 
         :param userdata:
