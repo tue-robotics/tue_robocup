@@ -64,13 +64,12 @@ def main():
 
     action_client = ActionClient(robot.robot_name)
 
-    knowledge = load_knowledge('challenge_gpsr')
+    knowledge = load_knowledge('challenge_demo')
 
     no_of_tasks_performed = 0
 
     user_instruction = "What can I do for you?"
     report = ""
-
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Start
@@ -87,16 +86,15 @@ def main():
     if restart:
         robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
 
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     finished = False
     start_time = rospy.get_time()
 
     trigger = WaitForTrigger(robot, ["gpsr"], "/amigo/trigger")
-    trigger.execute()
 
     while True:
+        trigger.execute()
         # Navigate to the GPSR meeting point
         if not skip and not finished:
             robot.speech.speak("Moving to the meeting point.", block=False)
@@ -163,9 +161,9 @@ def main():
 
         robot.head.look_at_standing_person()
         robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close',0.0)
+        robot.leftArm.send_gripper_goal('close', 0.0)
         robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close',0.0)
+        robot.rightArm.send_gripper_goal('close', 0.0)
         robot.torso.reset()
 
         if task_result.succeeded:
