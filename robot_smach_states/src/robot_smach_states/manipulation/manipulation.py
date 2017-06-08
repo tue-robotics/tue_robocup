@@ -167,7 +167,7 @@ class OpenGripperOnHandoverToHuman(smach.State):
         self.arm_designator = arm_designator
         self.timeout = timeout
 
-    def execute(self,userdata):
+    def execute(self,userdata=None):
         arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
@@ -189,7 +189,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
         self.item_label = grabbed_entity_label
         self.item_designator = grabbed_entity_designator
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
@@ -222,7 +222,7 @@ class SetGripper(smach.State):
         self.grab_entity_designator = grab_entity_designator
         self.timeout = timeout
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
@@ -267,7 +267,7 @@ class ArmToUserPose(smach.State):
         self.frame_id  = frame_id
         self.delta = delta
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if not self.delta:
             rospy.logwarn("Transforming to baselink, should become obsolete but this is not yet the case")
             #target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
@@ -299,7 +299,7 @@ class ArmToQueryPoint(smach.State):
         self.pre_grasp            = pre_grasp
         self.first_joint_pos_only = first_joint_pos_only
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         # ToDo: check point_designator?
         goal = self.point_designator.resolve()
         if not goal:
@@ -331,7 +331,7 @@ class TorsoToUserPos(smach.State):
         self.torso_pos = torso_pos
         self.time_out = time_out
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if self.robot.spindle.send_goal(self.torso_pos,timeout=self.time_out):
             return 'succeeded'
         else:
