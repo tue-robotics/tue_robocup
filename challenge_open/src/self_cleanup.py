@@ -34,7 +34,7 @@ class ArmFree(smach.State):
         smach.State.__init__(self, outcomes=["yes", "no"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         d = UnoccupiedArmDesignator(self._robot.arms, self._robot.rightArm, name="empty_arm_designator2")
         if d.resolve():
             return "yes"
@@ -45,7 +45,7 @@ class ForceDriveBackwards(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.base.force_drive(0, 0, 1.57, 2.0)    # x, y, z, time in seconds
         return "done"
 
@@ -54,7 +54,7 @@ class ArmOccupied(smach.State):
         smach.State.__init__(self, outcomes=["yes", "no"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         d = OccupiedArmDesignator(self._robot.arms, self._robot.rightArm, name="empty_arm_designator2")
         if d.resolve():
             return "yes"
@@ -75,7 +75,7 @@ class Speak(smach.State):
             "Removing the %s " + object_description
         ]
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         e = self._selected_entity_designator.resolve()
 
         if e:
