@@ -23,7 +23,7 @@ class StoreRobocupArena(smach.State):
         self._robot = robot
         robot.base.local_planner.cancelCurrentPlan()
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.ed.update_entity(id="robocup_arena", posestamped=self._robot.base.get_location(), type="waypoint")
 
         return "done"
@@ -33,7 +33,7 @@ class HeadStraight(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_standing_person()
         return "done"
 
@@ -42,7 +42,7 @@ class HeadCancel(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.close()
         return "done"
 
@@ -62,7 +62,7 @@ class WaitForOperatorCommand(smach.State):
 
         return False
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
 
