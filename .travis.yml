@@ -9,7 +9,7 @@ before_install:
   - wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
   - wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
   # Determine packages modified in this commit
-  - PACKAGES=`git diff-tree --name-only $TRAVIS_COMMIT | xargs ls -dl 2>/dev/null |  grep "^d" | awk '{print $NF}' `
+  - PACKAGES=`git diff-tree --name-only $TRAVIS_COMMIT | xargs ls -dl 2>/dev/null |  grep "^d" | grep -v "\." | awk '{print $NF}' `
 
 script: 
   - 'for PACKAGE in $PACKAGES;
