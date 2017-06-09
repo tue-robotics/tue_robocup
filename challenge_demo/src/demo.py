@@ -34,7 +34,7 @@ def request_missing_field(grammar, grammar_target, semantics, missing_field):
 
 
 def main():
-    rospy.init_node("gpsr")
+    rospy.init_node("demo")
     random.seed()
 
     skip        = rospy.get_param('~skip', False)
@@ -71,6 +71,7 @@ def main():
     user_instruction = "What can I do for you?"
     report = ""
 
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Start
 
@@ -85,6 +86,7 @@ def main():
 
     if restart:
         robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
+
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -161,9 +163,9 @@ def main():
 
         robot.head.look_at_standing_person()
         robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close', 0.0)
+        robot.leftArm.send_gripper_goal('close',0.0)
         robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close', 0.0)
+        robot.rightArm.send_gripper_goal('close',0.0)
         robot.torso.reset()
 
         if task_result.succeeded:
