@@ -51,7 +51,7 @@ class HearWhichTable(smach.State):
         self._timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if self.look_at_standing_person:
             self._robot.head.look_at_standing_person()
 
@@ -87,7 +87,7 @@ class HeadStraight(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_standing_person()
         return "done"
 
@@ -96,7 +96,7 @@ class HeadCancel(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.close()
         return "done"
 
@@ -106,7 +106,7 @@ class StoreKitchen(smach.State):
         self._robot = robot
         robot.base.local_planner.cancelCurrentPlan()
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.ed.update_entity(id="kitchen", frame_stamped=self._robot.base.get_location(), type="waypoint")
 
         return "done"
@@ -116,7 +116,7 @@ class StoreBeverageSide(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.speech.speak("Is the bar on my left or on my right?")
 
         self._robot.head.look_at_standing_person()
@@ -160,7 +160,7 @@ else:
             self._robot = robot
             self._robot.speech.speak("Using a custom waiter")
 
-        def execute(self, userdata):
+        def execute(self, userdata=None):
             # Stop the base
             self._robot.base.local_planner.cancelCurrentPlan()
 
@@ -211,7 +211,7 @@ class CheckKnowledge(smach.State):
         smach.State.__init__(self, outcomes=["yes", "no"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         # Get the robot pose and compare if we are close enough to the kitchen waypoint
         entity_ids = set([e.id for e in self._robot.ed.get_entities()])
         if set(["one", "two", "three"]).issubset(entity_ids):
@@ -223,7 +223,7 @@ class CheckInKitchen(smach.State):
         smach.State.__init__(self, outcomes=["in_kitchen", "not_in_kitchen"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         # Get the robot pose and compare if we are close enough to the kitchen waypoint
         kitchen = self._robot.ed.get_entity(id="kitchen")
         if kitchen:
@@ -240,7 +240,7 @@ class LookAtPersonSitting(smach.State):
 
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_ground_in_front_of_robot(3)
 
         return 'done'
@@ -263,7 +263,7 @@ class AskOrder(smach.State):
                 self._robot.speech.speak("Please say yes or no")
         return False
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_ground_in_front_of_robot(3)
         self._robot.speech.speak("Which combo or beverage do you want?")
 
@@ -306,7 +306,7 @@ class SpeakOrders(smach.State):
 
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("Mr. Barman I have some orders.")
 
@@ -339,7 +339,7 @@ class DeliverOrderWithBasket(smach.StateMachine):
 
         with self:
             @smach.cb_interface(outcomes=['spoken'])
-            def instruct_barman(userdata):
+            def instruct_barman(userdata=None):
                 try:
                     order = ORDERS[order_type]
                     beverage_dest_desig.id = order['location']
@@ -367,7 +367,7 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                                     'goal_not_defined'  :'failed'})
 
             @smach.cb_interface(outcomes=['spoken'])
-            def instruct_guest(userdata):
+            def instruct_guest(userdata=None):
                 try:
                     order = ORDERS[order_type]
                     robot.speech.speak("Dear guest at table {location}, you can get your {name} from my basket.".format(**order))
