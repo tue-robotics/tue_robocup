@@ -22,7 +22,7 @@ class HearQuestion(smach.State):
         self.robot = robot
         self.time_out = time_out
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.robot.head.look_at_ground_in_front_of_robot(100)
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
@@ -80,7 +80,7 @@ class Turn(smach.State):
         # TUrn
         self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         print "Last talker id: " + self.robot.hmi.last_talker_id
 
