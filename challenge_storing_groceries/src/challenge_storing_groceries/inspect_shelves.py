@@ -20,7 +20,7 @@ class InspectShelves(smach.State):
         self.robot = robot
         self.object_shelves = config.OBJECT_SHELVES
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         # Get cabinet entity
         # Sleep for a while to make sure that the robot is actually in ED
