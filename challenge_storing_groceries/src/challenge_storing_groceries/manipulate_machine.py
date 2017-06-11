@@ -81,7 +81,7 @@ class GrabSingleItem(smach.StateMachine):
 
         with self:
             @smach.cb_interface(outcomes=["locked"])
-            def lock(userdata):
+            def lock(userdata=None):
                 """ 'Locks' a locking designator """
                 # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
                 self.grab_designator.lock()
@@ -106,7 +106,7 @@ class GrabSingleItem(smach.StateMachine):
                                                 'failed': 'UNLOCK_ITEM_FAIL'})
 
             @smach.cb_interface(outcomes=["unlocked"])
-            def lock(userdata):
+            def lock(userdata=None):
                 """ 'Locks' a locking designator """
                 # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
                 self.grab_designator.unlock()
@@ -144,7 +144,7 @@ class PlaceSingleItem(smach.State):
 
         # ToDo: unlock stuff?
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         arm = None
         # See if there's an arm holding something
