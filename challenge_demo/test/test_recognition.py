@@ -6,7 +6,7 @@ import random
 
 from robocup_knowledge import load_knowledge
 from hmi import TimeoutException
-knowledge = load_knowledge('challenge_gpsr')
+knowledge = load_knowledge('challenge_demo')
 
 
 def main():
