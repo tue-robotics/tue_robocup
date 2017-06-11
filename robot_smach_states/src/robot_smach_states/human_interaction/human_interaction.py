@@ -88,7 +88,7 @@ class HearOptions(smach.State):
         self._timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if self.look_at_standing_person:
             self._robot.head.look_at_standing_person()
 
