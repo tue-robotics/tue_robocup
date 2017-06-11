@@ -146,7 +146,7 @@ class ForceDrive(smach.State):
         self._vth = vth
         self._duration = duration
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Executes the state """
         self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
         return 'done'
@@ -173,7 +173,7 @@ class ForceRotate(smach.State):
         self._timeout = timeout
         self._first_stamp = None
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Executes the state """
         if self._first_stamp is None:
             self._first_stamp = rospy.Time.now()
@@ -206,7 +206,7 @@ class FitEntity(smach.State):
         self._srv = rospy.ServiceProxy(robot.robot_name + '/ed/fit_entity_in_image', FitEntityInImage)
         self._entity_str = entity_str
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Executes the state """
         # Make sure the robot looks at the entity
         self._robot.head.reset()  # ToDo: this is abuse of the reset function
@@ -243,7 +243,7 @@ class InspectShelves(smach.State):
         self.robot = robot
         self.object_shelves = object_shelves
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         global SEGMENTED_ENTITIES
         global DETECTED_OBJECTS_WITH_PROBS
@@ -484,7 +484,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'done': 'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
-            def lock(userdata):
+            def lock(userdata=None):
                 self.current_item.lock() #This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
                 if self.current_item.resolve():
                     rospy.loginfo("Current_item is now locked to {0}".format(self.current_item.resolve().id))
@@ -511,7 +511,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'UNLOCK_ITEM_AFTER_FAILED_GRAB'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_PICK_SHELF
 
             @smach.cb_interface(outcomes=['unlocked'])
-            def unlock_and_ignore(userdata):
+            def unlock_and_ignore(userdata=None):
                 global ignore_ids
                 # import ipdb; ipdb.set_trace()
                 if self.current_item.resolve():
@@ -525,7 +525,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'unlocked'              :'failed'})
 
             @smach.cb_interface(outcomes=['stored'])
-            def store_as_manipulated(userdata):
+            def store_as_manipulated(userdata=None):
                 # manipulated_items.current += [self.current_item.current]
                 item_list = manipulated_items.resolve()
                 item_list += [self.current_item.resolve()]
@@ -659,7 +659,7 @@ def setup_statemachine(robot):
                                              'failed'                   :'EXPORT_PDF'})
 
         @smach.cb_interface(outcomes=["exported"])
-        def export_to_pdf(userdata):
+        def export_to_pdf(userdata=None):
             global DETECTED_OBJECTS_WITH_PROBS
 
             entities = [ e[0] for e in DETECTED_OBJECTS_WITH_PROBS ]
