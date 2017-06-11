@@ -50,7 +50,7 @@ class TakeOrder(smach.State):
             return False
         return speech_result.semantics == "yes"
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._nr_tries += 1
         self._robot.head.look_at_ground_in_front_of_robot(3)
 
@@ -116,7 +116,7 @@ class ReciteOrders(smach.State):
         self._robot = robot
         self._orders = orders
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("Mr. Barman I have some orders.")
 
