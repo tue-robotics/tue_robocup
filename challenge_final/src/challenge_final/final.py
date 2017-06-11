@@ -128,7 +128,7 @@ class ChallengeFinal(smach.StateMachine):
                                    transitions={"spoken": "RESET_HEAD"})
 
             @smach.cb_interface(outcomes=["done"])
-            def reset_head(userdata):
+            def reset_head(userdata=None):
                 """ Resets the head """
                 print "Resetting head"
                 robot.head.reset()
