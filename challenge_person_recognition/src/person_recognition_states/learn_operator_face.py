@@ -10,7 +10,7 @@ class LearnOperatorFace(smach.StateMachine):
         self.robot = robot
 
         @smach.cb_interface(outcomes=['done'])
-        def look_at_standing_person(userdata):
+        def look_at_standing_person(userdata=None):
             robot.head.look_at_standing_person()
             return 'done'
 
