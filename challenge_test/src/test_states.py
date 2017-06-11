@@ -68,7 +68,7 @@ class AskPersonName(smach.State):
         self.personNameDes = personNameDes
         self.defaultName = defaultName
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         printOk("AskPersonName")
 
         self.robot.speech.speak("What is your name?", block=True)
@@ -115,7 +115,7 @@ class PickUpRandomObj(smach.State):
         self.robot = robot
         self.objectsIDsDes = objectsIDsDes
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         printOk("PickUpRandomObj")
 
         objsResolved = self.objectsIDsDes.resolve()
@@ -176,7 +176,7 @@ class RecognizePeople(smach.State):
 
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         printOk("RecognizePeople")
 
         rospy.logerr("ed.detect_ persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
