@@ -36,7 +36,7 @@ class StoringGroceries(smach.StateMachine):
                                                 'no_response': 'AWAIT_START'})
 
             @smach.cb_interface(outcomes=["done"])
-            def move_table(userdata):
+            def move_table(userdata=None):
                 """ 'Locks' a locking designator """
                 # For now, don't do anything
                 return "done"
