@@ -32,7 +32,7 @@ class PreparePlace(smach.State):
         self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         placement_fs = self._placement_pose_designator.resolve()
         if not placement_fs:
@@ -88,7 +88,7 @@ class Put(smach.State):
         self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         item_to_place = self._item_to_place_designator.resolve()
         if not item_to_place:
