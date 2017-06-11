@@ -74,7 +74,7 @@ class UpdateEntityPose(smach.State):
         self._robot = robot
         self._entity_designator = entity_designator
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Looks at the entity and updates its pose using the update kinect service """
         # Start by looking at the entity
         entity_to_inspect = self._entity_designator.resolve()
