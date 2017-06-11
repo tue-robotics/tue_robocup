@@ -645,7 +645,7 @@ class FollowOperator(smach.State):
         # No end criteria met
         return None
 
-    def execute(self, userdata=[]):
+    def execute(self, userdata=None):
         # Reset robot and operator last pose
         self._last_pose_stamped = None
         self._last_operator_fs = None
