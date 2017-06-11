@@ -96,7 +96,6 @@ def main():
     trigger = WaitForTrigger(robot, ["gpsr"], "/amigo/trigger")
 
     while True:
-        trigger.execute()
         # Navigate to the GPSR meeting point
         if not skip and not finished:
             robot.speech.speak("Moving to the meeting point.", block=False)
@@ -112,6 +111,7 @@ def main():
         robot.speech.speak(report, block=True)
 
         while True:
+            trigger.execute()
             while True:
                 try:
                     robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
