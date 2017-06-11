@@ -28,7 +28,7 @@ class WaitSay(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self._robot.head.look_at_standing_person()
         answer = None
         while not answer or answer.result != "side detection":
@@ -139,7 +139,7 @@ class AutomaticSideDetection(smach.State):
 
         return best_side
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         rospy.sleep(0.2)
         self._inspect_sides()
 
@@ -165,7 +165,7 @@ class StoreWaypoint(smach.State):
                 self._robot.speech.speak("Please say yes or no")
         return False
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
 
