@@ -39,7 +39,7 @@ class DetectCrowd(smach.State):
         self._face_recognizer = FaceRecognizer(align_path, net_path)
         # self._skybiometry = Skybiometry(key, secret)
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
         tries = 3
         detections = self.recognize(tries)
 
