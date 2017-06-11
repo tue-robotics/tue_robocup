@@ -133,7 +133,7 @@ class AutomaticSideDetection(smach.State):
 
         return best_side
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         rospy.sleep(0.2)
         self._inspect_sides()
 
@@ -155,7 +155,7 @@ class StoreWaypoint(smach.State):
         self._location_id = location_id
         self._waypoint_pub = rospy.Publisher("/restaurant_waypoints", Marker, queue_size=10)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         # Store current base position
         base_pose = self._robot.base.get_location().frame
