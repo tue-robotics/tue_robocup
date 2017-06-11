@@ -146,7 +146,7 @@ class SelectAction(smach.State):
 
         rospy.loginfo("Use 'navc' to continue, 'navp' to pause and 'navs' to stop this node")
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if self.outcome == 'pause':
             rospy.sleep(rospy.Duration(1/self.rate))
         return self.outcome
@@ -189,7 +189,7 @@ class RandomNav(smach.StateMachine):
             @smach.cb_interface(outcomes=['target_determined', 'no_targets_available'],
                                 input_keys=[],
                                 output_keys=[])
-            def determine_target(userdata, designator):
+            def determine_target(userdata=None, designator):
 
                 entity_id = designator.getRandomGoal()
 
