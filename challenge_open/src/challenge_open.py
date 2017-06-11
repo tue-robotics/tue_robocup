@@ -19,7 +19,7 @@ class VerifyWorldModelInfo(smach.State):
         smach.State.__init__(self, outcomes=["failed", "done"])
         self._robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         if "trashbin" not in ids:
@@ -67,7 +67,7 @@ class DetermineWhatToCleanInspect(smach.State):
         self._robot = robot
         self._served = []
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         while not rospy.is_shutdown():
             self._robot.head.reset()
             rospy.sleep(rospy.Duration(1.0))
