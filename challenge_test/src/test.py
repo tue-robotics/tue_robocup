@@ -140,13 +140,13 @@ class LearnNameContainer(smach.StateMachine):
     def __init__(self, robot, personNameDesLocal):
 
         @smach.cb_interface(outcomes=['spoken'])
-        def sayIsYourName(userdata):
+        def sayIsYourName(userdata=None):
             printOk("sayIsYourName")
             robot.speech.speak( "I heard " + personNameDes.resolve() + ". Is this correct?", block=True)
             return 'spoken'
 
         @smach.cb_interface(outcomes=['spoken'])
-        def sayCouldNotLearnNameCB(userdata):
+        def sayCouldNotLearnNameCB(userdata=None):
             printOk("sayCouldNotLearnNameCB")
             robot.speech.speak( "Sorry but I could not understand your name. I will just call you " + personNameDesLocal.resolve(), block=False)
             return 'spoken'
@@ -302,7 +302,7 @@ class SearchPeopleContainer(smach.StateMachine):
     def __init__(self, robot, personNameDesLocal):
 
         @smach.cb_interface(outcomes=['spoken'])
-        def saySearchingOperatorCB(userdata = None):
+        def saySearchingOperatorCB(userdata=None):
             printOk("saySearchingOperatorCB")
             robot.speech.speak( "I am searching for " + personNameDesLocal.resolve() + "!", block=False)
             return 'spoken'
@@ -387,7 +387,7 @@ class ChallengeTest(smach.StateMachine):
         # - - - - - - - - - - - - - - - - - - - Callback States  - - - - - - - - - - - - - - - - - - -
 
         @smach.cb_interface(outcomes=['spoken'])
-        def sayHelloCB(userdata = None):
+        def sayHelloCB(userdata=None):
             printOk("sayHelloCB")
             robot.speech.speak( "Hello " + personNameDes.resolve() + "!", block=False)
             return 'spoken'
