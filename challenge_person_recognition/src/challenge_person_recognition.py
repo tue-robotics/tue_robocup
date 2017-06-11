@@ -52,7 +52,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                  'failed': 'LEARN_OPERATOR_FACE'})
 
             @smach.cb_interface(outcomes=['done'])
-            def wait_a_sec(userdata):
+            def wait_a_sec(userdata=None):
                 robot.speech.speak("I will wait for 10 seconds for you to join the crowd", block=True)
                 start = rospy.Time.now()
                 stop = rospy.Duration(10) + start
@@ -69,7 +69,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                    transitions={'done': 'FORCE_DRIVE'})
 
             @smach.cb_interface(outcomes=['done'])
-            def force_drive(userdata):
+            def force_drive(userdata=None):
                 vth = 0.5
                 th = 3.1415
                 robot.head.cancel_goal()
