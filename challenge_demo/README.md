@@ -1,8 +1,8 @@
-Responsible: Rokus
+Responsible: Matthijs
 
 # Start-up
 
-    <robot>-challenge-gpsr
+    <robot>-demo
 
 # Scenario
 
