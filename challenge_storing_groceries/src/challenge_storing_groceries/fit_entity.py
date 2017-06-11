@@ -16,7 +16,7 @@ class FitEntity(smach.State):
         self._srv = rospy.ServiceProxy(robot.robot_name + '/ed/fit_entity_in_image', FitEntityInImage)
         self._entity_str = entity_str
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Executes the state """
         # Make sure the robot looks at the entity
         self._robot.head.reset()  # ToDo: this is abuse of the reset function
