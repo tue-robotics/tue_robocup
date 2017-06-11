@@ -29,7 +29,7 @@ class checkTimeOut(smach.State):
 
         self.turn = -1
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         current_seconds = rospy.Time.now().to_sec()
 
         radians = 0.15
@@ -58,7 +58,7 @@ class Turn(smach.State):
         self.robot = robot
         self.radians = radians
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         self.robot.head.close()
 
         vth = 1.0
@@ -73,7 +73,7 @@ class DetermineDoor(smach.State):
         self._robot = robot
         self._door_id_designator = door_id_designator
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         door_1_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_1).pose.position
         door_2_position = self._robot.ed.get_entity(id=challenge_knowledge.reentry_door_2).pose.position
 
@@ -110,7 +110,7 @@ class SelectWaypoints(smach.State):
         self._wp_1_des = wp_1_des
         self._wp_2_des = wp_2_des
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if self._door_id_designator.resolve() == challenge_knowledge.target_door_1:
             self._wp_1_des.writeable.write(challenge_knowledge.target_door_opening_start_1)
             self._wp_2_des.writeable.write(challenge_knowledge.target_door_opening_dest_1)
@@ -137,7 +137,7 @@ class DetermineObject(smach.State):
         self.pc = PositionConstraint(frame="/map", constraint="(x-%f)^2+(y-%f)^2 < 0.05" % (pose.position.x, pose.position.y))
         self.obstacle_radius = obstacle_radius
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         self._robot.speech.speak("Waypoint 2 is occupied, what do we have here", block=False)
 
