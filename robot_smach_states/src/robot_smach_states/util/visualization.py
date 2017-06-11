@@ -235,7 +235,7 @@ def testcase1():
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:
         @smach.cb_interface(outcomes=["succeeded"])
-        def execute(userdata):
+        def execute(userdata=None):
             return "succeeded"
         smach.StateMachine.add('TEST1',
                                 smach.CBState(execute),
@@ -252,7 +252,7 @@ def testcase2():
     toplevel = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with toplevel:
         @smach.cb_interface(outcomes=["succeeded", 'error'])
-        def execute(userdata):
+        def execute(userdata=None):
             return "succeeded"
         smach.StateMachine.add('TEST1',
                                 smach.CBState(execute),
@@ -282,7 +282,7 @@ def testcase3():
     testcase3 = smach.StateMachine(outcomes=['Done'])
     with testcase3:
         @smach.cb_interface(outcomes=["succeeded"])
-        def execute(userdata):
+        def execute(userdata=None):
             return "succeeded"
         smach.StateMachine.add('TEST1',
                                 smach.CBState(execute),
@@ -311,7 +311,7 @@ def testcase4():
     testcase4 = smach.StateMachine(outcomes=['Done'])
     with testcase4:
         @smach.cb_interface(outcomes=["succeeded", 'error'])
-        def execute(userdata):
+        def execute(userdata=None):
             return "succeeded"
         smach.StateMachine.add('TEST1',
                                 smach.CBState(execute),
