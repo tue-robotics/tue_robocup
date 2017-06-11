@@ -162,7 +162,7 @@ class PointingDetector(smach.State):
         self._super_type = super_type
         self._default_entity_id = default_entity_id
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         # Point head in the right direction (look at the ground 100 m in front of the robot
         self._robot.head.look_at_ground_in_front_of_robot(distance=100.0)
