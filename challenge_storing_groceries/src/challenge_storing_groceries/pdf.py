@@ -35,7 +35,7 @@ class WritePdf(smach.State):
         self._items = {}  # Dict mapping entity id to tuples: entity, probability, and filename of images
         self._designator = None
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         # # Get all entities
         # entities = self._robot.ed.get_entities()
