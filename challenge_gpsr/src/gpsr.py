@@ -40,6 +40,7 @@ def main():
     restart     = rospy.get_param('~restart', False)
     robot_name  = rospy.get_param('~robot_name')
     no_of_tasks = rospy.get_param('~number_of_tasks', 0)
+    test        = rospy.get_param('~test_mode', False)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
@@ -49,6 +50,8 @@ def main():
         rospy.loginfo("[GPSR] number_of_tasks = {}".format(no_of_tasks))
     if restart:
         rospy.loginfo("[GPSR] running a restart")
+    if test:
+        rospy.loginfo("[GPSR] running in test mode")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -109,7 +112,7 @@ def main():
         robot.speech.speak(report, block=True)
 
         while True:
-            while True:
+            while True and not test:
                 try:
                     robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
                 except hmi.TimeoutException:
@@ -129,15 +132,16 @@ def main():
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
                     continue
 
-            # check if we have heard this correctly
-            robot.speech.speak('I heard %s, is this correct?' % sentence)
-            try:
-                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
-                    robot.speech.speak('Sorry')
-                    continue
-            except hmi.TimeoutException:
-                # robot did not hear the confirmation, so lets assume its correct
-                break
+            if not test:
+                # check if we have heard this correctly
+                robot.speech.speak('I heard %s, is this correct?' % sentence)
+                try:
+                    if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                        robot.speech.speak('Sorry')
+                        continue
+                except hmi.TimeoutException:
+                    # robot did not hear the confirmation, so lets assume its correct
+                    break
 
             break
 
