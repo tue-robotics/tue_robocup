@@ -498,7 +498,7 @@ class FollowOperator(smach.State):
             # Sort based on probability
             if detections:
                 detections = sorted(detections, key=lambda det: det[1])
-                rospy.loginfo("sorted(detections): {}".format(detections)
+                rospy.loginfo("sorted(detections): {}".format(detections))
                 best_detection = detections[0][0]
                 rospy.loginfo("best_detection = {}".format(best_detection))
             else:
