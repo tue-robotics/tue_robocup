@@ -96,7 +96,7 @@ VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
 
 grammar += """
 
-VP["action": "inspect", "entity": {"id": X}] -> inspect the MANIPULATION_AREA_LOCATIONS[X]
+VP["action": "inspect", "entity": {"id": X}] -> inspect the LOCATIONS[X]
 """
 
 ###############################################################################
