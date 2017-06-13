@@ -92,7 +92,7 @@ class WaitForClickedCustomer(smach.State):
         self._point = None
 
     def callback(self, point_stamped):
-        rospy.loginfo("Recieved a point: {}".format(point_stamped))
+        rospy.loginfo("Recieved a point:\n{}".format(point_stamped))
         self._point = point_stamped
 
     def execute(self, userdata):
@@ -101,15 +101,12 @@ class WaitForClickedCustomer(smach.State):
 
         rate = rospy.Rate(self.rate)
         self._point = False
-        #rospy.logwarn("Waiting for trigger (any of {0}) on topic /trigger".format(self.triggers))
         while not rospy.is_shutdown() and not self._point:
-            print "Waiting for a point"
             rate.sleep()
 
         if not self._point:
             return 'aborted'
 
-        print self._point
         # TODO, get data from point into ED
         pose = frame_stamped("map", self._point.point.x, self._point.point.y, 0.0)
         self._robot.ed.update_entity(id="customer", frame_stamped=pose, type="waypoint")
