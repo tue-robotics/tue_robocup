@@ -12,10 +12,13 @@ class Api(RobotPart):
         client = self.create_simple_action_client('/' + robot_name + '/hmi', QueryAction)
         self._client = Client(simple_action_client=client)
 
-
     def query(self, description, grammar, target, timeout=10):
         """
         Perform a HMI query, returns a HMIResult
+        :param description: text describing the query
+        :param grammar: string with the grammar to load
+        :param target: string identifying the target of the grammar to recognize
+        :param timeout: timeout in seconds (float)
         """
         return self._client.query(description, grammar, target, timeout)
 
