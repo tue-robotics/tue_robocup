@@ -333,10 +333,10 @@ class Head(RobotPart):
 
         # Only take detections with operator
         detections = []
-        for d in detections:
-            for cp in d.categorical_distribution.probabilities:
+        for recog in recognitions:
+            for cp in recog.categorical_distribution.probabilities:
                 if cp.label == desired_label:
-                    detections.append((d, cp.probability))
+                    detections.append((recog, cp.probability))
 
         # Sort based on probability
         if detections:
