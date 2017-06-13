@@ -217,11 +217,14 @@ class Head(RobotPart):
         # self._camera_cv
         # self._camera_last_image
 
+        # import ipdb; ipdb.set_trace()
+
         # lazy subscribe to the kinect
         if not self._camera_lazy_sub:
             # for test with tripod kinect
             # self._camera_lazy_sub = rospy.Subscriber("/camera/rgb/image_rect_color", Image, self._image_cb)
             # for the robot
+            rospy.loginfo("Creating subscriber")
             self._camera_lazy_sub = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, self._image_cb)
             rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
 
@@ -231,9 +234,14 @@ class Head(RobotPart):
         self._camera_last_image = None
         for i in range(timeout):
             if self._camera_last_image:
+                rospy.loginfo("len(self._camera_last_image): {}".format(len(self._camera_last_image.data)))
                 break
+            else:
+                rospy.loginfo("self._camera_last_image: {}".format(self._camera_last_image))
+
             if rospy.is_shutdown():
                 return
+
             self._camera_cv.wait(timeout=1)
         else:
             raise Exception('no image received from %s' % self._camera_lazy_sub.name)
@@ -293,11 +301,12 @@ class Head(RobotPart):
             rospy.logerr("Cannot get image")
             return False
 
-        recognitions = self._get_faces(image).recognitions
-        recognitions = [r for r in recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
+        raw_recognitions = self._get_faces(image).recognitions
+        recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
         rospy.loginfo('found %d valid face(s)', len(recognitions))
 
         if len(recognitions) != 1:
+            rospy.loginfo("Too many faces: {}".format(len(recognitions)))
             return False
 
         recognition = recognitions[0]
