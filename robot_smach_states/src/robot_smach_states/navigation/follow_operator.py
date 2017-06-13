@@ -485,25 +485,7 @@ class FollowOperator(smach.State):
             # a CategoricalDistribution is a list of CategoryProbabilities
             # a CategoryProbability has a label and a float
             raw_detections = self._robot.head.detect_faces()
-
-            rospy.loginfo("_recover_operator: raw_detections: {}".format(raw_detections))
-
-            # Only take detections with operator
-            detections = []
-            for d in raw_detections:
-                for cp in d.categorical_distribution.probabilities:
-                    if cp.label == "operator":
-                        detections.append((d, cp.probability))
-
-            # Sort based on probability
-            if detections:
-                detections = sorted(detections, key=lambda det: det[1])
-                rospy.loginfo("sorted(detections): {}".format(detections))
-                best_detection = detections[0][0]
-                rospy.loginfo("best_detection = {}".format(best_detection))
-            else:
-                best_detection = None
-                recovered_operator = None
+            best_detection = self._robot.head.get_best_face_recognition(raw_detections, "operator")
 
             rospy.loginfo("best_detection = {}".format(best_detection))
             if best_detection:

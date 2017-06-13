@@ -327,6 +327,26 @@ class Head(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
+    def get_best_face_recognition(self, recognitions, desired_label):
+        """Returns the face with the highest probability of having some label"""
+        rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
+
+        # Only take detections with operator
+        detections = []
+        for d in detections:
+            for cp in d.categorical_distribution.probabilities:
+                if cp.label == desired_label:
+                    detections.append((d, cp.probability))
+
+        # Sort based on probability
+        if detections:
+            sorted_detections = sorted(detections, key=lambda det: det[1])
+            best_detection = sorted_detections[0][0]
+        else:
+            best_detection = None
+
+        return best_detection
+
     def clear_face(self):
         rospy.loginfo('clearing all learned faces')
         self._clear_srv()
