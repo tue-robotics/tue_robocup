@@ -53,7 +53,7 @@ class ChallengeSetATable(smach.StateMachine):
                                    Initialize(robot),
                                    transitions={'initialized': 'AUFRAEUMEN',
                                                 'abort': 'Aborted'})
-            smach.StateMachine.add('AUFRAEUMEN', # Clear up the table (bring the objects to their default location)
+            smach.StateMachine.add('CLEAR_UP', # Clear up the table (bring the objects to their default location)
                                    Initialize(robot),
                                    transitions={'initialized': 'CLEAN_THE_TABLE',
                                                 'abort': 'Aborted'})
