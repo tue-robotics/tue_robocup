@@ -31,7 +31,7 @@ def answer(robot, res, crowd_data):
                 if action['action'] == 'answer':
                     # if res.semantics['actions'] == 'answer':
                     answer = action['solution']#res.semantics['solution']
-               
+
                 # Counting people
                 if action['action'] == 'count':
 
@@ -97,7 +97,7 @@ def answer(robot, res, crowd_data):
                         print cat
                         loc, area_name = common_knowledge.get_object_category_location(cat)
                         answer = 'You can find the %s %s %s' % (entity, area_name, loc)
-                        
+
                     else:
                         answer = 'I dont know that object'
 
@@ -106,7 +106,7 @@ def answer(robot, res, crowd_data):
                     entity = action['entity']
                     loc, area_name = common_knowledge.get_object_category_location(entity)
                     answer = 'You can find the %s on the %s' % (entity, loc)
-    
+
                 # Return objects category
                 if action['action'] == 'return_category':
                     entity = action['entity']
@@ -114,7 +114,7 @@ def answer(robot, res, crowd_data):
                     if len(locations) == 1:
                         cat = locations[0]['category']
                         answer = 'The %s belongs to %s' % (entity, cat)
-        
+
                     else:
                         answer = 'I dont know that object'
 
@@ -125,9 +125,9 @@ def answer(robot, res, crowd_data):
                     if len(locations) == 1:
                         col = locations[0]['color']
                         answer = 'The color of %s is %s' % (entity, col)
-        
+
                     else:
-                        answer = 'I dont know that object'    
+                        answer = 'I dont know that object'
 
                 # Compare objects categories
                 if action['action'] == 'compare_category':
@@ -143,7 +143,7 @@ def answer(robot, res, crowd_data):
                         else:
                             answer = 'These objects belong to different categories'
                     else:
-                        answer = 'I dont know these objects'    
+                        answer = 'I dont know these objects'
 
                 # Count how many objects belong to category
                 if action['action'] == 'count_object':
@@ -153,7 +153,7 @@ def answer(robot, res, crowd_data):
                         count = len(objects_count)
                         answer = 'The number of objects in category %s is %i' % (entity, count)
                     else:
-                        answer = 'I dont know this category' 
+                        answer = 'I dont know this category'
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
@@ -167,7 +167,7 @@ def answer(robot, res, crowd_data):
 
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(15)):
+    def __init__(self, robot, time_out=15.0):
         smach.State.__init__(self, outcomes=["answered", "not_answered"], input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
