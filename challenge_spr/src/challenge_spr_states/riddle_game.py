@@ -24,97 +24,136 @@ def hear(robot, time_out):
 
 def answer(robot, res, crowd_data):
     if res:
-        if 'answer' in res.semantics:
-            answer = res.semantics['answer']
-            rospy.loginfo("Question was: '%s'?"%res.sentence)
-            robot.speech.speak("The answer is %s"%answer)
-            return 'answered'
-        elif 'action' in res.semantics:
-            # Counting people
-            if res.semantics['action'] == 'count':
+        if 'actions' in res.semantics:
+            for action in res.semantics['actions']:
 
-                if res.semantics['entity'] == 'people':
-                    answer = 'In the crowd are %d people' % crowd_data['crowd_size']
+                # Predefined questions
+                if action['action'] == 'answer':
+                    # if res.semantics['actions'] == 'answer':
+                    answer = action['solution']#res.semantics['solution']
 
-                if res.semantics['entity'] == 'children':
-                    answer = 'In the crowd are %d children' % crowd_data['children']
+                # Counting people
+                if action['action'] == 'count':
 
-                if res.semantics['entity'] == 'adults':
-                    answer = 'In the crowd are %d adults' % crowd_data['adults']
+                    if action['entity'] == 'people':
+                        answer = 'In the crowd are %d people' % crowd_data['crowd_size']
 
-                if res.semantics['entity'] == 'elders':
-                    answer = 'In the crowd are %d elders' % crowd_data['elders']
+                    if action['entity'] == 'children':
+                        answer = 'In the crowd are %d children' % crowd_data['children']
 
-                if res.semantics['entity'] == 'males':
-                    answer = 'In the crowd are %d males' % crowd_data['males']
+                    if action['entity'] == 'adults':
+                        answer = 'In the crowd are %d adults' % crowd_data['adults']
 
-                if res.semantics['entity'] == 'females':
-                    answer = 'In the crowd are %d females' % crowd_data['females']
+                    if action['entity'] == 'elders':
+                        answer = 'In the crowd are %d elders' % crowd_data['elders']
 
-                if res.semantics['entity'] == 'men':
-                    answer = 'In the crowd are %d men' % crowd_data['men']
+                    if action['entity'] == 'males':
+                        answer = 'In the crowd are %d males' % crowd_data['males']
 
-                if res.semantics['entity'] == 'women':
-                    answer = 'In the crowd are %d women' % crowd_data['women']
+                    if action['entity'] == 'females':
+                        answer = 'In the crowd are %d females' % crowd_data['females']
 
-                if res.semantics['entity'] == 'boys':
-                    answer = 'In the crowd are %d boys' % crowd_data['boys']
+                    if action['entity'] == 'men':
+                        answer = 'In the crowd are %d men' % crowd_data['men']
 
-                if res.semantics['entity'] == 'girls':
-                    answer = 'In the crowd are %d girls' % crowd_data['girls']
+                    if action['entity'] == 'women':
+                        answer = 'In the crowd are %d women' % crowd_data['women']
 
-            # Location of placements or beacons
-            if res.semantics['action'] == 'a_find':
-                entity = res.semantics['entity']
-                locations = [l for l in common_knowledge.locations if l['name'] == entity]
-                if len(locations) == 1:
-                    loc = locations[0]['room']
-                    answer = 'The %s can be found in the %s' % (entity, loc)
-                else:
-                    answer = 'I dont know that object'
+                    if action['entity'] == 'boys':
+                        answer = 'In the crowd are %d boys' % crowd_data['boys']
 
-            # Count placements or beacons in the room
-            if res.semantics['action'] == 'a_count':
-                entity = res.semantics['entity']
-                locations = [l for l in common_knowledge.locations if l['name'] == entity]
-                if len(locations) == 1:
-                    loc = locations[0]['room']
-                    if loc == res.semantics['location']:
-                        answer = 'There is one %s in the %s' % (entity, loc)
+                    if action['entity'] == 'girls':
+                        answer = 'In the crowd are %d girls' % crowd_data['girls']
+
+                # Location of placements or beacons
+                if action['action'] == 'find_placement':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                    if len(locations) == 1:
+                        loc = locations[0]['room']
+                        answer = 'The %s can be found in the %s' % (entity, loc)
                     else:
-                        answer = 'There are no %s in the %s' % (entity, loc)
-                else:
-                    answer = 'I dont know that object'
+                        answer = 'I dont know that object'
 
-            # Find objects
-            if res.semantics['action'] == 'o_find':
-                entity = res.semantics['entity']
-                locations = [l for l in common_knowledge.objects if l['name'] == entity]
-                if len(locations) == 1:
-                    cat = locations[0]['category']
-                    print cat
-                    loc, area_name = common_knowledge.get_object_category_location(cat)
-                    answer = 'You can find the %s %s %s' % (entity, area_name, loc)
-                    
-                else:
-                    answer = 'I dont know that object'
+                # Count placements or beacons in the room
+                if action['action'] == 'count_placement':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.locations if l['name'] == entity]
+                    if len(locations) == 1:
+                        loc = locations[0]['room']
+                        if loc == action['location']:
+                            answer = 'There is one %s in the %s' % (entity, loc)
+                        else:
+                            answer = 'There are no %s in the %s' % (entity, loc)
+                    else:
+                        answer = 'I dont know that object'
 
-            # Find category
-            if res.semantics['action'] == 'c_find':
-                entity = res.semantics['entity']
-                loc, area_name = common_knowledge.get_object_category_location(entity)
-                answer = 'You can find the %s on the %s' % (entity, loc)
-                
-            # Return objects category
-            if res.semantics['action'] == 'return_category':
-                entity = res.semantics['entity']
-                locations = [l for l in common_knowledge.objects if l['name'] == entity]
-                if len(locations) == 1:
-                    cat = locations[0]['category']
-                    answer = 'The %s belongs to %s' % (entity, cat)
-                    
-                else:
-                    answer = 'I dont know that object'
+                # Find objects
+                if action['action'] == 'find_object':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                    if len(locations) == 1:
+                        cat = locations[0]['category']
+                        print cat
+                        loc, area_name = common_knowledge.get_object_category_location(cat)
+                        answer = 'You can find the %s %s %s' % (entity, area_name, loc)
+
+                    else:
+                        answer = 'I dont know that object'
+
+                # Find category
+                if action['action'] == 'find_category':
+                    entity = action['entity']
+                    loc, area_name = common_knowledge.get_object_category_location(entity)
+                    answer = 'You can find the %s on the %s' % (entity, loc)
+
+                # Return objects category
+                if action['action'] == 'return_category':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                    if len(locations) == 1:
+                        cat = locations[0]['category']
+                        answer = 'The %s belongs to %s' % (entity, cat)
+
+                    else:
+                        answer = 'I dont know that object'
+
+                # Return objects color
+                if action['action'] == 'return_color':
+                    entity = action['entity']
+                    locations = [l for l in common_knowledge.objects if l['name'] == entity]
+                    if len(locations) == 1:
+                        col = locations[0]['color']
+                        answer = 'The color of %s is %s' % (entity, col)
+
+                    else:
+                        answer = 'I dont know that object'
+
+                # Compare objects categories
+                if action['action'] == 'compare_category':
+                    entity_a = action['entity_a']
+                    entity_b = action['entity_b']
+                    locations_a = [l for l in common_knowledge.objects if l['name'] == entity_a]
+                    locations_b = [l for l in common_knowledge.objects if l['name'] == entity_b]
+                    if len(locations_a) == 1 & len(locations_b) == 1:
+                        cat_a = locations_a[0]['category']
+                        cat_b = locations_b[0]['category']
+                        if cat_a == cat_b:
+                            answer = 'Both objects belong to the same category %s' % (cat_a)
+                        else:
+                            answer = 'These objects belong to different categories'
+                    else:
+                        answer = 'I dont know these objects'
+
+                # Count how many objects belong to category
+                if action['action'] == 'count_object':
+                    entity = action['entity']
+                    objects_count = [l for l in common_knowledge.objects if l['category'] == entity]
+                    if len(objects_count) > 0:
+                        count = len(objects_count)
+                        answer = 'The number of objects in category %s is %i' % (entity, count)
+                    else:
+                        answer = 'I dont know this category'
 
             rospy.loginfo("Question was: '%s'?"%res.sentence)
             robot.speech.speak("The answer is %s"%answer)
@@ -128,7 +167,7 @@ def answer(robot, res, crowd_data):
 
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(15)):
+    def __init__(self, robot, time_out=15.0):
         smach.State.__init__(self, outcomes=["answered", "not_answered"], input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out

@@ -39,6 +39,7 @@ class VerifyWorldModelInfo(smach.State):
 
         return "done"
 
+
 class StartDetectingSkeletonsForever(smach.State):		
     def __init__(self, robot):		
         smach.State.__init__(self, outcomes=['started'])		
@@ -58,6 +59,7 @@ class StartDetectingSkeletonsForever(smach.State):
         g_thread = threading.Thread(target=self._detect_skeletons_forever, args=("detect-skeletons-forever", d, g_run_event))		
         g_thread.start()		
         return 'started'
+ 
 
 class DetermineWhatToCleanInspect(smach.State):
     def __init__(self, robot):

@@ -4,15 +4,20 @@ import rospy
 import smach
 import sys
 import time
+import datetime
 from hmi import TimeoutException
 
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
 import robot_smach_states.util.designators as ds
+from robot_smach_states.util.designators import check_type
+from robot_skills.arms import Arm
+
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
 from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
@@ -42,7 +47,7 @@ class WaitForOperatorCommand(smach.State):
 
         smach.State.__init__(self, outcomes=_outcomes,  output_keys=_output_keys)
 
-    def _listen_for_commands(self, tries=3, time_out = rospy.Duration(30)):
+    def _listen_for_commands(self, tries=3, time_out=30):
         for i in range(0, tries):
             try:
                 result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T', timeout=time_out)
@@ -84,7 +89,7 @@ class StoreCarWaypoint(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car,
+        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
                                                frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
 
@@ -109,7 +114,8 @@ class GrabItem(smach.State):
         handOverHuman = states.HandoverFromHuman(self._robot,
                                                  self._empty_arm_designator,
                                                  "current_item",
-                                                 self._current_item)
+                                                 self._current_item,
+                                                 arm_configuration="carrying_bag_pose")
 
         userdata.target_room_out = userdata.target_room_in
 
@@ -135,6 +141,34 @@ class NavigateToRoom(smach.State):
 
         return navigateToWaypoint.execute()
 
+class DropBagOnGround(smach.StateMachine):
+    """
+    Put a bag in the robot's gripper on the ground
+    """
+    def __init__(self, robot, arm_designator):
+        """
+        :param robot: the robot with which to execute this state machine
+        :param arm_designator: ArmDesignator resolving to Arm holding the bag to drop
+
+        """
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        check_type(arm_designator, Arm)
+
+        with self:
+            smach.StateMachine.add( 'OPEN_BEFORE_DROP', states.SetGripper(robot, arm_designator, gripperstate='open'),
+                                transitions={'succeeded'    :   'DROP_POSE',
+                                             'failed'       :   'DROP_POSE'})
+
+            smach.StateMachine.add("DROP_POSE", states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
+                            transitions={'succeeded'        :'RESET_ARM_OK',
+                                         'failed'           :'RESET_ARM_FAIL'})
+
+            smach.StateMachine.add( 'RESET_ARM_OK', states.ResetArms(robot),
+                                transitions={'done'         :   'succeeded'})
+
+            smach.StateMachine.add( 'RESET_ARM_FAIL', states.ResetArms(robot),
+                                transitions={'done'         :   'failed'})
 
 def setup_statemachine(robot):
 
@@ -147,12 +181,23 @@ def setup_statemachine(robot):
     empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms,
                                                       robot.rightArm,
                                                       name="empty_arm_designator")
-    current_item = ds.EntityByIdDesignator(robot,
-                                           id=challenge_knowledge.default_item,
-                                           name="current_item")
-    arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms,
-                                                             current_item,
-                                                             name="arm_with_item_designator")
+
+
+    # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm (first resolve is cached), unless it is unlocked
+    # For this challenge, unlocking is not needed
+    bag_arm_designator = empty_arm_designator.lockable()
+    bag_arm_designator.lock()
+
+    # We don't actually grab something, so there is no need for an actual thing to grab
+    current_item = ds.VariableDesignator(Entity("dummy",
+                                                "dummy",
+                                                "/{}/base_link".format(robot.robot_name),
+                                                kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5),
+                                                None,
+                                                {},
+                                                [],
+                                                datetime.datetime.now()),
+                                         name="current_item")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -167,6 +212,10 @@ def setup_statemachine(robot):
         #                        WaitForOperatorCommand(robot, possible_commands=['follow', 'follow me']),
         #                        transitions={'success':        'FOLLOW_OPERATOR',
         #                                     'abort':          'Aborted'})
+
+        smach.StateMachine.add('ASK_FOLLOW_OR_REMEMBER',
+                                states.Say(robot, ["Are we at the car or should I follow you?"], block=True),
+                                transitions={'spoken':  'WAIT_TO_FOLLOW_OR_REMEMBER'})
 
         smach.StateMachine.add('WAIT_TO_FOLLOW_OR_REMEMBER',
                                WaitForOperatorCommand(robot,
@@ -191,14 +240,18 @@ def setup_statemachine(robot):
                                                      ask_follow=True,
                                                      learn_face=True,
                                                      replan=True),
-                               transitions={'stopped':        'WAIT_TO_FOLLOW_OR_REMEMBER',
-                                            'lost_operator':  'WAIT_TO_FOLLOW_OR_REMEMBER',
-                                            'no_operator':    'WAIT_TO_FOLLOW_OR_REMEMBER'})
+                               transitions={'stopped':        'ASK_FOLLOW_OR_REMEMBER',
+                                            'lost_operator':  'ASK_FOLLOW_OR_REMEMBER',
+                                            'no_operator':    'ASK_FOLLOW_OR_REMEMBER'})
 
         smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                StoreCarWaypoint(robot),
-                               transitions={'success':        'WAIT_FOR_DESTINATION',
+                               transitions={'success':        'ASK_DESTINATION',
                                             'abort':          'Aborted'})
+
+        smach.StateMachine.add('ASK_DESTINATION',
+                                states.Say(robot, ["Where should I bring the groceries?"], block=True),
+                                transitions={'spoken':  'WAIT_FOR_DESTINATION'})
 
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                WaitForOperatorCommand(robot,
@@ -209,12 +262,16 @@ def setup_statemachine(robot):
 
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
-                               GrabItem(robot, empty_arm_designator, current_item),
-                               transitions={'succeeded':        'GOTO_DESTINATION',
-                                            'timeout':          'GOTO_DESTINATION', # For now in simulation timeout is considered a succes.
+                               GrabItem(robot, bag_arm_designator, current_item),
+                               transitions={'succeeded':        'SAY_GOING_TO_ROOM',
+                                            'timeout':          'SAY_GOING_TO_ROOM', # For now in simulation timeout is considered a succes.
                                             'failed':           'Aborted'},
                                remapping = {'target_room_in':   'command_recognized',
                                             'target_room_out':  'target_room'})
+
+        smach.StateMachine.add('SAY_GOING_TO_ROOM',
+                                states.Say(robot, ["Let me bring in your groceries", "Helping you carry stuff", "I'm going back inside"], block=True),
+                                transitions={'spoken':  'GOTO_DESTINATION'})
 
 
         smach.StateMachine.add('GOTO_DESTINATION',
@@ -225,9 +282,9 @@ def setup_statemachine(robot):
 
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
         smach.StateMachine.add('PUTDOWN_ITEM',
-                               states.Place(robot, current_item, place_position, arm_with_item_designator),
-                               transitions={'done':             'ASKING_FOR_HELP',
-                                            'failed':           'Aborted'})
+                               DropBagOnGround(robot, bag_arm_designator),
+                               transitions={'succeeded':        'ASKING_FOR_HELP',
+                                            'failed':           'ASKING_FOR_HELP'})
 
         smach.StateMachine.add('ASKING_FOR_HELP',
                                #TODO: look and then face new operator
@@ -255,7 +312,7 @@ def setup_statemachine(robot):
                                #             'abort':          'Aborted'})
 
         smach.StateMachine.add('AT_END',
-                                states.Say(robot, "Goodbye"),
+                                states.Say(robot, ["We arrived at the car, goodbye", "You have reached your destination, goodbye", "The car is right here, see you later!"], block=True),
                                 transitions={'spoken':  'Done'})
 
     ds.analyse_designators(sm, "help_me_carry")

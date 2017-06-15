@@ -39,22 +39,19 @@ def main():
     skip        = rospy.get_param('~skip', False)
     restart     = rospy.get_param('~restart', False)
     robot_name  = rospy.get_param('~robot_name')
-    entrance_no = rospy.get_param('~entrance_number', 0)
     no_of_tasks = rospy.get_param('~number_of_tasks', 0)
+    test        = rospy.get_param('~test_mode', False)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
     if skip:
         rospy.loginfo("[GPSR] skip = {}".format(skip))
-    if entrance_no not in [1]:
-        rospy.logerr("[GPSR] entrance_number should be 1. You set it to {}".format(entrance_no))
-    else:
-        rospy.loginfo("[GPSR] entrance_number = {}".format(entrance_no))
-        entrance_no -= 1  # to transform to a 0-based index
     if no_of_tasks:
         rospy.loginfo("[GPSR] number_of_tasks = {}".format(no_of_tasks))
     if restart:
         rospy.loginfo("[GPSR] running a restart")
+    if test:
+        rospy.loginfo("[GPSR] running in test mode")
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -83,7 +80,7 @@ def main():
     if not skip and not restart:
 
         # Wait for door, enter arena
-        s = StartChallengeRobust(robot, knowledge.initial_pose[entrance_no])
+        s = StartChallengeRobust(robot, knowledge.initial_pose)
         s.execute()
 
         # Move to the start location
@@ -105,7 +102,7 @@ def main():
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.starting_pose[entrance_no]),
+                                                                              id=knowledge.starting_pose),
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
@@ -115,7 +112,7 @@ def main():
         robot.speech.speak(report, block=True)
 
         while True:
-            while True:
+            while True and not test:
                 try:
                     robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
                 except hmi.TimeoutException:
@@ -135,15 +132,16 @@ def main():
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
                     continue
 
-            # check if we have heard this correctly
-            robot.speech.speak('I heard %s, is this correct?' % sentence)
-            try:
-                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
-                    robot.speech.speak('Sorry')
-                    continue
-            except hmi.TimeoutException:
-                # robot did not hear the confirmation, so lets assume its correct
-                break
+            if not test:
+                # check if we have heard this correctly
+                robot.speech.speak('I heard %s, is this correct?' % sentence)
+                try:
+                    if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                        robot.speech.speak('Sorry')
+                        continue
+                except hmi.TimeoutException:
+                    # robot did not hear the confirmation, so lets assume its correct
+                    break
 
             break
 
@@ -190,7 +188,7 @@ def main():
         if finished and not skip:
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.exit_waypoint[entrance_no]),
+                                                                              id=knowledge.exit_waypoint),
                                      radius = 0.3)
             nwc.execute()
             robot.speech.speak("Thank you very much, and goodbye!", block=True)

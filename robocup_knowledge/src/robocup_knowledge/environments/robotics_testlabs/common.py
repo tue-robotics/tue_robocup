@@ -1,97 +1,114 @@
 # COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
 
-female_names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
-male_names = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+female_names = ["anna", "beth", "carmen", "jennifer", "jessica", "kimberly", "kristina", "laura", "mary", "sarah"]
+male_names = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
+
 names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'couch_table',   'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'dinner_table',  'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'bar',           'room':'livingroom', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'bookcase',      'room':'livingroom', 'category': 'shelf',   'manipulation':'yes' },
+    {'name': 'couch_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'bar',           'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'bookcase',      'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
 
-    { 'name':'cabinet',       'room':'kitchen',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'trashbin',      'room':'kitchen',    'category': 'utility', 'manipulation':'no'  },
-    { 'name':'plant',         'room':'kitchen',    'category': 'plant',   'manipulation':'no'  },
+    {'name': 'cabinet',       'room': 'kitchen',    'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'trashbin',      'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
+    {'name': 'plant',         'room': 'kitchen',    'category': 'plant',   'manipulation': 'no'},
 
-    { 'name':'bed',           'room':'bedroom',    'category': 'seat',    'manipulation':'yes' },
-    { 'name':'nightstand',    'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
+    {'name': 'bed',           'room': 'bedroom',    'category': 'seat',    'manipulation': 'yes'},
+    {'name': 'nightstand',    'room': 'bedroom',    'category': 'table',   'manipulation': 'yes'},
 
-    { 'name':'flight_case',   'room':'workshop',   'category': 'table',   'manipulation':'no'  },
-    { 'name':'battery_table', 'room':'workshop',   'category': 'table',   'manipulation':'no' },
-    { 'name':'workbench',     'room':'workshop',   'category': 'table',   'manipulation':'yes' },
+    {'name': 'flight_case',   'room': 'workshop',   'category': 'table',   'manipulation': 'no'},
+    {'name': 'battery_table', 'room': 'workshop',   'category': 'table',   'manipulation': 'no'},
+    {'name': 'workbench',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
 
-    { 'name':'hallway_table', 'room':'hallway',    'category': 'table',   'manipulation':'yes' }
+    {'name': 'hallway_table', 'room': 'hallway',    'category': 'table',   'manipulation': 'yes'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
 location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
-location_manipulatable = list(set([ o["manipulation"] for o in locations ]))
+manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
 rooms = location_rooms + ["workshop"]
 
 objects = [
-    {'category': 'food',                'name': 'apple'             },
-    {'category': 'food',                'name': 'bread'             },
-    {'category': 'food',                'name': 'cereals'           },
-    {'category': 'food',                'name': 'cornflakes'        },
-    {'category': 'food',                'name': 'crackers'          },
-    {'category': 'food',                'name': 'lemon'             },
-    {'category': 'food',                'name': 'noodles'           },
-    {'category': 'food',                'name': 'paprika'           },
-    {'category': 'food',                'name': 'peas'              },
-    {'category': 'food',                'name': 'pepper'            },
-    {'category': 'food',                'name': 'potato'            },
-    {'category': 'food',                'name': 'potato_soup'       },
-    {'category': 'food',                'name': 'salt'              },
-    {'category': 'food',                'name': 'tomato_pasta'      },
-    {'category': 'container',           'name': 'bag'               },
-    {'category': 'container',           'name': 'basket'            },
-    {'category': 'container',           'name': 'coffecup'          },
-    {'category': 'container',           'name': 'plate'             },
-    {'category': 'container',           'name': 'red_bowl'          },
-    {'category': 'container',           'name': 'white_bowl'        },
-    {'category': 'drink',               'name': 'banana_milk'       },
-    {'category': 'drink',               'name': 'cappucino'         },
-    {'category': 'drink',               'name': 'coke'              },
-    {'category': 'drink',               'name': 'orange_drink'      },
-    {'category': 'drink',               'name': 'water'             },
-    {'category': 'snack',               'name': 'chocolate_cookies' },
-    {'category': 'snack',               'name': 'egg'               },
-    {'category': 'snack',               'name': 'party_cracker'     },
-    {'category': 'snack',               'name': 'pringles'          },
-    {'category': 'cleaning_stuff',      'name': 'cloth'             },
-    {'category': 'cleaning_stuff',      'name': 'paper'             },
-    {'category': 'cleaning_stuff',      'name': 'sponge'            },
-    {'category': 'cleaning_stuff',      'name': 'towel'             },
-    {'category': 'cutlery',             'name': 'fork'              },
-    {'category': 'cutlery',             'name': 'spoon'             },
-    {'category': 'cutlery',             'name': 'knife'             }
+    {'category': 'food',                'name': 'apple',                'color': 'red'},
+    {'category': 'food',                'name': 'bread',                'color': 'brown'},
+    {'category': 'food',                'name': 'cereals',              'color': 'green'},
+    {'category': 'food',                'name': 'cornflakes',           'color': 'yellow'},
+    {'category': 'food',                'name': 'crackers',             'color': 'red'},
+    {'category': 'food',                'name': 'lemon',                'color': 'yellow'},
+    {'category': 'food',                'name': 'noodles',              'color': 'yellow'},
+    {'category': 'food',                'name': 'paprika',              'color': 'red'},
+    {'category': 'food',                'name': 'peas',                 'color': 'green'},
+    {'category': 'food',                'name': 'pepper',               'color': 'red'},
+    {'category': 'food',                'name': 'potato',               'color': 'brown'},
+    {'category': 'food',                'name': 'potato_soup',          'color': 'yellowish'},
+    {'category': 'food',                'name': 'salt',                 'color': 'white'},
+    {'category': 'food',                'name': 'tomato_pasta',         'color': 'red'},
+    {'category': 'container',           'name': 'bag',                  'color': 'brown'},
+    {'category': 'container',           'name': 'basket',               'color': 'black'},
+    {'category': 'container',           'name': 'coffecup',             'color': 'white'},
+    {'category': 'container',           'name': 'plate',                'color': 'white'},
+    {'category': 'container',           'name': 'red_bowl',             'color': 'red'},
+    {'category': 'container',           'name': 'white_bowl',           'color': 'white'},
+    {'category': 'drink',               'name': 'banana_milk',          'color': 'yellow'},
+    {'category': 'drink',               'name': 'cappucino',            'color': 'creamy'},
+    {'category': 'drink',               'name': 'coke',                 'color': 'black'},
+    {'category': 'drink',               'name': 'orange_drink',         'color': 'orange'},
+    {'category': 'drink',               'name': 'water',                'color': 'transparent'},
+    {'category': 'snack',               'name': 'chocolate_cookies',    'color': 'brownish'},
+    {'category': 'snack',               'name': 'egg',                  'color': 'white'},
+    {'category': 'snack',               'name': 'party_cracker',        'color': 'yellow'},
+    {'category': 'snack',               'name': 'pringles',             'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'cloth',                'color': 'blue'},
+    {'category': 'cleaning_stuff',      'name': 'paper',                'color': 'white'},
+    {'category': 'cleaning_stuff',      'name': 'sponge',               'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'towel',                'color': 'pink'},
+    {'category': 'cutlery',             'name': 'fork',                 'color': 'green'},
+    {'category': 'cutlery',             'name': 'spoon',                'color': 'blue'},
+    {'category': 'cutlery',             'name': 'knife',                'color': 'pink'}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
+object_color = list(set([ o["color"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
     "food": {"bookcase": "shelf3"},
-    "drink": {"cabinet": "on_top_of"},
-    "tool": {"workbench": "on_top_of"},
-    "decoration": {"dinner_table": "on_top_of"},
-    "leisure": {"bar": "on_top_of"},
-    "bowl": {"dinner_table": "on_top_of"},
-    "tray": {"dinner_table": "on_top_of"}
+    "container": {"flight_case": "in"},
+    "drink": {"dinner_table": "on_top_of"},
+    "snack": {"bookcase": "on_top_of"},
+    "cleaning_stuff": {"cabinet": "on_top_of"},
+    "cutlery": {"bar": "on_top_of"}
 }
 
 inspect_areas = {
-    "bookcase" : ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
+    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 }
 
 inspect_positions = {
 }
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+most_probable_location_in_room_map = {
+    'livingroom': 'dinner_table',
+    'bedroom': 'nightstand',
+    'workshop': 'workbench',
+    'kitchen': 'desk',
+    'hallway': 'hallway_table'
+}
+
+
+def get_location_from_room(room_id):
+    if room_id in most_probable_location_in_room_map:
+        return most_probable_location_in_room_map[room_id]
+    return None
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -108,15 +125,18 @@ class bcolors:
 
 
 '''
-	General function for printing shortcuts
-	name: name of the progam that instanciates make_prints
-	sentence: sentence to be displayed
+General function for printing shortcuts
+name: name of the program that instantiates make_prints
+sentence: sentence to be displayed
 
-	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
+Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
 '''
+
+
 def make_prints(name):
 
     prefix = bcolors.HEADER + name + bcolors.ENDC
+
     def printOk(sentence):
         print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
 
@@ -136,14 +156,17 @@ def is_location(location):
             return True
     return False
 
+
 def get_room(location):
     for loc in locations:
         if loc["name"] == location:
             return loc["room"]
     return None
 
+
 def is_room(entity_id):
     return (entity_id in rooms)
+
 
 def get_inspect_areas(location):
     if location in inspect_areas:
@@ -151,11 +174,13 @@ def get_inspect_areas(location):
     else:
         return ["on_top_of"]
 
+
 def get_inspect_position(location, area=""):
     if location in inspect_positions and area in inspect_positions[location]:
         return inspect_positions[location][area]
     else:
         return "in_front_of"
+
 
 def is_pick_location(location):
     for loc in locations:
@@ -163,11 +188,13 @@ def is_pick_location(location):
             return True
     return False
 
+
 def is_place_location(location):
     for loc in locations:
         if loc["name"] == location and (loc["manipulation"] == "yes" or loc["manipulation"] == "only_putting"):
             return True
     return False
+
 
 def get_locations(room=None, pick_location=None, place_location=None):
     return [loc["name"] for loc in locations
@@ -175,14 +202,22 @@ def get_locations(room=None, pick_location=None, place_location=None):
                    (pick_location == None or pick_location == is_pick_location(loc["name"])) and \
                    (place_location == None or place_location == is_place_location(loc["name"]))]
 
+
 def get_objects(category=None):
     return [obj["name"] for obj in objects
                 if category == None or category == obj["category"]]
+
 
 def get_object_category(obj):
     for o in objects:
         if o["name"] == obj:
             return o["category"]
+    return None
+
+def get_object_color(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["color"]
     return None
 
 # Returns (location, area_name)

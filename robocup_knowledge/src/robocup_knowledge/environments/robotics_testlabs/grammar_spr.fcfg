@@ -1,0 +1,197 @@
+
+
+
+T[{actions : <A1>}] -> C[A1]
+
+C[{A}] -> Q[A]
+
+V_GUIDE -> guide | escort | take | lead | accompany
+
+DET -> the | a | an | some
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
+
+ROOMS[workshop] -> workshop
+ROOMS[hallway] -> hallway
+ROOMS[bedroom] -> bedroom
+ROOMS[livingroom] -> livingroom
+ROOMS[kitchen] -> kitchen
+LOCATIONS[couch_table] -> couch_table
+LOCATIONS[dinner_table] -> dinner_table
+LOCATIONS[bar] -> bar
+LOCATIONS[bookcase] -> bookcase
+LOCATIONS[cabinet] -> cabinet
+LOCATIONS[trashbin] -> trashbin
+LOCATIONS[plant] -> plant
+LOCATIONS[bed] -> bed
+LOCATIONS[nightstand] -> nightstand
+LOCATIONS[flight_case] -> flight_case
+LOCATIONS[battery_table] -> battery_table
+LOCATIONS[workbench] -> workbench
+LOCATIONS[hallway_table] -> hallway_table
+ ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]
+OBJECT_NAMES[cereals] -> cereals
+OBJECT_NAMES[apple] -> apple
+OBJECT_NAMES[sponge] -> sponge
+OBJECT_NAMES[paper] -> paper
+OBJECT_NAMES[cornflakes] -> cornflakes
+OBJECT_NAMES[red_bowl] -> red_bowl
+OBJECT_NAMES[noodles] -> noodles
+OBJECT_NAMES[coffecup] -> coffecup
+OBJECT_NAMES[lemon] -> lemon
+OBJECT_NAMES[tomato_pasta] -> tomato_pasta
+OBJECT_NAMES[white_bowl] -> white_bowl
+OBJECT_NAMES[pringles] -> pringles
+OBJECT_NAMES[fork] -> fork
+OBJECT_NAMES[plate] -> plate
+OBJECT_NAMES[pepper] -> pepper
+OBJECT_NAMES[cappucino] -> cappucino
+OBJECT_NAMES[banana_milk] -> banana_milk
+OBJECT_NAMES[coke] -> coke
+OBJECT_NAMES[chocolate_cookies] -> chocolate_cookies
+OBJECT_NAMES[peas] -> peas
+OBJECT_NAMES[water] -> water
+OBJECT_NAMES[cloth] -> cloth
+OBJECT_NAMES[spoon] -> spoon
+OBJECT_NAMES[bread] -> bread
+OBJECT_NAMES[towel] -> towel
+OBJECT_NAMES[potato] -> potato
+OBJECT_NAMES[egg] -> egg
+OBJECT_NAMES[potato_soup] -> potato_soup
+OBJECT_NAMES[paprika] -> paprika
+OBJECT_NAMES[bag] -> bag
+OBJECT_NAMES[knife] -> knife
+OBJECT_NAMES[basket] -> basket
+OBJECT_NAMES[crackers] -> crackers
+OBJECT_NAMES[salt] -> salt
+OBJECT_NAMES[orange_drink] -> orange_drink
+OBJECT_NAMES[party_cracker] -> party_cracker
+MANIPULATION_AREA_LOCATIONS[couch_table] -> MANIPULATION_AREA_DESCRIPTIONS the couch_table
+MANIPULATION_AREA_LOCATIONS[dinner_table] -> MANIPULATION_AREA_DESCRIPTIONS the dinner_table
+MANIPULATION_AREA_LOCATIONS[bar] -> MANIPULATION_AREA_DESCRIPTIONS the bar
+MANIPULATION_AREA_LOCATIONS[bookcase] -> MANIPULATION_AREA_DESCRIPTIONS the bookcase
+MANIPULATION_AREA_LOCATIONS[cabinet] -> MANIPULATION_AREA_DESCRIPTIONS the cabinet
+MANIPULATION_AREA_LOCATIONS[bed] -> MANIPULATION_AREA_DESCRIPTIONS the bed
+MANIPULATION_AREA_LOCATIONS[nightstand] -> MANIPULATION_AREA_DESCRIPTIONS the nightstand
+MANIPULATION_AREA_LOCATIONS[workbench] -> MANIPULATION_AREA_DESCRIPTIONS the workbench
+MANIPULATION_AREA_LOCATIONS[hallway_table] -> MANIPULATION_AREA_DESCRIPTIONS the hallway_table
+OBJECT_CATEGORIES[cleaning_stuff] -> cleaning_stuff
+OBJECT_CATEGORIES[snack] -> snack
+OBJECT_CATEGORIES[container] -> container
+OBJECT_CATEGORIES[food] -> food
+OBJECT_CATEGORIES[drink] -> drink
+OBJECT_CATEGORIES[cutlery] -> cutlery
+ PLACEMENTS_AND_BEACONS[plant] -> plant
+ PLACEMENTS_AND_BEACONS[bar] -> bar
+ PLACEMENTS_AND_BEACONS[trashbin] -> trashbin
+ PLACEMENTS_AND_BEACONS[flight_case] -> flight_case
+ PLACEMENTS_AND_BEACONS[dinner_table] -> dinner_table
+ PLACEMENTS_AND_BEACONS[bed] -> bed
+ PLACEMENTS_AND_BEACONS[cabinet] -> cabinet
+ PLACEMENTS_AND_BEACONS[bookcase] -> bookcase
+ PLACEMENTS_AND_BEACONS[nightstand] -> nightstand
+ PLACEMENTS_AND_BEACONS[hallway_table] -> hallway_table
+ PLACEMENTS_AND_BEACONS[couch_table] -> couch_table
+ PLACEMENTS_AND_BEACONS[workbench] -> workbench
+ PLACEMENTS_AND_BEACONS[battery_table] -> battery_table
+Q["action" : "answer", "solution": "Magdeburg"] -> what city are we in
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Chewbacca"] -> name the big hairy creature in star wars
+Q["action" : "answer", "solution": "Isaac Asimov"] -> who wrote the three laws of robotics
+Q["action" : "answer", "solution": "The Jetsons"] -> from what series do you know rosie the robot
+Q["action" : "answer", "solution": "The Flintstones"] -> from what series do you know the baby bam bam
+Q["action" : "answer", "solution": "Neo"] -> who is the main character of the matrix
+Q["action" : "answer", "solution": "Peper and HSR"] -> name the two robocupathome standart platforms
+Q["action" : "answer", "solution": "In my SSD"] -> where do you store your memories
+Q["action" : "answer", "solution": "In Eindhoven The Netherlands"] -> where is your team located
+
+WHATWHICH -> what | which
+
+Q["action" : "answer", "solution": "basket"] -> WHATWHICH is the biggest object
+Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest object
+Q["action" : "answer", "solution": "pringles"] -> WHATWHICH is the biggest food
+Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest food
+Q["action" : "answer", "solution": "basket"] -> WHATWHICH is the biggest container
+Q["action" : "answer", "solution": "coffecup"] -> WHATWHICH is the smallest container
+Q["action" : "answer", "solution": "water"] -> WHATWHICH is the biggest drink
+Q["action" : "answer", "solution": "orange drink"] -> WHATWHICH is the smallest drink
+Q["action" : "answer", "solution": "paper"] -> WHATWHICH is the biggest cleaning stuff
+Q["action" : "answer", "solution": "sponge"] -> WHATWHICH is the smallest cleaning stuff
+Q["action" : "answer", "solution": "knife"] -> WHATWHICH is the biggest cutlery
+Q["action" : "answer", "solution": "fork"] -> WHATWHICH is the smallest cutlery
+
+Q["action" : "answer", "solution":  "the bedroom has two doors"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "the dining room has two doors"] -> how many doors has the dining room
+Q["action" : "answer", "solution": "in the living room there are no doors"] -> how many doors has the living room
+Q["action" : "answer", "solution": "in the kitchen there are no doors"] -> how many doors has the kitchen
+
+Q["action" : "count", "entity" : P] -> how many PEOPLE[P] are in the crowd | tell me the number of PEOPLE[P] in the crowd
+
+
+NQ["action" : "c_count", "entity" : X] -> how many people in the crowd are POSITION[X]
+NQ["action" : "c_count", "entity" : W] -> how many people in the crowd are GESTURE[W]
+NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
+NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
+NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER
+NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER or GENDER
+NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
+
+SEARCH -> where is | in WHATWHICH room is
+
+Q["action" : "a_find", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
+Q["action" : "a_count", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
+
+ADJR -> smaller | bigger
+
+Q["action" : "o_find", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
+Q["action" : "c_find", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
+Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
+
+NQ["action" : "o_count", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
+
+NQ["action" : "find_color", "entity" : O] -> whats the colour of the OBJECT_NAMES[O]
+NQ["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
+
+NQ["action" : "o_count", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "o_count", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
+
+NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] WHATWHICH one is ADJR
+
+
+PEOPLE['people'] -> people
+PEOPLE['children'] -> children
+PEOPLE['adults'] -> adults
+PEOPLE['elders'] -> elders
+PEOPLE['males'] -> males
+PEOPLE['females'] -> females
+PEOPLE['men'] -> men
+PEOPLE['women'] -> women
+PEOPLE['boys'] -> boys
+PEOPLE['girls'] -> girls
+
+GENDER['male'] -> male
+GENDER['female'] -> female
+GENDER['man'] -> man
+GENDER['woman'] -> woman
+GENDER['boy'] -> boy
+GENDER['girl'] -> girl
+
+POSITION['standing'] -> standing
+POSITION['sitting'] -> sitting
+POSITION['lying'] -> lying
+
+GESTURE['waving'] -> waving
+GESTURE['rise_l_arm'] -> rising left arm
+GESTURE['rise_r_arm'] -> rising right arm
+GESTURE['left'] -> pointing left
+GESTURE['right'] -> pointing right
+
+COLOR['red'] -> red
+COLOR['blue'] -> blue
+COLOR['white'] -> white
+COLOR['black'] -> black
+COLOR['green'] -> green
+COLOR['yellow'] -> yellow
+
+
+

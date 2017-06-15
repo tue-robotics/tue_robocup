@@ -62,7 +62,16 @@ class HandoverFromHuman(smach.StateMachine):
     CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
     as id.
     '''
-    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10, arm_configuration="handover_to_human"):
+        """
+        Hold up hand to accept an object and close hand once something is inserted
+        :param robot: Robot with which to execute this behavior
+        :param arm_designator: ArmDesignator resolving to arm accept item into
+        :param grabbed_entity_label: What ID to give a dummy item in case no grabbed_entity_designator is supplied
+        :param grabbed_entity_designator: EntityDesignator resolving to the accepted item. Can be a dummy
+        :param timeout: How long to hold hand over before closing without anything
+        :param arm_configuration: Which pose to put arm in when holding hand up for the item.
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed','timeout'])
 
         check_type(arm_designator, Arm)
@@ -70,7 +79,7 @@ class HandoverFromHuman(smach.StateMachine):
             rospy.logerr("No grabbed entity label or grabbed entity designator given")
 
         with self:
-            smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, "handover_to_human"),
+            smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, arm_configuration),
                             transitions={'succeeded':'OPEN_BEFORE_INSERT','failed':'OPEN_BEFORE_INSERT'})
 
             smach.StateMachine.add( 'OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator, gripperstate='open'),
@@ -187,7 +196,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
             return "failed"
 
         if self.item_designator:
-            arm.occupied_by = self.item_designator
+            arm.occupied_by = self.item_designator.resolve()
         else:
             if self.item_label != "":
                 handed_entity = EntityInfo(id=self.item_label)
