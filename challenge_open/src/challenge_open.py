@@ -40,6 +40,27 @@ class VerifyWorldModelInfo(smach.State):
         return "done"
 
 
+class StartDetectingSkeletonsForever(smach.State):		
+    def __init__(self, robot):		
+        smach.State.__init__(self, outcomes=['started'])		
+        self._robot = robot		
+		
+    def _detect_skeletons_forever(self, name, delay, run_event):		
+        while run_event.is_set():		
+            try:		
+                self._robot.head.detect_persons_3d()		
+            except rospy.ServiceException as e:		
+                rospy.logerr(e.message)		
+        rospy.loginfo("Stopped detecting skeletons forever")		
+		
+    def execute(self, userdata):		
+        g_run_event.set()		
+        d = 0		
+        g_thread = threading.Thread(target=self._detect_skeletons_forever, args=("detect-skeletons-forever", d, g_run_event))		
+        g_thread.start()		
+        return 'started'
+ 
+
 class DetermineWhatToCleanInspect(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=[place["entity_id"] for place in challenge_knowledge.inspection_places])

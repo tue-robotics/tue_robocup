@@ -11,7 +11,7 @@ translations = {"bookcase": "bocase"}
 inspection_places = [
     {"entity_id": "dinner_table",
      "room_id": "livingroom",
-     "navigate_area": "near",
+     "navigate_area": "in_front_of",
      "segment_areas": ["on_top_of"]},
 
     {"entity_id": "hallway_table",
