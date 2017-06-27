@@ -7,9 +7,9 @@ import os
 from robocup_knowledge import knowledge_loader
 
 
-""" 
-Counts the images in the subdirectories of 
-~/MEGA/data<ROBOT_ENV>/training_data/annotated. Both the verified and 
+"""
+Counts the images in the subdirectories of
+~/MEGA/data<ROBOT_ENV>/training_data/annotated. Both the verified and
 unverified annotations are checked and a summary is printed to screen.
 This contains:
 - Per object that is present in the database: the amount of images present in the directory
@@ -70,9 +70,28 @@ if __name__ == "__main__":
     # Get the names of the objects in which we are interested
     common_knowledge = knowledge_loader.load_knowledge("common")
     objects = common_knowledge.object_names
+    objects_set = set(objects)
+
+
+    robot_env = os.environ.get("ROBOT_ENV")
+    # get the names of the objects in output labels
+    tensorflow_labels_path = os.path.join(os.path.expanduser("~"), "MEGA", "data", robot_env, "models", "tensorflow_ros", "output_labels.txt")
+    with open(tensorflow_labels_path) as tensorflow_labels_file:
+        raw_labels_lines = tensorflow_labels_file.readlines()
+        tensorflow_labels = [line.strip() for line in raw_labels_lines]
+        tensorflow_set = set(tensorflow_labels)
+
+    print "objects that are present in objects_set but not in tensorflow_set\n"
+    for o in objects_set.difference(tensorflow_set):
+        print o
+    print "\n"
+
+    print "objects that are present in tensorflow_set but not in objects_set\n"
+    for t in tensorflow_set.difference(objects_set):
+        print t
+    print "\n"
 
     # Get the path to the folder where images are stored
-    robot_env = os.environ.get("ROBOT_ENV")
     path = os.path.join(os.path.expanduser("~"), "MEGA", "data", robot_env, "training_data", "annotated")
 
     # Count both verified and unverified
