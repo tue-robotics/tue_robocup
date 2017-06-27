@@ -25,7 +25,7 @@ MAX_ATTEMPTS = 15
 
 
 robot.head.look_at_standing_person()
-robot.speech.speak("{}, please stand in front of me".format(OPERATOR_NAME))
+robot.speech.speak("{name}, please stand in front of me".format(name=OPERATOR_NAME))
 rospy.sleep(1)
 
 total_learn_attempts, successful_learn_attempts = 0, 0
@@ -35,9 +35,9 @@ while total_learn_attempts < MAX_ATTEMPTS and successful_learn_attempts < SAMPLE
         successful_learn_attempts += 1
 
 if successful_learn_attempts:
-    robot.speech.speak("I learned {} after {} attempts".format(OPERATOR_NAME, total_learn_attempts))
+    robot.speech.speak("I learned {name} after {count} attempts".format(name=OPERATOR_NAME, count=total_learn_attempts))
 else:
-    robot.speech.speak("Learning {} failed after {} attempts. Exit test".format(OPERATOR_NAME, total_learn_attempts))
+    robot.speech.speak("Learning {name} failed after {count} attempts. Exit test".format(name=OPERATOR_NAME, count=total_learn_attempts))
 
     exit(-1)
 
@@ -55,14 +55,14 @@ while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts 
     raw_detections = robot.head.detect_faces()
 
     if raw_detections:
-        robot.speech.speak("There are {} raw_recognitions".format(len(raw_detections)))
+        robot.speech.speak("There are {count} raw_recognitions".format(count=len(raw_detections)))
 
         best_detection = robot.head.get_best_face_recognition(raw_detections, OPERATOR_NAME)
         if best_detection:
-            robot.speech.speak("The best detection has probability {}".format(best_detection))
+            robot.speech.speak("The best detection has probability {prob} for label {lbl}".format(prob=best_detection.probability, lbl=best_detection.label))
             successful_recognize_attempts += 1
         else:
-            robot.speech.speak("{} not detected".format(OPERATOR_NAME))
+            robot.speech.speak("{name} not detected".format(name=OPERATOR_NAME))
     else:
         robot.speech.speak("No raw detections")
 
