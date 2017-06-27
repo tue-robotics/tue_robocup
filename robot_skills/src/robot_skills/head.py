@@ -331,13 +331,14 @@ class Head(RobotPart):
             return self._get_faces(image).recognitions
 
     def get_best_face_recognition(self, recognitions, desired_label):
-        """Returns the face with the highest probability of having some label
+        """Returns the Recognition with the highest probability of having some label.
+
         :param recognitions The recognitions to select the best one with desired_label from
         :type recognitions list[image_recognition_msgs/Recognition]
         :param desired_label what label to look for in the recognitions
         :type desired_label str
         :returns the best recognition matching the given desired_label
-        :rtype image_recognition_msgs/Recognition, which consists of a probability dist and a roi"""
+        :rtype image_recognition_msgs/Recognition, which consists of a probability distribution and a roi"""
 
         rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
 
@@ -351,7 +352,7 @@ class Head(RobotPart):
         # Sort based on probability
         if detections:
             sorted_detections = sorted(detections, key=lambda det: det[1])
-            best_detection = sorted_detections[0][0]
+            best_detection = sorted_detections[0][0]  # A CategoricalDistribution in a Recognition is already ordered, max prob is at [0]
         else:
             best_detection = None
 

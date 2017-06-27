@@ -33,6 +33,7 @@ while total_learn_attempts < MAX_ATTEMPTS and successful_learn_attempts < SAMPLE
     total_learn_attempts += 1
     if robot.head.learn_person(OPERATOR_NAME):
         successful_learn_attempts += 1
+        robot.speech.speak("{count}".format(count=successful_learn_attempts))
 
 if successful_learn_attempts:
     robot.speech.speak("I learned {name} after {count} attempts".format(name=OPERATOR_NAME, count=total_learn_attempts))
@@ -45,7 +46,7 @@ robot.speech.speak("To test, someone step in front of me.")
 rospy.sleep(5)
 
 total_recognize_attempts, successful_recognize_attempts = 0, 0
-while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts < 5:
+while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts < 1:
     total_recognize_attempts += 1
 
     # raw_detections is a list of Recognitions
@@ -57,9 +58,11 @@ while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts 
     if raw_detections:
         robot.speech.speak("There are {count} raw_recognitions".format(count=len(raw_detections)))
 
-        best_detection = robot.head.get_best_face_recognition(raw_detections, OPERATOR_NAME)
-        if best_detection:
-            robot.speech.speak("The best detection has probability {prob} for label {lbl}".format(prob=best_detection.probability, lbl=best_detection.label))
+        import ipdb; ipdb.set_trace()
+        best_recognition = robot.head.get_best_face_recognition(raw_detections, OPERATOR_NAME)
+        if best_recognition:
+            most_probable_catprob = best_recognition.categorical_distribution.probabilities[0]
+            robot.speech.speak("The most probable label {lbl} in distribution has prob {prob:.2f}".format(prob=most_probable_catprob.probability, lbl=most_probable_catprob.label))
             successful_recognize_attempts += 1
         else:
             robot.speech.speak("{name} not detected".format(name=OPERATOR_NAME))
