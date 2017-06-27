@@ -69,7 +69,7 @@ def turn_to_closest_entity(robot):
 
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(15)):
+    def __init__(self, robot, time_out=15.0):
         smach.State.__init__(self, outcomes=["answered", "not_answered"],input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
@@ -87,7 +87,7 @@ class HearQuestion(smach.State):
 
 
 class HearQuestionRepeat(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(15)):
+    def __init__(self, robot, time_out=15.0):
         smach.State.__init__(self, outcomes=["answered", "not_answered"], input_keys=['crowd_data'])
         self.robot = robot
         self.time_out = time_out
