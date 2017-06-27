@@ -344,6 +344,7 @@ class Head(RobotPart):
 
         # Only take detections with operator
         detections = []
+        # TODO Loy: Get the recognition where the probability distribution has the highest prob for the desired label
         for recog in recognitions:
             for cp in recog.categorical_distribution.probabilities:
                 if cp.label == desired_label:
