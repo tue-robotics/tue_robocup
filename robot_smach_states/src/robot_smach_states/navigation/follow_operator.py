@@ -481,7 +481,7 @@ class FollowOperator(smach.State):
             self._robot.head.wait_for_motion_done()
 
             # raw_detections is a list of Recognitions
-            # a recognition constains a CategoricalDistribution
+            # a recognition contains a CategoricalDistribution
             # a CategoricalDistribution is a list of CategoryProbabilities
             # a CategoryProbability has a label and a float
             raw_detections = self._robot.head.detect_faces()
