@@ -58,11 +58,10 @@ while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts 
     if raw_detections:
         robot.speech.speak("There are {count} raw_recognitions".format(count=len(raw_detections)))
 
-        import ipdb; ipdb.set_trace()
         best_recognition = robot.head.get_best_face_recognition(raw_detections, OPERATOR_NAME)
         if best_recognition:
             most_probable_catprob = best_recognition.categorical_distribution.probabilities[0]
-            robot.speech.speak("The most probable label {lbl} in distribution has prob {prob:.2f}".format(prob=most_probable_catprob.probability, lbl=most_probable_catprob.label))
+            robot.speech.speak("The most probable label {lbl} has probability {prob:.2f}".format(prob=most_probable_catprob.probability, lbl=most_probable_catprob.label))
             successful_recognize_attempts += 1
         else:
             robot.speech.speak("{name} not detected".format(name=OPERATOR_NAME))
