@@ -348,7 +348,6 @@ class Head(RobotPart):
 
         # Only take detections with operator
         detections = []
-        # TODO Loy: Get the recognition where the probability distribution has the highest prob for the desired label
         # The old implementation took, for each recognition, the (label, prob) pairs where label==desired_label.
         # Other pairs in the same distribution may have higher probability.
         # When the best_recognition is picked, it picked the recognition where the probability for the desired_label is hhighest comapared to other recognitions. BUT: a recognitions highest probability may be for a different label
