@@ -345,6 +345,17 @@ class Head(RobotPart):
         # Only take detections with operator
         detections = []
         # TODO Loy: Get the recognition where the probability distribution has the highest prob for the desired label
+        # Current implementation takes, for each recognition, the (label, prob) pairs where label==desired_label.
+        # Other pairs in the same distribution may have higher probability.
+        # When the best_recognition is picked, but it highest probability may be for a different label
+        # because the selection only compares matching labels, not looking at the probability of non-matching pairs.
+        # For example: we have 2 recognitions.
+        #   in recognition 1, A has 50%, desired_label has 30%, B has 20%.
+        #   in recognition 2, B has 60%, desired_label has 35%, A has 5%.
+        # Then, recognition 2 has the highest probability for the desired_label and is thus picked.
+        # Because we take the [0]'th index of the distribution, that name is B
+        #
+        # Solution: because the probability distributions are sorted, just take the probability distribution where the desired label has the highest probability.
         for recog in recognitions:
             for cp in recog.categorical_distribution.probabilities:
                 if cp.label == desired_label:
