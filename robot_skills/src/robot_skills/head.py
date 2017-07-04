@@ -315,11 +315,7 @@ class Head(RobotPart):
         try:
             self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
         except rospy.ServiceException as e:
-            rospy.logerr('annotate failed:')
-            try:
-                rospy.logerr(e)
-            except TypeError:
-                pass  # This exception is thrown when not all arguments can be converted to string somehow
+            rospy.logerr('annotate failed: {}'.format(e))
             return False
 
         return True
@@ -335,7 +331,8 @@ class Head(RobotPart):
             return self._get_faces(image).recognitions
 
     def get_best_face_recognition(self, recognitions, desired_label):
-        """Returns the Recognition with the highest probability of having some label.
+        """Returns the Recognition with the highest probability of having the desired_label.
+        Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
 
         :param recognitions The recognitions to select the best one with desired_label from
         :type recognitions list[image_recognition_msgs/Recognition]
@@ -372,11 +369,13 @@ class Head(RobotPart):
         #    best_detection = None
 
         for index, recog in enumerate(recognitions):
-            rospy.loginfo("{index}: {dist}".format(index=index, dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
+            rospy.loginfo("{index}: {dist}".format(index=index,
+                                                   dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
 
         matching_recognitions = [recog for recog in recognitions if \
                 recog.categorical_distribution.probabilities and \
                 recog.categorical_distribution.probabilities[0].label == desired_label]
+
         if matching_recognitions:
             best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
             return best_recognition
