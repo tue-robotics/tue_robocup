@@ -315,7 +315,7 @@ class Head(RobotPart):
         try:
             self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
         except rospy.ServiceException as e:
-            rospy.logerr('annotate failed:', e)
+            rospy.logerr('annotate failed:')
             try:
                 rospy.logerr(e)
             except TypeError:
