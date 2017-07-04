@@ -345,9 +345,9 @@ class Head(RobotPart):
         # Only take detections with operator
         detections = []
         # TODO Loy: Get the recognition where the probability distribution has the highest prob for the desired label
-        # Current implementation takes, for each recognition, the (label, prob) pairs where label==desired_label.
+        # The old implementation took, for each recognition, the (label, prob) pairs where label==desired_label.
         # Other pairs in the same distribution may have higher probability.
-        # When the best_recognition is picked, but it highest probability may be for a different label
+        # When the best_recognition is picked, it picked the recognition where the probability for the desired_label is hhighest comapared to other recognitions. BUT: a recognitions highest probability may be for a different label
         # because the selection only compares matching labels, not looking at the probability of non-matching pairs.
         # For example: we have 2 recognitions.
         #   in recognition 1, A has 50%, desired_label has 30%, B has 20%.
@@ -356,19 +356,28 @@ class Head(RobotPart):
         # Because we take the [0]'th index of the distribution, that name is B
         #
         # Solution: because the probability distributions are sorted, just take the probability distribution where the desired label has the highest probability.
-        for recog in recognitions:
-            for cp in recog.categorical_distribution.probabilities:
-                if cp.label == desired_label:
-                    detections.append((recog, cp.probability))
+        #for recog in recognitions:
+        #    for cp in recog.categorical_distribution.probabilities:
+        #        if cp.label == desired_label:
+        #            detections.append((recog, cp.probability))
 
         # Sort based on probability
-        if detections:
-            sorted_detections = sorted(detections, key=lambda det: det[1])
-            best_detection = sorted_detections[0][0]  # A CategoricalDistribution in a Recognition is already ordered, max prob is at [0]
-        else:
-            best_detection = None
+        #if detections:
+        #    sorted_detections = sorted(detections, key=lambda det: det[1])
+        #    best_detection = sorted_detections[0][0]  # A CategoricalDistribution in a Recognition is already ordered, max prob is at [0]
+        #else:
+        #    best_detection = None
 
-        return best_detection
+        for index, recog in enumerate(recognitions):
+            rospy.loginfo("{index}: {dist}".format(index=index, dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
+
+        matching_recognitions = filter(lambda recog: recog.categorical_distribution.probabilities[0].label == desired_label, recognitions)
+        best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
+        if best_recognition:
+            return best_recognition
+        else:
+            return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
+
 
     def clear_face(self):
         rospy.loginfo('clearing all learned faces')
