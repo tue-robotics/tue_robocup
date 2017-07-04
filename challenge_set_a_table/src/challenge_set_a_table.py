@@ -13,7 +13,7 @@ import robot_smach_states.util.designators as ds
 
 # Still empty
 #from challenge_set_a_table_states import clean_table
-#from challenge_set_a_table_states import fetch_command
+from challenge_set_a_table_states import fetch_command
 #from challenge_set_a_table_states import set_table
 
 
@@ -28,13 +28,13 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'initialized': 'FETCH_COMMAND_I',
                                                 'abort': 'Aborted'})            
             smach.StateMachine.add('FETCH_COMMAND_I', # Hear "set the table"
-                                   Initialize(robot),
-                                   transitions={'initialized': 'ASK_FOR_MEAL',
-                                                'abort': 'Aborted'})
+                                   fetch(robot),
+                                   transitions={'heard': 'ASK_FOR_MEAL'})
+
             smach.StateMachine.add('ASK_FOR_MEAL',
                                    Say(robot, "What should I serve, master?"),
                                    transitions={'spoken': 'SET_THE_TABLE'})
-
+#save the order
             smach.StateMachine.add('SET_THE_TABLE', # Set the table (bring the objects to the table)
                                    Initialize(robot),
                                    transitions={'initialized': 'SERVE_MEAL',
@@ -49,10 +49,10 @@ class ChallengeSetATable(smach.StateMachine):
                                                 'abort': 'Aborted'})
 
             #Part II: Clean the table
-            smach.StateMachine.add('FETCH_COMMAND_II', #Hear "clear up the table"
-                                   Initialize(robot),
-                                   transitions={'initialized': 'AUFRAEUMEN',
-                                                'abort': 'Aborted'})
+            smach.StateMachine.add('FETCH_COMMAND_II', # Hear "clear up the table"
+                                   fetch(robot),
+                                   transitions={'heard': 'CLEAR_UP'})
+
             smach.StateMachine.add('CLEAR_UP', # Clear up the table (bring the objects to their default location)
                                    Initialize(robot),
                                    transitions={'initialized': 'CLEAN_THE_TABLE',
