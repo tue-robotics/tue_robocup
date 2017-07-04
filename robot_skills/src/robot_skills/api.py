@@ -2,7 +2,7 @@
 import rospy
 from hmi_msgs.msg import QueryAction
 from hmi import Client
-
+from std_srvs.srv import Empty
 from robot_part import RobotPart
 
 
@@ -11,6 +11,8 @@ class Api(RobotPart):
         super(Api, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         client = self.create_simple_action_client('/' + robot_name + '/hmi', QueryAction)
         self._client = Client(simple_action_client=client)
+
+        self.restart_srv = self.create_service_client('/' + robot_name + '/hmi/dragonfly_speech_recognition/restart_node', Empty)
 
     def query(self, description, grammar, target, timeout=10):
         """
@@ -30,3 +32,6 @@ class Api(RobotPart):
         msg = 'robot.ears.recognize IS REMOVED. Use `robot.hmi.query`'
         rospy.logerr(msg)
         raise Exception(msg)
+
+    def restart_dragonfly(self):
+        self.restart_srv()
