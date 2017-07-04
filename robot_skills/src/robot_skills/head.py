@@ -316,6 +316,10 @@ class Head(RobotPart):
             self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
         except rospy.ServiceException as e:
             rospy.logerr('annotate failed:', e)
+            try:
+                rospy.logerr(e)
+            except TypeError:
+                pass  # This exception is thrown when not all arguments can be converted to string somehow
             return False
 
         return True
@@ -371,9 +375,11 @@ class Head(RobotPart):
         for index, recog in enumerate(recognitions):
             rospy.loginfo("{index}: {dist}".format(index=index, dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
 
-        matching_recognitions = filter(lambda recog: recog.categorical_distribution.probabilities[0].label == desired_label, recognitions)
-        best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
-        if best_recognition:
+        matching_recognitions = [recog for recog in recognitions if \
+                recog.categorical_distribution.probabilities and \
+                recog.categorical_distribution.probabilities[0].label == desired_label]
+        if matching_recognitions:
+            best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
             return best_recognition
         else:
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
