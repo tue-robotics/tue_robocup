@@ -217,11 +217,14 @@ class Head(RobotPart):
         # self._camera_cv
         # self._camera_last_image
 
+        # import ipdb; ipdb.set_trace()
+
         # lazy subscribe to the kinect
         if not self._camera_lazy_sub:
             # for test with tripod kinect
             # self._camera_lazy_sub = rospy.Subscriber("/camera/rgb/image_rect_color", Image, self._image_cb)
             # for the robot
+            rospy.loginfo("Creating subscriber")
             self._camera_lazy_sub = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, self._image_cb)
             rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
 
@@ -231,9 +234,14 @@ class Head(RobotPart):
         self._camera_last_image = None
         for i in range(timeout):
             if self._camera_last_image:
+                rospy.loginfo("len(self._camera_last_image): {}".format(len(self._camera_last_image.data)))
                 break
+            else:
+                rospy.loginfo("self._camera_last_image: {}".format(self._camera_last_image))
+
             if rospy.is_shutdown():
                 return
+
             self._camera_cv.wait(timeout=1)
         else:
             raise Exception('no image received from %s' % self._camera_lazy_sub.name)
@@ -293,11 +301,12 @@ class Head(RobotPart):
             rospy.logerr("Cannot get image")
             return False
 
-        recognitions = self._get_faces(image).recognitions
-        recognitions = [r for r in recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
+        raw_recognitions = self._get_faces(image).recognitions
+        recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
         rospy.loginfo('found %d valid face(s)', len(recognitions))
 
         if len(recognitions) != 1:
+            rospy.loginfo("Too many faces: {}".format(len(recognitions)))
             return False
 
         recognition = recognitions[0]
@@ -306,17 +315,73 @@ class Head(RobotPart):
         try:
             self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
         except rospy.ServiceException as e:
-            rospy.logerr('annotate failed:', e)
+            rospy.logerr('annotate failed: {}'.format(e))
             return False
 
         return True
 
     def detect_faces(self, stamp=False):
+        """Snap an image with the camera and return the recognized faces.
+        :returns image_recognition_msgs/Recognition
+        """
         image = self.get_image()
         if stamp:
             return self._get_faces(image).recognitions, image.header.stamp
         else:
             return self._get_faces(image).recognitions
+
+    def get_best_face_recognition(self, recognitions, desired_label):
+        """Returns the Recognition with the highest probability of having the desired_label.
+        Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
+
+        :param recognitions The recognitions to select the best one with desired_label from
+        :type recognitions list[image_recognition_msgs/Recognition]
+        :param desired_label what label to look for in the recognitions
+        :type desired_label str
+        :returns the best recognition matching the given desired_label
+        :rtype image_recognition_msgs/Recognition, which consists of a probability distribution and a roi"""
+
+        rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
+
+        # Only take detections with operator
+        detections = []
+        # The old implementation took, for each recognition, the (label, prob) pairs where label==desired_label.
+        # Other pairs in the same distribution may have higher probability.
+        # When the best_recognition is picked, it picked the recognition where the probability for the desired_label is hhighest comapared to other recognitions. BUT: a recognitions highest probability may be for a different label
+        # because the selection only compares matching labels, not looking at the probability of non-matching pairs.
+        # For example: we have 2 recognitions.
+        #   in recognition 1, A has 50%, desired_label has 30%, B has 20%.
+        #   in recognition 2, B has 60%, desired_label has 35%, A has 5%.
+        # Then, recognition 2 has the highest probability for the desired_label and is thus picked.
+        # Because we take the [0]'th index of the distribution, that name is B
+        #
+        # Solution: because the probability distributions are sorted, just take the probability distribution where the desired label has the highest probability.
+        #for recog in recognitions:
+        #    for cp in recog.categorical_distribution.probabilities:
+        #        if cp.label == desired_label:
+        #            detections.append((recog, cp.probability))
+
+        # Sort based on probability
+        #if detections:
+        #    sorted_detections = sorted(detections, key=lambda det: det[1])
+        #    best_detection = sorted_detections[0][0]  # A CategoricalDistribution in a Recognition is already ordered, max prob is at [0]
+        #else:
+        #    best_detection = None
+
+        for index, recog in enumerate(recognitions):
+            rospy.loginfo("{index}: {dist}".format(index=index,
+                                                   dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
+
+        matching_recognitions = [recog for recog in recognitions if \
+                recog.categorical_distribution.probabilities and \
+                recog.categorical_distribution.probabilities[0].label == desired_label]
+
+        if matching_recognitions:
+            best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
+            return best_recognition
+        else:
+            return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
+
 
     def clear_face(self):
         rospy.loginfo('clearing all learned faces')

@@ -33,7 +33,7 @@ def frame_stampeds_to_pose_stampeds(frame_stampeds):
 
 class FollowOperator(smach.State):
     def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0,
-                 start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=5, lost_distance=0.8,
+                 start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=60, lost_distance=0.8,
                  operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
                  operator_standing_still_timeout=3.0, replan=False):
         """ Constructor
@@ -47,7 +47,7 @@ class FollowOperator(smach.State):
         :param start_timeout:
         :param operator_timeout:
         :param distance_threshold:
-        :param lost_timeout:
+        :param lost_timeout: How long to look for the operator when we lost him/her?
         :param lost_distance:
         :param operator_id_des:
         :param standing_still_timeout:
@@ -453,7 +453,7 @@ class FollowOperator(smach.State):
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
         # Wait for the operator and find his/her face
-        operator_recovery_timeout = 60.0  # TODO: parameterize
+        operator_recovery_timeout = self._lost_timeout
         start_time = rospy.Time.now()
         recovered_operator = None
 
@@ -481,26 +481,13 @@ class FollowOperator(smach.State):
             self._robot.head.wait_for_motion_done()
 
             # raw_detections is a list of Recognitions
-            # a recognition constains a CategoricalDistribution
+            # a recognition contains a CategoricalDistribution
             # a CategoricalDistribution is a list of CategoryProbabilities
             # a CategoryProbability has a label and a float
             raw_detections = self._robot.head.detect_faces()
+            best_detection = self._robot.head.get_best_face_recognition(raw_detections, "operator")
 
-            # Only take detections with operator
-            detections = []
-            for d in raw_detections:
-                for cp in d.categorical_distribution.probabilities:
-                    if cp.label == "operator":
-                        detections.append((d, cp.probability))
-
-            # Sort based on probability
-            if detections:
-                detections = sorted(detections, key=lambda det: det[1])
-                best_detection = detections[0][0]
-            else:
-                best_detection = None
-                recovered_operator = None
-
+            rospy.loginfo("best_detection = {}".format(best_detection))
             if best_detection:
 
                 # print "Best detection: {}".format(best_detection)
