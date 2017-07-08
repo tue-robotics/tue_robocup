@@ -34,4 +34,9 @@ class Api(RobotPart):
         raise Exception(msg)
 
     def restart_dragonfly(self):
-        self.restart_srv()
+        try:
+            self.restart_srv()
+        except rospy.ServiceException, e:
+            rospy.logerr("Service call failed: {0}".format(e))
+
+
