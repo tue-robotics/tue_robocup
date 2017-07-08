@@ -12,15 +12,31 @@ rosrun challenge_set_a_table challenge_set_a_table.py amigo
 ## CHALLENGE PLAN
 
 	# PART I
-	- enter the arena and go to the designated position
+	+ enter the arena and go to the designated position
 	+ hear: "Set the table!"
 	+ say: "What should I serve, master?"
-	- receive order and proceed, with respect to it
-	- set the table:
-		- inspect the table (see what's missing)
-		- grab the needed objects from their default place (3 easy & 3 hard to grasp objects)
-		- open door to grab objects???
-		- place the objects on the table
+	- receive order and proceed, with respect to it:
+			- meal 1: breakfast
+				- cereal box (easy)
+				- milk box (easy)
+				- glass (easy)
+				- bowl (hard)
+				- spoon (hard)
+				- napkins (hard)
+			- meal 2: lunch
+				- glass (easy)
+				- juice (easy)
+				- plastic steak (easy)
+				- bread (easy)
+				- plate (hard)
+				- knife (hard)
+				- fork (hard)
+				- napkins (hard)
+		- set the table:
+			- inspect the table (see what's missing)
+			- grab the needed objects from their default place (3 easy & 3 hard to grasp objects)
+			- open door to grab objects???
+			- place the objects on the table
 	- serve the meal: (2 options out of cereal and milk, sandwiches, toasts, Coffee and bread or something else)
 		- pour milk in the bowl??? (We can bring our own food)
 		- pour cereals in the bowl???
@@ -45,5 +61,6 @@ rosrun challenge_set_a_table challenge_set_a_table.py amigo
 ## TODO
 
 1. Check what of the plan is possible
-2. Check for ready available functions and implement them
-3. Make the missing functions
+2. Choose meals and food
+3. Check for ready available functions and implement them
+4. Make the missing functions

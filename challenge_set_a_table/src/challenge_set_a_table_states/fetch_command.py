@@ -8,6 +8,7 @@ import datetime
 import math
 
 import hmi
+import robot_smach_states.util.designators as ds
 
 from robot_smach_states import Initialize, Say
 from robot_smach_states.util.startup import startup
@@ -18,29 +19,29 @@ def fetch(robot, time_out=15.0):
     robot.speech.speak('What can I do for you, master?')
 
     # Listen for the new task
-    while not confirmed:
+    i = 0
+    while not confirmed and i < 10:
         try:
-            sentence, semantics = robot.hmi.query('', 'T -> see the taa | other open', 'T')
+            sentence, semantics = robot.hmi.query('', 'T -> set the table | clean the table', 'T')
                     
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
             try:
-                if 'yes' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                result = robot.hmi.query('', 'T -> yes | no', 'T').sentence
+                if result == 'yes':
                     confirmed = True
-
-                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
-                        robot.speech.speak('Sorry, please repeat')
-                        pass
+                elif result == 'no':
+                    robot.speech.speak('Sorry, please repeat')
+                    pass
                 
             except hmi.TimeoutException:
                 confirmed = True
                 # robot did not hear the confirmation, so lets assume its correct
 
         except hmi.TimeoutException:
-            pass
+            i += 1
                  
     return 'heard'
-
 
 class HearFetchCommand(smach.State):
         def __init__(self, robot, time_out=15.0):
@@ -52,9 +53,7 @@ class HearFetchCommand(smach.State):
                 
                 self.robot.head.look_at_standing_person()
 
-                fetch_command = fetch(self.robot, time_out=self.time_out)
-
-                return fetch_command
+                return fetch(self.robot, time_out=self.time_out)
 
 
                 # Standalone testing -----------------------------------------------------------------
@@ -70,7 +69,7 @@ class TestFetchCommand(smach.StateMachine):
                                                                                                 'abort': 'Aborted'})
 
                         smach.StateMachine.add('FETCH_COMMAND', # Hear "set the table"
-                                                                     fetch(robot),
+                                                                     HearFetchCommand(robot, 15.0),
                                                                      transitions={'heard': 'END_CHALLENGE'})
 
                         # End
