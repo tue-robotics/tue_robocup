@@ -11,7 +11,7 @@ import os
 import datetime
 import math
 
-from robot_smach_states import Initialize, Say, StartChallengeRobust
+from robot_smach_states import Say, StartChallengeRobust
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
@@ -28,11 +28,6 @@ class ChallengeSetATable(smach.StateMachine):
 
         with self:
             #Part I: Set a table
-            smach.StateMachine.add('INITIALIZE',
-                                   Initialize(robot),
-                                   transitions={'initialized': 'ENTER_ROOM',
-                                                'abort': 'Aborted'})    
-
             smach.StateMachine.add('ENTER_ROOM', # Enter the room
                                    StartChallengeRobust(robot, knowledge.initial_pose),
                                    transitions={'Done': 'ANNOUNCEMENT',
