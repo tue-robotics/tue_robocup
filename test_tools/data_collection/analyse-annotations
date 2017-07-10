@@ -62,7 +62,7 @@ def count_images(objects, path):
         if candidate not in objects:
             print BColors.WARNING + candidate + BColors.ENDC
 
-    print "\n"
+    print
 
 
 if __name__ == "__main__":
@@ -84,12 +84,12 @@ if __name__ == "__main__":
     print "objects that are present in objects_set but not in tensorflow_set\n"
     for o in objects_set.difference(tensorflow_set):
         print o
-    print "\n"
+    print
 
     print "objects that are present in tensorflow_set but not in objects_set\n"
     for t in tensorflow_set.difference(objects_set):
         print t
-    print "\n"
+    print
 
     # Get the path to the folder where images are stored
     path = os.path.join(os.path.expanduser("~"), "MEGA", "data", robot_env, "training_data", "annotated")
