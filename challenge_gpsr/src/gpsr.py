@@ -194,18 +194,16 @@ def main():
                     robot.speech.speak('Sorry, I will go on as long as you need me')
                     continue
                 else:
-                    pass
-            except hmi.TimeoutException:
-                # robot did not hear the confirmation, so lets go on
-                continue
-            
-            nwc = NavigateToWaypoint(robot=robot,
+                    nwc = NavigateToWaypoint(robot=robot,
                                              waypoint_designator=EntityByIdDesignator(robot=robot,
                                                                                       id=knowledge.exit_waypoint),
                                              radius = 0.3)
-            robot.speech.speak("Thank you very much, and goodbye!", block=True)
-            nwc.execute()
-            break
+                    robot.speech.speak("Thank you very much, and goodbye!", block=True)
+                    nwc.execute()
+                    break
+            except hmi.TimeoutException:
+                # robot did not hear the confirmation, so lets go on
+                continue
 
 
 # ------------------------------------------------------------------------------------------------------------------------
