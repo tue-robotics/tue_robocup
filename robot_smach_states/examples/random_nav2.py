@@ -189,7 +189,7 @@ class RandomNav(smach.StateMachine):
             @smach.cb_interface(outcomes=['target_determined', 'no_targets_available'],
                                 input_keys=[],
                                 output_keys=[])
-            def determine_target(userdata=None, designator):
+            def determine_target(userdata, designator):
 
                 entity_id = designator.getRandomGoal()
 
