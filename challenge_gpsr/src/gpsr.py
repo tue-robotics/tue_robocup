@@ -172,7 +172,7 @@ def main():
         if task_result.succeeded:
             # Keep track of the number of performed tasks
             no_of_tasks_performed += 1
-            if no_of_tasks_performed == no_of_tasks:
+            if no_of_tasks_performed >= no_of_tasks:
                 finished = True
 
             # If we succeeded, we can say something optimistic after reporting to the operator
