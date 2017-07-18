@@ -50,7 +50,8 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
             entities = [e for e in entities if e.id in list_of_entity_ids]
 
     # Sort entities by distance
-    robot_pos = robot.base.get_location().frame.p
+    robot_location = robot.base.get_location()
+    robot_pos = robot_location.frame.p
     entities = sorted(entities, key=lambda entity: entity.distance_to_2d(robot_pos))
 
     return entities

@@ -145,7 +145,8 @@ def parse_object(p, robot):
     else:
         entities = robot.ed.get_entities(parse=False)
 
-    robot_pos = robot.base.get_location().frame.p
+    robot_location = robot.base.get_location()
+    robot_pos = robot_location.frame.p
 
     # Sort entities by distance
     entities = sorted(entities, key=lambda entity: entity.distance_to_2d(robot_pos))

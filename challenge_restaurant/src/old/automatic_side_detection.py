@@ -72,7 +72,8 @@ class AutomaticSideDetection(smach.State):
             self._robot.head.wait_for_motion_done()
             rospy.sleep(0.2)
 
-            base_position = self._robot.base.get_location().frame.p
+            base_location = self._robot.base.get_location()
+            base_position = base_location.frame.p
 
             # Update kinect
             try:
