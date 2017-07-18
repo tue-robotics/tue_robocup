@@ -273,5 +273,5 @@ if __name__ == "__main__":
     place_entity = EdEntityDesignator(robot, id="bla")
     arm = ArmDesignator(robot.arms)
 
-    sm = Place(robot=robot, item_to_place=place_entity, place_pose='stove', arm=arm, place_volume='on_top_of')
+    sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm, place_volume='on_top_of')
     print sm.execute()

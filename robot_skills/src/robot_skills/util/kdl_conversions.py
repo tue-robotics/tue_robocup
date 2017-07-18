@@ -1,5 +1,6 @@
 import rospy
 import PyKDL as kdl
+from copy import deepcopy
 
 # Needed for UGLY hacks
 import tf
@@ -36,7 +37,7 @@ class FrameStamped(object):
         >>> fs.extractVectorStamped()
         [           1,           2,           3] @ /map
         """
-        return VectorStamped(frame_id=self.frame_id, vector=self.frame.p)
+        return deepcopy(VectorStamped(frame_id=self.frame_id, vector=self.frame.p))
 
 
 def frame_stamped(frame_id, x, y, z, roll=0, pitch=0, yaw=0):

@@ -158,7 +158,8 @@ class StoreWaypoint(smach.State):
     def execute(self, userdata=None):
 
         # Store current base position
-        base_pose = self._robot.base.get_location().frame
+        base_loc = self._robot.base.get_location()
+        base_pose = base_loc.frame
 
         # Create automatic side detection state and execute
         self._robot.speech.speak("I am now going to look for the table", block=False)
