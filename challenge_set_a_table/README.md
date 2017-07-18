@@ -12,13 +12,32 @@ rosrun challenge_set_a_table challenge_set_a_table.py amigo
 ## CHALLENGE PLAN
 
 	# PART I
-	- hear: "Set the table!"
+	+ enter the arena and go to the designated position
+	+ hear: "Set the table!"
 	+ say: "What should I serve, master?"
-	- set the table:
-		- grab objects from their default place (6 objects)
-		- open door to grab objects???
-		- place the object to the table
-	- serve the meal: (2 options out of cereal and milk, sandwiches, toasts, Coffee and bread)
+	- receive order and proceed, with respect to it:
+			- meal 1: breakfast
+				- cereal box (easy)
+				- milk box (easy)
+				- glass (easy)
+				- bowl (hard)
+				- spoon (hard)
+				- napkins (hard)
+			- meal 2: lunch
+				- glass (easy)
+				- juice (easy)
+				- plastic steak (easy)
+				- bread (easy)
+				- plate (hard)
+				- knife (hard)
+				- fork (hard)
+				- napkins (hard)
+		- set the table:
+			- inspect the table (see what's missing)
+			- grab the needed objects from their default place (3 easy & 3 hard to grasp objects)
+			- open door to grab objects???
+			- place the objects on the table
+	- serve the meal: (2 options out of cereal and milk, sandwiches, toasts, Coffee and bread or something else)
 		- pour milk in the bowl??? (We can bring our own food)
 		- pour cereals in the bowl???
 	- correct object positions:
@@ -26,10 +45,10 @@ rosrun challenge_set_a_table challenge_set_a_table.py amigo
 		- move the objects to their original places???
 
 	# PART II
-	- hear: "Clean the table!"
+	+ hear: "Clean the table!"
 	- clear up the table:
-		- grab objects from table
-		- place the object to their default place
+		- grab 6 objects from table (3 easy & 3 hard to grasp objects)
+		- place the objects to their default place
 	- clean the table:
 		- detect spots and spills???
 		- clean them using a cleaning cloth???
@@ -42,5 +61,6 @@ rosrun challenge_set_a_table challenge_set_a_table.py amigo
 ## TODO
 
 1. Check what of the plan is possible
-2. Check for ready available functions and implement them
-3. Make the missing functions
+2. Choose meals and food
+3. Check for ready available functions and implement them
+4. Make the missing functions
