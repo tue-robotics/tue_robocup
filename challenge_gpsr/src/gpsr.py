@@ -186,13 +186,24 @@ def main():
             finished = True
 
         if finished and not skip:
-            nwc = NavigateToWaypoint(robot=robot,
-                                     waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.exit_waypoint),
-                                     radius = 0.3)
-            nwc.execute()
-            robot.speech.speak("Thank you very much, and goodbye!", block=True)
-            break
+            # check if indeed the challenge is over
+            robot.speech.speak('According to me, this challenge is over, is this correct?')
+            try:
+                if 'no' == robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                    # Do something smart when the answer is no, so you dont keep asking
+                    robot.speech.speak('Sorry, I will go on as long as you need me')
+                    continue
+                else:
+                    nwc = NavigateToWaypoint(robot=robot,
+                                             waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                                      id=knowledge.exit_waypoint),
+                                             radius = 0.3)
+                    robot.speech.speak("Thank you very much, and goodbye!", block=True)
+                    nwc.execute()
+                    break
+            except hmi.TimeoutException:
+                # robot did not hear the confirmation, so lets go on
+                continue
 
 
 # ------------------------------------------------------------------------------------------------------------------------
