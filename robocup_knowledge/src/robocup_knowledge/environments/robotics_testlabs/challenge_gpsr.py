@@ -232,7 +232,7 @@ follow_action = "follow", {"location-from": {""}, "location-to": {}, "target": {
 ##############################################################################
 
 grammar += """
-VP["action": "answer_question"] -> answer a question
+VP["action": "answer-question"] -> answer a question
 """
 
 ##############################################################################
