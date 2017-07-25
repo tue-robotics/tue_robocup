@@ -65,19 +65,21 @@ class ChallengeSetATable(smach.StateMachine):
                                                 'abort': 'Aborted'},
                                    remapping={'meal': 'meal'})
 
-            smach.StateMachine.add('SERVE_MEAL',  # Serve the meal (for example: pour milk into the bowl)
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'CORRECT_OBJECT_POSITIONS',
-                                                'abort': 'Aborted'})
+            # We won't pour anything
+            # smach.StateMachine.add('SERVE_MEAL',  # Serve the meal (for example: pour milk into the bowl)
+            #                        states.Initialize(robot),
+            #                        transitions={'initialized': 'CORRECT_OBJECT_POSITIONS',
+            #                                     'abort': 'Aborted'})
 
-            smach.StateMachine.add('CORRECT_OBJECT_POSITIONS',  # Inspect table and correct the moved objects
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'ANNOUNCE_TASK_COMPLETION',
-                                                'abort': 'Aborted'})
+            # You don't get points for this?!
+            # smach.StateMachine.add('CORRECT_OBJECT_POSITIONS',  # Inspect table and correct the moved objects
+            #                        states.Initialize(robot),
+            #                        transitions={'initialized': 'ANNOUNCE_TASK_COMPLETION',
+            #                                     'abort': 'Aborted'})
 
             smach.StateMachine.add('ANNOUNCE_TASK_COMPLETION',
                                    states.Say(robot, "The table is set! Moving to the meeting point for the next task.",
-                                              block=True),
+                                              block=False),
                                    transitions={'spoken': 'NAVIGATE_TO_WAYPOINT_II'})
 
             # Part II: Clean the table
@@ -98,10 +100,11 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'initialized': 'CLEAN_THE_TABLE',
                                                 'abort': 'Aborted'})
 
-            smach.StateMachine.add('CLEAN_THE_TABLE',  # Inspect for spots and spills and clean them
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'END_CHALLENGE',
-                                                'abort': 'Aborted'})
+            # We can't clean the table
+            # smach.StateMachine.add('CLEAN_THE_TABLE',  # Inspect for spots and spills and clean them
+            #                        states.Initialize(robot),
+            #                        transitions={'initialized': 'END_CHALLENGE',
+            #                                     'abort': 'Aborted'})
 
             # End
             smach.StateMachine.add('END_CHALLENGE',
