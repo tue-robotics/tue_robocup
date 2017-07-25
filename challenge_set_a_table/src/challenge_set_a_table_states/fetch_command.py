@@ -1,17 +1,16 @@
 #! /usr/bin/env python
 
+# ROS
 import rospy
 import smach
-import time
-import os
-import datetime
-import math
 
+# TU/e Robotics
 import hmi
 import robot_smach_states.util.designators as ds
 
 from robot_smach_states import Initialize, Say
 from robot_smach_states.util.startup import startup
+
 
 def fetch(robot, time_out=15.0):
 
@@ -23,7 +22,7 @@ def fetch(robot, time_out=15.0):
     while not confirmed and i < 10:
         try:
             sentence, semantics = robot.hmi.query('', 'T -> set the table | clean the table', 'T')
-                    
+
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
             try:
@@ -33,15 +32,16 @@ def fetch(robot, time_out=15.0):
                 elif result == 'no':
                     robot.speech.speak('Sorry, please repeat')
                     pass
-                
+
             except hmi.TimeoutException:
                 confirmed = True
                 # robot did not hear the confirmation, so lets assume its correct
 
         except hmi.TimeoutException:
             i += 1
-                 
+
     return 'heard'
+
 
 class HearFetchCommand(smach.State):
         def __init__(self, robot, time_out=15.0):
@@ -50,35 +50,34 @@ class HearFetchCommand(smach.State):
                 self.time_out = time_out
 
         def execute(self, userdata):
-                
+
                 self.robot.head.look_at_standing_person()
 
                 return fetch(self.robot, time_out=self.time_out)
 
 
-                # Standalone testing -----------------------------------------------------------------
-
+# Standalone testing -----------------------------------------------------------------~
 class TestFetchCommand(smach.StateMachine):
         def __init__(self, robot):
-                smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+                smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
                 with self:
                         smach.StateMachine.add('INITIALIZE',
-                                                                     Initialize(robot),
-                                                                     transitions={'initialized': 'FETCH_COMMAND',
-                                                                                                'abort': 'Aborted'})
+                                               Initialize(robot),
+                                               transitions={'initialized': 'FETCH_COMMAND',
+                                                            'abort': 'Aborted'})
 
-                        smach.StateMachine.add('FETCH_COMMAND', # Hear "set the table"
-                                                                     HearFetchCommand(robot, 15.0),
-                                                                     transitions={'heard': 'END_CHALLENGE'})
+                        smach.StateMachine.add('FETCH_COMMAND',  # Hear "set the table"
+                                               HearFetchCommand(robot, 15.0),
+                                               transitions={'heard': 'END_CHALLENGE'})
 
                         # End
                         smach.StateMachine.add('END_CHALLENGE',
-                                                                     Say(robot, "I am finally free!"),
-                                                                     transitions={'spoken': 'Done'})
+                                               Say(robot, "I am finally free!"),
+                                               transitions={'spoken': 'Done'})
 
                         ds.analyse_designators(self, "set_a_table")
-                                                                     
+
 
 if __name__ == "__main__":
         rospy.init_node('set_a_table_exec')
