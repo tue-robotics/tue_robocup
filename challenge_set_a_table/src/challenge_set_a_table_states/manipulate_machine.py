@@ -222,7 +222,7 @@ class ManipulateMachine(smach.StateMachine):
                                                                            entityDes=grasp_furniture_designator,
                                                                            objectIDsDes=None,
                                                                            searchArea=grasp_surface_id,
-                                                                           inspection_area="in_front_of"),
+                                                                           navigation_area="in_front_of"),
                                    transitions={"done": "GRAB_ITEM_1",
                                                 "failed": "failed"})
 

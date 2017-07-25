@@ -16,10 +16,11 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
-# Storing groceries
+# Set the table
 # from challenge_set_a_table_states import set_table
 # from challenge_set_a_table_states import clean_table
 from challenge_set_a_table_states.fetch_command import HearFetchCommand
+from challenge_set_a_table_states.manipulate_machine import ManipulateMachine
 
 # Load all knowledge
 knowledge = load_knowledge('challenge_set_a_table')
@@ -60,10 +61,13 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'spoken': 'SET_THE_TABLE'})
 
             smach.StateMachine.add('SET_THE_TABLE',  # Take order and Set the table (bring the objects to the table)
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'SERVE_MEAL',
-                                                'abort': 'Aborted'},
-                                   remapping={'meal': 'meal'})
+                                   ManipulateMachine(robot=robot,
+                                                     grasp_furniture_id=knowledge.cupboard,
+                                                     grasp_surface_id=knowledge.cupboard_surface,
+                                                     place_furniture_id=knowledge.table,
+                                                     place_surface_id=knowledge.table_surface),
+                                   transitions={'succeeded': 'ANNOUNCE_TASK_COMPLETION',
+                                                'failed': 'NAVIGATE_TO_WAYPOINT_II'})
 
             # We won't pour anything
             # smach.StateMachine.add('SERVE_MEAL',  # Serve the meal (for example: pour milk into the bowl)
@@ -95,10 +99,14 @@ class ChallengeSetATable(smach.StateMachine):
                                    HearFetchCommand(robot, 15.0),
                                    transitions={'heard': 'CLEAR_UP'})
 
-            smach.StateMachine.add('CLEAR_UP',  # Clear up the table (bring the objects to their default location)
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'CLEAN_THE_TABLE',
-                                                'abort': 'Aborted'})
+            smach.StateMachine.add('CLEAR_UP',  # Clear the table
+                                   ManipulateMachine(robot=robot,
+                                                     grasp_furniture_id=knowledge.table,
+                                                     grasp_surface_id=knowledge.table_surface,
+                                                     place_furniture_id=knowledge.cupboard,
+                                                     place_surface_id=knowledge.cupboard_surface),
+                                   transitions={'succeeded': 'END_CHALLENGE',
+                                                'failed': 'END_CHALLENGE'})
 
             # We can't clean the table
             # smach.StateMachine.add('CLEAN_THE_TABLE',  # Inspect for spots and spills and clean them
@@ -108,7 +116,7 @@ class ChallengeSetATable(smach.StateMachine):
 
             # End
             smach.StateMachine.add('END_CHALLENGE',
-                                   states.Say(robot, "I am finally free!"),
+                                   states.Say(robot, "I am done here"),
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "set_a_table")
