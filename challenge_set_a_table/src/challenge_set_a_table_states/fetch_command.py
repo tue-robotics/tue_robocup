@@ -53,7 +53,80 @@ class HearFetchCommand(smach.State):
 
                 self.robot.head.look_at_standing_person()
 
-                return fetch(self.robot, time_out=self.time_out)
+                result = fetch(self.robot, time_out=self.time_out)
+
+                self.robot.head.reset()
+
+                return result
+
+
+class GetBreakfastOrder(smach.State):
+    """ Gets the breakfast order by asking it to the customer. N.B.: the order is asked, but this information is not
+     stored (we won't get points for that anyway """
+    def __init__(self, robot, options, timeout=15.0):
+        """ Constructor
+
+        :param robot: robot object
+        :param options: list with strings containing the possible breakfast choices
+        :param timeout: timeout in seconds
+        """
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.options = options
+        self.grammar = "T[O] -> SENTENCE[O]\n\n"
+        self.grammar += "DET -> the | a | an | some\n\n"
+        self.grammar += "SENTENCE[O] -> Could you bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> Can you bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> Could you give me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> Can you give me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> Please bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> Bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> I would like DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> I want DET OPTIONS[O]\n\n"
+        for option in options:
+            self.grammar += "OPTIONS[{}] -> {}\n".format(option, option)
+
+        print self.grammar
+        self.timeout = timeout
+
+    def execute(self, userdata):
+
+        self.robot.speech.speak("What would you like to have for breakfast?", block=False)
+
+        self.robot.head.look_at_standing_person()
+
+        # Try for a max of 3 times
+        i = 0
+        while i < 3:
+
+            i += 1
+
+            try:
+                sentence, semantics = self.robot.hmi.query('', self.grammar, 'T')  # ToDo: add timeout
+                order = semantics
+
+                # check if we have heard this correctly
+                self.robot.speech.speak('I understood you would like {}, is this correct?'.format(order))
+                try:
+                    result = self.robot.hmi.query('', 'T -> yes | no', 'T').sentence
+                    if result == 'yes':
+                        self.robot.speech.speak("Okay, I will bring you {}".format(order))
+                        return "done"
+                    elif result == 'no':
+                        self.robot.speech.speak('Sorry, please repeat')
+                        pass
+
+                except hmi.TimeoutException:
+                    return "done"
+                    # robot did not hear the confirmation, so lets assume its correct
+
+            except hmi.TimeoutException:
+                pass
+
+        # If nothing has been heard, make a guess
+        self.robot.speech.speak("I will bring you {}".format(self.options[0]))
+
+        return "done"
 
 
 # Standalone testing -----------------------------------------------------------------~
