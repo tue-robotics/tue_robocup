@@ -238,7 +238,7 @@ class ManipulateMachine(smach.StateMachine):
             else:
                 smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self._table_designator,
                                                                        objectIDsDes=None, searchArea=GRAB_SURFACE,
-                                                                       inspection_area="in_front_of"),
+                                                                       navigation_area="in_front_of"),
                                        transitions={"done": "GRAB_ITEM_1",
                                                     "failed": "failed"})
 
