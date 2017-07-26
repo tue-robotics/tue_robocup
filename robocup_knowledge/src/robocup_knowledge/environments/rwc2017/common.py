@@ -89,7 +89,12 @@ category_locations = {
 }
 
 # ToDo: Matthijs
+# "left_planks": [],
+# "right_planks": [],
 inspect_areas = {
+    "kitchen_shelf": ["shelf2", "shelf3", "shelf4", "shelf5", "shelf6"],
+    "balcony_shelf": ["shelf2", "shelf3", "shelf4"],
+    "kitchen_rack": ["shelf2", "shelf3", "shelf4"]
 }
 
 inspect_positions = {
