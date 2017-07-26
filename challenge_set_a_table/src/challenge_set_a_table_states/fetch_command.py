@@ -12,7 +12,14 @@ from robot_smach_states import Initialize, Say
 from robot_smach_states.util.startup import startup
 
 
-def fetch(robot, time_out=15.0):
+def fetch(robot, time_out=15.0, task="set"):
+    """
+
+    :param robot: robot object
+    :param time_out: timeout in seconds (not yet used)
+    :param task: string with set or clear
+    :return: string with heard or not heard
+    """
 
     confirmed = False
     robot.speech.speak('What can I do for you, master?')
@@ -21,7 +28,14 @@ def fetch(robot, time_out=15.0):
     i = 0
     while not confirmed and i < 10:
         try:
-            sentence, semantics = robot.hmi.query('', 'T -> set the table | clean the table', 'T')
+            if task == "set":
+                sentence, semantics = robot.hmi.query('', 'T -> set the table', 'T')
+                return "heard"
+            elif task == "clear":
+                sentence, semantics = robot.hmi.query('', 'T -> set the table', 'T')
+                return "heard"
+            else:
+                rospy.logerr("This does not make any sense!!!")
 
             # check if we have heard this correctly
             robot.speech.speak('I heard %s, is this correct?' % sentence)
@@ -40,24 +54,35 @@ def fetch(robot, time_out=15.0):
         except hmi.TimeoutException:
             i += 1
 
-    return 'heard'
+    return "not_heard"
 
 
 class HearFetchCommand(smach.State):
-    def __init__(self, robot, time_out=15.0):
-        smach.State.__init__(self, outcomes=["heard"])
+    def __init__(self, robot, time_out=15.0, task="set"):
+        """ Constructor
+
+        :param robot: robot object
+        :param time_out: timeout in seconds (not yet used)
+        :param task: string with set or clear
+        """
+        smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
         self.time_out = time_out
+        if task not in ["set", "clear"]:
+            rospy.logerr("You either have to supply the set or clear task")
+        self.task = task
 
     def execute(self, userdata):
 
         self.robot.head.look_at_standing_person()
 
         result = fetch(self.robot, time_out=self.time_out)
+        if result != "heard":
+            self.robot.speech.speak("I am sorry but I did not hear you. I will start doing some work anyway")
 
         self.robot.head.reset()
 
-        return result
+        return "done"
 
 
 class GetBreakfastOrder(smach.State):

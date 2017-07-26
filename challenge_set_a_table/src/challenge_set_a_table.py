@@ -17,8 +17,6 @@ from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
 # Set the table
-# from challenge_set_a_table_states import set_table
-# from challenge_set_a_table_states import clean_table
 from challenge_set_a_table_states.fetch_command import HearFetchCommand, GetBreakfastOrder
 from challenge_set_a_table_states.manipulate_machine import ManipulateMachine
 
@@ -53,12 +51,16 @@ class ChallengeSetATable(smach.StateMachine):
                                                 'goal_not_defined': 'FETCH_COMMAND_I'})
 
             smach.StateMachine.add('FETCH_COMMAND_I',  # Hear "set the table"
-                                   HearFetchCommand(robot, 15.0),
-                                   transitions={'heard': 'ASK_FOR_MEAL'})
+                                   HearFetchCommand(robot, 15.0, "set"),
+                                   transitions={'done': 'ASK_FOR_MEAL'})
 
             smach.StateMachine.add('ASK_FOR_MEAL',
                                    states.Say(robot, "What should I serve, master?", block=True),
-                                   transitions={'spoken': 'SET_THE_TABLE'})
+                                   transitions={'spoken': 'GET_ORDER'})
+
+            smach.StateMachine.add('GET_ORDER',
+                                   GetBreakfastOrder(robot, knowledge.options, timeout=15.0),
+                                   transitions={'done': 'SET_THE_TABLE'})
 
             smach.StateMachine.add('SET_THE_TABLE',  # Take order and Set the table (bring the objects to the table)
                                    ManipulateMachine(robot=robot,
@@ -96,8 +98,8 @@ class ChallengeSetATable(smach.StateMachine):
                                                 'goal_not_defined': 'FETCH_COMMAND_II'})
 
             smach.StateMachine.add('FETCH_COMMAND_II',  # Hear "clear up the table"
-                                   HearFetchCommand(robot, 15.0),
-                                   transitions={'heard': 'CLEAR_UP'})
+                                   HearFetchCommand(robot, 15.0, "clear"),
+                                   transitions={'done': 'CLEAR_UP'})
 
             smach.StateMachine.add('CLEAR_UP',  # Clear the table
                                    ManipulateMachine(robot=robot,
