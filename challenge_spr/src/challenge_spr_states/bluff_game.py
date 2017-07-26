@@ -77,7 +77,7 @@ def turn_to_closest_entity(robot):
 
     rospy.loginfo("I should turn %.2f rad now", yaw)
 
-    vyaw = 0.5
+    vyaw = 1.0
     robot.base.force_drive(0, 0, (yaw / abs(yaw)) * vyaw, abs(yaw) / vyaw)
 
 
