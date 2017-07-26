@@ -44,7 +44,6 @@ class StoringGroceries(smach.StateMachine):
             def move_table(userdata=None, manipulate_machine=None):
                 """ Moves the entities for this challenge to the correct poses"""
                 # Determine where to perform the challenge
-                import ipdb;ipdb.set_trace()
                 robot_pose = robot.base.get_location()
                 ENTITY_POSES.sort(key=lambda tup: (tup[0].frame.p - robot_pose.frame.p).Norm())
                 cabinet_id = ENTITY_POSES[0][2]

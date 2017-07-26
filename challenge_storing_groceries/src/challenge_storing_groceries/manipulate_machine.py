@@ -207,8 +207,8 @@ class ManipulateMachine(smach.StateMachine):
         self.place_designator = ds.EmptySpotDesignator(robot=robot,
                                                        place_location_designator=self.place_entity_designator,
                                                        area="temp")
-        self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=place_designator)
-        self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=place_designator)
+        self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
+        self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
 
         with self:
 
