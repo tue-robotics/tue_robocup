@@ -3,6 +3,7 @@
 import robot
 import rospy
 import tf
+import math
 
 from geometry_msgs.msg import PoseStamped
 
@@ -21,7 +22,7 @@ class SSL(object):
         if not self._last_msg or rospy.Time.now() - self._last_received_time > rospy.Duration(max_age_seconds):
             return None
         q = self._last_msg.pose.orientation
-        return tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])[2]
+        return tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])[2] + math.pi
 
 
 class Amigo(robot.Robot):
