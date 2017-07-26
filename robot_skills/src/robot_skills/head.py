@@ -328,7 +328,7 @@ class Head(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
-    def get_best_face_recognition(self, recognitions, desired_label):
+    def get_best_face_recognition(self, recognitions, desired_label, probability_threshold=-0.5):
         """Returns the Recognition with the highest probability of having the desired_label.
         Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
 
@@ -376,7 +376,7 @@ class Head(RobotPart):
 
         if matching_recognitions:
             best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
-            return best_recognition
+            return best_recognition if best_recognition.probabilities[0].probability > probability_threshold else None
         else:
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
 
