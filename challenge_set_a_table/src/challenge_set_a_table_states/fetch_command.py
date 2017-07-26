@@ -44,20 +44,20 @@ def fetch(robot, time_out=15.0):
 
 
 class HearFetchCommand(smach.State):
-        def __init__(self, robot, time_out=15.0):
-                smach.State.__init__(self, outcomes=["heard"])
-                self.robot = robot
-                self.time_out = time_out
+    def __init__(self, robot, time_out=15.0):
+        smach.State.__init__(self, outcomes=["heard"])
+        self.robot = robot
+        self.time_out = time_out
 
-        def execute(self, userdata):
+    def execute(self, userdata):
 
-                self.robot.head.look_at_standing_person()
+        self.robot.head.look_at_standing_person()
 
-                result = fetch(self.robot, time_out=self.time_out)
+        result = fetch(self.robot, time_out=self.time_out)
 
-                self.robot.head.reset()
+        self.robot.head.reset()
 
-                return result
+        return result
 
 
 class GetBreakfastOrder(smach.State):
@@ -75,16 +75,16 @@ class GetBreakfastOrder(smach.State):
         self.options = options
         self.grammar = "T[O] -> SENTENCE[O]\n\n"
         self.grammar += "DET -> the | a | an | some\n\n"
-        self.grammar += "SENTENCE[O] -> Could you bring me DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> Can you bring me DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> Could you give me DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> Can you give me DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> Please bring me DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> Bring me DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> I would like DET OPTIONS[O]\n"
-        self.grammar += "SENTENCE[O] -> I want DET OPTIONS[O]\n\n"
+        self.grammar += "SENTENCE[O] -> could you bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> can you bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> could you give me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> can you give me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> please bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> bring me DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> i would like DET OPTIONS[O]\n"
+        self.grammar += "SENTENCE[O] -> i want DET OPTIONS[O]\n\n"
         for option in options:
-            self.grammar += "OPTIONS[{}] -> {}\n".format(option, option)
+            self.grammar += "OPTIONS['{}'] -> {}\n".format(option, option)
 
         print self.grammar
         self.timeout = timeout
