@@ -37,16 +37,7 @@ class StoringGroceries(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None):
-                """ 'Locks' a locking designator """
-                # For now, don't do anything
-                return "done"
-
-                # Move away the cabinet
-                robot.ed.update_entity(id="cabinet",
-                                       frame_stamped=FrameStamped(frame=kdl.Frame(kdl.Rotation(),
-                                                                                  kdl.Vector(12.0, 0, 0)),
-                                                                  frame_id="map"))
-
+                """ Moves the entities for this challenge to the correct poses"""
                 # Determine where to perform the challenge
                 robot_pose = robot.base.get_location()
                 ENTITY_POSES.sort(key=lambda tup: (tup[0].frame.p - robot_pose.frame.p).Norm())
