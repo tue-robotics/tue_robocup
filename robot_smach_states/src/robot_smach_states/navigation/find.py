@@ -38,7 +38,7 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
         # Select entities based on the description (only type for now)
         try:
             if entity_description['type'] in knowledge.object_categories:
-                entities = [e for e in entities if knowledge.object_category(e.type) == entity_description['type']]
+                entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['type']]
             else:
                 entities = [e for e in entities if e.type == entity_description['type']]
         except:
