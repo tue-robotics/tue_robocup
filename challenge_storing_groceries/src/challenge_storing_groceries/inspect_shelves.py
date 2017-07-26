@@ -15,9 +15,10 @@ import config
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
 
-    def __init__(self, robot):
+    def __init__(self, robot, cabinet):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'nothing_found'])
         self.robot = robot
+        self.cabinet = cabinet
         self.object_shelves = config.OBJECT_SHELVES
 
     def execute(self, userdata=None):
@@ -25,7 +26,7 @@ class InspectShelves(smach.State):
         # Get cabinet entity
         # Sleep for a while to make sure that the robot is actually in ED
         rospy.sleep(rospy.Duration(0.25))
-        cabinet_entity = self.robot.ed.get_entity(id=config.CABINET, parse=True)
+        cabinet_entity = self.robot.ed.get_entity(id=self.cabinet.id_, parse=True)
 
         # Get the pose of all shelves
         shelves = []
