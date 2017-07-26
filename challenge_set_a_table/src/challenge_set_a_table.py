@@ -19,7 +19,7 @@ import robot_smach_states.util.designators as ds
 # Set the table
 # from challenge_set_a_table_states import set_table
 # from challenge_set_a_table_states import clean_table
-from challenge_set_a_table_states.fetch_command import HearFetchCommand
+from challenge_set_a_table_states.fetch_command import HearFetchCommand, GetBreakfastOrder
 from challenge_set_a_table_states.manipulate_machine import ManipulateMachine
 
 # Load all knowledge
