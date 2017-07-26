@@ -9,7 +9,7 @@ from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from std_srvs.srv import Empty
 from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
-from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetPersons
+from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse
 from image_recognition_msgs.msg import Annotation
 
 from sensor_msgs.msg import Image, RegionOfInterest
