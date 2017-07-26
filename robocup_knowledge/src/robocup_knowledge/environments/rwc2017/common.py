@@ -38,6 +38,11 @@ manipulation_locations = list(set([o["name"] for o in locations if o["manipulati
 # hack
 # ToDo: Rokus
 most_probable_location_in_room_map = {
+    "living_room" : "desk",
+    "kitchen" : "kitchen_table",
+    "bedroom" : "little_desk",
+    "entrance" : "entrance_shelf",
+    "balcony" : "bistro_table"
 }
 
 
