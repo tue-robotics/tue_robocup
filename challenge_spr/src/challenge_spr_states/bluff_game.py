@@ -56,14 +56,14 @@ from riddle_game import hear, answer
 
 def turn_to_closest_entity(robot):
 
-    rospy.sleep(0.5)
+    rospy.sleep(1.5)
 
     start = rospy.Time.now()
     yaw = None
 
     # Try to find a source for a couple of seconds
     while not yaw and (rospy.Time.now() - start).to_sec() < 6:
-        yaw = robot.ssl.get_last_yaw()
+        yaw = robot.ssl.get_last_yaw(.1)
         rospy.sleep(0.05)
 
     # If we did not find a yaw, just default
