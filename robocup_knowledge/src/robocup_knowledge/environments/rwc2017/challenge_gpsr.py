@@ -134,7 +134,6 @@ VP["action": "pick-up", "object": {"type": X}, "location": {"id": Y}] -> V_PICKU
 grammar += """
 V_PLACE -> put | place
 
-VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
 VP["action": "place", "object": {"type": "reference"}, "location": {"id": Y}] -> V_PLACE PPN_OBJECT MANIPULATION_AREA_LOCATION[Y]
 """
 
@@ -213,6 +212,10 @@ VP["action": "bring", "target-location": Y, "object": {"type": Z}] -> V_BRING to
 # Bring <person> the <object> from the <location>
 grammar += """
 VP["action": "bring", "source-location": X, "target-location": Y, "object": {"type": Z}] -> V_BRING to BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+"""
+
+grammar += """
+VP["action": "bring", "object": {"type": Z}, "target-location": Y] -> V_PLACE OBJECT_TO_BE_BROUGHT[Z] MANIPULATION_AREA_DESCRIPTION the BRING_LOCATION[Y]
 """
 
 
