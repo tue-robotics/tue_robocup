@@ -29,8 +29,12 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'AWAIT_START',
+                                   transitions={'initialized': 'SAY_UNABLE_TO_OPEN_DOOR',
                                                 'abort': 'Aborted'})
+
+            smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
+                                   states.Say(robot, "I am unable to open the shelf door, can you please open it for me?"),
+                                   transitions={'spoken': 'AWAIT_START'})
 
             smach.StateMachine.add("AWAIT_START",
                                    states.AskContinue(robot),
