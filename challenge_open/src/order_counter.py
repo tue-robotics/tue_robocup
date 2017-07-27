@@ -38,7 +38,13 @@ class OrderCounter(smach.State):
         :param userdata:
         :return:
         """
+        # Enable callback
         self._active = True
+
+        # Talk to the audience
+        self.robot.speech.speak("Hello dear people, my name is amigo.")
+        self.robot.speech.speak("Are you thirsty?")
+        self.robot.speech.speak("Raise your hand if you would like a drink")
 
         # Sleeping for 10 seconds to do magic
         # ToDo: create something useful
@@ -46,7 +52,15 @@ class OrderCounter(smach.State):
         rospy.sleep(rospy.Duration(10.0))
         rospy.loginfo("Done counting orders")
 
+        # Disable callback
         self._active = False
+
+        # Summarize
+        if self._number_of_thirsty_people > 0:
+            self.robot.speech.speak("I've seen {} thirsty people, "
+                                    "let's get some drinks".format(self._number_of_thirsty_people))
+
+        # Return
         return "done"
 
     def _people_callback(self, people):
