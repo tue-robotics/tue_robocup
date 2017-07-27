@@ -52,7 +52,7 @@ class WaitForCustomer(smach.State):
 
         header = self.people_received.header
         point = waving_persons[0].position
-        pose = frame_stamped(header.frame_id, point.x, point.y, 0.0)
+        pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
 
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
