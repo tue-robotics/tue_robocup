@@ -74,10 +74,10 @@ class CheckIfDescribedEntityAvailable(smach.State):
 
     def execute(self, userdata=None):
         ids_to_select_from = [e.id for e in self._candidate_entities_designator.resolve()]
-        rospy.logdebug('list of entities to select from: {}'.format(ids_to_select_from))
+        rospy.loginfo('list of entities to select from: {}'.format(ids_to_select_from))
         description = self._description_designator.resolve()
 
-        rospy.logdebug('description used for selection: {}'.format(description))
+        rospy.loginfo('description used for selection: {}'.format(description))
 
         satisfying_entities = entities_from_description(robot=self._robot,
                                                         entity_description=description,
