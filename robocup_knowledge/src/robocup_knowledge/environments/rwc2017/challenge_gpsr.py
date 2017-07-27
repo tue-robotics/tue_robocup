@@ -35,7 +35,7 @@ C[{A}] -> VP[A]
 ##############################################################################
 
 grammar += """
-PPN_OBJECT[reference] -> it | them 
+PPN_OBJECT[reference] -> it | them
 PPN_PERSON -> him | her | them
 
 DET -> the | a | an | some
@@ -162,11 +162,12 @@ grammar += """
 VP["action": "bring", "target-location": Y, "object": {"type": Z}] -> V_BRING to BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] | V_BRING BRING_PERSON[Y] OBJECT_TO_BE_BROUGHT[Z]
 """
 
-# Bring <person> the <object> from the <location>
+# Bring to <person> the <object> from the <location>
 grammar += """
-VP["action": "bring", "source-location": X, "target-location": Y, "object": {"type": Z}] -> V_BRING to BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+VP["action": "bring", "source-location": X, "target-location": Y, "object": {"type": Z}] -> V_BRING to BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] | V_BRING BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
 """
 
+# Place the <object> on the <location>
 grammar += """
 VP["action": "bring", "object": {"type": Z}, "target-location": Y] -> V_PLACE OBJECT_TO_BE_BROUGHT[Z] MANIPULATION_AREA_DESCRIPTION the BRING_LOCATION[Y]
 """
