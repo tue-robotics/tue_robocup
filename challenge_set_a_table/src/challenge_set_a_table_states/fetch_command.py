@@ -116,7 +116,7 @@ class GetBreakfastOrder(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("What would you like to have for breakfast?", block=False)
+        self.robot.speech.speak("What would you like to have for breakfast?", block=True)
 
         self.robot.head.look_at_standing_person()
 
@@ -149,7 +149,7 @@ class GetBreakfastOrder(smach.State):
                 pass
 
         # If nothing has been heard, make a guess
-        self.robot.speech.speak("I will bring you {}".format(self.options[0]))
+        self.robot.speech.speak("I will bring you {}".format(self.options[0]), block=False)
 
         return "done"
 
