@@ -10,7 +10,7 @@ import robot_smach_states as states
 # Challenge restaurant
 from store_waypoint import StoreWaypoint
 from take_orders import TakeOrder, ReciteOrders
-from wait_for_customer import WaitForClickedCustomer
+from wait_for_customer import WaitForCustomer
 
 
 class Restaurant(smach.StateMachine):
@@ -43,7 +43,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'done': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
-                                   WaitForClickedCustomer(robot, caller_id),
+                                   WaitForCustomer(robot, caller_id),
                                    transitions={'succeeded': 'NAVIGATE_TO_CUSTOMER',
                                                 'failed': 'WAIT_FOR_CUSTOMER',
                                                 'aborted': 'WAIT_FOR_CUSTOMER',

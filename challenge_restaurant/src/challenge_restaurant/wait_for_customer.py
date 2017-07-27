@@ -8,20 +8,22 @@ import smach
 from robot_skills.util.kdl_conversions import frame_stamped
 from hmi import TimeoutException
 from geometry_msgs.msg import PointStamped
-
+from people_msgs.msg import People
 
 class WaitForCustomer(smach.State):
     """ Wait for the waiving person """
 
-    def __init__(self, robot, location_id):
+    def __init__(self, robot, caller_id):
         """ Constructor
 
         :param robot: robot object
-        :param location_id: string with which the location of the caller will be designated
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted', 'rejected'])
         self._robot = robot
-        self._location_id = location_id
+        self._caller_id = caller_id
+        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb)
+        self.rate = 10
+        self.people_received = []
 
     def execute(self, userdata=None):
         """ Does the actual work
@@ -33,31 +35,35 @@ class WaitForCustomer(smach.State):
         self._robot.head.reset()
         rospy.sleep(1)
 
-        while True:
-            self._robot.speech.speak("I'm looking for waving persons")
-            persons = self._robot.head.detect_waving_persons()
-            if not persons:
-                continue
+        rospy.loginfo('waiting for waving person')
+        waving_persons = []
+        while not rospy.is_shutdown() and not waving_persons:
+            rospy.sleep(1/self.rate)
+            for person in self.people_received.people:
+                if {'RWave', 'LWave'}.intersection(set(person.tags)):
+                    waving_persons.append(person)
 
-            self._robot.speech.speak("I found a waving person")
+        if not waving_persons:
+            return 'aborted'
 
-            person = persons[0]
+        rospy.loginfo('waving persons: %s', waving_persons)
+        if len(waving_persons) > 1:
+            rospy.logwarn('using the first person')
 
-            try:
-                point = self._robot.head.project_roi(person.roi, frame_id="map")
-                break
-            except ValueError as e:
-                rospy.logerr('project failed: %s', e)
-
-        pose = frame_stamped("map", point.vector.x(), point.vector.y(), 0.0)
+        header = self.people_received.header
+        point = waving_persons[0].position
+        pose = frame_stamped(header.frame_id, point.x, point.y, 0.0)
 
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
         if self._confirm():
-            self._robot.ed.update_entity(id="customer", frame_stamped=pose, type="waypoint")
+            self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
             return 'succeeded'
         else:
             return 'rejected'
+
+    def people_cb(self, persons):
+        self.people_received = persons
 
     def _confirm(self):
         cgrammar = """
@@ -78,15 +84,14 @@ class WaitForCustomer(smach.State):
 class WaitForClickedCustomer(smach.State):
     """ Wait for the waiving person """
 
-    def __init__(self, robot, location_id):
+    def __init__(self, robot, caller_id):
         """ Constructor
 
         :param robot: robot object
-        :param location_id: string with which the location of the caller will be designated
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted', 'rejected'])
         self._robot = robot
-        self._location_id = location_id
+        self._caller_id = caller_id
         self._sub = rospy.Subscriber("/clicked_point", PointStamped, self.callback)
         self.rate = 10
         self._point = None
@@ -109,5 +114,27 @@ class WaitForClickedCustomer(smach.State):
 
         # TODO, get data from point into ED
         pose = frame_stamped("map", self._point.point.x, self._point.point.y, 0.0)
-        self._robot.ed.update_entity(id="customer", frame_stamped=pose, type="waypoint")
+        self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
         return 'succeeded'
+
+
+if __name__ == '__main__':
+    rospy.init_node('wait_for_customer')
+
+    from robot_skills.amigo import Amigo
+    robot = Amigo()
+    robot.ed.reset()
+
+    sm = smach.StateMachine(outcomes=['done', 'aborted'])
+    with sm:
+        smach.StateMachine.add('STORE_WAYPOINT',
+                               WaitForCustomer(robot),
+                               transitions={
+                                    'succeeded' : 'done',
+                                    'failed'  : 'done',
+                                    'aborted' : 'done',
+                                    'rejected' : 'done'})
+
+    # states.startup(setup_statemachine, challenge_name="automatic_side_detection")
+    sm.execute()
+
