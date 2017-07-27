@@ -39,7 +39,7 @@ class ChallengeSetATable(smach.StateMachine):
             smach.StateMachine.add('ANNOUNCEMENT',
                                    states.Say(robot, "Let's see if my master has a task for me! "
                                                      "Moving to the meeting point.",
-                                              block=False),
+                                              block=True),
                                    transitions={'spoken': 'NAVIGATE_TO_WAYPOINT_I'})
 
             smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_I',
