@@ -22,6 +22,11 @@ class Restaurant(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['Done', 'WAIT_FOR_CUSTOMER'])
 
+        start_pose = robot.base.get_location()
+        start_x = start_pose.frame.p.x()
+        start_y = start_pose.frame.p.y()
+        start_rz = start_pose.frame.M.GetRPY()[2]
+
         kitchen_id = "kitchen"
         kitchen_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
                                                                                        id=kitchen_id)
@@ -101,8 +106,7 @@ class Restaurant(smach.StateMachine):
                                                 'preempted': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('RETURN_TO_KITCHEN',
-                                   states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
-                                                             radius=0.15),
+                                   states.NavigateToPose(robot=robot, x=start_x, y=start_y, rz=start_rz, radius=0.3),
                                    transitions={'arrived': 'WAIT_FOR_CUSTOMER',
                                                 'unreachable': 'WAIT_FOR_CUSTOMER',
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
