@@ -110,12 +110,18 @@ def main():
         # Report to the user
         robot.head.look_at_standing_person()
         robot.speech.speak(report, block=True)
+        timeout_count = 0
 
         while True:
             while True and not test:
                 try:
                     robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
                 except hmi.TimeoutException:
+                    if timeout_count >= 3:
+                        robot.hmi.restart_dragonfly()
+                        timeout_count = 0
+                    else:
+                        timeout_count += 1
                     continue
                 else:
                     break
