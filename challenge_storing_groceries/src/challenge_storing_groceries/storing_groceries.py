@@ -67,6 +67,7 @@ class StoringGroceries(smach.StateMachine):
                 # Update manipulate machine
                 manipulate_machine.place_entity_designator.id_ = cabinet_id
                 manipulate_machine.place_designator._area = ENTITY_POSES[0][5]
+                manipulate_machine.place_designator.place_location_designator.id = cabinet_id
                 manipulate_machine.table_designator.id_ = table_id
                 manipulate_machine.cabinet.id_ = ENTITY_POSES[0][2]
 
