@@ -141,6 +141,28 @@ class NavigateToRoom(smach.State):
 
         return navigateToWaypoint.execute()
 
+class ArmWaitForMotionDone(smach.State):
+
+    def __init__(self, robot, arm_designator, timeout=10.0):
+
+        smach.State.__init__(self,
+                             outcomes=['succeeded', 'failed'])
+
+        self._robot = robot
+        check_type(arm_designator, Arm)
+        self.arm_designator = arm_designator
+        self.timeout = timeout
+
+    def execute(self, userdata):
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+        if arm.wait_for_motion_done(timeout=self.timeout):
+            return 'succeeded'
+        return "failed"
+
+
 class DropBagOnGround(smach.StateMachine):
     """
     Put a bag in the robot's gripper on the ground
@@ -156,13 +178,13 @@ class DropBagOnGround(smach.StateMachine):
         check_type(arm_designator, Arm)
 
         with self:
-            smach.StateMachine.add( 'OPEN_BEFORE_DROP', states.SetGripper(robot, arm_designator, gripperstate=ArmState.OPEN),
-                                transitions={'succeeded'    :   'DROP_POSE',
-                                             'failed'       :   'DROP_POSE'})
+            smach.StateMachine.add('DROP_POSE', states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
+                                   transitions={'succeeded': 'OPEN_AFTER_DROP',
+                                                'failed': 'OPEN_AFTER_DROP'})
 
-            smach.StateMachine.add("DROP_POSE", states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
-                            transitions={'succeeded'        :'RESET_ARM_OK',
-                                         'failed'           :'RESET_ARM_FAIL'})
+            smach.StateMachine.add('OPEN_AFTER_DROP', states.SetGripper(robot, arm_designator, gripperstate=ArmState.OPEN),
+                                transitions={'succeeded'    :   'RESET_ARM_OK',
+                                             'failed'       :   'RESET_ARM_FAIL'})
 
             smach.StateMachine.add( 'RESET_ARM_OK', states.ResetArms(robot),
                                 transitions={'done'         :   'succeeded'})
