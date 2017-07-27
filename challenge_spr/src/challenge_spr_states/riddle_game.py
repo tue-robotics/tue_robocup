@@ -97,7 +97,7 @@ def answer(robot, res, crowd_data):
                             else:
                                 answer = 'There are no %s in the %s' % (entity, loc)
                         else:
-                            answer = 'I dont know that object'
+                            answer = 'I should count but I dont know that object %s' % entity
 
                     # Find objects
                     if action['action'] == 'find_object':
@@ -110,7 +110,7 @@ def answer(robot, res, crowd_data):
                             answer = 'You can find the %s %s %s' % (entity, area_name, loc)
 
                         else:
-                            answer = 'I dont know that object'
+                            answer = 'I should find %s but I dont know %s' % entity
 
                     # Find category
                     if action['action'] == 'find_category':
@@ -127,7 +127,7 @@ def answer(robot, res, crowd_data):
                             answer = 'The %s belongs to %s' % (entity, cat)
 
                         else:
-                            answer = 'I dont know that object'
+                            answer = 'I should name a category but I dont know %s' % entity
 
                     if action['action'] == "c_count":
                         answer = "4 people are wearing %s" % str(action['entity'])
@@ -141,7 +141,7 @@ def answer(robot, res, crowd_data):
                             answer = 'The color of %s is %s' % (entity, col)
 
                         else:
-                            answer = 'I dont know that object'
+                            answer = 'I should name the color but I dont know %s' % entity
 
                     # Compare objects categories
                     if action['action'] == 'compare_category':
