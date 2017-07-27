@@ -85,14 +85,11 @@ VP["action": "find", "object": {"type": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 VP["action": "find", "object": {"type": person, "id": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
 """
 
-
-
 ###############################################################################
 #
 # Navigate
 #
 ###############################################################################
-# V_GUIDE -> guide | escort | lead | accompany
 
 grammar += """
 V_GOPL -> go to | navigate to
@@ -100,17 +97,6 @@ V_GOR -> V_GOPL | enter
 
 VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOM[X]
 VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATION[X]
-"""
-
-###############################################################################
-#
-# Inspect
-#
-###############################################################################
-
-grammar += """
-
-VP["action": "inspect", "entity": {"id": X}] -> inspect the LOCATION[X]
 """
 
 ###############################################################################
@@ -136,39 +122,6 @@ V_PLACE -> put | place
 
 VP["action": "place", "object": {"type": "reference"}, "location": {"id": Y}] -> V_PLACE PPN_OBJECT MANIPULATION_AREA_LOCATION[Y]
 """
-
-###############################################################################
-#
-# Follow
-#
-###############################################################################
-
-grammar += """
-V_FOLLOW -> follow | go after | come after
-
-VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
-VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]
-
-VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
-VP["action": "follow", "target": {"id": "operator"}, "location-to": {"id": X}] -> V_FOLLOW me to the ROOM_OR_LOCATION[X]
-
-VP["action": "follow", "target": {"type": "reference"}] -> V_FOLLOW PPN_PERSON
-VP["action": "follow", "target": {"type": "reference"}, "location-to": {"id: X}] -> V_FOLLOW PPN_PERSON to the ROOM_OR_LOCATION[X]
-
-VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
-VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]L
-
-VP["action": "follow", "location-from": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOM_OR_LOCATION[X]
-VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X]
-
-VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
-"""
-
-grammar += '\nFOLLOW_PERSONS[the person] -> DET person'
-grammar += '\nFOLLOW_PERSONS[the woman] -> DET woman'
-grammar += '\nFOLLOW_PERSONS[the man] -> DET man'
-for name in common.names:
-    grammar += '\nFOLLOW_PERSONS[%s] -> %s' % (name, name)
 
 ###############################################################################
 #
@@ -268,46 +221,6 @@ VP["action": "answer-question", "target-person": X] -> answer a question to BRIN
 # VP["action": "find-out-and-report", "object": {"type": "person"}, "subject": X, "target": {"id": Z}] -> V_SAY the PERSON_PROPERTY[X] of the person in the ROOM_OR_LOCATION[Z]
 # """
 
-##############################################################################
-#
-# INCOMPLETE QUESTIONS
-#
-##############################################################################
-
-grammar += """
-
-HIM_HER -> him | her
-
-VP["action": "find", "object": {"type": "person"}, "target": {"id": Z}] -> V_FIND MEET_PERSON[Z]
-VP["action": "navigate-to"] -> V_GUIDE HIM_HER
-"""
-
-grammar += '\nMEET_PERSON[the person] -> DET person'
-grammar += '\nMEET_PERSON[the woman] -> DET woman'
-grammar += '\nMEET_PERSON[the man] -> DET man'
-for name in common.names:
-    grammar += '\nMEET_PERSON[%s] -> %s' % (name, name)
-
-# FOLLOW PERSON : (PERSON is at the BEACON)
-# BRING me (a | some) CATEGORY : (which object of this category)
-# DELIVER CATEGORY to PERSON : (which object of this category) && (PERSON is at the BEACON)
-# meet PERSON(M) and GUIDE him : (PERSON is at the BEACON) && (guide him to BEACON)
-# meet PERSON(F) and GUIDE her : (PERSON is at the BEACON) && (guide her to BEACON)
-# NAVIGATE-TO BEACON, meet PERSON(M), and GUIDE him : (guide him to BEACON) && (keep him not lost)
-# NAVIGATE-TO BEACON, meet PERSON(F), and GUIDE her : (guide her to BEACON) && (keep him not lost)
-
-loc_grammar = """
-
-HE_SHE -> he | she | it | him | her
-
-VP["object": {"id": X}] -> HE_SHE is in the ROOM_OR_LOCATION[X] | in the ROOM_OR_LOCATION[X] | you could find HE_SHE in the ROOM_OR_LOCATION[X]
-"""
-
-obj_grammar = """
-
-VP["object": {"id": Y}] -> the NAMED_OBJECT[Z] is DET NAMED_OBJECT[Y] | the NAMED_OBJECT[Z] is NAMED_OBJECT[Y] | NAMED_OBJECT[Y] | DET NAMED_OBJECT[Y]
-"""
-
 if __name__ == "__main__":
     print "GPSR Grammar:\n\n{}\n\n".format(grammar)
 
@@ -349,21 +262,6 @@ C[{A}] -> Q[A]
 
 # Predefined questions
 question_grammar += '''
-Q["action" : "answer", "solution": "Nagoya"] -> what city are we in
-Q["action" : "answer", "solution": "Tech united"] -> what is the name of your team
-Q["action" : "answer", "solution": "31"] -> how many teams participate in robocup at home this year
-Q["action" : "answer", "solution": "Hillary Clinton"] -> who won the popular vote in the us election
-Q["action" : "answer", "solution": "Mount Fuji"] -> what is the highest mountain in japan
-Q["action" : "answer", "solution": "Pepper and HSR"] -> name the two robocup at home standard platforms
-Q["action" : "answer", "solution": "Domestic Standard Platform League"] -> what does dspl stand for
-Q["action" : "answer", "solution": "Social Standard Platform League"] -> what does sspl stand for
-Q["action" : "answer", "solution": "SoftBank"] -> who did alphabet sell boston dynamics to
-Q["action" : "answer", "solution": "over 410000 square metres"] -> nagoya has one of the largest train stations in the world. how large is it
-Q["action" : "answer", "solution": "My team is located in Eindhoven"] -> where is your team located
-Q["action" : "answer", "solution": "George Lucas"] -> who created star wars
-Q["action" : "answer", "solution": "Sponge Bob Squarepants"] -> who lives in a pineapple under the sea
-Q["action" : "answer", "solution": "the inventor of the first compiler"] -> who is grace hopper
-Q["action" : "answer", "solution": "the inventor of the first compiler"] -> what invented grace hopper
 
 WHATWHICH -> what | which
 
