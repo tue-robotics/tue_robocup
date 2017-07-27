@@ -89,8 +89,8 @@ category_locations = {
     "cleaning_stuff": {"right_rack": "on_top_of"},
     "cutlery": {"sideboard": "on_top_of"},
     "food": {"kitchen_shelf": "on_top_of"},
-    "drinks": {"kitchen_counter": "on_top_of"},
-    "snacks": {"kitchen_rack": "on_top_of"}
+    "drink": {"kitchen_counter": "on_top_of"},
+    "snack": {"kitchen_rack": "on_top_of"}
 }
 
 # ToDo: Matthijs
