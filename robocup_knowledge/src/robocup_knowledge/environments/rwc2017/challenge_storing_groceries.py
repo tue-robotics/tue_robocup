@@ -17,7 +17,7 @@ cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, -0.0, 0.1292
                                               kdl.Vector(2.39, -4.125, 0)),
                               frame_id="map"),
                  FrameStamped(frame=kdl.Frame(kdl.Rotation(),
-                                              kdl.Vector(-2.27, -8.055, 0.0)),
+                                              kdl.Vector(-2.27, -7.55, 0.0)),
                               frame_id="map")]
 object_shelves = ["shelf2", "shelf3", "shelf4", "shelf5"]
 object_types = [obj["name"] for obj in common.objects]
