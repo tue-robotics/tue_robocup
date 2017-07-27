@@ -23,7 +23,7 @@ class WaitForCustomer(smach.State):
         self._caller_id = caller_id
         self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb)
         self.rate = 10
-        self.people_received = []
+        self.people_received = People()
 
     def execute(self, userdata=None):
         """ Does the actual work
