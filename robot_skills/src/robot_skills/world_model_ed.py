@@ -198,6 +198,7 @@ class ED(RobotPart):
 
         if frame_stamped:
             if frame_stamped.frame_id != "/map":
+                rospy.loginfo('update_entity: frame not in map, transforming')
                 frame_stamped = frame_stamped.projectToFrame("/map", self._tf_listener)
 
             Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
