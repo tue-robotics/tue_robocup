@@ -91,6 +91,12 @@ class OrderCounter(smach.State):
                                              id=count)
             marker_array_msg.markers.append(marker)
 
+        # Play sound if the number of people changed
+        if count > self._number_of_thirsty_people:
+			self.robot.speech.speak("ping")
+		elif count > self._number_of_thirsty_people:
+			self.robot.speech.speak("pong")
+
         # Remember the number of thirsty people
         self._number_of_thirsty_people = count
 
