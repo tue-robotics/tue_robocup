@@ -376,7 +376,7 @@ class Head(RobotPart):
 
         if matching_recognitions:
             best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
-            return best_recognition if best_recognition.probabilities[0].probability > probability_threshold else None
+            return best_recognition if best_recognition.categorical_distribution.probabilities[0].probability > probability_threshold else None
         else:
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
 
