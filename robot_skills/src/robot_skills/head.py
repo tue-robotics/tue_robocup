@@ -339,6 +339,18 @@ class Head(RobotPart):
         :returns the best recognition matching the given desired_label
         :rtype image_recognition_msgs/Recognition, which consists of a probability distribution and a roi"""
 
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+        rospy.logerr("PLease check the probability_threshold!")
+
         rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
 
         # Only take detections with operator
