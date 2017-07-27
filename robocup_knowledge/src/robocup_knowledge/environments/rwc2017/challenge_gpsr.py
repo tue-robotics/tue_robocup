@@ -35,9 +35,7 @@ C[{A}] -> VP[A]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
-
-PPN_OBJECT -> it | them 
+PPN_OBJECT[reference] -> it | them 
 PPN_PERSON -> him | her | them
 
 DET -> the | a | an | some
@@ -94,6 +92,7 @@ VP["action": "find", "object": {"type": person, "id": X}] -> V_FIND DET PERSON_T
 # Navigate
 #
 ###############################################################################
+# V_GUIDE -> guide | escort | lead | accompany
 
 grammar += """
 V_GOPL -> go to | navigate to
@@ -146,7 +145,7 @@ VP["action": "place", "object": {"type": "reference"}, "location": {"id": Y}] ->
 ###############################################################################
 
 grammar += """
-V_FOLLOW -> follow | go after | come after | V_GUIDE
+V_FOLLOW -> follow | go after | come after
 
 VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
 VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]
@@ -158,7 +157,7 @@ VP["action": "follow", "target": {"type": "reference"}] -> V_FOLLOW PPN_PERSON
 VP["action": "follow", "target": {"type": "reference"}, "location-to": {"id: X}] -> V_FOLLOW PPN_PERSON to the ROOM_OR_LOCATION[X]
 
 VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
-VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]L
 
 VP["action": "follow", "location-from": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOM_OR_LOCATION[X]
 VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X]
@@ -178,28 +177,44 @@ for name in common.names:
 #
 ###############################################################################
 
-grammar += """
-OPERATOR[operator] -> me
-BRING_NAME -> OPERATOR | BRING_PERSON
+for room in common.location_rooms:
+    grammar += '\nBRING_ROOM[{"type": room, "id": %s}] -> %s' % (room, room)
 
-BRING_TARGET[{"id": X, "type": person}] -> BRING_NAME[X]
-BRING_TARGET[{"id": X}] -> the ROOM_OR_LOCATION[X]
+for loc in common.get_locations():
+    grammar += '\nBRING_LOCATION[{"type": furniture, "id": %s}] -> %s' % (loc, loc)
+
+grammar += '\n BRING_ROOM_OR_LOCATION[X] -> BRING_ROOM[X] | BRING_LOCATION[X]'
+
+grammar += """
+INAT -> in | at
+
+BRING_PERSON_AT_LOCATION[{"type": person, "id": X, "loc": Y}] -> NAMED_PERSON[X] INAT the ROOM_OR_LOCATION[Y]
+BRING_OPERATOR[{"type": person, "id": operator}] -> me
+BRING_PERSON -> BRING_OPERATOR | BRING_PERSON_AT_LOCATION
+
+BRING_TARGET[X] -> BRING_PERSON[X] | the BRING_LOCATION[X]
 
 OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT | PPN_OBJECT
 
-V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over
-
-VP["action": "bring", "source-location": {"id": X}, "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
-VP["action": "bring", "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
-VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
-VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
-
-VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING BRING_NAME to BRING_TARGET[X]
+V_BRING -> bring | deliver | take | give | get
 """
 
-for name in common.names:
-    grammar += '\nBRING_PERSON[%s] -> %s' % (name, name)
+# Bring <object> from the <location> to the <location>
+# Bring <object> to the <location> from the <location>
+grammar += """
+VP["action": "bring", "source-location": X, "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
+"""
+
+# Bring to <person> the <object> | Bring <object> to <person> | bring <person> the <object>
+grammar += """
+VP["action": "bring", "target-location": Y, "object": {"type": Z}] -> V_BRING to BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] | V_BRING BRING_PERSON[Y] OBJECT_TO_BE_BROUGHT[Z]
+"""
+
+# Bring <person> the <object> from the <location>
+grammar += """
+VP["action": "bring", "source-location": X, "target-location": Y, "object": {"type": Z}] -> V_BRING to BRING_TARGET[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+"""
+
 
 ##############################################################################
 #
@@ -211,6 +226,7 @@ grammar += """
 V_SAY -> tell | say | speak
 
 VP["action": "say", "sentence": X] -> V_SAY SAY_SENTENCE[X]
+VP["action": "say", "sentence": X, "target-person": Y] -> V_SAY SAY_SENTENCE[X] to BRING_PERSON_AT_LOCATION[Y]
 """
 
 grammar += '\nSAY_SENTENCE["ROBOT_NAME"] -> your name'
@@ -221,6 +237,7 @@ grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
+grammar += '\nSAY_SENTENCE["SOMETHING_ABOUT_SELF"] -> something about yourself'
 
 
 follow_action = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
@@ -232,7 +249,8 @@ follow_action = "follow", {"location-from": {""}, "location-to": {}, "target": {
 ##############################################################################
 
 grammar += """
-VP["action": "answer_question"] -> answer a question
+VP["action": "answer-question"] -> answer a question
+VP["action": "answer-question", "target-person": X] -> answer a question to BRING_PERSON_AT_LOCATION[X]
 """
 
 ##############################################################################
@@ -244,7 +262,7 @@ VP["action": "answer_question"] -> answer a question
 # grammar += """
 # PERSON_PROPERTY -> age | name
 
-# VP["action": "find_out_and_report", "object": {"type": "person"}, "subject": X, "target": {"id": Z}] -> V_SAY the PERSON_PROPERTY[X] of the person in the ROOM_OR_LOCATION[Z]
+# VP["action": "find-out-and-report", "object": {"type": "person"}, "subject": X, "target": {"id": Z}] -> V_SAY the PERSON_PROPERTY[X] of the person in the ROOM_OR_LOCATION[Z]
 # """
 
 ##############################################################################
@@ -310,4 +328,63 @@ if __name__ == "__main__":
     result = grammar_parser.parse("T", sentence)
 
     print "Result:\n\n{}".format(result)
+
+
+##############################################################################
+#
+# Question grammar
+#
+##############################################################################
+
+question_grammar_target = "T"
+
+question_grammar = """
+T[{actions : <A1>}] -> C[A1]
+
+C[{A}] -> Q[A]
+"""
+
+# Predefined questions
+question_grammar += '''
+Q["action" : "answer", "solution": "Nagoya"] -> what city are we in
+Q["action" : "answer", "solution": "Tech united"] -> what is the name of your team
+Q["action" : "answer", "solution": "31"] -> how many teams participate in robocup at home this year
+Q["action" : "answer", "solution": "Hillary Clinton"] -> who won the popular vote in the us election
+Q["action" : "answer", "solution": "Mount Fuji"] -> what is the highest mountain in japan
+Q["action" : "answer", "solution": "Pepper and HSR"] -> name the two robocup at home standard platforms
+Q["action" : "answer", "solution": "Domestic Standard Platform League"] -> what does dspl stand for
+Q["action" : "answer", "solution": "Social Standard Platform League"] -> what does sspl stand for
+Q["action" : "answer", "solution": "SoftBank"] -> who did alphabet sell boston dynamics to
+Q["action" : "answer", "solution": "over 410000 square metres"] -> nagoya has one of the largest train stations in the world. how large is it
+Q["action" : "answer", "solution": "My team is located in Eindhoven"] -> where is your team located
+Q["action" : "answer", "solution": "George Lucas"] -> who created star wars
+Q["action" : "answer", "solution": "Sponge Bob Squarepants"] -> who lives in a pineapple under the sea
+Q["action" : "answer", "solution": "the inventor of the first compiler"] -> who is grace hopper
+Q["action" : "answer", "solution": "the inventor of the first compiler"] -> what invented grace hopper
+
+WHATWHICH -> what | which
+
+BIGGEST_ADJ -> biggest | heaviest
+SMALLEST_ADJ -> smallest | lightest
+
+Q["action" : "answer", "solution": "bread"] -> WHATWHICH is the BIGGEST_ADJ object
+Q["action" : "answer", "solution": "chopsticks"] -> WHATWHICH is the SMALLEST_ADJ object
+Q["action" : "answer", "solution": "bread"] -> WHATWHICH is the BIGGEST_ADJ food
+Q["action" : "answer", "solution": "onion"] -> WHATWHICH is the SMALLEST_ADJ food
+Q["action" : "answer", "solution": "plate"] -> WHATWHICH is the BIGGEST_ADJ container
+Q["action" : "answer", "solution": "soup_container"] -> WHATWHICH is the SMALLEST_ADJ container
+Q["action" : "answer", "solution": "green_tea"] -> WHATWHICH is the BIGGEST_ADJ drink
+Q["action" : "answer", "solution": "coke"] -> WHATWHICH is the SMALLEST_ADJ drink
+Q["action" : "answer", "solution": "hair_spray"] -> WHATWHICH is the BIGGEST_ADJ cleaning stuff
+Q["action" : "answer", "solution": "moisturizer"] -> WHATWHICH is the SMALLEST_ADJ cleaning stuff
+Q["action" : "answer", "solution": "spoon"] -> WHATWHICH is the BIGGEST_ADJ cutlery
+Q["action" : "answer", "solution": "chopsticks"] -> WHATWHICH is the SMALLEST_ADJ cutlery
+
+Q["action" : "answer", "solution":  "the bedroom has one door"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "the entrance has one door"] -> how many doors has the entrance
+Q["action" : "answer", "solution": "the living room has one door"] -> how many doors has the living_room
+Q["action" : "answer", "solution": "the kitchen has one door"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "the corridor has zero doors"] -> how many doors has the corridor
+Q["action" : "answer", "solution": "the balcony has zero doors"] -> how many doors has the balcony
+'''
 
