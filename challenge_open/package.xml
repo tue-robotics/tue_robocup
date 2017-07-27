@@ -13,5 +13,6 @@
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>people_msgs</run_depend>
 
 </package>
