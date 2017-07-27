@@ -328,7 +328,7 @@ class Head(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
-    def get_best_face_recognition(self, recognitions, desired_label, probability_threshold=-0.5):
+    def get_best_face_recognition(self, recognitions, desired_label, probability_threshold=4.0):
         """Returns the Recognition with the highest probability of having the desired_label.
         Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
 
@@ -338,18 +338,6 @@ class Head(RobotPart):
         :type desired_label str
         :returns the best recognition matching the given desired_label
         :rtype image_recognition_msgs/Recognition, which consists of a probability distribution and a roi"""
-
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
-        rospy.logerr("PLease check the probability_threshold!")
 
         rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
 
@@ -378,6 +366,7 @@ class Head(RobotPart):
         #else:
         #    best_detection = None
 
+        rospy.loginfo("Probability threshold %.2f", probability_threshold)
         for index, recog in enumerate(recognitions):
             rospy.loginfo("{index}: {dist}".format(index=index,
                                                    dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
