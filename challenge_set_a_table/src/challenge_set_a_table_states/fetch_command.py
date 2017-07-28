@@ -100,6 +100,7 @@ class GetBreakfastOrder(smach.State):
         self.options = options
         self.grammar = "T[O] -> SENTENCE[O]\n\n"
         self.grammar += "DET -> the | a | an | some\n\n"
+        self.grammar += "SENTENCE[O] -> OPTIONS[O]\n\n"
         self.grammar += "SENTENCE[O] -> could you bring me DET OPTIONS[O]\n"
         self.grammar += "SENTENCE[O] -> can you bring me DET OPTIONS[O]\n"
         self.grammar += "SENTENCE[O] -> could you give me DET OPTIONS[O]\n"
@@ -108,7 +109,7 @@ class GetBreakfastOrder(smach.State):
         self.grammar += "SENTENCE[O] -> bring me DET OPTIONS[O]\n"
         self.grammar += "SENTENCE[O] -> i would like DET OPTIONS[O]\n"
         self.grammar += "SENTENCE[O] -> i want DET OPTIONS[O]\n\n"
-        for option in options:
+        for option in options.keys():
             self.grammar += "OPTIONS['{}'] -> {}\n".format(option, option)
 
         print self.grammar
@@ -116,7 +117,13 @@ class GetBreakfastOrder(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("What would you like to have for breakfast?", block=True)
+        olist = self.options.keys()
+        options_sentence = "{} and {}".format(olist[-2], olist[-1])
+        if len(olist) > 2:
+            for o in olist[:-2]:
+                options_sentence = "{}, ".format(o) + options_sentence
+        self.robot.speech.speak("What would you like to have for breakfast?", block=False)
+        self.robot.speech.speak("You can choose from {}".format(options_sentence), block=True)
 
         self.robot.head.look_at_standing_person()
 
@@ -135,7 +142,7 @@ class GetBreakfastOrder(smach.State):
                 try:
                     result = self.robot.hmi.query('', 'T -> yes | no', 'T').sentence
                     if result == 'yes':
-                        self.robot.speech.speak("Okay, I will bring you {}".format(order))
+                        self._recite(order)
                         return "done"
                     elif result == 'no':
                         self.robot.speech.speak('Sorry, please repeat')
@@ -149,9 +156,21 @@ class GetBreakfastOrder(smach.State):
                 pass
 
         # If nothing has been heard, make a guess
-        self.robot.speech.speak("I will bring you {}".format(self.options[0]), block=False)
+        self._recite(self.options[0])
 
         return "done"
+
+    def _recite(self, choice):
+        """ Recites the order based on the main course
+        :param choice: string with chosen main course
+        """
+        self.robot.speech.speak("I will bring you {}".format(choice), block=False)
+        self.robot.speech.speak("This comes with {} and {}".format(self.options[choice][1],
+                                                                   self.options[choice][2]), block=False)
+        self.robot.speech.speak("To eat, you will get {} and {}".format(self.options[choice][3],
+                                                                        self.options[choice][4]), block=False)
+        self.robot.speech.speak("I will serve this all on a {}".format(self.options[choice][5]), block=True)
+
 
 
 # Standalone testing -----------------------------------------------------------------~
