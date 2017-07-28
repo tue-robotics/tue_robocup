@@ -130,7 +130,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'RETURN_TO_START_TURN_AROUND'})
 
             smach.StateMachine.add('RETURN_TO_START_TURN_AROUND',
-                                   states.Turn(robot, radians=2*math.pi),
+                                   states.Turn(robot, radians=math.pi),
                                    transitions={'turned': 'RETURN_TO_START_FALLBACK'})
 
             smach.StateMachine.add('RETURN_TO_START_FALLBACK',
