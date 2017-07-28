@@ -55,6 +55,7 @@ class WaitForCustomer(smach.State):
         header = self.people_received.header
         point = waving_persons[0].position
         pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
+        rospy.loginfo('update customer position to %s', pose)
         self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
         # customer_point_msg_stamped_camera = PointStamped()
         # customer_point_msg_stamped_camera = self.people_received.header
@@ -70,8 +71,6 @@ class WaitForCustomer(smach.State):
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
         if self._confirm():
-            rospy.loginfo('update customer position to %s', pose)
-
             self._robot.head.cancel_goal()
             return 'succeeded'
         else:
