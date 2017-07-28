@@ -216,11 +216,14 @@ VP["action": "answer-question", "target-person": X] -> answer a question to BRIN
 #
 ##############################################################################
 
-# grammar += """
-# PERSON_PROPERTY -> age | name
+grammar += """
+PROPERTY["number"] -> number
+PROPERTY["name"] -> name
 
-# VP["action": "find-out-and-report", "object": {"type": "person"}, "subject": X, "target": {"id": Z}] -> V_SAY the PERSON_PROPERTY[X] of the person in the ROOM_OR_LOCATION[Z]
-# """
+INVESTIGATION_LOCATION[X] -> MANIPULATION_AREA_LOCATION[X] | in the ROOM
+
+VP["action": "find-out-and-report", "property": X, "object": {"type": Y}] -> tell me the PROPERTY[X] of OBJECT_TO_BE_FOUND[Y] INVESTIGATION_LOCATION[Z]
+"""
 
 if __name__ == "__main__":
     print "GPSR Grammar:\n\n{}\n\n".format(grammar)
