@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node name="trigger_client_hsr" pkg="multirobot_communication" type="trigger_client.py" output="screen" respawn="true">
+        <param name="ip" value="hsrb" />
+        <param name="port" value="3000" />
+        <param name="remote_robot_name" value="hsrb" />
+    </node>
+
+</launch>
+
