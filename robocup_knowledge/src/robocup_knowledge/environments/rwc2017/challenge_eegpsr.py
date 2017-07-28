@@ -96,10 +96,10 @@ VP["action": "find", "object": {"type": "person", "id": X}, "location": {"id": Y
 grammar += """
 V_GUIDE -> guide | escort | take
 
-VP["action": "navigate-to", "object": {"id": X}] -> V_GUIDE PPN_PERSON[Y] to the ROOM_OR_LOCATION[X]
+VP["action": "guide", "object": {"id": X}] -> V_GUIDE PPN_PERSON[Y] to the ROOM_OR_LOCATION[X]
 
 V_GOPL -> go to | navigate to
-V_GOR -> V_GOPL | enter
+V_GOR -> V_GOPL | enter to | enter
 
 VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOM[X]
 VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATION[X]
@@ -184,7 +184,7 @@ VP["action": "bring", "source-location": X, "target-location": Y, "object": {"ty
 
 # Bring to <person> the <object> | Bring <object> to <person> | bring <person> the <object>
 grammar += """
-VP["action": "bring", "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] | V_BRING BRING_PERSON[Y] OBJECT_TO_BE_BROUGHT[Z]
+VP["action": "bring", "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] | V_BRING BRING_PERSON[Y] OBJECT_TO_BE_BROUGHT[Z] | V_BRING OBJECT_TO_BE_BROUGHT[Z] on BRING_TARGET[Y]
 """
 
 # Bring <person> the <object> from the <location>
