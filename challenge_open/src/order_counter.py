@@ -1,5 +1,6 @@
 # ROS
 import people_msgs.msg
+import PyKDL as kdl
 import rospy
 import smach
 import std_msgs.msg
@@ -12,15 +13,17 @@ from robot_skills.util.transformations import tf_transform
 class OrderCounter(smach.State):
     """ Smach state to count the number of people raising their hands to order something.
     """
-    def __init__(self, robot):
+    def __init__(self, robot, room_id=None):
         """ Constructor
 
         :param robot: robot object
+        :param room_id: id of the room where the people should be (if None, check is skipped)
         """
         smach.State.__init__(self, outcomes=["done"])
 
         # Robot object
         self.robot = robot
+        self.room_id = room_id
 
         # Subscriber for people detections and publisher for visualization
         rospy.Subscriber("/amigo/persons", people_msgs.msg.People, self._people_callback)
@@ -37,6 +40,10 @@ class OrderCounter(smach.State):
         # Backup trigger string
         self._trigger_string = "stopcounter"
 
+        # Room bounding box
+        self._room_box_min = kdl.Vector()
+        self._room_box_max = kdl.Vector()
+
     def execute(self, userdata):
         """ Execute hook
 
@@ -44,6 +51,19 @@ class OrderCounter(smach.State):
         :return:
         """
         rospy.logwarn("To stop this state manually, enter 'amigo-trigger-command {}'".format(self._trigger_string))
+
+        # Check the room bounding box (if this fails: fix the worldmodel)
+        if self.room_id is not None:
+            entities = self.robot.ed.get_entities()
+            rooms = [e for e in entities if e.is_a("room")]
+            for room in rooms:
+                if room.id == self.room_id:
+                    self._room_box_min = room._pose * room.volumes["in"].min_corner
+                    self._room_box_min = room._pose * room.volumes["in"].min_corner
+                    break
+
+        # Look up
+        self.robot.head.look_at_standing_person()
 
         # Enable callback
         self._active = True
@@ -93,12 +113,21 @@ class OrderCounter(smach.State):
             if "LWave" not in person.tags and "RWave" not in person.tags:
                 continue
 
-            # Count
-            count += 1
-
             # Create a marker message
             marker = self._create_marker_msg(header=msg.header, position=person.position,
                                              object_id=count)
+
+            # Check if it is in the bounding box
+            # ToDo: refactor (do transformation outside marker msg function for clarity)
+            if self.room_id is not None:
+                if not (self._room_box_min.x() < marker.pose.position.x < self._room_box_max.x() and
+                        self._room_box_min.y() < marker.pose.position.y < self._room_box_max.y()):
+                    continue
+
+            # Count
+            count += 1
+
+            # Add the marker message
             marker_array_msg.markers.append(marker)
 
         # Play sound if the number of people changed
