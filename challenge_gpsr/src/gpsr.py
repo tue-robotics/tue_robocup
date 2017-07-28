@@ -123,6 +123,9 @@ def main():
             break
 
         while True:
+            if not test:
+                robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
+
             while True and not test:
                 try:
                     robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
