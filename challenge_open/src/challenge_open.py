@@ -78,7 +78,7 @@ def setup_statemachine(robot):
                                                                      waypoint_designator=EntityByIdDesignator(
                                                                          robot=robot,
                                                                          id=challenge_knowledge.hsr_demo_waypoint),
-                                                                     radius=0.3),
+                                                                     radius=0.025),
                                transitions={'arrived': 'Done',
                                             'unreachable': 'Done',
                                             'goal_not_defined': 'Done'})
