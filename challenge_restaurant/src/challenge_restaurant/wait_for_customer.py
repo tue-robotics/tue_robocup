@@ -18,7 +18,7 @@ class WaitForCustomer(smach.State):
 
         :param robot: robot object
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted', 'rejected'])
+        smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'rejected'])
         self._robot = robot
         self._caller_id = caller_id
         self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb)
@@ -35,7 +35,7 @@ class WaitForCustomer(smach.State):
         self._robot.head.reset()
         rospy.sleep(1)
 
-        rospy.loginfo('waiting for waving person')
+        self._robot.speech.speak("I'm waiting for a waving person")
         waving_persons = []
         while not rospy.is_shutdown() and not waving_persons:
             rospy.sleep(1/self.rate)
@@ -90,7 +90,7 @@ class WaitForClickedCustomer(smach.State):
 
         :param robot: robot object
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'aborted', 'rejected'])
+        smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'rejected'])
         self._robot = robot
         self._caller_id = caller_id
         self._sub = rospy.Subscriber("/clicked_point", PointStamped, self.callback)
@@ -132,7 +132,6 @@ if __name__ == '__main__':
                                WaitForCustomer(robot),
                                transitions={
                                     'succeeded' : 'done',
-                                    'failed'  : 'done',
                                     'aborted' : 'done',
                                     'rejected' : 'done'})
 

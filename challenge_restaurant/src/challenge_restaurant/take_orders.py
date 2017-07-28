@@ -29,12 +29,11 @@ class TakeOrder(smach.State):
         failed: didn't hear anything or exceeded maximum number of tries
         misunderstood: misunderstood, might try again
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'misunderstood'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self._robot = robot
         self._location = location
         self._orders = orders
-        self._nr_tries = 0
         self._max_tries = 5
 
     def _confirm(self):
@@ -51,11 +50,12 @@ class TakeOrder(smach.State):
         return speech_result.semantics == "yes"
 
     def execute(self, userdata=None):
-        self._nr_tries += 1
         self._robot.head.look_at_ground_in_front_of_robot(3)
 
-        order = None
-        while not order:
+        nr_tries = 0
+        while nr_tries < self._max_tries and not rospy.is_shutdown():
+            nr_tries += 1
+            rospy.loginfo('nr_tries: %d', nr_tries)
 
             self._robot.speech.speak("Which combo or beverage do you want?")
             count = 0
@@ -93,14 +93,10 @@ class TakeOrder(smach.State):
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
-            else:
-                if self._nr_tries < self._max_tries:
-                    self._robot.head.cancel_goal()
-                    return "misunderstood"
-                else:
-                    self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
-                    self._robot.head.cancel_goal()
-                    return "failed"
+
+        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+        self._robot.head.cancel_goal()
+        return "failed"
 
 
 class ReciteOrders(smach.State):
