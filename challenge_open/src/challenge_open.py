@@ -7,6 +7,9 @@ from robocup_knowledge import load_knowledge
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
 
 from ssl_demo import SSLDemo
+from raytrace_demo import RayTraceDemo
+from order_counter import OrderCounter
+
 challenge_knowledge = load_knowledge('challenge_open')
 
 
@@ -39,6 +42,34 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SSL_DEMO",
                                SSLDemo(robot),
+                               transitions={"done": "NAVIGATE_TO_LASER_DEMO", 'preempted': 'Aborted'})
+
+        smach.StateMachine.add("NAVIGATE_TO_LASER_DEMO",
+                               robot_smach_states.NavigateToWaypoint(robot=robot,
+                                                                     waypoint_designator=EntityByIdDesignator(
+                                                                         robot=robot,
+                                                                         id=challenge_knowledge.raytrace_waypoint),
+                                                                     radius=0.3),
+                               transitions={'arrived': 'RAYTRACE_DEMO',
+                                            'unreachable': 'RAYTRACE_DEMO',
+                                            'goal_not_defined': 'RAYTRACE_DEMO'})
+
+        smach.StateMachine.add("RAYTRACE_DEMO",
+                               RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
+                               transitions={"done": "NAVIGATE_TO_ORDER_COUNTER", 'preempted': 'Aborted'})
+
+        smach.StateMachine.add("NAVIGATE_TO_ORDER_COUNTER",
+                               robot_smach_states.NavigateToWaypoint(robot=robot,
+                                                                     waypoint_designator=EntityByIdDesignator(
+                                                                         robot=robot,
+                                                                         id=challenge_knowledge.order_counter_waypoint),
+                                                                     radius=0.3),
+                               transitions={'arrived': 'ORDER_COUNTER',
+                                            'unreachable': 'ORDER_COUNTER',
+                                            'goal_not_defined': 'ORDER_COUNTER'})
+
+        smach.StateMachine.add("ORDER_COUNTER",
+                               OrderCounter(robot),
                                transitions={"done": "Done", 'preempted': 'Aborted'})
 
     return sm
