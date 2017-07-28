@@ -99,7 +99,6 @@ class RayTraceDemo(smach.State):
         # Perform raytrace
         raytraceresult = self.robot.ed.ray_trace(map_pose)
         entity_id = raytraceresult.entity_id
-        rospy.loginfo("Random yaw: {}, entity_id: {}".format(yaw, entity_id))
 
         # ToDo: say what's pointed to
         # e = self.robot.ed.get_entity(id=raytraceresult.entity_id)
