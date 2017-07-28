@@ -28,13 +28,13 @@ def task_result_to_report(task_result):
     #     output += " I am truly sorry, let's try this again! "
     return output
 
+
 def request_missing_field(grammar, grammar_target, semantics, missing_field):
     return semantics
 
 
 def main():
     rospy.init_node("gpsr")
-    start_time = rospy.Time.now().secs
     random.seed()
 
     skip        = rospy.get_param('~skip', False)
@@ -43,6 +43,12 @@ def main():
     no_of_tasks = rospy.get_param('~number_of_tasks', 0)
     test        = rospy.get_param('~test_mode', False)
     eegpsr      = rospy.get_param('~eegpsr', False)
+    time_limit  = rospy.get_param('~time_limit', 0)
+    if no_of_tasks == 0:
+        no_of_tasks = 999
+
+    if time_limit == 0:
+        time_limit = 999
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
@@ -54,6 +60,7 @@ def main():
         rospy.loginfo("[GPSR] running a restart")
     if test:
         rospy.loginfo("[GPSR] running in test mode")
+    rospy.loginfo("[GPSR] time_limit = {}".format(time_limit))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -139,8 +146,10 @@ def main():
                     if timeout_count >= 3:
                         robot.hmi.restart_dragonfly()
                         timeout_count = 0
+                        rospy.logwarn("[GPSR] Dragonfly restart")
                     else:
                         timeout_count += 1
+                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
 
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
@@ -156,8 +165,10 @@ def main():
                     if timeout_count >= 3:
                         robot.hmi.restart_dragonfly()
                         timeout_count = 0
+                        rospy.logwarn("[GPSR] Dragonfly restart")
                     else:
                         timeout_count += 1
+                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
 
 
             if not test:
@@ -211,8 +222,7 @@ def main():
                 task_word = "tasks"
             report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
 
-        if rospy.get_time() - start_time > (60 * 10 - 45) and no_of_tasks_performed >= \
-            1:
+        if rospy.get_time() - start_time > (60 * time_limit - 45) and no_of_tasks_performed >= 1:
             finished = True
 
 
