@@ -79,7 +79,6 @@ class WaitForCustomer(smach.State):
         C[True] -> amigo take the order
         C[False] -> amigo wait
         """
-        self._robot.head.look_at_standing_person()
         for i in range(3):
             try:
                 speech_result = self._robot.hmi.query(description="Should I get the order?",
