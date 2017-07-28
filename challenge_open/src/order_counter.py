@@ -1,5 +1,5 @@
 # ROS
-import people_msgs
+import people_msgs.msg
 import rospy
 import smach
 import visualization_markers
@@ -63,10 +63,10 @@ class OrderCounter(smach.State):
         # Return
         return "done"
 
-    def _people_callback(self, people):
+    def _people_callback(self, msg):
         """ Callback function for people subscriber. If this state is active, the number of
         people raising their hands is counted and markers are published on their positions
-        :param people: people_msgs/People message
+        :param msg: people_msgs/People message
         """
         # Check if active
         if not self._active:
@@ -78,7 +78,7 @@ class OrderCounter(smach.State):
         # Iterate over all people
         marker_array_msg = visualization_markers.msg.MarkerArray()
         count = 0
-        for person in people:
+        for person in msg.people:
             # If hand is not raised: continue
             if "raised_hand" not in person.tags:
                 continue
@@ -87,7 +87,7 @@ class OrderCounter(smach.State):
             count += 1
 
             # Create a marker message
-            marker = self._create_marker_msg(header=people.header, position=person.position,
+            marker = self._create_marker_msg(header=msg.header, position=person.position,
                                              id=count)
             marker_array_msg.markers.append(marker)
 
