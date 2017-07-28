@@ -60,3 +60,23 @@ class SSLDemo(smach.StateMachine):
                                                 "timeout": "LOOKAT_ROTATE"})
 
 
+# ------------------------------------------------------------------------------------------------
+
+def setup_statemachine(robot):
+    sm = smach.StateMachine(outcomes=['Done'])
+
+    with sm:
+
+        # Start challenge via StartChallengeRobust, skipped atm
+        smach.StateMachine.add("SSLDEMO",
+                               SSLDemo(robot),
+                               transitions={"done": "Done",
+                                            "preempted": "Done"})
+
+    return sm
+
+
+if __name__ == '__main__':
+    import robot_smach_states
+    rospy.init_node('test_ssl_demo')
+    robot_smach_states.util.startup(setup_statemachine, challenge_name="challenge_open")
