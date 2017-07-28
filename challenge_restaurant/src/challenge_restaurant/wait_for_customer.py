@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
 # ROS
+import PyKDL as kdl
 import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import frame_stamped
+from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from hmi import TimeoutException
 from geometry_msgs.msg import PointStamped
 from people_msgs.msg import People
@@ -64,9 +65,14 @@ class WaitForCustomer(smach.State):
 
         # look at the barman
         kitchen_entity = self._kitchen_designator.resolve()
-        kitchen_pose = kitchen_entity.pose.extractVectorStamped()
-        kitchen_pose.vector[2] = 1.5
-        self._robot.head.look_at_point(kitchen_pose)
+        target_pose = kitchen_entity._pose
+        head_target_kdl = target_pose * kdl.Vector(20.0, 0.0, 0.0)
+        head_target = VectorStamped(x=head_target_kdl.x(), y=head_target_kdl.y(), z=head_target_kdl.z(),
+                                    frame_id="/map")
+        # pose = kitchen_entity.pose.extractVectorStamped()
+        # pose.vector[2] = 1.5
+
+        self._robot.head.look_at_point(head_target)
 
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
