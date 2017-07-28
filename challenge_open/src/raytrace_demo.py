@@ -3,15 +3,11 @@ import math
 import threading
 
 # ROS
-import geometry_msgs.msg
-import people_msgs.msg
+import tue_msgs.msg
 import rospy
 import smach
 import std_msgs.msg
-
-# TU/e Robotics
-# from robot_skills.util.kdl_conversions import
-from robot_skills.util.transformations import tf_transform
+import geometry_msgs.msg
 
 
 class RayTraceDemo(smach.State):
@@ -31,7 +27,7 @@ class RayTraceDemo(smach.State):
         self.breakout_id = breakout_id
 
         # Subscriber for people detections and publisher for visualization
-        rospy.Subscriber("/amigo/persons", people_msgs.msg.People, self._people_callback)
+        rospy.Subscriber("/amigo/persons", tue_msgs.msg.People, self._people_callback)
         rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
 
         # Flag for the callback to indicate whether or not to process data
@@ -59,38 +55,16 @@ class RayTraceDemo(smach.State):
         entities = self.robot.ed.get_entities()
         self._furniture_objects = [e for e in entities if e.is_a("furniture")]
 
+        # Look up
+        self.robot.head.look_at_standing_person()
+
         # Enable callback
         self._active = True
 
-        # Start blink thread
-        # ToDo: remove threading???
-        blink_thread = threading.Thread(target=self._blink)
-        blink_thread.start()
-
-        # ToDo: wait for external trigger to exit state --> pointing at the couch?
-        # (and have timeout and/or overrule as backup)
-        ###### Test stuff v1 #####
-        # rospy.sleep(rospy.Duration(1.0))
-        # rospy.loginfo("Blinking kitchen table")
-        # self._requested_highlight = "kitchen_table"
-        # rospy.sleep(rospy.Duration(5.0))
-        # rospy.loginfo("Blinking kitchen counter")
-        # self._requested_highlight = "kitchen_counter"
-        # rospy.sleep(rospy.Duration(5.0))
-        #####
-
-        ###### Test stuff v2 #####
-        while self._active:
-            import random
-            rospy.sleep(rospy.Duration(random.random()))
-            self._people_callback([])
-        #####
+        self._blink()
 
         # Disable callback
         self._active = False
-
-        # Wait for blink thread
-        blink_thread.join()
 
         # clear stuff
         return "done"
@@ -100,47 +74,31 @@ class RayTraceDemo(smach.State):
         people raising their hands is counted and markers are published on their positions
         :param msg: people_msgs/People message
         """
-        # ToDo: enable!!!
-        # # Check if active
-        # if not self._active:
-        #     return
-        #
-        # # Check if there are people in the message
-        # if len(msg.people) == 0:
-        #     self._requested_highlight = ""
-        #     return
-        #
-        # # Select the closest person
-        # base_loc = self.robot.base.get_location()
-        # map_list = [(person, self.robot.tf_listener.transformPoint("map",
-        #                                                            person.position, msg.header.time,
-        #                                                            msg.header.frame_id)) for person in msg.people]
-        # map_list = sorted(map_list, key=lambda p: math.hypot(base_loc.frame.p.x() - p[1].point.x,
-        #                                                      base_loc.frame.p.y() - p[1].point.y))
-        # pointing_person = map_list[0][0]
 
-        # ToDo: include Ramon's interface
-        ##### TEST STUFF
-        pointing_person = people_msgs.msg.Person()
-        pointing_person.position.x = 3.28616728357
-        pointing_person.position.y = -4.46435200987
-        pointing_person.position.z = 0.5
-        raytrace_pose = geometry_msgs.msg.PoseStamped()
-        raytrace_pose.header.frame_id = "map"
-        raytrace_pose.header.stamp = rospy.Time.now()
-        raytrace_pose.pose.position = pointing_person.position
-        import random
-        import PyKDL as kdl
-        yaw = 2.0 * math.pi * random.random()
-        (raytrace_pose.pose.orientation.x, raytrace_pose.pose.orientation.y, raytrace_pose.pose.orientation.z,
-         raytrace_pose.pose.orientation.w) = kdl.Rotation.RPY(0, 0, yaw).GetQuaternion()
+        # Check if active
+        if not self._active:
+            return
 
-        #####
+        # Check if there are people in the message
+        if not msg.people:
+            self._requested_highlight = ""
+            return
+
+        sorted_by_distance = sorted(msg.people, key=lambda p: p.position.x ** 2 +
+                                                              p.position.y ** 2 +
+                                                              p.position.z ** 2)
+        closest_person = sorted_by_distance[0]
+
+        if "is_pointing" not in closest_person.tags:
+            self._requested_highlight = ""
+            return
+
+        map_pose = self.robot.tf_listener.transformPose(
+            "map", geometry_msgs.msg.PoseStamped(header=msg.header, pose=closest_person.pointing_pose))
 
         # Perform raytrace
-        raytraceresult = self.robot.ed.ray_trace(raytrace_pose)
+        raytraceresult = self.robot.ed.ray_trace(map_pose)
         entity_id = raytraceresult.entity_id
-        rospy.loginfo("Random yaw: {}, entity_id: {}".format(yaw, entity_id))
 
         # ToDo: say what's pointed to
         # e = self.robot.ed.get_entity(id=raytraceresult.entity_id)
@@ -176,7 +134,7 @@ class RayTraceDemo(smach.State):
         # Start looping
         state = False
         rate = rospy.Rate(self._blink_rate)
-        while self._active:
+        while self._active and not rospy.is_shutdown():
 
             # If the requested is not the same as the active highlight, update this
             if self._requested_highlight != self._active_highlight:
