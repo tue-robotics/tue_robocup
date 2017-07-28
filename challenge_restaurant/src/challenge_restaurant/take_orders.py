@@ -47,7 +47,12 @@ class TakeOrder(smach.State):
                                                   grammar=cgrammar, target="C")
         except TimeoutException:
             return False
-        return speech_result.semantics == "yes"
+
+        try:
+            ret = speech_result.semantics == "yes"
+        except:
+            return False
+        return ret
 
     def execute(self, userdata=None):
         self._robot.head.look_at_ground_in_front_of_robot(3)
@@ -77,14 +82,17 @@ class TakeOrder(smach.State):
                         self._robot.head.cancel_goal()
                         return "failed"
 
-            # Now: confirm
-            if "beverage" in speech_result.semantics:
-                self._robot.speech.speak("I understood that you would like {}, "
-                                         "is this correct?".format(speech_result.semantics['beverage']))
-            elif "food1" and "food2" in speech_result.semantics:
-                self._robot.speech.speak("I understood that you would like {} and {}, "
-                                         "is this correct?".format(speech_result.semantics['food1'],
-                                                                   speech_result.semantics['food2']))
+            try:
+                # Now: confirm
+                if "beverage" in speech_result.semantics:
+                    self._robot.speech.speak("I understood that you would like {}, "
+                                            "is this correct?".format(speech_result.semantics['beverage']))
+                elif "food1" and "food2" in speech_result.semantics:
+                    self._robot.speech.speak("I understood that you would like {} and {}, "
+                                            "is this correct?".format(speech_result.semantics['food1'],
+                                                                    speech_result.semantics['food2']))
+            except:
+                continue
 
             if self._confirm():
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
