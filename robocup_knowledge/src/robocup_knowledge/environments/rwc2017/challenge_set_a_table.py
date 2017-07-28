@@ -10,4 +10,7 @@ cupboard_surface = "on_top_of"
 table = "kitchen_table"
 table_surface = "on_top_of"
 
-options = ["bread", "curry"]
+options = {
+    "fries": ["fries", "coke", "aquarius", "fork", "spoon", "plate"],
+    "curry": ["curry", "green_tea", "cold_brew", "chop_sticks", "spoon", "bowl"]
+}
