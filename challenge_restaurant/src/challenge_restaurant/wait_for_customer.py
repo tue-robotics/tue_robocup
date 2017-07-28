@@ -58,7 +58,9 @@ class WaitForCustomer(smach.State):
 
         # look at the barman
         kitchen_entity = self._kitchen_designator.resolve()
-        self._robot.head.look_at_point(kitchen_entity.pose.extractVectorStamped())
+        pose = kitchen_entity.pose.extractVectorStamped()
+        pose.vector[2] = 1.5
+        self._robot.head.look_at_point(pose)
 
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
