@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<arg name="local_server_host" />
+
+    <node name="trigger_client_hsr" pkg="multirobot_communication" type="trigger_client.py" output="screen" respawn="true">
+        <param name="ip" value="hsrb" />
+        <param name="port" value="3000" />
+        <param name="remote_robot_name" value="hsrb" />
+    </node>
+
+    <node name="trigger_server_hsr" pkg="multirobot_communication" type="trigger_server.py" output="screen" respawn="true">
+        <param name="ip" value="$(arg local_server_host)" />
+        <param name="port" value="3000" />
+        <param name="robot_name" value="amigo" />
+    </node>
+
+</launch>
+
