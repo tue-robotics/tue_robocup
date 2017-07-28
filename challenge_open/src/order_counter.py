@@ -79,7 +79,7 @@ class OrderCounter(smach.State):
         # rospy.sleep(rospy.Duration(10.0))
         # rospy.loginfo("Done counting orders")
 
-        while self._active:
+        while self._active and not rospy.is_shutdown():
             rospy.sleep(rospy.Duration(0.5))
 
         # Disable callback

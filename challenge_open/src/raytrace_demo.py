@@ -83,7 +83,7 @@ class RayTraceDemo(smach.State):
         #####
 
         ###### Test stuff v2 #####
-        while self._active:
+        while self._active and not rospy.is_shutdown():
             import random
             rospy.sleep(rospy.Duration(random.random()))
             self._people_callback([])
@@ -179,7 +179,7 @@ class RayTraceDemo(smach.State):
         # Start looping
         state = False
         rate = rospy.Rate(self._blink_rate)
-        while self._active:
+        while self._active and not rospy.is_shutdown():
 
             # If the requested is not the same as the active highlight, update this
             if self._requested_highlight != self._active_highlight:
