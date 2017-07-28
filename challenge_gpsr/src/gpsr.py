@@ -42,6 +42,7 @@ def main():
     robot_name  = rospy.get_param('~robot_name')
     no_of_tasks = rospy.get_param('~number_of_tasks', 0)
     test        = rospy.get_param('~test_mode', False)
+    eegpsr      = rospy.get_param('~eegpsr', False)
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
@@ -67,7 +68,10 @@ def main():
 
     action_client = ActionClient(robot.robot_name)
 
-    knowledge = load_knowledge('challenge_gpsr')
+    if eegpsr:
+        knowledge = load_knowledge('challenge_eegpsr')
+    else:
+        knowledge = load_knowledge('challenge_gpsr')
 
     no_of_tasks_performed = 0
 
