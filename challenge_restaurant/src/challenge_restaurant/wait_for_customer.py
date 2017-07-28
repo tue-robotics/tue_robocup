@@ -10,10 +10,11 @@ from hmi import TimeoutException
 from geometry_msgs.msg import PointStamped
 from people_msgs.msg import People
 
+
 class WaitForCustomer(smach.State):
     """ Wait for the waiving person """
 
-    def __init__(self, robot, caller_id):
+    def __init__(self, robot, caller_id, kitchen_designator):
         """ Constructor
 
         :param robot: robot object
@@ -21,6 +22,7 @@ class WaitForCustomer(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'rejected'])
         self._robot = robot
         self._caller_id = caller_id
+        self._kitchen_designator = kitchen_designator
         self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb)
         self.rate = 10
         self.people_received = People()
@@ -54,13 +56,19 @@ class WaitForCustomer(smach.State):
         point = waving_persons[0].position
         pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
 
+        # look at the barman
+        kitchen_entity = self._kitchen_designator.resolve()
+        self._robot.head.look_at_point(kitchen_entity.pose.extractVectorStamped())
+
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
         if self._confirm():
             rospy.loginfo('update customer position to %s', pose)
             self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
+            self._robot.head.cancel_goal()
             return 'succeeded'
         else:
+            self._robot.head.cancel_goal()
             return 'rejected'
 
     def people_cb(self, persons):

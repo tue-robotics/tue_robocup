@@ -49,7 +49,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'done': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
-                                   WaitForCustomer(robot, caller_id),
+                                   WaitForCustomer(robot, caller_id, kitchen_designator),
                                    transitions={'succeeded': 'NAVIGATE_TO_CUSTOMER',
                                                 'aborted': 'STOP',
                                                 'rejected': 'WAIT_FOR_CUSTOMER'})
