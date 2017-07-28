@@ -2,7 +2,8 @@
 import people_msgs.msg
 import rospy
 import smach
-import visualization_markers
+import std_msgs.msg
+import visualization_msgs.msg
 
 # TU/e Robotics
 from robot_skills.util.transformations import tf_transform
@@ -23,8 +24,9 @@ class OrderCounter(smach.State):
 
         # Subscriber for people detections and publisher for visualization
         rospy.Subscriber("/amigo/persons", people_msgs.msg.People, self._people_callback)
+        rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
         self._marker_array_pub = rospy.Publisher('/amigo/thirsty_people',
-                                                 visualization_markers.msg.MarkerArray, queue_size=1)
+                                                 visualization_msgs.msg.MarkerArray, queue_size=1)
 
         # Flag for the callback to indicate whether or not to process data
         self._active = False
@@ -32,12 +34,17 @@ class OrderCounter(smach.State):
         # Number of thirsty people
         self._number_of_thirsty_people = -1
 
+        # Backup trigger string
+        self._trigger_string = "stopcounter"
+
     def execute(self, userdata):
         """ Execute hook
 
         :param userdata:
         :return:
         """
+        rospy.logwarn("To stop this state manually, enter 'amigo-trigger-command {}'".format(self._trigger_string))
+
         # Enable callback
         self._active = True
 
@@ -46,11 +53,14 @@ class OrderCounter(smach.State):
         self.robot.speech.speak("Are you thirsty?")
         self.robot.speech.speak("Raise your hand if you would like a drink")
 
-        # Sleeping for 10 seconds to do magic
-        # ToDo: create something useful
-        rospy.loginfo("Counting orders")
-        rospy.sleep(rospy.Duration(10.0))
-        rospy.loginfo("Done counting orders")
+        # # Sleeping for 10 seconds to do magic
+        # # ToDo: create something useful
+        # rospy.loginfo("Counting orders")
+        # rospy.sleep(rospy.Duration(10.0))
+        # rospy.loginfo("Done counting orders")
+
+        while self._active:
+            rospy.sleep(rospy.Duration(0.5))
 
         # Disable callback
         self._active = False
@@ -76,11 +86,11 @@ class OrderCounter(smach.State):
         self._clear_markers()
 
         # Iterate over all people
-        marker_array_msg = visualization_markers.msg.MarkerArray()
+        marker_array_msg = visualization_msgs.msg.MarkerArray()
         count = 0
         for person in msg.people:
             # If hand is not raised: continue
-            if "raised_hand" not in person.tags:
+            if "LWave" not in person.tags and "RWave" not in person.tags:
                 continue
 
             # Count
@@ -88,7 +98,7 @@ class OrderCounter(smach.State):
 
             # Create a marker message
             marker = self._create_marker_msg(header=msg.header, position=person.position,
-                                             id=count)
+                                             object_id=count)
             marker_array_msg.markers.append(marker)
 
         # Play sound if the number of people changed
@@ -112,12 +122,12 @@ class OrderCounter(smach.State):
         height = 2.0
         diameter = 0.4
 
-        msg = visualization_markers.msg.Marker()
+        msg = visualization_msgs.msg.Marker()
         msg.header.stamp = header.stamp
         msg.header.frame_id = "map"
         msg.id = object_id
-        msg.type = visualization_markers.msg.Marker.CYLINDER
-        msg.action = visualization_markers.msg.Marker.ADD
+        msg.type = visualization_msgs.msg.Marker.CYLINDER
+        msg.action = visualization_msgs.msg.Marker.ADD
         msg.pose.position = tf_transform(position, header.frame_id, "map", self.robot.tf_listener)
         msg.pose.position.z = 0.5 * height  # Make sure the cylinder stands neatly on the floor
         msg.pose.orientation.w = 1.0
@@ -133,11 +143,19 @@ class OrderCounter(smach.State):
     def _clear_markers(self):
         """ Clears all previously published markers
         """
-        marker_array_msg = visualization_markers.msg.MarkerArray()
-        msg = visualization_markers.msg.Marker()
-        msg.action = visualization_markers.msg.DELETEALL
+        marker_array_msg = visualization_msgs.msg.MarkerArray()
+        msg = visualization_msgs.msg.Marker()
+        msg.action = visualization_msgs.msg.Marker.DELETEALL
         marker_array_msg.markers.append(msg)
         self._marker_array_pub.publish(marker_array_msg)
+
+    def _trigger_callback(self, msg):
+        """ Callback function for trigger topic. If the specified message is returned, this state will exit
+        :param msg: string message
+        """
+        if msg.data == self._trigger_string:
+            rospy.loginfo("Stopping order counter by external trigger")
+            self._active = False
 
 
 # ------------------------------------------------------------------------------------------------
