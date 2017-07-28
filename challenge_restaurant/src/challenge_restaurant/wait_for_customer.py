@@ -55,6 +55,11 @@ class WaitForCustomer(smach.State):
         header = self.people_received.header
         point = waving_persons[0].position
         pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
+        self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
+        # customer_point_msg_stamped_camera = PointStamped()
+        # customer_point_msg_stamped_camera = self.people_received.header
+        # customer_point_msg_stamped_camera = waving_persons[0].position
+        # self.robot.tf_listener.
 
         # look at the barman
         kitchen_entity = self._kitchen_designator.resolve()
@@ -66,7 +71,7 @@ class WaitForCustomer(smach.State):
 
         if self._confirm():
             rospy.loginfo('update customer position to %s', pose)
-            self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
+
             self._robot.head.cancel_goal()
             return 'succeeded'
         else:
