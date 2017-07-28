@@ -83,24 +83,28 @@ objects = [
 object_names = list(set([o["name"] for o in objects]))
 object_categories = list(set([o["category"] for o in objects]))
 
-# ToDo: check by Matthijs
 category_locations = {
     "container": {"left_rack": "on_top_of"},
     "cleaning_stuff": {"right_rack": "on_top_of"},
     "cutlery": {"sideboard": "on_top_of"},
-    "food": {"kitchen_shelf": "on_top_of"},
+    "food": {"kitchen_shelf": "shelf3"},
     "drink": {"kitchen_counter": "on_top_of"},
-    "snack": {"kitchen_rack": "on_top_of"}
+    "snack": {"kitchen_rack": "shelf2"},
+    "fruit": {"bistro_table": "on_top_of"}
 }
 
-# ToDo: Matthijs
 # "left_planks": [],
 # "right_planks": [],
 inspect_areas = {
     "kitchen_shelf": ["shelf2", "shelf3", "shelf4", "shelf5", "shelf6"],
     "balcony_shelf": ["shelf2", "shelf3", "shelf4"],
     "kitchen_rack": ["shelf2", "shelf3", "shelf4"],
-    "kitchen_table": ["on_top_of", "on_top_of_back"]
+    "kitchen_table": ["on_top_of", "on_top_of_back"],
+    "sideboard": ["on_top_of", "shelf1"],
+    "left_rack": ["on_top_of"],
+    "right_rack": ["on_top_of"],
+    "left_planks": ["on_top_of"],
+    "right_planks": ["on_top_of"]
 }
 
 inspect_positions = {
