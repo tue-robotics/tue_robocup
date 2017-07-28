@@ -10,4 +10,5 @@ raytrace_breakout_id = "sofa"
 
 # Openpose demo
 order_counter_waypoint = "order_counter_waypoint"   # ToDo: add
+audience_room = "balcony"
 

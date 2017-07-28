@@ -69,7 +69,7 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'ORDER_COUNTER'})
 
         smach.StateMachine.add("ORDER_COUNTER",
-                               OrderCounter(robot),
+                               OrderCounter(robot, room_id=challenge_knowledge.audience_room),
                                transitions={"done": "Done", 'preempted': 'Aborted'})
 
     return sm
