@@ -263,8 +263,8 @@ class ManipulateMachine(smach.StateMachine):
 
             # Place the second item
             smach.StateMachine.add("PLACE_ITEM_2", PlaceSingleItem(robot=robot, place_designator=place_designator),
-                                   transitions={"succeeded": "succeeded",
-                                                "failed": "failed"})
+                                   transitions={"succeeded": "MOVE_TO_GRASP_SURFACE3",
+                                                "failed": "MOVE_TO_GRASP_SURFACE3"})
 
             # Move back to the grasp surface to grasp the third item
             smach.StateMachine.add("MOVE_TO_GRASP_SURFACE3",
