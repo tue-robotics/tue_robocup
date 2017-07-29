@@ -160,7 +160,7 @@ class OrderCounter(smach.State):
             marker_array_msg.markers.append(marker)
 
         # Play sound if the number of people changed
-        if count != self._number_of_thirsty_people:
+        if count != self._max_number_of_thirsty_people:
             self.robot.speech.speak("%d beer" % count)
 
         # Remember the number of thirsty people
