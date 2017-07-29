@@ -1,5 +1,5 @@
 # ROS
-import people_msgs.msg
+import tue_msgs.msg
 import PyKDL as kdl
 import rospy
 import smach
@@ -26,7 +26,7 @@ class OrderCounter(smach.State):
         self.room_id = room_id
 
         # Subscriber for people detections and publisher for visualization
-        rospy.Subscriber("/amigo/persons", people_msgs.msg.People, self._people_callback)
+        rospy.Subscriber("/amigo/persons", tue_msgs.msg.People, self._people_callback)
         rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
         self._marker_array_pub = rospy.Publisher('/amigo/thirsty_people',
                                                  visualization_msgs.msg.MarkerArray, queue_size=1)
@@ -96,7 +96,7 @@ class OrderCounter(smach.State):
     def _people_callback(self, msg):
         """ Callback function for people subscriber. If this state is active, the number of
         people raising their hands is counted and markers are published on their positions
-        :param msg: people_msgs/People message
+        :param msg: tue_msgs/People message
         """
         # Check if active
         if not self._active:
