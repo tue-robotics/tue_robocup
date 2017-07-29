@@ -15,7 +15,7 @@ class HsrInteraction(smach.State):
 
         self._active = False
 
-        self._trigger_string = "hsrdone"
+        self._trigger_string = "continue"
 
     def execute(self, userdata):
 

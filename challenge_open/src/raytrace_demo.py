@@ -42,7 +42,7 @@ class RayTraceDemo(smach.State):
         self._blink_rate = 4.0
 
         # Backup trigger string
-        self._trigger_string = "stoplaser"
+        self._trigger_string = "continue"
 
         # Furniture objects
         self._furniture_objects = []
