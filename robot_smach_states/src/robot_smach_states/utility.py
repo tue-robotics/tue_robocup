@@ -121,7 +121,7 @@ class WaitForTriggerTimeout(smach.State):
         self.timeout = timeout
         self.robot = robot
         self.triggers = triggers
-        self.trigger_received = False
+        self.trigger_received = None
 
         # Get the ~private namespace parameters from command line or launch file.
         topic     = topic
@@ -131,6 +131,9 @@ class WaitForTriggerTimeout(smach.State):
         rospy.loginfo('topic: /%s', topic)
 
     def execute(self, userdata=None):
+        if self.trigger_received is None:
+            self.trigger_received = False
+
         rospy.sleep(self.timeout)
 
         if self.trigger_received:
