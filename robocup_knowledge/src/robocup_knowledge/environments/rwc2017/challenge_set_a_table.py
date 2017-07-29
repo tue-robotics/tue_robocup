@@ -14,3 +14,10 @@ options = {
     "fries": ["fries", "coke", "aquarius", "fork", "spoon", "plate"],
     "curry": ["curry", "green_tea", "cold_brew", "chop_sticks", "spoon", "bowl"]
 }
+
+options2 = {
+    "fries": {"food": "fries", "drink1": "coke", "drink2": "aquarius",
+              "difficult1": "fork", "difficult2": "spoon", "difficult3": "plate"},
+    "curry": {"food": "green_tea", "drink1": "cold_brew", "drink2": "green_tea",
+              "difficult1": "chop_sticks", "difficult2": "spoon", "difficult3": "bowl"}
+}
