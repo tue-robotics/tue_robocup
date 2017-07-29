@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 import rospy
-from sensor_msgs.msg import Image
 from image_recognition_msgs.srv import GetPersons
+from sensor_msgs.msg import Image
 
 
 def callback(img):
-
     try:
         detect_persons(image=img)
     except rospy.ServiceException, e:
