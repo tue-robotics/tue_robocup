@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
 import robot_smach_states
+from robot_skills.util.robot_constructor import robot_constructor
+
 import rospy
 import smach
+import sys
 from robocup_knowledge import load_knowledge
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
 
@@ -16,7 +19,6 @@ challenge_knowledge = load_knowledge('challenge_open')
 
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    robot.ed.reset()
 
     with sm:
 
@@ -106,4 +108,58 @@ def setup_statemachine(robot):
 
 if __name__ == '__main__':
     rospy.init_node('challenge_open')
-    robot_smach_states.util.startup(setup_statemachine, challenge_name="challenge_open")
+
+    amigo = robot_constructor('amigo')
+
+    with amigo:
+        # build the state machine
+        executioner = setup_statemachine(amigo)
+        children = executioner.get_children().keys()
+
+        # Verify that the start_states are in the children list of the executive
+        start_states = ["START_CHALLENGE_ROBUST",
+                        "NAVIGATE_TO_SSL_WAYPOINT",
+                        "NAVIGATE_TO_LASER_DEMO",
+                        "NAVIGATE_TO_HSR_DEMO",
+                        "RETURN_TO_AUDIENCE"]
+
+        for start_state in start_states:
+            if start_state not in children:
+                rospy.logerr("Provided start state {} not in children: {}".format(start_state, children))
+                sys.exit(1)
+
+        print ""
+        print "Select start state:"
+        for i, state in enumerate(start_states):
+            print "[{}] {}".format(i, state)
+        print ""
+
+        invalid_option_received = "I received an invalid input ... Aborting ..."
+        try:
+            choice = raw_input().lower()
+        except:
+            print invalid_option_received
+            sys.exit(1)
+
+        # raw_input returns the empty string for "enter"
+        options = [str(e) for e in range(0, len(start_states))] + ['']
+
+        if choice not in options:
+            print invalid_option_received
+            sys.exit(1)
+
+        initial_state = start_states[int(choice)] if choice != '' else None
+
+        print ""
+
+        if initial_state:
+            rospy.loginfo("Starting challenge with initial state '{}'".format(initial_state))
+            executioner.set_initial_state([initial_state])
+        else:
+            rospy.loginfo("Starting challenge with default initial state")
+
+        print ""
+
+        # Run the statemachine
+        outcome = executioner.execute()
+        print "Final outcome: {0}".format(outcome)
