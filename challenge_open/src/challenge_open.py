@@ -34,13 +34,13 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("START_CHALLENGE_ROBUST",
                                robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.initial_pose),
-                               transitions={"Done": "SAY_STARTING_OPEN_CHALLENGE",
+                               transitions={"Done": "NAVIGATE_TO_SSL_WAYPOINT",
                                             "Failed": "Aborted",
                                             "Aborted": "Aborted"})
 
-        smach.StateMachine.add('SAY_STARTING_OPEN_CHALLENGE',
-                               robot_smach_states.Say(robot, ["Hi there, welcome to the open challenge!"], block=False),
-                               transitions={"spoken": "NAVIGATE_TO_SSL_WAYPOINT"})
+        # smach.StateMachine.add('SAY_STARTING_OPEN_CHALLENGE',
+        #                        robot_smach_states.Say(robot, ["Hi there, welcome to the open challenge!"], block=False),
+        #                        transitions={"spoken": "NAVIGATE_TO_SSL_WAYPOINT"})
 
         smach.StateMachine.add("NAVIGATE_TO_SSL_WAYPOINT",
                                robot_smach_states.NavigateToWaypoint(robot=robot,

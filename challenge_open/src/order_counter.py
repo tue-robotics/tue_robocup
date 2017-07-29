@@ -71,7 +71,7 @@ class OrderCounter(smach.State):
                     break
 
         # Look up
-        self.robot.head.look_at_standing_person()
+        self.robot.head.reset()
 
         # Enable callback
         self._active = True
