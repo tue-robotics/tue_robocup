@@ -271,18 +271,27 @@ class ManipulateMachine(smach.StateMachine):
                                    states.NavigateToSymbolic(robot,
                                                              {grasp_furniture_designator3: "in_front_of"},
                                                              grasp_furniture_designator3),
-                                   transitions={'arrived': 'GRAB_ITEM_3',
+                                   transitions={'arrived': 'INSPECT_GRASP_SURFACE2',
                                                 'unreachable': 'MOVE_TO_GRASP_SURFACE4',
-                                                'goal_not_defined': 'GRAB_ITEM_3'})
+                                                'goal_not_defined': 'INSPECT_GRASP_SURFACE2'})
 
             # Backup for moving back to the grasp location
             smach.StateMachine.add("MOVE_TO_GRASP_SURFACE4",
                                    states.NavigateToSymbolic(robot,
                                                              {grasp_furniture_designator3: "large_in_front_of"},
                                                              grasp_furniture_designator3),
-                                   transitions={'arrived': 'GRAB_ITEM_3',
-                                                'unreachable': 'GRAB_ITEM_3',
-                                                'goal_not_defined': 'GRAB_ITEM_3'})
+                                   transitions={'arrived': 'INSPECT_GRASP_SURFACE2',
+                                                'unreachable': 'INSPECT_GRASP_SURFACE2',
+                                                'goal_not_defined': 'INSPECT_GRASP_SURFACE2'})
+
+            # Inspect grasp furniture
+            smach.StateMachine.add("INSPECT_GRASP_SURFACE2", states.Inspect(robot=robot,
+                                                                            entityDes=grasp_furniture_designator3,
+                                                                            objectIDsDes=None,
+                                                                            searchArea="shelf2",
+                                                                            navigation_area="in_front_of"),
+                                   transitions={"done": "GRAB_ITEM_3",
+                                                "failed": "failed"})
 
             # Grasp the third item
             smach.StateMachine.add("GRAB_ITEM_3", GrabSingleItem(robot=robot, grab_designator=grasp_designator3),

@@ -19,6 +19,7 @@ import robot_smach_states.util.designators as ds
 # Set the table
 from challenge_set_a_table_states.fetch_command import HearFetchCommand, GetBreakfastOrder
 from challenge_set_a_table_states.manipulate_machine import ManipulateMachine, DefaultGrabDesignator
+from challenge_set_a_table_states.clear_manipulate_machine import ClearManipulateMachine
 
 # Load all knowledge
 knowledge = load_knowledge('challenge_set_a_table')
@@ -29,14 +30,14 @@ class ChallengeSetATable(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         # Create designators
-        grasp_furniture_designator = ds.EntityByIdDesignator(robot, id=knowledge.cupboard)
-        grasp_designator = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-                                                  area_description=knowledge.cupboard_surface)
-
-        place_furniture_designator = ds.EntityByIdDesignator(robot, id=knowledge.table)
-        place_designator = ds.EmptySpotDesignator(robot=robot,
-                                                  place_location_designator=place_furniture_designator,
-                                                  area=knowledge.table_surface)
+        # grasp_furniture_designator = ds.EntityByIdDesignator(robot, id=knowledge.cupboard)
+        # grasp_designator = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
+        #                                          area_description=knowledge.cupboard_surface)
+        #
+        # place_furniture_designator = ds.EntityByIdDesignator(robot, id=knowledge.table)
+        # place_designator = ds.EmptySpotDesignator(robot=robot,
+        #                                           place_location_designator=place_furniture_designator,
+        #                                           area=knowledge.table_surface)
 
         grasp_designator1 = ds.EdEntityDesignator(robot, type="temp")
         grasp_designator2 = ds.EdEntityDesignator(robot, type="temp")
@@ -119,10 +120,7 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'done': 'CLEAR_UP'})
 
             smach.StateMachine.add('CLEAR_UP',  # Clear the table
-                                   ManipulateMachine(robot=robot,
-                                                     grasp_furniture_designator, grasp_designator,
-                                                     place_furniture_designator, place_designator
-                                                     ),
+                                   ClearManipulateMachine(robot=robot),
                                    transitions={'succeeded': 'END_CHALLENGE',
                                                 'failed': 'END_CHALLENGE'})
 
