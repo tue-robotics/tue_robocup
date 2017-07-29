@@ -67,7 +67,7 @@ class OrderCounter(smach.State):
             for room in rooms:
                 if room.id == self.room_id:
                     self._room_box_min = room._pose * room.volumes["in"].min_corner
-                    self._room_box_min = room._pose * room.volumes["in"].min_corner
+                    self._room_box_max = room._pose * room.volumes["in"].max_corner
                     break
 
         # Look up
