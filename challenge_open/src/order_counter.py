@@ -30,6 +30,12 @@ class OrderCounter(smach.State):
         # Subscriber for people detections and publisher for visualization
         rospy.Subscriber("/amigo/persons", tue_msgs.msg.People, self._people_callback)
         rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
+
+        rospy.Subscriber('/' + robot.robot_name + '/handoverdetector_left/result', std_msgs.msg.Bool, self._on_handover)
+        rospy.Subscriber('/' + robot.robot_name + '/handoverdetector_right/result', std_msgs.msg.Bool, self._on_handover)
+        self._handover_left_on = rospy.Publisher('/' + robot.robot_name + '/handoverdetector_left/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
+        self._handover_right_on = rospy.Publisher('/' + robot.robot_name + '/handoverdetector_right/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
+
         self._marker_array_pub = rospy.Publisher('/amigo/thirsty_people',
                                                  visualization_msgs.msg.MarkerArray, queue_size=1)
 
@@ -80,6 +86,9 @@ class OrderCounter(smach.State):
         # rospy.loginfo("Counting orders")
         # rospy.sleep(rospy.Duration(10.0))
         # rospy.loginfo("Done counting orders")
+
+        self._handover_left_on.publish(True)
+        self._handover_right_on.publish(True)
 
         while self._active and not rospy.is_shutdown():
             rospy.sleep(rospy.Duration(0.5))
@@ -191,6 +200,10 @@ class OrderCounter(smach.State):
         if msg.data == self._trigger_string:
             rospy.loginfo("Stopping order counter by external trigger")
             self._active = False
+
+    def _on_handover(self, data):
+        rospy.loginfo("Stopping order counter by handover detect")
+        self._active = False
 
 
 # ------------------------------------------------------------------------------------------------
