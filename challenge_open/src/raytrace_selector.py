@@ -58,7 +58,7 @@ class RayTraceSelector(smach.State):
         # Speech grammar
         self.grammar = '''
         T["continue"] -> continue
-        T["drive"] -> drive over there | move to the object
+        T["drive"] -> drive over there | move over there
         T["bring"] -> grab that | grab that thing | bring me that | bring me that thing
         '''
         # T["move"] -> move to the object
@@ -88,10 +88,23 @@ class RayTraceSelector(smach.State):
         blink_thead.join()
 
         # Disable callback
-        self._active = False
+        self._active = False  # To start/stop this state
+        self._pause = False  # To pause in case of HRI
 
         # clear stuff
         return "done"
+
+    def _wait_for_entity(self, timeout):
+        """ Waits a maximum of <timeout> seconds for the operator to point to an entity to move towards or to
+         grasp from.
+        """
+        tstart = rospy.Time.now()
+        rate = rospy.Rate(10.0)
+        while self._active and not rospy.is_shutdown() and (rospy.Time.now() - tstart).to_sec() < timeout:
+            if self._last_entity_id != "":
+                rospy.loginfo("Wait for entity: operator pointed to {}".format(self._last_entity_id))
+                self._pause = True
+            rate.sleep()
 
     def _wait_for_amigo(self):
         """ Waits until the robot hears its name
@@ -143,6 +156,9 @@ class RayTraceSelector(smach.State):
                 # Checkout what the robot wants
                 assignment = self._get_assignment()
 
+                # Wait to see if the operator pointed to an entity
+                self._wait_for_entity(timeout=3.0)
+
                 # Check if feasible
                 if assignment == "continue":
                     continue
@@ -173,14 +189,29 @@ class RayTraceSelector(smach.State):
 
         return "done"
 
+    def _set_waypoint(self):
+        """ Puts the goal as a waypoint in ED
+        """
+        # ToDo
+        return
+
+    def _set_furniture_designator(self):
+        """ Sets the id of the furniture designator
+        """
+        # ToDo
+        return
+
     def _people_callback(self, msg):
         """ Callback function for people subscriber. If this state is active, the number of
         people raising their hands is counted and markers are published on their positions
         :param msg: tue_msgs/People message
         """
-
         # Check if active
         if not self._active:
+            return
+
+        # Check if pausing
+        if self._pause:
             return
 
         # Check if there are people in the message
