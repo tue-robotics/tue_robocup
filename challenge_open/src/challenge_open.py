@@ -18,8 +18,11 @@ challenge_knowledge = load_knowledge('challenge_open')
 
 
 class BeerCounter(object):
+    MAX_COUNT = 3
+
     def __init__(self):
         self.count = 0
+
 
 
 def setup_statemachine(robot):

@@ -27,7 +27,7 @@ class HsrInteraction(smach.State):
         if self.beercounter is None:
             self._hsr_pub.publish(std_msgs.msg. String(data="cycle(3)"))
         else:
-            n = max(1, min(self.beercounter.count, 3))  # Minimally 1 can, maximally 3
+            n = max(1, min(self.beercounter.count, self.beercounter.MAX_COUNT))  # Minimally 1 can, maximally 3
             self._hsr_pub.publish(std_msgs.msg.String(data="cycle({})".format(n)))
 
         self.robot.speech.speak("Hey buddy, can you give me some drinks")
