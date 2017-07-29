@@ -1,4 +1,5 @@
 # ROS
+import sys
 import tue_msgs.msg
 import PyKDL as kdl
 import rospy
@@ -31,10 +32,14 @@ class OrderCounter(smach.State):
         rospy.Subscriber("/amigo/persons", tue_msgs.msg.People, self._people_callback)
         rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
 
-        rospy.Subscriber('/' + robot.robot_name + '/handoverdetector_left/result', std_msgs.msg.Bool, self._on_handover)
-        rospy.Subscriber('/' + robot.robot_name + '/handoverdetector_right/result', std_msgs.msg.Bool, self._on_handover)
-        self._handover_left_on = rospy.Publisher('/' + robot.robot_name + '/handoverdetector_left/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
-        self._handover_right_on = rospy.Publisher('/' + robot.robot_name + '/handoverdetector_right/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
+        if 'left' in sys.argv:
+            rospy.loginfo('handover detector left enabled')
+            rospy.Subscriber('/' + robot.robot_name + '/handoverdetector_left/result', std_msgs.msg.Bool, self._on_handover)
+            self._handover_left_on = rospy.Publisher('/' + robot.robot_name + '/handoverdetector_left/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
+        if 'right' in sys.argv:
+            rospy.loginfo('handover detector right enabled')
+            rospy.Subscriber('/' + robot.robot_name + '/handoverdetector_right/result', std_msgs.msg.Bool, self._on_handover)
+            self._handover_right_on = rospy.Publisher('/' + robot.robot_name + '/handoverdetector_right/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
 
         self._marker_array_pub = rospy.Publisher('/amigo/thirsty_people',
                                                  visualization_msgs.msg.MarkerArray, queue_size=1)
