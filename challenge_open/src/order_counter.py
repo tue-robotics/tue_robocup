@@ -44,6 +44,7 @@ class OrderCounter(smach.State):
 
         # Number of thirsty people
         self._number_of_thirsty_people = -1
+        self._max_number_of_thirsty_people = -1
 
         # Backup trigger string
         self._trigger_string = "continue"
@@ -97,21 +98,21 @@ class OrderCounter(smach.State):
         self._active = False
 
         # Summarize
-        if self._number_of_thirsty_people <= 0:
+        if self._max_number_of_thirsty_people <= 0:
             self.robot.speech.speak("I guess nobody is thirsty. I will get something for Tim anyway", block=False)
-        elif self._number_of_thirsty_people == 1:
+        elif self._max_number_of_thirsty_people == 1:
             self.robot.speech.speak("I've seen one thirsty person, "
                                     "let's get him something to drink", block=False)
-        elif self._number_of_thirsty_people <= self.beercounter.MAX_COUNT:
+        elif self._max_number_of_thirsty_people <= self.beercounter.MAX_COUNT:
             self.robot.speech.speak("I've seen {} thirsty people, "
-                                    "let's get some drinks".format(self._number_of_thirsty_people), block=False)
+                                    "let's get some drinks".format(self._max_number_of_thirsty_people), block=False)
         else:
             self.robot.speech.speak("I've seen {} thirsty people. I will start with three, "
-                                    "let's get some drinks".format(self._number_of_thirsty_people), block=False)
+                                    "let's get some drinks".format(self._max_number_of_thirsty_people), block=False)
 
         # Remember number of beers
         if self.beercounter is not None:
-            self.beercounter.count = self._number_of_thirsty_people
+            self.beercounter.count = self._max_number_of_thirsty_people
 
         # Return
         return "done"
@@ -154,13 +155,12 @@ class OrderCounter(smach.State):
             marker_array_msg.markers.append(marker)
 
         # Play sound if the number of people changed
-        if count > self._number_of_thirsty_people:
-            self.robot.speech.speak("ping")
-        elif count < self._number_of_thirsty_people:
-            self.robot.speech.speak("pong")
+        if count != self._number_of_thirsty_people:
+            self.robot.speech.speak("%d beer", count)
 
         # Remember the number of thirsty people
         self._number_of_thirsty_people = count
+        self._max_number_of_thirsty_people = max(count, self._max_number_of_thirsty_people)
 
         # Publish the marker array message
         self._marker_array_pub.publish(marker_array_msg)
