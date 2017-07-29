@@ -46,10 +46,9 @@ class ChallengeSetATable(smach.StateMachine):
         with self:
             # Part I: Set a table
             smach.StateMachine.add('ENTER_ROOM',  # Enter the room
-                                   states.StartChallengeRobust(robot, knowledge.initial_pose),
-                                   transitions={'Done': 'ANNOUNCEMENT',
-                                                'Aborted': 'Aborted',
-                                                'Failed': 'Aborted'})
+                                   states.Initialize(robot),
+                                   transitions={'initialized': 'ANNOUNCEMENT',
+                                                'abort': 'Aborted'})
 
             smach.StateMachine.add('ANNOUNCEMENT',
                                    states.Say(robot, "Let's see if my master has a task for me! "
