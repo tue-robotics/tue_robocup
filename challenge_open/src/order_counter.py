@@ -48,8 +48,8 @@ class OrderCounter(smach.State):
         self._active = False
 
         # Number of thirsty people
-        self._number_of_thirsty_people = -1
-        self._max_number_of_thirsty_people = -1
+        # self._number_of_thirsty_people = -1
+        self._max_number_of_thirsty_people = 0
 
         # Backup trigger string
         self._trigger_string = "continue"
@@ -85,7 +85,7 @@ class OrderCounter(smach.State):
         # Talk to the audience
         self.robot.speech.speak("Hello dear people, my name is amigo.")
         self.robot.speech.speak("Are you thirsty?")
-        self.robot.speech.speak("Raise your hand if you would like a drink")
+        # self.robot.speech.speak("Raise your hand if you would like a drink")
 
         # # Sleeping for 10 seconds to do magic
         # # ToDo: create something useful
@@ -106,7 +106,7 @@ class OrderCounter(smach.State):
 
         # Summarize
         if self._max_number_of_thirsty_people <= 0:
-            self.robot.speech.speak("I guess nobody is thirsty. I will get something for Tim anyway", block=False)
+            self.robot.speech.speak("Okay, i will get some beer", block=False)
         elif self._max_number_of_thirsty_people == 1:
             self.robot.speech.speak("I've seen one thirsty person, "
                                     "let's get him something to drink", block=False)
@@ -162,12 +162,13 @@ class OrderCounter(smach.State):
             marker_array_msg.markers.append(marker)
 
         # Play sound if the number of people changed
-        if count != self._max_number_of_thirsty_people:
+        if count > self._max_number_of_thirsty_people:
             self.robot.speech.speak("%d beer" % count)
+            self._max_number_of_thirsty_people = count
 
         # Remember the number of thirsty people
-        self._number_of_thirsty_people = count
-        self._max_number_of_thirsty_people = max(count, self._max_number_of_thirsty_people)
+        # self._number_of_thirsty_people = count
+        # self._max_number_of_thirsty_people = max(count, self._max_number_of_thirsty_people)
 
         # Publish the marker array message
         self._marker_array_pub.publish(marker_array_msg)
