@@ -19,6 +19,6 @@
   <run_depend>python-markdown</run_depend>
   <run_depend>python-xhtml2pdf</run_depend>
   <run_depend>python-numpy</run_depend>
-  <run_depend>people_msgs</run_depend>
+  <run_depend>tue_msgs</run_depend>
 
 </package>
