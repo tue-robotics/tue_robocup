@@ -17,8 +17,14 @@ from hsr_interaction import HsrInteraction
 challenge_knowledge = load_knowledge('challenge_open')
 
 
+class BeerCounter(object):
+    def __init__(self):
+        self.count = 0
+
+
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+    beercounter = BeerCounter()
 
     with sm:
 
@@ -89,7 +95,8 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'ORDER_COUNTER'})
 
         smach.StateMachine.add("ORDER_COUNTER",
-                               OrderCounter(robot, room_id=challenge_knowledge.audience_room),
+                               OrderCounter(robot, room_id=challenge_knowledge.audience_room,
+                                            beercounter=beercounter),
                                transitions={"done": "NAVIGATE_TO_HSR_DEMO"})
 
         smach.StateMachine.add("NAVIGATE_TO_HSR_DEMO",
@@ -107,7 +114,7 @@ def setup_statemachine(robot):
                                transitions={"spoken": "Done"})
 
         smach.StateMachine.add("WAIT_FOR_BEER",
-                               HsrInteraction(robot=robot),
+                               HsrInteraction(robot=robot, beercounter=beercounter),
                                transitions={"done": "RETURN_TO_AUDIENCE"})
 
         smach.StateMachine.add("RETURN_TO_AUDIENCE",

@@ -13,17 +13,19 @@ from robot_skills.util.transformations import tf_transform
 class OrderCounter(smach.State):
     """ Smach state to count the number of people raising their hands to order something.
     """
-    def __init__(self, robot, room_id=None):
+    def __init__(self, robot, room_id=None, beercounter=None):
         """ Constructor
 
         :param robot: robot object
         :param room_id: id of the room where the people should be (if None, check is skipped)
+        :param beercounter: BeerCounter object to communicate the number of beers to other states
         """
         smach.State.__init__(self, outcomes=["done"])
 
         # Robot object
         self.robot = robot
         self.room_id = room_id
+        self.beercounter = beercounter
 
         # Subscriber for people detections and publisher for visualization
         rospy.Subscriber("/amigo/persons", tue_msgs.msg.People, self._people_callback)
@@ -89,6 +91,10 @@ class OrderCounter(smach.State):
         if self._number_of_thirsty_people > 0:
             self.robot.speech.speak("I've seen {} thirsty people, "
                                     "let's get some drinks".format(self._number_of_thirsty_people))
+
+        # Remember number of beers
+        if self.beercounter is not None:
+            self.beercounter.count = self._number_of_thirsty_people
 
         # Return
         return "done"

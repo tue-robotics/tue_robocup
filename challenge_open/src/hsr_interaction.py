@@ -5,10 +5,11 @@ import std_msgs.msg
 
 
 class HsrInteraction(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, beercounter=None):
         smach.State.__init__(self, outcomes=["done"])
 
         self.robot = robot
+        self.beercounter = beercounter
 
         self._hsr_pub = rospy.Publisher('/hsrb/trigger', std_msgs.msg.String, queue_size=1)
         rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
@@ -23,7 +24,11 @@ class HsrInteraction(smach.State):
 
         self._active = True
 
-        self._hsr_pub.publish(std_msgs.msg. String(data="cycle(3)"))
+        if self.beercounter is None:
+            self._hsr_pub.publish(std_msgs.msg. String(data="cycle(3)"))
+        else:
+            n = max(1, min(self.beercounter.count, 3))  # Minimally 1 can, maximally 3
+            self._hsr_pub.publish(std_msgs.msg.String(data="cycle({})".format(n)))
 
         self.robot.speech.speak("Hey buddy, can you give me some drinks")
 
