@@ -38,7 +38,7 @@ class OrderCounter(smach.State):
         self._number_of_thirsty_people = -1
 
         # Backup trigger string
-        self._trigger_string = "stopcounter"
+        self._trigger_string = "continue"
 
         # Room bounding box
         self._room_box_min = kdl.Vector()
