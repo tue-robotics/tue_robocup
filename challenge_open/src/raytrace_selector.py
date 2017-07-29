@@ -93,59 +93,80 @@ class RayTraceSelector(smach.State):
         # clear stuff
         return "done"
 
+    def _wait_for_amigo(self):
+        """ Waits until the robot hears its name
+        :return True if "amigo" has been heard, False otherwise
+        """
+        # Wait until the robot is called
+        try:
+            result = self.robot.hmi.query('', 'amigo', 'T').sentence
+            return True
+        except hmi.TimeoutException:
+            return False
+
+    def _get_assignment(self):
+        """ Asks the operator what to do
+        :return: string with assignment (and "continue" in case of a TimeoutException)
+        """
+        self.robot.speech.speak("What can I do for you", block=True)
+        try:
+            sentence, assignment = self.robot.hmi.query("", self.grammar, "T", timeout=5.0)
+            return assignment
+        except hmi.TimeoutException:
+            # We probably had a false "amigo" detection
+            return "continue"
+
+    def _ask_confirmation(self):
+        """ Asks for confirmation
+        :return: True if confirmed, False otherwise
+        """
+        try:
+            result = self.robot.hmi.query('', 'T -> yes | no', 'T').sentence
+            if result == 'yes':
+                return True
+            elif result == 'no':
+                self.robot.speech.speak("I am sorry, I misunderstood")
+                return False
+        except hmi.TimeoutException:
+            # robot did not hear the confirmation, so lets assume it's False
+            return False
+
     def _do_speech(self):
         """ Performs the speech logic. One of the state outcomes is returned as a string """
         while not rospy.is_shutdown() and self._active:  # self._active: in case of fallbacks
 
             try:  # Big try loop for unexpected stuff
 
-                # Wait until the robot is called
-                try:
-                    result = self.robot.hmi.query('', 'amigo', 'T').sentence
-                except hmi.TimeoutException:
-                    # If we have a timeout, just continue and try again
+                if not self._wait_for_amigo():
                     continue
 
                 # Checkout what the robot wants
-                self.robot.speech.speak("What can I do for you", block=True)
-                try:
-                    sentence, semantics = self.robot.hmi.query("", self.grammar, "T", timeout=5.0)
-                except hmi.TimeoutException:
-                    # We probably had a false "amigo" detection
-                    continue
+                assignment = self._get_assignment()
 
                 # Check if feasible
-                if semantics == "continue":
+                if assignment == "continue":
                     continue
-                elif semantics == "" and self._last_entity_id != "":  # Drive do waypoint
+                elif assignment == "" and self._last_entity_id != "":  # Drive do waypoint
                     conf_sentence = "Do you want me to drive to that point"
                     result = "waypoint"
-                elif semantics == "":  # Drive to furniture
+                elif assignment == "":  # Drive to furniture
                     conf_sentence = "Do you want me to drive to the {}".format(self._last_entity_id)
                     result = "furniture"
-                elif semantics == "" and self._last_entity_id != "":  # Grab something
+                elif assignment == "" and self._last_entity_id != "":  # Grab something
                     conf_sentence = "Do you want me to grasp something from the {}".format(self._last_entity_id)
                     result = "grasp"
-                elif semantics == "" and self._last_entity_id == "":
+                elif assignment == "" and self._last_entity_id == "":
                     self.robot.speech.speak("I am sorry but i cannot grasp anything from the floor", block=True)
                 else:
-                    rospy.logwarn("Something went terribly wrong, I cannot process {} and {}".format(sentence,
-                                                                                                     semantics))
+                    rospy.logwarn("Something went terribly wrong, I cannot process {}".format(assignment))
                     continue
 
                 # Ask for confirmation
                 self.robot.speech.speak(conf_sentence, block=True)
-                try:
-                    result = self.robot.hmi.query('', 'T -> yes | no', 'T').sentence
-                    if result == 'yes':
-                        return result
-                    elif result == 'no':
-                        self.robot.speech.speak("I am sorry, I misunderstood")
-                        continue
-                except hmi.TimeoutException:
-                    # robot did not hear the confirmation, so lets assume it's False
+                if self._ask_confirmation():
+                    return result
+                else:
                     continue
-
             except:
                 rospy.logerr("RaytraceSelector: Something went terribly wrong in speech...")
                 continue
@@ -185,9 +206,7 @@ class RayTraceSelector(smach.State):
 
         # Remember results
         if entity_id == "":
-            self._last_waypoint = self.robot.tf_listener.transformPose(
-                "map", raytraceresult.
-            )
+            self._last_waypoint = self.robot.tf_listener.transformPose("map", raytraceresult.raytrace_pose)
             self._last_entity_id = ""
         else:
             self._last_waypoint = None
@@ -288,6 +307,7 @@ if __name__ == '__main__':
     import robot_smach_states
     rospy.init_node('test_raytrace_demo')
     robot_smach_states.util.startup(setup_statemachine, challenge_name="challenge_open")
+
 
 
 
