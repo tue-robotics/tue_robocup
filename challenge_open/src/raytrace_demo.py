@@ -72,7 +72,7 @@ class RayTraceDemo(smach.State):
     def _people_callback(self, msg):
         """ Callback function for people subscriber. If this state is active, the number of
         people raising their hands is counted and markers are published on their positions
-        :param msg: people_msgs/People message
+        :param msg: tue_msgs/People message
         """
 
         # Check if active
