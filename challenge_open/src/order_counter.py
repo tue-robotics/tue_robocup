@@ -103,9 +103,9 @@ class OrderCounter(smach.State):
         self._active = False
 
         # Summarize
-        if self._max_number_of_thirsty_people <= 0:
-            self.robot.speech.speak("I guess nobody is thirsty. I will get something for Tim anyway", block=False)
-        elif self._max_number_of_thirsty_people == 1:
+        # if self._max_number_of_thirsty_people <= 0:
+        #     self.robot.speech.speak("I guess nobody is thirsty. I will get something for Tim anyway", block=False)
+        if self._max_number_of_thirsty_people <= 1:
             self.robot.speech.speak("I've seen one thirsty person, "
                                     "let's get him something to drink", block=False)
         elif self._max_number_of_thirsty_people <= self.beercounter.MAX_COUNT:
