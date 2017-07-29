@@ -128,7 +128,7 @@ class WaitForTriggerTimeout(smach.State):
 
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
-        rospy.loginfo('topic: /%s', topic)
+        rospy.loginfo('topic: %s', topic)
 
     def execute(self, userdata=None):
         if self.trigger_received is None:
