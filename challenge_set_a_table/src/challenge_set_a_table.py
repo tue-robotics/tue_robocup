@@ -43,27 +43,21 @@ class ChallengeSetATable(smach.StateMachine):
         grasp_designator2 = ds.EdEntityDesignator(robot, type="temp")
         grasp_designator3 = ds.EdEntityDesignator(robot, type="temp")
 
+        start_pose = robot.base.get_location()
+        start_x = start_pose.frame.p.x()
+        start_y = start_pose.frame.p.y()
+        start_rz = start_pose.frame.M.GetRPY()[2]
+
         with self:
             # Part I: Set a table
             smach.StateMachine.add('ENTER_ROOM',  # Enter the room
-                                   states.StartChallengeRobust(robot, knowledge.initial_pose),
-                                   transitions={'Done': 'ANNOUNCEMENT',
-                                                'Aborted': 'Aborted',
-                                                'Failed': 'Aborted'})
+                                   states.Initialize(robot),
+                                   transitions={'initialized': 'ANNOUNCEMENT',
+                                                'abort': 'Aborted'})
 
             smach.StateMachine.add('ANNOUNCEMENT',
-                                   states.Say(robot, "Let's see if my master has a task for me! "
-                                                     "Moving to the meeting point.",
-                                              block=True),
-                                   transitions={'spoken': 'NAVIGATE_TO_WAYPOINT_I'})
-
-            smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_I',
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot=robot,
-                                                                                            id=knowledge.starting_pose),
-                                                             radius=0.3),
-                                   transitions={'arrived': 'FETCH_COMMAND_I',
-                                                'unreachable': 'FETCH_COMMAND_I',
-                                                'goal_not_defined': 'FETCH_COMMAND_I'})
+                                   states.Say(robot, "Let's see if my master has a task for me! ", block=True),
+                                   transitions={'spoken': 'FETCH_COMMAND_I'})
 
             smach.StateMachine.add('FETCH_COMMAND_I',  # Hear "set the table"
                                    HearFetchCommand(robot, 15.0, "set"),
@@ -87,7 +81,7 @@ class ChallengeSetATable(smach.StateMachine):
                                                      grasp_designator2=grasp_designator2,
                                                      grasp_designator3=grasp_designator3),
                                    transitions={'succeeded': 'ANNOUNCE_TASK_COMPLETION',
-                                                'failed': 'NAVIGATE_TO_WAYPOINT_II'})
+                                                'failed': 'RETURN_TO_START_2'})
 
             # We won't pour anything
             # smach.StateMachine.add('SERVE_MEAL',  # Serve the meal (for example: pour milk into the bowl)
@@ -104,13 +98,11 @@ class ChallengeSetATable(smach.StateMachine):
             smach.StateMachine.add('ANNOUNCE_TASK_COMPLETION',
                                    states.Say(robot, "The table is set! Moving to the meeting point for the next task.",
                                               block=False),
-                                   transitions={'spoken': 'NAVIGATE_TO_WAYPOINT_II'})
+                                   transitions={'spoken': 'RETURN_TO_START_2'})
 
             # Part II: Clean the table
-            smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_II',
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot=robot,
-                                                                                            id=knowledge.starting_pose),
-                                                             radius=0.3),
+            smach.StateMachine.add('RETURN_TO_START_2',
+                                   states.NavigateToPose(robot=robot, x=start_x, y=start_y, rz=start_rz, radius=0.3),
                                    transitions={'arrived': 'FETCH_COMMAND_II',
                                                 'unreachable': 'FETCH_COMMAND_II',
                                                 'goal_not_defined': 'FETCH_COMMAND_II'})
