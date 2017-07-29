@@ -148,7 +148,7 @@ class OrderCounter(smach.State):
         :param position: geometry_msgs/Point of the position of the marker
         :param object_id: integer with the id for the marker
         """
-        height = 2.0
+        height = 30
         diameter = 0.4
 
         msg = visualization_msgs.msg.Marker()
@@ -165,7 +165,7 @@ class OrderCounter(smach.State):
         msg.scale.z = height
         msg.color.r = 1.0
         msg.color.g = 1.0
-        msg.color.a = 0.75
+        msg.color.a = 0.3
 
         return msg
 
