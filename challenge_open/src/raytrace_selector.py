@@ -56,12 +56,12 @@ class RayTraceSelector(smach.State):
         self._last_waypoint = None
 
         # Speech grammar
-        self.grammar = ""
-        self.grammar = "T[O] -> SENTENCE[O]\n\n"
-        self.grammar = "T[O] -> continue\n"  # Necessary in case of false detections
-        self.grammar = "SENTENCE[O] -> drive over there\n"
-        self.grammar = "SENTENCE[O] -> move to the object\n"
-        self.grammar = "SENTENCE[O] -> grab that | grab that thing | bring me that | bring me that thing\n"
+        self.grammar = '''
+        T["continue"] -> continue
+        T["drive"] -> drive over there | move to the object
+        T["bring"] -> grab that | grab that thing | bring me that | bring me that thing
+        '''
+        # T["move"] -> move to the object
 
     def execute(self, userdata):
         """ Execute function """
@@ -146,16 +146,16 @@ class RayTraceSelector(smach.State):
                 # Check if feasible
                 if assignment == "continue":
                     continue
-                elif assignment == "" and self._last_entity_id != "":  # Drive do waypoint
+                elif assignment == "drive" and self._last_entity_id != "":  # Drive do waypoint
                     conf_sentence = "Do you want me to drive to that point"
                     result = "waypoint"
-                elif assignment == "":  # Drive to furniture
+                elif assignment == "drive":  # Drive to furniture
                     conf_sentence = "Do you want me to drive to the {}".format(self._last_entity_id)
                     result = "furniture"
-                elif assignment == "" and self._last_entity_id != "":  # Grab something
+                elif assignment == "bring" and self._last_entity_id != "":  # Grab something
                     conf_sentence = "Do you want me to grasp something from the {}".format(self._last_entity_id)
                     result = "grasp"
-                elif assignment == "" and self._last_entity_id == "":
+                elif assignment == "bring" and self._last_entity_id == "":
                     self.robot.speech.speak("I am sorry but i cannot grasp anything from the floor", block=True)
                 else:
                     rospy.logwarn("Something went terribly wrong, I cannot process {}".format(assignment))
