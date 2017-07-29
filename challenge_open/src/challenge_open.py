@@ -131,7 +131,9 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'SAY_BEER'})
 
         smach.StateMachine.add("SAY_BEER",
-                               robot_smach_states.Say(robot, "Hey guys, here's your beer. That will be all"),
+                               robot_smach_states.Say(robot, "Hey guys, here's your beer. That will be all. "
+                                                             "By the way, if you leave the balcony door open,"
+                                                             "birds will fly in"),
                                transitions={"spoken": "Done"})
 
     return sm
