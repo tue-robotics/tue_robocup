@@ -163,7 +163,7 @@ class GetBreakfastOrder(smach.State):
                 rospy.logerr('exception: %s', e)
 
         # If nothing has been heard, make a guess
-        self._recite(self.options[0])
+        self._recite(self.options.keys()[0])
 
         return "done"
 
