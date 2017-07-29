@@ -53,7 +53,9 @@ def fetch(robot, time_out=15.0, task="set"):
 
         except hmi.TimeoutException:
             i += 1
-
+        except Exception as e:
+            rospy.logerr('exception: %s', e)
+            return "heard"
     return "not_heard"
 
 
@@ -157,6 +159,8 @@ class GetBreakfastOrder(smach.State):
 
             except hmi.TimeoutException:
                 pass
+            except Exception as e:
+                rospy.logerr('exception: %s', e)
 
         # If nothing has been heard, make a guess
         self._recite(self.options[0])
