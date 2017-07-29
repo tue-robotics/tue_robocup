@@ -88,7 +88,7 @@ class HearFetchCommand(smach.State):
 class GetBreakfastOrder(smach.State):
     """ Gets the breakfast order by asking it to the customer. N.B.: the order is asked, but this information is not
      stored (we won't get points for that anyway """
-    def __init__(self, robot, options, timeout=15.0):
+    def __init__(self, robot, options, grasp_designator1, grasp_designator2, grasp_designator3, timeout=15.0):
         """ Constructor
 
         :param robot: robot object
@@ -98,6 +98,9 @@ class GetBreakfastOrder(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
         self.options = options
+        self.grasp_designator1 = grasp_designator1
+        self.grasp_designator2 = grasp_designator2
+        self.grasp_designator3 = grasp_designator3
         self.grammar = "T[O] -> SENTENCE[O]\n\n"
         self.grammar += "DET -> the | a | an | some\n\n"
         self.grammar += "SENTENCE[O] -> OPTIONS[O]\n\n"
@@ -164,12 +167,16 @@ class GetBreakfastOrder(smach.State):
         """ Recites the order based on the main course
         :param choice: string with chosen main course
         """
+        self.grasp_designator1.type = self.options[choice]["drink1"]
+        self.grasp_designator2.type = self.options[choice]["drink2"]
+        self.grasp_designator3.type = self.options[choice]["food"]
+
         self.robot.speech.speak("I will bring you {}".format(choice), block=False)
-        self.robot.speech.speak("This comes with {} and {}".format(self.options[choice][1],
-                                                                   self.options[choice][2]), block=False)
-        self.robot.speech.speak("To eat, you will get {} and {}".format(self.options[choice][3],
-                                                                        self.options[choice][4]), block=False)
-        self.robot.speech.speak("I will serve this all on a {}".format(self.options[choice][5]), block=True)
+        self.robot.speech.speak("This comes with {} and {}".format(self.options[choice]["drink1"],
+                                                                   self.options[choice]["drink2"]), block=False)
+        self.robot.speech.speak("To eat, you will get {} and {}".format(self.options[choice]["difficult1"],
+                                                                        self.options[choice]["difficult2"]), block=False)
+        self.robot.speech.speak("I will serve this all on a {}".format(self.options[choice]["difficult3"]), block=True)
 
 
 
