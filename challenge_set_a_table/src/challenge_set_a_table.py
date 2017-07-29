@@ -56,9 +56,7 @@ class ChallengeSetATable(smach.StateMachine):
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add('ANNOUNCEMENT',
-                                   states.Say(robot, "Let's see if my master has a task for me! "
-                                                     "Moving to the meeting point.",
-                                              block=True),
+                                   states.Say(robot, "Let's see if my master has a task for me! ", block=True),
                                    transitions={'spoken': 'FETCH_COMMAND_I'})
 
             smach.StateMachine.add('FETCH_COMMAND_I',  # Hear "set the table"
