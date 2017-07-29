@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
-import robot_smach_states
-from robot_skills.util.robot_constructor import robot_constructor
+import sys
 
+import robot_smach_states
 import rospy
 import smach
-import sys
 from robocup_knowledge import load_knowledge
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
+from robot_skills.util.robot_constructor import robot_constructor
+from robot_smach_states.util.designators import EntityByIdDesignator
 
-from ssl_demo import SSLDemo
-from raytrace_demo import RayTraceDemo
-from order_counter import OrderCounter
 from hsr_interaction import HsrInteraction
+from order_counter import OrderCounter
+from raytrace_demo import RayTraceDemo
+from ssl_demo import SSLDemo
 
 challenge_knowledge = load_knowledge('challenge_open')
 
@@ -24,13 +24,11 @@ class BeerCounter(object):
         self.count = 0
 
 
-
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     beercounter = BeerCounter()
 
     with sm:
-
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("START_CHALLENGE_ROBUST",
                                robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.initial_pose),
