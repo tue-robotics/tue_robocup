@@ -56,7 +56,7 @@ class RayTraceDemo(smach.State):
         self._furniture_objects = [e for e in entities if e.is_a("furniture")]
 
         # Look up
-        self.robot.head.look_at_standing_person()
+        self.robot.head.look_at_ground_in_front_of_robot(distance=100)
 
         # Enable callback
         self._active = True

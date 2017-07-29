@@ -53,9 +53,18 @@ def setup_statemachine(robot):
                                                                          robot=robot,
                                                                          id=challenge_knowledge.raytrace_waypoint),
                                                                      radius=0.3),
-                               transitions={'arrived': 'RAYTRACE_DEMO',
-                                            'unreachable': 'RAYTRACE_DEMO',
-                                            'goal_not_defined': 'RAYTRACE_DEMO'})
+                               transitions={'arrived': 'RESET_HEAD_BEFORE_RAYTRACE_DEMO',
+                                            'unreachable': 'RESET_HEAD_BEFORE_RAYTRACE_DEMO',
+                                            'goal_not_defined': 'RESET_HEAD_BEFORE_RAYTRACE_DEMO'})
+
+        smach.StateMachine.add("RESET_HEAD_BEFORE_RAYTRACE_DEMO",
+                               robot_smach_states.ResetHead(robot),
+                               transitions={'done': 'WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO'})
+
+        smach.StateMachine.add("WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO",
+                               robot_smach_states.WaitForTrigger(robot, ["continue"], "/amigo/trigger"),
+                               transitions={'continue': 'RAYTRACE_DEMO',
+                                            'preempted': 'RAYTRACE_DEMO'})
 
         smach.StateMachine.add("RAYTRACE_DEMO",
                                RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
@@ -81,9 +90,13 @@ def setup_statemachine(robot):
                                                                          robot=robot,
                                                                          id=challenge_knowledge.hsr_demo_waypoint),
                                                                      radius=0.025),
-                               transitions={'arrived': 'Done',
-                                            'unreachable': 'Done',
-                                            'goal_not_defined': 'Done'})
+                               transitions={'arrived': 'WAIT_FOR_BEER',
+                                            'unreachable': 'CANNOT_REACH_BEER_LOCATION',
+                                            'goal_not_defined': 'CANNOT_REACH_BEER_LOCATION'})
+
+        smach.StateMachine.add("CANNOT_REACH_BEER_LOCATION",
+                               robot_smach_states.Say(robot, "I cannot reach my beer buddy, let's give it another try"),
+                               transitions={"spoken": "Done"})
 
         smach.StateMachine.add("WAIT_FOR_BEER",
                                HsrInteraction(robot=robot),

@@ -23,9 +23,7 @@ class HsrInteraction(smach.State):
 
         self._active = True
 
-        # cycle(3)
-        msg = std_msgs.msg.String()
-        msg.data = "cycle(3)"
+        self._hsr_pub.publish(std_msgs.msg. String(data="cycle(3)"))
 
         self.robot.speech.speak("Hey buddy, can you give me some drinks")
 
