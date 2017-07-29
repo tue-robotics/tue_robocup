@@ -59,12 +59,20 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("RESET_HEAD_BEFORE_RAYTRACE_DEMO",
                                robot_smach_states.ResetHead(robot),
-                               transitions={'done': 'WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO'})
+                               transitions={'done': 'SAY_PEOPLE_DETECTOR'})
+
+        smach.StateMachine.add("SAY_PEOPLE_DETECTOR",
+                               robot_smach_states.Say(robot, "Now I will show you my awesome people detector"),
+                               transitions={"spoken": "WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO"})
 
         smach.StateMachine.add("WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO",
                                robot_smach_states.WaitForTrigger(robot, ["continue"], "/amigo/trigger"),
-                               transitions={'continue': 'RAYTRACE_DEMO',
-                                            'preempted': 'RAYTRACE_DEMO'})
+                               transitions={'continue': 'SAY_RAYTRACE_DEMO',
+                                            'preempted': 'SAY_RAYTRACE_DEMO'})
+
+        smach.StateMachine.add("SAY_RAYTRACE_DEMO",
+                               robot_smach_states.Say(robot, "You can interact with me by pointing at objects!"),
+                               transitions={"spoken": "RAYTRACE_DEMO"})
 
         smach.StateMachine.add("RAYTRACE_DEMO",
                                RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
