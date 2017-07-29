@@ -93,8 +93,10 @@ class OrderCounter(smach.State):
         # rospy.sleep(rospy.Duration(10.0))
         # rospy.loginfo("Done counting orders")
 
-        self._handover_left_on.publish(True)
-        self._handover_right_on.publish(True)
+        if 'left' in sys.argv:
+            self._handover_left_on.publish(True)
+        if 'right' in sys.argv:
+            self._handover_right_on.publish(True)
 
         while self._active and not rospy.is_shutdown():
             rospy.sleep(rospy.Duration(0.5))
