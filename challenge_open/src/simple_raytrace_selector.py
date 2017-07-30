@@ -150,6 +150,7 @@ class SimpleRayTraceSelector(smach.State):
                 assignment = self._get_assignment()
 
                 # Wait to see if the operator pointed to an entity
+                self.robot.lights.set_color(255, 0, 255)
                 target = self._wait_for_entity(timeout=5.0)
 
                 # If no target: continue
