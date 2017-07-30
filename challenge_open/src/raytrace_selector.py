@@ -12,26 +12,26 @@ import geometry_msgs.msg
 # TU/e Robotics
 import hmi
 from robot_skills.util.kdl_conversions import FrameStamped
+import robot_smach_states.util.designators as ds
 import tue_msgs.msg
 
 
 class RayTraceSelector(smach.State):
     """ State to perform raytrace demo. The outcome depends on the provided speech command.
     """
-    def __init__(self, robot, breakout_id, waypoint=None, furniture_designator=None):
+    def __init__(self, robot, waypoint=None, furniture_designator=None):
         """ Constructor
 
         :param robot: robot object
-        :param breakout_id: string identifying the breakout object. If the operator points to this object, the state
-        will finish
+        :param waypoint: string with waypoint id
+        :param furniture_designator: EdEntityDesignator to be filled
         :param
         """
         smach.State.__init__(self, outcomes=["waypoint", "furniture", "grasp", "done"])
 
         # Robot object
         self.robot = robot
-        self.breakout_id = breakout_id
-        self.waypoint = waypoint
+        self.waypoint_id = waypoint
         self.furniture_designator = furniture_designator
 
         # Subscriber for people detections and publisher for visualization
@@ -203,7 +203,7 @@ class RayTraceSelector(smach.State):
         position = kdl.Vector(intersection_point.point.x, intersection_point.point.y, 0.0)
         orientation = kdl.Rotation.RPY(0.0, 0.0, yaw)
         waypoint = FrameStamped(frame=kdl.Frame(orientation, position), frame_id="/map")
-        self.robot.ed.update_entity(id="final_waypoint", type="waypoint", frame_stamped=waypoint)
+        self.robot.ed.update_entity(id=self.waypoint_id, type="waypoint", frame_stamped=waypoint)
         # import ipdb;ipdb.set_trace()
         return
 
@@ -350,8 +350,9 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("RAYTRACEDEMO",
-                               RayTraceSelector(robot, breakout_id="kitchen_shelf"),
-                               transitions={"done": "Done"})
+                               RayTraceSelector(robot, waypoint="final_challenge",
+                                                furniture_designator=ds.EntityByIdDesignator(robot, id="temp")),
+                               transitions={outcome: "Done" for outcome in ["waypoint", "furniture", "grasp", "done"]})
 
     return sm
 
