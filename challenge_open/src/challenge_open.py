@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+from argparse import ArgumentParser
 
 import robot_smach_states
 import rospy
@@ -8,6 +9,7 @@ import smach
 from robocup_knowledge import load_knowledge
 from robot_skills.util.robot_constructor import robot_constructor
 from robot_smach_states.util.designators import EntityByIdDesignator
+from  smach_ros import IntrospectionServer
 
 from hsr_interaction import HsrInteraction
 from order_counter import OrderCounter
@@ -138,10 +140,17 @@ def setup_statemachine(robot):
 
 
 if __name__ == '__main__':
+    # parse args
+    parser = ArgumentParser()
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args(rospy.myargv()[1:])
+
+    enable_debug = args.debug
+
     rospy.init_node('challenge_open')
+    rospy.loginfo('args: %s', args)
 
     amigo = robot_constructor('amigo')
-
     with amigo:
         # build the state machine
         executioner = setup_statemachine(amigo)
@@ -193,6 +202,14 @@ if __name__ == '__main__':
 
         print ""
 
+        introserver = None
+        if enable_debug:
+            introserver = IntrospectionServer('amigo', executioner, '/SM_ROOT_PRIMARY')
+            introserver.start()
+
         # Run the statemachine
         outcome = executioner.execute()
         print "Final outcome: {0}".format(outcome)
+
+        if introserver:
+            introserver.stop()
