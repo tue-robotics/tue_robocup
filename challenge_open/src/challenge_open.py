@@ -3,17 +3,17 @@
 import sys
 from argparse import ArgumentParser
 
-import robot_smach_states
 import rospy
 import smach
 from robocup_knowledge import load_knowledge
 from robot_skills.util.robot_constructor import robot_constructor
+from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, ResetHead, Say, WaitForTrigger, \
+    NavigateToSymbolic
 from robot_smach_states.util.designators import EntityByIdDesignator
-from  smach_ros import IntrospectionServer
+from smach_ros import IntrospectionServer
 
-from hsr_interaction import HsrInteraction
-from order_counter import OrderCounter
-from raytrace_demo import RayTraceDemo
+from inspect_and_grab import InspectAndGrab
+from raytrace_selector import RayTraceSelector
 from ssl_demo import SSLDemo
 
 challenge_knowledge = load_knowledge('challenge_open')
@@ -27,13 +27,13 @@ class BeerCounter(object):
 
 
 def setup_statemachine(robot):
-    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    beercounter = BeerCounter()
+    furniture = EntityByIdDesignator(robot, 'selected_furniture')
 
+    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                               robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.initial_pose),
+                               StartChallengeRobust(robot, challenge_knowledge.initial_pose),
                                transitions={"Done": "NAVIGATE_TO_SSL_WAYPOINT",
                                             "Failed": "Aborted",
                                             "Aborted": "Aborted"})
@@ -43,11 +43,11 @@ def setup_statemachine(robot):
         #                        transitions={"spoken": "NAVIGATE_TO_SSL_WAYPOINT"})
 
         smach.StateMachine.add("NAVIGATE_TO_SSL_WAYPOINT",
-                               robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=EntityByIdDesignator(
-                                                                         robot=robot,
-                                                                         id=challenge_knowledge.ssl_waypoint),
-                                                                     radius=0.3),
+                               NavigateToWaypoint(robot=robot,
+                                                  waypoint_designator=EntityByIdDesignator(
+                                                      robot=robot,
+                                                      id=challenge_knowledge.ssl_waypoint),
+                                                  radius=0.3),
                                transitions={'arrived': 'SSL_DEMO',
                                             'unreachable': 'SSL_DEMO',
                                             'goal_not_defined': 'SSL_DEMO'})
@@ -57,84 +57,120 @@ def setup_statemachine(robot):
                                transitions={"done": "NAVIGATE_TO_LASER_DEMO", 'preempted': 'Aborted'})
 
         smach.StateMachine.add("NAVIGATE_TO_LASER_DEMO",
-                               robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=EntityByIdDesignator(
-                                                                         robot=robot,
-                                                                         id=challenge_knowledge.raytrace_waypoint),
-                                                                     radius=0.3),
+                               NavigateToWaypoint(robot=robot,
+                                                  waypoint_designator=EntityByIdDesignator(
+                                                      robot=robot,
+                                                      id=challenge_knowledge.raytrace_waypoint),
+                                                  radius=0.3),
                                transitions={'arrived': 'RESET_HEAD_BEFORE_RAYTRACE_DEMO',
                                             'unreachable': 'RESET_HEAD_BEFORE_RAYTRACE_DEMO',
                                             'goal_not_defined': 'RESET_HEAD_BEFORE_RAYTRACE_DEMO'})
 
         smach.StateMachine.add("RESET_HEAD_BEFORE_RAYTRACE_DEMO",
-                               robot_smach_states.ResetHead(robot),
+                               ResetHead(robot),
                                transitions={'done': 'SAY_PEOPLE_DETECTOR'})
 
         smach.StateMachine.add("SAY_PEOPLE_DETECTOR",
-                               robot_smach_states.Say(robot, "Now I will show you my awesome people detector"),
+                               Say(robot, "Now I will show you my awesome people detector"),
                                transitions={"spoken": "WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO"})
 
         smach.StateMachine.add("WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO",
-                               robot_smach_states.WaitForTrigger(robot, ["continue"], "/amigo/trigger"),
+                               WaitForTrigger(robot, ["continue"], "/amigo/trigger"),
                                transitions={'continue': 'SAY_RAYTRACE_DEMO',
                                             'preempted': 'SAY_RAYTRACE_DEMO'})
 
         smach.StateMachine.add("SAY_RAYTRACE_DEMO",
-                               robot_smach_states.Say(robot, "You can interact with me by pointing at objects!"),
-                               transitions={"spoken": "RAYTRACE_DEMO"})
+                               Say(robot, "You can interact with me by pointing at objects!"),
+                               transitions={"spoken": "RAYTRACE_SELECTOR"})
 
-        smach.StateMachine.add("RAYTRACE_DEMO",
-                               RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
-                               transitions={"done": "NAVIGATE_TO_ORDER_COUNTER"})
+        # smach.StateMachine.add("RAYTRACE_DEMO",
+        #                        RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
+        #                        transitions={"done": "NAVIGATE_TO_ORDER_COUNTER"})
 
-        smach.StateMachine.add("NAVIGATE_TO_ORDER_COUNTER",
-                               robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=EntityByIdDesignator(
-                                                                         robot=robot,
-                                                                         id=challenge_knowledge.order_counter_waypoint),
-                                                                     radius=0.3),
-                               transitions={'arrived': 'ORDER_COUNTER',
-                                            'unreachable': 'ORDER_COUNTER',
-                                            'goal_not_defined': 'ORDER_COUNTER'})
+        smach.StateMachine.add("RAYTRACE_SELECTOR",
+                               RayTraceSelector(robot, waypoint=None, furniture_designator=furniture),
+                               transitions={
+                                   "waypoint": 'NAVIGATE_TO_WAYPOINT',
+                                   "furniture": 'NAVIGATE_TO_FURNITURE',
+                                   "grasp": 'INSPECT_AND_GRAB',
+                                   "done": 'RAYTRACE_SELECTOR'
+                               })
 
-        smach.StateMachine.add("ORDER_COUNTER",
-                               OrderCounter(robot, room_id=challenge_knowledge.audience_room,
-                                            beercounter=beercounter),
-                               transitions={"done": "NAVIGATE_TO_HSR_DEMO"})
+        smach.StateMachine.add("NAVIGATE_TO_FURNITURE",
+                               NavigateToSymbolic(robot,
+                                                  entity_designator_area_name_map={furniture: 'in_front_of'},
+                                                  entity_lookat_designator=furniture),
+                               transitions={
+                                   'arrived': 'RAYTRACE_SELECTOR',
+                                   'unreachable': 'RAYTRACE_SELECTOR',
+                                   'goal_not_defined': 'RAYTRACE_SELECTOR',
+                               })
 
-        smach.StateMachine.add("NAVIGATE_TO_HSR_DEMO",
-                               robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=EntityByIdDesignator(
-                                                                         robot=robot,
-                                                                         id=challenge_knowledge.hsr_demo_waypoint),
-                                                                     radius=0.025),
-                               transitions={'arrived': 'WAIT_FOR_BEER',
-                                            'unreachable': 'CANNOT_REACH_BEER_LOCATION',
-                                            'goal_not_defined': 'CANNOT_REACH_BEER_LOCATION'})
+        smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
+                               NavigateToWaypoint(robot=robot,
+                                                  waypoint_designator=EntityByIdDesignator(
+                                                      robot=robot,
+                                                      id='final_waypoint'),
+                                                  radius=0.3),
+                               transitions={'arrived': 'RAYTRACE_SELECTOR',
+                                            'unreachable': 'RAYTRACE_SELECTOR',
+                                            'goal_not_defined': 'RAYTRACE_SELECTOR'})
 
-        smach.StateMachine.add("CANNOT_REACH_BEER_LOCATION",
-                               robot_smach_states.Say(robot, "I cannot reach my beer buddy, let's give it another try"),
-                               transitions={"spoken": "Done"})
+        smach.StateMachine.add("INSPECT_AND_GRAB", InspectAndGrab(robot, supporting_entity_designator=furniture),
+                               transitions={
+                                   'succeeded': 'RAYTRACE_SELECTOR',
+                                   'inspect_failed': 'RAYTRACE_SELECTOR',
+                                   'grasp_failed': 'RAYTRACE_SELECTOR'
+                               })
 
-        smach.StateMachine.add("WAIT_FOR_BEER",
-                               HsrInteraction(robot=robot, beercounter=beercounter),
-                               transitions={"done": "RETURN_TO_AUDIENCE"})
-
-        smach.StateMachine.add("RETURN_TO_AUDIENCE",
-                               robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=EntityByIdDesignator(
-                                                                         robot=robot,
-                                                                         id=challenge_knowledge.order_counter_waypoint),
-                                                                     radius=0.3),
-                               transitions={'arrived': 'SAY_BEER',
-                                            'unreachable': 'SAY_BEER',
-                                            'goal_not_defined': 'SAY_BEER'})
-
-        smach.StateMachine.add("SAY_BEER",
-                               robot_smach_states.Say(robot, "Hey guys, here's your beer. That will be all. "
-                                                             "By the way, if you leave the balcony door open,"
-                                                             "birds will fly in"),
-                               transitions={"spoken": "Done"})
+        # smach.StateMachine.add("NAVIGATE_TO_ORDER_COUNTER",
+        #                        robot_smach_states.NavigateToWaypoint(robot=robot,
+        #                                                              waypoint_designator=EntityByIdDesignator(
+        #                                                                  robot=robot,
+        #                                                                  id=challenge_knowledge.order_counter_waypoint),
+        #                                                              radius=0.3),
+        #                        transitions={'arrived': 'ORDER_COUNTER',
+        #                                     'unreachable': 'ORDER_COUNTER',
+        #                                     'goal_not_defined': 'ORDER_COUNTER'})
+        #
+        # smach.StateMachine.add("ORDER_COUNTER",
+        #                        OrderCounter(robot, room_id=challenge_knowledge.audience_room,
+        #                                     beercounter=beercounter),
+        #                        transitions={"done": "NAVIGATE_TO_HSR_DEMO"})
+        #
+        # smach.StateMachine.add("NAVIGATE_TO_HSR_DEMO",
+        #                        robot_smach_states.NavigateToWaypoint(robot=robot,
+        #                                                              waypoint_designator=EntityByIdDesignator(
+        #                                                                  robot=robot,
+        #                                                                  id=challenge_knowledge.hsr_demo_waypoint),
+        #                                                              radius=0.025),
+        #                        transitions={'arrived': 'WAIT_FOR_BEER',
+        #                                     'unreachable': 'CANNOT_REACH_BEER_LOCATION',
+        #                                     'goal_not_defined': 'CANNOT_REACH_BEER_LOCATION'})
+        #
+        # smach.StateMachine.add("CANNOT_REACH_BEER_LOCATION",
+        #                        robot_smach_states.Say(robot, "I cannot reach my beer buddy, let's give it another try"),
+        #                        transitions={"spoken": "Done"})
+        #
+        # smach.StateMachine.add("WAIT_FOR_BEER",
+        #                        HsrInteraction(robot=robot, beercounter=beercounter),
+        #                        transitions={"done": "RETURN_TO_AUDIENCE"})
+        #
+        # smach.StateMachine.add("RETURN_TO_AUDIENCE",
+        #                        robot_smach_states.NavigateToWaypoint(robot=robot,
+        #                                                              waypoint_designator=EntityByIdDesignator(
+        #                                                                  robot=robot,
+        #                                                                  id=challenge_knowledge.order_counter_waypoint),
+        #                                                              radius=0.3),
+        #                        transitions={'arrived': 'SAY_BEER',
+        #                                     'unreachable': 'SAY_BEER',
+        #                                     'goal_not_defined': 'SAY_BEER'})
+        #
+        # smach.StateMachine.add("SAY_BEER",
+        #                        robot_smach_states.Say(robot, "Hey guys, here's your beer. That will be all. "
+        #                                                      "By the way, if you leave the balcony door open,"
+        #                                                      "birds will fly in"),
+        #                        transitions={"spoken": "Done"})
 
     return sm
 
@@ -160,10 +196,7 @@ if __name__ == '__main__':
         start_states = ["START_CHALLENGE_ROBUST",
                         "NAVIGATE_TO_SSL_WAYPOINT",
                         "NAVIGATE_TO_LASER_DEMO",
-                        "NAVIGATE_TO_ORDER_COUNTER",
-                        "ORDER_COUNTER",
-                        "NAVIGATE_TO_HSR_DEMO",
-                        "RETURN_TO_AUDIENCE"]
+                        "RAYTRACE_SELECTOR"]
 
         for start_state in start_states:
             if start_state not in children:
