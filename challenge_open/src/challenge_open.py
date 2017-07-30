@@ -8,11 +8,12 @@ import smach
 from robocup_knowledge import load_knowledge
 from robot_skills.util.robot_constructor import robot_constructor
 from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, ResetHead, Say, WaitForTrigger, \
-    NavigateToSymbolic
-from robot_smach_states.util.designators import EntityByIdDesignator
+    NavigateToSymbolic, HandoverToHuman
+from robot_smach_states.util.designators import EntityByIdDesignator, UnoccupiedArmDesignator
 from smach_ros import IntrospectionServer
 
 from inspect_and_grab import InspectAndGrab
+from raytrace_demo import RayTraceDemo
 from raytrace_selector import RayTraceSelector
 from ssl_demo import SSLDemo
 
@@ -28,6 +29,8 @@ class BeerCounter(object):
 
 def setup_statemachine(robot):
     furniture = EntityByIdDesignator(robot, 'selected_furniture')
+    # arm_designator = ArmDesignator(robot.arms, robot.arms['left'])
+    arm_designator = UnoccupiedArmDesignator(robot.arms, robot.arms['left'])
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:
@@ -76,16 +79,16 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("WAIT_FOR_TRIGGER_BEFORE_RAYTRACE_DEMO",
                                WaitForTrigger(robot, ["continue"], "/amigo/trigger"),
-                               transitions={'continue': 'SAY_RAYTRACE_DEMO',
-                                            'preempted': 'SAY_RAYTRACE_DEMO'})
+                               transitions={'continue': 'RAYTRACE_DEMO',
+                                            'preempted': 'RAYTRACE_DEMO'})
 
-        smach.StateMachine.add("SAY_RAYTRACE_DEMO",
+        smach.StateMachine.add("RAYTRACE_DEMO",
+                               RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
+                               transitions={"done": "SAY_RAYTRACE_SELECTOR"})
+
+        smach.StateMachine.add("SAY_RAYTRACE_SELECTOR",
                                Say(robot, "You can interact with me by pointing at objects!"),
                                transitions={"spoken": "RAYTRACE_SELECTOR"})
-
-        # smach.StateMachine.add("RAYTRACE_DEMO",
-        #                        RayTraceDemo(robot, breakout_id=challenge_knowledge.raytrace_waypoint),
-        #                        transitions={"done": "NAVIGATE_TO_ORDER_COUNTER"})
 
         smach.StateMachine.add("RAYTRACE_SELECTOR",
                                RayTraceSelector(robot, waypoint=None, furniture_designator=furniture),
@@ -116,11 +119,19 @@ def setup_statemachine(robot):
                                             'unreachable': 'NAVIGATE_BACK_TO_LASER_DEMO',
                                             'goal_not_defined': 'NAVIGATE_BACK_TO_LASER_DEMO'})
 
-        smach.StateMachine.add("INSPECT_AND_GRAB", InspectAndGrab(robot, supporting_entity_designator=furniture),
+        smach.StateMachine.add("INSPECT_AND_GRAB",
+                               InspectAndGrab(robot, supporting_entity_designator=furniture,
+                                              arm_designator=arm_designator),
                                transitions={
                                    'succeeded': 'NAVIGATE_BACK_TO_LASER_DEMO',
                                    'inspect_failed': 'NAVIGATE_BACK_TO_LASER_DEMO',
                                    'grasp_failed': 'NAVIGATE_BACK_TO_LASER_DEMO'
+                               })
+
+        smach.StateMachine.add("HANDOVER_TO_HUMAN", HandoverToHuman(robot, arm_designator, timeout=10),
+                               transitions={
+                                   'succeeded': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                   'failed': 'NAVIGATE_BACK_TO_LASER_DEMO',
                                })
 
         smach.StateMachine.add("NAVIGATE_BACK_TO_LASER_DEMO",
