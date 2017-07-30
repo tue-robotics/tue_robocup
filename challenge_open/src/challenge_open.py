@@ -15,6 +15,7 @@ from smach_ros import IntrospectionServer
 from inspect_and_grab import InspectAndGrab
 from raytrace_demo import RayTraceDemo
 from raytrace_selector import RayTraceSelector
+from simple_raytrace_selector import SimpleRayTraceSelector
 from ssl_demo import SSLDemo
 
 challenge_knowledge = load_knowledge('challenge_open')
@@ -91,7 +92,7 @@ def setup_statemachine(robot):
                                transitions={"spoken": "RAYTRACE_SELECTOR"})
 
         smach.StateMachine.add("RAYTRACE_SELECTOR",
-                               RayTraceSelector(robot, waypoint=None, furniture_designator=furniture),
+                               SimpleRayTraceSelector(robot, waypoint=None, furniture_designator=furniture),
                                transitions={
                                    "waypoint": 'NAVIGATE_TO_WAYPOINT',
                                    "furniture": 'NAVIGATE_TO_FURNITURE',
