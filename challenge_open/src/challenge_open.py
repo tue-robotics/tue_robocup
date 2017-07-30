@@ -217,6 +217,7 @@ if __name__ == '__main__':
         start_states = ["START_CHALLENGE_ROBUST",
                         "NAVIGATE_TO_SSL_WAYPOINT",
                         "NAVIGATE_TO_LASER_DEMO",
+                        "RAYTRACE_DEMO",
                         "RAYTRACE_SELECTOR"]
 
         for start_state in start_states:
