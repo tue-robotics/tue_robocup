@@ -124,7 +124,7 @@ def setup_statemachine(robot):
                                InspectAndGrab(robot, supporting_entity_designator=furniture,
                                               arm_designator=arm_designator),
                                transitions={
-                                   'succeeded': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                   'succeeded': 'HANDOVER_TO_HUMAN',
                                    'inspect_failed': 'NAVIGATE_BACK_TO_LASER_DEMO',
                                    'grasp_failed': 'NAVIGATE_BACK_TO_LASER_DEMO'
                                })
