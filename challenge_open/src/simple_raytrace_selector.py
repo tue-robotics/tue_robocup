@@ -182,8 +182,8 @@ class SimpleRayTraceSelector(smach.State):
                     return result
                 else:
                     continue
-            except:
-                rospy.logerr("RaytraceSelector: Something went terribly wrong in speech...")
+            except Exception as e:
+                rospy.logerr("RaytraceSelector: Something went terribly wrong in speech: %s", e)
                 continue
 
         return "done"
