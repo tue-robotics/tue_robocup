@@ -86,16 +86,16 @@ class SimpleRayTraceSelector(smach.State):
         blink_thead.start()
 
         # Do speech
-        self._do_speech()
-
-        # Wait for blink thread to finish
-        blink_thead.join()
+        result = self._do_speech()
 
         # Disable callback
         self._active = False
 
+        # Wait for blink thread to finish
+        blink_thead.join()
+
         # clear stuff
-        return "done"
+        return result
 
     def _wait_for_entity(self, timeout):
         """ Waits a maximum of <timeout> seconds for the operator to point to an entity to move towards or to
@@ -108,6 +108,7 @@ class SimpleRayTraceSelector(smach.State):
             if self._last_entity_id != "":
                 rospy.loginfo("Wait for entity: operator pointed to {}".format(self._last_entity_id))
                 target = self._last_entity_id
+                self._last_entity_id = ""  # Reset last entity
                 return target
             rate.sleep()
 
@@ -144,10 +145,14 @@ class SimpleRayTraceSelector(smach.State):
         """ Performs the speech logic. One of the state outcomes is returned as a string """
         while not rospy.is_shutdown() and self._active:  # self._active: in case of fallbacks
 
+            self.robot.hmi.restart_dragonfly()
+
             try:  # Big try loop for unexpected stuff
 
                 # Checkout what the robot wants
                 assignment = self._get_assignment()
+                if assignment == "continue":
+                    continue
 
                 # Wait to see if the operator pointed to an entity
                 self.robot.lights.set_color(255, 0, 255)
@@ -216,13 +221,8 @@ class SimpleRayTraceSelector(smach.State):
         people raising their hands is counted and markers are published on their positions
         :param msg: tue_msgs/People message
         """
-        rospy.loginfo("People callback: active: {}, pause: {}".format(self._active, self._pause))
         # Check if active
         if not self._active:
-            return
-
-        # Check if pausing
-        if self._pause:
             return
 
         # Check if there are people in the message
@@ -252,7 +252,7 @@ class SimpleRayTraceSelector(smach.State):
         entity_id = raytraceresult.entity_id
 
         # Remember results
-        if entity_id == "":  # Remember the waypoint on the floor
+        if entity_id == "" or "wall" in entity_id or "floor" in entity_id:  # Remember the waypoint on the floor
             self._last_intersection_point = self.robot.tf_listener.transformPoint("map",
                                                                                   raytraceresult.intersection_point)
             self._last_entity_id = ""
@@ -260,6 +260,7 @@ class SimpleRayTraceSelector(smach.State):
         else:  # Remember the entity id
             self._last_intersection_point = None
             self._last_entity_id = entity_id
+            rospy.logwarn("Saw entity id: {}".format(entity_id))
             # self._set_furniture_designator(entity_id)
 
         # If we're pointing to the same thing
@@ -273,7 +274,7 @@ class SimpleRayTraceSelector(smach.State):
 
         # Else: get it from ed, check if it is furniture
         e = self.robot.ed.get_entity(id=entity_id)
-        if e.is_a("furniture"):
+        if e.is_a("furniture") and "wall" not in e.id:
             # self.robot.speech.speak("{}".format(entity_id.replace("_", " ")), block=False)
             self._requested_highlight = entity_id
         else:
