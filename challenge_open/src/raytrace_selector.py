@@ -105,7 +105,7 @@ class RayTraceSelector(smach.State):
         """
         tstart = rospy.Time.now()
         rate = rospy.Rate(10.0)
-        self._disable_speech_synthesis = True
+        # self._disable_speech_synthesis = True
         while self._active and not rospy.is_shutdown() and (rospy.Time.now() - tstart).to_sec() < timeout:
             if self._last_entity_id != "":
                 rospy.loginfo("Wait for entity: operator pointed to {}".format(self._last_entity_id))
@@ -114,15 +114,13 @@ class RayTraceSelector(smach.State):
 
             rate.sleep()
 
-        self._disable_speech_synthesis = False
-
     def _wait_for_amigo(self):
         """ Waits until the robot hears its name
         :return True if "amigo" has been heard, False otherwise
         """
         # Wait until the robot is called
         try:
-            result = self.robot.hmi.query('', 'T -> amigo', 'T').sentence
+            result = self.robot.hmi.query('', 'T -> amigo', 'T', timeout=60.0).sentence
             return True
         except hmi.TimeoutException:
             return False
@@ -161,12 +159,17 @@ class RayTraceSelector(smach.State):
         """ Performs the speech logic. One of the state outcomes is returned as a string """
         while not rospy.is_shutdown() and self._active:  # self._active: in case of fallbacks
 
+            self._pause = False
+            self._disable_speech_synthesis = False
+            self.robot.hmi.restart_dragonfly()
+
             try:  # Big try loop for unexpected stuff
 
                 if not self._wait_for_amigo():
                     continue
 
                 # Checkout what the robot wants
+                self._disable_speech_synthesis = True
                 assignment = self._get_assignment()
 
                 # Wait to see if the operator pointed to an entity
@@ -192,18 +195,22 @@ class RayTraceSelector(smach.State):
                     self._pause = False
                     continue
 
-                # Disable the pause
-                self._pause = False
-
                 # Ask for confirmation
                 self.robot.speech.speak(conf_sentence, block=True)
                 if self._ask_confirmation():
                     self._active = False
+                    self._pause = False
+                    self._disable_speech_synthesis = False
                     return result
                 else:
+                    self._pause = False
+                    self._disable_speech_synthesis = False
                     continue
             except Exception as e:
                 rospy.logerr("RaytraceSelector: Something went terribly wrong in speech: %s", e)
+                self._active = False
+                self._pause = False
+                self._disable_speech_synthesis = False
                 continue
 
         return "done"
@@ -235,7 +242,7 @@ class RayTraceSelector(smach.State):
         people raising their hands is counted and markers are published on their positions
         :param msg: tue_msgs/People message
         """
-        rospy.loginfo("People callback: active: {}, pause: {}".format(self._active, self._pause))
+        # rospy.loginfo("People callback: active: {}, pause: {}".format(self._active, self._pause))
         # Check if active
         if not self._active:
             return
