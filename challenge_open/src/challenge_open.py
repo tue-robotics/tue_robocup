@@ -101,9 +101,9 @@ def setup_statemachine(robot):
                                                   entity_designator_area_name_map={furniture: 'in_front_of'},
                                                   entity_lookat_designator=furniture),
                                transitions={
-                                   'arrived': 'RAYTRACE_SELECTOR',
-                                   'unreachable': 'RAYTRACE_SELECTOR',
-                                   'goal_not_defined': 'RAYTRACE_SELECTOR',
+                                   'arrived': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                   'unreachable': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                   'goal_not_defined': 'NAVIGATE_BACK_TO_LASER_DEMO',
                                })
 
         smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
@@ -112,16 +112,26 @@ def setup_statemachine(robot):
                                                       robot=robot,
                                                       id='final_waypoint'),
                                                   radius=0.3),
-                               transitions={'arrived': 'RAYTRACE_SELECTOR',
-                                            'unreachable': 'RAYTRACE_SELECTOR',
-                                            'goal_not_defined': 'RAYTRACE_SELECTOR'})
+                               transitions={'arrived': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                            'unreachable': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                            'goal_not_defined': 'NAVIGATE_BACK_TO_LASER_DEMO'})
 
         smach.StateMachine.add("INSPECT_AND_GRAB", InspectAndGrab(robot, supporting_entity_designator=furniture),
                                transitions={
-                                   'succeeded': 'RAYTRACE_SELECTOR',
-                                   'inspect_failed': 'RAYTRACE_SELECTOR',
-                                   'grasp_failed': 'RAYTRACE_SELECTOR'
+                                   'succeeded': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                   'inspect_failed': 'NAVIGATE_BACK_TO_LASER_DEMO',
+                                   'grasp_failed': 'NAVIGATE_BACK_TO_LASER_DEMO'
                                })
+
+        smach.StateMachine.add("NAVIGATE_BACK_TO_LASER_DEMO",
+                               NavigateToWaypoint(robot=robot,
+                                                  waypoint_designator=EntityByIdDesignator(
+                                                      robot=robot,
+                                                      id=challenge_knowledge.raytrace_waypoint),
+                                                  radius=0.3),
+                               transitions={'arrived': 'RAYTRACE_SELECTOR',
+                                            'unreachable': 'RAYTRACE_SELECTOR',
+                                            'goal_not_defined': 'RAYTRACE_SELECTOR'})
 
         # smach.StateMachine.add("NAVIGATE_TO_ORDER_COUNTER",
         #                        robot_smach_states.NavigateToWaypoint(robot=robot,

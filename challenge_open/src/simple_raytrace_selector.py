@@ -16,7 +16,7 @@ import robot_smach_states.util.designators as ds
 import tue_msgs.msg
 
 
-class RayTraceSelector(smach.State):
+class SimpleRayTraceSelector(smach.State):
     """ State to perform raytrace demo. The outcome depends on the provided speech command.
     """
     def __init__(self, robot, waypoint=None, furniture_designator=None):
@@ -40,8 +40,6 @@ class RayTraceSelector(smach.State):
 
         # Flag for the callback to indicate whether or not to process data
         self._active = False  # To start/stop this state
-        self._pause = False  # To pause in case of HRI
-        self._disable_speech_synthesis = False  # Necessary to prevent a mess
 
         # Requested and active highlight
         self._requested_highlight = ""  # Set by the people callback
@@ -88,7 +86,7 @@ class RayTraceSelector(smach.State):
         blink_thead.start()
 
         # Do speech
-        result = self._do_speech()
+        self._do_speech()
 
         # Wait for blink thread to finish
         blink_thead.join()
@@ -97,7 +95,7 @@ class RayTraceSelector(smach.State):
         self._active = False
 
         # clear stuff
-        return result
+        return "done"
 
     def _wait_for_entity(self, timeout):
         """ Waits a maximum of <timeout> seconds for the operator to point to an entity to move towards or to
@@ -105,25 +103,15 @@ class RayTraceSelector(smach.State):
         """
         tstart = rospy.Time.now()
         rate = rospy.Rate(10.0)
-        # self._disable_speech_synthesis = True
+        target = ""
         while self._active and not rospy.is_shutdown() and (rospy.Time.now() - tstart).to_sec() < timeout:
             if self._last_entity_id != "":
                 rospy.loginfo("Wait for entity: operator pointed to {}".format(self._last_entity_id))
-                self._pause = True
-                break
-
+                target = self._last_entity_id
+                return target
             rate.sleep()
 
-    def _wait_for_amigo(self):
-        """ Waits until the robot hears its name
-        :return True if "amigo" has been heard, False otherwise
-        """
-        # Wait until the robot is called
-        try:
-            result = self.robot.hmi.query('', 'T -> amigo', 'T', timeout=60.0).sentence
-            return True
-        except hmi.TimeoutException:
-            return False
+        return target
 
     def _get_assignment(self):
         """ Asks the operator what to do
@@ -141,93 +129,78 @@ class RayTraceSelector(smach.State):
         """ Asks for confirmation
         :return: True if confirmed, False otherwise
         """
-        rospy.sleep(rospy.Duration(0.5))
         try:
             result = self.robot.hmi.query('', 'T -> yes | no', 'T').sentence
             if result == 'yes':
-                rospy.loginfo("Ask confirmation: True")
                 return True
-            else:
+            elif result == 'no':
                 self.robot.speech.speak("I am sorry, I misunderstood")
                 return False
         except hmi.TimeoutException:
             # robot did not hear the confirmation, so lets assume it's False
-            rospy.loginfo("Ask confirmation: False")
             return False
 
     def _do_speech(self):
         """ Performs the speech logic. One of the state outcomes is returned as a string """
         while not rospy.is_shutdown() and self._active:  # self._active: in case of fallbacks
 
-            self._pause = False
-            self._disable_speech_synthesis = False
-            self.robot.hmi.restart_dragonfly()
-
             try:  # Big try loop for unexpected stuff
 
-                if not self._wait_for_amigo():
-                    continue
-
                 # Checkout what the robot wants
-                self._disable_speech_synthesis = True
                 assignment = self._get_assignment()
 
                 # Wait to see if the operator pointed to an entity
-                self._wait_for_entity(timeout=3.0)
+                target = self._wait_for_entity(timeout=5.0)
+
+                # If no target: continue
+                if target == "":
+                    self.robot.speech.speak("I am sorry but I did not see where you want me to go")
+                    continue
 
                 # Check if feasible
                 if assignment == "continue":
-                    self._pause = False
                     continue
-                elif assignment == "drive" and self._last_entity_id == "":  # Drive do waypoint
-                    conf_sentence = "Do you want me to drive to that point"
-                    result = "waypoint"
+                # elif assignment == "drive" and target != "":  # Drive do waypoint
+                #     conf_sentence = "Do you want me to drive to that point"
+                #     result = "waypoint"
                 elif assignment == "drive":  # Drive to furniture
-                    conf_sentence = "Do you want me to drive to the {}".format(self._last_entity_id)
+                    conf_sentence = "Do you want me to drive to the {}".format(target)
                     result = "furniture"
-                elif assignment == "bring" and self._last_entity_id != "":  # Grab something
-                    conf_sentence = "Do you want me to grasp something from the {}".format(self._last_entity_id)
+                elif assignment == "bring" and target != "":  # Grab something
+                    conf_sentence = "Do you want me to grasp something from the {}".format(target)
                     result = "grasp"
-                elif assignment == "bring" and self._last_entity_id == "":
-                    self.robot.speech.speak("I am sorry but i cannot grasp anything from the floor", block=True)
+                # elif assignment == "bring" and target == "":
+                #     self.robot.speech.speak("I am sorry but i cannot grasp anything from the floor", block=True)
                 else:
                     rospy.logwarn("Something went terribly wrong, I cannot process {}".format(assignment))
-                    self._pause = False
                     continue
 
                 # Ask for confirmation
                 self.robot.speech.speak(conf_sentence, block=True)
                 if self._ask_confirmation():
-                    self._active = False
-                    self._pause = False
-                    self._disable_speech_synthesis = False
+                    self._set_furniture_designator(target)
                     return result
                 else:
-                    self._pause = False
-                    self._disable_speech_synthesis = False
                     continue
-            except Exception as e:
-                rospy.logerr("RaytraceSelector: Something went terribly wrong in speech: %s", e)
-                self._active = False
-                self._pause = False
-                self._disable_speech_synthesis = False
+            except:
+                rospy.logerr("RaytraceSelector: Something went terribly wrong in speech...")
                 continue
 
         return "done"
 
-    def _set_waypoint(self, intersection_point, person_position):
-        """ Puts the goal as a waypoint in ED
-        :param intersection_point: geometry_msgs PointStamped of the last raytrace intersection (in map)
-        :param person_position: geometry_msgs PointStamped of the last measured person position (in map)
-        """
-        yaw = math.atan2(person_position.point.y - intersection_point.point.y,
-                         person_position.point.x - intersection_point.point.x)
-        position = kdl.Vector(intersection_point.point.x, intersection_point.point.y, 0.0)
-        orientation = kdl.Rotation.RPY(0.0, 0.0, yaw)
-        waypoint = FrameStamped(frame=kdl.Frame(orientation, position), frame_id="/map")
-        self.robot.ed.update_entity(id=self.waypoint_id, type="waypoint", frame_stamped=waypoint)
-        # import ipdb;ipdb.set_trace()
-        return
+    # def _set_waypoint(self, intersection_point, person_position):
+    #     """ Puts the goal as a waypoint in ED
+    #     :param intersection_point: geometry_msgs PointStamped of the last raytrace intersection (in map)
+    #     :param person_position: geometry_msgs PointStamped of the last measured person position (in map)
+    #     """
+    #     yaw = math.atan2(person_position.point.y - intersection_point.point.y,
+    #                      person_position.point.x - intersection_point.point.x)
+    #     position = kdl.Vector(intersection_point.point.x, intersection_point.point.y, 0.0)
+    #     orientation = kdl.Rotation.RPY(0.0, 0.0, yaw)
+    #     waypoint = FrameStamped(frame=kdl.Frame(orientation, position), frame_id="/map")
+    #     self.robot.ed.update_entity(id=self.waypoint_id, type="waypoint", frame_stamped=waypoint)
+    #     # import ipdb;ipdb.set_trace()
+    #     return
 
     def _set_furniture_designator(self, identifier):
         """ Sets the id of the furniture designator
@@ -242,7 +215,7 @@ class RayTraceSelector(smach.State):
         people raising their hands is counted and markers are published on their positions
         :param msg: tue_msgs/People message
         """
-        # rospy.loginfo("People callback: active: {}, pause: {}".format(self._active, self._pause))
+        rospy.loginfo("People callback: active: {}, pause: {}".format(self._active, self._pause))
         # Check if active
         if not self._active:
             return
@@ -266,8 +239,8 @@ class RayTraceSelector(smach.State):
             return
 
         # Person pose in map frame
-        person_position = self.robot.tf_listener.transformPoint(
-            "map", geometry_msgs.msg.PointStamped(header=msg.header, point=closest_person.position))
+        # person_position = self.robot.tf_listener.transformPoint(
+        #     "map", geometry_msgs.msg.PointStamped(header=msg.header, point=closest_person.position))
 
         # Pointing pose in map frame
         map_pose = self.robot.tf_listener.transformPose(
@@ -278,26 +251,15 @@ class RayTraceSelector(smach.State):
         entity_id = raytraceresult.entity_id
 
         # Remember results
-        if entity_id == "" or entity_id == "floor":  # Remember the waypoint on the floor
+        if entity_id == "":  # Remember the waypoint on the floor
             self._last_intersection_point = self.robot.tf_listener.transformPoint("map",
                                                                                   raytraceresult.intersection_point)
             self._last_entity_id = ""
-            self._set_waypoint(self._last_intersection_point, person_position)
+            # self._set_waypoint(self._last_intersection_point, person_position)
         else:  # Remember the entity id
             self._last_intersection_point = None
             self._last_entity_id = entity_id
-            self._set_furniture_designator(entity_id)
-
-        # ToDo: say what's pointed to
-        # e = self.robot.ed.get_entity(id=raytraceresult.entity_id)
-        # if raytraceresult.entity_id != "" and e is not None and raytraceresult.entity_id != self._active_highlight:
-        #     self.robot.speech.speak("You are pointing to the {}".format(raytraceresult.entity_id))
-        # # Only do stuff if we have pointed to an entity and this is not already active
-        # if entity_id != "" and entity_id != self._active_highlight:
-        #     self._requested_highlight = raytraceresult.entity_id
-        #     e = self.robot.ed.get_entity(id=self._requested_highlight)
-        #
-        # # ToDo: check for furniture
+            # self._set_furniture_designator(entity_id)
 
         # If we're pointing to the same thing
         if entity_id == self._active_highlight:
@@ -311,8 +273,7 @@ class RayTraceSelector(smach.State):
         # Else: get it from ed, check if it is furniture
         e = self.robot.ed.get_entity(id=entity_id)
         if e.is_a("furniture"):
-            if not self._disable_speech_synthesis:
-                self.robot.speech.speak("{}".format(entity_id.replace("_", " ")), block=False)
+            # self.robot.speech.speak("{}".format(entity_id.replace("_", " ")), block=False)
             self._requested_highlight = entity_id
         else:
             rospy.loginfo("{} is not furniture".format(entity_id))
@@ -374,7 +335,7 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("RAYTRACEDEMO",
-                               RayTraceSelector(robot, waypoint="final_challenge",
+                               SimpleRayTraceSelector(robot, waypoint="final_challenge",
                                                 furniture_designator=ds.EntityByIdDesignator(robot, id="temp")),
                                transitions={outcome: "Done" for outcome in ["waypoint", "furniture", "grasp", "done"]})
 
