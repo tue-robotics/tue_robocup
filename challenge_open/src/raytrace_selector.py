@@ -3,12 +3,16 @@ import math
 import threading
 
 # ROS
-import hmi
-import tue_msgs.msg
+import PyKDL as kdl
 import rospy
 import smach
 import std_msgs.msg
 import geometry_msgs.msg
+
+# TU/e Robotics
+import hmi
+from robot_skills.util.kdl_conversions import FrameStamped
+import tue_msgs.msg
 
 
 class RayTraceSelector(smach.State):
@@ -53,7 +57,7 @@ class RayTraceSelector(smach.State):
 
         # Remember last raytraceresult
         self._last_entity_id = ""
-        self._last_waypoint = None
+        self._last_intersection_point = None
 
         # Speech grammar
         self.grammar = '''
@@ -189,16 +193,26 @@ class RayTraceSelector(smach.State):
 
         return "done"
 
-    def _set_waypoint(self):
+    def _set_waypoint(self, intersection_point, person_position):
         """ Puts the goal as a waypoint in ED
+        :param intersection_point: geometry_msgs PointStamped of the last raytrace intersection (in map)
+        :param person_position: geometry_msgs PointStamped of the last measured person position (in map)
         """
-        # ToDo
+        yaw = math.atan2(person_position.point.y - intersection_point.point.y,
+                         person_position.point.x - intersection_point.point.x)
+        position = kdl.Vector(intersection_point.point.x, intersection_point.point.y, 0.0)
+        orientation = kdl.Rotation.RPY(0.0, 0.0, yaw)
+        waypoint = FrameStamped(frame=kdl.Frame(orientation, position), frame_id="/map")
+        self.robot.ed.update_entity(id="final_waypoint", type="waypoint", frame_stamped=waypoint)
+        # import ipdb;ipdb.set_trace()
         return
 
-    def _set_furniture_designator(self):
+    def _set_furniture_designator(self, identifier):
         """ Sets the id of the furniture designator
+        :param identifier: string with furniture ID
         """
-        # ToDo
+        # import ipdb;ipdb.set_trace()
+        self.furniture_designator.id_ = identifier
         return
 
     def _people_callback(self, msg):
@@ -228,6 +242,11 @@ class RayTraceSelector(smach.State):
             self._requested_highlight = ""
             return
 
+        # Person pose in map frame
+        person_position = self.robot.tf_listener.transformPoint(
+            "map", geometry_msgs.msg.PointStamped(header=msg.header, point=closest_person.position))
+
+        # Pointing pose in map frame
         map_pose = self.robot.tf_listener.transformPose(
             "map", geometry_msgs.msg.PoseStamped(header=msg.header, pose=closest_person.pointing_pose))
 
@@ -236,12 +255,15 @@ class RayTraceSelector(smach.State):
         entity_id = raytraceresult.entity_id
 
         # Remember results
-        if entity_id == "":
-            self._last_waypoint = self.robot.tf_listener.transformPose("map", raytraceresult.raytrace_pose)
+        if entity_id == "":  # Remember the waypoint on the floor
+            self._last_intersection_point = self.robot.tf_listener.transformPoint("map",
+                                                                                  raytraceresult.intersection_point)
             self._last_entity_id = ""
-        else:
-            self._last_waypoint = None
+            self._set_waypoint(self._last_intersection_point, person_position)
+        else:  # Remember the entity id
+            self._last_intersection_point = None
             self._last_entity_id = entity_id
+            self._set_furniture_designator(entity_id)
 
         # ToDo: say what's pointed to
         # e = self.robot.ed.get_entity(id=raytraceresult.entity_id)
