@@ -39,7 +39,8 @@ class RayTraceSelector(smach.State):
         rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self._trigger_callback)
 
         # Flag for the callback to indicate whether or not to process data
-        self._active = False
+        self._active = False  # To start/stop this state
+        self._pause = False  # To pause in case of HRI
 
         # Requested and active highlight
         self._requested_highlight = ""  # Set by the people callback
@@ -62,8 +63,8 @@ class RayTraceSelector(smach.State):
         # Speech grammar
         self.grammar = '''
         T["continue"] -> continue
-        T["drive"] -> drive over there | move over there
-        T["bring"] -> grab that | grab that thing | bring me that | bring me that thing
+        T["drive"] -> drive over there | move over there | go there | move there
+        T["bring"] -> grab that | grab that thing | bring me that | bring me that thing | give me that thing
         '''
         # T["move"] -> move to the object
 
@@ -92,8 +93,7 @@ class RayTraceSelector(smach.State):
         blink_thead.join()
 
         # Disable callback
-        self._active = False  # To start/stop this state
-        self._pause = False  # To pause in case of HRI
+        self._active = False
 
         # clear stuff
         return "done"
@@ -116,7 +116,7 @@ class RayTraceSelector(smach.State):
         """
         # Wait until the robot is called
         try:
-            result = self.robot.hmi.query('', 'amigo', 'T').sentence
+            result = self.robot.hmi.query('', 'T -> amigo', 'T').sentence
             return True
         except hmi.TimeoutException:
             return False
@@ -165,6 +165,7 @@ class RayTraceSelector(smach.State):
 
                 # Check if feasible
                 if assignment == "continue":
+                    self._pause = False
                     continue
                 elif assignment == "drive" and self._last_entity_id != "":  # Drive do waypoint
                     conf_sentence = "Do you want me to drive to that point"
@@ -179,7 +180,11 @@ class RayTraceSelector(smach.State):
                     self.robot.speech.speak("I am sorry but i cannot grasp anything from the floor", block=True)
                 else:
                     rospy.logwarn("Something went terribly wrong, I cannot process {}".format(assignment))
+                    self._pause = False
                     continue
+
+                # Disable the pause
+                self._pause = False
 
                 # Ask for confirmation
                 self.robot.speech.speak(conf_sentence, block=True)
@@ -220,6 +225,7 @@ class RayTraceSelector(smach.State):
         people raising their hands is counted and markers are published on their positions
         :param msg: tue_msgs/People message
         """
+        rospy.loginfo("People callback: active: {}, pause: {}".format(self._active, self._pause))
         # Check if active
         if not self._active:
             return
