@@ -37,11 +37,11 @@ class SelectEasiestGraspEntity(smach.State):
 class InspectAndGrab(smach.StateMachine):
     """ Smach state machine to inspect a given entity and grab something from its on_top_of area
     """
-    def __init__(self, robot, supporting_entity_designator):
+    def __init__(self, robot, supporting_entity_designator, arm_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'inspect_failed', 'grasp_failed'])
         self._robot = robot
         self._supporting_entity_designator = supporting_entity_designator
-        self._arm_designator = UnoccupiedArmDesignator(self._robot.arms, self._robot.leftArm)
+        self._arm_designator = arm_designator
 
         self._classification_result_designator = VariableDesignator([], resolve_type=[ClassificationResult])
 
@@ -80,11 +80,13 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
     des = EdEntityDesignator(robot=robot, id='left_planks')
+    arm_des = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
 
     with sm:
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("INSPECT_AND_GRAB",
-                               InspectAndGrab(robot, supporting_entity_designator=des),
+                               InspectAndGrab(robot, supporting_entity_designator=des,
+                                              arm_designator=arm_des),
                                transitions={"succeeded": "Done",
                                             "inspect_failed": "Aborted",
                                             "grasp_failed": "Aborted"})
