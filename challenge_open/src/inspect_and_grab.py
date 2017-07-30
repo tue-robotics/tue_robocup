@@ -41,7 +41,7 @@ class InspectAndGrab(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'inspect_failed', 'grasp_failed'])
         self._robot = robot
         self._supporting_entity_designator = supporting_entity_designator
-        self._arm_designator = UnoccupiedArmDesignator(self._robot.arms, self._robot.rightArm)
+        self._arm_designator = UnoccupiedArmDesignator(self._robot.arms, self._robot.leftArm)
 
         self._classification_result_designator = VariableDesignator([], resolve_type=[ClassificationResult])
 
