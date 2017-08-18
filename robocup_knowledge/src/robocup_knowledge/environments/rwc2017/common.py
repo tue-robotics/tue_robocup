@@ -101,8 +101,8 @@ inspect_areas = {
     "kitchen_rack": ["shelf2", "shelf3", "shelf4"],
     "kitchen_table": ["on_top_of", "on_top_of_back"],
     "sideboard": ["on_top_of", "shelf1"],
-    "left_rack": ["on_top_of"],
-    "right_rack": ["on_top_of"],
+    "left_rack": ["on_top_of", "shelf3", "shelf2"],
+    "right_rack": ["on_top_of", "shelf3", "shelf2"],
     "left_planks": ["on_top_of"],
     "right_planks": ["on_top_of"]
 }
