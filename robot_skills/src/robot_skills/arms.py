@@ -260,6 +260,12 @@ class Arm(RobotPart):
         '''
         return self.send_joint_goal('reset', timeout=timeout)
 
+    def zero(self, timeout=0.0):
+        '''
+        Put the arm into the 'zero' pose
+        '''
+        return self._send_joint_trajectory([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], timeout=rospy.Duration(timeout))
+
     @property
     def occupied_by(self):
         '''
