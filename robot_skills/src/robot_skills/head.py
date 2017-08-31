@@ -300,7 +300,7 @@ class Head(RobotPart):
             return False
 
         raw_recognitions = self._get_faces(image).recognitions
-        recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
+        recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.width > WIDTH_TRESHOLD]
         rospy.loginfo('found %d valid face(s)', len(recognitions))
 
         if len(recognitions) != 1:
