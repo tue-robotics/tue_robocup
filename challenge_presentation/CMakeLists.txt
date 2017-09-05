@@ -9,7 +9,7 @@ project(challenge_presentation)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   robot_skills
-  robot_smach_states/
+  robot_smach_states
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
