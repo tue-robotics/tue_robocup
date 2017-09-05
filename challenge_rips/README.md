@@ -9,4 +9,4 @@ localhost:
     sshamigo3 #This will not work because amigo is unplugged
 
 During the challenge: 
-    - Amigo drives to some position and then says it will wait for 'continue' to be said.
+    - Amigo drives to some position and then says it will wait for 'continue' to be said. After which it will drive to the exit.
