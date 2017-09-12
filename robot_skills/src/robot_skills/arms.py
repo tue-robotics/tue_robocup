@@ -260,6 +260,12 @@ class Arm(RobotPart):
         '''
         return self.send_joint_goal('reset', timeout=timeout)
 
+    def zero(self, timeout=0.0):
+        '''
+        Put the arm into the 'zero' pose
+        '''
+        return self.send_joint_goal('zero', timeout=timeout)
+
     @property
     def occupied_by(self):
         '''
