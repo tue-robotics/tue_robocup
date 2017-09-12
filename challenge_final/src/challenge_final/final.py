@@ -1,31 +1,21 @@
-# ROS
-import PyKDL as kdl
 import robot_smach_states as states
 import rospy
 import smach
-
-# TU/e Robotics
-from robocup_knowledge import knowledge_loader
-from robocup_knowledge import knowledge_loader
-import robot_smach_states as states
-from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
 from challenge_storing_groceries.manipulate_machine import PlaceSingleItem
+from robocup_knowledge import knowledge_loader
+from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
 
-# Challenge final
 from pickup_item import PickupItem
 from pointing_designator import PointingDesignator
 from pointing_detector import PointingDetector
-from track_operator import TrackFace
 
 # Load the knowledge
 knowledge = knowledge_loader.load_knowledge("challenge_final")
 
 
-
-
-
 class ChallengeFinal(smach.StateMachine):
     """ State machine for the final challenge """
+
     def __init__(self, robot):
         """ Constructor
         :param robot: robot object
@@ -150,5 +140,3 @@ class ChallengeFinal(smach.StateMachine):
             #                        TrackFace(robot=robot),
             #                        transitions={"aborted": "Done",
             #                                     "lost": "Done"})
-
-

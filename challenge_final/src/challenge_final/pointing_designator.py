@@ -1,12 +1,10 @@
-# ROS
 import rospy
-
-# TU/e Robotics
 from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
 
 
 class PointingDesignator(EdEntityDesignator):
     """ Specific designator for challenge final """
+
     def __init__(self, robot):
         """ Constructor
 
