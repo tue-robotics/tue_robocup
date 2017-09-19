@@ -207,7 +207,6 @@ def main():
         robot.rightArm.reset()
         robot.rightArm.send_gripper_goal('close',0.0)
         robot.torso.reset()
-        robot.ed.reset()
 
         if task_result.succeeded:
             # Keep track of the number of performed tasks
