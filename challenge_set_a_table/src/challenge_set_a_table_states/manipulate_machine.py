@@ -8,7 +8,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 # Challenge set the table
-# from entity_description_designator import EntityDescriptionDesignator
 from config import MIN_GRAB_OBJECT_HEIGHT, MAX_GRAB_OBJECT_WIDTH
 
 
@@ -93,12 +92,6 @@ class GrabSingleItem(smach.StateMachine):
                                    smach.CBState(lock),
                                    transitions={'locked': 'GRAB_ITEM'})
 
-            # smach.StateMachine.add("ANNOUNCE_ITEM",
-            #                        states.Say(robot, EntityDescriptionDesignator(self.grab_designator,
-            #                                                                      name="current_item_desc"),
-            #                                   block=False),
-            #                        transitions={'spoken': 'GRAB_ITEM'})
-
             smach.StateMachine.add("GRAB_ITEM",
                                    states.Grab(robot, self.grab_designator, self.empty_arm_designator),
                                    transitions={'done': 'UNLOCK_ITEM_SUCCEED',
@@ -173,37 +166,24 @@ class ManipulateMachine(smach.StateMachine):
     - State place shelf
     - Place item
     """
-    def __init__(self, robot, grasp_designator1, grasp_designator2, grasp_designator3):
+    def __init__(self, robot, grasp_designator1, grasp_designator2, grasp_designator3,
+                 grasp_furniture_id1, grasp_furniture_id3, place_furniture_id):
         """ Constructor
         :param robot: robot object
+        :param grasp_designator1: EdEntityDesignator designating the first item to grab.
+        :param grasp_designator2: EdEntityDesignator designating the second item to grab.
+        :param grasp_designator3: EdEntityDesignator designating the third item to grab.
+        :param grasp_furniture_id1: string identifying the location where to grasp objects 1 and 2
+        :param grasp_furniture_id3: string identifying the location where to grasp object 3
+        :param place_furniture_id: string identifying the location where to place the objects
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        # grasp_furniture_designator = ds.EntityByIdDesignator(robot, id=grasp_furniture_id)
-        # grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                           area_description=grasp_surface_id)
-        # grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                           area_description=grasp_surface_id)
-        # grab_designator_3 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                           area_description=grasp_surface_id)
-        #
-        # place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
-        # place_designator = ds.EmptySpotDesignator(robot=robot,
-        #                                           place_location_designator=place_furniture_designator,
-        #                                           area=place_surface_id)
+        grasp_furniture_designator1 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id1)
+        grasp_furniture_designator3 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id3)
 
-        grasp_furniture_designator1 = ds.EntityByIdDesignator(robot, id="kitchen_counter")
-        # grasp_furniture_designator2 = ds.EntityByIdDesignator(robot, id="kitchen_counter")
-        grasp_furniture_designator3 = ds.EntityByIdDesignator(robot, id="kitchen_rack")
-        # grab_designator1 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                          area_description="on_top_of")
-        # grab_designator2 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                          area_description="on_top_of")
-        # grab_designator3 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                          area_description="shelf3")
-
-        place_furniture_designator = ds.EntityByIdDesignator(robot, id="kitchen_table")
+        place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
         place_designator = ds.EmptySpotDesignator(robot=robot,
                                                   place_location_designator=place_furniture_designator,
                                                   area="on_top_of")

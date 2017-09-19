@@ -30,15 +30,6 @@ class ChallengeSetATable(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         # Create designators
-        # grasp_furniture_designator = ds.EntityByIdDesignator(robot, id=knowledge.cupboard)
-        # grasp_designator = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
-        #                                          area_description=knowledge.cupboard_surface)
-        #
-        # place_furniture_designator = ds.EntityByIdDesignator(robot, id=knowledge.table)
-        # place_designator = ds.EmptySpotDesignator(robot=robot,
-        #                                           place_location_designator=place_furniture_designator,
-        #                                           area=knowledge.table_surface)
-
         grasp_designator1 = ds.EdEntityDesignator(robot, type="temp")
         grasp_designator2 = ds.EdEntityDesignator(robot, type="temp")
         grasp_designator3 = ds.EdEntityDesignator(robot, type="temp")
@@ -79,21 +70,12 @@ class ChallengeSetATable(smach.StateMachine):
                                    ManipulateMachine(robot=robot,
                                                      grasp_designator1=grasp_designator1,
                                                      grasp_designator2=grasp_designator2,
-                                                     grasp_designator3=grasp_designator3),
+                                                     grasp_designator3=grasp_designator3,
+                                                     grasp_furniture_id1=knowledge.cupboard,
+                                                     grasp_furniture_id3=knowledge.cupboard,
+                                                     place_furniture_id=knowledge.table),
                                    transitions={'succeeded': 'ANNOUNCE_TASK_COMPLETION',
                                                 'failed': 'RETURN_TO_START_2'})
-
-            # We won't pour anything
-            # smach.StateMachine.add('SERVE_MEAL',  # Serve the meal (for example: pour milk into the bowl)
-            #                        states.Initialize(robot),
-            #                        transitions={'initialized': 'CORRECT_OBJECT_POSITIONS',
-            #                                     'abort': 'Aborted'})
-
-            # You don't get points for this?!
-            # smach.StateMachine.add('CORRECT_OBJECT_POSITIONS',  # Inspect table and correct the moved objects
-            #                        states.Initialize(robot),
-            #                        transitions={'initialized': 'ANNOUNCE_TASK_COMPLETION',
-            #                                     'abort': 'Aborted'})
 
             smach.StateMachine.add('ANNOUNCE_TASK_COMPLETION',
                                    states.Say(robot, "The table is set! Moving to the meeting point for the next task.",
@@ -112,15 +94,11 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'done': 'CLEAR_UP'})
 
             smach.StateMachine.add('CLEAR_UP',  # Clear the table
-                                   ClearManipulateMachine(robot=robot),
+                                   ClearManipulateMachine(robot=robot, grasp_furniture_id=knowledge.table,
+                                                          place_furniture_id1=knowledge.cupboard,
+                                                          place_furniture_id3=knowledge.cupboard),
                                    transitions={'succeeded': 'END_CHALLENGE',
                                                 'failed': 'END_CHALLENGE'})
-
-            # We can't clean the table
-            # smach.StateMachine.add('CLEAN_THE_TABLE',  # Inspect for spots and spills and clean them
-            #                        states.Initialize(robot),
-            #                        transitions={'initialized': 'END_CHALLENGE',
-            #                                     'abort': 'Aborted'})
 
             # End
             smach.StateMachine.add('END_CHALLENGE',

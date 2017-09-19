@@ -183,8 +183,9 @@ class GetBreakfastOrder(smach.State):
         self.robot.speech.speak("I will serve this all on a {}".format(self.options[choice]["difficult3"]), block=True)
 
 
-
 # Standalone testing -----------------------------------------------------------------~
+
+
 class TestFetchCommand(smach.StateMachine):
         def __init__(self, robot):
                 smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])

@@ -26,14 +26,17 @@ class ClearManipulateMachine(smach.StateMachine):
     - State place shelf
     - Place item
     """
-    def __init__(self, robot):
+    def __init__(self, robot, grasp_furniture_id, place_furniture_id1, place_furniture_id3):
         """ Constructor
         :param robot: robot object
+        :param grasp_furniture_id: string identifying the furniture object where to grasp the objects
+        :param place_furniture_id1: string identifying the furniture object where to place objects 1 and 2
+        :param place_furniture_id3: string identifying the furniture object where to place object 3
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        grasp_furniture_designator = ds.EntityByIdDesignator(robot, id="kitchen_table")
+        grasp_furniture_designator = ds.EntityByIdDesignator(robot, id=grasp_furniture_id)
         grasp_designator1 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
                                                   area_description="on_top_of")
         grasp_designator2 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
@@ -41,12 +44,12 @@ class ClearManipulateMachine(smach.StateMachine):
         grasp_designator3 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
                                                   area_description="on_top_of")
 
-        place_furniture_designator1 = ds.EntityByIdDesignator(robot, id="kitchen_counter")
+        place_furniture_designator1 = ds.EntityByIdDesignator(robot, id=place_furniture_id1)
         place_designator1 = ds.EmptySpotDesignator(robot=robot,
                                                    place_location_designator=place_furniture_designator1,
                                                    area="on_top_of")
 
-        place_furniture_designator3 = ds.EntityByIdDesignator(robot, id="kitchen_counter")
+        place_furniture_designator3 = ds.EntityByIdDesignator(robot, id=place_furniture_id3)
         place_designator3 = ds.EmptySpotDesignator(robot=robot,
                                                    place_location_designator=place_furniture_designator3,
                                                    area="on_top_of")
