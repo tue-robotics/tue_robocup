@@ -33,7 +33,8 @@ class StoringGroceries(smach.StateMachine):
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
-                                   states.Say(robot, "I am unable to open the shelf door, can you please open it for me?"),
+                                   states.Say(robot, "I am unable to open the shelf door, "
+                                                     "can you please open it for me?"),
                                    transitions={'spoken': 'AWAIT_START'})
 
             smach.StateMachine.add("AWAIT_START",
@@ -117,4 +118,3 @@ class StoringGroceries(smach.StateMachine):
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "manipulation")
-
