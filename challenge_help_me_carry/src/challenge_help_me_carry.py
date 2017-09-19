@@ -141,27 +141,6 @@ class NavigateToRoom(smach.State):
 
         return navigateToWaypoint.execute()
 
-class ArmWaitForMotionDone(smach.State):
-
-    def __init__(self, robot, arm_designator, timeout=10.0):
-
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'])
-
-        self._robot = robot
-        check_type(arm_designator, Arm)
-        self.arm_designator = arm_designator
-        self.timeout = timeout
-
-    def execute(self, userdata):
-        arm = self.arm_designator.resolve()
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
-        if arm.wait_for_motion_done(timeout=self.timeout):
-            return 'succeeded'
-        return "failed"
-
 
 class DropBagOnGround(smach.StateMachine):
     """
