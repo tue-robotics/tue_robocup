@@ -2,7 +2,7 @@
 <package>
   <name>challenge_spr</name>
   <version>1.0.0</version>
-  <description>Speech and Person Recognition challenge from Robocup 2017 rulebook</description>
+  <description>Speech and Person Recognition challenge</description>
 
   <maintainer email="alexandrov.samuil@gmail.com">Sam Alexandrov</maintainer>
 
