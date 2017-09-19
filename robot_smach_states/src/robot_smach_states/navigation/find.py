@@ -34,11 +34,15 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
     # TODO: hack because ed maintains all labels that were ever assigned to an entity in the .types field
     if entity_description['type'] == 'person':
         entities = [e for e in entities if e.is_a('possible_human')]
+
+        # Remove the segmented entities from the inspection
+        for id in list_of_entity_ids:
+            robot.ed.update_entity(id=id, action='remove')
     else:
         # Select entities based on the description (only type for now)
         try:
             if entity_description['type'] in knowledge.object_categories:
-                entities = [e for e in entities if knowledge.object_category(e.type) == entity_description['type']]
+                entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['type']]
             else:
                 entities = [e for e in entities if e.type == entity_description['type']]
         except:
@@ -74,10 +78,10 @@ class CheckIfDescribedEntityAvailable(smach.State):
 
     def execute(self, userdata=None):
         ids_to_select_from = [e.id for e in self._candidate_entities_designator.resolve()]
-        rospy.logdebug('list of entities to select from: {}'.format(ids_to_select_from))
+        rospy.loginfo('list of entities to select from: {}'.format(ids_to_select_from))
         description = self._description_designator.resolve()
 
-        rospy.logdebug('description used for selection: {}'.format(description))
+        rospy.loginfo('description used for selection: {}'.format(description))
 
         satisfying_entities = entities_from_description(robot=self._robot,
                                                         entity_description=description,

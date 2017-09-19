@@ -2,7 +2,7 @@
 State machine startup
 
 Usage:
-  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no_execute]
+  challenge_{challenge_name}.py ({robot}) [--initial=<init>] [--initial_pose=<init_pose>] [--debug] [--no-execute]
 
 Options:
   -h --help                     Show this screen.
@@ -45,7 +45,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     initial_state = arguments["--initial"]
     initial_pose = arguments["--initial_pose"]
     enable_debug = arguments["--debug"]
-    no_execute = arguments["--no_execute"]
+    no_execute = arguments["--no-execute"]
 
     robot = robot_constructor(robot_name)
 
