@@ -35,24 +35,17 @@ def look_at_segmentation_area(robot, entity, volume=None):
     # Check if we have areas: use these
     if volume in entity.volumes:
         search_volume = entity.volumes[volume]
-        try:
-            x_obj = 0.5 * (search_volume.min_corner.x() + search_volume.max_corner.x())
-            y_obj = 0.5 * (search_volume.min_corner.y() + search_volume.max_corner.y())
-            z_obj = search_volume.min_corner.z()
-            lookat_pos_map = entity.pose.frame * kdl.Vector(x_obj, y_obj, z_obj)
-            x = lookat_pos_map.x()
-            y = lookat_pos_map.y()
-            z = lookat_pos_map.z()
-        except Exception as e:
-            rospy.logerr("Cannot get z_min of volume {} of entity {}: {}".format(volume,
-                                                                                 entity.id, e.message))
+        x_obj = 0.5 * (search_volume.min_corner.x() + search_volume.max_corner.x())
+        y_obj = 0.5 * (search_volume.min_corner.y() + search_volume.max_corner.y())
+        z_obj = search_volume.min_corner.z()
+        lookat_pos_map = entity.pose.frame * kdl.Vector(x_obj, y_obj, z_obj)
+        x = lookat_pos_map.x()
+        y = lookat_pos_map.y()
+        z = lookat_pos_map.z()
     else:
         # Look at the top of the entity to inspect
         pos = entity.pose.frame.p
-        try:
-            z = pos.z + entity.shape.z_max
-        except Exception as e:
-            rospy.logerr("Cannot get z_max of entity {}: {}".format(entity.id, e.message))
+        z = pos.z + entity.shape.z_max
 
     # Point the head at the right direction
     robot.head.look_at_point(VectorStamped(x, y, z, "/map"), timeout=0)
