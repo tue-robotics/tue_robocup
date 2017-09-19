@@ -22,12 +22,22 @@ class Speech(RobotPart):
     def close(self):
         pass
 
-    def speak(self, sentence, language=None, personality=None, voice=None, mood=None, block=True, replace={"_":" "}):
+    def speak(self, sentence, language=None, personality=None, voice=None, mood=None, block=True, replace={"_": " "}):
         """
         Send a sentence to the text to speech module.
-        You can set language, personality, voice and mood for the Phiips TTS.
-        When block=False, this method returns immediatly.
-        With the replace-dictionary, you can specify which characters to replace with what. By default, it replace underscores with spaces.
+        You can set language, personality, voice and mood for the Philips TTS.
+        When block=False, this method returns immediately.
+        With the replace-dictionary, you can specify which characters to replace with what. By default, it replace
+        underscores with spaces.
+
+        :param sentence: string with sentence to pronounce
+        :param language: string with language to speak. Philips TTS supports English (en) Dutch (nl)
+        :param personality:  # ToDo: update
+        :param voice:  # ToDo: update
+        :param mood:  # ToDo: update
+        :param block: bool to indicate whether this function should return immediately or if it should block until the
+        sentence has been spoken
+        :param replace: dictionary with replacement stuff # ToDo: replace
         """
 
         if not language:
