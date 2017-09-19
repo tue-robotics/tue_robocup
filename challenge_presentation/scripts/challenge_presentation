@@ -7,9 +7,9 @@ import rospy
 from robot_smach_states.util.startup import startup
 
 # Challenge presentation
-from challenge_presentation.presentation import Presentation
+from challenge_presentation.presentation import PresentationMachine
 
 if __name__ == '__main__':
     rospy.init_node('state_machine')
 
-    startup(Presentation)
+    startup(PresentationMachine)
