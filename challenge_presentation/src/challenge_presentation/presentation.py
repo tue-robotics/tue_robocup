@@ -23,7 +23,6 @@ class Presentation(smach.State):
         :return:
         """
         # ToDo: here we can have the robot do awesome stuff
-        # self.robot.speech.speak("Yeehah")
         # Introduction
         self.robot.speech.speak("Hi, my name is {}".format(self.robot.robot_name), block=True)
         self.robot.speech.speak("I am one of the care robots of the Eindhoven University of Technology", block=True)
@@ -41,13 +40,12 @@ class Presentation(smach.State):
         # Arms
         self.robot.speech.speak("I have two arms. These have the dimensions and degrees of freedom of human arms",
                                 block=False)
-        self.robot.speech.speak("With these, I can grasp objects")
-        # ToDo: replace
-        self.robot.leftArm._send_joint_trajectory([[-0.1, 1.4, 0.5, 1.6, 0, 0, 0],
-                                                   [-0.1, 1.4, -0.5, 1.6, 0, 0, 0],
-                                                   [-0.1, 1.4, 0.5, 1.6, 0, 0, 0],
-                                                   [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]])
-
+        self.robot.leftArm.send_joint_trajectory("wave_front")
+        self.robot.speech.speak("At the end of my arms, I have two grippers with which I can grasp objects", block=False)
+        self.robot.leftArm.send_gripper_goal("open")
+        self.robot.leftArm.send_gripper_goal("close")
+        self.robot.rightArm.send_gripper_goal("open")
+        self.robot.rightArm.send_gripper_goal("close")
         # Torso
         self.robot.speech.speak("My arms are mounted on a moveable torso. This way, I can grasp higher and lower",
                                 block=False)
@@ -57,21 +55,21 @@ class Presentation(smach.State):
 
         # Kinect
         self.robot.speech.speak("As a head, I have a 3D camera. I use this to detect and recognize objects and people",
-                                block=False)
-        # ToDo: replace
-        self.robot.rightArm._send_joint_trajectory([[-0.1, 1.4, 0.5, 1.6, 0, 0, 0],
-                                                   [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]])
+                                block=True)
+        self.robot.speech.speak("My 3D camera is mounted on top of my torso", block=False)
+        self.robot.rightArm.send_joint_trajectory("point_to_kinect")
 
         # Lasers
-        self.robot.speech.speak("Furthermore, I have two laser range finders to help me to see where I am", block=False)
-        # ToDo: replace
-        self.robot.leftArm._send_joint_trajectory([[-1.2, 0.3, 1.0, 2.2, 0, 0.5, 0],
-                                                   [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]])
+        self.robot.speech.speak("Furthermore, I have two laser range finders to help me to see where I am", block=True)
+        self.robot.speech.speak("One laser is mounted on my torso and the other one is at the bottom of my base",
+                                block=False)
+        self.robot.leftArm.send_joint_trajectory("point_to_laser")
 
         # Microphone
         self.robot.speech.speak("Finally, I have a microphone on my head so that I can hear what you're saying")
 
-        # ToDo: uitsmijter
+        # Final
+        self.robot.speech.speak("This was my introduction, I hope that you like what you see and please enjoy the presentation.")
 
         return "done"
 
