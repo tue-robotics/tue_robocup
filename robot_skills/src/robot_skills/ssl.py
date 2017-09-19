@@ -2,10 +2,11 @@ import rospy
 import tf
 import math
 from geometry_msgs.msg import PoseStamped
+from robot_part import RobotPart
 
 
-class SSL(object):
-    def __init__(self, topic):
+class SSL(RobotPart):
+    def __init__(self, robot_name, tf_listener):
         """
         Sound source localization interface for the robot
 
@@ -15,7 +16,8 @@ class SSL(object):
 
         :param topic: Incoming PoseStamped
         """
-        self._sub = rospy.Subscriber(topic, PoseStamped, self._callback, queue_size=1)
+        super(SSL, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self._sub = rospy.Subscriber('/{}/ssl/direction_of_arrival'.format(self.robot_name), PoseStamped, self._callback, queue_size=1)
         self._last_msg = None
         self._last_received_time = rospy.Time(0)
 

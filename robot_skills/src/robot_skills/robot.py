@@ -43,7 +43,7 @@ class Robot(object):
         self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
         self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
         self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
-        self.parts['ssl'] = ssl.SSL('/{}/ssl/direction_of_arrival'.format(self.robot_name))
+        self.parts['ssl'] = ssl.SSL(self.robot_name, self.tf_listener)
 
         # Human Robot Interaction
         self.parts['lights'] = lights.Lights(self.robot_name, self.tf_listener)
