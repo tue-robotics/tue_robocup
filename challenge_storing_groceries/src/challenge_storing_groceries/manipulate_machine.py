@@ -9,7 +9,8 @@ import robot_smach_states.util.designators as ds
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
-from config import TABLE, GRAB_SURFACE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA, CABINET
+# from config import TABLE, GRAB_SURFACE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA, CABINET
+from config import GRAB_SURFACE
 from config import MIN_GRAB_OBJECT_HEIGHT, MAX_GRAB_OBJECT_WIDTH
 
 
@@ -125,7 +126,7 @@ class GrabSingleItem(smach.StateMachine):
 class PlaceSingleItem(smach.State):
     """ Tries to place an object. A 'place' statemachine is constructed dynamically since this makes it easier to
      build a statemachine (have we succeeded in grasping the objects?)"""
-    def __init__(self, robot, place_designator=None):
+    def __init__(self, robot, place_designator):
         """ Constructor
 
         :param robot: robot object
@@ -135,12 +136,12 @@ class PlaceSingleItem(smach.State):
 
         self._robot = robot
         if place_designator is not None:
-            self._place_designator = place_designator
-        else:
-            place_entity_designator = ds.EdEntityDesignator(robot=robot, id=DEFAULT_PLACE_ENTITY)
-            self._place_designator = ds.EmptySpotDesignator(robot=robot,
-                                                            place_location_designator=place_entity_designator,
-                                                            area=DEFAULT_PLACE_AREA)
+            self.place_designator = place_designator
+        # else:
+        #     place_entity_designator = ds.EdEntityDesignator(robot=robot, id=DEFAULT_PLACE_ENTITY)
+        #     self._place_designator = ds.EmptySpotDesignator(robot=robot,
+        #                                                     place_location_designator=place_entity_designator,
+        #                                                     area=DEFAULT_PLACE_AREA)
 
         # ToDo: unlock stuff?
 
@@ -159,7 +160,7 @@ class PlaceSingleItem(smach.State):
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
         arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
-        sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self._place_designator, arm=arm_designator)
+        sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self.place_designator, arm=arm_designator)
         result = sm.execute()
 
         # If failed, do handover to human in order to continue
@@ -193,28 +194,36 @@ class ManipulateMachine(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self._table_designator = ds.EntityByIdDesignator(robot, id=TABLE)
+        self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
         if grab_designator_1 is None:
-            grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self._table_designator,
+            grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE)
         if grab_designator_2 is None:
-            grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self._table_designator,
+            grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE)
+        self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
+
+        self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
+        self.place_designator = ds.EmptySpotDesignator(robot=robot,
+                                                       place_location_designator=self.place_entity_designator,
+                                                       area="temp")
+        self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
+        self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
 
         with self:
 
             smach.StateMachine.add("MOVE_TO_TABLE1",
                                    states.NavigateToSymbolic(robot,
-                                                             {self._table_designator: "in_front_of"},
-                                                             self._table_designator),
+                                                             {self.table_designator: "in_front_of"},
+                                                             self.table_designator),
                                    transitions={'arrived': 'INSPECT_TABLE',
                                                 'unreachable': 'MOVE_TO_TABLE2',
                                                 'goal_not_defined': 'INSPECT_TABLE'})
 
             smach.StateMachine.add("MOVE_TO_TABLE2",
                                    states.NavigateToSymbolic(robot,
-                                                             {self._table_designator: "large_in_front_of"},
-                                                             self._table_designator),
+                                                             {self.table_designator: "large_in_front_of"},
+                                                             self.table_designator),
                                    transitions={'arrived': 'INSPECT_TABLE',
                                                 'unreachable': 'INSPECT_TABLE',
                                                 'goal_not_defined': 'INSPECT_TABLE'})
@@ -227,7 +236,7 @@ class ManipulateMachine(smach.StateMachine):
                 # Add the designator to the pdf writer state
                 pdf_writer.set_designator(class_designator)
 
-                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self._table_designator,
+                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=class_designator,
                                                                        searchArea=GRAB_SURFACE,
                                                                        navigation_area="in_front_of"),
@@ -236,9 +245,9 @@ class ManipulateMachine(smach.StateMachine):
 
                 smach.StateMachine.add("WRITE_PDF", pdf_writer, transitions={"done": "GRAB_ITEM_1"})
             else:
-                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self._table_designator,
+                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=None, searchArea=GRAB_SURFACE,
-                                                                       inspection_area="in_front_of"),
+                                                                       navigation_area="in_front_of"),
                                        transitions={"done": "GRAB_ITEM_1",
                                                     "failed": "failed"})
 
@@ -250,19 +259,18 @@ class ManipulateMachine(smach.StateMachine):
                                    transitions={"succeeded": "MOVE_TO_PLACE",
                                                 "failed": "MOVE_TO_PLACE"})
 
-            cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
             smach.StateMachine.add("MOVE_TO_PLACE",
                                    states.NavigateToSymbolic(robot,
-                                                             {cabinet: "in_front_of"},
-                                                             cabinet),
+                                                             {self.cabinet: "in_front_of"},
+                                                             self.cabinet),
                                    transitions={'arrived': 'PLACE_ITEM_1',
                                                 'unreachable': 'PLACE_ITEM_1',
                                                 'goal_not_defined': 'PLACE_ITEM_1'})
 
-            smach.StateMachine.add("PLACE_ITEM_1", PlaceSingleItem(robot=robot, place_designator=place_designator),
+            smach.StateMachine.add("PLACE_ITEM_1", self.placeaction1,
                                    transitions={"succeeded": "PLACE_ITEM_2",
                                                 "failed": "PLACE_ITEM_2"})
 
-            smach.StateMachine.add("PLACE_ITEM_2", PlaceSingleItem(robot=robot, place_designator=place_designator),
+            smach.StateMachine.add("PLACE_ITEM_2", self.placeaction2,
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})

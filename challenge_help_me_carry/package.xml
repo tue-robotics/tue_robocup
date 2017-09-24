@@ -2,9 +2,9 @@
 <package>
   <name>challenge_help_me_carry</name>
   <version>0.0.0</version>
-  <description>No description available</description>
+  <description>Help-me-carry challenge</description>
 
-  <maintainer email="t.m.assman@gmail.com">Tim Assman</maintainer>
+  <maintainer email="amigo@tue.nl">Loy van Beek</maintainer>
 
   <license>TODO</license>
 

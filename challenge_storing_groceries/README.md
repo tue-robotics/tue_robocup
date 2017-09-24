@@ -38,6 +38,11 @@ ToDo: update (so skip it at this point)
 
 # Notes
 
+Before the challenge
+--------------------
+To run this in simulation, you first need to add the simulated objects to the simulator. In order to do so, run:
+rosrun challenge_storing_groceries add_entities.py
+
 During the challenge
 --------------------
 

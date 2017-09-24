@@ -11,7 +11,7 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.designators import check_type
-from robot_skills.arms import Arm
+from robot_skills.arms import Arm, ArmState
 
 import robot_smach_states as states
 
@@ -47,7 +47,7 @@ class WaitForOperatorCommand(smach.State):
 
         smach.State.__init__(self, outcomes=_outcomes,  output_keys=_output_keys)
 
-    def _listen_for_commands(self, tries=3, time_out=30):
+    def _listen_for_commands(self, tries=5, time_out=30):
         for i in range(0, tries):
             try:
                 result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T', timeout=time_out)
@@ -141,6 +141,7 @@ class NavigateToRoom(smach.State):
 
         return navigateToWaypoint.execute()
 
+
 class DropBagOnGround(smach.StateMachine):
     """
     Put a bag in the robot's gripper on the ground
@@ -156,13 +157,13 @@ class DropBagOnGround(smach.StateMachine):
         check_type(arm_designator, Arm)
 
         with self:
-            smach.StateMachine.add( 'OPEN_BEFORE_DROP', states.SetGripper(robot, arm_designator, gripperstate='open'),
-                                transitions={'succeeded'    :   'DROP_POSE',
-                                             'failed'       :   'DROP_POSE'})
+            smach.StateMachine.add('DROP_POSE', states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
+                                   transitions={'succeeded': 'OPEN_AFTER_DROP',
+                                                'failed': 'OPEN_AFTER_DROP'})
 
-            smach.StateMachine.add("DROP_POSE", states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
-                            transitions={'succeeded'        :'RESET_ARM_OK',
-                                         'failed'           :'RESET_ARM_FAIL'})
+            smach.StateMachine.add('OPEN_AFTER_DROP', states.SetGripper(robot, arm_designator, gripperstate=ArmState.OPEN),
+                                transitions={'succeeded'    :   'RESET_ARM_OK',
+                                             'failed'       :   'RESET_ARM_FAIL'})
 
             smach.StateMachine.add( 'RESET_ARM_OK', states.ResetArms(robot),
                                 transitions={'done'         :   'succeeded'})
@@ -204,8 +205,14 @@ def setup_statemachine(robot):
     with sm:
         smach.StateMachine.add('INITIALIZE',
                                states.Initialize(robot),
-                               transitions={'initialized':    'FOLLOW_OPERATOR',
+                               transitions={'initialized':    'SET_INITIAL_POSE',
                                             'abort':          'Aborted'})
+
+        smach.StateMachine.add('SET_INITIAL_POSE',
+                               states.SetInitialPose(robot, challenge_knowledge.starting_point),
+                               transitions={'done': 'FOLLOW_OPERATOR',
+                                            "preempted": 'Aborted',
+                                            'error': 'FOLLOW_OPERATOR'})
 
         # TODO: learn operator state needs to be added before follow
         # smach.StateMachine.add('WAIT_TO_FOLLOW',
@@ -250,8 +257,8 @@ def setup_statemachine(robot):
                                             'abort':          'Aborted'})
 
         smach.StateMachine.add('ASK_DESTINATION',
-                                states.Say(robot, ["Where should I bring the groceries?"], block=True),
-                                transitions={'spoken':  'WAIT_FOR_DESTINATION'})
+                               states.Say(robot, ["Where should I bring the groceries?"], block=True),
+                               transitions={'spoken':  'WAIT_FOR_DESTINATION'})
 
         smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                WaitForOperatorCommand(robot,
@@ -263,21 +270,33 @@ def setup_statemachine(robot):
         # Grab the item (bag) the operator hands to the robot, when they are at the "car".
         smach.StateMachine.add('GRAB_ITEM',
                                GrabItem(robot, bag_arm_designator, current_item),
-                               transitions={'succeeded':        'SAY_GOING_TO_ROOM',
-                                            'timeout':          'SAY_GOING_TO_ROOM', # For now in simulation timeout is considered a succes.
-                                            'failed':           'Aborted'},
-                               remapping = {'target_room_in':   'command_recognized',
-                                            'target_room_out':  'target_room'})
+                               transitions={'succeeded':        'ARM_DRIVING_POSE',
+                                            'timeout':          'BACKUP_CLOSE_GRIPPER', # For now in simulation timeout is considered a succes.
+                                            'failed':           'BACKUP_CLOSE_GRIPPER'},
+                               remapping={'target_room_in':   'command_recognized',
+                                          'target_room_out':  'target_room'})
+
+        smach.StateMachine.add('BACKUP_CLOSE_GRIPPER',
+                               states.SetGripper(robot, bag_arm_designator, gripperstate=ArmState.CLOSE),
+                               transitions={'succeeded': 'ARM_DRIVING_POSE',
+                                            'failed': 'ARM_DRIVING_POSE'})
+
+        smach.StateMachine.add('ARM_DRIVING_POSE',
+                               states.ArmToJointConfig(robot, bag_arm_designator, 'driving_bag_pose'),
+                               transitions={'succeeded': 'SAY_GOING_TO_ROOM',
+                                            'failed': 'SAY_GOING_TO_ROOM'})
 
         smach.StateMachine.add('SAY_GOING_TO_ROOM',
-                                states.Say(robot, ["Let me bring in your groceries", "Helping you carry stuff", "I'm going back inside"], block=True),
-                                transitions={'spoken':  'GOTO_DESTINATION'})
-
+                               states.Say(robot, ["Let me bring in your groceries",
+                                                  "Helping you carry stuff",
+                                                  "I'm going back inside"],
+                                          block=True),
+                               transitions={'spoken':  'GOTO_DESTINATION'})
 
         smach.StateMachine.add('GOTO_DESTINATION',
                                NavigateToRoom(robot),
                                transitions={'arrived':          'PUTDOWN_ITEM',
-                                            'unreachable':      'PUTDOWN_ITEM',  #implement avoid obstacle behaviour later
+                                            'unreachable':      'PUTDOWN_ITEM',  # implement avoid obstacle behaviour later
                                             'goal_not_defined': 'Aborted'})
 
         # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
@@ -312,8 +331,11 @@ def setup_statemachine(robot):
                                #             'abort':          'Aborted'})
 
         smach.StateMachine.add('AT_END',
-                                states.Say(robot, ["We arrived at the car, goodbye", "You have reached your destination, goodbye", "The car is right here, see you later!"], block=True),
-                                transitions={'spoken':  'Done'})
+                               states.Say(robot, ["We arrived at the car, goodbye",
+                                                  "You have reached your destination, goodbye",
+                                                  "The car is right here, see you later!"],
+                                          block=True),
+                               transitions={'spoken':  'Done'})
 
     ds.analyse_designators(sm, "help_me_carry")
     return sm

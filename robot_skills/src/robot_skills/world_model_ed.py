@@ -198,6 +198,7 @@ class ED(RobotPart):
 
         if frame_stamped:
             if frame_stamped.frame_id != "/map":
+                rospy.loginfo('update_entity: frame not in map, transforming')
                 frame_stamped = frame_stamped.projectToFrame("/map", self._tf_listener)
 
             Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
@@ -237,7 +238,7 @@ class ED(RobotPart):
             json_entity += ']'
 
         json = '{"entities":[{%s}]}'%json_entity
-        print json
+        rospy.logdebug(json)
 
         return self._ed_update_srv(request=json)
 
@@ -384,6 +385,12 @@ class ED(RobotPart):
         return matches
 
     def ray_trace(self, pose):
+        """ Performs a ray trace
+
+        :param pose: geometry_msg PoseStamped. Position is the origin of ray. x-axis is pointing in the ray direction
+        :return: RayTraceResult. This struct contains intersection_point (geometry_msgs/PoseStamped) and entity_id
+        (string)
+        """
         return self._ed_ray_trace_srv(raytrace_pose=pose)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
