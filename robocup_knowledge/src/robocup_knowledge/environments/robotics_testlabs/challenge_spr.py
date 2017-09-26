@@ -110,11 +110,11 @@ grammar += '''
 
 NQ["action" : "c_count", "entity" : X] -> how many people in the crowd are POSITION[X]
 NQ["action" : "c_count", "entity" : W] -> how many people in the crowd are GESTURE[W]
+NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
 NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
 NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
 NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER
 NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER or GENDER
-NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
 '''
 
 ##############################################################################
