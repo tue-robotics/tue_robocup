@@ -129,6 +129,7 @@ class PlaceSingleItem(smach.State):
 
     def execute(self, userdata=None):
 
+        # ToDo: turn this into a proper statemachine
         arm = None
         # See if there's an arm holding something
         for k, v in self._robot.arms.iteritems():
