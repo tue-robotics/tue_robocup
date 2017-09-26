@@ -64,6 +64,9 @@ class Speech(RobotPart):
         except rospy.ServiceException, e:
             rospy.logerr("Service call failed: {0}".format(e))
             result = False
+        except Exception as e:
+            rospy.logerr("Something went seriously wrong: {}".format(e))
+            result = False
 
         if hasattr(self._post_hook, '__call__'):
             self._post_hook()

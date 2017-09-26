@@ -73,5 +73,20 @@ if __name__ == "__main__":
         W.add_object("coke22", "sim-coke", 3.3 + ux, 0.0 + uy, 0.5)
         W.add_object("coke23", "sim-coke", 3.4 + ux, 0.2 + uy, 0.5)
 
+    if env == "rwc2017":
+
+        ux = 0.0
+        uy = 0.0
+
+        # 2.39, -4.125, 0
+        W.add_object("coke11", "sim-coke", 2.39 + ux, -4.3 + uy, 0.5)
+        W.add_object("coke12", "sim-coke", 2.39 + ux, -4.1 + uy, 0.5)
+        W.add_object("coke13", "sim-coke", 2.39 + ux, -3.9 + uy, 0.5)
+
+        # 4.16, -2.86, 0
+        W.add_object("coke21", "sim-coke", 3.9 + ux, -3.5 + uy, 0.9)
+        W.add_object("coke22", "sim-coke", 4.1 + ux, -3.5 + uy, 0.9)
+        W.add_object("coke23", "sim-coke", 4.3 + ux, -3.5 + uy, 0.9)
+
 
 
