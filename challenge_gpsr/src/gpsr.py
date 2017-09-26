@@ -28,6 +28,7 @@ def task_result_to_report(task_result):
     #     output += " I am truly sorry, let's try this again! "
     return output
 
+
 def request_missing_field(grammar, grammar_target, semantics, missing_field):
     return semantics
 
@@ -41,6 +42,13 @@ def main():
     robot_name  = rospy.get_param('~robot_name')
     no_of_tasks = rospy.get_param('~number_of_tasks', 0)
     test        = rospy.get_param('~test_mode', False)
+    eegpsr      = rospy.get_param('~eegpsr', False)
+    time_limit  = rospy.get_param('~time_limit', 0)
+    if no_of_tasks == 0:
+        no_of_tasks = 999
+
+    if time_limit == 0:
+        time_limit = 999
 
     rospy.loginfo("[GPSR] Parameters:")
     rospy.loginfo("[GPSR] robot_name = {}".format(robot_name))
@@ -52,6 +60,7 @@ def main():
         rospy.loginfo("[GPSR] running a restart")
     if test:
         rospy.loginfo("[GPSR] running in test mode")
+    rospy.loginfo("[GPSR] time_limit = {}".format(time_limit))
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -66,7 +75,10 @@ def main():
 
     action_client = ActionClient(robot.robot_name)
 
-    knowledge = load_knowledge('challenge_gpsr')
+    if eegpsr:
+        knowledge = load_knowledge('challenge_eegpsr')
+    else:
+        knowledge = load_knowledge('challenge_gpsr')
 
     no_of_tasks_performed = 0
 
@@ -98,7 +110,7 @@ def main():
 
     while True:
         # Navigate to the GPSR meeting point
-        if not skip and not finished:
+        if not skip:
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
                                      waypoint_designator=EntityByIdDesignator(robot=robot,
@@ -110,15 +122,34 @@ def main():
         # Report to the user
         robot.head.look_at_standing_person()
         robot.speech.speak(report, block=True)
+        timeout_count = 0
+
+        if finished and not skip:
+            nwc = NavigateToWaypoint(robot=robot,
+                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                              id=knowledge.exit_waypoint),
+                                     radius=0.3)
+            robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)
+            nwc.execute()
+            break
 
         while True:
+            if not test:
+                robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
+
             while True and not test:
                 try:
                     robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
-                except hmi.TimeoutException:
-                    continue
-                else:
+                    timeout_count = 0
                     break
+                except hmi.TimeoutException:
+                    if timeout_count >= 3:
+                        robot.hmi.restart_dragonfly()
+                        timeout_count = 0
+                        rospy.logwarn("[GPSR] Dragonfly restart")
+                    else:
+                        timeout_count += 1
+                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
 
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
@@ -127,10 +158,18 @@ def main():
                     sentence, semantics = robot.hmi.query(description="",
                                                           grammar=knowledge.grammar,
                                                           target=knowledge.grammar_target)
+                    timeout_count = 0
                     break
                 except hmi.TimeoutException:
                     robot.speech.speak(random.sample(knowledge.not_understood_sentences, 1)[0])
-                    continue
+                    if timeout_count >= 3:
+                        robot.hmi.restart_dragonfly()
+                        timeout_count = 0
+                        rospy.logwarn("[GPSR] Dragonfly restart")
+                    else:
+                        timeout_count += 1
+                        rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
+
 
             if not test:
                 # check if we have heard this correctly
@@ -182,17 +221,8 @@ def main():
                 task_word = "tasks"
             report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
 
-        if rospy.get_time() - start_time > 60 * 15:
+        if rospy.get_time() - start_time > (60 * time_limit - 45) and no_of_tasks_performed >= 1:
             finished = True
-
-        if finished and not skip:
-            nwc = NavigateToWaypoint(robot=robot,
-                                     waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.exit_waypoint),
-                                     radius = 0.3)
-            nwc.execute()
-            robot.speech.speak("Thank you very much, and goodbye!", block=True)
-            break
 
 
 # ------------------------------------------------------------------------------------------------------------------------

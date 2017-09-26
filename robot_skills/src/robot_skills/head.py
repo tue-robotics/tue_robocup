@@ -9,7 +9,7 @@ from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from std_srvs.srv import Empty
 from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
-from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetPersons
+from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse
 from image_recognition_msgs.msg import Annotation
 
 from sensor_msgs.msg import Image, RegionOfInterest
@@ -87,8 +87,6 @@ class Head(RobotPart):
         self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
-        # self._get_persons_srv = self.create_service_client('/detect_persons', GetPersons)
-        self._get_persons_srv = self.create_service_client('/' + robot_name + '/person_detection/detect_persons', GetPersons)
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
@@ -302,7 +300,7 @@ class Head(RobotPart):
             return False
 
         raw_recognitions = self._get_faces(image).recognitions
-        recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.height > WIDTH_TRESHOLD]
+        recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.width > WIDTH_TRESHOLD]
         rospy.loginfo('found %d valid face(s)', len(recognitions))
 
         if len(recognitions) != 1:
@@ -330,7 +328,7 @@ class Head(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
-    def get_best_face_recognition(self, recognitions, desired_label):
+    def get_best_face_recognition(self, recognitions, desired_label, probability_threshold=4.0):
         """Returns the Recognition with the highest probability of having the desired_label.
         Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
 
@@ -368,6 +366,7 @@ class Head(RobotPart):
         #else:
         #    best_detection = None
 
+        rospy.loginfo("Probability threshold %.2f", probability_threshold)
         for index, recog in enumerate(recognitions):
             rospy.loginfo("{index}: {dist}".format(index=index,
                                                    dist=[(cp.label, "{:.2f}".format(cp.probability)) for cp in recog.categorical_distribution.probabilities]))
@@ -378,7 +377,7 @@ class Head(RobotPart):
 
         if matching_recognitions:
             best_recognition = max(matching_recognitions, key=lambda recog: recog.categorical_distribution.probabilities[0].probability)
-            return best_recognition
+            return best_recognition if best_recognition.categorical_distribution.probabilities[0].probability > probability_threshold else None
         else:
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
 
@@ -386,167 +385,6 @@ class Head(RobotPart):
     def clear_face(self):
         rospy.loginfo('clearing all learned faces')
         self._clear_srv()
-
-    def _get_persons(self, image):
-        r = self._get_persons_srv(image=image)
-        rospy.loginfo('found %d persons(s) in the image', len(r.detections))
-        return r
-
-    def detect_persons(self):
-        image = self.get_image()
-        return self._get_persons(image).detections
-
-    def detect_waving_persons(self):
-        persons = []
-        for person in self.detect_persons():
-            height = person.neck.y - person.nose.y
-            roi = RegionOfInterest(x_offset=person.nose.x - 10, y_offset=person.nose.y, width=20, height=height)
-            sides = []
-            for side in ['left', 'right']:
-                elbow = getattr(person, '%s_elbow' % side)
-                wrist = getattr(person, '%s_wrist' % side)
-                shoulder = getattr(person, '%s_shoulder' % side)
-
-                if math.isnan(elbow.confidence) or elbow.confidence < 0.4 or\
-                        math.isnan(wrist.confidence) or wrist.confidence < 0.4 or\
-                        math.isnan(shoulder.confidence) or shoulder.confidence < 0.4:
-                    continue
-
-                dx = elbow.x - wrist.x
-                dy = elbow.y - wrist.y
-                rospy.loginfo('%s arm: dx=%f dy=%f', side, dx, dy)
-
-                angle = math.atan2(dy, dx)
-                angle = math.degrees(angle)
-
-                rospy.loginfo('arm angle: %f', angle)
-
-                if angle < 45 or angle > 180 - 45:
-                    rospy.loginfo('skipping %s arm because its not pointing upwards', side)
-                    continue
-
-                if wrist.y < shoulder.y:
-                    rospy.loginfo('skipping %s arm because its not above the shoulder', side)
-
-                if dy < 50:
-                    rospy.loginfo('skipping %s arm because its not big enough', side)
-
-                if person not in persons:
-                    sides.append(side)
-
-            if sides:
-                persons.append(WavingResult(side=sides, roi=roi))
-
-        rospy.loginfo('found %d waving persons', len(persons))
-        return persons
-
-    def detect_persons_3d(self):
-        """
-        :return: [Skeleton]
-        """
-        width = 10 # px
-        height = 10 # px
-
-        persons = self.detect_persons()
-
-        person_slot_rois = []
-        for i, person in enumerate(persons):
-            for slot in person.__slots__:
-                detection = getattr(person, slot)
-                if detection.x == 0 or detection.y == 0:
-                    continue
-                x_offset = max(0, detection.x - width // 2)
-                y_offset = max(0, detection.y - height // 2)
-                width = width
-                height = height
-
-                roi = RegionOfInterest(x_offset=x_offset, y_offset=y_offset, width=width, height=height)
-                print((i, slot, roi))
-                person_slot_rois.append((i, slot, roi))
-
-        try:
-            input = [r for _, _, r in person_slot_rois]
-            rospy.loginfo('project input: %s', str(input))
-            ps = self.project_rois(input).points
-        except ValueError as e:
-            rospy.loginfo('project_rois failed: %s', e)
-            return []
-
-        skeletons = [dict() for _ in range(len(persons))]
-        for j, (person, slot, _) in enumerate(person_slot_rois):
-            p = ps[j]
-            if math.isnan(p.point.x) or math.isnan(p.point.y) or math.isnan(p.point.z):
-                rospy.loginfo('skipping %s because of invalid projection to 3d', slot)
-                continue
-            rospy.loginfo('adding point to person {}: {} at slot {}'.format(person, p.point, slot).replace('\n', ' '))
-            skeletons[person][slot] = p
-
-        for skeleton in skeletons:
-            zmin = float('inf')
-            for slot, point in skeleton.items():
-                if point.point.z < zmin:
-                    zmin = point.point.z
-
-            for slot, point in skeleton.items():
-                point.point.z = zmin
-
-        skeletons = [Skeleton(bodyparts) for bodyparts in skeletons]
-        self.visualize_skeletons(skeletons)
-        return skeletons
-
-    def visualize_skeletons(self, skeletons):
-        """
-        Publish a MarkerArray for the given skeletons
-        :param skeletons: [Skeleton]
-        :return: MarkerArray
-        """
-        skeleton_markers = MarkerArray()
-        import itertools
-        colors = itertools.cycle([ColorRGBA(0, 0, 1, 1), ColorRGBA(1, 0, 0, 1), ColorRGBA(0, 1, 1, 1)])
-
-        for index, skeleton in enumerate(skeletons):
-            try:
-                if skeleton.bodyparts:
-                    skeleton_markers.markers += self.markers_for_skeleton(skeleton, index, sphere_color=colors.next(),line_color=colors.next())
-                else:
-                    rospy.logerr("No bodyparts at index {}".format(index))
-            except Exception as e:
-                rospy.logerr("Could not visualize skeleton {}: {}".format(skeleton, e))
-
-        self._skeleton_pub.publish(skeleton_markers)
-
-    def markers_for_skeleton(self, skeleton, index=0, sphere_color=None, line_color=None):
-        sphere_color = ColorRGBA(1, 0, 0, 1) if not sphere_color else sphere_color
-        line_color = ColorRGBA(0, 0, 1, 1) if not line_color else line_color
-
-        joints_marker = Marker()
-        joints_marker.id = index
-        # joints_marker.lifetime = rospy.Duration(30)
-        joints_marker.type = Marker.SPHERE_LIST
-        joints_marker.scale.x, joints_marker.scale.y, joints_marker.scale.z = 0.05, 0.05, 0.05
-        joints_marker.action = Marker.ADD
-        joints_marker.ns = "skeleton_spheres"
-        joints_marker.header.frame_id = skeleton.bodyparts.values()[0].header.frame_id  # Just take the first one
-        joints_marker.header.stamp = rospy.Time.now()
-        joints_marker.points = [joint_ps.point for joint_name, joint_ps in skeleton.items()]
-        joints_marker.colors = [sphere_color for _, _ in skeleton.items()]
-        rospy.loginfo("Added {} joints for skeleton {}".format(len(joints_marker.points), skeleton))
-
-        links_marker = Marker()
-        links_marker.id = index
-        # links_marker.lifetime = rospy.Duration(30)
-        links_marker.type = Marker.LINE_LIST
-        links_marker.ns = "skeleton_lines"
-        links_marker.scale.x = 0.02
-        links_marker.action = Marker.ADD
-        links_marker.header.frame_id = skeleton.bodyparts.values()[0].header.frame_id  # Just take the first one
-        links_marker.header.stamp = rospy.Time.now()
-        links_marker.points = list(skeleton.generate_links())
-        links_marker.colors = [line_color for _ in links_marker.points]  # TODO: not in sync, whould iterate over pairs of points here
-
-        rospy.loginfo("Added {} links for skeleton {}".format(len(links_marker.points)/2, skeleton))  # /2 because lines are pairs of points
-
-        return [joints_marker, links_marker]
 
             #######################################
             # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
