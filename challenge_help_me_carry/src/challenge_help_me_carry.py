@@ -121,6 +121,7 @@ class GrabItem(smach.State):
 
         return handOverHuman.execute()
 
+
 class NavigateToRoom(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,
