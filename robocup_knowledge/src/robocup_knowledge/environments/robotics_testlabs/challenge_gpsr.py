@@ -21,9 +21,11 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[{actions : <A1>}] -> C[A1]
-T[{actions : <A1, A2>}] -> C[A1] and C[A2]
-T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+T[A] -> CC[A] | amigo CC[A]
+
+CC[{actions : <A1>}] -> C[A1]
+CC[{actions : <A1, A2>}] -> C[A1] and C[A2]
+CC[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> VP[A]
 """
@@ -37,7 +39,7 @@ C[{A}] -> VP[A]
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany
 
-PPN_OBJECT -> it | them 
+PPN_OBJECT -> it | them
 PPN_PERSON -> him | her | them
 
 DET -> the | a | an | some
