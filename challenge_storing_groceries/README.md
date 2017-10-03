@@ -16,7 +16,7 @@ amigo2/sergio2:
 
     Mount usb stick:
 
-    rosrun challenge_manipulation mount_usb # usb dir in /home/amigo should be green
+    rosrun challenge_storing_groceries mount_usb # usb dir in /home/amigo should be green
     
     amigo-challenge-storing-groceries
 
