@@ -37,21 +37,43 @@ C[{A}] -> VP[A]
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany
 
+PPN_OBJECT -> it | them 
+PPN_PERSON -> him | her | them
+
 DET -> the | a | an | some
-MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on | from
+NUMBER -> one | two | three
+MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 
 for room in common.location_rooms:
-    grammar += '\nROOMS[%s] -> %s' % (room, room)
+    grammar += '\nROOM[%s] -> %s' % (room, room)
+
 for loc in common.get_locations():
-    grammar += '\nLOCATIONS[%s] -> %s' % (loc, loc)
-grammar += '\n ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]'
+    grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
+
+grammar += '\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]'
+
 for obj in common.object_names:
-    grammar += '\nOBJECT_NAMES[%s] -> %s' % (obj, obj)
+    grammar += '\nNAMED_OBJECT[%s] -> %s' % (obj, obj)
+
 for loc in common.get_locations(pick_location=True, place_location=True):
-    grammar += '\nMANIPULATION_AREA_LOCATIONS[%s] -> MANIPULATION_AREA_DESCRIPTIONS the %s' % (loc, loc)
+    grammar += '\nMANIPULATION_AREA_LOCATION[%s] -> MANIPULATION_AREA_DESCRIPTION the %s' % (loc, loc)
+
 for cat in common.object_categories:
-    grammar += '\nOBJECT_NAMES[%s] -> %s' % (cat, cat)
+    grammar += '\nOBJECT_CATEGORY[%s] -> %s' % (cat, cat)
+
+for name in common.names:
+    grammar += '\nNAMED_PERSON[%s] -> %s' % (name, name)
+
+###############################################################################
+#
+# Demo
+#
+###############################################################################
+
+grammar += """
+VP["action": "demo-presentation"] -> introduce yourself | present yourself | perform a demonstration
+"""
 
 ###############################################################################
 #
@@ -62,17 +84,20 @@ for cat in common.object_categories:
 grammar += """
 V_FIND -> find | locate | look for | meet
 
-VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] in the ROOMS[Y]
-VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS in the ROOMS[Y]
-VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS near the LOCATIONS[Y]
-VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
+PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | NAMED_PERSON | someone
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
+
+VP["action": "find", "object": {"type": "person", "id": X}, "location": {"id": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] in the ROOM[Y]
+VP["action": "find", "object": {"type": "person", "id": X}, "location": {"id": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
+
+VP["action": "find", "object": {"type": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
+VP["action": "find", "object": {"type": person, "id": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
 """
 
-grammar += '\nFIND_PERSONS -> DET person'
-grammar += '\nFIND_PERSONS -> DET women'
-grammar += '\nFIND_PERSONS -> DET man'
-for name in common.names:
-    grammar += '\nFIND_PERSONS -> %s' % name
+
 
 ###############################################################################
 #
@@ -84,8 +109,8 @@ grammar += """
 V_GOPL -> go to | navigate to
 V_GOR -> V_GOPL | enter
 
-VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOMS[X]
-VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOM[X]
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATION[X]
 """
 
 ###############################################################################
@@ -96,7 +121,7 @@ VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
 
 grammar += """
 
-VP["action": "inspect", "entity": {"id": X}] -> inspect the LOCATIONS[X]
+VP["action": "inspect", "entity": {"id": X}] -> inspect the LOCATION[X]
 """
 
 ###############################################################################
@@ -108,7 +133,7 @@ VP["action": "inspect", "entity": {"id": X}] -> inspect the LOCATIONS[X]
 grammar += """
 V_PICKUP -> get | grasp | take | pick up | grab
 
-VP["action": "pick-up", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+VP["action": "pick-up", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
 """
 
 ###############################################################################
@@ -120,7 +145,8 @@ VP["action": "pick-up", "object": {"type": X}, "location": {"id": Y}] -> V_PICKU
 grammar += """
 V_PLACE -> put | place
 
-VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
+VP["action": "place", "object": {"type": "reference"}, "location": {"id": Y}] -> V_PLACE PPN_OBJECT MANIPULATION_AREA_LOCATION[Y]
 """
 
 ###############################################################################
@@ -132,17 +158,20 @@ VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE D
 grammar += """
 V_FOLLOW -> follow | go after | come after | V_GUIDE
 
-VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
-VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]
 
-VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
 VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
+VP["action": "follow", "target": {"id": "operator"}, "location-to": {"id": X}] -> V_FOLLOW me to the ROOM_OR_LOCATION[X]
 
-VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
-VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "target": {"type": "reference"}] -> V_FOLLOW PPN_PERSON
+VP["action": "follow", "target": {"type": "reference"}, "location-to": {"id: X}] -> V_FOLLOW PPN_PERSON to the ROOM_OR_LOCATION[X]
 
-VP["action": "follow", "location-from": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X]
-VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X] from the ROOM_OR_LOCATION[Y]
+
+VP["action": "follow", "location-from": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOM_OR_LOCATION[X]
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOM_OR_LOCATION[X]
 
 VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
 """
@@ -160,22 +189,27 @@ for name in common.names:
 ###############################################################################
 
 grammar += """
-V_BRING -> bring | deliver | take | carry | transport
-V_BRING_PERSON -> V_BRING | give | hand | hand over
+OPERATOR[operator] -> me
+BRING_NAME -> OPERATOR | BRING_PERSON
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y] | V_BRING OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
-VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y] | V_BRING OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+BRING_TARGET[{"id": X, "type": person}] -> BRING_NAME[X]
+BRING_TARGET[{"id": X}] -> the ROOM_OR_LOCATION[X]
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X] | V_BRING OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
-VP["action": "bring", "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS | V_BRING OBJECT_NAMES[Z] to BRING_PERSONS
+OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT | PPN_OBJECT
 
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] | V_BRING OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
-VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z] | V_BRING OBJECT_NAMES[Z] to me | V_BRING me OBJECT_NAMES[Z]
-VP["action": "bring", "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] | V_BRING OBJECT_NAMES[Z]
+V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
+VP["action": "bring", "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
+VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
+
+VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING BRING_NAME to BRING_TARGET[X]
 """
 
 for name in common.names:
-    grammar += '\nBRING_PERSONS -> %s' % name
+    grammar += '\nBRING_PERSON[%s] -> %s' % (name, name)
 
 ##############################################################################
 #
@@ -196,9 +230,32 @@ grammar += '\nSAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month'
 grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
+grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
 
 
-follow_acton = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
+follow_action = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
+
+##############################################################################
+#
+# ANSWER QUESTION
+#
+##############################################################################
+
+grammar += """
+VP["action": "answer_question"] -> answer a question
+"""
+
+##############################################################################
+#
+# FIND OUT AND REPORT
+#
+##############################################################################
+
+# grammar += """
+# PERSON_PROPERTY -> age | name
+
+# VP["action": "find_out_and_report", "object": {"type": "person"}, "subject": X, "target": {"id": Z}] -> V_SAY the PERSON_PROPERTY[X] of the person in the ROOM_OR_LOCATION[Z]
+# """
 
 ##############################################################################
 #
@@ -232,12 +289,12 @@ loc_grammar = """
 
 HE_SHE -> he | she | it | him | her
 
-VP["object": {"id": X}] -> HE_SHE is in the ROOMS_AND_LOCATIONS[X] | in the ROOMS_AND_LOCATIONS[X] | you could find HE_SHE in the ROOMS_AND_LOCATIONS[X]
+VP["object": {"id": X}] -> HE_SHE is in the ROOM_OR_LOCATION[X] | in the ROOM_OR_LOCATION[X] | you could find HE_SHE in the ROOM_OR_LOCATION[X]
 """
 
 obj_grammar = """
 
-VP["object": {"id": Y}] -> the OBJECT_NAMES[Z] is DET OBJECT_NAMES[Y] | the OBJECT_NAMES[Z] is OBJECT_NAMES[Y] | OBJECT_NAMES[Y] | DET OBJECT_NAMES[Y]
+VP["object": {"id": Y}] -> the NAMED_OBJECT[Z] is DET NAMED_OBJECT[Y] | the NAMED_OBJECT[Z] is NAMED_OBJECT[Y] | NAMED_OBJECT[Y] | DET NAMED_OBJECT[Y]
 """
 
 if __name__ == "__main__":

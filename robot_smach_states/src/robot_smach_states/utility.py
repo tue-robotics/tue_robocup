@@ -25,6 +25,7 @@ class Initialize(smach.State):
     def execute(self, userdata=None):
         self.robot.lights.set_color(0, 0, 1)  # be sure lights are blue
 
+        self.robot.base.local_planner._action_client.cancel_all_goals()
         self.robot.head.reset()
         self.robot.leftArm.reset()
         self.robot.leftArm.send_gripper_goal('close', 0.0)
@@ -105,6 +106,48 @@ class Trigger(smach.State):
     def execute(self, userdata=None):
         self.pub.publish(std_msgs.String(data=trigger))
         return 'triggered'
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class WaitForTriggerTimeout(smach.State):
+    '''
+    Same as WaitForTrigger with timeout
+    '''
+
+    def __init__(self, robot, timeout, triggers, topic):
+        smach.State.__init__(self,
+                             outcomes=triggers+['preempted', 'timeout'])
+        self.timeout = timeout
+        self.robot = robot
+        self.triggers = triggers
+        self.trigger_received = None
+
+        # Get the ~private namespace parameters from command line or launch file.
+        topic     = topic
+
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+
+        rospy.loginfo('topic: %s', topic)
+
+    def execute(self, userdata=None):
+        if self.trigger_received is None:
+            self.trigger_received = False
+
+        rospy.sleep(self.timeout)
+
+        if self.trigger_received:
+            return self.trigger_received
+        else:
+            return 'timeout'
+
+    def callback(self, data):
+        # Simply print out values in our custom message.
+        if data.data in self.triggers:
+            rospy.loginfo('trigger received: %s', data.data)
+            self.trigger_received = data.data
+        else:
+            rospy.logwarn('wrong trigger received: %s', data.data)
 
 # ----------------------------------------------------------------------------------------------------
 
