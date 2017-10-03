@@ -30,7 +30,7 @@ class Presentation(smach.State):
 
         # Base
         self.robot.speech.speak("I have a omnidirectionaly base", block=True)
-        self.robot.speech.speak("With this, I can instantly move in any direction", block=False)
+        self.robot.speech.speak("With this, I can instantly move in any direction and turn around whenever I want", block=False)
         self.robot.base.force_drive(0.1, 0, 0, 1.0)  # Forward
         self.robot.base.force_drive(0, 0.1, 0, 1.0)  # Left
         self.robot.base.force_drive(-0.1, 0, 0, 1.0)  # Backwards
@@ -44,6 +44,10 @@ class Presentation(smach.State):
         self.robot.speech.speak("At the end of my arms, I have two grippers with which I can grasp objects", block=False)
         self.robot.leftArm.send_gripper_goal("open")
         self.robot.leftArm.send_gripper_goal("close")
+        self.robot.leftArm.send_gripper_goal("open")
+        self.robot.leftArm.send_gripper_goal("close")
+        self.robot.rightArm.send_gripper_goal("open")
+        self.robot.rightArm.send_gripper_goal("close")
         self.robot.rightArm.send_gripper_goal("open")
         self.robot.rightArm.send_gripper_goal("close")
         # Torso
@@ -52,11 +56,13 @@ class Presentation(smach.State):
         self.robot.torso.low()
         self.robot.torso.wait_for_motion_done(5.0)
         self.robot.torso.reset()
+        self.robot.torso.wait_for_motion_done(5.0)
 
         # Kinect
         self.robot.speech.speak("As a head, I have a 3D camera. I use this to detect and recognize objects and people",
                                 block=True)
-        self.robot.speech.speak("My 3D camera is mounted on top of my torso", block=False)
+
+        self.robot.speech.speak("My 3D camera is mounted on top of my torso and I can move my camera just like a human head.", block=False)
         self.robot.rightArm.send_joint_trajectory("point_to_kinect")
 
         # Lasers
