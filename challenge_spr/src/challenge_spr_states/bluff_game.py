@@ -1,22 +1,15 @@
 #!/usr/bin/python
-import threading
 
-import roslib
+import threading
 import rospy
 import smach
 import sys
-import random
 import math
 import time
 
-from robot_skills.util import transformations as tf
 from robot_smach_states.util.startup import startup
-from robot_skills.util import transformations, msg_constructors
 
-from robot_smach_states import Initialize, Say
-from robot_smach_states.util.designators import Designator, EdEntityDesignator
-
-from robocup_knowledge import load_knowledge
+from robot_smach_states import Initialize
 
 from riddle_game import hear, answer
 
