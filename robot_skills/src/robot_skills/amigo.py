@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 
 import robot
-import rospy
-import tf
-import math
 
 
 class Amigo(robot.Robot):
