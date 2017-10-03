@@ -30,7 +30,6 @@ def look_at_segmentation_area(robot, entity, volume=None):
     pos = entity.pose.frame.p
     x = pos.x()
     y = pos.y()
-    z = 0.7
 
     # Check if we have areas: use these
     if volume in entity.volumes:
