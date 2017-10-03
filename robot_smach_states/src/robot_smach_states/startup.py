@@ -2,7 +2,7 @@
 import roslib;
 import rospy
 import smach
-
+import math
 
 from robot_smach_states.state import State
 
@@ -117,6 +117,7 @@ class WaitForDoorOpen(State):
         self.door_open = Event()
 
     def avg(self, lst):
+        lst = [point for point in lst if not math.isnan(point)]
         return sum(lst)/max(len(lst), 1)
 
     def process_scan(self, scan_msg):
@@ -124,6 +125,7 @@ class WaitForDoorOpen(State):
             middle_index = len(scan_msg.ranges)/2  # Get the middle point
             ranges_at_center = scan_msg.ranges[middle_index-2:middle_index+2]  # Get some points around the middle
             distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range and use it as the distance to the door
+            rospy.loginfo("AVG distance: {0}".format(distance_to_door))
             self.distances += [distance_to_door] #store all distances
 
             avg_distance_now = self.avg(self.distances[-5:]) #And the latest 5
