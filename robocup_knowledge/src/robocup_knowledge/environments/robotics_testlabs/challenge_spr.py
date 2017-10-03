@@ -84,10 +84,10 @@ Q["action" : "answer", "solution": "sponge"] -> WHATWHICH is the smallest cleani
 Q["action" : "answer", "solution": "knife"] -> WHATWHICH is the biggest cutlery
 Q["action" : "answer", "solution": "fork"] -> WHATWHICH is the smallest cutlery
 
-Q["action" : "answer", "solution":  "the bedroom has two doors"] -> how many doors has the bedroom
-Q["action" : "answer", "solution": "the dining room has two doors"] -> how many doors has the dining room
-Q["action" : "answer", "solution": "in the living room there are no doors"] -> how many doors has the living room
-Q["action" : "answer", "solution": "in the kitchen there are no doors"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "the bedroom has two doors"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "the living room has two doors"] -> how many doors has the livingroom
+Q["action" : "answer", "solution": "the kitchen has one door"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "in the workshop there are no doors"] -> how many doors has the workshop
 '''
 
 ##############################################################################
