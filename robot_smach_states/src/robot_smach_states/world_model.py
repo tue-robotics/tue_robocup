@@ -43,7 +43,7 @@ def look_at_segmentation_area(robot, entity, volume=None):
         pos = entity.pose.frame.p
         x = pos.x()
         y = pos.y()
-        z = pos.z + entity.shape.z_max
+        z = pos.z() + entity.shape.z_max
 
     # Point the head at the right direction
     robot.head.look_at_point(VectorStamped(x, y, z, "/map"), timeout=0)
