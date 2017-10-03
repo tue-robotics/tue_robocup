@@ -42,14 +42,10 @@ rosrun challenge_spr bluff_game.py amigo
 
 ## TODO
 
-Riddle / Bluff games:
+Riddle game:
+	- finish refactoring by creating functions for all long answers
+	- test
 
-- update library with predefined questions
-- remove WaitForPersonInFront state, substitute it with timeout and Say state
-- implement the sound localization into Bluff game
-- detect.py
-	- use skybiometry node and service
-	- use face_recognition node and service
-	- change topic of local kinect to the same topic as robot kinect
-- head.py
-    - Change topic name of get_image so it depending on robot name
+Bluff game:
+	- refactor by simplification of the code and reusing instead of copying the function of riddle game
+	- test
