@@ -64,7 +64,7 @@ class HearTurnAndAnswerQuestions(smach.State):
             t.join()
 
             if not answer(self.robot, res, crowd_data):
-                robot.speech.speak("Could you please repeat your question?")
+                self.robot.speech.speak("Could you please repeat your question?")
 
                 res = hear(self.robot, hear_time=self.hear_time)
 
@@ -136,8 +136,7 @@ class TestBluffGame(smach.StateMachine):
 
             smach.StateMachine.add('BLUFF_GAME',
                                    HearTurnAndAnswerQuestions(robot, num_questions=3),
-                                   transitions={'answered': 'Done',
-                                                'not_answered': 'Aborted'},
+                                   transitions={'done': 'Done'},
                                    remapping={'crowd_data':'crowd_data'})
 
 if __name__ == "__main__":

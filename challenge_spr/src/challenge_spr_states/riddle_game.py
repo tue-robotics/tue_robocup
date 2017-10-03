@@ -37,11 +37,11 @@ class HearAndAnswerQuestions(smach.State):
     Outputs:
         done: answered all questions
     '''
-    def __init__(self, robot, num_questions=1, time_out=DEFAULT_HEAR_TIME):
+    def __init__(self, robot, num_questions=1, hear_time=DEFAULT_HEAR_TIME):
         smach.State.__init__(self, outcomes=["done"], input_keys=['crowd_data'])
         self.robot = robot
         self.num_questions = num_questions
-        self.time_out = time_out
+        self.hear_time = hear_time
 
     def execute(self, userdata):
         crowd_data = userdata.crowd_data
@@ -50,10 +50,10 @@ class HearAndAnswerQuestions(smach.State):
 
         for _ in xrange(self.num_questions):
 
-            res = hear(self.robot, time_out=self.time_out)
+            res = hear(self.robot, hear_time=self.hear_time)
 
             if not answer(self.robot, res, crowd_data):
-                robot.speech.speak("Please ask me the next question!")
+                self.robot.speech.speak("Please ask me the next question!")
 
         return "done"
 
@@ -63,7 +63,7 @@ class HearAndAnswerQuestions(smach.State):
 #
 ##############################################################################
 
-def hear(robot, time_out):
+def hear(robot, hear_time):
     '''
     Robots hears a question
 
@@ -71,7 +71,7 @@ def hear(robot, time_out):
         question, if understood, else None
     '''
     try:
-        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=time_out)
+        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=hear_time)
     except TimeoutException:
         return None
 
@@ -161,7 +161,7 @@ def answer_placement_location(action):
     else:
         return 'I dont know that object'
 
-def answer_count_placement(action)
+def answer_count_placement(action):
     entity = action['entity']
     locations = [loc for loc in common_knowledge.locations if loc['name'] == entity]
     if len(locations) == 1:

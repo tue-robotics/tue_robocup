@@ -50,8 +50,8 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add("WAIT_FOR_OPERATOR",
                                    WaitForPersonInFront(robot, attempts=3, sleep_interval=1),
-                                   transitions={'success': 'RIDDLE_GAME_1',
-                                                'failed': 'RIDDLE_GAME_1'})
+                                   transitions={'success': 'RIDDLE_GAME',
+                                                'failed': 'RIDDLE_GAME'})
 
             # Riddle Game
 
@@ -63,14 +63,13 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add("TRANSITION",
                                    Say(robot, "Now lets play the blind mans bluff game"),
-                                   transitions={"spoken": "BLUFF_GAME_INF"})
+                                   transitions={"spoken": "BLUFF_GAME"})
 
             # Bluff Games:
 
             smach.StateMachine.add('BLUFF_GAME',
                                    bluff_game.HearTurnAndAnswerQuestions(robot, num_questions=6, num_operators=5),
-                                   transitions={'answered': 'END_CHALLENGE',
-                                                'not_answered': 'END_CHALLENGE'})
+                                   transitions={'done': 'END_CHALLENGE'})
             # End
 
             smach.StateMachine.add('END_CHALLENGE',
