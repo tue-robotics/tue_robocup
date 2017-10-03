@@ -19,6 +19,7 @@
   <run_depend>challenge_help_me_carry</run_depend>
   <run_depend>challenge_open</run_depend>
   <run_depend>challenge_person_recognition</run_depend>
+  <run_depend>challenge_presentation</run_depend>
   <run_depend>challenge_restaurant</run_depend>
   <run_depend>challenge_rips</run_depend>
   <run_depend>challenge_robozoo</run_depend>
@@ -29,7 +30,6 @@
   <run_depend>challenge_test</run_depend>
   <run_depend>challenge_demo</run_depend>
   <run_depend>test_tools</run_depend>
-  <run_depend>audio_capture</run_depend>
 
   <export>
     <metapackage/>

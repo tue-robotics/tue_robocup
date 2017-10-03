@@ -2,9 +2,9 @@
 <package>
   <name>challenge_storing_groceries</name>
   <version>0.0.0</version>
-  <description>No description available</description>
+  <description>Storing groceries challenge</description>
 
-  <maintainer email="todo@todo.com">Jip Reinders</maintainer>
+  <maintainer email="amigo@tue.nl">Janno Lunenburg</maintainer>
 
   <license>BSD</license>
 

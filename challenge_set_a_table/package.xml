@@ -2,9 +2,9 @@
 <package>
   <name>challenge_set_a_table</name>
   <version>1.0.0</version>
-  <description>Set a table challenge from Robocup 2017 rulebook</description>
+  <description>Set a table challenge</description>
 
-  <maintainer email="alexandrov.samuil@gmail.com">Sam Alexandrov</maintainer>
+  <maintainer email="amigo@tue.nl">Ramon Wijnands</maintainer>
 
   <license>TODO</license>
 

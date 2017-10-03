@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import PyKDL as kdl
 import rospy
 import smach
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -26,27 +27,26 @@ def look_at_segmentation_area(robot, entity, volume=None):
 
     # Determine the height of the head target
     # Start with a default
-    pos = entity.pose.frame.p
-    look_at_point_z = 0.7
 
     # Check if we have areas: use these
     if volume in entity.volumes:
         search_volume = entity.volumes[volume]
-        try:
-            look_at_point_z = search_volume.min_corner.z()
-        except Exception as e:
-            rospy.logerr("Cannot get z_min of volume {} of entity {}: {}".format(volume,
-                                                                                 entity.id, e.message))
+        x_obj = 0.5 * (search_volume.min_corner.x() + search_volume.max_corner.x())
+        y_obj = 0.5 * (search_volume.min_corner.y() + search_volume.max_corner.y())
+        z_obj = search_volume.min_corner.z()
+        lookat_pos_map = entity.pose.frame * kdl.Vector(x_obj, y_obj, z_obj)
+        x = lookat_pos_map.x()
+        y = lookat_pos_map.y()
+        z = lookat_pos_map.z()
     else:
         # Look at the top of the entity to inspect
         pos = entity.pose.frame.p
-        try:
-            look_at_point_z = pos.z + entity.shape.z_max
-        except Exception as e:
-            rospy.logerr("Cannot get z_max of entity {}: {}".format(entity.id, e.message))
+        x = pos.x()
+        y = pos.y()
+        z = pos.z() + entity.shape.z_max
 
     # Point the head at the right direction
-    robot.head.look_at_point(VectorStamped(pos.x(), pos.y(), look_at_point_z, "/map"), timeout=0)
+    robot.head.look_at_point(VectorStamped(x, y, z, "/map"), timeout=0)
 
     # Make sure the spindle is at the appropriate height if we are AMIGO
     if robot.robot_name == "amigo":
@@ -54,7 +54,7 @@ def look_at_segmentation_area(robot, entity, volume=None):
         # Correction for standard height: with a table heigt of 0.76 a spindle position
         # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
         # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
-        spindle_target = max(0.15, min(look_at_point_z - 0.41, robot.torso.upper_limit[0]))
+        spindle_target = max(0.15, min(z - 0.41, robot.torso.upper_limit[0]))
 
         robot.torso._send_goal([spindle_target], timeout=0)
         robot.torso.wait_for_motion_done()

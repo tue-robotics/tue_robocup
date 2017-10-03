@@ -2,9 +2,9 @@
 <package>
   <name>challenge_rips</name>
   <version>0.0.0</version>
-  <description>No description available</description>
+  <description>challenge rips</description>
 
-  <maintainer email="todo@tue.nl">todo</maintainer>
+  <maintainer email="amigo@tue.nl">Matthijs van der Burgh</maintainer>
 
   <license>TODO</license>
 

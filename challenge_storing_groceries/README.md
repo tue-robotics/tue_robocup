@@ -14,29 +14,18 @@ amigo1/sergio1:
 
 amigo2/sergio2:
 
-    roslaunch amigo_bringup challenge_storing_groceries.launch
-
-amigo2:
-
-ToDo: update (so skip it at this point)
-
     Mount usb stick:
 
-    rosrun challenge_manipulation mount_usb # usb dir in /home/amigo should be green
-
-    Test audio:
-
-    rosrun robot_skills test_audio.py [robot_name]
-
-    asdf
-
-    rosrun challenge_manipulation manipulation.py [robot_name]
-
-    or
-
-    hear continue #Don't press enter just yet
+    rosrun challenge_storing_groceries mount_usb # usb dir in /home/amigo should be green
+    
+    amigo-challenge-storing-groceries
 
 # Notes
+
+Before the challenge
+--------------------
+To run this in simulation, you first need to add the simulated objects to the simulator. In order to do so, run:
+rosrun challenge_storing_groceries add_entities.py
 
 During the challenge
 --------------------

@@ -71,7 +71,7 @@ class Torso(RobotPart):
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
 
         import time; time.sleep(0.01)  # This is dangerous now we are change the Ts of the TrajectoryActionLib
-        
+
                                         # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
                                         # means that if two goals are send approximately at the same
@@ -88,6 +88,7 @@ class Torso(RobotPart):
             return self.wait(timeout)
 
     def high(self):
+        """ Sends the torso to its upper limit """
         return self._send_goal(self.upper_limit)
 
     def medium(self):
@@ -98,6 +99,7 @@ class Torso(RobotPart):
         return self._send_goal(goal)
 
     def low(self):
+        """ Sends the torso to its lower limit """
         return self._send_goal(self.lower_limit)
 
     def reset(self):

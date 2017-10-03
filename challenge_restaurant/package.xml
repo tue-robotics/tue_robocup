@@ -2,9 +2,9 @@
 <package>
   <name>challenge_restaurant</name>
   <version>0.0.0</version>
-  <description>No description available</description>
+  <description>Restaurant challenge</description>
 
-  <maintainer email="reinzor@gmail.com">Rein Appeldoorn</maintainer>
+  <maintainer email="amigo@tue.nl">Ramon Wijnands</maintainer>
 
   <license>BSD</license>
 
@@ -19,5 +19,6 @@
   <run_depend>python-markdown</run_depend>
   <run_depend>python-xhtml2pdf</run_depend>
   <run_depend>python-numpy</run_depend>
+  <run_depend>tue_msgs</run_depend>
 
 </package>
