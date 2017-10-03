@@ -20,55 +20,87 @@ from robocup_knowledge import load_knowledge
 
 from riddle_game import hear, answer
 
-# def _turn_to_closest_entity(robot):
-#     # Reset the world model just to be sure
-#     robot.ed.reset()
+##############################################################################
 #
-#     operator = None
-#     while not operator:
-#         operator = robot.ed.get_closest_entity(radius=1.9, center_point=robot.base.get_location().extractVectorStamped())
-#         print operator
-#         if not operator:
-#             vth = 0.5
-#             th = 3.1415 / 10
-#             print "Turning %f radians with force drive" % th
-#             robot.base.force_drive(0, 0, vth, th / vth)
+# Default parameters:
 #
-#     robot.base.force_drive(0, 0, 0, 0.5)
-#
-#     # Turn towards the operator
-#     current = robot.base.get_location()
-#     robot_th = current.frame.M.GetRPY()[2]  # Get the Yaw, rotation around Z
-#     desired_th = math.atan2(operator._pose.p.y() - current.frame.p.y(),
-#                             operator._pose.p.x() - current.frame.p.x())
-#
-#     # Calculate params
-#     th = desired_th - robot_th
-#     if th > 3.1415:
-#         th -= 2 * 3.1415
-#     if th < -3.1415:
-#         th += 2 * 3.1415
-#     vth = 0.5
-#
-#     # Turn
-#     robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
+##############################################################################
 
+DEFAULT_HEAR_TIME = 15.0        # seconds
+SOURCE_LOCALISATION_TIME = 6    # seconds
+INITIAL_TURNING_DELAY = 1.5     # seconds
 
-def turn_to_closest_entity(robot):
+##############################################################################
+#
+# Main class:
+#
+##############################################################################
 
-    rospy.sleep(1.5)
+class HearTurnAndAnswerQuestions(smach.State):
+    '''
+    Robot hears a question, turn and then answers (bluff game in SPR challenge).
+    If the question is not answered, robot asks the operator to repeat the question and tries again, without turning.
+
+    Variables:
+        num_questions: number of questions to be heard and answered
+        num_operators: number of operators to play the game
+        hear_time: amount of time to hear a single question
+
+    Outputs:
+        done: answered all questions
+    '''
+    def __init__(self, robot, num_questions=1, num_operators=5, hear_time=DEFAULT_HEAR_TIME):
+        smach.State.__init__(self, outcomes=["done"], input_keys=['crowd_data'])
+        self.robot = robot
+        self.num_questions = num_questions
+        self.num_operators = num_operators
+        self.hear_time = hear_time
+
+    def execute(self, userdata):
+        crowd_data = userdata.crowd_data
+
+        self.robot.head.look_at_standing_person()
+
+        for _ in xrange(self.num_questions):
+
+            t = threading.Thread(target=turn_to_closest_entity, args=(self.robot,self.num_operators))
+            t.start()
+
+            res = hear(self.robot, hear_time=self.hear_time)
+
+            t.join()
+
+            if not answer(self.robot, res, crowd_data):
+                robot.speech.speak("Could you please repeat your question?")
+
+                res = hear(self.robot, hear_time=self.hear_time)
+
+                if not answer(self.robot, res, crowd_data):
+                    robot.speech.speak("Please ask next question!")
+
+        return "done"
+
+##############################################################################
+#
+# Functions:
+#
+##############################################################################
+
+def turn_to_closest_entity(robot, num_operators):
+
+    rospy.sleep(INITIAL_TURNING_DELAY)
 
     start = rospy.Time.now()
     yaw = None
 
     # Try to find a source for a couple of seconds
-    while not yaw and (rospy.Time.now() - start).to_sec() < 6:
+    while not yaw and (rospy.Time.now() - start).to_sec() < SOURCE_LOCALISATION_TIME:
         yaw = robot.ssl.get_last_yaw(.1)
         rospy.sleep(0.05)
 
     # If we did not find a yaw, just default
     if yaw is None:
-        yaw = math.pi * 2 / 5
+        yaw = math.pi * 2 / num_operators
 
     if yaw > math.pi:
         yaw -= 2 * math.pi
@@ -80,47 +112,11 @@ def turn_to_closest_entity(robot):
     vyaw = 1.0
     robot.base.force_drive(0, 0, (yaw / abs(yaw)) * vyaw, abs(yaw) / vyaw)
 
-
-class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=15.0):
-        smach.State.__init__(self, outcomes=["answered", "not_answered"],input_keys=['crowd_data'])
-        self.robot = robot
-        self.time_out = time_out
-
-    def execute(self, userdata):
-        crowd_data = userdata.crowd_data
-
-        self.robot.head.look_at_standing_person()
-
-        t = threading.Thread(target=turn_to_closest_entity, args=(self.robot,))
-        t.start()
-
-        res = hear(self.robot, time_out=self.time_out)
-
-        t.join()
-
-        return answer(self.robot, res, crowd_data)
-
-
-class HearQuestionRepeat(smach.State):
-    def __init__(self, robot, time_out=15.0):
-        smach.State.__init__(self, outcomes=["answered", "not_answered"], input_keys=['crowd_data'])
-        self.robot = robot
-        self.time_out = time_out
-
-    def execute(self, userdata):
-        crowd_data = userdata.crowd_data
-
-        self.robot.head.look_at_standing_person()
-
-        res = hear(self.robot, time_out=self.time_out)
-
-        return answer(self.robot, res, crowd_data)
-
-
-
-# Standalone testing -----------------------------------------------------------------
-
+##############################################################################
+#
+# Standalone testing:
+#
+##############################################################################
 
 class TestBluffGame(smach.StateMachine):
     def __init__(self, robot):
@@ -142,26 +138,14 @@ class TestBluffGame(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    Initialize(robot),
-                                   transitions={'initialized': 'BLUFF_GAME_1',
+                                   transitions={'initialized': 'BLUFF_GAME',
                                                 'abort': 'Aborted'})
 
-            smach.StateMachine.add('BLUFF_GAME_1',
-                                   HearQuestion(robot),
+            smach.StateMachine.add('BLUFF_GAME',
+                                   HearTurnAndAnswerQuestions(robot, num_questions=3),
                                    transitions={'answered': 'Done',
-                                                'not_answered': 'BLUFF_GAME_1_ASK_REPEAT'},
+                                                'not_answered': 'Aborted'},
                                    remapping={'crowd_data':'crowd_data'})
-
-
-            smach.StateMachine.add("BLUFF_GAME_1_ASK_REPEAT",
-                                   Say(robot, "Could you please repeat your question?"),
-                                   transitions={"spoken": "BLUFF_GAME_1_REPEAT"})
-
-            smach.StateMachine.add('BLUFF_GAME_1_REPEAT',
-                                   HearQuestionRepeat(robot),
-                                   transitions={'answered' :'Done',
-                                                'not_answered': 'Done'},
-                                   remapping={'crowd_data':'crowd_data'})
-
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')

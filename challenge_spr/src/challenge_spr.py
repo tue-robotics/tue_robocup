@@ -67,21 +67,12 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
 
             # Bluff Games:
 
-            smach.StateMachine.add('BLUFF_GAME_INF',
-                                   bluff_game.HearQuestion(robot),
-                                   transitions={'answered': 'BLUFF_GAME_INF',
-                                                'not_answered': 'BLUFF_GAME_INF_ASK_REPEAT'})
-
-            smach.StateMachine.add("BLUFF_GAME_INF_ASK_REPEAT",
-                                   Say(robot, "Could you please repeat your question?"),
-                                   transitions={"spoken": "BLUFF_GAME_INF_REPEAT"})
-
-            smach.StateMachine.add('BLUFF_GAME_INF_REPEAT',
-                                   bluff_game.HearQuestionRepeat(robot),
-                                   transitions={'answered' :'BLUFF_GAME_INF',
-                                                'not_answered': 'BLUFF_GAME_INF'})
-
+            smach.StateMachine.add('BLUFF_GAME',
+                                   bluff_game.HearTurnAndAnswerQuestions(robot, num_questions=6, num_operators=5),
+                                   transitions={'answered': 'END_CHALLENGE',
+                                                'not_answered': 'END_CHALLENGE'})
             # End
+
             smach.StateMachine.add('END_CHALLENGE',
                                    Say(robot, "My work here is done, goodbye!"),
                                    transitions={'spoken': 'Done'})

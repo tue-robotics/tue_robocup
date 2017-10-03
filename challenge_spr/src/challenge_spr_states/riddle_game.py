@@ -16,6 +16,14 @@ common_knowledge = load_knowledge('common')
 
 ##############################################################################
 #
+# Default parameters:
+#
+##############################################################################
+
+DEFAULT_HEAR_TIME = 15.0
+
+##############################################################################
+#
 # Main class:
 #
 ##############################################################################
@@ -30,7 +38,7 @@ class HearAndAnswerQuestions(smach.State):
     Outputs:
         done: answered all questions
     '''
-    def __init__(self, robot, num_questions=1, time_out=15.0):
+    def __init__(self, robot, num_questions=1, time_out=DEFAULT_HEAR_TIME):
         smach.State.__init__(self, outcomes=["done"], input_keys=['crowd_data'])
         self.robot = robot
         self.num_questions = num_questions
@@ -46,7 +54,7 @@ class HearAndAnswerQuestions(smach.State):
             res = hear(self.robot, time_out=self.time_out)
 
             if not answer(self.robot, res, crowd_data):
-                robot.speech.speak("Please ask next question!")
+                robot.speech.speak("Please ask me the next question!")
 
         return "done"
 
