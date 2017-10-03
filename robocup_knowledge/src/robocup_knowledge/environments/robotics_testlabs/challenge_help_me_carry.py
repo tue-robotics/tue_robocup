@@ -23,7 +23,7 @@ default_item = "coke"
 default_place = "cabinet"
 default_area = "on_top_of"
 
-starting_point = "initial_pose"
+starting_point = "help_me_carry_starting_point"
 rotation = 0
 
 time_out_seconds = 60.0

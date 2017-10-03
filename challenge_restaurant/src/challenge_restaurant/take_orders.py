@@ -29,12 +29,11 @@ class TakeOrder(smach.State):
         failed: didn't hear anything or exceeded maximum number of tries
         misunderstood: misunderstood, might try again
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'misunderstood'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self._robot = robot
         self._location = location
         self._orders = orders
-        self._nr_tries = 0
         self._max_tries = 5
 
     def _confirm(self):
@@ -48,14 +47,20 @@ class TakeOrder(smach.State):
                                                   grammar=cgrammar, target="C")
         except TimeoutException:
             return False
-        return speech_result.semantics == "yes"
+
+        try:
+            ret = speech_result.semantics == "yes"
+        except:
+            return False
+        return ret
 
     def execute(self, userdata=None):
-        self._nr_tries += 1
         self._robot.head.look_at_ground_in_front_of_robot(3)
 
-        order = None
-        while not order:
+        nr_tries = 0
+        while nr_tries < self._max_tries and not rospy.is_shutdown():
+            nr_tries += 1
+            rospy.loginfo('nr_tries: %d', nr_tries)
 
             self._robot.speech.speak("Which combo or beverage do you want?")
             count = 0
@@ -77,14 +82,17 @@ class TakeOrder(smach.State):
                         self._robot.head.cancel_goal()
                         return "failed"
 
-            # Now: confirm
-            if "beverage" in speech_result.semantics:
-                self._robot.speech.speak("I understood that you would like {}, "
-                                         "is this correct?".format(speech_result.semantics['beverage']))
-            elif "food1" and "food2" in speech_result.semantics:
-                self._robot.speech.speak("I understood that you would like {} and {}, "
-                                         "is this correct?".format(speech_result.semantics['food1'],
-                                                                   speech_result.semantics['food2']))
+            try:
+                # Now: confirm
+                if "beverage" in speech_result.semantics:
+                    self._robot.speech.speak("I understood that you would like {}, "
+                                            "is this correct?".format(speech_result.semantics['beverage']))
+                elif "food1" and "food2" in speech_result.semantics:
+                    self._robot.speech.speak("I understood that you would like {} and {}, "
+                                            "is this correct?".format(speech_result.semantics['food1'],
+                                                                    speech_result.semantics['food2']))
+            except:
+                continue
 
             if self._confirm():
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
@@ -93,14 +101,10 @@ class TakeOrder(smach.State):
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
-            else:
-                if self._nr_tries < self._max_tries:
-                    self._robot.head.cancel_goal()
-                    return "misunderstood"
-                else:
-                    self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
-                    self._robot.head.cancel_goal()
-                    return "failed"
+
+        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+        self._robot.head.cancel_goal()
+        return "failed"
 
 
 class ReciteOrders(smach.State):

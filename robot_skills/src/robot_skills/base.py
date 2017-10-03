@@ -178,7 +178,14 @@ class Base(RobotPart):
         return plan
 
     def force_drive(self, vx, vy, vth, timeout):
+        """ Forces the robot to drive by sending a command velocity directly to the base controller. N.B.: all collision
+        avoidance is bypassed.
 
+        :param vx: forward velocity in m/s
+        :param vy: sideways velocity in m/s
+        :param vth: rotational velocity in rad/s
+        :param timeout: duration for this motion in seconds
+        """
         # Cancel the local planner goal
         self.local_planner.cancelCurrentPlan()
 
