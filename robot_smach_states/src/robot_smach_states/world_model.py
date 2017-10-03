@@ -27,9 +27,6 @@ def look_at_segmentation_area(robot, entity, volume=None):
 
     # Determine the height of the head target
     # Start with a default
-    pos = entity.pose.frame.p
-    x = pos.x()
-    y = pos.y()
 
     # Check if we have areas: use these
     if volume in entity.volumes:
@@ -44,6 +41,8 @@ def look_at_segmentation_area(robot, entity, volume=None):
     else:
         # Look at the top of the entity to inspect
         pos = entity.pose.frame.p
+        x = pos.x()
+        y = pos.y()
         z = pos.z + entity.shape.z_max
 
     # Point the head at the right direction
