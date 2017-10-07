@@ -40,14 +40,14 @@ class Presentation(smach.State):
         # Arms
         self.robot.speech.speak("I have two arms. These have the dimensions and degrees of freedom of human arms",
                                 block=False)
+        self.robot.speech.speak("So I can move my arms like you would move your arms", block=False)
         self.robot.leftArm.send_joint_trajectory("wave_front")
         self.robot.speech.speak("At the end of my arms, I have two grippers with which I can grasp objects", block=False)
+        self.robot.speech.speak("My grippers can be opened and closed when I need to.", block=False)
+        self.robot.leftArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
+        self.robot.rightArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
         self.robot.leftArm.send_gripper_goal("open")
         self.robot.leftArm.send_gripper_goal("close")
-        self.robot.leftArm.send_gripper_goal("open")
-        self.robot.leftArm.send_gripper_goal("close")
-        self.robot.rightArm.send_gripper_goal("open")
-        self.robot.rightArm.send_gripper_goal("close")
         self.robot.rightArm.send_gripper_goal("open")
         self.robot.rightArm.send_gripper_goal("close")
         # Torso
@@ -60,10 +60,9 @@ class Presentation(smach.State):
 
         # Kinect
         self.robot.speech.speak("As a head, I have a 3D camera. I use this to detect and recognize objects and people",
-                                block=True)
-
-        self.robot.speech.speak("My 3D camera is mounted on top of my torso and I can move my camera just like a human head.", block=False)
+                                block=False)
         self.robot.rightArm.send_joint_trajectory("point_to_kinect")
+        self.robot.speech.speak("My 3D camera is mounted on top of my torso and I can move my camera just like a human head.", block=False)
 
         # Lasers
         self.robot.speech.speak("Furthermore, I have two laser range finders to help me to see where I am", block=True)
