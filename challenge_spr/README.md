@@ -6,46 +6,31 @@ Launch procedure:
 ```
 amigo-start
 amigo-free-mode
-rosrun challenge_spr challenge_spr.py amigo
+amigo-challenge_spr
 ```
 
 Testing the detection individually:
 ```
-rosrun challenge_spr detect.py amigo
+amigo-start
+amigo-free-mode
+./detect.py amigo
 ```
 
-Start at the Riddle Game
+Testing the Riddle Game individually:
 ```
-rosrun challenge_spr riddle_game.py amigo
-```
-
-Start at the Bluff Game
-```
-rosrun challenge_spr bluff_game.py amigo
+amigo-start
+amigo-free-mode
+./riddle_game.py amigo
 ```
 
-## DONE
-
-- main scenario is ready
-- riddle_game and bluff_game are ready for standalone testing
-- riddle game works in simulation, should be tested on robot
-- bluff game works in simulation, should be tested on robot
-- detectCrowd:
-	- create robot.perception.getImage() skill
-		- create image listener
-		- grab one image
-	- create robot.perception.detectFaces(image)
-		- send the image to /amigo/face_recognition/recognize
-		- process the results
-- send data for the inspected crowd to the library
-- updated library with questions for crowd, arena and objects
+Testing the Bluff Game individually:
+```
+amigo-start
+amigo-free-mode
+./bluff_game.py amigo
+```
 
 ## TODO
 
-Riddle game:
-	- finish refactoring by creating functions for all long answers
-	- test
-
-Bluff game:
-	- refactor by simplification of the code and reusing instead of copying the function of riddle game
-	- test
+- implement posture detection, color detection and position detection for the crowd questions
+- update library with crowd questions for position, posture etc.
