@@ -1,22 +1,18 @@
-import roslaunch, rospkg
-import os.path
 import rospy
+from std_srvs.srv import Trigger, TriggerRequest
 
 
 def start_robocup_recorder(robot_name):
+    service_name = '%s/robocup_recorder_toggle'%robot_name
+    try:
+        rospy.wait_for_service(service_name, timeout=1.0)
+    except rospy.ROSException as e:
+        rospy.logwarn("Service 'robocup_recorder_toggle' unavailable, unable to start recording.")
+        return
 
     try:
-        package_path = rospkg.RosPack().get_path('%s_bringup' % robot_name)
-    except rospkg.ResourceNotFound as e:
-        rospy.logerr("Could not find bringup package of robot %s" % robot_name)
-        return
+        s = rospy.ServiceProxy(service_name, Trigger)
+        s()
+    except rospy.ServiceException as e:
+        rospy.logwarn("Unable to start recording: %s" % e)
 
-    file_path = package_path + "/launch/record_robocup.launch"
-    if not os.path.isfile(file_path):
-        rospy.logerr("Could not find record_robocup.launch in bringup package of robot %s" % robot_name)
-        return
-
-    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-    roslaunch.configure_logging(uuid)
-    launch = roslaunch.parent.ROSLaunchParent(uuid, [file_path])
-    launch.start()

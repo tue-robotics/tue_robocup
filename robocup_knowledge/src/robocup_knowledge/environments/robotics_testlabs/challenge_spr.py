@@ -84,10 +84,10 @@ Q["action" : "answer", "solution": "sponge"] -> WHATWHICH is the smallest cleani
 Q["action" : "answer", "solution": "knife"] -> WHATWHICH is the biggest cutlery
 Q["action" : "answer", "solution": "fork"] -> WHATWHICH is the smallest cutlery
 
-Q["action" : "answer", "solution":  "the bedroom has two doors"] -> how many doors has the bedroom
-Q["action" : "answer", "solution": "the dining room has two doors"] -> how many doors has the dining room
-Q["action" : "answer", "solution": "in the living room there are no doors"] -> how many doors has the living room
-Q["action" : "answer", "solution": "in the kitchen there are no doors"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "the bedroom has two doors"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "the living room has two doors"] -> how many doors has the livingroom
+Q["action" : "answer", "solution": "the kitchen has one door"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "in the workshop there are no doors"] -> how many doors has the workshop
 '''
 
 ##############################################################################
@@ -110,11 +110,11 @@ grammar += '''
 
 NQ["action" : "c_count", "entity" : X] -> how many people in the crowd are POSITION[X]
 NQ["action" : "c_count", "entity" : W] -> how many people in the crowd are GESTURE[W]
+NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
 NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
 NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
 NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER
 NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER or GENDER
-NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
 '''
 
 ##############################################################################
