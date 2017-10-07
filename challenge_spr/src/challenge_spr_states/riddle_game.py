@@ -115,7 +115,7 @@ def answer(robot, res, crowd_data):
             if 'action' not in action:
                 continue
 
-            answer = "Sorry, I cannot %s. I don't know the answer.  " % str(action['action'])
+            answer = "Sorry, I cannot %s. I don't know the answer." % str(action['action'])
             for name, func in assignments:
                 if action['action'] == name:
                     answer = func(action)
@@ -180,32 +180,32 @@ def answer_find_objects(action):
         cat = objects[0]['category']
         print cat
         loc, area_name = common_knowledge.get_object_category_location(cat)
-        answer = 'You can find the %s %s %s' % (entity, area_name, loc)
+        return 'You can find the %s %s %s' % (entity, area_name, loc)
     else:
-        answer = 'I should find %s but I dont know %s' % entity
+        return 'I should find %s but I dont know %s' % entity
 
 def answer_find_category(action):
     entity = action['entity']
     loc, area_name = common_knowledge.get_object_category_location(entity)
-    answer = 'You can find the %s on the %s' % (entity, loc)
-
+    return 'You can find the %s on the %s' % (entity, loc)
+    
 def answer_object_category(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         cat = objects[0]['category']
-        answer = 'The %s belongs to %s' % (entity, cat)
+        return 'The %s belongs to %s' % (entity, cat)
     else:
-        answer = 'I should name a category but I dont know what is %s' % entity
+        return 'I should name a category but I dont know what is %s' % entity
 
 def answer_object_color(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         col = objects[0]['color']
-        answer = 'The color of %s is %s' % (entity, col)
+        return 'The color of %s is %s' % (entity, col)
     else:
-        answer = 'I should name the color but I dont know %s' % entity
+        return 'I should name the color but I dont know %s' % entity
 
 def answer_compare_objects_categories(action):
     entity_a = action['entity_a']
@@ -216,19 +216,19 @@ def answer_compare_objects_categories(action):
         cat_a = objects_a[0]['category']
         cat_b = objects_b[0]['category']
         if cat_a == cat_b:
-            answer = 'Both objects belong to the same category %s' % cat_a
+            return 'Both objects belong to the same category %s' % cat_a
         else:
-            answer = 'These objects belong to different categories'
+            return 'These objects belong to different categories'
     else:
-        answer = 'I dont know these objects'
-
+        return 'I dont know these objects'
+    
 def answer_count_objects_in_category(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['category'] == entity]
     if len(objects) > 0:
         count = len(objects)
-        answer = 'The number of objects in category %s is %i' % (entity, count)
-
+        return 'The number of objects in category %s is %i' % (entity, count)
+        
 ##############################################################################
 #
 # Standalone testing:
