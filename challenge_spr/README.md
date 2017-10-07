@@ -13,21 +13,21 @@ Testing the detection individually:
 ```
 amigo-start
 amigo-free-mode
-./detect.py amigo
+rosrun challenge_spr detect.py amigo
 ```
 
 Testing the Riddle Game individually:
 ```
 amigo-start
 amigo-free-mode
-./riddle_game.py amigo
+rosrun challenge_spr riddle_game.py amigo
 ```
 
 Testing the Bluff Game individually:
 ```
 amigo-start
 amigo-free-mode
-./bluff_game.py amigo
+rosrun challenge_spr bluff_game.py amigo
 ```
 
 ## TODO
