@@ -56,7 +56,7 @@ class Presentation(smach.State):
         # Torso
         self.robot.speech.speak("My arms are mounted on a moveable torso. This way, I can grasp higher and lower",
                                 block=False)
-        self.robot.torso.low()
+        self.robot.torso.medium()
         self.robot.torso.wait_for_motion_done(5.0)
         self.robot.torso.reset()
         self.robot.torso.wait_for_motion_done(5.0)
@@ -79,7 +79,7 @@ class Presentation(smach.State):
         self.robot.leftArm.send_joint_trajectory("point_to_laser")
 
         # Microphone
-        self.robot.speech.speak("Finally, I have a microphone on my head so that I can hear what you're saying")
+        self.robot.speech.speak("Finally, I have a microphone on my head so that I can hear what you are saying")
 
         # Final
         self.robot.speech.speak("This was my introduction, I hope that you like what you see and please enjoy the presentation.")
