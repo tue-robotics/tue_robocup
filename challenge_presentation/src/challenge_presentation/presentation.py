@@ -43,7 +43,7 @@ class Dutch(object):
 
 class Presentation(smach.State):
     """ Smach state to have the robot present itself to an audience as a demo """
-    def __init__(self, robot, language_name='en'):
+    def __init__(self, robot, language='en'):
         """ Constructor
 
         :param robot: robot object
@@ -51,8 +51,8 @@ class Presentation(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
         self.robot = robot
-        self.language_name = language_name
-        self.lang = {"en":English, "nl":Dutch}[language_name]
+        self.language = language
+        self.trans = {"en":English, "nl":Dutch}[language]
 
     def execute(self, userdata=None):
         """ Execute function
@@ -62,13 +62,13 @@ class Presentation(smach.State):
         """
         # ToDo: here we can have the robot do awesome stuff
         # Introduction
-        self.robot.speech.speak(self.lang.HI_MY_NAME_IS.format(self.robot.robot_name), language=self.language_name, block=True)
-        self.robot.speech.speak(self.lang.IM_A_SERVICE_ROBOT, language=self.language_name, block=True)
-        self.robot.speech.speak(self.lang.PURPOSE, language=self.language_name, block=True)
+        self.robot.speech.speak(self.trans.HI_MY_NAME_IS.format(self.robot.robot_name), language=self.language, block=True)
+        self.robot.speech.speak(self.trans.IM_A_SERVICE_ROBOT, language=self.language, block=True)
+        self.robot.speech.speak(self.trans.PURPOSE, language=self.language, block=True)
 
         # Base
-        self.robot.speech.speak(self.lang.IM_OMNIDIR, language=self.language_name, block=True)
-        self.robot.speech.speak(self.lang.EXPLAIN_BASE, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.IM_OMNIDIR, language=self.language, block=True)
+        self.robot.speech.speak(self.trans.EXPLAIN_BASE, language=self.language, block=False)
         self.robot.base.force_drive(0.1, 0, 0, 1.0)  # Forward
         self.robot.base.force_drive(0, 0.1, 0, 1.0)  # Left
         self.robot.base.force_drive(-0.1, 0, 0, 1.0)  # Backwards
@@ -76,11 +76,11 @@ class Presentation(smach.State):
         self.robot.base.force_drive(0, 0, 1.0, 6.28)  # Turn around
 
         # Arms
-        self.robot.speech.speak(self.lang.TWO_ARMS, language=self.language_name, block=False)
-        self.robot.speech.speak(self.lang.HUMAN_ARMS, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.TWO_ARMS, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.HUMAN_ARMS, language=self.language, block=False)
         self.robot.leftArm.send_joint_trajectory("wave_front")
-        self.robot.speech.speak(self.lang.END_OF_ARMS, language=self.language_name, block=False)
-        self.robot.speech.speak(self.lang.GRIPPERS, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.END_OF_ARMS, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.GRIPPERS, language=self.language, block=False)
         self.robot.leftArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
         self.robot.rightArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
         self.robot.leftArm.send_gripper_goal("open")
@@ -91,16 +91,16 @@ class Presentation(smach.State):
         self.robot.rightArm.reset()
 
         # Torso
-        self.robot.speech.speak(self.lang.TORSO, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.TORSO, language=self.language, block=False)
         self.robot.torso.medium()
         self.robot.torso.wait_for_motion_done(5.0)
         self.robot.torso.reset()
         self.robot.torso.wait_for_motion_done(5.0)
 
         # Kinect
-        self.robot.speech.speak(self.lang.HEAD, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.HEAD, language=self.language, block=False)
         self.robot.rightArm.send_joint_trajectory("point_to_kinect")
-        self.robot.speech.speak(self.lang.CAMERA, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.CAMERA, language=self.language, block=False)
         self.robot.head.look_at_hand("right")
         self.robot.head.wait_for_motion_done()
         self.robot.head.look_at_hand("left")
@@ -108,21 +108,21 @@ class Presentation(smach.State):
         self.robot.head.reset()
 
         # Lasers
-        self.robot.speech.speak(self.lang.TWO_LRFs, language=self.language_name, block=True)
-        self.robot.speech.speak(self.lang.LRF_LOCS, language=self.language_name, block=False)
+        self.robot.speech.speak(self.trans.TWO_LRFs, language=self.language, block=True)
+        self.robot.speech.speak(self.trans.LRF_LOCS, language=self.language, block=False)
         self.robot.leftArm.send_joint_trajectory("point_to_laser")
 
         # Microphone
-        self.robot.speech.speak(self.lang.MICROPHONE, language=self.language_name, block=True)
+        self.robot.speech.speak(self.trans.MICROPHONE, language=self.language, block=True)
 
         # Final
-        self.robot.speech.speak(self.lang.END_OF_INTRO, language=self.language_name, block=True)
+        self.robot.speech.speak(self.trans.END_OF_INTRO, language=self.language, block=True)
 
         return "done"
 
 
 class PresentationMachine(smach.StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, language='en'):
             """ Contains the Initialize state and the Presentation state
             :param robot: Robot to use
             :return:
@@ -134,21 +134,5 @@ class PresentationMachine(smach.StateMachine):
                                        transitions={"initialized": "PRESENT",
                                                     "abort": "aborted"})
 
-                smach.StateMachine.add("PRESENT", Presentation(robot=robot),
-                                       transitions={"done": "done"})
-
-class PresentationMachineDutch(smach.StateMachine):
-    def __init__(self, robot):
-            """ Contains the Initialize state and the Presentation state
-            :param robot: Robot to use
-            :return:
-            """
-            smach.StateMachine.__init__(self, outcomes=["done", "aborted"])
-
-            with self:
-                smach.StateMachine.add("INITIALIZE", Initialize(robot=robot),
-                                       transitions={"initialized": "PRESENT",
-                                                    "abort": "aborted"})
-
-                smach.StateMachine.add("PRESENT", Presentation(robot=robot, language_name="nl"),
+                smach.StateMachine.add("PRESENT", Presentation(robot=robot, language=language),
                                        transitions={"done": "done"})
