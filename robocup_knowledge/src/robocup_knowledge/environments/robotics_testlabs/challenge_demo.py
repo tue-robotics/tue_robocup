@@ -113,7 +113,6 @@ grammar += """
 V_PLACE -> put | place
 
 VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-VP["action": "place", "object": {"type": "reference"}, "location": {"id": Y}] -> V_PLACE PPN_OBJECT MANIPULATION_AREA_LOCATION[Y]
 """
 
 ###############################################################################
