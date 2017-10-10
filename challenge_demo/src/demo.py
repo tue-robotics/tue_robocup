@@ -1,12 +1,11 @@
 #! /usr/bin/python
 
 # ------------------------------------------------------------------------------------------------------------------------
-# By Rokus Ottervanger, 2017
+# By Matthijs van der Burgh, 2017
 # ------------------------------------------------------------------------------------------------------------------------
 
 import sys
 import rospy
-import smach
 import random
 import json
 
@@ -18,6 +17,7 @@ from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint,
 from robot_smach_states import StartChallengeRobust, WaitForTrigger
 from robot_smach_states.util.designators import EntityByIdDesignator
 
+from robot_skills.util.kdl_conversions import FrameStamped
 from robocup_knowledge import load_knowledge
 
 
@@ -131,6 +131,13 @@ def main():
             #             timeout_count += 1
             #             rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
 
+            base_loc = robot.base.get_location()
+            base_pose = base_loc.frame
+            print base_pose
+            location_id = "starting_point"
+            robot.ed.update_entity(id=location_id, frame_stamped=FrameStamped(base_pose, "/map"),
+                                         type="waypoint")
+
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
             while True:
@@ -185,6 +192,13 @@ def main():
         robot.rightArm.reset()
         robot.rightArm.send_gripper_goal('close', 0.0)
         robot.torso.reset()
+
+        rospy.loginfo("Driving back to the starting point")
+        nwc = NavigateToWaypoint(robot=robot,
+                                 waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                          id=location_id),
+                                 radius=0.3)
+        nwc.execute()
 
         if task_result.succeeded:
             # Keep track of the number of performed tasks
