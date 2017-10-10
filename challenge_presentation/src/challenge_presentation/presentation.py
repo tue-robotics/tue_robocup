@@ -20,7 +20,7 @@ class English(object):
     TWO_LRFs = "Furthermore, I have two laser range finders to help me to see where I am"
     LRF_LOCS = "One laser is mounted on my torso and the other one is at the bottom of my base"
     MICROPHONE = "Finally, I have a microphone on my head so that I can hear what you are saying"
-    END_OF_INTRO = "Thank you for listening, I hope that you like what you see and have a nice day."
+    END_OF_INTRO = "Thank you for your attention, I hope that you like what you see and have a nice day."
 
 class Dutch(object):
     HI_MY_NAME_IS = "Hallo, mijn naam is {}"
@@ -38,7 +38,7 @@ class Dutch(object):
     TWO_LRFs = "Verder heb ik twee lezer afstandsmeters, waarmee ik beter kan zien waar ik ben" # laser = lezer :-)
     LRF_LOCS = "1 lezer zit op mijn torso en de andere onderaan mijn onderstel"
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
-    END_OF_INTRO = "Bedankt voor het luisteren, ik hoop dat leuk vind wat je ziet en ik wens je nog een fijne dag"
+    END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat leuk vind wat je ziet en ik wens je nog een fijne dag"
 
 
 class Presentation(smach.State):
