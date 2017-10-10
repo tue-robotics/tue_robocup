@@ -17,7 +17,9 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[{actions : <A>}] -> VP[A]
+T[{actions : <A>}] -> C[A] | amigo C[A]
+
+C[{A}] -> VP[A]
 """
 
 ##############################################################################
@@ -56,7 +58,12 @@ for name in common.names:
 ###############################################################################
 
 grammar += """
-VP["action": "demo-presentation"] -> introduce yourself | present yourself | perform a demonstration
+V_PRESENT -> introduce yourself | present yourself | perform a demonstration | give a presentation
+ENGLISH['en'] -> english
+DUTCH['nl'] -> dutch
+LANGUAGE[X] -> ENGLISH[X] | DUTCH[X]
+VP["action": "demo-presentation", 'language': 'en'] -> V_PRESENT
+VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 """
 
 
@@ -203,4 +210,3 @@ if __name__ == "__main__":
     result = grammar_parser.parse("T", sentence)
 
     print "Result:\n\n{}".format(result)
-
