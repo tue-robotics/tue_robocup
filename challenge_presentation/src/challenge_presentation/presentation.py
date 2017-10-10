@@ -53,6 +53,10 @@ class Presentation(smach.State):
         self.robot = robot
         self.language = language
         self.trans = {"en":English, "nl":Dutch}[language]
+        if self.language=="nl":
+            self.voice="marjolijn"
+        else:
+            self.voice="kyle"
 
     def execute(self, userdata=None):
         """ Execute function
@@ -61,13 +65,13 @@ class Presentation(smach.State):
         :return:
         """
         # Introduction
-        self.robot.speech.speak(self.trans.HI_MY_NAME_IS.format(self.robot.robot_name), language=self.language, block=True)
-        self.robot.speech.speak(self.trans.IM_A_SERVICE_ROBOT, language=self.language, block=True)
-        self.robot.speech.speak(self.trans.PURPOSE, language=self.language, block=True)
+        self.robot.speech.speak(self.trans.HI_MY_NAME_IS.format(self.robot.robot_name), language=self.language, voice=self.voice, block=True)
+        self.robot.speech.speak(self.trans.IM_A_SERVICE_ROBOT, language=self.language, voice=self.voice, block=True)
+        self.robot.speech.speak(self.trans.PURPOSE, language=self.language, voice=self.voice, block=True)
 
         # Base
-        self.robot.speech.speak(self.trans.IM_OMNIDIR, language=self.language, block=True)
-        self.robot.speech.speak(self.trans.EXPLAIN_BASE, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.IM_OMNIDIR, language=self.language, voice=self.voice, block=True)
+        self.robot.speech.speak(self.trans.EXPLAIN_BASE, language=self.language, voice=self.voice, block=False)
         self.robot.base.force_drive(0.1, 0, 0, 1.0)  # Forward
         self.robot.base.force_drive(0, 0.1, 0, 1.0)  # Left
         self.robot.base.force_drive(-0.1, 0, 0, 1.0)  # Backwards
@@ -75,11 +79,11 @@ class Presentation(smach.State):
         self.robot.base.force_drive(0, 0, 1.0, 6.28)  # Turn around
 
         # Arms
-        self.robot.speech.speak(self.trans.TWO_ARMS, language=self.language, block=False)
-        self.robot.speech.speak(self.trans.HUMAN_ARMS, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False)
+        self.robot.speech.speak(self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False)
         self.robot.leftArm.send_joint_trajectory("wave_front")
-        self.robot.speech.speak(self.trans.END_OF_ARMS, language=self.language, block=False)
-        self.robot.speech.speak(self.trans.GRIPPERS, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False)
+        self.robot.speech.speak(self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False)
         self.robot.leftArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
         self.robot.rightArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
         self.robot.leftArm.send_gripper_goal("open")
@@ -88,19 +92,19 @@ class Presentation(smach.State):
         self.robot.rightArm.send_gripper_goal("close")
         self.robot.leftArm.reset()
         self.robot.rightArm.reset()
-        self.robot.rightArm.wait_for_motion_done
+        self.robot.rightArm.wait_for_motion_done()
 
         # Torso
-        self.robot.speech.speak(self.trans.TORSO, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.TORSO, language=self.language, voice=self.voice, block=False)
         self.robot.torso.medium()
         self.robot.torso.wait_for_motion_done(5.0)
         self.robot.torso.reset()
         self.robot.torso.wait_for_motion_done(5.0)
 
         # Kinect
-        self.robot.speech.speak(self.trans.HEAD, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.HEAD, language=self.language, voice=self.voice, block=False)
         self.robot.rightArm.send_joint_trajectory("point_to_kinect")
-        self.robot.speech.speak(self.trans.CAMERA, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.CAMERA, language=self.language, voice=self.voice, block=False)
         self.robot.head.look_at_hand("right")
         self.robot.head.wait_for_motion_done()
         self.robot.head.look_at_hand("left")
@@ -109,21 +113,21 @@ class Presentation(smach.State):
         self.robot.head.wait_for_motion_done()
 
         # Lasers
-        self.robot.speech.speak(self.trans.TWO_LRFs, language=self.language, block=True)
-        self.robot.speech.speak(self.trans.LRF_LOCS, language=self.language, block=False)
+        self.robot.speech.speak(self.trans.TWO_LRFs, language=self.language, voice=self.voice, block=True)
+        self.robot.speech.speak(self.trans.LRF_LOCS, language=self.language, voice=self.voice, block=False)
         self.robot.leftArm.send_joint_trajectory("point_to_laser")
 
         # Microphone
-        self.robot.speech.speak(self.trans.MICROPHONE, language=self.language, block=True)
+        self.robot.speech.speak(self.trans.MICROPHONE, language=self.language, voice=self.voice, block=True)
 
         # Final
-        self.robot.speech.speak(self.trans.END_OF_INTRO, language=self.language, block=True)
+        self.robot.speech.speak(self.trans.END_OF_INTRO, language=self.language, voice=self.voice, block=True)
 
         return "done"
 
 
 class PresentationMachine(smach.StateMachine):
-    def __init__(self, robot, language='en'):
+    def __init__(self, robot, language='nl'):
             """ Contains the Initialize state and the Presentation state
             :param robot: Robot to use
             :return:
