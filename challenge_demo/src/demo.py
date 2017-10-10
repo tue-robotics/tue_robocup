@@ -208,13 +208,6 @@ def main():
             if no_of_tasks_performed >= no_of_tasks:
                 finished = True
 
-            # If we succeeded, we can say something optimistic after reporting to the operator
-            if no_of_tasks_performed == 1:
-                task_word = "task"
-            else:
-                task_word = "tasks"
-            report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
-
         if rospy.get_time() - start_time > (60 * time_limit - 45) and no_of_tasks_performed >= 1:
             finished = True
 
