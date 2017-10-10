@@ -138,6 +138,8 @@ def main():
             robot.ed.update_entity(id=location_id, frame_stamped=FrameStamped(base_pose, "/map"),
                                          type="waypoint")
 
+            robot.head.look_at_standing_person()
+
             robot.speech.speak(user_instruction, block=True)
             # Listen for the new task
             while True:
