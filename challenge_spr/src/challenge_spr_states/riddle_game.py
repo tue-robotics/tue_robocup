@@ -27,8 +27,9 @@ DEFAULT_HEAR_TIME = 15.0
 #
 ##############################################################################
 
+
 class HearAndAnswerQuestions(smach.State):
-    '''
+    """
     Robot hears and answers questions from the riddle game in SPR challenge.
 
     Variables:
@@ -36,7 +37,7 @@ class HearAndAnswerQuestions(smach.State):
 
     Outputs:
         done: answered all questions
-    '''
+    """
     def __init__(self, robot, num_questions=1, hear_time=DEFAULT_HEAR_TIME):
         smach.State.__init__(self, outcomes=["done"], input_keys=['crowd_data'])
         self.robot = robot
@@ -63,20 +64,22 @@ class HearAndAnswerQuestions(smach.State):
 #
 ##############################################################################
 
+
 def hear(robot, hear_time):
-    '''
+    """
     Robots hears a question
 
     Output:
         question, if understood, else None
-    '''
+    """
     try:
         return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=hear_time)
     except TimeoutException:
         return None
 
+
 def answer(robot, res, crowd_data):
-    '''
+    """
     Robot answers the heard question
 
     Arguments:
@@ -85,7 +88,7 @@ def answer(robot, res, crowd_data):
 
     Outputs:
         True: if successfully answered the question, else False
-    '''
+    """
     if not res:
         return False
 
@@ -108,14 +111,14 @@ def answer(robot, res, crowd_data):
                    ('return_color',     answer_object_color),
                    ('compare_category', answer_compare_objects_categories),
                    ('count_object',     answer_count_objects_in_category),
-                  ]
+                   ]
 
     for action in res.semantics['actions']:
         try:
             if 'action' not in action:
                 continue
 
-            answer = "Sorry, I cannot %s. I don't know the answer.  " % str(action['action'])
+            answer = "Sorry, I cannot %s. I don't know the answer." % str(action['action'])
             for name, func in assignments:
                 if action['action'] == name:
                     answer = func(action)
@@ -129,11 +132,14 @@ def answer(robot, res, crowd_data):
     robot.speech.speak("The answer is %s" % answer)
     return True
 
+
 def answer_random_gender(action):
     return random.choice(["A male", "A female"])
 
+
 def answer_predefined_questions(action):
     return action['solution']
+
 
 def answer_count_people(action, crowd_data):
     crowd_properties = [('people', 'crowd_size'),
@@ -152,6 +158,7 @@ def answer_count_people(action, crowd_data):
             return 'In the crowd are %d %s' % (crowd_data[property_value], property_name)
     return 'I dont know'
 
+
 def answer_placement_location(action):
     entity = action['entity']
     locations = [loc for loc in common_knowledge.locations if loc['name'] == entity]
@@ -160,6 +167,7 @@ def answer_placement_location(action):
         return 'The %s can be found in the %s' % (entity, room)
     else:
         return 'I dont know that object'
+
 
 def answer_count_placement(action):
     entity = action['entity']
@@ -180,32 +188,36 @@ def answer_find_objects(action):
         cat = objects[0]['category']
         print cat
         loc, area_name = common_knowledge.get_object_category_location(cat)
-        answer = 'You can find the %s %s %s' % (entity, area_name, loc)
+        return 'You can find the %s %s %s' % (entity, area_name, loc)
     else:
-        answer = 'I should find %s but I dont know %s' % entity
+        return 'I should find %s but I dont know %s' % entity
+
 
 def answer_find_category(action):
     entity = action['entity']
     loc, area_name = common_knowledge.get_object_category_location(entity)
-    answer = 'You can find the %s on the %s' % (entity, loc)
+    return 'You can find the %s on the %s' % (entity, loc)
+
 
 def answer_object_category(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         cat = objects[0]['category']
-        answer = 'The %s belongs to %s' % (entity, cat)
+        return 'The %s belongs to %s' % (entity, cat)
     else:
-        answer = 'I should name a category but I dont know what is %s' % entity
+        return 'I should name a category but I dont know what is %s' % entity
+
 
 def answer_object_color(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         col = objects[0]['color']
-        answer = 'The color of %s is %s' % (entity, col)
+        return 'The color of %s is %s' % (entity, col)
     else:
-        answer = 'I should name the color but I dont know %s' % entity
+        return 'I should name the color but I dont know %s' % entity
+
 
 def answer_compare_objects_categories(action):
     entity_a = action['entity_a']
@@ -216,24 +228,26 @@ def answer_compare_objects_categories(action):
         cat_a = objects_a[0]['category']
         cat_b = objects_b[0]['category']
         if cat_a == cat_b:
-            answer = 'Both objects belong to the same category %s' % cat_a
+            return 'Both objects belong to the same category %s' % cat_a
         else:
-            answer = 'These objects belong to different categories'
+            return 'These objects belong to different categories'
     else:
-        answer = 'I dont know these objects'
+        return 'I dont know these objects'
+
 
 def answer_count_objects_in_category(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['category'] == entity]
     if len(objects) > 0:
         count = len(objects)
-        answer = 'The number of objects in category %s is %i' % (entity, count)
+        return 'The number of objects in category %s is %i' % (entity, count)
 
 ##############################################################################
 #
 # Standalone testing:
 #
 ##############################################################################
+
 
 class TestRiddleGame(smach.StateMachine):
     def __init__(self, robot):
