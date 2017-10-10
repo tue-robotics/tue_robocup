@@ -22,15 +22,14 @@ class Presentation(smach.State):
         :param userdata:
         :return:
         """
-        # ToDo: here we can have the robot do awesome stuff
         # Introduction
-        self.robot.speech.speak("Hi, my name is {}".format(self.robot.robot_name), block=True)
-        self.robot.speech.speak("I am one of the care robots of the Eindhoven University of Technology", block=True)
+        self.robot.speech.speak("Hello, my name is {}".format(self.robot.robot_name), block=True)
+        self.robot.speech.speak("I am one of the service robots of the Eindhoven University of Technology", block=True)
         self.robot.speech.speak("My purpose is to help people in domestic or care environments.", block=True)
 
         # Base
-        self.robot.speech.speak("I have a omnidirectionaly base", block=True)
-        self.robot.speech.speak("With this, I can instantly move in any direction", block=False)
+        self.robot.speech.speak("I have an omnidirectional base instead of legs", block=True)
+        self.robot.speech.speak("With this base, I can instantly move in any direction and turn around whenever I want", block=False)
         self.robot.base.force_drive(0.1, 0, 0, 1.0)  # Forward
         self.robot.base.force_drive(0, 0.1, 0, 1.0)  # Left
         self.robot.base.force_drive(-0.1, 0, 0, 1.0)  # Backwards
@@ -40,24 +39,41 @@ class Presentation(smach.State):
         # Arms
         self.robot.speech.speak("I have two arms. These have the dimensions and degrees of freedom of human arms",
                                 block=False)
+        self.robot.speech.speak("This makes me capable of moving my arms just like you would move your arms.", block=False)
         self.robot.leftArm.send_joint_trajectory("wave_front")
+
         self.robot.speech.speak("At the end of my arms, I have two grippers with which I can grasp objects", block=False)
+        self.robot.speech.speak("My grippers can be opened and closed when I need to.", block=False)
+        self.robot.leftArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
+        self.robot.rightArm._send_joint_trajectory([[0, 0, 0, 1.7, 0, 0, 0]])
         self.robot.leftArm.send_gripper_goal("open")
         self.robot.leftArm.send_gripper_goal("close")
         self.robot.rightArm.send_gripper_goal("open")
         self.robot.rightArm.send_gripper_goal("close")
+        self.robot.leftArm.reset()
+        self.robot.rightArm.reset()
+        self.robot.rightArm.wait_for_motion_done
+
         # Torso
-        self.robot.speech.speak("My arms are mounted on a moveable torso. This way, I can grasp higher and lower",
+        self.robot.speech.speak("My arms are mounted on a moveable torso. This way, I can grasp higher and lower.",
                                 block=False)
-        self.robot.torso.low()
+        self.robot.torso.medium()
         self.robot.torso.wait_for_motion_done(5.0)
         self.robot.torso.reset()
+        self.robot.torso.wait_for_motion_done(5.0)
 
         # Kinect
-        self.robot.speech.speak("As a head, I have a 3D camera. I use this to detect and recognize objects and people",
-                                block=True)
-        self.robot.speech.speak("My 3D camera is mounted on top of my torso", block=False)
+        self.robot.speech.speak("As a head, I have a 3D camera. I use this to detect and recognize objects and people.",
+                                block=False)
         self.robot.rightArm.send_joint_trajectory("point_to_kinect")
+
+        self.robot.speech.speak("My 3D camera is mounted on top of my torso and I can move my camera just like a human head.", block=False)
+        self.robot.head.look_at_hand("right")
+        self.robot.head.wait_for_motion_done()
+        self.robot.head.look_at_hand("left")
+        self.robot.head.wait_for_motion_done()
+        self.robot.head.reset()
+        self.robot.head.wait_for_motion_done()
 
         # Lasers
         self.robot.speech.speak("Furthermore, I have two laser range finders to help me to see where I am", block=True)
@@ -66,10 +82,10 @@ class Presentation(smach.State):
         self.robot.leftArm.send_joint_trajectory("point_to_laser")
 
         # Microphone
-        self.robot.speech.speak("Finally, I have a microphone on my head so that I can hear what you're saying")
+        self.robot.speech.speak("Finally, I have a microphone on my head so that I can hear what you are saying")
 
         # Final
-        self.robot.speech.speak("This was my introduction, I hope that you like what you see and please enjoy the presentation.")
+        self.robot.speech.speak("Thank you for listening, I hope that you like what you see and have a nice day.")
 
         return "done"
 
