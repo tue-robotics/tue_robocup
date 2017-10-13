@@ -1,22 +1,11 @@
 #! /usr/bin/env python
-import roslib;
+
 import rospy
 import smach
-import geometry_msgs.msg
-import time
-import ed
-import time
 
-from math import cos, sin
-from geometry_msgs.msg import *
-from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg
-from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 
-import math
-import actionlib
 from random import choice
-import robot_skills.util.msg_constructors as msgs
 
 # ----------------------------------------------------------------------------------------------------
 
