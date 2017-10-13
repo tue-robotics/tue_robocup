@@ -76,8 +76,8 @@
   <build_depend>text_to_speech</build_depend>
   <run_depend>text_to_speech</run_depend>
 
-  <build_depend>ed</build_depend>
-  <run_depend>ed</run_depend>
+  <build_depend>ed_msgs</build_depend>
+  <run_depend>ed_msgs</run_depend>
 
   <build_depend>ed_perception</build_depend>
   <run_depend>ed_perception</run_depend>

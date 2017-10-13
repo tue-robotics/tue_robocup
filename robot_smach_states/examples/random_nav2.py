@@ -13,7 +13,7 @@ from robot_smach_states.util.startup import startup
 import std_msgs.msg
 
 from robot_smach_states.designators.designator import Designator
-from ed.srv import SimpleQuery, SimpleQueryRequest
+from ed_msgs.srv import SimpleQuery, SimpleQueryRequest
 
 class RandomNavDesignator(Designator):
 

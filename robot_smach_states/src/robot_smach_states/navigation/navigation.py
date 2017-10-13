@@ -346,7 +346,7 @@ class Navigate(smach.StateMachine):
         """@param robot the robot with which to perform this action
         @param entityId the entity or item to observe.
         @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation.
-            entityInfo is a ed/EntityInfo message.
+            entityInfo is a ed_msgs/EntityInfo message.
         @param finishedChecker a function(robot) that checks whether the item if observed to your satisfaction. """
         smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 

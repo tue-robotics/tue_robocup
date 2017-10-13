@@ -15,7 +15,7 @@
   <run_depend>smach</run_depend>
   <run_depend>smach_ros</run_depend>
   <run_depend>geometry_msgs</run_depend>
-  <run_depend>ed</run_depend>
+  <run_depend>ed_msgs</run_depend>
   <run_depend>python-docopt</run_depend>
   <run_depend>python-mock</run_depend>
   <run_depend>ipython</run_depend>

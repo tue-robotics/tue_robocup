@@ -7,7 +7,7 @@ from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
 from robot_smach_states.util.designators import check_resolve_type
-import ed.msg
+import ed_msgs.msg
 
 import rospy
 
@@ -22,10 +22,10 @@ class NavigateToExplore(NavigateTo):
 
         self.robot    = robot
 
-        check_resolve_type(constraint_designator, ed.msg.EntityInfo) #Check that the constraint designator resolves to an Entity
+        check_resolve_type(constraint_designator, ed_msgs.msg.EntityInfo) #Check that the constraint designator resolves to an Entity
         self.constraint_designator = constraint_designator
 
-        check_resolve_type(breakout_designator, ed.msg.EntityInfo) #Check that the constraint designator resolves to an Entity
+        check_resolve_type(breakout_designator, ed_msgs.msg.EntityInfo) #Check that the constraint designator resolves to an Entity
         self.breakout_designator   = breakout_designator
         self.radius   = radius
         self.exclude_radius = exclude_radius

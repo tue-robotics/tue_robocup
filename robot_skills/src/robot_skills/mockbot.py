@@ -9,7 +9,7 @@ import std_msgs.msg
 import tf
 from dragonfly_speech_recognition.msg import Choice
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-from ed.msg import EntityInfo
+from ed_msgs.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
 
 import arms

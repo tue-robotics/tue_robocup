@@ -15,7 +15,7 @@ import ed_perception.msg
 import math
 import robot_skills.util.msg_constructors as msgs
 
-from ed.msg import EntityInfo
+from ed_msgs.msg import EntityInfo
 from smach_ros import SimpleActionState
 from collections import namedtuple
 from dragonfly_speech_recognition.srv import GetSpeechResponse
