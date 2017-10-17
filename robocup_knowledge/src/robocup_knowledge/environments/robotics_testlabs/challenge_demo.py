@@ -17,7 +17,7 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[{actions : <A>}] -> C[A] | amigo C[A]
+T[{actions : <A1>}] -> C[A1]
 
 C[{A}] -> VP[A]
 """
@@ -53,7 +53,7 @@ for name in common.names:
 
 ###############################################################################
 #
-# Demo
+# Demo presentation
 #
 ###############################################################################
 
@@ -66,6 +66,18 @@ VP["action": "demo-presentation", 'language': 'en'] -> V_PRESENT
 VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 """
 
+###############################################################################
+#
+# Find objects
+#
+###############################################################################
+
+grammar += """
+V_FIND -> find | locate | look for
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
+VP["action": "find", "object": {"type": X}] -> V_FIND DET NAMED_OBJECT[X]
+"""
 
 ###############################################################################
 #
@@ -75,7 +87,6 @@ VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 
 grammar += """
 V_GOPL -> go to | navigate to
-V_GOR -> V_GOPL | enter
 
 VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATION[X]
 """
@@ -117,25 +128,13 @@ VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE D
 
 ###############################################################################
 #
-# Follow
-#
-###############################################################################
-
-grammar += """
-V_FOLLOW -> follow | come after
-
-VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
-"""
-
-###############################################################################
-#
 # BRING
 #
 ###############################################################################
 
 grammar += """
 OPERATOR[operator] -> me
-BRING_NAME -> OPERATOR | BRING_PERSON
+BRING_NAME -> OPERATOR
 
 BRING_TARGET[{"id": X, "type": person}] -> BRING_NAME[X]
 BRING_TARGET[{"id": X}] -> the LOCATION[X]
@@ -146,7 +145,9 @@ V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over
 
 VP["action": "bring", "source-location": {"id": X}, "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the LOCATION[X] to BRING_TARGET[Y]
 VP["action": "bring", "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the LOCATION[X]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+
+VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
 """
 
 for name in common.names:
@@ -172,19 +173,6 @@ grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
-
-
-##############################################################################
-#
-# ANSWER QUESTION
-#
-##############################################################################
-
-grammar += """
-VP["action": "answer-question"] -> answer a question
-"""
-
-
 
 if __name__ == "__main__":
     print "GPSR Grammar:\n\n{}\n\n".format(grammar)
