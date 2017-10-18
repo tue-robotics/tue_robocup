@@ -9,8 +9,8 @@ import rospy
 import visualization_msgs.msg
 
 # TU/e
-import ed.srv
-from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
+import ed_msgs.srv
+from ed_msgs.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 import ed_sensor_integration.srv
 from ed_perception.srv import Classify
 from ed_gui_server.srv import GetEntityInfo
@@ -57,7 +57,7 @@ class ED(RobotPart):
                                                                 ed_sensor_integration.srv.Update)
         self._ed_classify_srv = self.create_service_client('/%s/ed/classify' % robot_name, Classify)
         self._ed_configure_srv = self.create_service_client('/%s/ed/configure' % robot_name, Configure)
-        self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed.srv.Reset)
+        self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed_msgs.srv.Reset)
         self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
                                                             ed_sensor_integration.srv.GetImage)
         self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name, ed_sensor_integration.srv.RayTrace)

@@ -10,7 +10,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.base import computePathLength
 import robot_smach_states as states
-from ed.msg import EntityInfo
+from ed_msgs.msg import EntityInfo
 import robot_smach_states.util.designators as ds
 
 

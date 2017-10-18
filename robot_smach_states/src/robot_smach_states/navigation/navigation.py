@@ -1,22 +1,11 @@
 #! /usr/bin/env python
-import roslib;
+
 import rospy
 import smach
-import geometry_msgs.msg
-import time
-import ed
-import time
 
-from math import cos, sin
-from geometry_msgs.msg import *
-from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg
-from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 
-import math
-import actionlib
 from random import choice
-import robot_skills.util.msg_constructors as msgs
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -346,7 +335,7 @@ class Navigate(smach.StateMachine):
         """@param robot the robot with which to perform this action
         @param entityId the entity or item to observe.
         @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation.
-            entityInfo is a ed/EntityInfo message.
+            entityInfo is a ed_msgs/EntityInfo message.
         @param finishedChecker a function(robot) that checks whether the item if observed to your satisfaction. """
         smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 

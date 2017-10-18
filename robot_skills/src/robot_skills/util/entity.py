@@ -126,9 +126,9 @@ class Entity(object):
 
 
 def from_entity_info(e):
-    """ Converts ed.msg.EntityInfo to an Entity
+    """ Converts ed_msgs.msg.EntityInfo to an Entity
 
-    :param e: ed.msg.EntityInfo
+    :param e: ed_msgs.msg.EntityInfo
     :return: Entity
     """
     identifier = e.id

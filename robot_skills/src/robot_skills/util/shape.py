@@ -102,7 +102,7 @@ def shape_from_entity_info(e):
     """ Creates a shape from the convex_hull, z_min and z_max of the EntityInfo object. If no convex hull is present,
     an empty Shape object is returned
 
-    :param e: ed.msg.EntityInfo
+    :param e: ed_msgs.msg.EntityInfo
     :return: Shape
     """
     # Check if we have a convex hull

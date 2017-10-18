@@ -2,7 +2,7 @@ import rospy
 import smach
 from robot_skills.util import transformations
 
-from ed.msg import EntityInfo
+from ed_msgs.msg import EntityInfo
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart

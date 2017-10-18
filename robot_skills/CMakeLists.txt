@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
     cb_planner_msgs_srvs
     tue_manipulation_msgs
     text_to_speech
-    ed
+    ed_msgs
     ed_navigation
     dragonfly_speech_recognition
 )

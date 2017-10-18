@@ -98,7 +98,7 @@ class OffsetVolume(Volume):
 def volumes_from_entity_info_data(data):
     """ Creates a dict mapping strings to Volumes from the EntityInfo data dictionary
 
-    :param data: ed.msg.EntityInfo.data (string)
+    :param data: ed_msgs.msg.EntityInfo.data (string)
     :return: dict mapping strings to Volumes
     """
     # Check if we have data and if it contains areas
