@@ -165,7 +165,7 @@ class RoboZooSimple(smach.StateMachine):
         with self:
             
             smach.StateMachine.add( "RESET_ALL",
-                                    states.ResetArmsSpindleHead(robot, timeout=5.0),
+                                    states.ResetArmsTorsoHead(robot, timeout=5.0),
                                     transitions={"done":"WAIT_A_SEC"})
 
             smach.StateMachine.add( "WAIT_A_SEC", 
