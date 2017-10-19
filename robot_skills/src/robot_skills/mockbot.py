@@ -236,7 +236,6 @@ class Mockbot(robot.Robot):
         # Body parts
         self.base = Base()
         self.torso = Torso()
-        self.spindle = self.torso
         self.leftArm = Arm(self.robot_name, self.tf_listener, "left")
         self.rightArm = Arm(self.robot_name, self.tf_listener, "right")
         self.arms = {"left":self.leftArm, "right":self.rightArm}
