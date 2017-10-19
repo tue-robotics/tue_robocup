@@ -145,7 +145,7 @@ V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over
 
 VP["action": "bring", "source-location": {"id": X}, "target-location": Y, "object": {"type": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the LOCATION[X] to BRING_TARGET[Y]
 VP["action": "bring", "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
-VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": Y}, "object": {"type": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the LOCATION[X]
 
 VP["action": "bring", "target-location": X, "object": {"type": "reference"}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
 """
