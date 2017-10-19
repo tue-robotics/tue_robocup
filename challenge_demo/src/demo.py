@@ -116,20 +116,8 @@ def main():
         timeout_count = 0
 
         while True:
+            rospy.loginfo("Waiting for trigger")
             trigger.execute()
-            # while True:
-            #     try:
-            #         robot.hmi.query(description="", grammar="T -> %s" % robot_name, target="T")
-            #         timeout_count = 0
-            #         break
-            #     except hmi.TimeoutException:
-            #         if timeout_count >= 3:
-            #             robot.hmi.restart_dragonfly()
-            #             timeout_count = 0
-            #             rospy.logwarn("[GPSR] Dragonfly restart")
-            #         else:
-            #             timeout_count += 1
-            #             rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
 
             base_loc = robot.base.get_location()
             base_pose = base_loc.frame
@@ -201,15 +189,6 @@ def main():
                                                                           id=location_id),
                                  radius=0.3)
         nwc.execute()
-
-        if task_result.succeeded:
-            # Keep track of the number of performed tasks
-            no_of_tasks_performed += 1
-            if no_of_tasks_performed >= no_of_tasks:
-                finished = True
-
-        if rospy.get_time() - start_time > (60 * time_limit - 45) and no_of_tasks_performed >= 1:
-            finished = True
 
 
 # ------------------------------------------------------------------------------------------------------------------------
