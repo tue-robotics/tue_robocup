@@ -71,7 +71,6 @@ class Robot(object):
         # Create attributes from dict
         for k, v in self.parts.iteritems():
             setattr(self, k, v)
-        self.spindle = self.torso  # (ToDo: kind of ugly, why do we still have spindle???)
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # (ToDo: kind of ugly, why do we need this???)
         self.ears._hmi = self.hmi  # ToDo: when ears is gone, remove this line
 
@@ -150,7 +149,7 @@ class Robot(object):
         except: pass
 
         try:
-            self.spindle.close()
+            self.torso.close()
         except: pass
 
         try:
