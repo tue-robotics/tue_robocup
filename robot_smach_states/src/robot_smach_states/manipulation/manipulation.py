@@ -332,7 +332,7 @@ class TorsoToUserPos(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata=None):
-        if self.robot.spindle.send_goal(self.torso_pos,timeout=self.time_out):
+        if self.robot.torso.send_goal(self.torso_pos,timeout=self.time_out):
             return 'succeeded'
         else:
             return 'failed'
