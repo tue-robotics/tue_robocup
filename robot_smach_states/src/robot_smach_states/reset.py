@@ -68,7 +68,7 @@ class ResetED(smach.State):
         return 'done'
 
 
-class ResetArmsSpindle(smach.State):
+class ResetArmsTorso(smach.State):
     def __init__(self, robot, timeout=0.0):
         self.robot = robot
         self.timeout = timeout
@@ -80,11 +80,11 @@ class ResetArmsSpindle(smach.State):
         self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
         self.robot.rightArm.reset()
         self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
-        self.robot.spindle.reset()
+        self.robot.torso.reset()
         return "done"
 
 
-class ResetArmsSpindleHead(smach.State):
+class ResetArmsTorsoHead(smach.State):
     # Checks how many tasks have been done and if another task is needed
     # Does this check with the database in the reasoner
     def __init__(self,robot, timeout=0.0):
@@ -97,6 +97,6 @@ class ResetArmsSpindleHead(smach.State):
         self.robot.rightArm.reset()
         self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
         self.robot.head.reset(timeout=self.timeout)
-        self.robot.spindle.reset()
+        self.robot.torso.reset()
 
         return "done"
