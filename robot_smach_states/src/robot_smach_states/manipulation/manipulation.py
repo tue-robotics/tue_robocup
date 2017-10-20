@@ -7,7 +7,7 @@ from ed_msgs.msg import EntityInfo
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
-from robot_skills.arms import ArmState
+from robot_skills.arms import GripperState
 from robot_smach_states.util.designators import LockingDesignator
 
 from robot_smach_states.util.designators import check_type
@@ -82,7 +82,7 @@ class HandoverFromHuman(smach.StateMachine):
             smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, arm_configuration),
                             transitions={'succeeded':'OPEN_BEFORE_INSERT','failed':'OPEN_BEFORE_INSERT'})
 
-            smach.StateMachine.add( 'OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator, gripperstate='open'),
+            smach.StateMachine.add( 'OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator, gripperstate=GripperState.OPEN),
                                 transitions={'succeeded'    :   'SAY1',
                                              'failed'       :   'SAY1'})
 
@@ -125,7 +125,7 @@ class HandoverToHuman(smach.StateMachine):
                         Say(robot, [ "Watch out, I will open my gripper in one second. Please take it from me."]),
                         transitions={   'spoken'    :'OPEN_GRIPPER_HANDOVER'})
 
-            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.OPEN, timeout=2.0),
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=GripperState.OPEN, timeout=2.0),
                         transitions={'succeeded'    :   'SAY_CLOSE_NOW_GRIPPER',
                                      'failed'       :   'SAY_CLOSE_NOW_GRIPPER'})
 
@@ -137,7 +137,7 @@ class HandoverToHuman(smach.StateMachine):
             #             transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
             #                          'failed'       :   'SAY_I_WILL_KEEP_IT'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.CLOSE, timeout=0.0),
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=GripperState.CLOSE, timeout=0.0),
                         transitions={'succeeded'    :   'RESET_ARM',
                                      'failed'       :   'RESET_ARM'})
 
@@ -212,7 +212,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
 
 class SetGripper(smach.State):
-    def __init__(self, robot, arm_designator, gripperstate='open', drop_from_frame=None, grab_entity_designator=None, timeout=10):
+    def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, drop_from_frame=None, grab_entity_designator=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         check_type(arm_designator, Arm)
@@ -242,7 +242,7 @@ class SetGripper(smach.State):
             result = False
 
         # ToDo: make sure things can get attached to the gripper in this state. Use userdata?
-        if self.gripperstate == ArmState.OPEN:
+        if self.gripperstate == GripperState.OPEN:
             arm.occupied_by = None
 
         # ToDo: check for failed in other states

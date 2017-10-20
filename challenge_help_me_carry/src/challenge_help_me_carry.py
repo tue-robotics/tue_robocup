@@ -11,7 +11,7 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.designators import check_type
-from robot_skills.arms import Arm, ArmState
+from robot_skills.arms import Arm, GripperState
 
 import robot_smach_states as states
 
@@ -162,7 +162,7 @@ class DropBagOnGround(smach.StateMachine):
                                    transitions={'succeeded': 'OPEN_AFTER_DROP',
                                                 'failed': 'OPEN_AFTER_DROP'})
 
-            smach.StateMachine.add('OPEN_AFTER_DROP', states.SetGripper(robot, arm_designator, gripperstate=ArmState.OPEN),
+            smach.StateMachine.add('OPEN_AFTER_DROP', states.SetGripper(robot, arm_designator, gripperstate=GripperState.OPEN),
                                 transitions={'succeeded'    :   'RESET_ARM_OK',
                                              'failed'       :   'RESET_ARM_FAIL'})
 
@@ -278,7 +278,7 @@ def setup_statemachine(robot):
                                           'target_room_out':  'target_room'})
 
         smach.StateMachine.add('BACKUP_CLOSE_GRIPPER',
-                               states.SetGripper(robot, bag_arm_designator, gripperstate=ArmState.CLOSE),
+                               states.SetGripper(robot, bag_arm_designator, gripperstate=GripperState.CLOSE),
                                transitions={'succeeded': 'ARM_DRIVING_POSE',
                                             'failed': 'ARM_DRIVING_POSE'})
 
