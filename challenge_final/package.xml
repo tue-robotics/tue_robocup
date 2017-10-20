@@ -19,7 +19,6 @@
   <build_depend>robot_skills</build_depend>
   <build_depend>robot_smach_states</build_depend>
   <build_depend>rospy</build_depend>
-  <build_depend>tue_recorder</build_depend>
   <build_depend>tue_serialization</build_depend>
   <build_depend>message_generation</build_depend>
 
@@ -29,7 +28,6 @@
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
-  <run_depend>tue_recorder</run_depend>
   <run_depend>tue_serialization</run_depend>
   <run_depend>message_runtime</run_depend>
 
