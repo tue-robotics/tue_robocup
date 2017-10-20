@@ -123,7 +123,7 @@ def save_entity_image_to_file(world_model_ed, entity_id):
         image = Image.open(stream)
     except Exception as e:
         rospy.logerr("Failed to load image from entity %s", entity_id)
-        rospy.logerr("Failed to load image ... Try installing the latest version of PILLOW: sudo pip install -I pillow")
+        rospy.logerr("Failed to load image ... Try installing the latest version of PILLOW: sudo apt-get install python-imaging")
         rospy.logerr(e)
         return None
 
