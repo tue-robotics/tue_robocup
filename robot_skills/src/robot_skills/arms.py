@@ -149,10 +149,7 @@ class Arm(RobotPart):
             else:
                 self._operational = True
 
-    def send_goal(self, frameStamped,
-                  timeout=30,
-                  pre_grasp=False,
-                  first_joint_pos_only=False,
+    def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
                   allowed_touch_objects=[]):
         """
         Send a arm to a goal:
@@ -169,7 +166,6 @@ class Arm(RobotPart):
         :param allowed_touch_objects: List of object names in the worldmodel, which are allowed to be touched
         :return: True of False
         """
-
         # save the arguments for debugging later
         myargs = locals()
 
@@ -276,7 +272,6 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
-
         if configuration in self.default_trajectories:
             return self._send_joint_trajectory(self.default_trajectories[configuration], timeout=rospy.Duration(timeout))
         else:
@@ -343,13 +338,10 @@ class Arm(RobotPart):
         """
         Handover an item from the gripper to a human.
 
-        Feels if user slightly pulls or pushes the (item in the) arm. On timeout, it will return False.
+        Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
         :param timeout: timeout in seconds
         :return: True or False
         """
-
-        succeeded = False
-
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1, latch = True)
         pub.publish(std_msgs.msg.Bool(True))
 
@@ -369,9 +361,6 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-
-        succeeded = False
-
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1, latch = True)
         pub.publish(std_msgs.msg.Bool(True))
 
