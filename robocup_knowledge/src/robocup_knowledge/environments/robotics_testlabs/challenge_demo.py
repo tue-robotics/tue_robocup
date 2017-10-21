@@ -172,6 +172,22 @@ grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | t
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
 
+###############################################################################
+#
+# Sound Source Localization (SSL)
+#
+###############################################################################
+
+grammar += """
+VP["action": "turn-toward-sound"] -> show your sound source localization | look at me when i am talking to you
+"""
+
+###############################################################################
+#
+# Test
+#
+###############################################################################
+
 if __name__ == "__main__":
     print "GPSR Grammar:\n\n{}\n\n".format(grammar)
 
