@@ -82,6 +82,14 @@ class Robot(object):
         e = rospy.Time.now()
         rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
 
+    def reset(self):
+        for k, v in self.parts.iteritems():
+            try:
+                v.reset()
+                v.send_gripper_goal('close')
+            except:
+                pass
+
     def standby(self):
         if not self.robot_name == 'amigo':
             rospy.logerr('Standby only works for amigo')

@@ -258,6 +258,10 @@ class Arm(RobotPart):
         '''
         Put the arm into the 'reset' pose
         '''
+        try:
+            self.send_gripper_goal('close')
+        except:
+            pass
         return self.send_joint_goal('reset', timeout=timeout)
 
     @property
@@ -282,7 +286,7 @@ class Arm(RobotPart):
         elif state == 'close':
             goal.command.direction = GripperCommand.CLOSE
         else:
-            rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
+            rospy.logerr('State should be open or close, now it is {0}'.format(state))
             return False
 
         self._ac_gripper.send_goal(goal)
