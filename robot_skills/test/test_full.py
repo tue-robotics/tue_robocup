@@ -115,10 +115,10 @@ def test_grippers(amigo):
 def test_torso(amigo):
     global joint_positions
 
-    amigo.spindle.send_goal(0.4, timeout=10)
+    amigo.torso.send_goal(0.4, timeout=10)
     show_test("torso up", in_bounds(joint_positions['torso_joint'], 0.4, 0.01))
 
-    amigo.spindle.send_goal(0.1, timeout=10)
+    amigo.torso.send_goal(0.1, timeout=10)
     show_test("torso down", in_bounds(joint_positions['torso_joint'], 0.1, 0.01))
 
 if __name__ == "__main__":

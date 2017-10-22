@@ -9,7 +9,7 @@ robot_console () {
 # _robot_console()
 # {
 #     local cur=${COMP_WORDS[COMP_CWORD]}
-#     COMPREPLY=( $(compgen -W "arms head ears base perception speech spindle" -- $cur) )
+#     COMPREPLY=( $(compgen -W "arms head ears base perception speech torso" -- $cur) )
 # }
 # complete -F _robot_console robot_console
 
