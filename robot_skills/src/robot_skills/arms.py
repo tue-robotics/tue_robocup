@@ -160,7 +160,7 @@ class Arm(RobotPart):
         defaults to base_link
 
         :param frameStamped: A FrameStamped to move the arm's end effector to
-        :param timeout: timeout in seconds
+        :param timeout: timeout in seconds; In case of 0.0, goal is executed without feedback and waiting
         :param pre_grasp: Bool to use pre_grasp or not
         :param first_joint_pos_only: Bool to only execute first joint position of whole trajectory
         :param allowed_touch_objects: List of object names in the worldmodel, which are allowed to be touched
@@ -307,7 +307,7 @@ class Arm(RobotPart):
         """
         Send a GripperCommand to the gripper of this arm and wait for finishing
         :param state: open or close
-        :param timeout: timeout in seconds
+        :param timeout: timeout in seconds; timeout of 0.0 is not allowed
         :return: True of False
         """
         goal = GripperCommandGoal()
@@ -342,7 +342,7 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1, latch = True)
+        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(std_msgs.msg.Bool(True))
 
         try:
@@ -361,7 +361,7 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1, latch = True)
+        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(std_msgs.msg.Bool(True))
 
         try:
@@ -389,7 +389,7 @@ class Arm(RobotPart):
         succeeded. On timeout, it will return False.
         :param joints_references: list of joint configurations,
         which should be a list of the length equal to the number of joints to be moved
-        :param timeout: timeout for each joint configuration in seconds
+        :param timeout: timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not allowed
         :param joint_names: joint names, which need to me moved
         :return: True or False
         """
@@ -436,7 +436,7 @@ class Arm(RobotPart):
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False):
         """ Waits until all action clients are done
-        :param timeout: double with time (defaults to 10.0 seconds)
+        :param timeout: timeout in seconds; in case 0.0, no sensible output is provided, just False
         :param cancel: bool specifying whether goals should be cancelled
         if timeout is exceeded
         :return bool indicates whether motion was done (True if reached,
@@ -445,7 +445,7 @@ class Arm(RobotPart):
         # rospy.loginfo('Waiting for ac_joint_traj')
         starttime = rospy.Time.now()
         if self._ac_joint_traj.gh:
-            if not self._ac_joint_traj.wait_for_result(rospy.Duration(10.0)):
+            if not self._ac_joint_traj.wait_for_result(rospy.Duration(timeout)):
                 if cancel:
                     rospy.loginfo("Arms: cancelling all goals (1)")
                     self.cancel_goals()
@@ -468,8 +468,9 @@ class Arm(RobotPart):
         # rospy.loginfo('Waiting for ac_gripper')
         if self._ac_gripper.gh:
             rospy.logdebug('Not waiting for gripper action')
+            # return self._ac_gripper.wait_for_result(rospy.Duration(timeout - passed_time))
             return True
-            return self._ac_gripper.wait_for_result(rospy.Duration(timeout-passed_time))
+
 
     def _publish_marker(self, goal, color, ns = ""):
         """
