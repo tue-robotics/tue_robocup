@@ -25,7 +25,7 @@
 		The robot must leave the arena/test area after all questions have been asked or
 		when instructed to do so.
 
-## Score 2017, Japan:
+## Scoring sheet of 2017, Japan:
 
 	Crowd:
 		State crowd’s size:								5
