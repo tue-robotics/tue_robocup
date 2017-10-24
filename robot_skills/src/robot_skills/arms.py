@@ -312,9 +312,9 @@ class Arm(RobotPart):
         """
         goal = GripperCommandGoal()
 
-        if state == 'open':
+        if state == GripperState.OPEN:
             goal.command.direction = GripperCommand.OPEN
-        elif state == 'close':
+        elif state == GripperState.CLOSE:
             goal.command.direction = GripperCommand.CLOSE
         else:
             rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
@@ -322,7 +322,7 @@ class Arm(RobotPart):
 
         self._ac_gripper.send_goal(goal)
 
-        if state == 'open':
+        if state == GripperState.OPEN:
             if self.occupied_by is not None:
                 rospy.logerr("send_gripper_goal open is called but there is still an entity with id '%s' occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
             self.occupied_by = None
