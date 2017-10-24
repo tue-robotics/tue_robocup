@@ -372,14 +372,6 @@ class Arm(RobotPart):
             rospy.logerr(e)
             return False
 
-    def handshake(self, timeout=10):
-        """
-        Perform a handshake
-        :param timeout: timeout in seconds
-        :return: True or False
-        """
-        return self.send_joint_trajectory('handshake', timeout)
-
     def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5), joint_names = None):
         """
         Low level method that sends a array of joint references to the arm.
