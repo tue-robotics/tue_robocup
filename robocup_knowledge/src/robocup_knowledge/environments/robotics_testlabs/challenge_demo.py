@@ -179,7 +179,7 @@ grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
 ###############################################################################
 
 grammar += """
-VP["action": "turn-toward-sound"] -> show your sound source localization | look at me when i am talking to you
+VP["action": "turn-toward-sound", "duration": "30"] -> show your sound source localization | look at me when i am talking to you
 """
 
 ###############################################################################
