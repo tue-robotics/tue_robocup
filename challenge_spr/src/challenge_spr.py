@@ -56,7 +56,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             # Riddle Game
 
             smach.StateMachine.add('RIDDLE_GAME',
-                                   riddle_game.HearAndAnswerQuestions(robot, num_questions=6),
+                                   riddle_game.HearAndAnswerQuestions(robot, num_questions=5),
                                    transitions={'done':'TRANSITION'})
 
             # Transition:
@@ -68,7 +68,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             # Bluff Games:
 
             smach.StateMachine.add('BLUFF_GAME',
-                                   bluff_game.HearTurnAndAnswerQuestions(robot, num_questions=6, num_operators=5),
+                                   bluff_game.HearTurnAndAnswerQuestions(robot, num_questions=5, num_operators=5),
                                    transitions={'done': 'END_CHALLENGE'})
             # End
 
