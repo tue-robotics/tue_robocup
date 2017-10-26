@@ -18,13 +18,17 @@ class RobotPart(object):
 
         self.__ros_connections = {}
 
-    def load_param(self, param_name):
+    def load_param(self, param_name, default=None):
         """
         Loads a parameter from the parameter server, namespaced by robot name
         :param param_name: parameter name
+        :param default: default value for when parameter unavailable
         :return: loaded parameters
         """
-        return rospy.get_param('/' + self.robot_name + '/' + param_name)
+        if default is None:
+            return rospy.get_param('/' + self.robot_name + '/' + param_name)
+        else:
+            return rospy.get_param('/' + self.robot_name + '/' + param_name, default)
 
     def wait_for_connections(self, timeout):
         """
