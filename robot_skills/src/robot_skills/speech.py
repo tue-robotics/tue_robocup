@@ -14,10 +14,10 @@ class Speech(RobotPart):
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 
-        self._default_language  = rospy.get_param(robot_name+"/text_to_speech/language", 'us')
-        self._default_voice     = rospy.get_param(robot_name+"/text_to_speech/voice", 'kyle')
-        self._default_character = rospy.get_param(robot_name+"/text_to_speech/character", 'default')
-        self._default_emotion   = rospy.get_param(robot_name+"/text_to_speech/emotion", 'neutral')
+        self._default_language  = self.load_param('text_to_speech/language', 'us')
+        self._default_voice     = self.load_param('text_to_speech/voice', 'kyle')
+        self._default_character = self.load_param('text_to_speech/character', 'default')
+        self._default_emotion   = self.load_param('text_to_speech/emotion', 'neutral')
 
     def close(self):
         pass
