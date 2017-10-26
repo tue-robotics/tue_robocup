@@ -63,8 +63,8 @@ class Speech(RobotPart):
         result = False
         try:
             # ToDo: test this. This just seems utterly wrong
-            if language == 'nl' and not (personality in ['david', 'marjolein']):
-                personality = 'david' #kyle doesn't work for NL
+            if language == 'nl' and not (personality in ['david', 'marjolijn']):
+                personality = 'marjolijn' #kyle doesn't work for NL
             rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
 
             req = SpeakRequest()
