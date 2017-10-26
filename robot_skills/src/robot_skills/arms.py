@@ -86,14 +86,6 @@ class Arm(RobotPart):
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
 
-    def load_param(self, param_name):
-        """
-        Loads a parameter from the parameter server, namespaced by robot name
-        :param param_name: parameter name
-        :return: loaded parameters
-        """
-        return rospy.get_param('/' + self.robot_name + '/' + param_name)
-
     def cancel_goals(self):
         """
         Cancels the currently active grasp-precompute and joint-trajectory-action goals
@@ -110,7 +102,7 @@ class Arm(RobotPart):
         try:
             rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
         except AttributeError:
-            print "Arm cancelling all goals on all arm-related ACs on close. Rospy is already deleted."
+            print "{0} arm cancelling all goals on all arm-related ACs on close. Rospy is already deleted.".format(self.side)
 
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
@@ -174,7 +166,7 @@ class Arm(RobotPart):
             frameStamped.frame_id = "/"+self.robot_name+"/"+frameStamped.frame_id
             rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
 
-        #Convert to baselink, which is needed because the offset is defined in the base_link frame
+        # Convert to baselink, which is needed because the offset is defined in the base_link frame
         frame_in_baselink = frameStamped.projectToFrame("/"+self.robot_name+"/base_link", self.tf_listener)
 
         # TODO: Get rid of this custom message type
@@ -258,8 +250,8 @@ class Arm(RobotPart):
         """
         if configuration in self.default_configurations:
             return self._send_joint_trajectory(
-                [self.default_configurations[configuration]]
-                , timeout=rospy.Duration(timeout))
+                [self.default_configurations[configuration]],
+                timeout=rospy.Duration(timeout))
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
@@ -462,7 +454,6 @@ class Arm(RobotPart):
             rospy.logdebug('Not waiting for gripper action')
             # return self._ac_gripper.wait_for_result(rospy.Duration(timeout - passed_time))
             return True
-
 
     def _publish_marker(self, goal, color, ns = ""):
         """
