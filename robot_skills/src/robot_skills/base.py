@@ -261,26 +261,19 @@ def get_location(robot_name, tf_listener):
     try:
         time = rospy.Time.now()
         tf_listener.waitForTransform("/map", "/" + robot_name + "/base_link", time, rospy.Duration(20.0))
-        (ro_trans, ro_rot) = tf_listener.lookupTransform("/map", "/" + robot_name + "/base_link", time)
+        resp = tf_listener.lookupTransform("/map", "/" + robot_name + "/base_link", time)
 
-        position = geometry_msgs.msg.Point()
-        orientation = geometry_msgs.msg.Quaternion()
+        position = resp.transform.translation
+        orientation = resp.transform.rotation
 
-        position.x = ro_trans[0]
-        position.y = ro_trans[1]
-        orientation.x = ro_rot[0]
-        orientation.y = ro_rot[1]
-        orientation.z = ro_rot[2]
-        orientation.w = ro_rot[3]
-
-        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         target_pose.header.stamp = time
         return kdlFrameStampedFromPoseStampedMsg(target_pose)
 
     except (tf.LookupException, tf.ConnectivityException):
         rospy.logerr("tf request failed!!!")
-        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         return kdlFrameStampedFromPoseStampedMsg(target_pose)
 
