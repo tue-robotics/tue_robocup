@@ -7,8 +7,8 @@ import utility
 import human_interaction
 import check_ebutton
 from sensor_msgs.msg import LaserScan
-from robot_skills.util.transformations import euler_z_from_quaternion
-
+from robot_skills.util.kdl_conversions import quaternionMsgToKdlRotation
+from geometry_msgs.msg import Quaternion
 from threading import Event
 
 
@@ -161,8 +161,9 @@ class WaitForDoorOpen(smach.State):
         """
         try:
             number_beams = len(scan_msg.ranges)
+            upside_down = -math.copysign(1, math.cos(self.laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
             front_index = int(
-                math.floor((-self.laser_roration - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
+                math.floor((upside_down*self.laser_rotation.GetRPY()[2] - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
 
             if front_index < 2 or front_index > number_beams - 2:
                 rospy.logerr("Base laser can't see in front of the robot")
@@ -170,8 +171,7 @@ class WaitForDoorOpen(smach.State):
                 raise IndexError()  # TODO Matthijs: very ugly
 
             ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
-            distance_to_door = self.avg(
-                ranges_at_center)  # and the average of the middle range and use it as the distance to the door
+            distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
             rospy.logdebug("AVG distance: {}".format(distance_to_door))
             self.distances += [distance_to_door]  # store all distances
 
@@ -189,7 +189,8 @@ class WaitForDoorOpen(smach.State):
         rospy.loginfo("Waiting for door...")
         resp = self._robot.tf_listener.lookupTransform(self._robot.base_link_frame,
                                                        self._robot.robot_name + '/base_laser')
-        self.laser_roration = euler_z_from_quaternion(resp.transform.rotation)
+        self.laser_rotation = quaternionMsgToKdlRotation(resp.transform.rotation)
+        type(self.laser_rotation)
         self.laser_sub = rospy.Subscriber("/" + self._robot.robot_name + "/base_laser/scan", LaserScan,
                                           self.process_scan)
 
