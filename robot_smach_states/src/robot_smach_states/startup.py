@@ -161,9 +161,8 @@ class WaitForDoorOpen(smach.State):
         """
         try:
             number_beams = len(scan_msg.ranges)
-            upside_down = -math.copysign(1, math.cos(self.laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
             front_index = int(
-                math.floor((upside_down*self.laser_rotation.GetRPY()[2] - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
+                math.floor((self.laser_upside_down*self.laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
 
             if front_index < 2 or front_index > number_beams - 2:
                 rospy.logerr("Base laser can't see in front of the robot")
@@ -189,8 +188,9 @@ class WaitForDoorOpen(smach.State):
         rospy.loginfo("Waiting for door...")
         resp = self._robot.tf_listener.lookupTransform(self._robot.base_link_frame,
                                                        self._robot.robot_name + '/base_laser')
-        self.laser_rotation = quaternionMsgToKdlRotation(resp.transform.rotation)
-        type(self.laser_rotation)
+        laser_rotation = quaternionMsgToKdlRotation(resp.transform.rotation)
+        self.laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
+        self.laser_yaw = laser_rotation.GetRPY()[2]
         self.laser_sub = rospy.Subscriber("/" + self._robot.robot_name + "/base_laser/scan", LaserScan,
                                           self.process_scan)
 
