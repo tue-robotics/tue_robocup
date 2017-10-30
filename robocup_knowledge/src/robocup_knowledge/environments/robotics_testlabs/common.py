@@ -34,23 +34,20 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 rooms = location_rooms + ["workshop"]
 
 objects = [
-    {'category': 'food',                'name': 'apple',                'color': 'green'},
-    {'category': 'food',                'name': 'banana',               'color': 'yellow'},
-    {'category': 'food',                'name': 'cereal',               'color': 'yellow'},
+    {'category': 'food',                'name': 'apple',                'color': 'green'},  # fruit
+    {'category': 'food',                'name': 'banana',               'color': 'yellow'},  # fruit
+    {'category': 'food',                'name': 'cereal',               'color': 'yellowish'},
     {'category': 'food',                'name': 'corn',                 'color': 'yellow'},
     {'category': 'food',                'name': 'crackers',             'color': 'yellow'},
-    {'category': 'food',                'name': 'mango',                'color': 'red'},
-    {'category': 'food',                'name': 'mentos',               'color': 'blue'},
+    {'category': 'food',                'name': 'mango',                'color': 'red'},  # fruit
     {'category': 'food',                'name': 'orange',               'color': 'orange'},
-    {'category': 'food',                'name': 'peas',                 'color': 'green'},
+    {'category': 'food',                'name': 'peas',                 'color': 'green'},  # fruit
     {'category': 'food',                'name': 'pepper',               'color': 'black'},
     {'category': 'food',                'name': 'salt',                 'color': 'white'},
+    {'category': 'container',           'name': 'basket',               'color': 'green'},
     {'category': 'container',           'name': 'bowl',                 'color': 'blue'},
     {'category': 'container',           'name': 'cup',                  'color': 'orangish'},
-    {'category': 'container',           'name': 'coffecup',             'color': 'white'},
-    {'category': 'container',           'name': 'plate',                'color': 'white'},
-    {'category': 'container',           'name': 'red_bowl',             'color': 'red'},
-    {'category': 'container',           'name': 'white_bowl',           'color': 'white'},
+    {'category': 'container',           'name': 'plate',                'color': 'grey'},
     {'category': 'drink',               'name': 'beer',                 'color': 'brown'},
     {'category': 'drink',               'name': 'bifrutas',             'color': 'blue'},
     {'category': 'drink',               'name': 'coke',                 'color': 'red'},
@@ -59,10 +56,15 @@ objects = [
     {'category': 'drink',               'name': 'tea',                  'color': 'green'},
     {'category': 'drink',               'name': 'water',                'color': 'transparent'},
     {'category': 'snack',               'name': 'cookies',              'color': 'brownish'},
+    {'category': 'snack',               'name': 'mentos',               'color': 'blue'},
     {'category': 'snack',               'name': 'pringles',             'color': 'orange'},
     {'category': 'cleaning_stuff',      'name': 'brush',                'color': 'brown'},
+    {'category': 'cleaning_stuff',      'name': 'cloth',                'color': 'yellow'},
     {'category': 'cleaning_stuff',      'name': 'deodarant',            'color': 'pink'},
+    {'category': 'cleaning_stuff',      'name': 'hair_gel',             'color': 'transparent'},
+    {'category': 'cleaning_stuff',      'name': 'hairspray',            'color': 'blue'},
     {'category': 'cleaning_stuff',      'name': 'sponge',               'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'toothpaste',           'color': 'blue'},
     {'category': 'cleaning_stuff',      'name': 'towel',                'color': 'pink'},
     {'category': 'cutlery',             'name': 'fork',                 'color': 'brownish'},
     {'category': 'cutlery',             'name': 'spoon',                'color': 'brownish'},
