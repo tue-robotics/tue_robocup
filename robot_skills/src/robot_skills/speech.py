@@ -14,10 +14,10 @@ class Speech(RobotPart):
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 
-        self._default_language  = rospy.get_param(robot_name+"/text_to_speech/language", 'us')
-        self._default_voice     = rospy.get_param(robot_name+"/text_to_speech/voice", 'kyle')
-        self._default_character = rospy.get_param(robot_name+"/text_to_speech/character", 'default')
-        self._default_emotion   = rospy.get_param(robot_name+"/text_to_speech/emotion", 'neutral')
+        self._default_language  = self.load_param('text_to_speech/language', 'us')
+        self._default_voice     = self.load_param('text_to_speech/voice', 'kyle')
+        self._default_character = self.load_param('text_to_speech/character', 'default')
+        self._default_emotion   = self.load_param('text_to_speech/emotion', 'neutral')
 
     def close(self):
         pass
@@ -63,8 +63,8 @@ class Speech(RobotPart):
         result = False
         try:
             # ToDo: test this. This just seems utterly wrong
-            if language == 'nl' and not (personality in ['david', 'marjolein']):
-                personality = 'david' #kyle doesn't work for NL
+            if language == 'nl' and not (personality in ['david', 'marjolijn']):
+                personality = 'marjolijn' #kyle doesn't work for NL
             rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
 
             req = SpeakRequest()

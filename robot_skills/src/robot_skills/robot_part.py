@@ -8,7 +8,8 @@ import actionlib
 class RobotPart(object):
     """ Base class for robot parts """
     def __init__(self, robot_name, tf_listener):
-        """ Constructor
+        """
+        Constructor
         :param robot_name: string with robot name
         :param tf_listener: tf listener object
         """
@@ -17,8 +18,21 @@ class RobotPart(object):
 
         self.__ros_connections = {}
 
+    def load_param(self, param_name, default=None):
+        """
+        Loads a parameter from the parameter server, namespaced by robot name
+        :param param_name: parameter name
+        :param default: default value for when parameter unavailable
+        :return: loaded parameters
+        """
+        if default is None:
+            return rospy.get_param('/' + self.robot_name + '/' + param_name)
+        else:
+            return rospy.get_param('/' + self.robot_name + '/' + param_name, default)
+
     def wait_for_connections(self, timeout):
-        """ Waits for the connections until they are connected
+        """
+        Waits for the connections until they are connected
         :param timeout: timeout in seconds
         :return: bool indicating whether all connections are connected
         """
@@ -64,7 +78,8 @@ class RobotPart(object):
         return False
 
     def create_simple_action_client(self, name, action_type):
-        """ Creates a simple actionlib client and waits for the action server
+        """
+        Creates a simple actionlib client and waits for the action server
         :param name: string with the name of the action in the correct namespace
         :param action_type: action type of this action
         :return: the action client
@@ -74,7 +89,8 @@ class RobotPart(object):
         return ac
 
     def create_service_client(self, name, srv_type):
-        """ Creates a service client and waits for the server
+        """
+        Creates a service client and waits for the server
         :param name: string with the name of the service in the correct namespace
         :param srv_type: service type
         :return: the service client
@@ -84,7 +100,8 @@ class RobotPart(object):
         return srv
 
     def _add_connection(self, name, connection):
-        """ Adds a connection to the internal dict with connections that is used when initializing the robot object.
+        """
+        Adds a connection to the internal dict with connections that is used when initializing the robot object.
         :param name: name of the connection
         :param connection: connection to add
         """
