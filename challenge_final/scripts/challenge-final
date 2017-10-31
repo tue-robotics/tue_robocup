@@ -1,17 +1,10 @@
 #!/usr/bin/python
 
-# ROS
 import rospy
-
-# TU/e Robotics
+from challenge_final.final import ChallengeFinal
 from robot_smach_states.util.startup import startup
 
-# Challenge final
-from challenge_final.final import ChallengeFinal
-
-
 if __name__ == "__main__":
-
     rospy.init_node("state_machine")
 
     startup(ChallengeFinal)
