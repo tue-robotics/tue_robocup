@@ -166,6 +166,9 @@ class FollowOperator(smach.State):
             operator = None
 
         while not operator:
+            if self.preempt_requested():
+                return False
+
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return False
 
@@ -473,6 +476,9 @@ class FollowOperator(smach.State):
 
         i = 0
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+            if self.preempt_requested():
+                return False
+
             self._robot.head.look_at_point(head_goals[i])
             i += 1
             if i == len(head_goals):
@@ -669,6 +675,9 @@ class FollowOperator(smach.State):
         self._time_started = rospy.Time.now()
 
         while not rospy.is_shutdown():
+
+            if self.preempt_requested():
+                return 'lost_operator'
 
             # 1) Track operator
             self._track_operator()
