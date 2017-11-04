@@ -224,7 +224,7 @@ def answer_compare_objects_categories(action):
     entity_b = action['entity_b']
     objects_a = [obj for obj in common_knowledge.objects if obj['name'] == entity_a]
     objects_b = [obj for obj in common_knowledge.objects if obj['name'] == entity_b]
-    if len(locations_a) == 1 and len(locations_b) == 1:
+    if len(objects_a) == 1 and len(objects_b) == 1:
         cat_a = objects_a[0]['category']
         cat_b = objects_b[0]['category']
         if cat_a == cat_b:

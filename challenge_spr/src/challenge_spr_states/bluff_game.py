@@ -69,7 +69,7 @@ class HearTurnAndAnswerQuestions(smach.State):
                 res = hear(self.robot, hear_time=self.hear_time)
 
                 if not answer(self.robot, res, crowd_data):
-                    robot.speech.speak("Please ask next question!")
+                    self.robot.speech.speak("Please ask next question!")
 
         return "done"
 
