@@ -119,6 +119,7 @@ def move_sergio_to_handover_pose(sergio, x_gripper_map, y_gripper_map, yaw_gripp
         # tf_listener.waitForTransform("/map", "/" + robot_name + "/base_link", rospy.Time.now(), rospy.Duration(20.0))
         # t = f.getLatestCommonTime("sergio/base_link", "sergio/odom")
         try:
+            # API of lookupTransform is changed, so broken right now
             (ro_trans, ro_rot) = sergio.tf_listener.lookupTransform("sergio/odom", "/sergio/base_link", rospy.Time(0))
 
             # position = geometry_msgs.msg.Point()
