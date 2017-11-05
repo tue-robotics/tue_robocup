@@ -128,7 +128,6 @@ class Lights(object):
         self.set_color = mock.MagicMock()
         self.on = mock.MagicMock()
         self.off = mock.MagicMock()
-        self.start_sinus = mock.MagicMock()
 
 
 class Speech(object):

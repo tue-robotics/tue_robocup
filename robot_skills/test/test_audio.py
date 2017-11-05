@@ -25,7 +25,7 @@ else:
     print "Unknown robot '%s'"%robot_name
     sys.exit()
 
-e = robot.ears
+hmi = robot.hmi
 s = robot.speech
 robot.head.look_at_standing_person()
 
@@ -54,7 +54,7 @@ BEV['steak'] -> steak[B]"""
 def ask(question, grammar, target):
     s.speak(question)
     print "Grammar: " + str(grammar)
-    r = robot.hmi.query(question, grammar, target)
+    r = hmi.query(question, grammar, target)
 
     if r:
         s.speak("You said: %s"%r.sentence)

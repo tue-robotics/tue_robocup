@@ -48,12 +48,14 @@ class Robot(object):
         # Human Robot Interaction
         self.parts['lights'] = lights.Lights(self.robot_name, self.tf_listener)
         self.parts['speech'] = speech.Speech(self.robot_name, self.tf_listener,
-                                             lambda: self.lights.set_color(1, 0, 0),
-                                             lambda: self.lights.set_color(0, 0, 1))
-        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener)
-        self.parts['ears'] = ears.Ears(self.robot_name,
-                                       lambda: self.lights.set_color(0, 1, 0),
-                                       lambda: self.lights.set_color(0, 0, 1))
+                                             lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
+                                             lambda: self.lights.set_color_colorRGBA(lights.RESET))
+        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener,
+                                    lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                    lambda: self.lights.set_color_colorRGBA(lights.RESET))
+        self.parts['ears'] = ears.Ears(self.robot_name, self.tf_listener,
+                                       lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                       lambda: self.lights.set_color_colorRGBA(lights.RESET))
 
         self.parts['ebutton'] = ebutton.EButton(self.robot_name, self.tf_listener)
 
