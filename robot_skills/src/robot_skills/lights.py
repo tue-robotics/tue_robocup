@@ -5,6 +5,10 @@ from std_msgs.msg import ColorRGBA
 from amigo_msgs.msg import RGBLightCommand
 from robot_part import RobotPart
 
+LISTENING = ColorRGBA(0, 1, 0, 1)
+SPEAKING = ColorRGBA(1, 0, 0, 1)
+RESET = ColorRGBA(0, 0, 1, 1)
+
 
 class Lights(RobotPart):
     """
@@ -31,7 +35,15 @@ class Lights(RobotPart):
         :param a: alpha value 0.0-1.0
         :return: no return
         """
-        rgb_msg = RGBLightCommand(color=ColorRGBA(r, g, b, a))
+        self.set_color_colorRGBA(ColorRGBA(r, g, b, a))
+
+    def set_color_colorRGBA(self, rgba):
+        """
+        Set the color of the robot by a std_msgs.msg.ColorRGBA
+        :param rgba: std_msgs.msg.ColorRGBA
+        :return: no return
+        """
+        rgb_msg = RGBLightCommand(color=rgba)
         rgb_msg.show_color.data = True
         self._topic.publish(rgb_msg)
 
@@ -40,7 +52,7 @@ class Lights(RobotPart):
         Set the lights to blue
         :return: no return
         """
-        self.set_color(0.0, 0.0, 1.0, 1.0)
+        self.set_color_colorRGBA(RESET)
 
     def on(self):
         """
