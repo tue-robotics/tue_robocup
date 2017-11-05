@@ -50,8 +50,10 @@ class Robot(object):
         self.parts['speech'] = speech.Speech(self.robot_name, self.tf_listener,
                                              lambda: self.lights.set_color(1, 0, 0),
                                              lambda: self.lights.set_color(0, 0, 1))
-        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener)
-        self.parts['ears'] = ears.Ears(self.robot_name,
+        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener,
+                                       lambda: self.lights.set_color(0, 1, 0),
+                                       lambda: self.lights.set_color(0, 0, 1))
+        self.parts['ears'] = ears.Ears(self.robot_name, self.tf_listener,
                                        lambda: self.lights.set_color(0, 1, 0),
                                        lambda: self.lights.set_color(0, 0, 1))
 

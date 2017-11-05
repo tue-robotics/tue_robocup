@@ -7,8 +7,11 @@ from robot_part import RobotPart
 
 
 class Api(RobotPart):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
         super(Api, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self._pre_hook = pre_hook
+        self._post_hook = post_hook
+
         client = self.create_simple_action_client('/' + robot_name + '/hmi', QueryAction)
         self._client = Client(simple_action_client=client)
 
@@ -22,7 +25,15 @@ class Api(RobotPart):
         :param target: string identifying the target of the grammar to recognize
         :param timeout: timeout in seconds (float)
         """
-        return self._client.query(description, grammar, target, timeout)
+        if hasattr(self._pre_hook, '__call__'):
+            self._pre_hook()
+
+        answer = self._client.query(description, grammar, target, timeout)
+
+        if hasattr(self._post_hook, '__call__'):
+            self._post_hook()
+
+        return answer
 
     @property
     def last_talker_id(self):
