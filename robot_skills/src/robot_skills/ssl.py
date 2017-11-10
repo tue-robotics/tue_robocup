@@ -39,6 +39,7 @@ class SSL(RobotPart):
         """
         Get last yaw rotation of the sound source localisation in the frame of the device
         :param max_age_seconds: maximum age of the last received direction of the sound, when older None is returned
+        :type max_age_seconds int
         :return: yaw
         """
         if not self._last_msg or rospy.Time.now() - self._last_received_time > rospy.Duration(max_age_seconds):
