@@ -96,7 +96,7 @@ class DetectCrowd(smach.State):
         self.robot.head.wait_for_motion_done()
         time.sleep(1)
 
-        image =self.robot.head.get_image()
+        image = self.robot.perception.get_image()
         return self._bridge.imgmsg_to_cv2(image, 'bgr8')
 
     def get_faces(self, image):
@@ -106,7 +106,6 @@ class DetectCrowd(smach.State):
         rospy.loginfo("Faces: %s", faces)
 
         return faces
-
 
     def describe_crowd(self, detections):
         num_males = 0
@@ -128,16 +127,16 @@ class DetectCrowd(smach.State):
             for d in detections:
                 if d.gender == FaceProperties.MALE:
                     if d.age < 18:
-                        num_boys +=1
+                        num_boys += 1
                     elif d.age > 60:
-                        num_elders +=1
+                        num_elders += 1
                     else:
                         num_men += 1
                 else:
                     if d.age < 18:
-                        num_girls +=1
+                        num_girls += 1
                     elif d.age > 60:
-                        num_elders +=1
+                        num_elders += 1
                     else:
                         num_women += 1
 
@@ -160,7 +159,6 @@ class DetectCrowd(smach.State):
         }
 
 
-
 # Standalone testing -----------------------------------------------------------------
 
 class TestDetectCrowd(smach.StateMachine):
@@ -177,6 +175,7 @@ class TestDetectCrowd(smach.StateMachine):
                                    DetectCrowd(robot),
                                    transitions={'succeeded': 'Done',
                                                 'failed': 'Aborted'})
+
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
