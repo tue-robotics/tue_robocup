@@ -3,8 +3,6 @@ import math
 
 import rospy
 from threading import Condition
-from geometry_msgs.msg import PointStamped
-from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from std_srvs.srv import Empty
 from visualization_msgs.msg import Marker, MarkerArray
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse
@@ -20,11 +18,9 @@ from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
 
-class Head(RobotPart):
+class Perception(RobotPart):
     def __init__(self, robot_name, tf_listener):
-        super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
-                                                                    HeadReferenceAction)
+        super(Perception, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._camera_lazy_sub = None
         self._camera_cv = Condition()
         self._camera_last_image = None
@@ -38,117 +34,11 @@ class Head(RobotPart):
 
         self._skeleton_pub = rospy.Publisher("skeleton_markers", MarkerArray, queue_size=100)
 
-        self._goal = None
-        self._at_setpoint = False
-
     def close(self):
-        self._ac_head_ref_action.cancel_all_goals()
-
-    # -- Helpers --
+        pass
 
     def reset(self, timeout=0):
-        """
-        Reset head position
-        """
-        reset_goal = VectorStamped(x=10, frame_id="/"+self.robot_name+"/base_link")
-
-        return self.look_at_point(reset_goal, timeout=timeout)
-
-    def look_at_hand(self, side):
-        """
-        Look at the left or right hand, expects string "left" or "right"
-        Optionally, keep tracking can be disabled (keep_tracking=False)
-        """
-        if side == "left":
-            return self.look_at_point(VectorStamped(0, 0, 0, frame_id="/"+self.robot_name+"/grippoint_left"))
-        elif side == "right":
-            return self.look_at_point(VectorStamped(0, 0, 0, frame_id="/"+self.robot_name+"/grippoint_right"))
-        else:
-            rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
-            return False
-
-    def look_at_ground_in_front_of_robot(self, distance=2):
-        goal = VectorStamped(x=distance, frame_id="/"+self.robot_name+"/base_link")
-
-        return self.look_at_point(goal)
-
-    def look_down(self, timeout=0):
-        """
-        Gives a target at z = 1.0 at 1 m in front of the robot
-        """
-        goal = VectorStamped(1, 0, 0.5, frame_id="/"+self.robot_name+"/base_link")
-
-        return self.look_at_point(goal, timeout=timeout)
-
-    def look_up(self, timeout=0):
-        """
-        Gives a target at z = 1.0 at 1 m in front of the robot
-        """
-        goal = VectorStamped(0.2, 0.0, 4.5, frame_id="/"+self.robot_name+"/base_link")
-
-        return self.look_at_point(goal, timeout=timeout)
-
-    def look_at_standing_person(self, timeout=0):
-        """
-        Gives a target at z = 1.75 at 1 m in front of the robot
-        """
-        goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self.robot_name + "/base_link")
-
-        return self.look_at_point(goal, timeout=timeout)
-
-    # -- Functionality --
-
-    def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=0.8, timeout=0):
-        assert isinstance(vector_stamped, VectorStamped)
-        point_stamped = kdlVectorStampedToPointStamped(vector_stamped)
-        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
-
-    def cancel_goal(self):
-        self._ac_head_ref_action.cancel_goal()
-        self._goal = None
-        self._at_setpoint = False
-
-    def wait_for_motion_done(self, timeout=5.0):
-        self._at_setpoint = False
-        starttime = rospy.Time.now()
-        if self._goal:
-            while (rospy.Time.now() - starttime).to_sec() < timeout:
-                if self._at_setpoint:
-                    rospy.sleep(0.3)
-                    return True
-                else:
-                    rospy.sleep(0.1)
-        return False
-
-    # ---- INTERFACING THE NODE ---
-
-    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, point_stamped=PointStamped(), pan=0, tilt=0,
-                              timeout=0):
-        self.cancel_goal()
-
-        self._goal = HeadReferenceGoal()
-        self._goal.goal_type = goal_type
-        self._goal.priority = 0  # Executives get prio 1
-        self._goal.pan_vel = pan_vel
-        self._goal.tilt_vel = tilt_vel
-        self._goal.target_point = point_stamped
-        self._goal.pan = pan
-        self._goal.tilt = tilt
-        self._goal.end_time = end_time
-        self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
-
-        start = rospy.Time.now()
-        if timeout != 0:
-            print "Waiting for %d seconds to reach target ..."%timeout
-            while (rospy.Time.now() - start) < rospy.Duration(timeout) and not self._at_setpoint:
-                rospy.sleep(0.1)
-
-    def __feedbackCallback(self, feedback):
-        self._at_setpoint = feedback.at_setpoint
-
-    def __doneCallback(self, terminal_state, result):
-        self._goal = None
-        self._at_setpoint = False
+        pass
 
     def _image_cb(self, image):
         self._camera_cv.acquire()
@@ -157,12 +47,6 @@ class Head(RobotPart):
         self._camera_cv.release()
 
     def get_image(self, timeout=5):
-        # self._camera_lazy_sub
-        # self._camera_cv
-        # self._camera_last_image
-
-        # import ipdb; ipdb.set_trace()
-
         # lazy subscribe to the kinect
         if not self._camera_lazy_sub:
             # for test with tripod kinect
@@ -171,7 +55,6 @@ class Head(RobotPart):
             rospy.loginfo("Creating subscriber")
             self._camera_lazy_sub = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, self._image_cb)
             rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
-
 
         rospy.loginfo("getting one image...")
         self._camera_cv.acquire()
@@ -211,7 +94,7 @@ class Head(RobotPart):
 
         # If necessary, transform the point
         if frame_id is not None:
-            print "Transforming roi to {}".format(frame_id)
+            print("Transforming roi to {}".format(frame_id))
             result = result.projectToFrame(frame_id=frame_id, tf_listener=self.tf_listener)
 
         # Return the result
@@ -227,6 +110,7 @@ class Head(RobotPart):
             rospy.loginfo('project_rois response: %s', points)
             return points
 
+    # OpenFace
     def _get_faces(self, image):
         try:
             r = self._recognize_srv(image=image)
@@ -274,21 +158,25 @@ class Head(RobotPart):
         else:
             return self._get_faces(image).recognitions
 
-    def get_best_face_recognition(self, recognitions, desired_label, probability_threshold=4.0):
-        """Returns the Recognition with the highest probability of having the desired_label.
+    @staticmethod
+    def get_best_face_recognition(recognitions, desired_label, probability_threshold=4.0):
+        """
+        Returns the Recognition with the highest probability of having the desired_label.
         Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
 
         :param recognitions The recognitions to select the best one with desired_label from
         :type recognitions list[image_recognition_msgs/Recognition]
         :param desired_label what label to look for in the recognitions
         :type desired_label str
+        :param probability_threshold only accept recognitions with probability higher than threshold
+        :type probability_threshold double
         :returns the best recognition matching the given desired_label
         :rtype image_recognition_msgs/Recognition, which consists of a probability distribution and a roi"""
 
         rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
 
         # Only take detections with operator
-        detections = []
+        # detections = []
         # The old implementation took, for each recognition, the (label, prob) pairs where label==desired_label.
         # Other pairs in the same distribution may have higher probability.
         # When the best_recognition is picked, it picked the recognition where the probability for the desired_label is hhighest comapared to other recognitions. BUT: a recognitions highest probability may be for a different label
@@ -327,25 +215,16 @@ class Head(RobotPart):
         else:
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
 
-
     def clear_face(self):
         rospy.loginfo('clearing all learned faces')
         self._clear_srv()
 
-            #######################################
-            # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
-            # def take_snapshot(self, distance=10, timeout = 1.0):
-
-            #     self.look_at_ground_in_front_of_robot(distance)
-            #     rospy.sleep(timeout)
-            #     rospy.loginfo("Taking snapshot")
-            #     res = self.snapshot_srv()
-
-            #     return res
 
 #######################################
 
 
 if __name__ == "__main__":
-    rospy.init_node('amigo_head_executioner', anonymous=True)
-    head = Head()
+    import tf_server
+    rospy.init_node('amigo_perception_executioner', anonymous=True)
+    tf_listener = tf_server.TFClient()
+    perception = Perception("amigo", tf_listener)
