@@ -36,6 +36,7 @@ class DetectCrowd(smach.State):
 
     def recognize(self, tries):
         number_of_people = 0
+        best_image = None
         best_detection = None
 
         sentences = ["You are all looking great today!            Keep looking in my camera!",
@@ -45,6 +46,8 @@ class DetectCrowd(smach.State):
             self.robot.speech.speak(sentences[i % (tries - 1)], block=False)
             self.robot.head.look_at_point(VectorStamped(100, 0, 1.5, self.robot.robot_name + "/base_link"))
             self.robot.head.wait_for_motion_done()
+            rospy.sleep(1)
+
             image = self.robot.perception.get_image()
             face_rois = self.robot.perception.detect_faces(image=image)
 
