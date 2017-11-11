@@ -5,8 +5,8 @@ import rospy
 from threading import Condition
 from std_srvs.srv import Empty
 from visualization_msgs.msg import Marker, MarkerArray
-from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse
-from image_recognition_msgs.msg import Annotation
+from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
+from image_recognition_msgs.msg import Annotation, Recognition
 
 from sensor_msgs.msg import Image, RegionOfInterest
 from robot_part import RobotPart
@@ -16,6 +16,7 @@ from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
 
 from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
+from .util.transformations import img_recognitions_to_rois, img_cutout
 
 
 class Perception(RobotPart):
@@ -28,6 +29,8 @@ class Perception(RobotPart):
         self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
+
+        self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
@@ -111,7 +114,9 @@ class Perception(RobotPart):
             return points
 
     # OpenFace
-    def _get_faces(self, image):
+    def _get_faces(self, image=None):
+        if not image:
+            image = self.get_image()
         try:
             r = self._recognize_srv(image=image)
             rospy.loginfo('found %d face(s) in the image', len(r.recognitions))
@@ -148,14 +153,22 @@ class Perception(RobotPart):
 
         return True
 
-    def detect_faces(self, stamp=False):
-        """Snap an image with the camera and return the recognized faces.
-        :returns image_recognition_msgs/Recognition
+    def detect_faces(self, image=None, stamp=False):
         """
-        image = self.get_image()
+        Snap an image with the camera and return the recognized faces.
+        :param image: image to use for recognition
+        :type image: sensor_msgs/Image
+        :param stamp: Return recognitions and stamp
+        :type stamp: bool
+        :return: recognitions of the faces
+        :rtype: list[image_recognition_msgs/Recognition]
+        """
+        if not image:
+            image = self.get_image()
         if stamp:
             return self._get_faces(image).recognitions, image.header.stamp
         else:
+            self.get_best_face_recognition()
             return self._get_faces(image).recognitions
 
     @staticmethod
@@ -164,14 +177,15 @@ class Perception(RobotPart):
         Returns the Recognition with the highest probability of having the desired_label.
         Assumes that the probability distributions in Recognition are already sorted by probability (descending, highest first)
 
-        :param recognitions The recognitions to select the best one with desired_label from
-        :type recognitions list[image_recognition_msgs/Recognition]
-        :param desired_label what label to look for in the recognitions
-        :type desired_label str
-        :param probability_threshold only accept recognitions with probability higher than threshold
-        :type probability_threshold double
-        :returns the best recognition matching the given desired_label
-        :rtype image_recognition_msgs/Recognition, which consists of a probability distribution and a roi"""
+        :param recognitions: The recognitions to select the best one with desired_label from
+        :type recognitions: list[image_recognition_msgs/Recognition]
+        :param desired_label: what label to look for in the recognitions
+        :type desired_label: str
+        :param probability_threshold: only accept recognitions with probability higher than threshold
+        :type probability_threshold: double
+        :return the best recognition matching the given desired_label
+        :rtype image_recognition_msgs/Recognition
+        """
 
         rospy.logdebug("get_best_face_recognition: recognitions = {}".format(recognitions))
 
@@ -216,9 +230,42 @@ class Perception(RobotPart):
             return None  # TODO: Maybe so something smart with selecting a recognition where the desired_label is not the most probable for a recognition?
 
     def clear_face(self):
+        """
+        clearing all faces from the OpenFace node.
+        :return: no return
+        """
         rospy.loginfo('clearing all learned faces')
         self._clear_srv()
 
+    # Skybiometry
+    def get_face_properties(self, faces=None, image=None):
+        """
+        Get the face properties of all faces or in an image. If faces is provided, image is ignored. If both aren't
+        provided, an image is collected.
+        :param faces: images of all faces
+        :type faces: list[sensor_msgs/Image]
+        :param image: image containing the faces
+        :type image: sensor_msgs/Image
+        :return: list of face properties
+        :rtype: list[image_recognition_msgs/FaceProperties]
+        """
+        if not faces:
+            if not image:
+                image = self.get_image()
+            face_recognitions = self.detect_faces(image=image)
+            rois = img_recognitions_to_rois(face_recognitions)
+            faces = self._img_cutout(image, rois)
+
+        try:
+            face_properties_response = self._face_properties_srv(faces)
+            face_properties = face_properties_response.properties_array
+        except Exception as e:
+            rospy.logerr(str(e))
+            return [None] * len(faces)
+
+        face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
+        rospy.loginfo('face_properties:%s', face_log)
+        return face_properties
 
 #######################################
 
