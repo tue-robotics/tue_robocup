@@ -16,7 +16,7 @@ from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
 
 from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
-from .util.transformations import img_recognitions_to_rois, img_cutout
+from .util.image_operations import img_recognitions_to_rois, img_cutout
 
 
 class Perception(RobotPart):
@@ -254,7 +254,7 @@ class Perception(RobotPart):
                 image = self.get_image()
             face_recognitions = self.detect_faces(image=image)
             rois = img_recognitions_to_rois(face_recognitions)
-            faces = self._img_cutout(image, rois)
+            faces = img_cutout(image, rois)
 
         try:
             face_properties_response = self._face_properties_srv(faces)

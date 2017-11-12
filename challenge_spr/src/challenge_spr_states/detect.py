@@ -14,7 +14,7 @@ import robot_skills.util.msg_constructors as msgs
 from image_recognition_msgs.msg import FaceProperties
 from robot_smach_states.util.startup import startup
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_skills.util.transformations import img_recognitions_to_rois, img_cutout
+from robot_skills.util.image_operations import img_recognitions_to_rois, img_cutout
 from robocup_knowledge import load_knowledge
 
 timeout = 10
