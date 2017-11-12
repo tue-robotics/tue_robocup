@@ -31,7 +31,7 @@ rospy.sleep(1)
 total_learn_attempts, successful_learn_attempts = 0, 0
 while total_learn_attempts < MAX_ATTEMPTS and successful_learn_attempts < SAMPLES:
     total_learn_attempts += 1
-    if robot.head.learn_person(OPERATOR_NAME):
+    if robot.perception.learn_person(OPERATOR_NAME):
         successful_learn_attempts += 1
         robot.speech.speak("{count}".format(count=successful_learn_attempts))
 
@@ -53,14 +53,14 @@ while total_recognize_attempts < MAX_ATTEMPTS and successful_recognize_attempts 
     # a recognition contains a CategoricalDistribution
     # a CategoricalDistribution is a list of CategoryProbabilities
     # a CategoryProbability has a label and a float
-    raw_detections = robot.head.detect_faces()
+    raw_detections = robot.perception.detect_faces()
 
     if raw_detections:
         robot.speech.speak("There are {count} raw_recognitions".format(count=len(raw_detections)))
 
         # import ipdb; ipdb.set_trace()
 
-        best_recognition = robot.head.get_best_face_recognition(raw_detections, OPERATOR_NAME)
+        best_recognition = robot.perception.get_best_face_recognition(raw_detections, OPERATOR_NAME)
         if best_recognition:
             most_probable_catprob = best_recognition.categorical_distribution.probabilities[0]
             robot.speech.speak("The most probable label {lbl} has probability {prob:.2f}".format(prob=most_probable_catprob.probability, lbl=most_probable_catprob.label))
