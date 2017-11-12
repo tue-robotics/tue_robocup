@@ -2,19 +2,10 @@
 import math
 
 import rospy
-from threading import Condition
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
-from std_srvs.srv import Empty
-from visualization_msgs.msg import Marker, MarkerArray
-from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse
-from image_recognition_msgs.msg import Annotation
 
-from sensor_msgs.msg import Image, RegionOfInterest
 from robot_part import RobotPart
-
-# TU/e
-from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
 
 from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
@@ -25,19 +16,6 @@ class Head(RobotPart):
         super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
-        self._camera_lazy_sub = None
-        self._camera_cv = Condition()
-        self._camera_last_image = None
-
-        self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
-        self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
-        self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
-
-        self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
-                                                          Project2DTo3D)
-
-        self._skeleton_pub = rospy.Publisher("skeleton_markers", MarkerArray, queue_size=100)
-
         self._goal = None
         self._at_setpoint = False
 
@@ -135,12 +113,12 @@ class Head(RobotPart):
         self._goal.pan = pan
         self._goal.tilt = tilt
         self._goal.end_time = end_time
-        self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
+        self._ac_head_ref_action.send_goal(self._goal, done_cb=self.__doneCallback, feedback_cb=self.__feedbackCallback)
 
         start = rospy.Time.now()
         if timeout != 0:
-            print "Waiting for %d seconds to reach target ..."%timeout
-            while (rospy.Time.now() - start) < rospy.Duration(timeout) and not self._at_setpoint:
+            rospy.logdebug("Waiting for %d seconds to reach target ...".format(timeout))
+            while not (not ((rospy.Time.now() - start) < rospy.Duration(timeout)) or self._at_setpoint):
                 rospy.sleep(0.1)
 
     def __feedbackCallback(self, feedback):
@@ -154,5 +132,7 @@ class Head(RobotPart):
 
 
 if __name__ == "__main__":
+    import tf_server
+    tf_listener = tf_server.TFClient()
     rospy.init_node('amigo_head_executioner', anonymous=True)
-    head = Head()
+    head = Head("amigo", tf_listener)
