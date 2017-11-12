@@ -165,7 +165,6 @@ class Perception(RobotPart):
         if stamp:
             return self._get_faces(image).recognitions, image.header.stamp
         else:
-            self.get_best_face_recognition()
             return self._get_faces(image).recognitions
 
     @staticmethod
