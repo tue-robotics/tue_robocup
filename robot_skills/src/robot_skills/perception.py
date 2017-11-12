@@ -4,7 +4,6 @@ import math
 import rospy
 from threading import Condition
 from std_srvs.srv import Empty
-from visualization_msgs.msg import Marker, MarkerArray
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
 from image_recognition_msgs.msg import Annotation, Recognition
 
@@ -34,8 +33,6 @@ class Perception(RobotPart):
 
         self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
                                                           Project2DTo3D)
-
-        self._skeleton_pub = rospy.Publisher("skeleton_markers", MarkerArray, queue_size=100)
 
     def close(self):
         pass
