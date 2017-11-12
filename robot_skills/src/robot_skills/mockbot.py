@@ -102,8 +102,6 @@ class Head(object):
         self.close = mock.MagicMock()
         self.set_pan_tilt = mock.MagicMock()
         self.send_goal = mock.MagicMock()
-        self.ults = mock.MagicMock()
-        self.ult = mock.MagicMock()
         self.cancel_goal = mock.MagicMock()
         self.reset = mock.MagicMock()
         self.look_at_hand = mock.MagicMock()
@@ -122,10 +120,17 @@ class Head(object):
         self.__doneCallback = mock.MagicMock()
 
 
+class Perception(object):
+    def __init__(self, *args, **kwargs):
+        self.reset = mock.MagicMock()
+        self.close = mock.MagicMock()
+
+
 class Lights(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
         self.set_color = mock.MagicMock()
+        self.set_color_colorRGBA = mock.MagicMock()
         self.on = mock.MagicMock()
         self.off = mock.MagicMock()
 
@@ -192,8 +197,6 @@ class ED(object):
         self.get_entity_info = mock.MagicMock()
 
         self._person_names = []
-
-        self.learn_person = lambda name: True
 
     @property
     def _entities(self):
