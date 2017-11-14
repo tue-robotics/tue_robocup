@@ -65,9 +65,13 @@ class Presentation(smach.State):
         :param userdata:
         :return:
         """
-        # Introduction
+
+        # List to store all functions
         function_list = []
 
+        # Add all functions to function_list by using partial to prevent the function from executing before it is callled in the for loop
+
+        # Introduction
         function_list.append(partial(self.robot.speech.speak, self.trans.HI_MY_NAME_IS.format(self.robot.robot_name), language=self.language, voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.IM_A_SERVICE_ROBOT, language=self.language, voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.PURPOSE, language=self.language, voice=self.voice, block=True))
@@ -126,6 +130,7 @@ class Presentation(smach.State):
         # Final
         function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_INTRO, language=self.language, voice=self.voice, block=True))
 
+        # Loop through all functions while checking for preempt between every function
         for function in function_list:
             function()
             if self.preempt_requested():
