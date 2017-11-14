@@ -102,7 +102,7 @@ class TrackFace(smach.State):
         # a recognition constains a CategoricalDistribution
         # a CategoricalDistribution is a list of CategoryProbabilities
         # a CategoryProbability has a label and a float
-        raw_detections = self._robot.head.detect_faces()
+        raw_detections = self._robot.perception.detect_faces()
 
         # Only take detections with operator
         detections = []
@@ -125,9 +125,9 @@ class TrackFace(smach.State):
         # print "Best detection: {}".format(best_detection)
         roi = best_detection.roi
         try:
-            operator_pos_kdl = self._robot.head.project_roi(roi=roi, frame_id="map")
+            operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
         except Exception as e:
-            rospy.logerr("head.project_roi failed: %s", e)
+            rospy.logerr("perception.project_roi failed: %s", e)
             return None
 
         return operator_pos_kdl

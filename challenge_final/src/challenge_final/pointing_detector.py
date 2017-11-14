@@ -47,7 +47,7 @@ def get_ray_trace_from_closest_person_dummy(robot,
 
 
 def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_norm_threshold=0.7):
-    persons = robot.head.detect_persons_3d()
+    persons = robot.head.detect_persons_3d()  # deprecated
     valid_persons = [person for person in persons if "right_shoulder" in person]
 
     if not valid_persons:
@@ -252,7 +252,7 @@ class PointingDetector(smach.State):
         """
         # ToDo: catch the exceptiono in the detect_faces and return an empty list
         try:
-            raw_detections = self._robot.head.detect_faces()
+            raw_detections = self._robot.perception.detect_faces()
         except Exception as e:
             raw_detections = None
 
@@ -263,7 +263,7 @@ class PointingDetector(smach.State):
         detections = []
         for d in raw_detections:
             try:
-                vs = self._robot.head.project_roi(roi=d.roi)
+                vs = self._robot.perception.project_roi(roi=d.roi)
             except Exception as e:
                 rospy.logwarn("ROI Projection failed: {}".format(e))
                 continue

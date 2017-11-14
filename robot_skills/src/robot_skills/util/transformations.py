@@ -2,7 +2,6 @@
 
 import math
 
-
 import geometry_msgs.msg
 import rospy
 import tf
@@ -127,6 +126,7 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener):
 
     output_coordinates = tf_listener.transformPoint(outputframe, ps, fixed_frame=inputframe)
     return output_coordinates.point
+
 
 if __name__ == '__main__':
     import doctest

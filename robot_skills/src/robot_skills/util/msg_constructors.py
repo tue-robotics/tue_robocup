@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""Contstruct complicated ROS messages as easy as possible"""
+"""Construct complicated ROS messages as easy as possible"""
 import rospy
 
 import std_msgs.msg as std
@@ -113,6 +113,7 @@ def PoseStamped(x=0, y=0, z=0, phi=0,
                               pose=Pose(x, y, z, phi, roll, pitch,yaw))
     else:
         raise ValueError("Either supply a number for x, y and z or a PointStamped to pointstamped")
+
 
 if __name__ == "__main__":
     rospy.init_node("msg_constructors_tester")

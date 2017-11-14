@@ -7,6 +7,7 @@ import base
 import torso
 import arms
 import head
+import perception
 import ssl
 
 # Human Robot Interaction
@@ -43,6 +44,7 @@ class Robot(object):
         self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
         self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
         self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
+        self.parts['perception'] = perception.Perception(self.robot_name, self.tf_listener)
         self.parts['ssl'] = ssl.SSL(self.robot_name, self.tf_listener)
 
         # Human Robot Interaction
