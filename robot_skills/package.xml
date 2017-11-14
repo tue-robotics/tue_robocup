@@ -58,6 +58,12 @@
   <build_depend>cb_planner_msgs_srvs</build_depend>
   <run_depend>cb_planner_msgs_srvs</run_depend>
 
+  <build_depend>octomap_msgs</build_depend>
+  <run_depend>octomap_msgs</run_depend>
+
+  <build_depend>cb_planner_msgs_srvs</build_depend>
+  <run_depend>cb_planner_msgs_srvs</run_depend>
+
   <build_depend>dragonfly_speech_recognition</build_depend>
   <run_depend>dragonfly_speech_recognition</run_depend>
 
