@@ -526,6 +526,7 @@ class LockToId(Designator):
                 entity = self.to_be_locked.resolve()  # Then find  out what we should remember
                 if entity:  # If we can find what to remember
                     self._locked_to_id = entity.id  # remember its ID.
+                    return entity
             else:  # If we do remember something already, recall that remembered ID:
                 return self.robot.ed.get_entity(id=self._locked_to_id)
         else:
