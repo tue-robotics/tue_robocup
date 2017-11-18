@@ -38,7 +38,6 @@ class Api(RobotPart):
         try:
             answer = self._client.query(description, grammar, target, timeout)
         except TimeoutException as e:
-            rospy.logdebug(e)
             if callable(self._post_hook):
                 self._post_hook()
             raise e
