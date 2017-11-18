@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from hmi_msgs.msg import QueryAction
-from hmi import Client
+from hmi import Client, TimeoutException
 from std_srvs.srv import Empty
 from robot_part import RobotPart
 
@@ -35,7 +35,13 @@ class Api(RobotPart):
         if callable(self._pre_hook):
             self._pre_hook()
 
-        answer = self._client.query(description, grammar, target, timeout)
+        try:
+            answer = self._client.query(description, grammar, target, timeout)
+        except TimeoutException as e:
+            rospy.logdebug(e)
+            if callable(self._post_hook):
+                self._post_hook()
+            raise e
 
         if callable(self._post_hook):
             self._post_hook()
@@ -54,7 +60,7 @@ class Api(RobotPart):
     def restart_dragonfly(self):
         try:
             self.restart_srv()
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             rospy.logerr("Service call failed: {0}".format(e))
 
 
