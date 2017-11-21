@@ -32,7 +32,7 @@ def fetch(robot, time_out=15.0, task="set"):
                 sentence, semantics = robot.hmi.query('', 'T -> set the table', 'T')
                 return "heard"
             elif task == "clear":
-                sentence, semantics = robot.hmi.query('', 'T -> set the table', 'T')
+                sentence, semantics = robot.hmi.query('', 'T -> clear the table', 'T')
                 return "heard"
             else:
                 rospy.logerr("This does not make any sense!!!")
