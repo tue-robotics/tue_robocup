@@ -134,6 +134,11 @@ class Presentation(smach.State):
         for function in function_list:
             function()
             if self.preempt_requested():
+                self.robot.speech.speak("Sorry, but I have to stop my introduction")
+                self.robot.leftArm.reset()
+                self.robot.rightArm.reset()
+                self.robot.torso.reset()
+                self.robot.head.reset()
                 return 'preempted'
 
         return "done"
