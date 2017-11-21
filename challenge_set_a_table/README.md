@@ -5,6 +5,7 @@
 Setup
 * Put the robot in front of the door (the usual initial pose)
 * Make sure one of the combos is on the cabinet (look at the RoboCup knowledge for the possibilities). N.B., only the 'easy' items are relevant.
+* When the robot asks what to do, answer 'Set the table'. The rest should speak for itself.
 
 Launch procedure:
 ```
