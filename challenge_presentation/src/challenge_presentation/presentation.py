@@ -131,14 +131,22 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_INTRO, language=self.language, voice=self.voice, block=True))
 
         # Loop through all functions while checking for preempt between every function
+        # When preempt, reset all parts and wait for the motion to be done before preempting
         for function in function_list:
             function()
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
                 self.robot.leftArm.reset()
                 self.robot.rightArm.reset()
+                self.robot.leftArm.send_gripper_goal("close")
+                self.robot.rightArm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
+
+                self.robot.leftArmArm.wait_for_motion_done()
+                self.robot.rightArm.wait_for_motion_done()
+                self.robot.torso.wait_for_motion_done()
+                self.robot.head.wait_for_motion_done()
                 return 'preempted'
 
         return "done"
