@@ -7,7 +7,7 @@ Responsible: Ramon
 * amigo-start should already be running
 * make sure the Jetson is running (check if <robot-name>/pose_detector/openpose is running)
 ```
-rosnode list |grep pose_detector
+rosnode list | grep pose_detector
 ```
 * start the middleware
 ```
