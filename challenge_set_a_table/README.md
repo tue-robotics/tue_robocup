@@ -2,11 +2,15 @@
 
 ## Testing
 
+Setup
+* Put the robot in front of the door (the usual initial pose)
+* Make sure one of the combos is on the cabinet (look at the RoboCup knowledge for the possibilities). N.B., only the 'easy' items are relevant.
+* When the robot asks what to do, answer 'Set the table'. The rest should speak for itself.
+
 Launch procedure:
 ```
-amigo-start
-amigo-free-mode
-rosrun challenge_set_a_table challenge_set_a_table.py amigo
+amigo-start (usually already running)
+amigo-challenge-set-a-table
 ```
 
 ## CHALLENGE PLAN
