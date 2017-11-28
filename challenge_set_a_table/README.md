@@ -10,8 +10,7 @@ Setup
 Launch procedure:
 ```
 amigo-start (usually already running)
-amigo-free-mode
-rosrun challenge_set_a_table challenge_set_a_table.py amigo
+amigo-challenge-set-a-table
 ```
 
 ## CHALLENGE PLAN
