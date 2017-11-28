@@ -143,7 +143,7 @@ class Presentation(smach.State):
                 self.robot.torso.reset()
                 self.robot.head.reset()
 
-                self.robot.leftArmArm.wait_for_motion_done()
+                self.robot.leftArm.wait_for_motion_done()
                 self.robot.rightArm.wait_for_motion_done()
                 self.robot.torso.wait_for_motion_done()
                 self.robot.head.wait_for_motion_done()
