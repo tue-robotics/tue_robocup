@@ -1,6 +1,6 @@
-# Challenge Restaurant 2016
+# Challenge Restaurant 2017
 
-Responsible: Rein
+Responsible: Ramon
 
 ## Startup
 ```
