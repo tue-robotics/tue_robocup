@@ -39,7 +39,7 @@ class Dutch(object):
     TWO_LRFs = "Verder heb ik twee lezer afstandsmeters, waarmee ik beter kan zien waar ik ben" # laser = lezer :-)
     LRF_LOCS = "1 lezer zit op mijn torso en de andere onderaan mijn onderstel"
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
-    END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat leuk vind wat je ziet en ik wens je nog een fijne dag"
+    END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je het leuk vond en ik wens je nog een fijne dag"
 
 
 class Presentation(smach.State):
@@ -110,7 +110,8 @@ class Presentation(smach.State):
 
         # Kinect
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "point_to_kinect"))
+        #Removed this part to increase the tempo of the presentation
+        # function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "point_to_kinect"))
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language, voice=self.voice, block=False))
         function_list.append(partial(self.robot.head.look_at_hand, "right"))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
@@ -122,7 +123,8 @@ class Presentation(smach.State):
         # Lasers
         function_list.append(partial(self.robot.speech.speak, self.trans.TWO_LRFs, language=self.language, voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser"))
+        #Removed this part to increase the tempo of the presentation
+        #function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser"))
 
         # Microphone
         function_list.append(partial(self.robot.speech.speak, self.trans.MICROPHONE, language=self.language, voice=self.voice, block=True))
