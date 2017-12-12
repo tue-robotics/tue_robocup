@@ -110,7 +110,8 @@ class Presentation(smach.State):
 
         # Kinect
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "point_to_kinect"))
+        #Removed this part to increase the tempo of the presentation
+        # function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "point_to_kinect"))
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language, voice=self.voice, block=False))
         function_list.append(partial(self.robot.head.look_at_hand, "right"))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
@@ -122,6 +123,7 @@ class Presentation(smach.State):
         # Lasers
         function_list.append(partial(self.robot.speech.speak, self.trans.TWO_LRFs, language=self.language, voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language, voice=self.voice, block=False))
+        #Removed this part to increase the tempo of the presentation
         #function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser"))
 
         # Microphone
