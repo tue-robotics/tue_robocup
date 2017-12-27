@@ -5,7 +5,10 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import VariableDesignator
 import robot_smach_states as states
 from hmi import TimeoutException
-
+from visualization_msgs.msg import Marker
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
 import copy
 import threading
 import time
@@ -13,15 +16,7 @@ import itertools
 import PyKDL as kdl
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
-
 import math
-from visualization_msgs.msg import Marker
-
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
-
-from robot_skills.util import kdl_conversions
-from robot_skills.util.entity import Entity
-
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):
     return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
@@ -72,10 +67,8 @@ class FollowOperator(smach.State):
         self._lost_distance = lost_distance
         self._standing_still_timeout = standing_still_timeout
         self._operator_standing_still_timeout = operator_standing_still_timeout
-
         self._operator_id_des = operator_id_des
         self._operator_distance = None
-
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
@@ -87,7 +80,6 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._last_pose_stamped_time = None
         self._last_operator_fs = None
-
         self._replan_active = False
         self._last_operator = None
         self._replan_allowed = replan
@@ -95,7 +87,6 @@ class FollowOperator(smach.State):
         self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
         self._replan_attempts = 0
         self._max_replan_attempts = 3
-
         self._period = 0.5
 
     def _operator_standing_still_for_x_seconds(self, timeout):
