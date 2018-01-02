@@ -60,7 +60,7 @@ objects = [
     {'category': 'snack',               'name': 'pringles',             'color': 'orange'},
     {'category': 'cleaning_stuff',      'name': 'brush',                'color': 'brown'},
     {'category': 'cleaning_stuff',      'name': 'cloth',                'color': 'yellow'},
-    {'category': 'cleaning_stuff',      'name': 'deodarant',            'color': 'pink'},
+    {'category': 'cleaning_stuff',      'name': 'deodorant',            'color': 'pink'},
     {'category': 'cleaning_stuff',      'name': 'hair_gel',             'color': 'transparent'},
     {'category': 'cleaning_stuff',      'name': 'hairspray',            'color': 'blue'},
     {'category': 'cleaning_stuff',      'name': 'sponge',               'color': 'yellow'},
