@@ -25,7 +25,12 @@ class DetectCrowd(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['crowd_data'])
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
+        """
+
+        :param userdata:
+        :return:
+        """
         tries = 3
         detections = self.recognize(tries)
 
@@ -34,7 +39,12 @@ class DetectCrowd(smach.State):
 
         return 'succeeded'
 
-    def recognize(self, tries):
+    def recognize(self, tries=3):
+        """
+        Recognize people. Takes multiple images and 
+        :param tries: number of tries
+        :return:
+        """
         number_of_people = 0
         best_image = None
         best_detection = None
@@ -56,11 +66,14 @@ class DetectCrowd(smach.State):
                 best_image = image
                 best_detection = face_rois
 
-        faces = img_cutout(best_image, img_recognitions_to_rois(best_detection))
+        if best_image:  # at least one face detected
+            faces = img_cutout(best_image, img_recognitions_to_rois(best_detection))
 
-        rospy.loginfo('Calling Skybiometry...')
+            rospy.loginfo('Calling Skybiometry...')
 
-        return self.robot.perception.get_face_properties(faces=faces)
+            return self.robot.perception.get_face_properties(faces=faces)
+        else:
+            return []
 
     def describe_crowd(self, detections):
         num_males = 0
