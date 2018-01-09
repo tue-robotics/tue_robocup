@@ -15,6 +15,15 @@ from tue_msgs.msg import GripperCommand
 
 from robot_part import RobotPart
 
+# If the grasp sensor distance is smaller than this value, the gripper is holding an object
+GRASP_SENSOR_THRESHOLD = 0.1
+
+
+class ObjectInGripperState(object):
+    EMPTY = -1
+    UNKNOWN = 0
+    HOLDING = 1
+
 
 class GripperState:
     """Specifies a State either OPEN or CLOSE"""
@@ -459,6 +468,20 @@ class Arm(RobotPart):
             rospy.logdebug('Not waiting for gripper action')
             # return self._ac_gripper.wait_for_result(rospy.Duration(timeout - passed_time))
             return True
+
+    @property
+    def object_in_gripper_state(self):
+        """ Returns whether the gripper is empty, holding an object or if this is unknown
+
+        :return: ObjectInGripperState
+        """
+        distance = self.grasp_sensor_distance
+        if distance is None:
+            return ObjectInGripperState.UNKNOWN
+        elif distance < GRASP_SENSOR_THRESHOLD:
+            return ObjectInGripperState.HOLDING
+        else:
+            return ObjectInGripperState.EMPTY
 
     @property
     def grasp_sensor_distance(self):
