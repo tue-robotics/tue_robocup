@@ -81,6 +81,11 @@ class Arm(RobotPart):
         self._ac_joint_traj = self.create_simple_action_client(
             "/" + robot_name + "/body/joint_trajectory_action", FollowJointTrajectoryAction)
 
+        # Init grasp sensor subscriber
+        self._grasp_sensor_state = (None, rospy.Time.now())
+        rospy.Subscriber("/" + self.robot_name + "/" + self.side + "_gripper/sensor_distance",
+                         std_msgs.msg.Float32, self._grasp_sensor_callback)
+
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
@@ -454,6 +459,26 @@ class Arm(RobotPart):
             rospy.logdebug('Not waiting for gripper action')
             # return self._ac_gripper.wait_for_result(rospy.Duration(timeout - passed_time))
             return True
+
+    @property
+    def grasp_sensor_distance(self):
+        """ Returns the sensor distance. If no recent measurement is available, None is returned
+
+        :return: float with distance, None if no recent measurement
+        """
+        distance, stamp = self._grasp_sensor_state
+        if (rospy.Time.now() - stamp).to_sec() < 0.5:
+            return distance
+        else:
+            return None
+
+    def _grasp_sensor_callback(self, msg):
+        """ Callback function for grasp sensor messages
+
+        :param msg: std_msgs.msg.Float32
+        """
+        sensor_state = (msg.data, rospy.Time.now())
+        self._grasp_sensor_state = sensor_state
 
     def _publish_marker(self, goal, color, ns = ""):
         """
