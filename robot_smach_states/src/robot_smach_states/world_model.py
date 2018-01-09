@@ -94,16 +94,21 @@ class SegmentObjects(smach.State):
     """ Look at an entiy and segment objects within the area desired.
     """
     def __init__(self, robot, segmented_entity_ids_designator, entity_to_inspect_designator,
-                 segmentation_area="on_top_of"):
+                 segmentation_area="on_top_of",
+                 threshold=0.0):
         """ Constructor
 
         :param robot: robot object
         :param segmented_entity_ids_designator: designator that is used to store the segmented objects
         :param entity_to_inspect_designator: EdEntityDesignator indicating the (furniture) object to inspect
         :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
+        :param threshold: float for classification score. Entities whose classification score is lower are ignore
+            (i.e. are not added to the segmented_entity_ids_designator)
         """
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
+
+        self.threshold = threshold
 
         ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
@@ -141,6 +146,15 @@ class SegmentObjects(smach.State):
             if object_classifications:
                 for idx, obj in enumerate(object_classifications):
                     _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id))
+
+                if self.threshold:
+                    object_classifications = [obj for obj in object_classifications if
+                                              obj.probability >= self.threshold]
+
+                    dropped = {obj.id: obj.probability for obj in object_classifications if
+                               obj.probability < self.threshold}
+                    rospy.loginfo("Dropping entities due to low class. score (< {th}: {dropped}"
+                                  .format(th=self.threshold, dropped=dropped))
 
                 self.segmented_entity_ids_designator.write(object_classifications)
             else:
