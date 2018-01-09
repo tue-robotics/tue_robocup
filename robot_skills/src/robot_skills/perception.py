@@ -252,6 +252,7 @@ class Perception(RobotPart):
             rois = img_recognitions_to_rois(face_recognitions)
             faces = img_cutout(image, rois)
 
+        face_properties = []
         try:
             face_properties_response = self._face_properties_srv(faces)
             face_properties = face_properties_response.properties_array

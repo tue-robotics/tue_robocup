@@ -21,11 +21,14 @@ timeout = 10
 
 
 class DetectCrowd(smach.State):
+    """
+    Detect a crowd and describe it based on individual detections
+    """
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['crowd_data'])
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         tries = 3
         detections = self.recognize(tries)
 
@@ -34,7 +37,14 @@ class DetectCrowd(smach.State):
 
         return 'succeeded'
 
-    def recognize(self, tries):
+    def recognize(self, tries=3):
+        """
+        Recognize people. Takes multiple images and takes the try with the most faces
+        :param tries: number of tries
+        :type tries: int
+        :return: list of face properties
+        :rtype: list[image_recognition_msgs/FaceProperties]
+        """
         number_of_people = 0
         best_image = None
         best_detection = None
@@ -56,13 +66,23 @@ class DetectCrowd(smach.State):
                 best_image = image
                 best_detection = face_rois
 
-        faces = img_cutout(best_image, img_recognitions_to_rois(best_detection))
+        if best_image:  # at least one face detected
+            faces = img_cutout(best_image, img_recognitions_to_rois(best_detection))
 
-        rospy.loginfo('Calling Skybiometry...')
-
-        return self.robot.perception.get_face_properties(faces=faces)
+            rospy.loginfo('Calling Skybiometry...')
+            return self.robot.perception.get_face_properties(faces=faces)
+        else:
+            rospy.logerr("No faces detected during all {} tries".format(tries))
+            return []
 
     def describe_crowd(self, detections):
+        """
+        Conversion from individual face properties to crowd properties
+        :param detections: list of face properties
+        :type detections: list[image_recognition_msgs/FaceProperties]
+        :return: crowd properties
+        :rtype: dict
+        """
         num_males = 0
         num_females = 0
         num_women = 0
