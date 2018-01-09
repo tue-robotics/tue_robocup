@@ -181,7 +181,7 @@ class Inspect(smach.StateMachine):
         :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
         :param objectIDsDes: designator that is used to store the segmented objects
         :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param navigatoin_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
+        :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
         If left empty, NavigateToObserve is used.
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
