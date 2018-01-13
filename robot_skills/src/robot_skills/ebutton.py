@@ -14,9 +14,7 @@ class EButton(RobotPart):
 
         rospy.logdebug("Initializing ebutton listener")
         self._ebuttonstatus = True
-        self._topic = self.create_subscriber("/{}/emergency_switch".format(robot_name),
-                                         Bool,
-                                         self._listen)
+        self._topic = self.create_subscriber("/{}/emergency_switch".format(robot_name), Bool, self._listen)
 
     def close(self):
         pass

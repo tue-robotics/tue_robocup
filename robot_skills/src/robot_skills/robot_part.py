@@ -6,6 +6,7 @@ import actionlib
 
 from diagnostic_msgs.msg import DiagnosticArray
 
+
 class RobotPart(object):
     """ Base class for robot parts """
     def __init__(self, robot_name, tf_listener):
