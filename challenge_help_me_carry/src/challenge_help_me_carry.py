@@ -15,16 +15,17 @@ print "=============================================="
 print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
+
 class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         hmc_functions.setup_challenge(self, robot)
 
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized':    'SET_INITIAL_POSE',
-                                                'abort':          'Aborted'})
+                                   transitions={'initialized': 'SET_INITIAL_POSE',
+                                                'abort': 'Aborted'})
 
             smach.StateMachine.add('SET_INITIAL_POSE',
                                    states.SetInitialPose(robot, challenge_knowledge.starting_point),
@@ -34,31 +35,28 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             # Follow the operator until (s)he states that you have arrived at the "car".
             smach.StateMachine.add('FOLLOW_OPERATOR',
-                                   states.FollowOperator(robot,
-                                                         operator_timeout=30,
-                                                         ask_follow=True,
-                                                         learn_face=True,
+                                   states.FollowOperator(robot, operator_timeout=30, ask_follow=True, learn_face=True,
                                                          replan=True),
-                                                         transitions={'stopped':        'ASK_FOR_TASK',
-                                                                      'lost_operator':  'ASK_FOR_TASK',
-                                                                      'no_operator':    'ASK_FOR_TASK'})
+                                   transitions={'stopped': 'ASK_FOR_TASK',
+                                                'lost_operator': 'ASK_FOR_TASK',
+                                                'no_operator': 'ASK_FOR_TASK'})
 
             smach.StateMachine.add('ASK_FOR_TASK',
-                                    states.Say(robot, ["Are we at the car or should I follow you?"], block=True),
-                                    transitions={'spoken': 'WAIT_FOR_TASK'})
+                                   states.Say(robot, ["Are we at the car or should I follow you?"], block=True),
+                                   transitions={'spoken': 'WAIT_FOR_TASK'})
 
             smach.StateMachine.add('WAIT_FOR_TASK',
                                    hmc_functions.WaitForOperatorCommand(robot,
-                                                          possible_commands=challenge_knowledge.commands.keys(),
-                                                          commands_as_outcomes=True),
-                                                          transitions={ 'follow':      'FOLLOW_OPERATOR',
-                                                                        'remember':    'REMEMBER_CAR_LOCATION',
-                                                                        'abort':       'Aborted'})
+                                                                        possible_commands=challenge_knowledge.commands.keys(),
+                                                                        commands_as_outcomes=True),
+                                   transitions={'follow': 'FOLLOW_OPERATOR',
+                                                'remember': 'REMEMBER_CAR_LOCATION',
+                                                'abort': 'Aborted'})
 
             smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                    hmc_functions.StoreCarWaypoint(robot),
-                                                    transitions={'success': 'ASK_FOR_DESTINATION',
-                                                                 'abort':   'Aborted'})
+                                   transitions={'success': 'ASK_FOR_DESTINATION',
+                                                'abort': 'Aborted'})
 
             smach.StateMachine.add('ASK_FOR_DESTINATION',
                                    states.Say(robot, ["Where should I bring the groceries?"], block=True),
@@ -66,19 +64,20 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                    hmc_functions.WaitForOperatorCommand(robot,
-                                                          possible_commands=challenge_knowledge.waypoints.keys(),
-                                                          commands_as_userdata=True),
+                                                                        possible_commands=challenge_knowledge.waypoints.keys(),
+                                                                        commands_as_userdata=True),
                                    transitions={'success': 'GRAB_ITEM',
-                                                'abort':   'Aborted'})
+                                                'abort': 'Aborted'})
 
             # Grab the item (bag) the operator hands to the robot, when they are at the "car".
             smach.StateMachine.add('GRAB_ITEM',
                                    hmc_functions.GrabItem(robot, self.bag_arm_designator, self.current_item),
-                                   transitions={'succeeded':      'ARM_DRIVING_POSE',
-                                                'timeout':        'BACKUP_CLOSE_GRIPPER', # For now in simulation timeout is considered a succes.
-                                                'failed':         'BACKUP_CLOSE_GRIPPER'},
-                                   remapping={'target_room_in':   'command_recognized',
-                                              'target_room_out':  'target_room'})
+                                   transitions={'succeeded': 'ARM_DRIVING_POSE',
+                                                'timeout': 'BACKUP_CLOSE_GRIPPER',
+                                                # For now in simulation timeout is considered a success.
+                                                'failed': 'BACKUP_CLOSE_GRIPPER'},
+                                   remapping={'target_room_in': 'command_recognized',
+                                              'target_room_out': 'target_room'})
 
             smach.StateMachine.add('BACKUP_CLOSE_GRIPPER',
                                    states.SetGripper(robot, self.bag_arm_designator, gripperstate=GripperState.CLOSE),
@@ -94,54 +93,50 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    states.Say(robot, ["Let me bring in your groceries",
                                                       "Helping you carry stuff",
                                                       "I'm going back inside"],
-                                                      block=True),
-                                                      transitions={'spoken':  'GOTO_DESTINATION'})
+                                              block=True),
+                                   transitions={'spoken': 'GOTO_DESTINATION'})
 
             smach.StateMachine.add('GOTO_DESTINATION',
                                    hmc_functions.NavigateToRoom(robot),
-                                   transitions={'arrived':          'PUTDOWN_ITEM',
-                                                'unreachable':      'PUTDOWN_ITEM',  # implement avoid obstacle behaviour later
+                                   transitions={'arrived': 'PUTDOWN_ITEM',
+                                                'unreachable': 'PUTDOWN_ITEM',
+                                                # implement avoid obstacle behaviour later
                                                 'goal_not_defined': 'Aborted'})
 
             # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
             smach.StateMachine.add('PUTDOWN_ITEM',
                                    hmc_functions.DropBagOnGround(robot, self.bag_arm_designator),
-                                   transitions={'succeeded':        'ASKING_FOR_HELP',
-                                                'failed':           'ASKING_FOR_HELP'})
+                                   transitions={'succeeded': 'ASKING_FOR_HELP',
+                                                'failed': 'ASKING_FOR_HELP'})
 
             smach.StateMachine.add('ASKING_FOR_HELP',
-                                   #TODO: look and then face new operator
+                                   # TODO: look and then face new operator
                                    states.Say(robot, "Please follow me and help me carry groceries into the house"),
                                    transitions={'spoken': 'GOTO_CAR'})
-                                   #transitions={'success':        'GOTO_CAR',
-                                   #             'abort':          'Aborted'})
 
             smach.StateMachine.add('GOTO_CAR',
-                                   states.NavigateToWaypoint(robot,
-                                                             ds.EntityByIdDesignator(robot,
-                                                             id=challenge_knowledge.waypoint_car['id']),
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_car['id']),
                                                              challenge_knowledge.waypoint_car['radius']),
 
                                    # TODO: detect closed door
-                                   transitions={'unreachable':      'OPEN_DOOR',
-                                                'arrived':          'AT_END',
+                                   transitions={'unreachable': 'OPEN_DOOR',
+                                                'arrived': 'AT_END',
                                                 'goal_not_defined': 'Aborted'})
 
             smach.StateMachine.add('OPEN_DOOR',
-                                   #TODO: implement functionality
+                                   # TODO: implement functionality
                                    states.Say(robot, "Please open the door for me"),
                                    transitions={'spoken': 'GOTO_CAR'})
-                                   #transitions={'success':        'GOTO_CAR',
-                                   #             'abort':          'Aborted'})
 
             smach.StateMachine.add('AT_END',
                                    states.Say(robot, ["We arrived at the car, goodbye",
                                                       "You have reached your destination, goodbye",
                                                       "The car is right here, see you later!"],
                                               block=True),
-                                   transitions={'spoken':  'Done'})
+                                   transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "help_me_carry")
+
 
 ############################## initializing program ##############################
 if __name__ == '__main__':
@@ -149,5 +144,5 @@ if __name__ == '__main__':
 
     states.util.startup(ChallengeHelpMeCarry, challenge_name="help_me_carry")
 
-# In order to start in a different initial state, start the challenge as following:
-# rosrun challenge_help_me_carry challenge_help_me_carry.py amigo --initial=<state name>
+    # In order to start in a different initial state, start the challenge as following:
+    # rosrun challenge_help_me_carry challenge_help_me_carry.py amigo --initial=<state name>
