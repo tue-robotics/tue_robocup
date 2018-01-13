@@ -101,6 +101,11 @@ class RobotPart(object):
         self._add_connection(name, srv)
         return srv
 
+    def create_subscriber(self, name, *args, **kwargs):
+        sub = rospy.Subscriber(name, *args, **kwargs)
+        self._add_connection(name, sub)
+        return sub
+
     def _add_connection(self, name, connection):
         """
         Adds a connection to the internal dict with connections that is used when initializing the robot object.
