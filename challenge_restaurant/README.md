@@ -5,7 +5,6 @@ Responsible: Lars
 ## Startup
 
 * place the robot next to the kitchen where the chef is. (robot detects a large ed entity as the side of the kitchen)
-```
 * amigo-start should already be running
 * make sure the Jetson is running (check if <robot-name>/pose_detector/openpose is running)
 ```
@@ -13,10 +12,11 @@ rosnode list | grep pose_detector
 ```
 * start the middleware
 ```
-amigo-challenge restaurant (starts the middleware)
-
+amigo-challenge-restaurant (starts the middleware, without state_machine)
+```
 * start the challenge
-rosrun challenge_restaurant challenge_restaurant amigo
+```
+rosrun challenge_restaurant challenge_restaurant <robot-name>
 ```
 * navigate around for a bit to get a proper map. (But still leave some unknown space)
 * have a customer wave to call <robot-name> for placing an order
