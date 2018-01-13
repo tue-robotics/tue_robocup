@@ -4,7 +4,7 @@
 import rospy
 import actionlib
 
-from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 
 
 class RobotPart(object):
@@ -169,6 +169,7 @@ class RobotPart(object):
         else:
             level = diags[0].level
 
+            # TODO: diagnostic_msgs.DiagnosticStatus.OK instead of our own enumeration.
             # 0. Stale
             # 1. Idle
             # 2. Operational
