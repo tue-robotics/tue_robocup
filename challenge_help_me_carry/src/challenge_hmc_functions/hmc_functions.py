@@ -113,7 +113,7 @@ class StoreCarWaypoint(smach.State):
         self._robot = robot
         robot.base.local_planner.cancelCurrentPlan()
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
                                                frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
@@ -124,41 +124,19 @@ class StoreCarWaypoint(smach.State):
             return "abort"
 
 
-class GrabItem(smach.State):
-    """
-    The robot's arm is put in carrying bag pose, waiting to receive the bag
-
-    """
-    def __init__(self, robot, empty_arm_designator, current_item):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'timeout'], input_keys=['target_room_in'],
-                             output_keys=['target_room_out'])
-        self._robot = robot
-        self._empty_arm_designator = empty_arm_designator
-        self._current_item = current_item
-        robot.base.local_planner.cancelCurrentPlan()
-
-    def execute(self, userdata):
-        handOverHuman = states.HandoverFromHuman(self._robot, self._empty_arm_designator, "current_item",
-                                                 self._current_item, arm_configuration="carrying_bag_pose")
-
-        userdata.target_room_out = userdata.target_room_in
-
-        return handOverHuman.execute()
-
-
-class NavigateToRoom(smach.State):
+class NavigateToDestination(smach.State):
     """
     Navigate to the target room or place
 
     """
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['unreachable', 'arrived', 'goal_not_defined'], input_keys=['target_room'])
+        smach.State.__init__(self, outcomes=['unreachable', 'arrived', 'goal_not_defined'], input_keys=['destination'])
         self._robot = robot
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
-        target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
+        target_waypoint = userdata.destination
+        target_radius = challenge_knowledge.default_target_radius
 
         navigateToWaypoint = states.NavigateToWaypoint(self._robot,
                                                        ds.EntityByIdDesignator(self._robot, id=target_waypoint),

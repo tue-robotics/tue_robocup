@@ -10,6 +10,7 @@ from robocup_knowledge import load_knowledge
 from challenge_hmc_functions import hmc_functions
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
+common = load_knowledge('common')
 
 print "=============================================="
 print "==         CHALLENGE HELP ME CARRY          =="
@@ -64,20 +65,20 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             smach.StateMachine.add('WAIT_FOR_DESTINATION',
                                    hmc_functions.WaitForOperatorCommand(robot,
-                                                                        possible_commands=challenge_knowledge.waypoints.keys(),
+                                                                        possible_commands=common.location_rooms.keys()+common.location_names.keys(),
                                                                         commands_as_userdata=True),
                                    transitions={'success': 'GRAB_ITEM',
                                                 'abort': 'Aborted'})
 
             # Grab the item (bag) the operator hands to the robot, when they are at the "car".
             smach.StateMachine.add('GRAB_ITEM',
-                                   hmc_functions.GrabItem(robot, self.bag_arm_designator, self.current_item),
+                                   states.HandoverFromHuman(robot, self.bag_arm_designator, "current_item",
+                                                            self.current_item,
+                                                            arm_configuration=challenge_knowledge.carrying_bag_pose),
                                    transitions={'succeeded': 'ARM_DRIVING_POSE',
                                                 'timeout': 'BACKUP_CLOSE_GRIPPER',
                                                 # For now in simulation timeout is considered a success.
-                                                'failed': 'BACKUP_CLOSE_GRIPPER'},
-                                   remapping={'target_room_in': 'command_recognized',
-                                              'target_room_out': 'target_room'})
+                                                'failed': 'BACKUP_CLOSE_GRIPPER'})
 
             smach.StateMachine.add('BACKUP_CLOSE_GRIPPER',
                                    states.SetGripper(robot, self.bag_arm_designator, gripperstate=GripperState.CLOSE),
@@ -97,7 +98,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'GOTO_DESTINATION'})
 
             smach.StateMachine.add('GOTO_DESTINATION',
-                                   hmc_functions.NavigateToRoom(robot),
+                                   hmc_functions.NavigateToDestination(robot),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
                                                 'unreachable': 'PUTDOWN_ITEM',
                                                 # implement avoid obstacle behaviour later
@@ -115,7 +116,8 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'GOTO_CAR'})
 
             smach.StateMachine.add('GOTO_CAR',
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_car['id']),
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(
+                                       robot, id=challenge_knowledge.waypoint_car['id']),
                                                              challenge_knowledge.waypoint_car['radius']),
 
                                    # TODO: detect closed door
