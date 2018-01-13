@@ -182,6 +182,8 @@ class Robot(object):
 
     @property
     def operational(self):
+        """
+        :returns if all parts are operational"""
         return all(bodypart.operational for bodypart in self.parts.values())
 
     def __enter__(self):
