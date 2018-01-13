@@ -75,7 +75,10 @@ class WaitForOperatorCommand(smach.State):
                 self._robot.speech.speak("I am still waiting for a command and did not hear anything")
 
             elif command_recognized in self._possible_commands:
-                self._robot.speech.speak(command_recognized + "OK")
+                if command_recognized == "follow":
+                    self._robot.speech.speak("OK, I will follow you")
+                else:
+                    self._robot.speech.speak("OK, I will remember this location")
                 return "success", command_recognized
             else:
                 self._robot.speech.speak(
