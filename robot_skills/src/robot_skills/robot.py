@@ -73,17 +73,21 @@ class Robot(object):
         self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
 
         # Create attributes from dict
-        for k, v in self.parts.iteritems():
-            setattr(self, k, v)
+        for partname, bodypart in self.parts.iteritems():
+            setattr(self, partname, bodypart)
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # (ToDo: kind of ugly, why do we need this???)
         self.ears._hmi = self.hmi  # ToDo: when ears is gone, remove this line
 
         # Wait for connections
         s = rospy.Time.now()
-        for k, v in self.parts.iteritems():
-            v.wait_for_connections(1.0)
+        for partname, bodypart in self.parts.iteritems():
+            bodypart.wait_for_connections(1.0)
         e = rospy.Time.now()
         rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+
+        if not self.operational:
+            not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
+            rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
     def standby(self):
         if not self.robot_name == 'amigo':
@@ -175,6 +179,10 @@ class Robot(object):
         try:
             self.lights.close()
         except: pass
+
+    @property
+    def operational(self):
+        return all(bodypart.operational for bodypart in self.parts.values())
 
     def __enter__(self):
         pass

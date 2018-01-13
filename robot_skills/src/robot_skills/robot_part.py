@@ -18,6 +18,8 @@ class RobotPart(object):
 
         self.__ros_connections = {}
 
+
+        self._operational = True
     def load_param(self, param_name, default=None):
         """
         Loads a parameter from the parameter server, namespaced by robot name
@@ -114,13 +116,15 @@ class RobotPart(object):
         """
         self.__ros_connections[name] = connection
 
-    def check_hardware(self):
+    @property
+    def operational(self):
         """
-        Check whether this bodypart's hardware is ready for work
-        If the associated hardware is not yet up, has an error etc, the bodypart is not ready.
+        Check whether this bodypart's hardware is operational
+        If the associated hardware is not yet up, has an error etc, the bodypart is not operational
 
-        :return: if the body part is ready to start work
         :rtype: bool True is part is ready to do work, False otherwise
         """
+        return self._operational
+
 
         raise NotImplementedError("Implement in subclasses")
