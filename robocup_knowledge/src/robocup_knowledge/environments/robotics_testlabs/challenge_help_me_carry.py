@@ -13,15 +13,12 @@ commands = {
                  'stop following me']}
 
 # add or get from ~/ros/kinetic/system/src/ed_object_models/models/robotics_testlabs/model.yaml
-waypoints = {
-    'dinner_table': {'id': 'dinner_table',
-                     'radius': 1},
-    'kitchen': {'id': 'bookcase_waypoint',
-                'radius': 1}}
-
 waypoint_car = {'id': 'car',
                 'radius': 1}
 
 default_item = 'coke'
 default_place = 'cabinet'
 default_area = 'on_top_of'
+default_target_radius = 25.0
+
+carrying_bag_pose = 'carrying_bag_pose'
