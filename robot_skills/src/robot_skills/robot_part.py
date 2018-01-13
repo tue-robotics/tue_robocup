@@ -60,6 +60,8 @@ class RobotPart(object):
                         connected = True
                     except:
                         connected = False
+                elif isinstance(v, rospy.Subscriber):
+                    connected = v.get_num_connections() >= 1
                 else:
                     rospy.logerr("Don't know what to do with a {}".format(type(v)))
                 # If connected, remove from the list
@@ -103,7 +105,7 @@ class RobotPart(object):
         """
         Adds a connection to the internal dict with connections that is used when initializing the robot object.
         :param name: name of the connection
-        :param connection: connection to add
+        :param connection: connection to add. This might be a ServiceProxy, ActionClient or Subscriber
         """
         self.__ros_connections[name] = connection
 
