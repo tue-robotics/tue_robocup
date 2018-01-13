@@ -19,6 +19,8 @@ class Head(RobotPart):
         self._goal = None
         self._at_setpoint = False
 
+        self.start_check_operational('head')
+
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
 
