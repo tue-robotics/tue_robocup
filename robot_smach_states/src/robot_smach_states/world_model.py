@@ -186,7 +186,7 @@ class Inspect(smach.StateMachine):
         :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
         If left empty, NavigateToObserve is used.
-        :param threshold: float for classification score. Entities whose classification score is lower are ignore
+        :param threshold: float for classification score. Entities whose classification score is lower are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
