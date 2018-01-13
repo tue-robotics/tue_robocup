@@ -46,37 +46,37 @@ class RobotPart(object):
                 return True
             # Check all connections
             new_connections = {}
-            for k, v in self.__ros_connections.iteritems():
-                # print "Checking {}".format(k)
+            for name, connection in self.__ros_connections.iteritems():
+                rospy.logdebug("Checking {}".format(name))
                 connected = False
                 # Check actionlib connection
-                if isinstance(v, actionlib.SimpleActionClient):
-                    connected = v.wait_for_server(rospy.Duration(0.01))
-                elif isinstance(v, rospy.ServiceProxy):
+                if isinstance(connection, actionlib.SimpleActionClient):
+                    connected = connection.wait_for_server(rospy.Duration(0.01))
+                elif isinstance(connection, rospy.ServiceProxy):
                     # Check service connection
                     # Need to use try-except in case of service since this throws an exception if not connected.
                     try:
-                        v.wait_for_service(timeout=0.01)
+                        connection.wait_for_service(timeout=0.01)
                         connected = True
                     except:
                         connected = False
-                elif isinstance(v, rospy.Subscriber):
-                    connected = v.get_num_connections() >= 1
+                elif isinstance(connection, rospy.Subscriber):
+                    connected = connection.get_num_connections() >= 1
                 else:
-                    rospy.logerr("Don't know what to do with a {}".format(type(v)))
+                    rospy.logerr("Don't know what to do with a {}".format(type(connection)))
                 # If connected, remove from the list
                 if connected:
-                    rospy.logdebug("Connected to {}".format(k))
+                    rospy.logdebug("Connected to {}".format(name))
                     # self.__ros_connections = {name: connection
                     #                           for name, connection in self.__ros_connections.iteritems() if name != k}
                 else:
-                    new_connections[k] = v
+                    new_connections[name] = connection
 
             self.__ros_connections = new_connections
             r.sleep()
 
-        for k, v in self.__ros_connections.iteritems():
-            rospy.logerr("{} not connected timely".format(k))
+        for name, connection in self.__ros_connections.iteritems():
+            rospy.logerr("{} not connected timely".format(name))
         return False
 
     def create_simple_action_client(self, name, action_type):
