@@ -4,8 +4,6 @@
 import rospy
 import actionlib
 
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
-
 
 class RobotPart(object):
     """ Base class for robot parts """
@@ -21,7 +19,6 @@ class RobotPart(object):
         self.__ros_connections = {}
 
         self.__diagnostics_name = ""
-        self._hardware_status_sub = None
 
         # This is set to False by start_check_operational, because then apparently there is a meaningful check
         # If no such check exists, then assume it's operational unless overridden in subclass
@@ -140,7 +137,7 @@ class RobotPart(object):
         """
         return self._operational
 
-    def start_check_operational(self, name):
+    def subscribe_hardware_status(self, name):
         """
         Start to check if the bodypart is operational. To do so, subscribe to the hardware status/diagnostics
 
@@ -151,15 +148,15 @@ class RobotPart(object):
 
         self.__diagnostics_name = name
 
-        self._hardware_status_sub = self.create_subscriber("/" + self.robot_name + "/hardware_status",
-                                                           DiagnosticArray, self.cb_hardware_status)
-
-    def cb_hardware_status(self, msg):
+    def handle_hardware_status(self, msg):
         """
         hardware_status callback to determine if the bodypart is operational
         :param msg: diagnostic_msgs.msg.DiagnosticArray
         :return: no return
         """
+        if not self.__diagnostics_name:
+            return
+
         diags = [diag for diag in msg.status if diag.name == self.__diagnostics_name]
 
         if len(diags) == 0:
@@ -179,3 +176,4 @@ class RobotPart(object):
                 self._operational = False
             else:
                 self._operational = True
+

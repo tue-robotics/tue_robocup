@@ -27,6 +27,9 @@ import world_model_ed
 import geometry_msgs
 from collections import OrderedDict
 
+# Check hardware status
+from diagnostic_msgs.msg import DiagnosticArray
+
 
 class Robot(object):
     """
@@ -67,6 +70,9 @@ class Robot(object):
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
+
+        # Check hardware status
+        self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         # Grasp offsets
         #TODO: Don't hardcode, load from parameter server to make robot independent.
@@ -185,6 +191,15 @@ class Robot(object):
         """
         :returns if all parts are operational"""
         return all(bodypart.operational for bodypart in self.parts.values())
+
+    def handle_hardware_status(self, msg):
+        """
+        hardware_status callback to determine if the bodypart is operational
+        :param msg: diagnostic_msgs.msg.DiagnosticArray
+        :return: no return
+        """
+        for name, part in self.parts.iteritems():
+            part.handle_hardware_status(msg)
 
     def __enter__(self):
         pass
