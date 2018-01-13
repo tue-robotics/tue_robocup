@@ -102,7 +102,7 @@ class SegmentObjects(smach.State):
         :param segmented_entity_ids_designator: designator that is used to store the segmented objects
         :param entity_to_inspect_designator: EdEntityDesignator indicating the (furniture) object to inspect
         :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param threshold: float for classification score. Entities whose classification score is lower are ignore
+        :param threshold: float for classification score. Entities whose classification score is lower are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
         """
         smach.State.__init__(self, outcomes=["done"])
