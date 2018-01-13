@@ -135,12 +135,12 @@ class GrabItem(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-        handover_human = states.HandoverFromHuman(self._robot, self._empty_arm_designator, "current_item",
-                                                  self._current_item, arm_configuration="carrying_bag_pose")
+        handOverHuman = states.HandoverFromHuman(self._robot, self._empty_arm_designator, "current_item",
+                                                 self._current_item, arm_configuration="carrying_bag_pose")
 
         userdata.target_room_out = userdata.target_room_in
 
-        return handover_human.execute()
+        return handOverHuman.execute()
 
 
 class NavigateToRoom(smach.State):
@@ -157,11 +157,11 @@ class NavigateToRoom(smach.State):
         target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
         target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
-        navigate_to_waypoint = states.NavigateToWaypoint(self._robot,
-                                                         ds.EntityByIdDesignator(self._robot, id=target_waypoint),
-                                                         target_radius)
+        navigateToWaypoint = states.NavigateToWaypoint(self._robot,
+                                                       ds.EntityByIdDesignator(self._robot, id=target_waypoint),
+                                                       target_radius)
 
-        return navigate_to_waypoint.execute()
+        return navigateToWaypoint.execute()
 
 
 class DropBagOnGround(smach.StateMachine):
