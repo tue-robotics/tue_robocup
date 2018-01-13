@@ -205,7 +205,7 @@ class Robot(object):
             # Pass a dict mapping the name to the item.
             # Bodypart.handle_hardware_status needs to find the element relevant to itself
             # iterating over the array would be done be each bodypart, but with a dict they can just look theirs up.
-            part.handle_hardware_status(diagnostic_dict)
+            part.process_hardware_status(diagnostic_dict)
 
     def __enter__(self):
         pass

@@ -148,7 +148,7 @@ class RobotPart(object):
 
         self.__diagnostics_name = name
 
-    def handle_hardware_status(self, diagnostic_dict):
+    def process_hardware_status(self, diagnostic_dict):
         """
         hardware_status callback to determine if the bodypart is operational
         :param diagnostic_dict: dictionary[str, diagnostic_msgs.msg.DiagnosticStatus]
