@@ -33,6 +33,8 @@ class Torso(RobotPart):
         # Init joint measurement subscriber
         self.torso_sub = self.create_subscriber('/' + self.robot_name + '/sergio/torso/measurements',JointState, self._receive_torso_measurement)
 
+        self.subscribe_hardware_status('spindle')
+
     def close(self):
         """
         Cancels all active goals for the torso
