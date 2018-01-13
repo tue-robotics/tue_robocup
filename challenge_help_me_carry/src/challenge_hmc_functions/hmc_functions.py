@@ -14,34 +14,36 @@ from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
-def setup_challenge(self, robot):
 
-    self.place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
-    self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_name,
-                                                                    name="placement",
-                                                                    area=challenge_knowledge.default_area),
-                                                                    name="place_position")
+def setup_challenge(setup, robot):
+    setup.place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
+    setup.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, setup.place_name, name="placement",
+                                                                       area=challenge_knowledge.default_area),
+                                                name="place_position")
 
-    self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.rightArm, name="empty_arm_designator")
+    setup.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.rightArm, name="empty_arm_designator")
 
-    # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm (first resolve is cached), unless it is unlocked
-    # For this challenge, unlocking is not needed
-    self.bag_arm_designator = self.empty_arm_designator.lockable()
-    self.bag_arm_designator.lock()
+    # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm, unless it is unlocked.
+    # For this challenge, unlocking is not needed.
+
+    setup.bag_arm_designator = setup.empty_arm_designator.lockable()
+    setup.bag_arm_designator.lock()
 
     # We don't actually grab something, so there is no need for an actual thing to grab
-    self.current_item = ds.VariableDesignator(Entity("dummy",
-                                                    "dummy",
-                                                    "/{}/base_link".format(robot.robot_name),
-                                                    kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5),
-                                                    None,
-                                                    {},
-                                                    [],
-                                                    datetime.datetime.now()),
-                                                    name="current_item")
+
+    setup.current_item = ds.VariableDesignator(Entity("dummy", "dummy", "/{}/base_link".format(robot.robot_name),
+                                                      kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5), None, {}, [],
+                                                      datetime.datetime.now()), name="current_item")
+
 
 class WaitForOperatorCommand(smach.State):
+    """
+    The robot waits for command from the operator
+    Possible commands are two types:
+        - commands as outcomes: each possible command is possible outcome
+        - commands as userdata: the command is passed to the next state
 
+    """
     def __init__(self, robot, possible_commands, commands_as_outcomes=False, commands_as_userdata=False):
 
         self._robot = robot
@@ -51,20 +53,21 @@ class WaitForOperatorCommand(smach.State):
 
         if commands_as_outcomes:  # each possible command is a separate outcome
             _outcomes = possible_commands + ['abort']
-        else:                     # outcome is success or abort, recognized command is returned using output_keys
+        else:  # outcome is success or abort, recognized command is returned using output_keys
             _outcomes = ['success', 'abort']
 
         if commands_as_userdata:  # pass the recognized command to the next state
             _output_keys = ['command_recognized']
-        else:                     # do not pass data to the next state
+        else:  # do not pass data to the next state
             _output_keys = []
 
-        smach.State.__init__(self, outcomes=_outcomes,  output_keys=_output_keys)
+        smach.State.__init__(self, outcomes=_outcomes, output_keys=_output_keys)
 
     def _listen_for_commands(self, tries=5, time_out=30):
         for i in range(0, tries):
             try:
-                result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T', timeout=time_out)
+                result = self._robot.hmi.query('What command?', 'T -> ' + ' | '.join(self._possible_commands), 'T',
+                                               timeout=time_out)
                 command_recognized = result.sentence
             except TimeoutException:
                 command_recognized = None
@@ -75,7 +78,8 @@ class WaitForOperatorCommand(smach.State):
                 self._robot.speech.speak(command_recognized + "OK")
                 return "success", command_recognized
             else:
-                self._robot.speech.speak("I don't understand, I expected a command like " + ", ".join(self._possible_commands))
+                self._robot.speech.speak(
+                    "I don't understand, I expected a command like " + ", ".join(self._possible_commands))
 
         self._robot.speech.speak("I did not recognize a command and will stop now")
         return "abort", "abort"
@@ -95,7 +99,12 @@ class WaitForOperatorCommand(smach.State):
         else:
             return outcome
 
+
 class StoreCarWaypoint(smach.State):
+    """
+    The robot remembers the position of the car for future use
+
+    """
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['success', 'abort'])
         self._robot = robot
@@ -111,11 +120,14 @@ class StoreCarWaypoint(smach.State):
         else:
             return "abort"
 
+
 class GrabItem(smach.State):
+    """
+    The robot's arm is put in carrying bag pose, waiting to receive the bag
+
+    """
     def __init__(self, robot, empty_arm_designator, current_item):
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed', 'timeout'],
-                             input_keys=['target_room_in'],
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'timeout'], input_keys=['target_room_in'],
                              output_keys=['target_room_out'])
         self._robot = robot
         self._empty_arm_designator = empty_arm_designator
@@ -123,39 +135,39 @@ class GrabItem(smach.State):
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-
-        handOverHuman = states.HandoverFromHuman(self._robot,
-                                                 self._empty_arm_designator,
-                                                 "current_item",
-                                                 self._current_item,
-                                                 arm_configuration="carrying_bag_pose")
+        handover_human = states.HandoverFromHuman(self._robot, self._empty_arm_designator, "current_item",
+                                                  self._current_item, arm_configuration="carrying_bag_pose")
 
         userdata.target_room_out = userdata.target_room_in
 
-        return handOverHuman.execute()
+        return handover_human.execute()
 
 
 class NavigateToRoom(smach.State):
+    """
+    Navigate to the target room or place
+
+    """
     def __init__(self, robot):
-        smach.State.__init__(self,
-                             outcomes=['unreachable','arrived','goal_not_defined'],
-                             input_keys=['target_room'])
+        smach.State.__init__(self, outcomes=['unreachable', 'arrived', 'goal_not_defined'], input_keys=['target_room'])
         self._robot = robot
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
-
         target_waypoint = challenge_knowledge.waypoints[userdata.target_room]['id']
         target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
-        navigateToWaypoint = states.NavigateToWaypoint(self._robot, ds.EntityByIdDesignator(self._robot, id=target_waypoint), target_radius)
+        navigate_to_waypoint = states.NavigateToWaypoint(self._robot,
+                                                         ds.EntityByIdDesignator(self._robot, id=target_waypoint),
+                                                         target_radius)
 
-        return navigateToWaypoint.execute()
+        return navigate_to_waypoint.execute()
 
 
 class DropBagOnGround(smach.StateMachine):
     """
-    Put a bag in the robot's gripper on the ground
+    Put the bag in the robot's gripper on the ground
+
     """
     def __init__(self, robot, arm_designator):
         """
@@ -163,21 +175,22 @@ class DropBagOnGround(smach.StateMachine):
         :param arm_designator: ArmDesignator resolving to Arm holding the bag to drop
 
         """
-        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         check_type(arm_designator, Arm)
 
         with self:
             smach.StateMachine.add('DROP_POSE', states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
-                                    transitions={'succeeded':'OPEN_AFTER_DROP',
-                                                'failed':'OPEN_AFTER_DROP'})
+                                   transitions={'succeeded': 'OPEN_AFTER_DROP',
+                                                'failed': 'OPEN_AFTER_DROP'})
 
-            smach.StateMachine.add('OPEN_AFTER_DROP', states.SetGripper(robot, arm_designator, gripperstate=GripperState.OPEN),
-                                    transitions={'succeeded':'RESET_ARM_OK',
-                                             'failed':'RESET_ARM_FAIL'})
+            smach.StateMachine.add('OPEN_AFTER_DROP',
+                                   states.SetGripper(robot, arm_designator, gripperstate=GripperState.OPEN),
+                                   transitions={'succeeded': 'RESET_ARM_OK',
+                                                'failed': 'RESET_ARM_FAIL'})
 
-            smach.StateMachine.add( 'RESET_ARM_OK', states.ResetArms(robot),
-                                    transitions={'done':'succeeded'})
+            smach.StateMachine.add('RESET_ARM_OK', states.ResetArms(robot),
+                                   transitions={'done': 'succeeded'})
 
-            smach.StateMachine.add( 'RESET_ARM_FAIL', states.ResetArms(robot),
-                                    transitions={'done':'failed'})
+            smach.StateMachine.add('RESET_ARM_FAIL', states.ResetArms(robot),
+                                   transitions={'done': 'failed'})
