@@ -106,3 +106,14 @@ class RobotPart(object):
         :param connection: connection to add
         """
         self.__ros_connections[name] = connection
+
+    def check_ready(self):
+        """
+        Check whether this bodypart is ready to do work.
+        If some backend node is not running or hardware is not yet up, has an error etc, the bodypart is not ready.
+
+        :return: if the body part is ready to start work
+        :rtype: bool True is part is ready to do work, False otherwise
+        """
+
+        raise NotImplementedError("Implement in subclasses")
