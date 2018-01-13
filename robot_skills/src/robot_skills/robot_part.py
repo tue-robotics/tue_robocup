@@ -20,7 +20,7 @@ class RobotPart(object):
 
         self.__diagnostics_name = ""
 
-        # This is set to False by start_check_operational, because then apparently there is a meaningful check
+        # This is set to False by subscribe_hardware_status, because then apparently there is a meaningful check
         # If no such check exists, then assume it's operational unless overridden in subclass
         self._operational = True
 
