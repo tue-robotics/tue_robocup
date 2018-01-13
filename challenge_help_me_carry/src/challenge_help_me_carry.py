@@ -1,24 +1,12 @@
 #!/usr/bin/python
-import roslib;
+
 import rospy
 import smach
-import sys
-import time
-import datetime
-from hmi import TimeoutException
-
-from cb_planner_msgs_srvs.msg import PositionConstraint
-
-import robot_smach_states.util.designators as ds
-from robot_smach_states.util.designators import check_type
-from robot_skills.arms import Arm, GripperState
-
 import robot_smach_states as states
+import robot_smach_states.util.designators as ds
 
+from robot_skills.arms import Arm, GripperState
 from robocup_knowledge import load_knowledge
-from robot_skills.util import kdl_conversions
-from robot_skills.util.entity import Entity
-
 from challenge_hmc_functions import hmc_functions
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
@@ -60,7 +48,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                     transitions={'spoken': 'WAIT_FOR_TASK'})
 
             smach.StateMachine.add('WAIT_FOR_TASK',
-                                   hmc_functions.WaitForOperatorCommand(robot, 
+                                   hmc_functions.WaitForOperatorCommand(robot,
                                                           possible_commands=challenge_knowledge.commands.keys(),
                                                           commands_as_outcomes=True),
                                                           transitions={ 'follow':      'FOLLOW_OPERATOR',

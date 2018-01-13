@@ -1,20 +1,13 @@
 #!/usr/bin/python
-import roslib;
-import rospy
+
 import smach
-import sys
-import time
 import datetime
-from hmi import TimeoutException
-
-from cb_planner_msgs_srvs.msg import PositionConstraint
-
+import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+
 from robot_smach_states.util.designators import check_type
 from robot_skills.arms import Arm, GripperState
-
-import robot_smach_states as states
-
+from hmi import TimeoutException
 from robocup_knowledge import load_knowledge
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
@@ -24,7 +17,7 @@ challenge_knowledge = load_knowledge('challenge_help_me_carry')
 def setup_challenge(self, robot):
 
     self.place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
-    self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_name, 
+    self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_name,
                                                                     name="placement",
                                                                     area=challenge_knowledge.default_area),
                                                                     name="place_position")
