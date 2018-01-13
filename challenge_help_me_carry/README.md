@@ -1,5 +1,5 @@
-# Challenge Help Me Carry 2017
-Responsible: Loy van Beek
+# Challenge Help Me Carry 2018
+Responsible: Sam Aleksandrov
 
 ## Setup
 amigo2/sergio2:
@@ -9,6 +9,10 @@ amigo2/sergio2:
 ### Testing in the lab/simulation
 
 starting location: next to the dinner table, looking to the robocup field
+
+for the simulation it's neccessary to simulate a human entity in RVIZ using:
+
+    rosrun fast_simulator interactive.py loy loy 0 0 0
 
 ## During the challenge
 
