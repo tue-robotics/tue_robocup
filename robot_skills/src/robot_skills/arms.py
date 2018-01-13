@@ -67,7 +67,7 @@ class Arm(RobotPart):
         self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
 
         # listen to the hardware status to determine if the arm is available
-        rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.cb_hardware_status)
+        self._hardware_status_sub = self.create_subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.cb_hardware_status)
 
         # Init gripper actionlib
         self._ac_gripper = self.create_simple_action_client(

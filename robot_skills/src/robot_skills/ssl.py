@@ -22,7 +22,7 @@ class SSL(RobotPart):
         :param tf_listener: tf_server.TFClient()
         """
         super(SSL, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._sub = rospy.Subscriber('/{}/ssl/direction_of_arrival'.format(self.robot_name), PoseStamped, self._callback, queue_size=1)
+        self._sub = self.create_subscriber('/{}/ssl/direction_of_arrival'.format(self.robot_name), PoseStamped, self._callback, queue_size=1)
         self._last_msg = None
         self._last_received_time = rospy.Time(0)
 
