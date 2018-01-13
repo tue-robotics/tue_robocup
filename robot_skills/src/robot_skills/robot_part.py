@@ -110,6 +110,13 @@ class RobotPart(object):
         return srv
 
     def create_subscriber(self, name, *args, **kwargs):
+        """
+        Creates a Subscriber and add to the connections to check
+        :param name: string with the name topic to subscribe
+        :param args: other args passed to rospy.Subscriber
+        :param kwargs: other keyword args passed to rospy.Subscriber
+        :return: the service client
+        """
         sub = rospy.Subscriber(name, *args, **kwargs)
         self._add_connection(name, sub)
         return sub
