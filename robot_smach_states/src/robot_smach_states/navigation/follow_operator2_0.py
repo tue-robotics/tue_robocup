@@ -5,6 +5,7 @@ import rospy
 import sys
 import smach_ros
 import math
+import collections
 from robot_smach_states.util.startup import startup
 
 
@@ -14,36 +15,50 @@ class LearnOperator(smach.State):
 
     def execute(self, userdata=None):
         num_detections = 0
-        while num_detections < 5:
+        while num_detections < 2:
             var = raw_input("Did I successfully detect you? Yes/No: ")
             if var == "Yes":
                 num_detections += 1
-        print ("Detected operator successfully 5 times, start following...")
+        print ("Detected operator successfully 2 times, start following...")
         # The operator should be added to the breadcrumb list here.
         return 'follow'
 
 
 class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self):
-        smach.State.__init__(self, outcomes=['track', 'no_track'])
+        smach.State.__init__(self,
+                             outcomes=['track', 'no_track'],
+                             input_keys=['track_buffer_in'],
+                             output_keys=['track_buffer_out'])
         self.counter = 0
 
-    def execute(self, userdata=None):
-        if self.counter == 10:
+    def execute(self, userdata):
+        if self.counter == 4:
+            userdata.track_buffer_in.append(self.counter)
             return 'no_track'
+        userdata.track_buffer_out = userdata.track_buffer_in
         self.counter += 1
         return 'track'
 
 
 class FollowBread(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['follow_bread', 'no_follow_bread'])
+        smach.State.__init__(self,
+                             outcomes=['follow_bread', 'no_follow_bread'],
+                             input_keys=['followbread_buffer_in'],
+                             output_keys=['followbread_buffer_out'])
         self.counter = 0
+        # self.navigation_data = [0]
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
         if self.counter == 5:
             return 'no_follow_bread'
         self.counter += 1
+        print userdata.followbread_buffer_in
+        # while len(userdata.followbread_buffer_in) > 0:
+        #     self.navigation_data.append(userdata.followbread_buffer_in.pop())
+        # print self.navigation_data
+        userdata.followbread_buffer_out = userdata.followbread_buffer_in
         return 'follow_bread'
 
 
@@ -62,7 +77,7 @@ class AskFinalize(smach.State):
 
 class Recovery(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['failed', 'follow'])
+        smach.State.__init__(self, outcomes=['Failed', 'follow'])
 
     def execute(self, userdata=None):
         var = raw_input("Did I find you again? Yes/No: ")
@@ -84,33 +99,26 @@ def setup_statemachine(robot):
                                transitions={'follow': 'CON_FOLLOW',
                                             'Done': 'Done'})
         smach.StateMachine.add('RECOVERY', Recovery(),
-                               transitions={'failed': 'Failed',
+                               transitions={'Failed': 'Failed',
                                             'follow': 'CON_FOLLOW'})
 
-        sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize'],
-                                   outcome_map={'ask_finalize':
-                                                    {'FOLLOWBREAD': 'no_follow_bread',
-                                                     'TRACK': 'track'}
-                                                'recover_operator':
-                                                    {'FOLLOWBREAD': 'no_follow_bread',
-                                                     'TRACK': 'no_track'}})
+        sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
+                                    default_outcome='keep_following',
+                                    outcome_map={'ask_finalize':
+                                                 {'FOLLOWBREAD': 'no_follow_bread', 'TRACK': 'track'},
+                                                 'recover_operator': {'FOLLOWBREAD': 'no_follow_bread', 'TRACK': 'no_track'}})
 
-
+        sm_con.userdata.buffer = collections.deque()
         with sm_con:
-            smach.Concurrence.add('FOLLOWBREAD', FollowBread())
-            smach.Concurrence.add('TRACK', Track())
+            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'followbread_buffer_in': 'buffer', 'followbread_buffer_out': 'buffer'})
+            smach.Concurrence.add('TRACK', Track(), remapping={'track_buffer_in':'buffer', 'track_buffer_out': 'buffer'})
 
-        smach.StateMachine.add('Con_Follow', sm_con,
+        smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
-                                            'ask_finalize': 'ASK_FINALIZE'})
+                                            'ask_finalize': 'ASK_FINALIZE',
+                                            'keep_following': 'CON_FOLLOW'})
 
         return sm_top
-
-
- # smach.StateMachine.add('TRACK', Track(),
- #                               transitions={'ask_finalize': 'ASK_FINALIZE',
- #                                            'keep_following': 'TRACK',
- #                                            'recover_operator': 'RECOVERY'})
 
 
 if __name__ == "__main__":
@@ -208,3 +216,35 @@ if __name__ == "__main__":
 #
 #
 #
+
+
+### new idea::
+# class BreadCrumb(object):
+#     def __init__(self):
+#         self._breadcrumb = collections.deque()
+#
+#     # def set_data(self, data):
+#     #     # Dit moet waarschijnlijk iets van 'append' worden. Alleen zetten is niet voldoende: het kan zomaar zijn dat ik
+#     #     # meerdere malen een punt toe voeg voordat ik weer uitlees
+#     #     # Bij het 'appenden' kun je ook meteen een distance check doen.
+#     #     with self._lock:
+#     #         self._list = copy.deepcopy(data)
+#     #
+#     #         # Equivalent to
+#     #         # self._lock.acquire()
+#     #         # self._list = copy.deepcopy(data)
+#     #         # self._lock.release()
+#
+#     def append(self, data):
+#         # ToDo Josja
+#         self._breadcrumb.append(data)
+#
+#
+## note that all the buffervariables are popped and placed in a different variable which can be used for planning
+#     def get_data(self):
+#         result = []
+#         while len(self._breadcrumb) > 0:
+#             result.append(self._breadcrumb.pop())  # Pop or popleft?
+#         return result
+
+
