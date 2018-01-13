@@ -148,31 +148,27 @@ class RobotPart(object):
 
         self.__diagnostics_name = name
 
-    def handle_hardware_status(self, msg):
+    def handle_hardware_status(self, diagnostic_dict):
         """
         hardware_status callback to determine if the bodypart is operational
-        :param msg: diagnostic_msgs.msg.DiagnosticArray
+        :param diagnostic_dict: dictionary[str, diagnostic_msgs.msg.DiagnosticStatus]
         :return: no return
         """
         if not self.__diagnostics_name:
             return
 
-        diags = [diag for diag in msg.status if diag.name == self.__diagnostics_name]
+        diag = diagnostic_dict.get(self.__diagnostics_name, None)
 
-        if len(diags) == 0:
+        if not diag:
             rospy.logwarn('no diagnostic msg received for the %s' % self.__diagnostics_name)
-        elif len(diags) != 1:
-            rospy.logwarn('multiple diagnostic msgs received for the %s' % self.__diagnostics_name)
         else:
-            level = diags[0].level
-
             # TODO: diagnostic_msgs.DiagnosticStatus.OK instead of our own enumeration.
             # 0. Stale
             # 1. Idle
             # 2. Operational
             # 3. Homing
             # 4. Error
-            if level != 2:
+            if diag.level != 2:
                 self._operational = False
             else:
                 self._operational = True

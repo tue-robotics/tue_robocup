@@ -192,14 +192,20 @@ class Robot(object):
         :returns if all parts are operational"""
         return all(bodypart.operational for bodypart in self.parts.values())
 
-    def handle_hardware_status(self, msg):
+    def handle_hardware_status(self, diagnostic_array):
         """
         hardware_status callback to determine if the bodypart is operational
         :param msg: diagnostic_msgs.msg.DiagnosticArray
         :return: no return
         """
+
+        diagnostic_dict = {diagnostic_status.name:diagnostic_status for diagnostic_status in diagnostic_array.status}
+
         for name, part in self.parts.iteritems():
-            part.handle_hardware_status(msg)
+            # Pass a dict mapping the name to the item.
+            # Bodypart.handle_hardware_status needs to find the element relevant to itself
+            # iterating over the array would be done be each bodypart, but with a dict they can just look theirs up.
+            part.handle_hardware_status(diagnostic_dict)
 
     def __enter__(self):
         pass
