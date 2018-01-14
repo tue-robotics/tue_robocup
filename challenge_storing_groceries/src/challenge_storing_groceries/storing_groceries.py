@@ -20,7 +20,7 @@ from pdf import WritePdf
 class StoringGroceries(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
-        # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
+        # start_waypoint = ds.EdEntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
         pdf_writer = WritePdf(robot=robot)
 
@@ -42,8 +42,8 @@ class StoringGroceries(smach.StateMachine):
                                    transitions={'continue': "MOVE_TABLE",
                                                 'no_response': 'AWAIT_START'})
 
-            cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
-            room = ds.EntityByIdDesignator(robot, id=ROOM)
+            cabinet = ds.EdEntityByIdDesignator(robot, id=CABINET)
+            room = ds.EdEntityByIdDesignator(robot, id=ROOM)
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None, manipulate_machine=None):

@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
         robot.speech.speak("I am going to navigate to the %s" % id, block=False)
 
-        machine = robot_smach_states.NavigateToSymbolic(robot, {robot_smach_states.util.designators.EntityByIdDesignator(robot, id=id): "in_front_of"},
-                                                        robot_smach_states.util.designators.EntityByIdDesignator(robot, id=id))
+        machine = robot_smach_states.NavigateToSymbolic(robot, {robot_smach_states.util.designators.EdEntityByIdDesignator(robot, id=id): "in_front_of"},
+                                                        robot_smach_states.util.designators.EdEntityByIdDesignator(robot, id=id))
 
         machine.execute()
 

@@ -171,7 +171,7 @@ def grab(p, robot):
         return
 
     arm = robot.leftArm
-    machine = Grab(robot, arm=ds.UnoccupiedArmDesignator(robot.arms, arm), item=ds.EntityByIdDesignator(robot, id=entities[0].id))
+    machine = Grab(robot, arm=ds.UnoccupiedArmDesignator(robot.arms, arm), item=ds.EdEntityByIdDesignator(robot, id=entities[0].id))
 
     stop()
 
@@ -189,7 +189,7 @@ def move(p, robot):
         say("No such entities!")
         return
 
-    machine = NavigateToObserve(robot, entity_designator=ds.EntityByIdDesignator(robot, id=entities[0].id), radius=.5)
+    machine = NavigateToObserve(robot, entity_designator=ds.EdEntityByIdDesignator(robot, id=entities[0].id), radius=.5)
 
     stop()
 

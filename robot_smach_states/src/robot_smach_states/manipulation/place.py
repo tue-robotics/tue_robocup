@@ -70,7 +70,7 @@ class Put(smach.State):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
         :param robot: Robot to execute state with
-        :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
+        :param item_to_place: Designator that resolves to the entity to place. e.g EdEntityByIdDesignator
         :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
         ArmHoldingEntityDesignator
@@ -191,7 +191,7 @@ class Place(smach.StateMachine):
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
         item there
         :param robot: Robot to execute state with
-        :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
+        :param item_to_place: Designator that resolves to the entity to place. e.g EdEntityByIdDesignator
         :param place_pose: The place pose can be one of three things:
          1: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
          2: EdEntityDesignator resolving to an object on which the robot should place something

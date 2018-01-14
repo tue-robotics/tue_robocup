@@ -15,7 +15,7 @@ from action_server import Client as ActionClient
 
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import StartChallengeRobust
-from robot_smach_states.util.designators import EntityByIdDesignator
+from robot_smach_states.util.designators import EdEntityByIdDesignator
 
 from robocup_knowledge import load_knowledge
 
@@ -113,7 +113,7 @@ def main():
         if not skip:
             robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=robot,
-                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                     waypoint_designator=EdEntityByIdDesignator(robot=robot,
                                                                               id=knowledge.starting_pose),
                                      radius=0.3)
             nwc.execute()
@@ -126,7 +126,7 @@ def main():
 
         if finished and not skip:
             nwc = NavigateToWaypoint(robot=robot,
-                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                     waypoint_designator=EdEntityByIdDesignator(robot=robot,
                                                                               id=knowledge.exit_waypoint),
                                      radius=0.3)
             robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)

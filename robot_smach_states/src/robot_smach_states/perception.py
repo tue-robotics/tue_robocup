@@ -108,7 +108,7 @@ class LookOnTopOfEntity(State):
 # Testing
 
 def setup_statemachine(robot):
-    entity = ds.EntityByIdDesignator(robot, id='hallway_couch')
+    entity = ds.EdEntityByIdDesignator(robot, id='hallway_couch')
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:

@@ -13,14 +13,14 @@ class EmptyShelfDesignator(Designator):
     robot = amigo
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
-    cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+    cabinet = ds.EdEntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
     place_position = ds.LockingDesignator(ds.EmptyShelfDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
     """
     def __init__(self, robot, place_location_designator, name=None, area=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
-        :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
+        :param place_location_designator: Designator resolving to an Entity, e.g. EdEntityByIdDesignator
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """

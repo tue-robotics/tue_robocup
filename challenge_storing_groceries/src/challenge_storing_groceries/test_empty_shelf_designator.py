@@ -2,7 +2,7 @@
 import rospy
 from robocup_knowledge import load_knowledge
 from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import EntityByIdDesignator
+from robot_smach_states.util.designators import EdEntityByIdDesignator
 
 from empty_shelf_designator import EmptyShelfDesignator
 
@@ -18,7 +18,7 @@ PLACE_SHELF = challenge_knowledge.place_shelf
 
 
 def setup_statemachine(robot):
-    cabinet = EntityByIdDesignator(robot, id="bookcase", name="pick_shelf")
+    cabinet = EdEntityByIdDesignator(robot, id="bookcase", name="pick_shelf")
 
     ds = EmptyShelfDesignator(robot, cabinet, name="placement", area=PLACE_SHELF)
 

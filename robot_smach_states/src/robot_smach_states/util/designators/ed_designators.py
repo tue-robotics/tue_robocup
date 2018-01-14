@@ -220,7 +220,7 @@ class EdEntityDesignator(Designator):
         #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
 
 
-class EntityByIdDesignator(Designator):
+class EdEntityByIdDesignator(Designator):
     def __init__(self, robot, id, parse=True, name=None):
         """
         Designate an entity by its ID. Resolves to the entity with that ID
@@ -229,7 +229,7 @@ class EntityByIdDesignator(Designator):
         :param parse: Whether to parse the Entity's data-field
         :param name: Name of the designator for introspection purposes
         """
-        super(EntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
+        super(EdEntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
         self.ed = robot.ed
         self.id_ = id
         self.parse = parse
@@ -284,7 +284,7 @@ class EmptySpotDesignator(Designator):
     robot = amigo
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
-    cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+    cabinet = ds.EdEntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
     place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
     """
 
@@ -292,7 +292,7 @@ class EmptySpotDesignator(Designator):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
-        :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
+        :param place_location_designator: Designator resolving to an Entity, e.g. EdEntityByIdDesignator
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """
