@@ -79,10 +79,10 @@ class NavigateToRoom(NavigateToSymbolic):
         :param robot: robot object
         :type robot: robot
         :param entity_designator_area: Designator to the area
-        :type entity_designator_area: EdEntityDesignator
-        :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
+        :type entity_designator_area: Designator resolving to an Ed entity
+        :param entity_lookat_designator: Designator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
-        :type entity_lookat_designator: EdEntityDesignator
+        :type entity_lookat_designator: Designator resolving to an Ed entity
         """
         area = "in"
         super(NavigateToRoom, self).__init__(robot, {entity_designator_area: area}, entity_lookat_designator)
