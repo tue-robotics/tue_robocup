@@ -7,7 +7,7 @@ import robot_smach_states.util.designators as ds
 
 from robot_skills.arms import Arm, GripperState
 from robocup_knowledge import load_knowledge
-from challenge_hmc_functions import hmc_functions
+from challenge_hmc_functions import hmc_states
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 common = load_knowledge('common')
@@ -20,7 +20,7 @@ print "=============================================="
 class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
-        hmc_functions.setup_challenge(self, robot)
+        hmc_states.setup_challenge(self, robot)
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -47,15 +47,15 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_TASK'})
 
             smach.StateMachine.add('WAIT_FOR_TASK',
-                                   hmc_functions.WaitForOperatorCommand(robot,
-                                                                        possible_commands=challenge_knowledge.commands.keys(),
-                                                                        commands_as_outcomes=True),
+                                   hmc_states.WaitForOperatorCommand(robot,
+                                                                     possible_commands=challenge_knowledge.commands.keys(),
+                                                                     commands_as_outcomes=True),
                                    transitions={'follow': 'FOLLOW_OPERATOR',
                                                 'remember': 'REMEMBER_CAR_LOCATION',
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add('REMEMBER_CAR_LOCATION',
-                                   hmc_functions.StoreCarWaypoint(robot),
+                                   hmc_states.StoreCarWaypoint(robot),
                                    transitions={'success': 'ASK_FOR_DESTINATION',
                                                 'abort': 'Aborted'})
 
@@ -64,9 +64,9 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_DESTINATION'})
 
             smach.StateMachine.add('WAIT_FOR_DESTINATION',
-                                   hmc_functions.WaitForOperatorCommand(robot,
-                                                                        possible_commands=common.location_rooms.keys()+common.location_names.keys(),
-                                                                        commands_as_userdata=True),
+                                   hmc_states.WaitForOperatorCommand(robot,
+                                                                     possible_commands=common.location_rooms.keys()+common.location_names.keys(),
+                                                                     commands_as_userdata=True),
                                    transitions={'success': 'GRAB_ITEM',
                                                 'abort': 'Aborted'})
 
@@ -98,7 +98,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'GOTO_DESTINATION'})
 
             smach.StateMachine.add('GOTO_DESTINATION',
-                                   hmc_functions.NavigateToDestination(robot),
+                                   hmc_states.NavigateToDestination(robot),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
                                                 'unreachable': 'PUTDOWN_ITEM',
                                                 # implement avoid obstacle behaviour later
@@ -106,7 +106,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
             smach.StateMachine.add('PUTDOWN_ITEM',
-                                   hmc_functions.DropBagOnGround(robot, self.bag_arm_designator),
+                                   hmc_states.DropBagOnGround(robot, self.bag_arm_designator),
                                    transitions={'succeeded': 'ASKING_FOR_HELP',
                                                 'failed': 'ASKING_FOR_HELP'})
 
