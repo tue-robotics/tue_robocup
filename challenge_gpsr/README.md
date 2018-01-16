@@ -22,7 +22,24 @@ However, they seem to be slightly more difficult to execute.
 ## Generating random command
 Use the command generator:
 
-TODO: Explain how to install and use the command generator.
+    cmdgen-gpsr
+    
+When asked "File x already exists. Overwrite?" you can choose "Yes".
+
+Press "1" to choose category 1
+
+When Amigo asks for a command, read the generated command out loud from the screen.
+
+In simulation, use:
+
+    amigo-hear <command>
+    
+where <command> is the command from the generator, converted to lowercase and stripped from all punctuation marks like {,.!?}
+
+The generator should be automatically installed, otherwise install manually:
+
+    tue-get install cmdgen
+
 
 # State machine design
 
