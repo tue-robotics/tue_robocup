@@ -1,39 +1,12 @@
 #!/usr/bin/python
 
 import smach
-import datetime
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from robot_smach_states.util.designators import check_type
 from robot_skills.arms import Arm, GripperState
 from hmi import TimeoutException
-from robocup_knowledge import load_knowledge
-from robot_skills.util import kdl_conversions
-from robot_skills.util.entity import Entity
-
-challenge_knowledge = load_knowledge('challenge_help_me_carry')
-
-
-def setup_challenge(setup, robot):
-    setup.place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
-    setup.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, setup.place_name, name="placement",
-                                                                       area=challenge_knowledge.default_area),
-                                                name="place_position")
-
-    setup.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.rightArm, name="empty_arm_designator")
-
-    # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm, unless it is unlocked.
-    # For this challenge, unlocking is not needed.
-
-    setup.bag_arm_designator = setup.empty_arm_designator.lockable()
-    setup.bag_arm_designator.lock()
-
-    # We don't actually grab something, so there is no need for an actual thing to grab
-
-    setup.current_item = ds.VariableDesignator(Entity("dummy", "dummy", "/{}/base_link".format(robot.robot_name),
-                                                      kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5), None, {}, [],
-                                                      datetime.datetime.now()), name="current_item")
 
 
 class WaitForOperatorCommand(smach.State):
@@ -108,13 +81,14 @@ class StoreCarWaypoint(smach.State):
     The robot remembers the position of the car for future use
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot, car_id):
         smach.State.__init__(self, outcomes=['success', 'abort'])
         self._robot = robot
+        self.car_id = car_id
         robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata=None):
-        success = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
+        success = self._robot.ed.update_entity(id=self.car_id,
                                                frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
 
@@ -129,14 +103,14 @@ class NavigateToDestination(smach.State):
     Navigate to the target room or place
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot, target_radius):
         smach.State.__init__(self, outcomes=['unreachable', 'arrived', 'goal_not_defined'], input_keys=['destination'])
         self._robot = robot
-        robot.base.local_planner.cancelCurrentPlan()
+        self.target_radius = target_radius
 
     def execute(self, userdata):
         target_waypoint = userdata.destination
-        target_radius = challenge_knowledge.default_target_radius
+        target_radius = self.target_radius
 
         navigateToWaypoint = states.NavigateToWaypoint(self._robot,
                                                        ds.EntityByIdDesignator(self._robot, id=target_waypoint),
@@ -150,28 +124,25 @@ class DropBagOnGround(smach.StateMachine):
     Put the bag in the robot's gripper on the ground
 
     """
-    def __init__(self, robot, arm_designator):
+    def __init__(self, robot, arm_designator, drop_bag_pose):
         """
         :param robot: the robot with which to execute this state machine
         :param arm_designator: ArmDesignator resolving to Arm holding the bag to drop
 
         """
-        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.StateMachine.__init__(self, outcomes=['done'])
 
         check_type(arm_designator, Arm)
 
         with self:
-            smach.StateMachine.add('DROP_POSE', states.ArmToJointConfig(robot, arm_designator, "drop_bag_pose"),
+            smach.StateMachine.add('DROP_POSE', states.ArmToJointConfig(robot, arm_designator, drop_bag_pose),
                                    transitions={'succeeded': 'OPEN_AFTER_DROP',
                                                 'failed': 'OPEN_AFTER_DROP'})
 
             smach.StateMachine.add('OPEN_AFTER_DROP',
                                    states.SetGripper(robot, arm_designator, gripperstate=GripperState.OPEN),
-                                   transitions={'succeeded': 'RESET_ARM_OK',
-                                                'failed': 'RESET_ARM_FAIL'})
+                                   transitions={'succeeded': 'RESET_ARM',
+                                                'failed': 'RESET_ARM'})
 
-            smach.StateMachine.add('RESET_ARM_OK', states.ResetArms(robot),
-                                   transitions={'done': 'succeeded'})
-
-            smach.StateMachine.add('RESET_ARM_FAIL', states.ResetArms(robot),
-                                   transitions={'done': 'failed'})
+            smach.StateMachine.add('RESET_ARM', states.ResetArms(robot),
+                                   transitions={'done': 'done'})
