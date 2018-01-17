@@ -6,7 +6,7 @@ import sys
 import random
 
 import robot_smach_states as states
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, EdEntityByIdDesignator, analyse_designators
 from geometry_msgs.msg import PointStamped
 
 import direct_speech_recognition

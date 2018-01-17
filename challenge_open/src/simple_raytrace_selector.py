@@ -338,7 +338,7 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust, skipped atm
         smach.StateMachine.add("RAYTRACEDEMO",
                                SimpleRayTraceSelector(robot, waypoint="final_challenge",
-                                                furniture_designator=ds.EntityByIdDesignator(robot, id="temp")),
+                                                furniture_designator=ds.EdEntityByIdDesignator(robot, id="temp")),
                                transitions={outcome: "Done" for outcome in ["waypoint", "furniture", "grasp", "done"]})
 
     return sm

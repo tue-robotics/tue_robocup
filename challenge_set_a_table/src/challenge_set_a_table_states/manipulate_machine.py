@@ -181,10 +181,10 @@ class ManipulateMachine(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        grasp_furniture_designator1 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id1)
-        grasp_furniture_designator3 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id3)
+        grasp_furniture_designator1 = ds.EdEntityByIdDesignator(robot, id=grasp_furniture_id1)
+        grasp_furniture_designator3 = ds.EdEntityByIdDesignator(robot, id=grasp_furniture_id3)
 
-        place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
+        place_furniture_designator = ds.EdEntityByIdDesignator(robot, id=place_furniture_id)
         place_designator = ds.EmptySpotDesignator(robot=robot,
                                                   place_location_designator=place_furniture_designator,
                                                   area="on_top_of")

@@ -9,7 +9,7 @@ from robocup_knowledge import load_knowledge
 from robot_skills.util.robot_constructor import robot_constructor
 from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, ResetHead, Say, WaitForTrigger, \
     NavigateToSymbolic, HandoverToHuman
-from robot_smach_states.util.designators import EntityByIdDesignator, UnoccupiedArmDesignator
+from robot_smach_states.util.designators import EdEntityByIdDesignator, UnoccupiedArmDesignator
 from smach_ros import IntrospectionServer
 
 from inspect_and_grab import InspectAndGrab
@@ -29,7 +29,7 @@ class BeerCounter(object):
 
 
 def setup_statemachine(robot):
-    furniture = EntityByIdDesignator(robot, 'selected_furniture')
+    furniture = EdEntityByIdDesignator(robot, 'selected_furniture')
     # arm_designator = ArmDesignator(robot.arms, robot.arms['left'])
     arm_designator = UnoccupiedArmDesignator(robot.arms, robot.arms['left'])
 
@@ -48,7 +48,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("NAVIGATE_TO_SSL_WAYPOINT",
                                NavigateToWaypoint(robot=robot,
-                                                  waypoint_designator=EntityByIdDesignator(
+                                                  waypoint_designator=EdEntityByIdDesignator(
                                                       robot=robot,
                                                       id=challenge_knowledge.ssl_waypoint),
                                                   radius=0.3),
@@ -62,7 +62,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("NAVIGATE_TO_LASER_DEMO",
                                NavigateToWaypoint(robot=robot,
-                                                  waypoint_designator=EntityByIdDesignator(
+                                                  waypoint_designator=EdEntityByIdDesignator(
                                                       robot=robot,
                                                       id=challenge_knowledge.raytrace_waypoint),
                                                   radius=0.3),
@@ -112,7 +112,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
                                NavigateToWaypoint(robot=robot,
-                                                  waypoint_designator=EntityByIdDesignator(
+                                                  waypoint_designator=EdEntityByIdDesignator(
                                                       robot=robot,
                                                       id='final_waypoint'),
                                                   radius=0.3),
@@ -137,7 +137,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("NAVIGATE_BACK_TO_LASER_DEMO",
                                NavigateToWaypoint(robot=robot,
-                                                  waypoint_designator=EntityByIdDesignator(
+                                                  waypoint_designator=EdEntityByIdDesignator(
                                                       robot=robot,
                                                       id=challenge_knowledge.raytrace_waypoint),
                                                   radius=0.3),
@@ -147,7 +147,7 @@ def setup_statemachine(robot):
 
         # smach.StateMachine.add("NAVIGATE_TO_ORDER_COUNTER",
         #                        robot_smach_states.NavigateToWaypoint(robot=robot,
-        #                                                              waypoint_designator=EntityByIdDesignator(
+        #                                                              waypoint_designator=EdEntityByIdDesignator(
         #                                                                  robot=robot,
         #                                                                  id=challenge_knowledge.order_counter_waypoint),
         #                                                              radius=0.3),
@@ -162,7 +162,7 @@ def setup_statemachine(robot):
         #
         # smach.StateMachine.add("NAVIGATE_TO_HSR_DEMO",
         #                        robot_smach_states.NavigateToWaypoint(robot=robot,
-        #                                                              waypoint_designator=EntityByIdDesignator(
+        #                                                              waypoint_designator=EdEntityByIdDesignator(
         #                                                                  robot=robot,
         #                                                                  id=challenge_knowledge.hsr_demo_waypoint),
         #                                                              radius=0.025),
@@ -180,7 +180,7 @@ def setup_statemachine(robot):
         #
         # smach.StateMachine.add("RETURN_TO_AUDIENCE",
         #                        robot_smach_states.NavigateToWaypoint(robot=robot,
-        #                                                              waypoint_designator=EntityByIdDesignator(
+        #                                                              waypoint_designator=EdEntityByIdDesignator(
         #                                                                  robot=robot,
         #                                                                  id=challenge_knowledge.order_counter_waypoint),
         #                                                              radius=0.3),

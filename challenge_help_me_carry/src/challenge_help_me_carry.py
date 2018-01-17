@@ -136,7 +136,7 @@ class NavigateToRoom(smach.State):
         target_radius = challenge_knowledge.waypoints[userdata.target_room]['radius']
 
         navigateToWaypoint = states.NavigateToWaypoint(self._robot,
-                                                       ds.EntityByIdDesignator(self._robot,
+                                                       ds.EdEntityByIdDesignator(self._robot,
                                                                                id=target_waypoint),
                                                        target_radius)
 
@@ -174,7 +174,7 @@ class DropBagOnGround(smach.StateMachine):
 
 def setup_statemachine(robot):
 
-    place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
+    place_name = ds.EdEntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
     place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot,
                                                                  place_name,
                                                                  name="placement",
@@ -315,7 +315,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GOTO_CAR',
                                states.NavigateToWaypoint(robot,
-                                                         ds.EntityByIdDesignator(robot,
+                                                         ds.EdEntityByIdDesignator(robot,
                                                          id=challenge_knowledge.waypoint_car['id']),
                                                          challenge_knowledge.waypoint_car['radius']),
 

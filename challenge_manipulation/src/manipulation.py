@@ -412,8 +412,8 @@ class ManipRecogSingleItem(smach.StateMachine):
         self.manipulated_items = manipulated_items
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        self.cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
-        # self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
+        self.cabinet = ds.EdEntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
+        # self.place_shelf = ds.EdEntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
@@ -467,7 +467,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         with self:
             # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
             #                         #states.NavigateToObserve(robot, self.pick_shelf),
-            #                         states.NavigateToSymbolic(robot, {self.pick_shelf:"in_front_of", EntityByIdDesignator(robot, id=ROOM):"in"}, self.pick_shelf),
+            #                         states.NavigateToSymbolic(robot, {self.pick_shelf:"in_front_of", EdEntityByIdDesignator(robot, id=ROOM):"in"}, self.pick_shelf),
             #                         transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
             #                                         'unreachable'       :'LOOKAT_PICK_SHELF',
             #                                         'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
@@ -576,7 +576,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
+    start_waypoint = ds.EdEntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
     placed_items = []
 
     with sm:
@@ -613,8 +613,8 @@ def setup_statemachine(robot):
                                transitions={'continue': drive_state,
                                             'no_response': 'AWAIT_START'})
 
-        cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
-        room = ds.EntityByIdDesignator(robot, id=ROOM)
+        cabinet = ds.EdEntityByIdDesignator(robot, id=CABINET)
+        room = ds.EdEntityByIdDesignator(robot, id=ROOM)
 
         if USE_SLAM:
             # vth = 1.0
