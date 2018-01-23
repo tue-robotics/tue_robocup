@@ -115,7 +115,7 @@ def kdlVectorToPointMsg(vector):
     """
     return gm.Point(vector.x(), vector.y(), vector.z())
 
-def kdlRotationToQuaternionMsg(rotation):
+def kdl_rotation_to_quaternion_msg(rotation):
     """
     Convert a PyKDL.Rotation object to a ROS geometry_msgs.msg.Quaternion message
     :param rotation: Rotation to be converted
@@ -123,12 +123,12 @@ def kdlRotationToQuaternionMsg(rotation):
     :rtype: geometry_msgs.msg.Quaternion
 
     >>> rot = kdl.Rotation.Quaternion(1, 0, 0, 0)
-    >>> quat_msg = kdlRotationToQuaternionMsg(rot)
+    >>> quat_msg = kdl_rotation_to_quaternion_msg(rot)
     >>> (quat_msg.x, quat_msg.y, quat_msg.z, quat_msg.w)
     (1.0, 0.0, 0.0, 0.0)
     >>> from math import pi
     >>> rot = kdl.Rotation.RPY(pi/2, 0, 0)
-    >>> quat_msg = kdlRotationToQuaternionMsg(rot)
+    >>> quat_msg = kdl_rotation_to_quaternion_msg(rot)
     >>> (quat_msg.x, quat_msg.y, quat_msg.z, quat_msg.w)
     (0.7071067811865475, 0.0, 0.0, 0.7071067811865476)
     """
@@ -182,7 +182,7 @@ def kdlFrameToPoseMsg(frame):
     """
     pose = gm.Pose()
     pose.position = kdlVectorToPointMsg(frame.p)
-    pose.orientation = kdlRotationToQuaternionMsg(frame.M)
+    pose.orientation = kdl_rotation_to_quaternion_msg(frame.M)
     return pose
 
 def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
@@ -202,7 +202,7 @@ def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
     pose_stamped = gm.PoseStamped()
     pose_stamped.header.frame_id = frame_stamped.frame_id
     pose_stamped.pose.position = kdlVectorToPointMsg(frame_stamped.frame.p)
-    pose_stamped.pose.orientation = kdlRotationToQuaternionMsg(frame_stamped.frame.M)
+    pose_stamped.pose.orientation = kdl_rotation_to_quaternion_msg(frame_stamped.frame.M)
     return pose_stamped
 
 def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
