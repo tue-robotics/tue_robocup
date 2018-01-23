@@ -205,7 +205,7 @@ def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
     pose_stamped.pose.orientation = kdl_rotation_to_quaternion_msg(frame_stamped.frame.M)
     return pose_stamped
 
-def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
+def kdl_frame_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     """
     Create a PyKDL.Frame from raw scalars
     :param x: The X value of the position
