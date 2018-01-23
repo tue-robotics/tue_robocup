@@ -28,7 +28,7 @@ class FrameStamped(object):
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
         transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
-        return kdlFrameStampedFromPoseStampedMsg(transformed_pose)
+        return kdl_frame_stamped_from_pose_stamped_msg(transformed_pose)
 
     def extractVectorStamped(self):
         """Extract only the position of this FrameStamped, without the orientation but with the frame_id metadata
@@ -219,7 +219,7 @@ def kdlFrameFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     """
     return kdl.Frame(kdl.Rotation.RPY(roll, pitch, yaw), kdl.Vector(x,y,z))
 
-def kdlFrameStampedFromPoseStampedMsg(pose_stamped):
+def kdl_frame_stamped_from_pose_stamped_msg(pose_stamped):
     """Convert a PoseStamped to FrameStamped
     :param pose_stamped the PoseStamped to be converted
     :returns FrameStamped"""
