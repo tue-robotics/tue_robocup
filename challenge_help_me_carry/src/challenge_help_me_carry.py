@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib;
+import roslib
 import rospy
 import smach
 import sys
