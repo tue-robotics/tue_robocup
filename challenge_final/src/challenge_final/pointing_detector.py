@@ -198,7 +198,7 @@ class PointingDetector(smach.State):
             result = RayTraceResponse()
             result.entity_id = self._default_entity_id
             face_pos_map = face_pos.projectToFrame("map", self._robot.tf_listener)
-            face_pos_msg = kdl_conversions.kdlVectorStampedToPointStamped(face_pos_map)
+            face_pos_msg = kdl_conversions.kdl_vector_stamped_to_point_stamped(face_pos_map)
 
             e = self._robot.ed.get_entity(id=self._default_entity_id)
             from geometry_msgs.msg import PointStamped

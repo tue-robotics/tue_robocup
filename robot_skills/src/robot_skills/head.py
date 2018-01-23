@@ -8,7 +8,7 @@ from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 from robot_part import RobotPart
 
 from .util import msg_constructors as msgs
-from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
+from .util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
 
 
 class Head(RobotPart):
@@ -78,7 +78,7 @@ class Head(RobotPart):
 
     def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=0.8, timeout=0):
         assert isinstance(vector_stamped, VectorStamped)
-        point_stamped = kdlVectorStampedToPointStamped(vector_stamped)
+        point_stamped = kdl_vector_stamped_to_point_stamped(vector_stamped)
         self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
 
     def cancel_goal(self):

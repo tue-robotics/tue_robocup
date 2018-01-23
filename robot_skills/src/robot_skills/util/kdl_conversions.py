@@ -70,7 +70,7 @@ class VectorStamped(object):
 
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
-        transformed_point = tf_listener.transformPoint(frame_id, kdlVectorStampedToPointStamped(self))
+        transformed_point = tf_listener.transformPoint(frame_id, kdl_vector_stamped_to_point_stamped(self))
         return kdl_vector_stamped_from_point_stamped_msg(transformed_point)
 
     def __eq__(self, other):
@@ -252,7 +252,7 @@ def kdl_vector_stamped_from_point_stamped_msg(point_stamped):
     return VectorStamped(vector=pointMsgToKdlVector(point_stamped.point),
                          frame_id=point_stamped.header.frame_id)
 
-def kdlVectorStampedToPointStamped(vector_stamped):
+def kdl_vector_stamped_to_point_stamped(vector_stamped):
     """Convert a VectorStamped to a PointStamped
     :param vector_stamped the VectorStamped to be converted
     :returns PointStamped"""

@@ -24,7 +24,7 @@ from robot_skills.util.entity import Entity
 
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):
-    return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+    return map(kdl_conversions.kdl_vector_stamped_to_point_stamped, vector_stampeds)
 
 
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
@@ -504,7 +504,7 @@ class FollowOperator(smach.State):
                 except Exception as e:
                     rospy.logerr("head.project_roi failed: %s", e)
                     return False
-                operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
+                operator_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(operator_pos_kdl)
 
                 self._face_pos_pub.publish(operator_pos_ros)
 
