@@ -27,7 +27,7 @@ class FrameStamped(object):
 
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
-        transformed_pose = tf_listener.transformPose(frame_id, kdlFrameStampedToPoseStampedMsg(self))
+        transformed_pose = tf_listener.transformPose(frame_id, kdl_frame_stamped_to_pose_stamped_msg(self))
         return kdl_frame_stamped_from_pose_stamped_msg(transformed_pose)
 
     def extractVectorStamped(self):
@@ -185,7 +185,7 @@ def kdlFrameToPoseMsg(frame):
     pose.orientation = kdlRotationToQuaternionMsg(frame.M)
     return pose
 
-def kdlFrameStampedToPoseStampedMsg(frame_stamped):
+def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
     """
     Convert a ROS PyKDL.Frame object to a geometry_msgs.msg.Pose message
     :param frame: Frame to be converted

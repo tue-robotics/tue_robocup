@@ -34,7 +34,7 @@ def get_ray_trace_from_closest_person_dummy(robot,
         ray_trace_frame = get_frame_from_vector(diff, operator_vec)
 
         # This is purely for visualization
-        robot.ed.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(ray_trace_frame))
+        robot.ed.ray_trace(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg(ray_trace_frame))
     except Exception as e:
         rospy.logerr(e)
         pass
@@ -141,7 +141,7 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         rospy.loginfo("No valid arms found ...")
         return None
 
-    return robot.ed.ray_trace(kdl_conversions.kdlFrameStampedToPoseStampedMsg(frame))
+    return robot.ed.ray_trace(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg(frame))
 
 
 class PointingDetector(smach.State):

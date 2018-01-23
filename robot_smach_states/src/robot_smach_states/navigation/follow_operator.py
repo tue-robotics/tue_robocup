@@ -28,7 +28,7 @@ def vector_stampeds_to_point_stampeds(vector_stampeds):
 
 
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
-    return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
+    return map(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg, frame_stampeds)
 
 
 class FollowOperator(smach.State):
