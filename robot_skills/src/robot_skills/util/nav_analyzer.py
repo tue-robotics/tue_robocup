@@ -204,10 +204,10 @@ class NavAnalyzer:
 
         self.previous_position = current_position
 
-    def kdl_frame_to_sub_element(self, kdlFrame, element):
-        x   = kdlFrame.p.x()
-        y   = kdlFrame.p.y()
-        phi = kdlFrame.M.GetRPY()[2]  # Get the yaw
+    def kdl_frame_to_sub_element(self, kdl_frame, element):
+        x   = kdl_frame.p.x()
+        y   = kdl_frame.p.y()
+        phi = kdl_frame.M.GetRPY()[2]  # Get the yaw
         element.set("x", "{0}".format(x))
         element.set("y", "{0}".format(y))
         element.set("phi", "{0}".format(phi))
