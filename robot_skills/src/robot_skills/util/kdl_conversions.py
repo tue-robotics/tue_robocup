@@ -98,14 +98,14 @@ def pointMsgToKdlVector(point):
     """
     return kdl.Vector(point.x, point.y, point.z)
 
-def kdlVectorToPointMsg(vector):
+def kdl_vector_to_point_msg(vector):
     """
     Convert a PyKDL.Vector object to a ROS geometry_msgs.msg.Point message
     :type vector: PyKDL.Vector
     :rtype: geometry_msgs.msg.Point
 
     >>> vector = kdl.Vector(1, 2, 3)
-    >>> point = kdlVectorToPointMsg(vector)
+    >>> point = kdl_vector_to_point_msg(vector)
     >>> point.x
     1.0
     >>> point.y
@@ -181,7 +181,7 @@ def kdlFrameToPoseMsg(frame):
     (1.0, 0.0, 0.0, 0.0)
     """
     pose = gm.Pose()
-    pose.position = kdlVectorToPointMsg(frame.p)
+    pose.position = kdl_vector_to_point_msg(frame.p)
     pose.orientation = kdl_rotation_to_quaternion_msg(frame.M)
     return pose
 
@@ -201,7 +201,7 @@ def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
     """
     pose_stamped = gm.PoseStamped()
     pose_stamped.header.frame_id = frame_stamped.frame_id
-    pose_stamped.pose.position = kdlVectorToPointMsg(frame_stamped.frame.p)
+    pose_stamped.pose.position = kdl_vector_to_point_msg(frame_stamped.frame.p)
     pose_stamped.pose.orientation = kdl_rotation_to_quaternion_msg(frame_stamped.frame.M)
     return pose_stamped
 

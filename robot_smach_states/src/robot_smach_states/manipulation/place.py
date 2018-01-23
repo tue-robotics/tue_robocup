@@ -2,7 +2,7 @@
 import rospy
 import smach
 
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, kdlVectorToPointMsg, FrameStamped
+from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from robot_smach_states.navigation import NavigateToPlace, NavigateToSymbolic
 from robot_smach_states.world_model import UpdateEntityPose
 from robot_smach_states.util.designators.ed_designators import EdEntityDesignator, EmptySpotDesignator

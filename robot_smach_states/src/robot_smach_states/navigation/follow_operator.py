@@ -360,7 +360,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.action = Marker.ADD
 
         for crumb in self._breadcrumbs:
-            breadcrumbs_msg.points.append(kdl_conversions.kdlVectorToPointMsg(crumb.pose.frame.p))
+            breadcrumbs_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
 
         self._breadcrumb_pub.publish(breadcrumbs_msg)
 
@@ -402,7 +402,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = kdl_conversions.kdlVectorToPointMsg(self._last_operator.pose.frame.p)
+            o.look_at = kdl_conversions.kdl_vector_to_point_msg(self._last_operator.pose.frame.p)
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -542,7 +542,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = kdl_conversions.kdlVectorToPointMsg(self._last_operator.pose.frame.p)
+            o.look_at = kdl_conversions.kdl_vector_to_point_msg(self._last_operator.pose.frame.p)
 
         dx = operator_position.x() - robot_position.x()
         dy = operator_position.y() - robot_position.y()
