@@ -134,7 +134,7 @@ def kdlRotationToQuaternionMsg(rotation):
     """
     return gm.Quaternion(*rotation.GetQuaternion())
 
-def quaternionMsgToKdlRotation(quaternion):
+def quaternion_msg_to_kdl_rotation(quaternion):
     """
     Convert a geometry_msgs.msg.Quaternion message to a ROS PyKDL.Rotation object
     :param quaternion: Rotation to be converted
@@ -142,7 +142,7 @@ def quaternionMsgToKdlRotation(quaternion):
     :rtype: PyKDL.Rotation
 
     >>> quat_msg = gm.Quaternion(1.0, 0.0, 0.0, 1.0)
-    >>> rot = quaternionMsgToKdlRotation(quat_msg)
+    >>> rot = quaternion_msg_to_kdl_rotation(quat_msg)
     >>> rot.GetRPY()
     (1.5707963267948966, -0.0, 0.0)
     """
