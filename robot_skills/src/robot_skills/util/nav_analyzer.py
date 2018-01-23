@@ -115,7 +115,7 @@ class NavAnalyzer:
 
         ''' Log startpose '''
         startposeitem = ET.SubElement(self.logitem, "startpose")
-        self.kdlFrameToSubElement(startpose, startposeitem)
+        self.kdl_frame_to_sub_element(startpose, startposeitem)
 
         ''' Start bagging '''
         # The os.setsid() is passed in the argument preexec_fn so
@@ -141,7 +141,7 @@ class NavAnalyzer:
 
         ''' Log endpose '''
         endposeitem = ET.SubElement(self.logitem, "endpose")
-        self.kdlFrameToSubElement(endpose, endposeitem)
+        self.kdl_frame_to_sub_element(endpose, endposeitem)
 
         ''' Make inactive '''
         self.active = False
@@ -204,7 +204,7 @@ class NavAnalyzer:
 
         self.previous_position = current_position
 
-    def kdlFrameToSubElement(self, kdlFrame, element):
+    def kdl_frame_to_sub_element(self, kdlFrame, element):
         x   = kdlFrame.p.x()
         y   = kdlFrame.p.y()
         phi = kdlFrame.M.GetRPY()[2]  # Get the yaw
