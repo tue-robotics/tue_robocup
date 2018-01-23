@@ -6,7 +6,7 @@ from robot_smach_states.util.designators import Designator
 import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
 import robot_skills.util.msg_constructors as msg_constructors
-from robot_skills.util.kdl_conversions import FrameStamped, poseMsgToKdlFrame, kdl_frame_stamped_from_XYZRPY
+from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame, kdl_frame_stamped_from_XYZRPY
 import PyKDL as kdl
 import copy
 
@@ -186,7 +186,7 @@ class EmptyShelfDesignator(Designator):
     #
     #     ''' Convert convex hull to map frame '''
     #
-    #     center_pose = poseMsgToKdlFrame(e.pose)
+    #     center_pose = pose_msg_to_kdl_frame(e.pose)
     #     ch = list()
     #     for point in e.convex_hull:
     #         p = point_msg_to_kdl_vector(point)

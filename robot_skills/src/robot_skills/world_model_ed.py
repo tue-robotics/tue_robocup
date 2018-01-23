@@ -19,7 +19,7 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 # Robot skills
 from .util import transformations
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, VectorStamped, kdl_vector_to_point_msg
+from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
 from .classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
 from robot_part import RobotPart

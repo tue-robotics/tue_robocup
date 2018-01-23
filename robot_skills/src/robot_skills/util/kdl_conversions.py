@@ -148,7 +148,7 @@ def quaternion_msg_to_kdl_rotation(quaternion):
     """
     return kdl.Rotation.Quaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w)
 
-def poseMsgToKdlFrame(pose):
+def pose_msg_to_kdl_frame(pose):
     """
     Convert a geometry_msgs.msg.Pose message to a PyKDL.Frame object
     :param pose: Pose to be converted
@@ -156,7 +156,7 @@ def poseMsgToKdlFrame(pose):
     :rtype: PyKDL.Frame
 
     >>> pose = gm.Pose(gm.Point(1, 2, 3), gm.Quaternion(1, 0, 0, 0))
-    >>> frame = poseMsgToKdlFrame(pose)
+    >>> frame = pose_msg_to_kdl_frame(pose)
     >>> frame.p
     [           1,           2,           3]
     >>> frame.M.GetQuaternion()
@@ -224,7 +224,7 @@ def kdl_frame_stamped_from_pose_stamped_msg(pose_stamped):
     :param pose_stamped the PoseStamped to be converted
     :returns FrameStamped"""
     assert isinstance(pose_stamped, gm.PoseStamped)
-    return FrameStamped(frame=poseMsgToKdlFrame(pose_stamped.pose),
+    return FrameStamped(frame=pose_msg_to_kdl_frame(pose_stamped.pose),
                         frame_id=pose_stamped.header.frame_id,
                         stamp=pose_stamped.header.stamp)
 
