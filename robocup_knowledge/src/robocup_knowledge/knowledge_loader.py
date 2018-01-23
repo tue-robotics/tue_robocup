@@ -11,7 +11,7 @@ def load_knowledge(knowledge_item, print_knowledge=False):
     # Look for the correct knowledge file
     try:
         _knowledge_path = os.path.dirname(os.path.realpath(__file__)) + "/environments/%s/%s.py" % (_robot_env, knowledge_item)
-        knowledge = imp.load_source('environment_knowledge', _knowledge_path)
+        knowledge = imp.load_source(knowledge_item, _knowledge_path)
 
         knowledge_attrs = [attr for attr in dir(knowledge) if not callable(attr) and not attr.startswith("__")]
 
