@@ -27,8 +27,8 @@ def get_ray_trace_from_closest_person_dummy(robot,
                                             operator_pos=None,
                                             furniture_pos=None):
     try:
-        operator_vec = kdl_conversions.kdlVectorStampedFromPointStampedMsg(operator_pos)
-        furniture_vec = kdl_conversions.kdlVectorStampedFromPointStampedMsg(furniture_pos)
+        operator_vec = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(operator_pos)
+        furniture_vec = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(furniture_pos)
 
         diff = (furniture_vec.vector - operator_vec.vector) / (furniture_vec.vector - operator_vec.vector).Norm()
         ray_trace_frame = get_frame_from_vector(diff, operator_vec)
@@ -60,11 +60,11 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
     right_arm_valid = "right_wrist" in person and "right_elbow" in person and "right_shoulder" in person
 
     if left_arm_valid:
-        left_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_wrist"]).projectToFrame("/map",
+        left_wrist = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(person["left_wrist"]).projectToFrame("/map",
                                                                                                               robot.tf_listener)
-        left_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_elbow"]).projectToFrame("/map",
+        left_elbow = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(person["left_elbow"]).projectToFrame("/map",
                                                                                                               robot.tf_listener)
-        left_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["left_shoulder"]).projectToFrame(
+        left_shoulder = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(person["left_shoulder"]).projectToFrame(
             "/map",
             robot.tf_listener)
         left_lower_arm_vector = (left_wrist.vector - left_elbow.vector) / (left_wrist.vector - left_elbow.vector).Norm()
@@ -80,13 +80,13 @@ def get_ray_trace_from_closest_person(robot, arm_norm_threshold=0.1, upper_arm_n
         rospy.loginfo("Left arm not valid because it does not contain all required bodyparts")
 
     if right_arm_valid:
-        right_wrist = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_wrist"]).projectToFrame("/map",
+        right_wrist = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(person["right_wrist"]).projectToFrame("/map",
                                                                                                                 robot.tf_listener)
 
-        right_elbow = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_elbow"]).projectToFrame("/map",
+        right_elbow = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(person["right_elbow"]).projectToFrame("/map",
                                                                                                                 robot.tf_listener)
 
-        right_shoulder = kdl_conversions.kdlVectorStampedFromPointStampedMsg(person["right_shoulder"]).projectToFrame(
+        right_shoulder = kdl_conversions.kdl_vector_stamped_from_point_stamped_msg(person["right_shoulder"]).projectToFrame(
             "/map",
             robot.tf_listener)
 
