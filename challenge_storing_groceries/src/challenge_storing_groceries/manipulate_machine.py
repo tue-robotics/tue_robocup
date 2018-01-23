@@ -230,6 +230,8 @@ class ManipulateMachine(smach.StateMachine):
 
             if pdf_writer:
                 # Designator to store the classificationresults
+                # The Inspect-state (INSPECT_TABLE) gathers a list of ClassificationResults for Entities on the table
+                # These are passed to the pdf_writer
                 class_designator = ds.VariableDesignator(
                     [], resolve_type=[robot_skills.classification_result.ClassificationResult])
 

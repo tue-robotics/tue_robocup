@@ -54,6 +54,12 @@ class WritePdf(smach.State):
         # Try to get stuff from the designator if available
         if self._designator is not None:
             results = self._designator.resolve()
+
+            # results is a list of ClassificationResults
+            # These are mapped to the entity ID, so that self._items[entity.id] maps to
+            #   the entity,
+            #   the probability for the type it has
+            #   an image
             for result in results:
                 if result.id not in self._items:
                     image = save_entity_image_to_file(self._robot.ed, result.id)
@@ -61,6 +67,7 @@ class WritePdf(smach.State):
                     self._items[entity.id] = (entity, result.probability, image)
 
         # Filter and sort based on probabilities
+        # Items with a to low probability are dropped from the list and thus not rendered to the PDF later
         items = [item for item in self._items.values() if item[1] >= config.CLASSIFICATION_THRESHOLD]
         items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
