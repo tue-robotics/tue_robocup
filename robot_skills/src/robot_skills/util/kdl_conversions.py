@@ -81,14 +81,14 @@ class VectorStamped(object):
             return False
 
 
-def pointMsgToKdlVector(point):
+def point_msg_to_kdl_vector(point):
     """
     Convert a ROS geometry_msgs.msg.Point message to a PyKDL.Vector object
     :type point:  geometry_msgs.msg.Point
     :rtype: PyKDL.Vector
 
     >>> point = gm.Point(1, 2, 3)
-    >>> v = pointMsgToKdlVector(point)
+    >>> v = point_msg_to_kdl_vector(point)
     >>> v.x()
     1.0
     >>> v.y()
@@ -249,7 +249,7 @@ def kdl_vector_stamped_from_point_stamped_msg(point_stamped):
     :param point_stamped the PointStamped to be converted
     :returns VectorStamped"""
     assert isinstance(point_stamped, gm.PointStamped)
-    return VectorStamped(vector=pointMsgToKdlVector(point_stamped.point),
+    return VectorStamped(vector=point_msg_to_kdl_vector(point_stamped.point),
                          frame_id=point_stamped.header.frame_id)
 
 def kdl_vector_stamped_to_point_stamped(vector_stamped):

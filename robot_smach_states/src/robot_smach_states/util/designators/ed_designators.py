@@ -17,7 +17,7 @@ from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, \
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, point_msg_to_kdl_vector, VectorStamped, FrameStamped, \
     kdl_frame_stamped_from_XYZRPY
 
 __author__ = 'loy'

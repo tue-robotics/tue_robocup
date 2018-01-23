@@ -189,7 +189,7 @@ class EmptyShelfDesignator(Designator):
     #     center_pose = poseMsgToKdlFrame(e.pose)
     #     ch = list()
     #     for point in e.convex_hull:
-    #         p = pointMsgToKdlVector(point)
+    #         p = point_msg_to_kdl_vector(point)
     #         # p = center_pose * p
     #         # p = p * center_pose
     #         pf = kdl.Frame(kdl.Rotation(), p)

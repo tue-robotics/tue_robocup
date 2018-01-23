@@ -2,7 +2,7 @@ import math
 import PyKDL as kdl
 
 import geometry_msgs.msg as gm
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector
+from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, point_msg_to_kdl_vector
 
 from ed_msgs.msg import EntityInfo
 
@@ -54,7 +54,7 @@ def onTopOff(subject, container, ht=0.1):
         return False
 
     ''' Second: turn points into KDL objects and offset '''
-    convex_hull_obj = [pointMsgToKdlVector(p) for p in container.convex_hull]   # convex hull in object frame
+    convex_hull_obj = [point_msg_to_kdl_vector(p) for p in container.convex_hull]   # convex hull in object frame
     convex_hull = offsetConvexHull(convex_hull_obj, container.pose.frame)  # convex hull in map frame
 
     ''' Third: check if center point of entity is within convex hull of container '''

@@ -5,7 +5,7 @@ import math
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import pointMsgToKdlVector, poseMsgToKdlFrame, FrameStamped, kdlFrameToPoseMsg
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, poseMsgToKdlFrame, FrameStamped, kdlFrameToPoseMsg
 
 
 class GraspPointDeterminant(object):
@@ -41,7 +41,7 @@ class GraspPointDeterminant(object):
         ''' Second: turn points into KDL objects and offset chull to get it in map frame '''
         center_pose = entity._pose  #TODO: Access to private member
 
-        # chull_obj = [pointMsgToKdlVector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
+        # chull_obj = [point_msg_to_kdl_vector(p) for p in entity.shape._convex_hull]   # convex hull in object frame
         # chull = offsetConvexHull(chull_obj, center_pose)    # convex hull in map frame
         chull = offsetConvexHull(entity.shape.convex_hull, center_pose)  # convex hull in map frame
         # import ipdb;ipdb.set_trace()

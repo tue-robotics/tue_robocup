@@ -21,7 +21,7 @@ import PyKDL as kdl
 
 # Robot skills
 import transformations
-from robot_skills.util.kdl_conversions import pointMsgToKdlVector
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
 
 
 class NavAnalyzer:
@@ -198,7 +198,7 @@ class NavAnalyzer:
         self.active = False
 
     def odomCallback(self, odom_msg):
-        current_position = pointMsgToKdlVector(odom_msg.pose.pose.position)
+        current_position = point_msg_to_kdl_vector(odom_msg.pose.pose.position)
         if self.active:
             self.distance_traveled += kdl.diff(current_position, self.previous_position).Norm()
 
