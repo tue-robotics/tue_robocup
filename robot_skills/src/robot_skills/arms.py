@@ -1,9 +1,13 @@
 #! /usr/bin/env python
 
+# System
+import enum
+
 import rospy
 import std_msgs.msg
 import PyKDL as kdl
 import tf_server
+import math
 import visualization_msgs.msg
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
@@ -17,12 +21,44 @@ from robot_part import RobotPart
 
 # If the grasp sensor distance is smaller than this value, the gripper is holding an object
 GRASP_SENSOR_THRESHOLD = 0.1
+GRASP_SENSOR_TIMEOUT = 0.5
+GRASP_SENSOR_LIMITS = (0.02, 0.18)
 
 
-class ObjectInGripperState(object):
+class GripperMeasurement(object):
     EMPTY = -1
     UNKNOWN = 0
     HOLDING = 1
+
+    def __init__(self, distance):
+        if GRASP_SENSOR_LIMITS[0] < distance < GRASP_SENSOR_LIMITS[1]:
+            self._distance = distance
+        else:
+            self._distance = float('nan')
+        self._stamp = rospy.Time.now()
+
+    @property
+    def distance(self):
+		# Check if data is recent
+        if (rospy.Time.now() - self._stamp).to_sec() < GRASP_SENSOR_TIMEOUT:
+            return self._distance
+        else:
+            return float('nan')
+
+    @property
+    def is_holding(self):
+        return self.distance < GRASP_SENSOR_THRESHOLD
+
+    @property
+    def is_unknown(self):
+		return math.isnan(self.distance)
+
+    @property
+    def is_empty(self):
+        return self.distance > GRASP_SENSOR_THRESHOLD
+
+	def __repr__(self):
+		return "Distance: {}, is_holding: {}".format(self.distance, self.is_holding)
 
 
 class GripperState:
@@ -92,8 +128,10 @@ class Arm(RobotPart):
 
         # Init grasp sensor subscriber
         self._grasp_sensor_state = (None, rospy.Time.now())
-        rospy.Subscriber("/" + self.robot_name + "/" + self.side + "_gripper/sensor_distance",
-                         std_msgs.msg.Float32, self._grasp_sensor_callback)
+        #rospy.Subscriber("/" + self.robot_name + "/" + self.side + "_gripper/sensor_distance",
+        #                 std_msgs.msg.Float32, self._grasp_sensor_callback)
+        rospy.Subscriber("/" + self.robot_name + "/" + self.side + "_arm/proximity_sensor",
+                         std_msgs.msg.Float32MultiArray, self._grasp_sensor_callback)
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
@@ -500,8 +538,7 @@ class Arm(RobotPart):
 
         :param msg: std_msgs.msg.Float32
         """
-        sensor_state = (msg.data, rospy.Time.now())
-        self._grasp_sensor_state = sensor_state
+        self._grasp_sensor_state = GripperMeasurement(msg.data[0])
 
     def _publish_marker(self, goal, color, ns = ""):
         """

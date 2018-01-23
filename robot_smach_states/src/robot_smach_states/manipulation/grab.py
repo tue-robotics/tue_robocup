@@ -9,7 +9,7 @@ from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, VectorS
 
 from robot_skills.util.entity import Entity
 
-from robot_skills.arms import Arm, ObjectInGripperState
+from robot_skills.arms import Arm, GripperMeasurement
 from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
@@ -231,7 +231,7 @@ class PickUp(smach.State):
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         # Check if the object is present in the gripper
-        if arm.object_in_gripper_state == ObjectInGripperState.EMPTY:
+        if arm.object_in_gripper_state == GripperMeasurement.EMPTY:
             # If state is empty, grasp has failed
             result = "failed"
             rospy.logerr("Gripper is not holding an object")
@@ -240,8 +240,8 @@ class PickUp(smach.State):
             # If unknown: sensor not there, assume gripper is holding and hope for the best
             result = "succeeded"
             arm.occupied_by = None  # Set the object the arm is holding to None
-            if arm.object_in_gripper_state == ObjectInGripperState.UNKNOWN:
-                rospy.logwarn("ObjectInGripperState unknown")
+            if arm.object_in_gripper_state == GripperMeasurement.UNKNOWN:
+                rospy.logwarn("GripperMeasurement unknown")
 
         # Reset head
         self.robot.head.cancel_goal()
