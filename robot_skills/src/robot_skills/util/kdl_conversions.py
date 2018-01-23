@@ -166,7 +166,7 @@ def pose_msg_to_kdl_frame(pose):
     trans = kdl.Vector(pose.position.x ,pose.position.y, pose.position.z)
     return kdl.Frame(rot, trans)
 
-def kdlFrameToPoseMsg(frame):
+def kdl_frame_to_pose_msg(frame):
     """
     Convert a ROS PyKDL.Frame object to a geometry_msgs.msg.Pose message
     :param frame: Frame to be converted
@@ -174,7 +174,7 @@ def kdlFrameToPoseMsg(frame):
     :rtype: geometry_msgs.msg.Pose
 
     >>> frame = kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3))
-    >>> pose = kdlFrameToPoseMsg(frame)
+    >>> pose = kdl_frame_to_pose_msg(frame)
     >>> (pose.position.x, pose.position.y, pose.position.z)
     (1.0, 2.0, 3.0)
     >>> (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
@@ -193,7 +193,7 @@ def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
     :rtype: geometry_msgs.msg.Pose
 
     >>> frame = kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3))
-    >>> pose = kdlFrameToPoseMsg(frame)
+    >>> pose = kdl_frame_to_pose_msg(frame)
     >>> (pose.position.x, pose.position.y, pose.position.z)
     (1.0, 2.0, 3.0)
     >>> (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)

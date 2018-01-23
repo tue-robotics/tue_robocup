@@ -5,7 +5,7 @@ import math
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, FrameStamped, kdlFrameToPoseMsg
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, FrameStamped, kdl_frame_to_pose_msg
 
 
 class GraspPointDeterminant(object):
@@ -140,7 +140,7 @@ class GraspPointDeterminant(object):
             marker.id = i
             marker.type = marker.ARROW
             marker.action = marker.ADD
-            marker.pose = kdlFrameToPoseMsg(c['vector'].frame)
+            marker.pose = kdl_frame_to_pose_msg(c['vector'].frame)
             if i == 0: # The 'best' one is blue...
                 marker.color.b = 1.0
             elif 'score' in c:

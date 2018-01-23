@@ -12,7 +12,7 @@ from visualization_msgs.msg import Marker
 # TU/e
 import robot_smach_states as states
 from robot_skills.util.shape import RightPrism
-from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdlFrameToPoseMsg
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdl_frame_to_pose_msg
 
 
 def _get_area(convex_hull):
@@ -194,7 +194,7 @@ class StoreWaypoint(smach.State):
         :return:
         """
         # Convert KDL object to geometry message
-        base_pose = kdlFrameToPoseMsg(base_pose)
+        base_pose = kdl_frame_to_pose_msg(base_pose)
 
         # Create the marker
         m = Marker()
