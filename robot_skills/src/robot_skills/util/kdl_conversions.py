@@ -228,7 +228,7 @@ def kdl_frame_stamped_from_pose_stamped_msg(pose_stamped):
                         frame_id=pose_stamped.header.frame_id,
                         stamp=pose_stamped.header.stamp)
 
-def kdlFrameStampedFromXYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
+def kdl_frame_stamped_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
     """
     Create a FrameStamped from raw scalars
     :param x: The X value of the position

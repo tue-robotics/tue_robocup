@@ -617,10 +617,10 @@ def setup_statemachine(robot):
 
 
 def test_delivery(robot):
-    from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY
-    robot.ed.update_entity(id="one", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=1.0, y=0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="two", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="three", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
+    from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY
+    robot.ed.update_entity(id="one", kdlFrameStamped=kdl_frame_stamped_from_XYZRPY(x=1.0, y=0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="two", kdlFrameStamped=kdl_frame_stamped_from_XYZRPY(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="three", kdlFrameStamped=kdl_frame_stamped_from_XYZRPY(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
 
     global ORDERS
     ORDERS = {"beverage":{"name":"coke", "location":"one"}, "combo":{"name":"pringles and chocolate", "location":"two"}}

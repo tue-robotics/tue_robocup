@@ -1,7 +1,7 @@
 import rospy
 from robot_smach_states.util.designators import Designator
 from visualization_msgs.msg import MarkerArray, Marker
-from robot_skills.util.kdl_conversions import FrameStamped, kdlFrameStampedFromXYZRPY
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_stamped_from_XYZRPY
 
 
 class EmptyShelfDesignator(Designator):
@@ -117,10 +117,10 @@ class EmptyShelfDesignator(Designator):
                     rospy.logerr("Spacing of empty spot designator is too large!!!")
                     continue
 
-                fs = kdlFrameStampedFromXYZRPY(frame_id=e.id,
-                                              x=box.max_corner.x() - self._edge_distance,
-                                              y=y,
-                                              z=box.min_corner.z() - 0.04)  # 0.04 is the usual z offset
+                fs = kdl_frame_stamped_from_XYZRPY(frame_id=e.id,
+                                                   x=box.max_corner.x() - self._edge_distance,
+                                                   y=y,
+                                                   z=box.min_corner.z() - 0.04)  # 0.04 is the usual z offset
 
                 self._candidate_list_obj.append(fs)
 
