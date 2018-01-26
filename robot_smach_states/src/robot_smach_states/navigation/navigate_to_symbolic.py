@@ -73,16 +73,20 @@ class NavigateToSymbolic(NavigateTo):
 
 
 class NavigateToRoom(NavigateToSymbolic):
-    def __init__(self, robot, entity_designator_area, entity_lookat_designator):
+    """
+    Navigation class to navigate to a room, which only has the area 'in' in ED
+    """
+    def __init__(self, robot, entity_designator_room, entity_lookat_designator=None):
         """
-        Navigate to a room, which only has the area: 'in'
         :param robot: robot object
         :type robot: robot
-        :param entity_designator_area: Designator to the area
-        :type entity_designator_area: Designator resolving to an Ed entity
+        :param entity_designator_room: Designator to the room
+        :type entity_designator_room: Designator resolving to an ED entity
         :param entity_lookat_designator: Designator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
-        :type entity_lookat_designator: Designator resolving to an Ed entity
+        :type entity_lookat_designator: Designator resolving to an ED entity
         """
-        area = "in"
-        super(NavigateToRoom, self).__init__(robot, {entity_designator_area: area}, entity_lookat_designator)
+        room_area = "in"
+        if not entity_lookat_designator:
+            entity_lookat_designator = entity_designator_room
+        super(NavigateToRoom, self).__init__(robot, {entity_designator_room: room_area}, entity_lookat_designator)
