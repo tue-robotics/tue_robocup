@@ -29,15 +29,16 @@ GRASP_SENSOR_LIMITS = (0.0025, 0.18)  # This should be approximately 0.02 once t
 
 
 class GripperMeasurement(object):
-    """ Class holding measurements from the distance sensor on the grippers
-
+    """
+    Class holding measurements from the distance sensor on the grippers
     """
     EMPTY = -1
     UNKNOWN = 0
     HOLDING = 1
 
     def __init__(self, distance):
-        """ Constructor
+        """
+        Constructor
 
         :param distance: float with measured distance
         """
@@ -45,7 +46,8 @@ class GripperMeasurement(object):
         self._stamp = rospy.Time.now()
 
     def _is_recent(self):
-        """ Checks if the sensor data is recent
+        """
+        Checks if the sensor data is recent
 
         :return: bool True if recent, i.e., measurement is less than GRASP_SENSOR_TIMEOUT old, False otherwise
         """
@@ -53,7 +55,8 @@ class GripperMeasurement(object):
 
     @property
     def distance(self):
-        """ Returns the measured distance. If the measurement is too old or the distance is outside of of the provided
+        """
+        Returns the measured distance. If the measurement is too old or the distance is outside of of the provided
         limits, NaN is returned
 
         :return: float with distance if valid, NaN otherwise
@@ -68,7 +71,8 @@ class GripperMeasurement(object):
 
     @property
     def is_holding(self):
-        """ Returns if the gripper is holding anything based on the measurement, i.e., if the measurement is recent and
+        """
+        Returns if the gripper is holding anything based on the measurement, i.e., if the measurement is recent and
         the value is between the lower limit and the sensor threshold
 
         :return: bool if holding
@@ -77,7 +81,8 @@ class GripperMeasurement(object):
 
     @property
     def is_unknown(self):
-        """ Returns if the state is unknown, i.e., either the measurement is outdated or the distance is less than the
+        """
+        Returns if the state is unknown, i.e., either the measurement is outdated or the distance is less than the
         limit
 
         :return: bool if unknown
@@ -86,7 +91,8 @@ class GripperMeasurement(object):
 
     @property
     def is_empty(self):
-        """ Returns if the gripper is empty, i.e., the measurement is recent and the value is greater than the threshold
+        """
+        Returns if the gripper is empty, i.e., the measurement is recent and the value is greater than the threshold
 
         :return: bool if holding
         """
@@ -98,7 +104,9 @@ class GripperMeasurement(object):
 
 
 class GripperState(object):
-    """Specifies a State either OPEN or CLOSE"""
+    """
+    Specifies a State either OPEN or CLOSE
+    """
     OPEN = "open"
     CLOSE = "close"
 
@@ -505,7 +513,8 @@ class Arm(RobotPart):
             return False
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False):
-        """ Waits until all action clients are done
+        """
+        Waits until all action clients are done
         :param timeout: timeout in seconds; in case 0.0, no sensible output is provided, just False
         :param cancel: bool specifying whether goals should be cancelled
         if timeout is exceeded
@@ -543,7 +552,8 @@ class Arm(RobotPart):
 
     @property
     def object_in_gripper_state(self):
-        """ Returns whether the gripper is empty, holding an object or if this is unknown
+        """
+        Returns whether the gripper is empty, holding an object or if this is unknown
 
         :return: latest GripperMeasurement
         """
@@ -551,7 +561,8 @@ class Arm(RobotPart):
 
     @property
     def grasp_sensor_distance(self):
-        """ Returns the sensor distance. If no recent measurement is available or the measurement is outside bounds
+        """
+        Returns the sensor distance. If no recent measurement is available or the measurement is outside bounds
         and hence unreliable, NaN is returned
 
         :return: float with distance
@@ -559,7 +570,8 @@ class Arm(RobotPart):
         return self._grasp_sensor_state.distance
 
     def _grasp_sensor_callback(self, msg):
-        """ Callback function for grasp sensor messages
+        """
+        Callback function for grasp sensor messages
 
         :param msg: std_msgs.msg.Float32
         """
