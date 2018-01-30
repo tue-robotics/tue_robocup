@@ -2,6 +2,7 @@
 
 # System
 import os
+import sys
 
 # Qt
 from python_qt_binding import loadUi
@@ -27,9 +28,10 @@ class GraspSensorSimulator(QWidget):
     """
     QWidget to simulate the distance sensors on the grippers
     """
-    def __init__(self):
+    def __init__(self, robot_name):
         """
         Constructor
+        :param robot_name: string with robot name
         """
         super(GraspSensorSimulator, self).__init__()
 
@@ -49,8 +51,10 @@ class GraspSensorSimulator(QWidget):
         self.right_slider.setValue(SENSOR_RANGE[1])
 
         # Setup the ROS publishers
-        self._left_pub = rospy.Publisher("/amigo/left_gripper/sensor_distance", std_msgs.msg.Float32, queue_size=1)
-        self._right_pub = rospy.Publisher("/amigo/right_gripper/sensor_distance", std_msgs.msg.Float32, queue_size=1)
+        self._left_pub = rospy.Publisher("/{}/left_gripper/sensor_distance".format(robot_name),
+                                         std_msgs.msg.Float32MultiArray, queue_size=1)
+        self._right_pub = rospy.Publisher("/{}/right_gripper/sensor_distance".format(robot_name),
+                                          std_msgs.msg.Float32MultiArray, queue_size=1)
 
         # Start a QThread to continuously publish the sensor values
         self._timer = QTimer(self)
@@ -64,12 +68,12 @@ class GraspSensorSimulator(QWidget):
         """
         Publishes the current sensor values (converted from mm to m)
         """
-        left_msg = std_msgs.msg.Float32()
-        left_msg.data = 0.001 * self.left_indicator.value()
+        left_msg = std_msgs.msg.Float32MultiArray()
+        left_msg.data.append(0.001 * self.left_indicator.value())
         self._left_pub.publish(left_msg)
 
-        right_msg = std_msgs.msg.Float32()
-        right_msg.data = 0.001 * self.right_indicator.value()
+        right_msg = std_msgs.msg.Float32MultiArray()
+        right_msg.data.append(0.001 * self.right_indicator.value())
         self._right_pub.publish(right_msg)
 
 
@@ -78,8 +82,13 @@ if __name__ == "__main__":
     # Init rosnode
     rospy.init_node("grasp_sensor_simulator")
 
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+    else:
+        robot_name = "amigo"
+
     # Start the UI
     app = QApplication([])
-    grasp_sensor_sim = GraspSensorSimulator()
+    grasp_sensor_sim = GraspSensorSimulator(robot_name=robot_name)
     grasp_sensor_sim.show()
     app.exec_()
