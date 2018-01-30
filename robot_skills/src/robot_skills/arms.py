@@ -39,7 +39,7 @@ class GripperMeasurement(object):
 
     @property
     def distance(self):
-		# Check if data is recent
+        # Check if data is recent
         if (rospy.Time.now() - self._stamp).to_sec() < GRASP_SENSOR_TIMEOUT:
             return self._distance
         else:
@@ -51,14 +51,14 @@ class GripperMeasurement(object):
 
     @property
     def is_unknown(self):
-		return math.isnan(self.distance)
+        return math.isnan(self.distance)
 
     @property
     def is_empty(self):
         return self.distance > GRASP_SENSOR_THRESHOLD
 
-	def __repr__(self):
-		return "Distance: {}, is_holding: {}".format(self.distance, self.is_holding)
+    def __repr__(self):
+        return "Distance: {}, is_holding: {}".format(self.distance, self.is_holding)
 
 
 class GripperState:
@@ -511,15 +511,9 @@ class Arm(RobotPart):
     def object_in_gripper_state(self):
         """ Returns whether the gripper is empty, holding an object or if this is unknown
 
-        :return: ObjectInGripperState
+        :return: latest GripperMeasurement
         """
-        distance = self.grasp_sensor_distance
-        if distance is None:
-            return ObjectInGripperState.UNKNOWN
-        elif distance < GRASP_SENSOR_THRESHOLD:
-            return ObjectInGripperState.HOLDING
-        else:
-            return ObjectInGripperState.EMPTY
+        return self._grasp_sensor_state
 
     @property
     def grasp_sensor_distance(self):
@@ -527,11 +521,7 @@ class Arm(RobotPart):
 
         :return: float with distance, None if no recent measurement
         """
-        distance, stamp = self._grasp_sensor_state
-        if (rospy.Time.now() - stamp).to_sec() < 0.5:
-            return distance
-        else:
-            return None
+        return self._grasp_sensor_state.distance
 
     def _grasp_sensor_callback(self, msg):
         """ Callback function for grasp sensor messages
