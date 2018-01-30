@@ -2,7 +2,9 @@ Responsible: Matthijs
 
 # Start-up
 
-    <robot>-demo
+    <robot>-demo-<loaction>
+    For robot you can currently only use "amigo".
+    For location you can use "intern" or "extern" (these are currently identical).
 
 # Scenario
 
