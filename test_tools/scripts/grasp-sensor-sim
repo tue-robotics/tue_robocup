@@ -24,11 +24,12 @@ class Side(object):
 
 
 class GraspSensorSimulator(QWidget):
-    """ QWidget to simulate the distance sensors on the grippers
-
+    """
+    QWidget to simulate the distance sensors on the grippers
     """
     def __init__(self):
-        """ Constructor
+        """
+        Constructor
         """
         super(GraspSensorSimulator, self).__init__()
 
@@ -60,7 +61,8 @@ class GraspSensorSimulator(QWidget):
         self.show()
 
     def _publish_values(self):
-        """ Publishes the current sensor values (converted from mm to m)
+        """
+        Publishes the current sensor values (converted from mm to m)
         """
         left_msg = std_msgs.msg.Float32()
         left_msg.data = 0.001 * self.left_indicator.value()
