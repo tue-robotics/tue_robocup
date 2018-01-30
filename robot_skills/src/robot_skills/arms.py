@@ -573,7 +573,7 @@ class Arm(RobotPart):
         """
         Callback function for grasp sensor messages
 
-        :param msg: std_msgs.msg.Float32
+        :param msg: std_msgs.msg.Float32MultiArray
         """
         self._grasp_sensor_state = GripperMeasurement(msg.data[0])
 
