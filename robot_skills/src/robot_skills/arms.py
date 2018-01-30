@@ -23,6 +23,7 @@ from robot_part import RobotPart
 GRASP_SENSOR_THRESHOLD = 0.1
 GRASP_SENSOR_TIMEOUT = 0.5
 GRASP_SENSOR_LIMITS = (0.02, 0.18)
+GRASP_SENSOR_LIMITS = (0.0025, 0.18)  # This should be approximately 0.02 once the sensor is correctly setup
 
 
 class GripperMeasurement(object):
@@ -31,31 +32,45 @@ class GripperMeasurement(object):
     HOLDING = 1
 
     def __init__(self, distance):
-        if GRASP_SENSOR_LIMITS[0] < distance < GRASP_SENSOR_LIMITS[1]:
-            self._distance = distance
-        else:
-            self._distance = float('nan')
+        self._distance = distance
+        #if GRASP_SENSOR_LIMITS[0] < distance < GRASP_SENSOR_LIMITS[1]:
+        #    self._distance = distance
+        #else:
+        #    self._distance = float('nan')
         self._stamp = rospy.Time.now()
+
+    def _is_recent(self):
+        return (rospy.Time.now() - self._stamp).to_sec() < GRASP_SENSOR_TIMEOUT
 
     @property
     def distance(self):
         # Check if data is recent
-        if (rospy.Time.now() - self._stamp).to_sec() < GRASP_SENSOR_TIMEOUT:
-            return self._distance
-        else:
+        if not self._is_recent():
             return float('nan')
+        elif not GRASP_SENSOR_LIMITS[0] < self._distance < GRASP_SENSOR_LIMITS[1]:
+            return float('nan')
+        else:
+            return self._distance
+        #else:
+        #    return float('nan')
 
     @property
     def is_holding(self):
-        return self.distance < GRASP_SENSOR_THRESHOLD
+        #return self.distance < GRASP_SENSOR_THRESHOLD
+        return self._is_recent() and GRASP_SENSOR_LIMITS[0] < self._distance < GRASP_SENSOR_THRESHOLD
 
     @property
     def is_unknown(self):
-        return math.isnan(self.distance)
+        #return math.isnan(self.distance)
+        #outdated = not self._is_recent()
+        #between_limits = GRASP_SENSOR_LIMITS[0] < self._distance < GRASP_SENSOR_LIMITS[1]
+        #return outdated or not between_limits
+        return not self._is_recent() or self._distance < GRASP_SENSOR_LIMITS[0]
 
     @property
     def is_empty(self):
-        return self.distance > GRASP_SENSOR_THRESHOLD
+        #return self.distance > GRASP_SENSOR_THRESHOLD
+        return self._is_recent() and self._distance > GRASP_SENSOR_THRESHOLD
 
     def __repr__(self):
         return "Distance: {}, is_holding: {}".format(self.distance, self.is_holding)

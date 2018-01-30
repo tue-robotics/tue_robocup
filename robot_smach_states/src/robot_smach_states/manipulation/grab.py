@@ -236,11 +236,11 @@ class PickUp(smach.State):
             result = "failed"
             rospy.logerr("Gripper is not holding an object")
             self.robot.speech.speak("Whoops, something went terribly wrong")
+            arm.occupied_by = None  # Set the object the arm is holding to None
         else:
             # State is holding, grasp succeeded.
             # If unknown: sensor not there, assume gripper is holding and hope for the best
             result = "succeeded"
-            arm.occupied_by = None  # Set the object the arm is holding to None
             if arm.object_in_gripper_state.is_unknown:
                 rospy.logwarn("GripperMeasurement unknown")
 
