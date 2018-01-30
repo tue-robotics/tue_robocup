@@ -17,12 +17,13 @@ class WaitForOperatorCommand(smach.State):
         - commands as userdata: the command is passed to the next state
 
     """
-    def __init__(self, robot, possible_commands, commands_as_outcomes=False, commands_as_userdata=False):
+    def __init__(self, robot, possible_commands, commands_as_outcomes=False, commands_as_userdata=False, target=None):
 
         self._robot = robot
         self._possible_commands = possible_commands
         self._commands_as_outcomes = commands_as_outcomes
         self._commands_as_userdata = commands_as_userdata
+        self.target_destination = target
 
         if commands_as_outcomes:  # each possible command is a separate outcome
             _outcomes = possible_commands + ['abort']
@@ -69,6 +70,7 @@ class WaitForOperatorCommand(smach.State):
 
         if self._commands_as_userdata:
             userdata.command_recognized = command_recognized
+            self.target_destination.id = command_recognized
 
         if self._commands_as_outcomes:
             return command_recognized
@@ -96,27 +98,6 @@ class StoreCarWaypoint(smach.State):
             return "success"
         else:
             return "abort"
-
-
-class NavigateToDestination(smach.State):
-    """
-    Navigate to the target room or place
-
-    """
-    def __init__(self, robot, target_radius):
-        smach.State.__init__(self, outcomes=['unreachable', 'arrived', 'goal_not_defined'], input_keys=['destination'])
-        self._robot = robot
-        self.target_radius = target_radius
-
-    def execute(self, userdata):
-        target_waypoint = userdata.destination
-        target_radius = self.target_radius
-
-        navigateToWaypoint = states.NavigateToWaypoint(self._robot,
-                                                       ds.EntityByIdDesignator(self._robot, id=target_waypoint),
-                                                       target_radius)
-
-        return navigateToWaypoint.execute()
 
 
 class DropBagOnGround(smach.StateMachine):

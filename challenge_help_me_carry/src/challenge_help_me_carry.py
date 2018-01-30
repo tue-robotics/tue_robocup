@@ -23,8 +23,12 @@ class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        self.place_name = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place, name="place_name")
-        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_name, name="placement",
+        self.target_destination = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place)
+
+        self.car_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_car['id'])
+
+        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.target_destination,
+                                                                          name="placement",
                                                                           area=challenge_knowledge.default_area),
                                                    name="place_position")
 
@@ -81,12 +85,13 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             smach.StateMachine.add('ASK_FOR_DESTINATION',
                                    states.Say(robot, ["Where should I bring the groceries?"], block=True),
-                                   transitions={'spoken': 'WAIT_FOR_DESTINATION'})
+                                   transitions={'spoken': 'RECEIVE_DESTINATION'})
 
-            smach.StateMachine.add('WAIT_FOR_DESTINATION',
+            smach.StateMachine.add('RECEIVE_DESTINATION',
                                    hmc_states.WaitForOperatorCommand(robot,
                                                                      possible_commands=challenge_knowledge.destinations,
-                                                                     commands_as_userdata=True),
+                                                                     commands_as_userdata=True,
+                                                                     target=self.target_destination),
                                    transitions={'success': 'GRAB_ITEM',
                                                 'abort': 'Aborted'})
 
@@ -119,7 +124,8 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'GOTO_DESTINATION'})
 
             smach.StateMachine.add('GOTO_DESTINATION',
-                                   hmc_states.NavigateToDestination(robot, challenge_knowledge.default_target_radius),
+                                   states.NavigateToWaypoint(robot, self.target_destination,
+                                                             challenge_knowledge.default_target_radius),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
                                                 'unreachable': 'PUTDOWN_ITEM',
                                                 # implement avoid obstacle behaviour later
@@ -137,8 +143,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'GOTO_CAR'})
 
             smach.StateMachine.add('GOTO_CAR',
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(
-                                       robot, id=challenge_knowledge.waypoint_car['id']),
+                                   states.NavigateToWaypoint(robot, self.car_waypoint,
                                                              challenge_knowledge.waypoint_car['radius']),
 
                                    # TODO: detect closed door
