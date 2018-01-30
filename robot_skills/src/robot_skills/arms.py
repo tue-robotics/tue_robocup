@@ -1,18 +1,20 @@
 #! /usr/bin/env python
 
 # System
-import enum
 
+# ROS
 import rospy
 import std_msgs.msg
 import PyKDL as kdl
 import tf_server
-import math
+
 import visualization_msgs.msg
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from diagnostic_msgs.msg import DiagnosticArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+# TU/e Robotics
 from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
