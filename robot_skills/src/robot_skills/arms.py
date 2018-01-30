@@ -67,7 +67,7 @@ class Arm(RobotPart):
         self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
 
         # listen to the hardware status to determine if the arm is available
-        rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.cb_hardware_status)
+        self.subscribe_hardware_status(self.side + '_arm')
 
         # Init gripper actionlib
         self._ac_gripper = self.create_simple_action_client(
@@ -107,39 +107,6 @@ class Arm(RobotPart):
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
-
-    @property
-    def operational(self):
-        """
-        The 'operational' property reflects the current hardware status of the arm.
-        :return: True or False
-        """
-        return self._operational
-
-    def cb_hardware_status(self, msg):
-        """
-        hardware_status callback to determine if the arms are operational
-        :param msg: diagnostic_msgs.msg.DiagnosticArray
-        :return: no return
-        """
-        diags = [diag for diag in msg.status if diag.name == self.side + '_arm']
-
-        if len(diags) == 0:
-            rospy.logwarn('no diagnostic msg received for the %s arm' % self.side)
-        elif len(diags) != 1:
-            rospy.logwarn('multiple diagnostic msgs received for the %s arm' % self.side)
-        else:
-            level = diags[0].level
-
-            # 0. Stale
-            # 1. Idle
-            # 2. Operational
-            # 3. Homing
-            # 4. Error
-            if level != 2:
-                self._operational = False
-            else:
-                self._operational = True
 
     def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
                   allowed_touch_objects=[]):

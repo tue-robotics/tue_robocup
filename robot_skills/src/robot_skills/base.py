@@ -160,6 +160,8 @@ class Base(RobotPart):
         self.global_planner = GlobalPlanner(robot_name, tf_listener, self.analyzer)
         self.local_planner = LocalPlanner(robot_name, tf_listener, self.analyzer)
 
+        self.subscribe_hardware_status('base')
+
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
         :param timeout: timeout in seconds
