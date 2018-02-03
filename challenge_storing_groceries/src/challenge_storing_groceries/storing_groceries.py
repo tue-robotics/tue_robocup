@@ -24,7 +24,7 @@ class StoringGroceries(smach.StateMachine):
 
         initial_inspection_results = InspectionResultDesignator() 
         pdf_writer = WritePdf(robot=robot,inspection_result_designator=initial_inspection_results)
-        
+
         with self:
             single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
 
@@ -84,11 +84,11 @@ class StoringGroceries(smach.StateMachine):
                                    states.NavigateToSymbolic(robot,
                                                              {cabinet: "in_front_of"},
                                                              cabinet),
-                                   transitions={'arrived': 'INSPECT_SHELVES',
-                                                'unreachable': 'INSPECT_SHELVES',
-                                                'goal_not_defined': 'INSPECT_SHELVES'})
+                                   transitions={'arrived': 'INSPECT_SHELVES_BEFORE',
+                                                'unreachable': 'INSPECT_SHELVES_BEFORE',
+                                                'goal_not_defined': 'INSPECT_SHELVES_BEFORE'})
 
-            smach.StateMachine.add("INSPECT_SHELVES",
+            smach.StateMachine.add("INSPECT_SHELVES_BEFORE",
                                    InspectShelves(robot, cabinet,initial_inspection_results),
                                    transitions={'succeeded': 'WRITE_PDF_SHELVES_BEFORE',
                                                 'nothing_found': 'WRITE_PDF_SHELVES_BEFORE',
