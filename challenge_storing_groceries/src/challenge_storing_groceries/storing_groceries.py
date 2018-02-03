@@ -22,8 +22,9 @@ class StoringGroceries(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
-        pdf_writer = WritePdf(robot=robot,)
-
+        initial_inspection_results = InspectionResultDesignator() 
+        pdf_writer = WritePdf(robot=robot,inspection_result_designator=initial_inspection_results)
+        
         with self:
             single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
 
@@ -44,7 +45,7 @@ class StoringGroceries(smach.StateMachine):
 
             cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
             room = ds.EntityByIdDesignator(robot, id=ROOM)
-            initial_inspection_results = InspectionResultDesignator()
+            
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None, manipulate_machine=None):
