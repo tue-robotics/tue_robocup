@@ -88,7 +88,7 @@ class InspectShelves(smach.State):
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=e.id, parse=False)
                 config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
-                inspection_result_designator.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+                self.inspection_result_designator.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
             config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1],
                                                         reverse=True)
