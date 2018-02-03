@@ -22,7 +22,7 @@ class WritePdf(smach.State):
     """ Writes pdf based on entityinfo.
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot,inspection_result_designator ):
         """ Constructor
 
         :param robot: robot object
@@ -32,6 +32,7 @@ class WritePdf(smach.State):
         self._robot = robot
         self._items = {}  # Dict mapping entity id to tuples: entity, probability, and filename of images
         self._designator = None
+        self.inspection_result_designator = inspection_result_designator
 
     def execute(self, userdata=None):
 
@@ -46,7 +47,7 @@ class WritePdf(smach.State):
         # ToDo: store probabilities in the world model
 
         # Get DETECTED_OBJECTS_WITH_PROBS, i.e., the detections resulting from inspection
-        for entity, probability in config.DETECTED_OBJECTS_WITH_PROBS:
+        for entity, probability in inspection_result_designator.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
                 self._items[entity.id] = (entity, probability, image)

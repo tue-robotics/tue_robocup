@@ -15,14 +15,14 @@ from config import *
 from inspect_shelves import InspectShelves
 from manipulate_machine import ManipulateMachine
 from pdf import WritePdf
-
+from inspection_result_designator import InspectionResultDesignator
 
 class StoringGroceries(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
-        pdf_writer = WritePdf(robot=robot)
+        pdf_writer = WritePdf(robot=robot,)
 
         with self:
             single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
@@ -44,6 +44,7 @@ class StoringGroceries(smach.StateMachine):
 
             cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
             room = ds.EntityByIdDesignator(robot, id=ROOM)
+            initial_inspection_results = InspectionResultDesignator()
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None, manipulate_machine=None):
@@ -87,12 +88,12 @@ class StoringGroceries(smach.StateMachine):
                                                 'goal_not_defined': 'INSPECT_SHELVES'})
 
             smach.StateMachine.add("INSPECT_SHELVES",
-                                   InspectShelves(robot, cabinet),
-                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
-                                                'nothing_found': 'WRITE_PDF_SHELVES',
-                                                'failed': 'WRITE_PDF_SHELVES'})
+                                   InspectShelves(robot, cabinet,initial_inspection_results),
+                                   transitions={'succeeded': 'WRITE_PDF_SHELVES_BEFORE',
+                                                'nothing_found': 'WRITE_PDF_SHELVES_BEFORE',
+                                                'failed': 'WRITE_PDF_SHELVES_BEFORE'})
 
-            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
+            smach.StateMachine.add("WRITE_PDF_SHELVES_BEFORE", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
 
             # Begin setup iterator
             # The exhausted argument should be set to the prefered state machine outcome
