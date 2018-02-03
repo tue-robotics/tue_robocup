@@ -22,10 +22,11 @@ from tue_msgs.msg import GripperCommand
 from robot_part import RobotPart
 
 # If the grasp sensor distance is smaller than this value, the gripper is holding an object
-GRASP_SENSOR_THRESHOLD = 0.1
-GRASP_SENSOR_TIMEOUT = 0.5
-GRASP_SENSOR_LIMITS = (0.02, 0.18)
-GRASP_SENSOR_LIMITS = (0.0025, 0.18)  # This should be approximately 0.02 once the sensor is correctly setup
+GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
+GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
+GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.02, 0.18]))
+# Temporary: this should be approximately 0.02 once the sensor is correctly setup
+GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.0025, 0.18]))
 
 
 class GripperMeasurement(object):
