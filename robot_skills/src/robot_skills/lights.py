@@ -1,7 +1,8 @@
-#! /usr/bin/env python
+# ROS
 import rospy
 from std_msgs.msg import ColorRGBA
 
+# TU/e Robotics
 from amigo_msgs.msg import RGBLightCommand
 from robot_part import RobotPart
 
@@ -21,7 +22,8 @@ class Lights(RobotPart):
         :param tf_listener: tf_server.TFClient()
         """
         super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand, queue_size=10)
+        self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand,
+                                      queue_size=10)
 
     def close(self):
         pass

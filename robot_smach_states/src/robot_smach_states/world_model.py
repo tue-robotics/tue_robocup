@@ -1,16 +1,19 @@
 #! /usr/bin/env python
 
+# System
+import time
+
+# ROS
 import PyKDL as kdl
 import rospy
 import smach
-from robot_skills.util.kdl_conversions import VectorStamped
 
+# TU/e Robotics
+from robot_skills.classification_result import ClassificationResult
+from robot_skills.util.entity import Entity
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states.navigation import NavigateToObserve, NavigateToSymbolic
 import robot_smach_states.util.designators as ds
-from robot_skills.util.entity import Entity
-from robot_skills.classification_result import ClassificationResult
-
-import time
 
 
 def _color_info(string):

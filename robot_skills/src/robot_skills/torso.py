@@ -1,12 +1,14 @@
-#! /usr/bin/env python
+# System
 import threading
 
+# ROS
+from actionlib_msgs.msg import GoalStatus
 import control_msgs.msg
 import rospy
-import trajectory_msgs.msg
-from actionlib_msgs.msg import GoalStatus
 from sensor_msgs.msg import JointState
+import trajectory_msgs.msg
 
+# TU/e Robotics
 from robot_part import RobotPart
 from .util import concurrent_util
 

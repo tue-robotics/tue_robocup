@@ -1,20 +1,19 @@
 #! /usr/bin/env python
-import math
 
-import rospy
+# System
 from threading import Condition
+
+# ROS
+import rospy
+from sensor_msgs.msg import Image, RegionOfInterest
 from std_srvs.srv import Empty
+
+# TU/e Robotics
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
 from image_recognition_msgs.msg import Annotation, Recognition
-
-from sensor_msgs.msg import Image, RegionOfInterest
-from robot_part import RobotPart
-
-# TU/e
 from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
-
-from .util import msg_constructors as msgs
-from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
+from robot_part import RobotPart
+from .util.kdl_conversions import VectorStamped
 from .util.image_operations import img_recognitions_to_rois, img_cutout
 
 

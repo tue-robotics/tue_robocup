@@ -1,10 +1,11 @@
+# System
 import math
+
+# ROS
 import PyKDL as kdl
 
-import geometry_msgs.msg as gm
+# TU/e Robotics
 from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector
-
-from ed_msgs.msg import EntityInfo
 
 
 def isLeftOfLine(p, l):

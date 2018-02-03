@@ -5,6 +5,7 @@ import yaml
 import rospy
 import PyKDL as kdl
 
+# TU/e Robotics
 from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, kdlFrameToPoseMsg, FrameStamped
 from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.shape import shape_from_entity_info

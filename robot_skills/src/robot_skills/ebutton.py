@@ -1,8 +1,12 @@
 #! /usr/bin/env python
+
+# ROS
 import rospy
 from std_msgs.msg import Bool
 
+# TU/e Robotics
 from robot_part import RobotPart
+
 
 class EButton(RobotPart):
     """
@@ -14,9 +18,7 @@ class EButton(RobotPart):
 
         rospy.logdebug("Initializing ebutton listener")
         self._ebuttonstatus = True
-        self._topic = rospy.Subscriber("/{}/emergency_switch".format(robot_name),
-                                         Bool,
-                                         self._listen)
+        self._topic = rospy.Subscriber("/{}/emergency_switch".format(robot_name), Bool, self._listen)
 
     def close(self):
         pass
@@ -25,11 +27,9 @@ class EButton(RobotPart):
         """
         Callback methods that listens to /emergency_switch
         """
-        #rospy.loginfo("Received ebutton status")
         self._ebuttonstatus = s.data
 
     def read_ebutton(self):
-        #rospy.loginfo("Returning ebuttonstatus")
         return self._ebuttonstatus
 
 

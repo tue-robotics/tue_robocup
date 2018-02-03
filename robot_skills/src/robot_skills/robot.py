@@ -1,6 +1,7 @@
 #! /usr/bin/env python
+
+# ROS
 import rospy
-import PyKDL as kdl
 
 # Body parts
 import base

@@ -1,11 +1,13 @@
-#! /usr/bin/env python
+# System
+from random import choice
 
+# ROS
 import rospy
 import smach
 
+# TU/e Robotics
 from cb_planner_msgs_srvs.msg import *
 
-from random import choice
 
 # ----------------------------------------------------------------------------------------------------
 

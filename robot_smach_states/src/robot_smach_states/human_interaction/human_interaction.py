@@ -1,24 +1,25 @@
 #! /usr/bin/env python
-import roslib;
+
+# System
+import math
+import random
+import time
+
+# ROS
 import rospy
 import smach
-import random
-import ed_perception.msg
-import actionlib
-from robot_smach_states.state import State
-from hmi import TimeoutException
 
+# TU/e Robotics
+from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
-from smach_ros import SimpleActionState
-import time
-import math
 
 # Say: Immediate say
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
 ##########################################################################################################################################
+
 
 class Say(smach.State):
     """Say a sentence or pick a random one from a list.

@@ -1,9 +1,13 @@
 #! /usr/bin/env python
 
+# ROS
 import rospy
+
+# TU/e Robotics
+from robot_skills.arms import Arm
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.utility import LockingDesignator
-from robot_skills.arms import Arm
+
 
 __author__ = 'loy'
 

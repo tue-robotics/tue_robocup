@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
 """Construct complicated ROS messages as easy as possible"""
-import rospy
-
-import std_msgs.msg as std
+# ROS
 import geometry_msgs.msg as gm
-
+import rospy
+import std_msgs.msg as std
 import tf
 
 number = (int, long, float)

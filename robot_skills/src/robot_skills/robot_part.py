@@ -39,8 +39,14 @@ class RobotPart(object):
         start = rospy.Time.now()
         t = rospy.Duration(timeout)
         r = rospy.Rate(20)
+
         # Loop until the timeout
         while (rospy.Time.now() - start) < t:
+
+            # If shutdown: return immediately without any further checks or prints
+            if rospy.is_shutdown():
+                return False
+
             # If everything is connected: return True
             if len(self.__ros_connections) == 0:
                 return True

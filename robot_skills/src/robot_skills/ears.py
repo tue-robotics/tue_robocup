@@ -1,6 +1,9 @@
 #! /usr/bin/env python
+
+# ROS
 import rospy
 
+# TU/e Robotics
 from robot_part import RobotPart
 
 
@@ -28,6 +31,7 @@ class Ears(RobotPart):
             self._post_hook()
 
         return answer
+
 
 if __name__ == "__main__":
     rospy.init_node('robot_ears', anonymous=True)

@@ -2,8 +2,12 @@
 
 __author__ = 'loy'
 
+# System
 import unittest
+
+# TU/e Robotics
 from robot_smach_states.util.designators.core import Designator, VariableDesignator
+
 
 class MyTestCase(unittest.TestCase):
     def test_visited_and_unreachable(self):

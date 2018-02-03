@@ -1,13 +1,12 @@
 #! /usr/bin/env python
-import math
 
+# ROS
 import rospy
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
+# TU/e Robotics
 from robot_part import RobotPart
-
-from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
 
 

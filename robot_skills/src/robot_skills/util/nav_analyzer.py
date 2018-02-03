@@ -1,26 +1,16 @@
-#! /usr/bin/env python
-import rospy
-#import os.path
-
-# Date and time stamping
+# System
 import datetime
-
-# XML
-import xml.etree.ElementTree as ET
-
-# Rosbagging with systemcalls
 import os
 import signal
 import subprocess
+import xml.etree.ElementTree as ET
 
-import math
-
-# Messages
+# ROS
 import nav_msgs.msg
 import PyKDL as kdl
+import rospy
 
-# Robot skills
-import transformations
+# TU/e Robotics
 from robot_skills.util.kdl_conversions import pointMsgToKdlVector
 
 

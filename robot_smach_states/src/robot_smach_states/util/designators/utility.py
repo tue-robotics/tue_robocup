@@ -1,5 +1,8 @@
 #! /usr/bin/env python
+# ROS
 import rospy
+
+# TU/e Robotics
 from robot_smach_states.util.designators.core import Designator, VariableDesignator
 
 __author__ = 'loy'

@@ -1,10 +1,14 @@
 __author__ = 'rokus'
 
+# ROS
 import smach, rospy
+
+# TU/e Robotics
+from robocup_knowledge import load_knowledge
+from robot_skills.classification_result import ClassificationResult
 import robot_smach_states as states
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator
-from robot_skills.classification_result import ClassificationResult
-from robocup_knowledge import load_knowledge
+
 
 def entities_from_description(robot, entity_description, list_of_entity_ids=None ):
     '''

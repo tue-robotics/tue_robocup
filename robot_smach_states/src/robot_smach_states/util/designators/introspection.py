@@ -7,11 +7,15 @@ A .dot and .png will be saved to the current directory, showing the relations an
 state_machines and designators.
 """
 
-import os
-import smach
-from robot_smach_states.util.designators.core import Designator, VariableWriter, VariableDesignator
+# System
 from graphviz import Digraph
+import os
 
+# ROS
+import smach
+
+# TU/e Robotics
+from robot_smach_states.util.designators.core import Designator, VariableWriter, VariableDesignator
 
 __author__ = 'loy'
 
