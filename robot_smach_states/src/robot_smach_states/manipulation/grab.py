@@ -231,7 +231,7 @@ class PickUp(smach.State):
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         # Check if the object is present in the gripper
-        if arm.object_in_gripper_state.is_empty:
+        if arm.object_in_gripper_measurement.is_empty:
             # If state is empty, grasp has failed
             result = "failed"
             rospy.logerr("Gripper is not holding an object")
@@ -241,7 +241,7 @@ class PickUp(smach.State):
             # State is holding, grasp succeeded.
             # If unknown: sensor not there, assume gripper is holding and hope for the best
             result = "succeeded"
-            if arm.object_in_gripper_state.is_unknown:
+            if arm.object_in_gripper_measurement.is_unknown:
                 rospy.logwarn("GripperMeasurement unknown")
 
         # Reset head

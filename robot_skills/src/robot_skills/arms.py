@@ -551,7 +551,7 @@ class Arm(RobotPart):
             return True
 
     @property
-    def object_in_gripper_state(self):
+    def object_in_gripper_measurement(self):
         """
         Returns whether the gripper is empty, holding an object or if this is unknown
 
