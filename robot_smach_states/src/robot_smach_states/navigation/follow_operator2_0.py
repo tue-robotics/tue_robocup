@@ -7,21 +7,52 @@ import smach_ros
 import math
 import collections
 from robot_smach_states.util.startup import startup
+from robot_skills.util import kdl_conversions
+import PyKDL as kdl
 
 
 class LearnOperator(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['follow'])
+    def __init__(self, robot, operator_timeout = 20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
+        smach.State.__init__(self, outcomes=['follow', 'Failed'])
+        self.robot = robot
+        self.operator_timeout = operator_timeout
+        self.ask_follow = ask_follow
+        self.learn_face = learn_face
+        self.learn_person_timeout = learn_person_timeout
+
 
     def execute(self, userdata=None):
-        num_detections = 0
-        while num_detections < 2:   #  Should eventually be increased, 2 is too small
-            var = raw_input("Did I successfully detect you? Yes/No: ")
-            if var == "Yes":
-                num_detections += 1
-        print ("Detected operator successfully 2 times, start following...")
+        operator = None                                             # local vs global variables?!?!
+        start_time = rospy.Time.now()
+        self.robot.head.look_at_standing_person()
+        while not operator:
+            if self.preempt_requested():
+                return 'Failed'
 
-        # The operator should be added to the breadcrumb list here.
+            if(rospy.Time.now() - start_time).to_sec() > self.operator_timeout:
+                return 'Failed'
+
+            operator = self.robot.ed.get_closest_laser_entity(
+                radius=0.5,
+                center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
+                                                           frame_id="/%s/base_link" % self.robot.robot_name))
+            rospy.loginfo("Operator: {op}".format(op=operator))
+            if not operator:
+                self.robot.speech.speak("Please stand in front of me")
+            else:
+                if self._learn_face:
+                    self.robot.speech.speak("Please look at me while I learn to recognize you.",
+                                             block=True)
+                    self.robot.head.look_at_standing_person()
+                    learn_person_start_time = rospy.Time.now()
+                    num_detections = 0
+                    while num_detections < 5:
+                        if self.robot.perception.learn_person(self._operator_name):
+                            num_detections += 1
+                        elif (rospy.Time.now() - learn_person_start_time).to_sec() > self.learn_person_timeout:
+                            self.robot.speech.speak("Please stand in front of me and look at me")
+                            operator = None
+                            break
         return 'follow'
 
 
@@ -29,21 +60,16 @@ class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['track', 'no_track'],
-                             input_keys=['track_buffer_in'],
-                             output_keys=['track_buffer_out'])
+                             input_keys=['buffer'])
         self.counter = 0
-        # self.track_buffer_in = track_buffer_in
 
     def execute(self, userdata):
         if self.counter == 4:
-            userdata.track_buffer_out = userdata.track_buffer_in.append(self.counter)
+            userdata.buffer.append(self.counter)
             print ("New breadcrumb added to buffer")
-            # print userdata.track_buffer_out
             self.counter = 0
             return 'no_track'
-        userdata.track_buffer_out.append(userdata.track_buffer_in)
         self.counter += 1
-        print (".")
         return 'track'
 
 
@@ -51,26 +77,10 @@ class FollowBread(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread'],
-                             input_keys=['followbread_buffer_in'],
-                             output_keys=['followbread_buffer_out']
-                             )
-        # self.counter = 0
-        # self.navigation_data = [0]
+                             input_keys=['buffer'])
 
     def execute(self, userdata):
-        # if self.counter == 5:
-        #     return 'no_follow_bread'
-        # self.counter += 1
-
-        if len(userdata.followbread_buffer_in) is not None:
-            print userdata.followbread_buffer_in
-            # userdata.followbread_buffer_in.popleft()
-        # userdata.followbread_buffer_out = userdata.followbread_buffer_in
-
-        # print userdata.followbread_buffer_out
-
-        # print self.navigation_data
-        # userdata.followbread_buffer_out = userdata.followbread_buffer_in
+        print list(userdata.buffer)
         return 'follow_bread'
 
 
@@ -102,15 +112,11 @@ class Recovery(smach.State):
 def setup_statemachine(robot):
     sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
 
-    # sm_top.userdata.buffer = collections.deque()  #  Als buffer ook in Learn Operator moet komen
-
     with sm_top:
+        smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
+                               transitions={'follow': 'CON_FOLLOW',
+                                            'Failed': 'Failed'})
 
-        smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(),
-                               transitions={'follow': 'CON_FOLLOW'})
-
-        #  remapping={'learn_op_buffer_in': 'buffer', 'learn_op_buffer_out': 'buffer'}
-        #  Buffer should be initialized in Learn Operator since the first breadcrumb is found here
         smach.StateMachine.add('ASK_FINALIZE', AskFinalize(),
                                transitions={'follow': 'CON_FOLLOW',
                                             'Done': 'Done'})
@@ -125,26 +131,18 @@ def setup_statemachine(robot):
                                                 'recover_operator': {'FOLLOWBREAD': 'no_follow_bread',
                                                                      'TRACK': 'no_track'}})
 
-        sm_con.userdata.buffer = collections.deque()
+        sm_con.userdata.buffer = collections.deque([1])
 
         with sm_con:
-            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'followbread_buffer_in': 'buffer',
-                                                                            'followbread_buffer_out': 'buffer'})
+            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
 
-            smach.Concurrence.add('TRACK', Track()
-                                   , remapping={'track_buffer_in': 'buffer',
-                                                                'track_buffer_out': 'buffer'}
+            smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer'}
                                   )
 
         smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
                                             'ask_finalize': 'ASK_FINALIZE',
-                                            'keep_following': 'CON_FOLLOW'},
-                               # remapping={#'track_buffer_in': 'buffer',
-                               #            #'track_buffer_out': 'buffer',
-                               #            'followbread_buffer_in': 'buffer',
-                               #            'followbread_buffer_out': 'buffer'}
-                               )
+                                            'keep_following': 'CON_FOLLOW'})
 
         return sm_top
 
