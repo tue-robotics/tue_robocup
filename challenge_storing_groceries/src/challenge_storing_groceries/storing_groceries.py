@@ -111,8 +111,23 @@ class StoringGroceries(smach.StateMachine):
                                                    loop_outcomes=['succeeded', 'failed'])
 
             smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-                                   {'succeeded': 'AT_END',
+                                   {'succeeded': 'NAV_TO_END_INSPECTION',
                                     'failed': 'Aborted'})
+
+            smach.StateMachine.add("NAV_TO_END_INSPECTION",
+                                   states.NavigateToSymbolic(robot,
+                                                             {cabinet: "in_front_of"},
+                                                             cabinet),
+                                   transitions={'arrived': 'INSPECT_SHELVES_AFTER',
+                                                'unreachable': 'INSPECT_SHELVES_AFTER',
+                                                'goal_not_defined': 'INSPECT_SHELVES_AFTER'})
+
+            smach.StateMachine.add("INSPECT_SHELVES_AFTER",
+                                   InspectShelves(robot, cabinet,initial_inspection_results),
+                                   transitions={'succeeded': 'AT_END',
+                                                'nothing_found': 'AT_END',
+                                                'failed': 'AT_END'})
+
             # End setup iterator
 
             smach.StateMachine.add('AT_END',
