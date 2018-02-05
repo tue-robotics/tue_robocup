@@ -33,8 +33,10 @@ class Torso(RobotPart):
                                                               control_msgs.msg.FollowJointTrajectoryAction)
 
         # Init joint measurement subscriber
-        self.torso_sub = rospy.Subscriber('/' + self.robot_name + '/sergio/torso/measurements', JointState,
-                                          self._receive_torso_measurement)
+        self.torso_sub = self.create_subscriber('/' + self.robot_name + '/torso/measurements',
+                                                JointState, self._receive_torso_measurement)
+
+        self.subscribe_hardware_status('spindle')
 
     def close(self):
         """

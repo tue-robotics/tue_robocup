@@ -87,7 +87,7 @@ class TakeOrder(smach.State):
                 if "beverage" in speech_result.semantics:
                     self._robot.speech.speak("I understood that you would like {}, "
                                             "is this correct?".format(speech_result.semantics['beverage']))
-                elif "food1" and "food2" in speech_result.semantics:
+                elif "food1" in speech_result.semantics and "food2" in speech_result.semantics:
                     self._robot.speech.speak("I understood that you would like {} and {}, "
                                             "is this correct?".format(speech_result.semantics['food1'],
                                                                     speech_result.semantics['food2']))
