@@ -82,7 +82,7 @@ class WritePdf(smach.State):
         items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
-        items = sorted(items, key=lambda item: item[4])
+        #items = sorted(items, key=lambda item: item[4])
 
         # Filter to get the unknowns
         # Based on classfication threshold
