@@ -30,7 +30,7 @@ class WritePdf(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
         self._robot = robot
-        self._items = {}  # Dict mapping entity id to tuples: entity, probability, and filename of images
+        self._items = {}  # Dict mapping entity id to tuples: entity, probability, filename of images, and during which inspection
         self._designator = None
         self.initial_inspection_ds = initial_inspection_ds
         self.final_inspection_ds = final_inspection_ds
@@ -48,10 +48,16 @@ class WritePdf(smach.State):
         # ToDo: store probabilities in the world model
 
         # Get DETECTED_OBJECTS_WITH_PROBS, i.e., the detections resulting from inspection
-        for entity, probability in self.inspection_result_designator.DETECTED_OBJECTS_WITH_PROBS:
+        for entity, probability in self.initial_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
-                self._items[entity.id] = (entity, probability, image)
+                self._items[entity.id] = (entity, probability, image,"initialinspection")
+
+        for entity, probability in self.final_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
+            if entity.id not in self._items:
+                image = save_entity_image_to_file(self._robot.ed, entity.id)
+                self._items[entity.id] = (entity, probability, image,"finalinspection")
+
 
         # Try to get stuff from the designator if available
         if self._designator is not None:
@@ -66,7 +72,7 @@ class WritePdf(smach.State):
                 if result.id not in self._items:
                     image = save_entity_image_to_file(self._robot.ed, result.id)
                     entity = self._robot.ed.get_entity(id=result.id)
-                    self._items[entity.id] = (entity, result.probability, image)
+                    self._items[entity.id] = (entity, result.probability, image,"fromtable")
 
         # Filter and sort based on probabilities
         # Items with a to low probability are dropped from the list and thus not rendered to the PDF later
@@ -181,6 +187,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
     for item in items:
         entity = item[0]
         image = item[2]
+        wherefound = item[3]
         if len(entity.id) == 32 and entity.type != "":
             # image = save_entity_image_to_file(world_model_ed, entity.id)
             print "Created entry for %s (%s)" % (entity.id, entity.type)
@@ -192,6 +199,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
             html += "<td><center>"
             html += "<h2>%s</h2>" % entity.id
             html += "<p><b>Type: </b>%s</p>" % entity.type
+            html += "<p><b>Found: </b>%s</p>" % wherefound
             html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>" % (entity._pose.p.x(),
                                                                           entity._pose.p.y(),
                                                                           entity._pose.p.z())
