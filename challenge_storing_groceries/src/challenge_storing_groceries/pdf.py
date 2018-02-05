@@ -51,12 +51,12 @@ class WritePdf(smach.State):
         for entity, probability in self.initial_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
-                self._items[entity.id] = (entity, probability, image,"initialinspection")
+                self._items[entity.id] = (entity, probability, image,"initialinspection",len(self._items))
 
         for entity, probability in self.final_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
-                self._items[entity.id] = (entity, probability, image,"finalinspection")
+                self._items[entity.id] = (entity, probability, image,"finalinspection",len(self._items))
 
 
         # Try to get stuff from the designator if available
@@ -68,11 +68,13 @@ class WritePdf(smach.State):
             #   the entity,
             #   the probability for the type it has
             #   an image
+            #   the location
+            #   index label
             for result in results:
                 if result.id not in self._items:
                     image = save_entity_image_to_file(self._robot.ed, result.id)
                     entity = self._robot.ed.get_entity(id=result.id)
-                    self._items[entity.id] = (entity, result.probability, image,"fromtable")
+                    self._items[entity.id] = (entity, result.probability, image,"fromtable",len(self._items))
 
         # Filter and sort based on probabilities
         # Items with a to low probability are dropped from the list and thus not rendered to the PDF later
@@ -80,6 +82,7 @@ class WritePdf(smach.State):
         items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
+        items = sorted(items, key=lambda item: item[4])
 
         # Filter to get the unknowns
         # Based on classfication threshold
