@@ -22,7 +22,7 @@ class WritePdf(smach.State):
     """ Writes pdf based on entityinfo.
 
     """
-    def __init__(self, robot,inspection_result_designator ):
+    def __init__(self, robot,initial_inspection_ds,final_inspection_ds ):
         """ Constructor
 
         :param robot: robot object
@@ -32,7 +32,8 @@ class WritePdf(smach.State):
         self._robot = robot
         self._items = {}  # Dict mapping entity id to tuples: entity, probability, and filename of images
         self._designator = None
-        self.inspection_result_designator = inspection_result_designator
+        self.initial_inspection_ds = initial_inspection_ds
+        self.final_inspection_ds = final_inspection_ds
 
     def execute(self, userdata=None):
 

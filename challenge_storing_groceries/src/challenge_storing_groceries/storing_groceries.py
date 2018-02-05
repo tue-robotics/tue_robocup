@@ -22,8 +22,11 @@ class StoringGroceries(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
-        initial_inspection_results = InspectionResultDesignator() 
-        pdf_writer = WritePdf(robot=robot,inspection_result_designator=initial_inspection_results)
+        initial_inspection_ds = InspectionResultDesignator() 
+        final_inspection_ds = InspectionResultDesignator()
+
+        #Filtering what was already written to pdf happens in pdf_writer
+        pdf_writer = WritePdf(robot=robot,initial_inspection_ds=initial_inspection_ds, final_inspection_ds=final_inspection_ds)
 
         with self:
             single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
@@ -89,7 +92,7 @@ class StoringGroceries(smach.StateMachine):
                                                 'goal_not_defined': 'INSPECT_SHELVES_BEFORE'})
 
             smach.StateMachine.add("INSPECT_SHELVES_BEFORE",
-                                   InspectShelves(robot, cabinet,initial_inspection_results),
+                                   InspectShelves(robot, cabinet,initial_inspection_ds),
                                    transitions={'succeeded': 'WRITE_PDF_SHELVES_BEFORE',
                                                 'nothing_found': 'WRITE_PDF_SHELVES_BEFORE',
                                                 'failed': 'WRITE_PDF_SHELVES_BEFORE'})
@@ -124,9 +127,11 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES_AFTER",
                                    InspectShelves(robot, cabinet,initial_inspection_results),
-                                   transitions={'succeeded': 'AT_END',
-                                                'nothing_found': 'AT_END',
-                                                'failed': 'AT_END'})
+                                   transitions={'succeeded': 'WRITE_PDF_SHELVES_AFTER',
+                                                'nothing_found': 'WRITE_PDF_SHELVES_AFTER',
+                                                'failed': 'WRITE_PDF_SHELVES_AFTER'})
+
+            smach.StateMachine.add("WRITE_PDF_SHELVES_AFTER", pdf_writer, transitions={"done": "AT_END"})
 
             # End setup iterator
 
