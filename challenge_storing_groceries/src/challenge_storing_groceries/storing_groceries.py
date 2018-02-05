@@ -126,7 +126,7 @@ class StoringGroceries(smach.StateMachine):
                                                 'goal_not_defined': 'INSPECT_SHELVES_AFTER'})
 
             smach.StateMachine.add("INSPECT_SHELVES_AFTER",
-                                   InspectShelves(robot, cabinet,initial_inspection_results),
+                                   InspectShelves(robot, cabinet,final_inspection_ds),
                                    transitions={'succeeded': 'WRITE_PDF_SHELVES_AFTER',
                                                 'nothing_found': 'WRITE_PDF_SHELVES_AFTER',
                                                 'failed': 'WRITE_PDF_SHELVES_AFTER'})
