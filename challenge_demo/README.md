@@ -3,7 +3,7 @@ Responsible: Matthijs
 # Start-up
 
     <robot>-demo-<location>
-    For robot you can currently only use "amigo".
+    For robot you can currently only use "AMIGO".
     For location you can use "intern" or "extern" (these are currently identical).
 
 # Scenario
