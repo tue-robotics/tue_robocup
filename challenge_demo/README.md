@@ -1,6 +1,8 @@
 Responsible: Matthijs
 
-# Start-up
+Start the relevant robot according to the [start-up manual](https://github.com/tue-robotics/tue-robotics.github.io/wiki/Starting-the-robots).
+
+# Starting demo
 
     <robot>-demo
 
