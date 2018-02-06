@@ -23,7 +23,7 @@ class WritePdf(smach.State):
     """ Writes pdf based on entityinfo.
 
     """
-    def __init__(self, robot,initial_inspection_ds,final_inspection_ds ):
+    def __init__(self, robot,initial_inspection_ds ):
         """ Constructor
 
         :param robot: robot object
@@ -34,7 +34,7 @@ class WritePdf(smach.State):
         self._items = {}  # Dict mapping entity id to tuples: entity, probability, filename of images, and during which inspection
         self._designator = None
         self.initial_inspection_ds = initial_inspection_ds
-        self.final_inspection_ds = final_inspection_ds
+        #self.final_inspection_ds = final_inspection_ds
 
     def execute(self, userdata=None):
 
@@ -54,10 +54,10 @@ class WritePdf(smach.State):
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
                 self._items[entity.id] = (entity, probability, image,"initialinspection",len(self._items))
 
-        for entity, probability in self.final_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
-            if entity.id not in self._items:
-                image = save_entity_image_to_file(self._robot.ed, entity.id)
-                self._items[entity.id] = (entity, probability, image,"finalinspection",len(self._items))
+        # for entity, probability in self.final_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
+        #     if entity.id not in self._items:
+        #         image = save_entity_image_to_file(self._robot.ed, entity.id)
+        #         self._items[entity.id] = (entity, probability, image,"finalinspection",len(self._items))
 
 
         # Try to get stuff from the designator if available
@@ -83,6 +83,8 @@ class WritePdf(smach.State):
         items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
+
+        # Filter again based on when added to list, for PDF generation
         items = sorted(items, key=lambda item: item[4])
         rospy.loginfo([item[0].type for item in items])
 
@@ -190,7 +192,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
     html += "<h1>%s</h1>" % name
     html += "<h1>date: %s</h1>" % time.strftime("%c")
     html += "<hr>"
-    html += "<Found in initial closet inspection:>"
+    html += "<h1>Found in initial closet inspection:</h1>"
 
     for index,item in enumerate(items):
         entity = item[0]
@@ -199,7 +201,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
         if len(entity.id) == 32 and entity.type != "":
             # image = save_entity_image_to_file(world_model_ed, entity.id)
             if wherefound == "fromtable" and items[index-1][3] == "initialinspection":
-                html+= "Found on table:"
+                html+= "<h1>Found on table:</h1>"
 
             print "Created entry for %s (%s)" % (entity.id, entity.type)
             html += "<table border='1'><tr>"
