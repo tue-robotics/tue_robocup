@@ -13,22 +13,21 @@ import PyKDL as kdl
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
-        #operator, operator_id,
-        smach.State.__init__(self, outcomes=['follow', 'Failed'])
-                             #output_keys=['operator', 'operator_id'])
+        smach.State.__init__(self, outcomes=['follow', 'Failed'],
+                             output_keys=['operator', 'operator_id'])
         self._robot = robot
         self._operator_timeout = operator_timeout
         self._ask_follow = ask_follow
         self._learn_face = learn_face
         self._learn_person_timeout = learn_person_timeout
         self._operator_name = "operator"
-        # self._operator = operator
-        # self._operator_id = operator_id
 
     def execute(self, userdata=None):
         operator = None                                             # local vs global variables?!?!
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
+
+        import pdb; pdb.set_trace()
         while not operator:
             if self.preempt_requested():
                 return 'Failed'
@@ -52,6 +51,7 @@ class LearnOperator(smach.State):
                     num_detections = 0
                     while num_detections < 5:
                         if self._robot.perception.learn_person(self._operator_name):
+                            self._roboto.speech.speak("Succesfully detected you %f times" % num_detections)
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                             self._robot.speech.speak("Please stand in front of me and look at me")
@@ -60,25 +60,44 @@ class LearnOperator(smach.State):
         print "We have a new operator: %s" % operator.id
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
-        # self._operator = operator
-        # self._operator_id = operator_id
+        self._operator = operator
+        self._operator_id = operator_id
         return 'follow'
 
 class Track(smach.State):  # Updates the breadcrumb path
-     def __init__(self):
+    def __init__(self):
          smach.State.__init__(self,
-                              outcomes=['track', 'no_track'])
-         #input_keys=['buffer', 'operator', 'operator_id'])      ## werkt dit zo met input keys?
+                              outcomes=['track', 'no_track'],
+                              input_keys=['buffer', 'operator', 'operator_id'])      ## werkt dit zo met input keys?
          self.counter = 0
-         self._operator_id = None
+         self.period = 0.5          #fix this magic number
 
-     def execute(self, userdata):
-         # if self._operator_id:
-         #     self._operator = self._robot.ed.get_entity(id=self._operator_id)
-         #
-         #
-         # else:
-         #     self._operator = None
+    def execute(self, userdata):
+        # if self._operator_id:
+        #     self._operator = self._robot.ed.get_entity(id=self._operator_id)
+        #     if (rospy.Time.now().to_sec() - self._operator.last_update_time) > self._period:
+        #         self._robot.speech.speak("Not so fast!")
+        #
+        #     # If the operator is still tracked, it is also the last_operator
+        #     self._last_operator = self._operator
+        #
+        #     operator_pos = geometry_msgs.msg.PointStamped()
+        #     operator_pos.header.stamp = rospy.get_rostime()
+        #     operator_pos.header.frame_id = self._operator_id
+        #     operator_pos.point.x = 0.0
+        #     operator_pos.point.y = 0.0
+        #     operator_pos.point.z = 0.0
+        #     self._operator_pub.publish(operator_pos)
+        #
+        #     f = self._robot.base.get_location().frame
+        #     self._operator_distance = self._last_operator.distance_to_2d(f.p)
+        #
+        #     return 'track'
+        #
+        # else:
+        #      self._operator = None
+         print userdata.operator
+         print userdata.operator_id
 
          if self.counter == 4:
              userdata.buffer.append(self.counter)
@@ -197,7 +216,7 @@ def setup_statemachine(robot):
         sm_con.userdata.buffer = collections.deque([1])
 
         with sm_con:
-            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
+            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer', 'operator': 'operator', 'operator_id': 'operator_id'})
 
             smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer'})
 
