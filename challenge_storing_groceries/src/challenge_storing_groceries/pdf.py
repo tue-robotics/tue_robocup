@@ -6,6 +6,7 @@ import numpy as np
 import os
 from PIL import Image
 from xhtml2pdf import pisa
+import time
 
 # ROS
 import rospy
@@ -82,7 +83,8 @@ class WritePdf(smach.State):
         items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
-        #items = sorted(items, key=lambda item: item[4])
+        items = sorted(items, key=lambda item: item[4])
+        rospy.loginfo([item[0].type for item in items])
 
         # Filter to get the unknowns
         # Based on classfication threshold
@@ -186,13 +188,19 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
 
     html += "<body>"
     html += "<h1>%s</h1>" % name
+    html += "<h1>date: %s</h1>" % time.strftime("%c")
+    html += "<hr>"
 
-    for item in items:
+    for index,item in enumerate(items):
         entity = item[0]
         image = item[2]
         wherefound = item[3]
         if len(entity.id) == 32 and entity.type != "":
             # image = save_entity_image_to_file(world_model_ed, entity.id)
+            if wherefound == "fromtable" && items[index-1][3] == "initialinspection"
+                html+= "<hr>"
+
+
             print "Created entry for %s (%s)" % (entity.id, entity.type)
             html += "<table border='1'><tr>"
             if image:
