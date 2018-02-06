@@ -190,6 +190,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
     html += "<h1>%s</h1>" % name
     html += "<h1>date: %s</h1>" % time.strftime("%c")
     html += "<hr>"
+    html += "<Found in initial closet inspection:>"
 
     for index,item in enumerate(items):
         entity = item[0]
@@ -197,9 +198,8 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
         wherefound = item[3]
         if len(entity.id) == 32 and entity.type != "":
             # image = save_entity_image_to_file(world_model_ed, entity.id)
-            if wherefound == "fromtable" && items[index-1][3] == "initialinspection"
-                html+= "<hr>"
-
+            if wherefound == "fromtable" and items[index-1][3] == "initialinspection":
+                html+= "Found on table:"
 
             print "Created entry for %s (%s)" % (entity.id, entity.type)
             html += "<table border='1'><tr>"
