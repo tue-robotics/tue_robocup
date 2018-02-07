@@ -24,24 +24,24 @@ class LearnOperator(smach.State):
         self._operator_name = "operator"
 
     def execute(self, userdata):
-        operator = None                                             # local vs global variables?!?!
+        # operator = None                                             # local vs global variables?!?!
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
 
         # import pdb; pdb.set_trace()
-        while not operator:
+        while not userdata.operator:
             if self.preempt_requested():
                 return 'Failed'
 
             if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return 'Failed'
 
-            operator = self._robot.ed.get_closest_laser_entity(
+            userdata.operator = self._robot.ed.get_closest_laser_entity(
                 radius=0.5,
                 center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
                                                            frame_id="/%s/base_link" % self._robot.robot_name))
-            rospy.loginfo("Operator: {op}".format(op=operator))
-            if not operator:
+            rospy.loginfo("Operator: {op}".format(op=userdata.operator))
+            if not userdata.operator:
                 self._robot.speech.speak("Please stand in front of me")
             else:
                 if self._learn_face:
@@ -56,12 +56,12 @@ class LearnOperator(smach.State):
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                             self._robot.speech.speak("Please stand in front of me and look at me")
-                            operator = None
+                            userdata.operator = None
                             break
         print "We have a new operator: %s" % operator.id
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
-        operator = operator
+        # operator = operator
         # self._operator_id = operator_id
         return 'follow'
 
@@ -97,16 +97,16 @@ class Track(smach.State):  # Updates the breadcrumb path
         #
         # else:
         #      self._operator = None
-         print userdata.operator
-         print userdata.operator_id
+        print userdata.operator
+        # print userdata.operator_id
 
-         if self.counter == 4:
-             userdata.buffer.append(self.counter)
-             print ("New breadcrumb added to buffer")
-             self.counter = 0
-             return 'no_track'
-         self.counter += 1
-         return 'track'
+        if self.counter == 4:
+            userdata.buffer.append(self.counter)
+            print ("New breadcrumb added to buffer")
+            self.counter = 0
+            return 'no_track'
+        self.counter += 1
+        return 'track'
 
 
    # def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0,
@@ -224,13 +224,14 @@ def setup_statemachine(robot):
         with sm_con:
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
 
-            smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer', 'operator': 'operator', 'operator_id': 'operator_id'})
+            smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer',
+                                                               'operator': 'operator',
+                                                               'operator_id': 'operator_id'})
 
         smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
                                             'ask_finalize': 'ASK_FINALIZE',
-                                            'keep_following': 'CON_FOLLOW'}) #,
-                              #  remapping={'operator': 'operator', 'operator_id': 'operator_id'})
+                                            'keep_following': 'CON_FOLLOW'})
 
         return sm_top
 
