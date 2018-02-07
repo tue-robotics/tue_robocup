@@ -27,7 +27,7 @@ class LearnOperator(smach.State):
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         while not operator:
             if self.preempt_requested():
                 return 'Failed'
@@ -51,7 +51,7 @@ class LearnOperator(smach.State):
                     num_detections = 0
                     while num_detections < 5:
                         if self._robot.perception.learn_person(self._operator_name):
-                            self._roboto.speech.speak("Succesfully detected you %f times" % num_detections)
+                            self._robot.speech.speak("Succesfully detected you %f times" % num_detections)
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                             self._robot.speech.speak("Please stand in front of me and look at me")
@@ -159,7 +159,7 @@ class FollowBread(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread'],
-                             input_keys=['buffer'])
+                             input_keys=['buffer', 'operator', 'operator_id'])
 
     def execute(self, userdata):
         print list(userdata.buffer)
@@ -193,11 +193,14 @@ class Recovery(smach.State):
 
 def setup_statemachine(robot):
     sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
+    sm_top.userdata.operator = None
+    sm_top.userdata.operator_id = None
 
     with sm_top:
         smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
                                transitions={'follow': 'CON_FOLLOW',
-                                            'Failed': 'Failed'})
+                                            'Failed': 'Failed'},
+                               remapping={'operator': 'operator', 'operator_id': 'operator_id'})
 
         smach.StateMachine.add('ASK_FINALIZE', AskFinalize(),
                                transitions={'follow': 'CON_FOLLOW',
@@ -218,7 +221,7 @@ def setup_statemachine(robot):
         with sm_con:
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer', 'operator': 'operator', 'operator_id': 'operator_id'})
 
-            smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer'})
+            smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer', 'operator': 'operator', 'operator_id': 'operator_id'})
 
         smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
