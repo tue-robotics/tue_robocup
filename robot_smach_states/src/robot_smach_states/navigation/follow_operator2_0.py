@@ -14,8 +14,8 @@ import PyKDL as kdl
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
         smach.State.__init__(self, outcomes=['follow', 'Failed'],
-                             input_keys=['operator', 'operator_id'],
-                             output_keys=['operator', 'operator_id'])
+                             input_keys=['operator_learn_in', 'operator_id_in'],
+                             output_keys=['operator_learn_out', 'operator_id_out'])
         self._robot = robot
         self._operator_timeout = operator_timeout
         self._ask_follow = ask_follow
@@ -27,21 +27,21 @@ class LearnOperator(smach.State):
         # operator = None                                             # local vs global variables?!?!
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
-
+        operator = userdata.operator_learn_in
         # import pdb; pdb.set_trace()
-        while not userdata.operator:
+        while not operator:
             if self.preempt_requested():
                 return 'Failed'
 
             if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return 'Failed'
 
-            userdata.operator = self._robot.ed.get_closest_laser_entity(
+            operator = self._robot.ed.get_closest_laser_entity(
                 radius=0.5,
                 center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
                                                            frame_id="/%s/base_link" % self._robot.robot_name))
-            rospy.loginfo("Operator: {op}".format(op=userdata.operator))
-            if not userdata.operator:
+            rospy.loginfo("Operator: {op}".format(op=operator))
+            if not operator:
                 self._robot.speech.speak("Please stand in front of me")
             else:
                 if self._learn_face:
@@ -50,19 +50,19 @@ class LearnOperator(smach.State):
                     self._robot.head.look_at_standing_person()
                     learn_person_start_time = rospy.Time.now()
                     num_detections = 0
-                    while num_detections < 3: # 5:
+                    while num_detections < 2: # 5:
                         if self._robot.perception.learn_person(self._operator_name):
                             self._robot.speech.speak("Succesfully detected you %i times" % (num_detections + 1))
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                             self._robot.speech.speak("Please stand in front of me and look at me")
-                            userdata.operator = None
+                            operator = None
                             break
-        print "We have a new operator: %s" % operator.id
+        print "We have a new operator: %s" % userdata.operator.id
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
-        # operator = operator
-        # self._operator_id = operator_id
+        userdata.operator_learn_out = operator
+        userdata.operator_id_out = userdata.operator.id
         return 'follow'
 
 class Track(smach.State):  # Updates the breadcrumb path
@@ -201,7 +201,8 @@ def setup_statemachine(robot):
         smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
                                transitions={'follow': 'CON_FOLLOW',
                                             'Failed': 'Failed'},
-                               remapping={'operator': 'operator', 'operator_id': 'operator_id'})
+                               remapping={'operator_learn_in': 'operator', 'operator_id_in': 'operator_id',
+                                          'operator_learn_out': 'operator', 'operator_id_out': 'operator_id'})
 
         smach.StateMachine.add('ASK_FINALIZE', AskFinalize(),
                                transitions={'follow': 'CON_FOLLOW',
