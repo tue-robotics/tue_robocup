@@ -50,9 +50,9 @@ class LearnOperator(smach.State):
                     self._robot.head.look_at_standing_person()
                     learn_person_start_time = rospy.Time.now()
                     num_detections = 0
-                    while num_detections < 5:
+                    while num_detections < 3: # 5:
                         if self._robot.perception.learn_person(self._operator_name):
-                            self._robot.speech.speak("Succesfully detected you %f times" % num_detections)
+                            self._robot.speech.speak("Succesfully detected you %i times" % (num_detections + 1))
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                             self._robot.speech.speak("Please stand in front of me and look at me")
@@ -61,8 +61,8 @@ class LearnOperator(smach.State):
         print "We have a new operator: %s" % operator.id
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
-        self._operator = operator
-        self._operator_id = operator_id
+        operator = operator
+        # self._operator_id = operator_id
         return 'follow'
 
 class Track(smach.State):  # Updates the breadcrumb path
@@ -218,6 +218,8 @@ def setup_statemachine(robot):
                                                                      'TRACK': 'no_track'}})
 
         sm_con.userdata.buffer = collections.deque([1])
+        sm_con.userdata.operator = sm_top.userdata.operator
+        sm_con.userdata.operator_id = sm_top.userdata.operator_id
 
         with sm_con:
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
@@ -227,7 +229,8 @@ def setup_statemachine(robot):
         smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
                                             'ask_finalize': 'ASK_FINALIZE',
-                                            'keep_following': 'CON_FOLLOW'})
+                                            'keep_following': 'CON_FOLLOW'}) #,
+                              #  remapping={'operator': 'operator', 'operator_id': 'operator_id'})
 
         return sm_top
 
