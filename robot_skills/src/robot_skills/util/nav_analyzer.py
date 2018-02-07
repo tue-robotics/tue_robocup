@@ -21,7 +21,7 @@ import PyKDL as kdl
 
 # Robot skills
 import transformations
-from robot_skills.util.kdl_conversions import pointMsgToKdlVector
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
 
 
 class NavAnalyzer:
@@ -115,7 +115,7 @@ class NavAnalyzer:
 
         ''' Log startpose '''
         startposeitem = ET.SubElement(self.logitem, "startpose")
-        self.kdlFrameToSubElement(startpose, startposeitem)
+        self.kdl_frame_to_sub_element(startpose, startposeitem)
 
         ''' Start bagging '''
         # The os.setsid() is passed in the argument preexec_fn so
@@ -141,7 +141,7 @@ class NavAnalyzer:
 
         ''' Log endpose '''
         endposeitem = ET.SubElement(self.logitem, "endpose")
-        self.kdlFrameToSubElement(endpose, endposeitem)
+        self.kdl_frame_to_sub_element(endpose, endposeitem)
 
         ''' Make inactive '''
         self.active = False
@@ -198,16 +198,16 @@ class NavAnalyzer:
         self.active = False
 
     def odomCallback(self, odom_msg):
-        current_position = pointMsgToKdlVector(odom_msg.pose.pose.position)
+        current_position = point_msg_to_kdl_vector(odom_msg.pose.pose.position)
         if self.active:
             self.distance_traveled += kdl.diff(current_position, self.previous_position).Norm()
 
         self.previous_position = current_position
 
-    def kdlFrameToSubElement(self, kdlFrame, element):
-        x   = kdlFrame.p.x()
-        y   = kdlFrame.p.y()
-        phi = kdlFrame.M.GetRPY()[2]  # Get the yaw
+    def kdl_frame_to_sub_element(self, kdl_frame, element):
+        x   = kdl_frame.p.x()
+        y   = kdl_frame.p.y()
+        phi = kdl_frame.M.GetRPY()[2]  # Get the yaw
         element.set("x", "{0}".format(x))
         element.set("y", "{0}".format(y))
         element.set("phi", "{0}".format(phi))

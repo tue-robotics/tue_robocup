@@ -35,9 +35,9 @@ for side, arm in robot.arms.items():
 
     # Notice the - for the right arm's Y position.
     if arm == robot.leftArm:
-        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342,  0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+        goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
     if arm == robot.rightArm:
-        goal1 = kdl_conversions.kdlFrameStampedFromXYZRPY(0.342, -0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+        goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342, -0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):

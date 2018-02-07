@@ -19,7 +19,7 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 # Robot skills
 from .util import transformations
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, kdlVectorToPointMsg
+from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
 from .classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
 from robot_part import RobotPart
@@ -87,7 +87,7 @@ class ED(RobotPart):
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self._tf_listener)
-        query = SimpleQueryRequest(id=id, type=type, center_point=kdlVectorToPointMsg(center_point_in_map.vector), radius=radius)
+        query = SimpleQueryRequest(id=id, type=type, center_point=kdl_vector_to_point_msg(center_point_in_map.vector), radius=radius)
 
         try:
             entity_infos= self._ed_simple_query_srv(query).entities

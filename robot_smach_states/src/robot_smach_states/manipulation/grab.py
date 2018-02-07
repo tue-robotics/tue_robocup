@@ -5,7 +5,7 @@ import rospy
 import smach
 import tf
 
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, VectorStamped
+from robot_skills.util.kdl_conversions import VectorStamped
 
 from robot_skills.util.entity import Entity
 

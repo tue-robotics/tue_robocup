@@ -18,7 +18,7 @@ from actionlib_msgs.msg import GoalStatus
 from robot_part import RobotPart
 from .util import nav_analyzer
 from .util import transformations
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromPoseStampedMsg
+from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg
 
 
 ###########################################################################################################################
@@ -281,13 +281,13 @@ def get_location(robot_name, tf_listener):
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         target_pose.header.stamp = time
-        return kdlFrameStampedFromPoseStampedMsg(target_pose)
+        return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
     except (tf.LookupException, tf.ConnectivityException):
         rospy.logerr("tf request failed!!!")
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
-        return kdlFrameStampedFromPoseStampedMsg(target_pose)
+        return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
 def computePathLength(path):
     distance = 0.0

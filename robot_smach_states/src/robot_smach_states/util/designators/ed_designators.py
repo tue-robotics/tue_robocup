@@ -17,8 +17,8 @@ from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, pointMsgToKdlVector, VectorStamped, FrameStamped, \
-    kdlFrameStampedFromXYZRPY
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped, FrameStamped, \
+    kdl_frame_stamped_from_XYZRPY
 
 __author__ = 'loy'
 
@@ -469,10 +469,10 @@ class EmptySpotDesignator(Designator):
                 ys = ch[i].y() + d / length * dy
 
                 # Shift point inwards and fill message
-                fs = kdlFrameStampedFromXYZRPY(x=xs - dy / length * self._edge_distance,
-                                               y=ys + dx / length * self._edge_distance,
-                                               z=center_frame.p.z() + z_max,
-                                               frame_id="/map")
+                fs = kdl_frame_stamped_from_XYZRPY(x=xs - dy / length * self._edge_distance,
+                                                   y=ys + dx / length * self._edge_distance,
+                                                   z=center_frame.p.z() + z_max,
+                                                   frame_id="/map")
 
                 # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
                 # prevent the robot from hitting the cabinet edges

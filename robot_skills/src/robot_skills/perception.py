@@ -14,7 +14,7 @@ from robot_part import RobotPart
 from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
 
 from .util import msg_constructors as msgs
-from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
+from .util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
 from .util.image_operations import img_recognitions_to_rois, img_cutout
 
 
