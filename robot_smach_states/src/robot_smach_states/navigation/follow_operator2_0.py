@@ -14,6 +14,7 @@ import PyKDL as kdl
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
         smach.State.__init__(self, outcomes=['follow', 'Failed'],
+                             input_keys=['operator', 'operator_id'],
                              output_keys=['operator', 'operator_id'])
         self._robot = robot
         self._operator_timeout = operator_timeout
@@ -22,7 +23,7 @@ class LearnOperator(smach.State):
         self._learn_person_timeout = learn_person_timeout
         self._operator_name = "operator"
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
         operator = None                                             # local vs global variables?!?!
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
@@ -159,7 +160,7 @@ class FollowBread(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread'],
-                             input_keys=['buffer', 'operator', 'operator_id'])
+                             input_keys=['buffer'])
 
     def execute(self, userdata):
         print list(userdata.buffer)
@@ -219,7 +220,7 @@ def setup_statemachine(robot):
         sm_con.userdata.buffer = collections.deque([1])
 
         with sm_con:
-            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer', 'operator': 'operator', 'operator_id': 'operator_id'})
+            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
 
             smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer', 'operator': 'operator', 'operator_id': 'operator_id'})
 
