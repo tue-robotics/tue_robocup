@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # ROS
 import rospy
 
@@ -91,8 +89,3 @@ class Speech(RobotPart):
             self._post_hook()
 
         return result
-
-
-if __name__ == "__main__":
-    rospy.init_node("amigo_speech_executioner", anonymous=True)
-    speech = Speech("amigo")

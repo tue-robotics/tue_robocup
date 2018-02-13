@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # System
 from threading import Condition
 
@@ -262,12 +260,3 @@ class Perception(RobotPart):
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
         rospy.loginfo('face_properties:%s', face_log)
         return face_properties
-
-#######################################
-
-
-if __name__ == "__main__":
-    import tf_server
-    rospy.init_node('amigo_perception_executioner', anonymous=True)
-    tf_listener = tf_server.TFClient()
-    perception = Perception("amigo", tf_listener)

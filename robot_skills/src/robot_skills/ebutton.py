@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # ROS
 import rospy
 from std_msgs.msg import Bool
@@ -31,8 +29,3 @@ class EButton(RobotPart):
 
     def read_ebutton(self):
         return self._ebuttonstatus
-
-
-if __name__ == "__main__":
-    rospy.init_node('ebutton_executive', anonymous=True)
-    ebutton = EButton()

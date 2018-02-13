@@ -1,7 +1,3 @@
-#! /usr/bin/env python
-
-# System
-
 # ROS
 import rospy
 import std_msgs.msg
@@ -575,11 +571,3 @@ class Arm(RobotPart):
 
     def __repr__(self):
         return "Arm(side='{side}')".format(side=self.side)
-
-
-if __name__ == "__main__":
-    rospy.init_node('amigo_arms_executioner', anonymous=True)
-    tf_listener = tf_server.TFClient()
-
-    left = Arm('amigo', "left", tf_listener)
-    right = Arm('amigo', "right", tf_listener)
