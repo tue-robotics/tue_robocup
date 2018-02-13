@@ -7,7 +7,7 @@ import smach
 import tf
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, VectorStamped
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
 from robot_skills.arms import Arm, GripperMeasurement
 from robot_smach_states.util.designators import check_type

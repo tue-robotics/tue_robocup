@@ -8,7 +8,8 @@ import smach
 
 # TU/e Robotics
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped, kdlVectorStampedFromPointStampedMsg
+
+from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_stamped_from_point_stamped_msg
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
 

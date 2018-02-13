@@ -9,7 +9,7 @@ from sensor_msgs.msg import LaserScan
 import smach
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import quaternionMsgToKdlRotation
+from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
 import check_ebutton
 import human_interaction
 import utility
@@ -192,7 +192,7 @@ class WaitForDoorOpen(smach.State):
         r = Quaternion()
         _, (r.x, r.y, r.z, r.w) = self._robot.tf_listener.lookupTransform(self._robot.base_link_frame,
                                                                           self._robot.robot_name + '/base_laser')
-        laser_rotation = quaternionMsgToKdlRotation(r)
+        laser_rotation = quaternion_msg_to_kdl_rotation(r)
         self.laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
         self.laser_yaw = laser_rotation.GetRPY()[2]
         self.laser_sub = rospy.Subscriber("/" + self._robot.robot_name + "/base_laser/scan", LaserScan,

@@ -134,7 +134,7 @@ class StoreBeverageSide(smach.State):
             print result
             print "\n"
 
-        self._robot.ed.update_entity(id="beverages", kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
+        self._robot.ed.update_entity(id="beverages", kdl_frame_stamped=FrameStamped(base_pose, "/map"), type="waypoint")
         return "done"
 
 def load_waypoints(robot, filename="/param/locations.yaml"):
@@ -149,7 +149,7 @@ def load_waypoints(robot, filename="/param/locations.yaml"):
             base_pose.pose.orientation = transformations.euler_z_to_quaternion(location['phi'])
 
             visualize_location(base_pose, tablename)
-            robot.ed.update_entity(id=tablename, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
+            robot.ed.update_entity(id=tablename, kdl_frame_stamped=FrameStamped(base_pose, "/map"), type="waypoint")
 
 if "--custom" not in sys.argv:
     from automatic_side_detection import StoreWaypoint
@@ -199,7 +199,7 @@ else:
                     loc_dict = {'x':base_pose.p.x(), 'y':base_pose.p.y(), 'phi':base_pose.M.GetRPY()[2]}
                     rospy.set_param("/restaurant_locations/{name}".format(name=location), loc_dict)
                     visualize_location(base_pose, location)
-                    self._robot.ed.update_entity(id=location, kdlFrameStamped=FrameStamped(base_pose, "/map"), type="waypoint")
+                    self._robot.ed.update_entity(id=location, kdl_frame_stamped=FrameStamped(base_pose, "/map"), type="waypoint")
 
                     return "done"
 
@@ -617,10 +617,10 @@ def setup_statemachine(robot):
 
 
 def test_delivery(robot):
-    from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY
-    robot.ed.update_entity(id="one", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=1.0, y=0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="two", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
-    robot.ed.update_entity(id="three", kdlFrameStamped=kdlFrameStampedFromXYZRPY(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
+    from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY
+    robot.ed.update_entity(id="one", kdl_frame_stamped=kdl_frame_stamped_from_XYZRPY(x=1.0, y=0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="two", kdl_frame_stamped=kdl_frame_stamped_from_XYZRPY(x=-1.2, y=0.0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="three", kdl_frame_stamped=kdl_frame_stamped_from_XYZRPY(x=1.950, y=1.551, frame_id="/map"), type="waypoint")
 
     global ORDERS
     ORDERS = {"beverage":{"name":"coke", "location":"one"}, "combo":{"name":"pringles and chocolate", "location":"two"}}

@@ -33,7 +33,7 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_smach_states.util.geometry_helpers import *
-from robot_skills.util.kdl_conversions import kdlVectorStampedFromPointStampedMsg, VectorStamped
+from robot_skills.util.kdl_conversions import VectorStamped
 
 # Robot Skills
 from robot_skills.util.entity import Entity

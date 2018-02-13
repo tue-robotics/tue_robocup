@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import roslib;
 import rospy
 import smach
 import sys
@@ -194,7 +193,7 @@ def setup_statemachine(robot):
     current_item = ds.VariableDesignator(Entity("dummy",
                                                 "dummy",
                                                 "/{}/base_link".format(robot.robot_name),
-                                                kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5),
+                                                kdl_conversions.kdl_frame_from_XYZRPY(0.6, 0, 0.5),
                                                 None,
                                                 {},
                                                 [],

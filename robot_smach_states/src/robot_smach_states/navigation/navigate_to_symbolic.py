@@ -6,7 +6,7 @@ import rospy
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import kdlVectorToPointMsg
+from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
 from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.util.designators import check_resolve_type
 
@@ -65,7 +65,7 @@ class NavigateToSymbolic(NavigateTo):
             rospy.logerr("Could not resolve entity_lookat_designator".format(self.entity_lookat_designator))
             return None
 
-        look_at = kdlVectorToPointMsg(entity_lookat.pose.extractVectorStamped().vector)
+        look_at = kdl_vector_to_point_msg(entity_lookat.pose.extractVectorStamped().vector)
         oc = OrientationConstraint(look_at=look_at, frame=entity_lookat.pose.frame_id)
 
         return pc, oc
