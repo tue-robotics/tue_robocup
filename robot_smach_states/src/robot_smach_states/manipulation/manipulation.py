@@ -1,17 +1,18 @@
+# ROS
 import rospy
 import smach
-from robot_skills.util import transformations
 
+# TU/e Robotics
 from ed_msgs.msg import EntityInfo
-
+from robot_skills.arms import Arm
+from robot_skills.arms import GripperState
+from robot_skills.util import transformations
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
-from robot_skills.arms import GripperState
 from robot_smach_states.util.designators import LockingDesignator
-
 from robot_smach_states.util.designators import check_type
-from robot_skills.arms import Arm
+
 
 
 # TODO: poses to move to robot_description:

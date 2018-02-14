@@ -1,9 +1,12 @@
-#! /usr/bin/env python
-import PyKDL as kdl
+# System
 import math
 
+# ROS
+import PyKDL as kdl
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
+
+# TU/e Robotics
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
 from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, FrameStamped, kdl_frame_to_pose_msg
 

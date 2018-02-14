@@ -1,8 +1,10 @@
-#!/usr/bin/env python
+# ROS
 import rospy
+from std_srvs.srv import Empty
+
+# TU/e Robotics
 from hmi_msgs.msg import QueryAction
 from hmi import Client, TimeoutException
-from std_srvs.srv import Empty
 from robot_part import RobotPart
 
 

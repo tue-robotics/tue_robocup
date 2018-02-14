@@ -1,15 +1,17 @@
 #! /usr/bin/python
 
+# System
+import cmd
+import importlib
+import multiprocessing
 import sys
 
-import cmd
+# ROS
 import rospy
-import importlib
-import threading
-import multiprocessing
 
-from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint
+# TU/e Robotics
 from robot_smach_states.manipulation import Grab, Place
+from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint
 import robot_smach_states.util.designators as ds
 
 ROBOTS = {}
@@ -25,6 +27,7 @@ WORDS = ["grab", "grasp", "pick", "up", "goto", "go", "to", "move", "navigate",
 
 # ----------------------------------------------------------------------------------------------------
 
+
 class bcolors:
     RED    = '\033[91m'
     ORANGE = '\033[93m'
@@ -37,6 +40,7 @@ class bcolors:
         return "%s%s%s" % (color, msg, bcolors.ENDC)
 
 # ----------------------------------------------------------------------------------------------------
+
 
 class SmachAction:
 

@@ -1,8 +1,14 @@
 # Maintainer: Janno Lunenburg <jannolunenburg@gmail.com>
 
+# System
+import os
+
 # ROS
 import rospy
 import actionlib
+
+# Determine simulation mode
+SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"
 
 
 class RobotPart(object):
@@ -45,8 +51,14 @@ class RobotPart(object):
         start = rospy.Time.now()
         t = rospy.Duration(timeout)
         r = rospy.Rate(20)
+
         # Loop until the timeout
         while (rospy.Time.now() - start) < t:
+
+            # If shutdown: return immediately without any further checks or prints
+            if rospy.is_shutdown():
+                return False
+
             # If everything is connected: return True
             if len(self.__ros_connections) == 0:
                 return True
@@ -131,11 +143,15 @@ class RobotPart(object):
     def operational(self):
         """
         Check whether this bodypart's hardware is operational
-        If the associated hardware is not yet up, has an error etc, the bodypart is not operational
+        If the associated hardware is not yet up, has an error etc, the bodypart is not operational. Note: in
+        in simulation: operational is always true
 
         :rtype: bool True is part is ready to do work, False otherwise
         """
-        return self._operational
+        if SIM_MODE:
+            return True
+        else:
+            return self._operational
 
     def subscribe_hardware_status(self, name):
         """

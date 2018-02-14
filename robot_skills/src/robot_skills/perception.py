@@ -1,20 +1,17 @@
-#! /usr/bin/env python
-import math
-
-import rospy
+# System
 from threading import Condition
+
+# ROS
+import rospy
+from sensor_msgs.msg import Image, RegionOfInterest
 from std_srvs.srv import Empty
+
+# TU/e Robotics
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
 from image_recognition_msgs.msg import Annotation, Recognition
-
-from sensor_msgs.msg import Image, RegionOfInterest
-from robot_part import RobotPart
-
-# TU/e
 from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
-
-from .util import msg_constructors as msgs
-from .util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
+from robot_part import RobotPart
+from .util.kdl_conversions import VectorStamped
 from .util.image_operations import img_recognitions_to_rois, img_cutout
 
 
@@ -263,12 +260,3 @@ class Perception(RobotPart):
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
         rospy.loginfo('face_properties:%s', face_log)
         return face_properties
-
-#######################################
-
-
-if __name__ == "__main__":
-    import tf_server
-    rospy.init_node('amigo_perception_executioner', anonymous=True)
-    tf_listener = tf_server.TFClient()
-    perception = Perception("amigo", tf_listener)

@@ -1,9 +1,13 @@
-#! /usr/bin/env python
+# System
 import os
+
+# ROS
 import rospy
 import smach
 
+# TU/e Robotics
 from human_interaction import Say
+
 
 class CheckEButton(smach.State):
     """Check if the robot's Emergency button is pressed"""
@@ -21,6 +25,7 @@ class CheckEButton(smach.State):
         else:
             rospy.logwarn("Ignoring e-button because this robot is simulated")
             return "released"
+
 
 class NotifyEButton(smach.StateMachine):
     """Alert the operator that the robot's Emergency button is still pressed"""

@@ -1,15 +1,12 @@
 #! /usr/bin/env python
+
+# ROS
 import rospy
 import smach
-
-''' For siren demo challenge '''
-import thread
-from visualization_msgs.msg import Marker
-
 import std_msgs.msg
-from robot_skills.util import transformations as tf
-import robot_smach_states.util.designators as ds
 
+# TU/e Robotics
+import robot_smach_states.util.designators as ds
 from util.robocup_recorder import start_robocup_recorder
 
 

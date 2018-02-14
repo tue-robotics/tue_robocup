@@ -1,12 +1,10 @@
-import rospy
-import PyKDL as kdl
+# System
 from copy import deepcopy
 
-# Needed for UGLY hacks
-import tf
-import time
-
+# ROS
 import geometry_msgs.msg as gm
+import PyKDL as kdl
+import rospy
 
 
 class FrameStamped(object):

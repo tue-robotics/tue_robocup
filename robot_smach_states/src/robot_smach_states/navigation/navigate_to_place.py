@@ -1,17 +1,16 @@
-#! /usr/bin/env python
+# System
+import math
 
-from robot_smach_states.navigation import NavigateTo
-
-from cb_planner_msgs_srvs.srv import *
-from cb_planner_msgs_srvs.msg import *
+# ROS
 from geometry_msgs.msg import *
-from robot_skills.util.kdl_conversions import FrameStamped
-
-from robot_smach_states.util.designators import Designator, check_resolve_type
-
 import rospy
 
-import math
+# TU/e Robotics
+from cb_planner_msgs_srvs.srv import *
+from cb_planner_msgs_srvs.msg import *
+from robot_skills.util.kdl_conversions import FrameStamped
+from robot_smach_states.navigation import NavigateTo
+from robot_smach_states.util.designators import Designator, check_resolve_type
 
 
 # ----------------------------------------------------------------------------------------------------

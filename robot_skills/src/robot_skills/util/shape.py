@@ -11,49 +11,56 @@ class Shape(object):
         return self._calc_convex_hull()
 
     def _calc_convex_hull(self):
-        raise NotImplementedError("_calc_convex_hull must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_convex_hull must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def x_min(self):
         return self._calc_x_min()
 
     def _calc_x_min(self):
-        raise NotImplementedError("_calc_x_min must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_x_min must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def x_max(self):
         return self._calc_x_max()
 
     def _calc_x_max(self):
-        raise NotImplementedError("_calc_x_max must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_x_max must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def y_min(self):
         return self._calc_y_min()
 
     def _calc_y_min(self):
-        raise NotImplementedError("_calc_y_min must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_y_min must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def y_max(self):
         return self._calc_y_max()
 
     def _calc_y_max(self):
-        raise NotImplementedError("_calc_y_max must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_y_max must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def z_min(self):
         return self._calc_z_min()
 
     def _calc_z_min(self):
-        raise NotImplementedError("_calc_z_min must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_z_min must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def z_max(self):
         return self._calc_z_max()
 
     def _calc_z_max(self):
-        raise NotImplementedError("_calc_z_max must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_z_max must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
 
 class RightPrism(Shape):
@@ -95,7 +102,6 @@ class RightPrism(Shape):
 
     def _calc_convex_hull(self):
         return self._convex_hull
-
 
 
 def shape_from_entity_info(e):

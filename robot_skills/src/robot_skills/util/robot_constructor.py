@@ -1,4 +1,4 @@
-import sys
+
 
 def robot_constructor(robot_name):
     """Construct a robot by it's name. Choices are amigo, sergio, mockbot

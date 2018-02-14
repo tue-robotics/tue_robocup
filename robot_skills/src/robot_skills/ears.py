@@ -1,6 +1,7 @@
-#! /usr/bin/env python
+# ROS
 import rospy
 
+# TU/e Robotics
 from robot_part import RobotPart
 
 
@@ -16,7 +17,8 @@ class Ears(RobotPart):
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 
-    #Function listens explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
+    # Function listens explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_
+    # speech_recognition
     def recognize(self, spec, choices={}, time_out=rospy.Duration(10)):
 
         if hasattr(self._pre_hook, '__call__'):
@@ -28,7 +30,3 @@ class Ears(RobotPart):
             self._post_hook()
 
         return answer
-
-if __name__ == "__main__":
-    rospy.init_node('robot_ears', anonymous=True)
-    ears = Ears("amigo")

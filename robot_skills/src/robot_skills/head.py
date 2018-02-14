@@ -1,13 +1,10 @@
-#! /usr/bin/env python
-import math
-
+# ROS
 import rospy
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
+# TU/e Robotics
 from robot_part import RobotPart
-
-from .util import msg_constructors as msgs
 from .util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
 
 
@@ -129,12 +126,3 @@ class Head(RobotPart):
     def __doneCallback(self, terminal_state, result):
         self._goal = None
         self._at_setpoint = False
-
-#######################################
-
-
-if __name__ == "__main__":
-    import tf_server
-    tf_listener = tf_server.TFClient()
-    rospy.init_node('amigo_head_executioner', anonymous=True)
-    head = Head("amigo", tf_listener)

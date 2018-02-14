@@ -1,8 +1,10 @@
-#! /usr/bin/env python
+# ROS
 import rospy
 from std_msgs.msg import Bool
 
+# TU/e Robotics
 from robot_part import RobotPart
+
 
 class EButton(RobotPart):
     """
@@ -23,14 +25,7 @@ class EButton(RobotPart):
         """
         Callback methods that listens to /emergency_switch
         """
-        #rospy.loginfo("Received ebutton status")
         self._ebuttonstatus = s.data
 
     def read_ebutton(self):
-        #rospy.loginfo("Returning ebuttonstatus")
         return self._ebuttonstatus
-
-
-if __name__ == "__main__":
-    rospy.init_node('ebutton_executive', anonymous=True)
-    ebutton = EButton()

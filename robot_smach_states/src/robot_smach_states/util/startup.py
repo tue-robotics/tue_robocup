@@ -12,14 +12,16 @@ Options:
   --no-execute                  Only construct state machine, do not execute it, i.e. only do checks.
 """
 
+# System
+import ast
+from docopt import docopt
+import sys
 
+# ROS
 import rospy
 import smach_ros
-import sys
-import traceback
-from docopt import docopt
-import os
-import ast
+
+# TU/e Robotics
 from robot_skills.util.robot_constructor import robot_constructor
 
 

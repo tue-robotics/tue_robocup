@@ -1,10 +1,4 @@
-#! /usr/bin/env python
-
-# System
-
 # ROS
-from geometry_msgs.msg import Point, PointStamped
-import PyKDL as kdl
 import rospy
 import visualization_msgs.msg
 

@@ -1,26 +1,23 @@
 #!/usr/bin/env python
 
-import smach, rospy, sys
-from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import VariableDesignator
-import robot_smach_states as states
-from hmi import TimeoutException
-
+# System
 import copy
-import threading
-import time
-import itertools
-import PyKDL as kdl
+import math
+
+# ROS
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
-
-import math
+import PyKDL as kdl
+import smach, rospy, sys
 from visualization_msgs.msg import Marker
 
+# TU/e Robotics
 from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
-
+from hmi import TimeoutException
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
+from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import VariableDesignator
 
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):

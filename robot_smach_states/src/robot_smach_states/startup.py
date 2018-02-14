@@ -1,15 +1,18 @@
-#! /usr/bin/env python
-import rospy
-import smach
+# System
 import math
-
-import utility
-import human_interaction
-import check_ebutton
-from sensor_msgs.msg import LaserScan
-from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
-from geometry_msgs.msg import Quaternion
 from threading import Event
+
+# ROS
+from geometry_msgs.msg import Quaternion
+import rospy
+from sensor_msgs.msg import LaserScan
+import smach
+
+# TU/e Robotics
+from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
+import check_ebutton
+import human_interaction
+import utility
 
 
 class StartChallengeRobust(smach.StateMachine):
