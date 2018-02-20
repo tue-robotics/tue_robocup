@@ -43,7 +43,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
         # We don't actually grab something, so there is no need for an actual thing to grab
 
         self.current_item = ds.VariableDesignator(Entity("dummy", "dummy", "/{}/base_link".format(robot.robot_name),
-                                                         kdl_conversions.kdlFrameFromXYZRPY(0.6, 0, 0.5), None, {}, [],
+                                                         kdl_conversions.kdl_frame_from_XYZRPY(0.6, 0, 0.5), None, {}, [],
                                                          datetime.datetime.now()), name="current_item")
 
         with self:
