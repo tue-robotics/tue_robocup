@@ -14,14 +14,14 @@ import PyKDL as kdl
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
         smach.State.__init__(self, outcomes=['follow', 'Failed'],
-                             input_keys=['operator_learn_in', 'operator_id_in'],
-                             output_keys=['operator_learn_out', 'operator_id_out'])
+                             input_keys=['operator_learn_in'],
+                             output_keys=['operator_learn_out'])
         self._robot = robot
         self._operator_timeout = operator_timeout
         self._ask_follow = ask_follow
         self._learn_face = learn_face
         self._learn_person_timeout = learn_person_timeout
-        self._operator_name = "operator"
+        self._operator_name = "operator_name"
 
     def execute(self, userdata):
         # operator = None                                             # local vs global variables?!?!
@@ -58,18 +58,18 @@ class LearnOperator(smach.State):
                             self._robot.speech.speak("Please stand in front of me and look at me")
                             operator = None
                             break
-        print "We have a new operator: %s" % userdata.operator.id
+        print "We have a new operator: %s" % operator.id
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
         userdata.operator_learn_out = operator
-        userdata.operator_id_out = userdata.operator.id
+        userdata.operator_id_out = operator.id
         return 'follow'
 
 class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self):
          smach.State.__init__(self,
                               outcomes=['track', 'no_track'],
-                              input_keys=['buffer', 'operator', 'operator_id'])      ## werkt dit zo met input keys?
+                              input_keys=['buffer', 'operator'])      ## werkt dit zo met input keys?
          self.counter = 0
          self.period = 0.5          #fix this magic number
 
@@ -195,14 +195,12 @@ class Recovery(smach.State):
 def setup_statemachine(robot):
     sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
     sm_top.userdata.operator = None
-    sm_top.userdata.operator_id = None
 
     with sm_top:
         smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
                                transitions={'follow': 'CON_FOLLOW',
                                             'Failed': 'Failed'},
-                               remapping={'operator_learn_in': 'operator', 'operator_id_in': 'operator_id',
-                                          'operator_learn_out': 'operator', 'operator_id_out': 'operator_id'})
+                               remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
 
         smach.StateMachine.add('ASK_FINALIZE', AskFinalize(),
                                transitions={'follow': 'CON_FOLLOW',
@@ -220,14 +218,12 @@ def setup_statemachine(robot):
 
         sm_con.userdata.buffer = collections.deque([1])
         sm_con.userdata.operator = sm_top.userdata.operator
-        sm_con.userdata.operator_id = sm_top.userdata.operator_id
 
         with sm_con:
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
 
             smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer',
-                                                               'operator': 'operator',
-                                                               'operator_id': 'operator_id'})
+                                                               'operator': 'operator'})
 
         smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
