@@ -9,6 +9,8 @@ import collections
 from robot_smach_states.util.startup import startup
 from robot_skills.util import kdl_conversions
 import PyKDL as kdl
+import geometry_msgs  # Only used for publishing markers
+import geometry_msgs.msg
 
 
 class LearnOperator(smach.State):
@@ -62,98 +64,59 @@ class LearnOperator(smach.State):
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
         userdata.operator_learn_out = operator
-        userdata.operator_id_out = operator.id
         return 'follow'
 
 class Track(smach.State):  # Updates the breadcrumb path
-    def __init__(self):
-         smach.State.__init__(self,
+    def __init__(self, robot):
+        smach.State.__init__(self,
                               outcomes=['track', 'no_track'],
-                              input_keys=['buffer', 'operator'])      ## werkt dit zo met input keys?
-         self.counter = 0
-         self.period = 0.5          #fix this magic number
+                              input_keys=['buffer_track_in', 'operator_track_in'],
+                              output_keys=['buffer_track_out'])
+        self.counter = 0
+        self._period = 0.5          #fix this magic number
+        self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
+                                             geometry_msgs.msg.PointStamped, queue_size=10)
+        self._robot = robot
+        self._operator_distance = None
+        self._breadcrumb_distance = 0.1
 
     def execute(self, userdata):
-        # if self._operator_id:
-        #     self._operator = self._robot.ed.get_entity(id=self._operator_id)
-        #     if (rospy.Time.now().to_sec() - self._operator.last_update_time) > self._period:
-        #         self._robot.speech.speak("Not so fast!")
-        #
-        #     # If the operator is still tracked, it is also the last_operator
-        #     self._last_operator = self._operator
-        #
-        #     operator_pos = geometry_msgs.msg.PointStamped()
-        #     operator_pos.header.stamp = rospy.get_rostime()
-        #     operator_pos.header.frame_id = self._operator_id
-        #     operator_pos.point.x = 0.0
-        #     operator_pos.point.y = 0.0
-        #     operator_pos.point.z = 0.0
-        #     self._operator_pub.publish(operator_pos)
-        #
-        #     f = self._robot.base.get_location().frame
-        #     self._operator_distance = self._last_operator.distance_to_2d(f.p)
-        #
-        #     return 'track'
-        #
-        # else:
-        #      self._operator = None
-        print userdata.operator
-        # print userdata.operator_id
+        operator = userdata.operator_track_in
+        buffer = userdata.buffer_track_in
+        if operator.id:
+            operator = self._robot.ed.get_entity(id=operator.id)
+            if (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+                self._robot.speech.speak("Not so fast!")
 
-        if self.counter == 4:
-            userdata.buffer.append(self.counter)
-            print ("New breadcrumb added to buffer")
-            self.counter = 0
+            self._last_operator = operator
+
+            operator_pos = geometry_msgs.msg.PointStamped()
+            operator_pos.header.stamp = rospy.get_rostime()
+            operator_pos.header.frame_id = operator.id
+            operator_pos.point.x = 0.0
+            operator_pos.point.y = 0.0
+            operator_pos.point.z = 0.0
+            self._operator_pub.publish(operator_pos)
+
+            f = self._robot.base.get_location().frame
+            self._operator_distance = self._last_operator.distance_to_2d(f.p)
+
+            # if buffer:
+            #     if buffer[-1].distance_to_2d(operator._pose.p) < self._breadcrumb_distance:
+            #         buffer[-1] = operator
+            #     else:
+            #         buffer.append(operator)
+            # else:
+            #     buffer = buffer.append([operator_pos]) # collections.deque([operator_pos])
+            buffer.append([operator_pos])
+            userdata.buffer_track_out = buffer
+            return 'track'
+
+        else:
             return 'no_track'
-        self.counter += 1
-        return 'track'
 
-
-   # def __init__(self, robot, ask_follow=True, learn_face=True, operator_radius=1, lookat_radius=1.2, timeout=1.0,
-   #               start_timeout=10, operator_timeout=20, distance_threshold=None, lost_timeout=60, lost_distance=0.8,
-   #               operator_id_des=VariableDesignator(resolve_type=str), standing_still_timeout=20,
-   #               operator_standing_still_timeout=3.0, replan=False):
-   #
-   #      smach.State.__init__(self, outcomes=["stopped", 'lost_operator', "no_operator"])
-   #      self._robot = robot
-   #      self._time_started = None
-   #      self._operator = None
-   #      self._operator_id = None
-   #      self._operator_name = "operator"
-   #      self._operator_radius = operator_radius
-   #      self._lookat_radius = lookat_radius
-   #      self._start_timeout = start_timeout
-   #      self._breadcrumbs = []  # List of Entity's
-   #      self._breadcrumb_distance = 0.1  # meters between dropped breadcrumbs
-   #      self._operator_timeout = operator_timeout
-   #      self._ask_follow = ask_follow
-   #      self._learn_face = learn_face
-   #      self._lost_timeout = lost_timeout
-   #      self._lost_distance = lost_distance
-   #      self._standing_still_timeout = standing_still_timeout
-   #      self._operator_standing_still_timeout = operator_standing_still_timeout
-   #      self._operator_id_des = operator_id_des
-   #      self._operator_distance = None
-   #      self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
-   #                                           geometry_msgs.msg.PointStamped, queue_size=10)
-   #      self._plan_marker_pub = rospy.Publisher('/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
-   #      self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker,
-   #                                             queue_size=10)
-   #      self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
-   #                                           geometry_msgs.msg.PointStamped, queue_size=10)
-   #
-   #      self._last_pose_stamped = None
-   #      self._last_pose_stamped_time = None
-   #      self._last_operator_fs = None
-   #      self._replan_active = False
-   #      self._last_operator = None
-   #      self._replan_allowed = replan
-   #      self._replan_timeout = 15 # seconds before another replan is allowed
-   #      self._replan_time = rospy.Time.now() - rospy.Duration(self._replan_timeout)
-   #      self._replan_attempts = 0
-   #      self._max_replan_attempts = 3
-   #      self._period = 0.5
-
+        # print buffer
+        # return 'track'
 
 
 class FollowBread(smach.State):
@@ -214,16 +177,20 @@ def setup_statemachine(robot):
                                    outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread',
                                                                  'TRACK': 'track'},
                                                 'recover_operator': {'FOLLOWBREAD': 'no_follow_bread',
-                                                                     'TRACK': 'no_track'}})
+                                                                     'TRACK': 'no_track'}},
+                                   input_keys=['operator'])
 
-        sm_con.userdata.buffer = collections.deque([1])
-        sm_con.userdata.operator = sm_top.userdata.operator
+        sm_con.userdata.buffer = collections.deque()
+        sm_con.userdata.operator = None
 
         with sm_con:
+            smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
+                                                                    'buffer_track_out': 'buffer',
+                                                                    'operator_track_in': 'operator'})
+
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
 
-            smach.Concurrence.add('TRACK', Track(), remapping={'buffer': 'buffer',
-                                                               'operator': 'operator'})
+
 
         smach.StateMachine.add('CON_FOLLOW', sm_con,
                                transitions={'recover_operator': 'RECOVERY',
