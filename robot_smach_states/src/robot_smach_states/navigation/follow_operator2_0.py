@@ -7,11 +7,16 @@ import smach_ros
 import math
 import collections
 from robot_smach_states.util.startup import startup
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 from robot_skills.util import kdl_conversions
 import PyKDL as kdl
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
-
+def vector_stampeds_to_point_stampeds(vector_stampeds):
+    return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+def frame_stampeds_to_pose_stampeds(frame_stampeds):
+    return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
+import copy
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
@@ -26,7 +31,6 @@ class LearnOperator(smach.State):
         self._operator_name = "operator_name"
 
     def execute(self, userdata):
-        # operator = None                                             # local vs global variables?!?!
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
         operator = userdata.operator_learn_in
@@ -79,16 +83,24 @@ class Track(smach.State):  # Updates the breadcrumb path
         self._robot = robot
         self._operator_distance = None
         self._breadcrumb_distance = 0.1
+        self._last_operator = None
+        self._last_operator_id = None
 
     def execute(self, userdata):
         operator = userdata.operator_track_in
         buffer = userdata.buffer_track_in
+
         if operator.id:
-            operator = self._robot.ed.get_entity(id=operator.id)
+            operator = self._robot.ed.get_entity(id=operator.id )
+        else:
+            operator = None
+
+        if operator:
             if (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
                 self._robot.speech.speak("Not so fast!")
 
             self._last_operator = operator
+            self._last_operator_id = operator.id
 
             operator_pos = geometry_msgs.msg.PointStamped()
             operator_pos.header.stamp = rospy.get_rostime()
@@ -96,37 +108,154 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator_pos.point.x = 0.0
             operator_pos.point.y = 0.0
             operator_pos.point.z = 0.0
-            self._operator_pub.publish(operator_pos)
 
             f = self._robot.base.get_location().frame
             self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
-            # if buffer:
-            #     if buffer[-1].distance_to_2d(operator._pose.p) < self._breadcrumb_distance:
-            #         buffer[-1] = operator
-            #     else:
-            #         buffer.append(operator)
-            # else:
-            #     buffer = buffer.append([operator_pos]) # collections.deque([operator_pos])
-            buffer.append([operator_pos])
+            if buffer:
+                if buffer[-1].distance_to_2d(operator._pose.p) < self._breadcrumb_distance:
+                    buffer[-1] = operator
+                else:
+                    buffer.append(operator)
+            else:
+                buffer.append(operator) # collections.deque([operator_pos])
+            # buffer.append([operator_pos])
             userdata.buffer_track_out = buffer
             return 'track'
 
         else:
-            return 'no_track'
+        #    if not self._last_operator:                                We leave this out for now, maybe it is necessary to implement it later.
+        #         if self._backup_register():
+        #             # If the operator is still tracked, it is also the last_operator
+        #             self._last_operator = self._operator
+        #
+        #             operator_pos = geometry_msgs.msg.PointStamped()
+        #             operator_pos.header.stamp = rospy.get_rostime()
+        #             operator_pos.header.frame_id = self._operator_id
+        #             operator_pos.point.x = 0.0
+        #             operator_pos.point.y = 0.0
+        #             operator_pos.point.z = 0.0
+        #             self._operator_pub.publish(operator_pos)
+        #
+        #             f = self._robot.base.get_location().frame
+        #             self._operator_distance = self._last_operator.distance_to_2d(f.p)
+        #
+        #             return True
+        #         else:
+        #             self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
+        #
+        #     f = self._robot.base.get_location().frame
+        #     self._operator_distance = self._last_operator.distance_to_2d(f.p)
+        #     # If the operator is lost, check if we still have an ID
+        #     if self._operator_id:
+        #         # At the moment when the operator is lost, tell him to slow down and clear operator ID
+        #         self._operator_id = None
+        #         self._robot.speech.speak("Stop! I lost you! Until I find you again, please wait there.", block=False)
+        #     return False
 
-        # print buffer
-        # return 'track'
+
+        #     while not operator:
+        #         operator = self._robot.ed.get_entity(id=self._last_operator_id)
+        #         rospy.sleep(2)
+        #         self._robot.speech.speak(
+        #         "Oh no I lost you for a second, please stay where you are and I will come and find you again!")
+        #         return 'no_track'
+        #     buffer.append(operator)
+        #     return 'track'
+
+            self._robot.speech.speak(
+                        "Oh no I lost you for a second, please stay where you are and I will come and find you again!")
+            return 'no_track'
 
 
 class FollowBread(smach.State):
-    def __init__(self):
+    def __init__(self, robot, operator_radius=1, lookat_radius = 1.2):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread'],
-                             input_keys=['buffer'])
+                             input_keys=['buffer_follow_in'],
+                             output_keys=['buffer_follow_out'])
+        self._robot = robot
+        self._operator_radius = operator_radius
+        self._lookat_radius = lookat_radius
 
     def execute(self, userdata):
-        print list(userdata.buffer)
+        # print list(userdata.buffer)
+        buffer = userdata.buffer_follow_in
+        while not buffer:
+            rospy.sleep(2)
+            print('Shit breaks here!')
+        newest_crumb = buffer[0]
+        operator = buffer[-1]
+        if len(buffer) == 1:
+            last_operator = buffer[-1]
+        else:
+            last_operator = buffer[-2]
+        robot_position = self._robot.base.get_location().frame
+        while len(buffer) >1 and newest_crumb.distance_to_2d(robot_position.p) < self._lookat_radius + 0.1:
+            buffer.popleft()
+
+        self._robot.head.cancel_goal()
+        f = self._robot.base.get_location().frame
+        robot_position = f.p
+        operator_position = last_operator._pose.p
+
+        ''' Define end goal constraint, solely based on the (old) operator position '''
+        p = PositionConstraint()
+        p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
+                                                       self._operator_radius)
+
+        o = OrientationConstraint()
+        if operator.id:
+            o.frame = operator.id
+        else:
+            o.frame = 'map'
+            o.look_at = kdl_conversions.kdlVectorToPointMsg(last_operator.pose.frame.p)
+
+        ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
+        res = 0.05      ##magic number number 2
+        kdl_plan = []
+        previous_point = robot_position
+
+        if operator:
+            buffer.append(operator)
+        else:
+            buffer.append(last_operator)
+        for crumb in buffer:
+            # assert isinstance(crumb, Entity)
+            diff = crumb._pose.p - previous_point
+            dx, dy = diff.x(), diff.y()
+            length = crumb.distance_to_2d(previous_point)
+
+            if length != 0:
+                dx_norm = dx / length
+                dy_norm = dy / length
+                yaw = math.atan2(dy, dx)
+
+                start = 0
+                end = int(length / res)
+
+                for i in range(start, end):
+                    x = previous_point.x() + i * dx_norm * res
+                    y = previous_point.y() + i * dy_norm * res
+                    kdl_plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
+
+            previous_point = copy.deepcopy(crumb._pose.p)
+
+        # Delete the elements from the plan within the operator radius from the robot
+        cutoff = int(self._operator_radius / (2.0 * res))
+        if len(kdl_plan) > cutoff:
+            del kdl_plan[-cutoff:]
+
+        ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+        # Check if plan is valid. If not, remove invalid points from the path
+        if not self._robot.base.global_planner.checkPlan(ros_plan):
+            print "Breadcrumb plan is blocked, removing blocked points"
+            # Go through plan from operator to robot and pick the first unoccupied point as goal point
+            ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
+
+        # self._visualize_plan(ros_plan)
+        # self._robot.base.local_planner.setPlan(ros_plan, p, o)
+        userdata.buffer_follow_out = buffer
         return 'follow_bread'
 
 
@@ -188,7 +317,8 @@ def setup_statemachine(robot):
                                                                     'buffer_track_out': 'buffer',
                                                                     'operator_track_in': 'operator'})
 
-            smach.Concurrence.add('FOLLOWBREAD', FollowBread(), remapping={'buffer': 'buffer'})
+            smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
+                                                                           'buffer_follow_out': 'buffer'})
 
 
 
