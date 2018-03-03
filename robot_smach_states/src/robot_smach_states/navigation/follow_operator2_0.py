@@ -30,7 +30,7 @@ class LearnOperator(smach.State):
         self._ask_follow = ask_follow
         self._learn_face = learn_face
         self._learn_person_timeout = learn_person_timeout
-        self._operator_name = "operator_name"
+        self._operator_name = "operator"
 
     def execute(self, userdata):
         start_time = rospy.Time.now()
@@ -58,9 +58,10 @@ class LearnOperator(smach.State):
                     self._robot.head.look_at_standing_person()
                     learn_person_start_time = rospy.Time.now()
                     num_detections = 0
-                    while num_detections < 2: # 5:
+                    while num_detections < 5: # 5:
                         if self._robot.perception.learn_person(self._operator_name):
-                            self._robot.speech.speak("Succesfully detected you %i times" % (num_detections + 1))
+                            #self._robot.speech.speak("Succesfully detected you %i times" % (num_detections + 1),block = False)
+                            print("Succesfully detected you %i times" % (num_detections + 1))
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                             self._robot.speech.speak("Please stand in front of me and look at me")
@@ -79,7 +80,7 @@ class Track(smach.State):  # Updates the breadcrumb path
                               input_keys=['buffer_track_in', 'operator_track_in'],
                               output_keys=['buffer_track_out'])
         self.counter = 0
-        self._period = 0.5          #fix this magic number
+        self._period = 2          #fix this magic number
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._robot = robot
@@ -165,8 +166,9 @@ class Track(smach.State):  # Updates the breadcrumb path
         #     buffer.append(operator)
         #     return 'track'
 
-            self._robot.speech.speak(
-                        "Oh no I lost you for a second, please stay where you are and I will come and find you again!")
+            # self._robot.speech.speak(
+            print("Oh no I lost you for a second, please stay where you are and I will come and find you again!")
+
             return 'no_track'
 
 
@@ -188,11 +190,14 @@ class FollowBread(smach.State):
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
         # print list(userdata.buffer)
-        if len(buffer) > 5:
+        if len(buffer) > 15: #5
             self._have_followed = True
 
-        if not buffer and not self._have_followed:
-            rospy.sleep(3)      #magic number
+        while not buffer:
+            if not self._have_followed:
+                rospy.sleep(5)      #magic number
+            else:
+                break
 
         newest_crumb = buffer[0]
         operator = buffer[-1]
@@ -335,7 +340,7 @@ class Recovery(smach.State):
         smach.State.__init__(self, outcomes=['Failed', 'follow'])
         self._robot = robot
         self._operator_name = "operator"
-        self.lost_timeout = lost_timeout
+        self._lost_timeout = lost_timeout
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
 
@@ -432,6 +437,8 @@ def setup_statemachine(robot):
                                    outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread',
                                                                  'TRACK': 'track'},
                                                 'recover_operator': {'FOLLOWBREAD': 'no_follow_bread',
+                                                                     'TRACK': 'no_track'},
+                                                'recover_operator': {'FOLLOWBREAD': 'follow_bread',
                                                                      'TRACK': 'no_track'}},
                                    input_keys=['operator'])
 
