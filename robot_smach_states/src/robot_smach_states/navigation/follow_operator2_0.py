@@ -109,7 +109,7 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator_pos.point.y = 0.0
             operator_pos.point.z = 0.0
 
-            f = self._robot.base.get_location().frame
+            f = self._robot.base.get_location().frame #changes made in tf_server/src/tf_server/tf_client.py & robot_skills/src/robot_skills/robot.py
             self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
             if buffer:
