@@ -18,6 +18,7 @@ def frame_stampeds_to_pose_stampeds(frame_stampeds):
     return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
 import copy
 from visualization_msgs.msg import Marker
+from hmi import TimeoutException
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
@@ -182,13 +183,17 @@ class FollowBread(smach.State):
                                                queue_size=10)
         self._plan_marker_pub = rospy.Publisher(
             '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
+        self._have_followed = False
 
     def execute(self, userdata):
-        # print list(userdata.buffer)
         buffer = userdata.buffer_follow_in
-        while not buffer:
-            rospy.sleep(2)
-            print('Shit breaks here!')
+        # print list(userdata.buffer)
+        if len(buffer) > 5:
+            self._have_followed = True
+
+        if not buffer and not self._have_followed:
+            rospy.sleep(3)      #magic number
+
         newest_crumb = buffer[0]
         operator = buffer[-1]
         if len(buffer) == 1:
@@ -196,11 +201,14 @@ class FollowBread(smach.State):
         else:
             last_operator = buffer[-2]
         robot_position = self._robot.base.get_location().frame
-        while len(buffer) >1 and newest_crumb.distance_to_2d(robot_position.p) < self._lookat_radius + 0.1:
+        while len(buffer) > 0 and newest_crumb.distance_to_2d(robot_position.p) < self._lookat_radius + 0.1:
             buffer.popleft()
 
         # print buffer
 
+        if not buffer and self._have_followed:
+            # rospy.sleep(1)
+            return 'no_follow'
         self._robot.head.cancel_goal()
         f = self._robot.base.get_location().frame
         robot_position = f.p
@@ -302,29 +310,105 @@ class FollowBread(smach.State):
 
 
 class AskFinalize(smach.State):
-    def __init__(self):
+    def __init__(self, robot):
         smach.State.__init__(self,  outcomes=['follow', 'Done'])
-        self.counter2 = 0
+        self._robot = robot
 
     def execute(self, userdata=None):
-        var = raw_input("Am I done following you? Yes/No: ")
-        if var == "No":
-            return 'follow'
-        print "Okidoki, we reached the final destination."
-        return 'Done'
+        sentence = "Are we there yet"
+        self._robot.speech.speak(sentence, block=True)
+        try:
+            answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+        except TimeoutException as e:
+            self._robot.speech.speak("I did not hear you!")
+            rospy.sleep(2)
+        else:
+            if answer.sentence == "yes":
+                self._robot.speech.speak("We reached our final destination!")
+                return 'Done'
+            else:
+                return 'follow'
 
 
 class Recovery(smach.State):
-    def __init__(self):
+    def __init__(self, robot, lost_timeout=60):
         smach.State.__init__(self, outcomes=['Failed', 'follow'])
+        self._robot = robot
+        self._operator_name = "operator"
+        self.lost_timeout = lost_timeout
+        self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
+                                             geometry_msgs.msg.PointStamped, queue_size=10)
 
     def execute(self, userdata=None):
-        var = raw_input("Did I find you again? Yes/No: ")
-        if var == "Yes":
-            return 'follow'
-        print "Oooh noooo, I give up."
-        return 'Failed'
+        rospy.loginfo("Trying to recover the operator")
+        self._robot.head.look_at_standing_person()
+        self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
+        # Wait for the operator and find his/her face
+        operator_recovery_timeout = self._lost_timeout
+        start_time = rospy.Time.now()
+
+        look_distance = 2.0     #magic number 4
+        look_angles = [0.0,
+                       math.pi / 6,
+                       math.pi / 4,
+                       math.pi / 2.3,
+                       0.0,
+                       -math.pi / 6,
+                       -math.pi / 4,
+                       -math.pi / 2.3]
+        head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
+                                                    y=look_distance * math.sin(angle), z=1.7,
+                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+                      for angle in look_angles]
+
+        i = 0
+        while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+            if self.preempt_requested():
+                return False
+
+            self._robot.head.look_at_point(head_goals[i])
+            i += 1
+            if i == len(head_goals):
+                 i = 0
+            self._robot.head.wait_for_motion_done()
+
+            # raw_detections is a list of Recognitions
+            # a recognition contains a CategoricalDistribution
+            # a CategoricalDistribution is a list of CategoryProbabilities
+            # a CategoryProbability has a label and a float
+            raw_detections = self._robot.perception.detect_faces()
+            best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
+
+            rospy.loginfo("best_detection = {}".format(best_detection))
+            if best_detection:
+                roi = best_detection.roi
+                try:
+                    operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
+                except Exception as e:
+                     rospy.logerr("head.project_roi failed: %s", e)
+                     return 'Failed'
+                operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
+                self._face_pos_pub.publish(operator_pos_ros)
+
+                recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
+                                                                              center_point=operator_pos_kdl)
+                if recovered_operator:
+                    print "Found one!"
+                    self._operator_id = recovered_operator.id
+                    print "Recovered operator id: %s" % self._operator_id
+                    self._operator = recovered_operator
+                    self._robot.speech.speak("There you are! Go ahead, I'll follow you again", block=False)
+                    self._robot.head.close()
+                    self._time_started = rospy.Time.now()
+                    return 'follow'
+                else:
+                    print "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
+
+        self._robot.head.close()
+        # self._turn_towards_operator()
+        rospy.sleep(2.0)
+        return 'Failed'
 
 def setup_statemachine(robot):
     sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
@@ -336,10 +420,10 @@ def setup_statemachine(robot):
                                             'Failed': 'Failed'},
                                remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
 
-        smach.StateMachine.add('ASK_FINALIZE', AskFinalize(),
+        smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
                                transitions={'follow': 'CON_FOLLOW',
                                             'Done': 'Done'})
-        smach.StateMachine.add('RECOVERY', Recovery(),
+        smach.StateMachine.add('RECOVERY', Recovery(robot),
                                transitions={'Failed': 'Failed',
                                             'follow': 'CON_FOLLOW'})
 
