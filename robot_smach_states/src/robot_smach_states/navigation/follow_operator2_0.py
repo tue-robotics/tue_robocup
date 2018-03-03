@@ -17,6 +17,7 @@ def vector_stampeds_to_point_stampeds(vector_stampeds):
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
     return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
 import copy
+from visualization_msgs.msg import Marker
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
@@ -177,6 +178,10 @@ class FollowBread(smach.State):
         self._robot = robot
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
+        self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker,
+                                               queue_size=10)
+        self._plan_marker_pub = rospy.Publisher(
+            '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
 
     def execute(self, userdata):
         # print list(userdata.buffer)
@@ -193,6 +198,8 @@ class FollowBread(smach.State):
         robot_position = self._robot.base.get_location().frame
         while len(buffer) >1 and newest_crumb.distance_to_2d(robot_position.p) < self._lookat_radius + 0.1:
             buffer.popleft()
+
+        # print buffer
 
         self._robot.head.cancel_goal()
         f = self._robot.base.get_location().frame
@@ -247,14 +254,49 @@ class FollowBread(smach.State):
             del kdl_plan[-cutoff:]
 
         ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+        # print ros_plan
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
+        buffer_msg = Marker()
+        buffer_msg.type = Marker.POINTS
+        buffer_msg.scale.x = 0.05
+        buffer_msg.header.stamp = rospy.get_rostime()
+        buffer_msg.header.frame_id = "/map"
+        buffer_msg.color.a = 1
+        buffer_msg.color.r = 0
+        buffer_msg.color.g = 1
+        buffer_msg.color.b = 1
+        buffer_msg.lifetime = rospy.Time(1.0)
+        buffer_msg.id = 0
+        buffer_msg.action = Marker.ADD
+
+        for crumb in buffer:
+            buffer_msg.points.append(kdl_conversions.kdlVectorToPointMsg(crumb.pose.frame.p))
+
+        line_strip = Marker()
+        line_strip.type = Marker.LINE_STRIP
+        line_strip.scale.x = 0.05
+        line_strip.header.frame_id = "/map"
+        line_strip.header.stamp = rospy.Time.now()
+        line_strip.color.a = 1
+        line_strip.color.r = 0
+        line_strip.color.g = 1
+        line_strip.color.b = 1
+        line_strip.id = 0
+        line_strip.action = Marker.ADD
+
+        # Push back all pnts
+        for pose_stamped in ros_plan:
+            line_strip.points.append(pose_stamped.pose.position)
+
+        self._plan_marker_pub.publish(line_strip)
+        self._breadcrumb_pub.publish(buffer_msg)
         # self._visualize_plan(ros_plan)
-        # self._robot.base.local_planner.setPlan(ros_plan, p, o)
+        self._robot.base.local_planner.setPlan(ros_plan, p, o)
         userdata.buffer_follow_out = buffer
         return 'follow_bread'
 
