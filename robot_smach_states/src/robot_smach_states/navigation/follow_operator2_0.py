@@ -190,7 +190,7 @@ class FollowBread(smach.State):
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
         # print list(userdata.buffer)
-        if len(buffer) > 15: #5
+        if len(buffer) > 5: #5
             self._have_followed = True
 
         while not buffer:
@@ -311,6 +311,7 @@ class FollowBread(smach.State):
         # self._visualize_plan(ros_plan)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         userdata.buffer_follow_out = buffer
+        print len(buffer)
         return 'follow_bread'
 
 
@@ -336,11 +337,12 @@ class AskFinalize(smach.State):
 
 
 class Recovery(smach.State):
-    def __init__(self, robot, lost_timeout=60):
+    def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
         smach.State.__init__(self, outcomes=['Failed', 'follow'])
         self._robot = robot
         self._operator_name = "operator"
         self._lost_timeout = lost_timeout
+        self._lost_distance = lost_distance
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
 
