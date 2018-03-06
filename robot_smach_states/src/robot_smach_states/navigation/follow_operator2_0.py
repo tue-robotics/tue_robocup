@@ -173,7 +173,7 @@ class Track(smach.State):  # Updates the breadcrumb path
 
 
 class FollowBread(smach.State):
-    def __init__(self, robot, operator_radius=1, lookat_radius = 1.2):
+    def __init__(self, robot, operator_radius=1, lookat_radius=1.2):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread'],
                              input_keys=['buffer_follow_in'],
@@ -213,7 +213,7 @@ class FollowBread(smach.State):
 
         if not buffer and self._have_followed:
             # rospy.sleep(1)
-            return 'no_follow'
+            return 'no_follow_bread'
         self._robot.head.cancel_goal()
         f = self._robot.base.get_location().frame
         robot_position = f.p
