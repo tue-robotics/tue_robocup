@@ -275,8 +275,11 @@ class FollowBread(smach.State):
             print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             #ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
-            ros_plan = [ros_plan[-1] if self._robot.base.global_planner.checkPlan([ros_plan[-1]])]
-
+            if self._robot.base.global_planner.checkPlan([ros_plan[-1]]):
+                ros_plan = ros_plan[-1]
+            else:
+                print 'Could not find path.'
+                return 'Failed'
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
         buffer_msg.scale.x = 0.05
