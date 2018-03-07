@@ -210,9 +210,10 @@ class FollowBread(smach.State):
             buffer.popleft()
 
         # print buffer
-
-        if not buffer and self._have_followed and operator.distance_to_2d(robot_position.p) < 0.5:
+        current_operator = self._robot.ed.get_entity(id=operator.id)
+        if not buffer and self._have_followed and current_operator.distance_to_2d(robot_position.p) < 0.5:
             # rospy.sleep(1)
+            print current_operator.distance_to_2d(robot_position.p)
             self._have_followed = False
             return 'no_follow_bread'
         self._robot.head.cancel_goal()
@@ -273,7 +274,8 @@ class FollowBread(smach.State):
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
-            ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
+            #ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
+            ros_plan = [ros_plan[-1] if self._robot.base.global_planner.checkPlan([ros_plan[-1]])]
 
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
@@ -322,7 +324,7 @@ class AskFinalize(smach.State):
         self._robot = robot
 
     def execute(self, userdata=None):
-        sentence = "Are we there yet"
+        sentence = "Are we there yet?"
         self._robot.speech.speak(sentence, block=True)
         try:
             answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
