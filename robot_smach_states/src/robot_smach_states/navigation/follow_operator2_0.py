@@ -206,10 +206,16 @@ class FollowBread(smach.State):
         else:
             last_operator = buffer[-2]
         robot_position = self._robot.base.get_location().frame
-        while len(buffer) > 0 and newest_crumb.distance_to_2d(robot_position.p) < self._lookat_radius + 0.1:
-            buffer.popleft()
+        # temp_buffer = buffer
+        temp_buffer = collections.deque()
+        for crumb in buffer:
+            if crumb.distance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
+                temp_buffer.append(crumb)
+            #else:
+            #    temp_buffer = None
+        buffer = temp_buffer
 
-        print "Buffer length after popping crumbs that are to close %i" % len(buffer)
+        # print "Buffer length after popping crumbs that are to close %i" % len(buffer)
         current_operator = self._robot.ed.get_entity(id=operator.id)
         if not buffer and self._have_followed and current_operator.distance_to_2d(robot_position.p) < 0.5:
             # rospy.sleep(1)
@@ -238,10 +244,10 @@ class FollowBread(smach.State):
         kdl_plan = []
         previous_point = robot_position
 
-        if operator:
-            buffer.append(operator)
-        else:
-            buffer.append(last_operator)
+        #if operator:
+        #    buffer.append(operator)
+        #else:
+        #    buffer.append(last_operator)
         for crumb in buffer:
             # assert isinstance(crumb, Entity)
             diff = crumb._pose.p - previous_point
