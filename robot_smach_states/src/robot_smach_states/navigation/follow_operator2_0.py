@@ -209,7 +209,7 @@ class FollowBread(smach.State):
         while len(buffer) > 0 and newest_crumb.distance_to_2d(robot_position.p) < self._lookat_radius + 0.1:
             buffer.popleft()
 
-        # print buffer
+        print "Buffer length after popping crumbs that are to close %i" % len(buffer)
         current_operator = self._robot.ed.get_entity(id=operator.id)
         if not buffer and self._have_followed and current_operator.distance_to_2d(robot_position.p) < 0.5:
             # rospy.sleep(1)
@@ -269,17 +269,14 @@ class FollowBread(smach.State):
             del kdl_plan[-cutoff:]
 
         ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
-        # print ros_plan
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
             print "Breadcrumb plan is blocked, removing blocked points"
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
-            #ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
-            if self._robot.base.global_planner.checkPlan([ros_plan[-1]]):
-                ros_plan = ros_plan[-1]
-            else:
-                print 'Could not find path.'
-                return 'Failed'
+            ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
+            # print ros_plan
+            print "Length of rosplan %i" % len(ros_plan)
+
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
         buffer_msg.scale.x = 0.05
@@ -317,7 +314,7 @@ class FollowBread(smach.State):
         # self._visualize_plan(ros_plan)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         userdata.buffer_follow_out = buffer
-        print len(buffer)
+        print "Buffer length at the end of the follow state %i" % len(buffer)
         return 'follow_bread'
 
 
