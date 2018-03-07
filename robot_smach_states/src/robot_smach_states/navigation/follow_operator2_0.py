@@ -85,7 +85,7 @@ class Track(smach.State):  # Updates the breadcrumb path
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._robot = robot
         self._operator_distance = None
-        self._breadcrumb_distance = 0.1
+        self._breadcrumb_distance = 0.5
         self._last_operator = None
         self._last_operator_id = None
 
@@ -190,7 +190,7 @@ class FollowBread(smach.State):
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
         # print list(userdata.buffer)
-        if len(buffer) > 15: #5
+        if len(buffer) > 5: #5
             self._have_followed = True
 
         while not buffer:
@@ -211,7 +211,7 @@ class FollowBread(smach.State):
 
         # print buffer
 
-        if not buffer and self._have_followed:
+        if not buffer and self._have_followed and operator.distance_to_2d(robot_position.p) < 0.5:
             # rospy.sleep(1)
             self._have_followed = False
             return 'no_follow_bread'
