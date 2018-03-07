@@ -190,7 +190,7 @@ class FollowBread(smach.State):
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
         # print list(userdata.buffer)
-        if len(buffer) > 5: #5
+        if len(buffer) > 15: #5
             self._have_followed = True
 
         while not buffer:
@@ -213,6 +213,7 @@ class FollowBread(smach.State):
 
         if not buffer and self._have_followed:
             # rospy.sleep(1)
+            self._have_followed = False
             return 'no_follow_bread'
         self._robot.head.cancel_goal()
         f = self._robot.base.get_location().frame
@@ -356,7 +357,7 @@ class Recovery(smach.State):
         start_time = rospy.Time.now()
 
         look_distance = 2.0     #magic number 4
-        look_angles = [0.0,
+        look_angles = [0.0,          #magic numbers
                        math.pi / 6,
                        math.pi / 4,
                        math.pi / 2.3,
