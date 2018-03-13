@@ -88,16 +88,17 @@ class Track(smach.State):  # Updates the breadcrumb path
         self._breadcrumb_distance = 0.1
         self._last_operator = None
         self._last_operator_id = None
+        self._operator = None
 
     def execute(self, userdata):
-        operator = userdata.operator_track_in
+        if userdata.operator_track_in:
+            operator = userdata.operator_track_in
+            self._operator = operator
+        else:
+            operator = self._operator
         buffer = userdata.buffer_track_in
 
-        if operator.id:
-            operator = self._robot.ed.get_entity(id=operator.id )
-        else:
-            operator = None
-
+        operator = self._robot.ed.get_entity(id=operator.id )
         if operator:
             if (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
                 self._robot.speech.speak("Not so fast!")
@@ -167,6 +168,7 @@ class Track(smach.State):  # Updates the breadcrumb path
         #     return 'track'
 
             # self._robot.speech.speak(
+
             print("Oh no I lost you for a second, please stay where you are and I will come and find you again!")
 
             return 'no_track'
@@ -187,6 +189,9 @@ class FollowBread(smach.State):
             '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._have_followed = False
         self._current_operator = None
+        self._newest_crumb = None
+        self._operator = None
+        self._last_operator = None
 
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
@@ -194,23 +199,16 @@ class FollowBread(smach.State):
 
         if len(buffer) > 5: #5
             self._have_followed = True
-
-        while not buffer:
-            if not self._have_followed:
-                rospy.sleep(5)      #magic number
-            else:
-                if self._current_operator:
-                    if self._current_operator.distance_to_2d(robot_position.p) < 1.0:
-                        return 'no_follow_bread'
-                break
-
-        newest_crumb = buffer[0]
-        operator = buffer[-1]
-        if len(buffer) == 1:
-            last_operator = buffer[-1]
-        else:
-            last_operator = buffer[-2]
         robot_position = self._robot.base.get_location().frame
+        if not buffer:
+            if not self._have_followed:
+                rospy.sleep(1)      #magic number
+        if buffer:
+            self._newest_crumb = buffer[0]
+            self._operator = buffer[-1]
+            self._last_operator = buffer[-1]
+        if len(buffer) > 1:
+            self._last_operator = buffer[-2]
         # temp_buffer = buffer
         temp_buffer = collections.deque()
         for crumb in buffer:
@@ -221,17 +219,17 @@ class FollowBread(smach.State):
         buffer = temp_buffer
 
         # print "Buffer length after popping crumbs that are to close %i" % len(buffer)
-        if operator.id:
-            self._current_operator = self._robot.ed.get_entity(id=operator.id)
-        if not buffer and self._have_followed and current_operator.distance_to_2d(robot_position.p) < 1.1:
+        if self._operator.id:
+            self._current_operator = self._robot.ed.get_entity(id=self._operator.id)
+        if not buffer and self._have_followed and self._current_operator.distance_to_2d(robot_position.p) < 0.8:
             # rospy.sleep(1)
-            print current_operator.distance_to_2d(robot_position.p)
+            print self._current_operator.distance_to_2d(robot_position.p)
             self._have_followed = False
             return 'no_follow_bread'
         self._robot.head.cancel_goal()
         f = self._robot.base.get_location().frame
         robot_position = f.p
-        operator_position = last_operator._pose.p
+        operator_position = self._last_operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
         p = PositionConstraint()
@@ -239,8 +237,8 @@ class FollowBread(smach.State):
                                                        self._operator_radius)
 
         o = OrientationConstraint()
-        if operator.id:
-            o.frame = operator.id
+        if self._operator.id:
+            o.frame = self._operator.id
         else:
             o.frame = 'map'
             o.look_at = kdl_conversions.kdlVectorToPointMsg(last_operator.pose.frame.p)
