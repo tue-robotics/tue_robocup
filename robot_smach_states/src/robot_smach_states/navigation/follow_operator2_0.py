@@ -85,7 +85,7 @@ class Track(smach.State):  # Updates the breadcrumb path
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._robot = robot
         self._operator_distance = None
-        self._breadcrumb_distance = 0.5
+        self._breadcrumb_distance = 0.1
         self._last_operator = None
         self._last_operator_id = None
 
@@ -186,10 +186,12 @@ class FollowBread(smach.State):
         self._plan_marker_pub = rospy.Publisher(
             '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._have_followed = False
+        self._current_operator = None
 
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
         # print list(userdata.buffer)
+
         if len(buffer) > 5: #5
             self._have_followed = True
 
@@ -197,6 +199,9 @@ class FollowBread(smach.State):
             if not self._have_followed:
                 rospy.sleep(5)      #magic number
             else:
+                if self._current_operator:
+                    if self._current_operator.distance_to_2d(robot_position.p) < 1.0:
+                        return 'no_follow_bread'
                 break
 
         newest_crumb = buffer[0]
@@ -216,8 +221,9 @@ class FollowBread(smach.State):
         buffer = temp_buffer
 
         # print "Buffer length after popping crumbs that are to close %i" % len(buffer)
-        current_operator = self._robot.ed.get_entity(id=operator.id)
-        if not buffer and self._have_followed and current_operator.distance_to_2d(robot_position.p) < 0.5:
+        if operator.id:
+            self._current_operator = self._robot.ed.get_entity(id=operator.id)
+        if not buffer and self._have_followed and current_operator.distance_to_2d(robot_position.p) < 1.1:
             # rospy.sleep(1)
             print current_operator.distance_to_2d(robot_position.p)
             self._have_followed = False
@@ -596,8 +602,3 @@ if __name__ == "__main__":
 ## note that all the buffervariables are popped and placed in a different variable which can be used for planning
 #     def get_data(self):
 #         result = []
-#         while len(self._breadcrumb) > 0:
-#             result.append(self._breadcrumb.pop())  # Pop or popleft?
-#         return result
-
-
