@@ -177,8 +177,10 @@ class FollowBread(smach.State):
     def __init__(self, robot, operator_radius=1, lookat_radius=1.2):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread_ask_finalize', 'no_follow_bread_recovery'],
-                             input_keys=['buffer_follow_in', 'have_followed_follow_bread_in'],
-                             output_keys=['buffer_follow_out', 'current_operator_out', 'have_followed_follow_bread_out'])
+                             input_keys=['buffer_follow_in'],
+                             output_keys=['buffer_follow_out'
+                                 #, 'current_operator_out', 'have_followed_follow_bread_out']
+                             ])
         self._robot = robot
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
@@ -193,9 +195,10 @@ class FollowBread(smach.State):
 
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
-        if userdata.have_followed_follow_bread_in is not None:
-            self._have_followed = userdata.have_followed_follow_bread_in
-            userdata.have_followed_follow_bread_out = None
+        #if userdata.have_followed_follow_bread_in is not None:
+        #    self._have_followed = userdata.have_followed_follow_bread_in
+
+        #userdata.have_followed_follow_bread_out = None
 
         # print list(userdata.buffer)
         print len(buffer)
@@ -221,13 +224,15 @@ class FollowBread(smach.State):
 
         if self._operator:
             print self._operator.id
+            if current_operator:
+                current_operator.popleft()
             current_operator.append(self._robot.ed.get_entity(id=self._operator.id))
 
         #print have_followed
         print len(buffer)
-        if len(buffer) == 1 and self._have_followed: # The only crumb is the operator
+        if len(buffer) == 1 and self._have_followed and current_operator[-1].distance_to_2d(robot_position.p) < 0.8: # The only crumb is the operator
             print current_operator
-            userdata.current_operator_out = current_operator
+            self._have_followed = False
             return 'no_follow_bread_ask_finalize'
 
         if not buffer:
@@ -366,33 +371,35 @@ class FollowBread(smach.State):
 class AskFinalize(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,  outcomes=['follow', 'Done'],
-                                    input_keys=['current_operator_in'],
-                                    output_keys=['have_followed_ask_finalize_out'])
+                                    #input_keys=['current_operator_in'],
+                                    #output_keys=['have_followed_ask_finalize_out']
+                                    )
         self._robot = robot
 
-    def execute(self, userdata):
-        current_operator = userdata.current_operator_in
-        print current_operator[-1]
-        robot_position = self._robot.base.get_location().frame
-        if current_operator[-1].distance_to_2d(robot_position.p) < 0.8:  #and self._have_followed:
-            sentence = "Are we there yet?"
-            self._robot.speech.speak(sentence, block=True)
-            try:
-                answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
-            except TimeoutException as e:
-                self._robot.speech.speak("I did not hear you!")
-                rospy.sleep(2)
-            else:
-                if answer.sentence == "yes":
-                    self._robot.speech.speak("We reached our final destination!")
-                    return 'Done'
-                else:
-                    userdata.have_followed_ask_finalize_out = False
-                    return 'follow'
-
+    def execute(self, userdata=None):
+        #current_operator = userdata.current_operator_in
+        #print current_operator[-1]
+        #robot_position = self._robot.base.get_location().frame
+        #if current_operator[-1].distance_to_2d(robot_position.p) < 0.8:  #and self._have_followed:
+        sentence = "Are we there yet?"
+        self._robot.speech.speak(sentence, block=True)
+        try:
+            answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+        except TimeoutException as e:
+            self._robot.speech.speak("I did not hear you!")
+            rospy.sleep(2)
+            self._robot.speech.speak("Since I did not hear from you I assume we are done!")
         else:
-            userdata.have_followed_ask_finalize_out = True
-            return 'follow'
+            if answer.sentence == "yes":
+                self._robot.speech.speak("We reached our final destination!")
+                return 'Done'
+            else:
+                #userdata.have_followed_ask_finalize_out = False
+                return 'follow'
+
+        #else:
+        #    userdata.have_followed_ask_finalize_out = True
+        #    return 'follow'
 
 class Recovery(smach.State):
     def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
@@ -478,8 +485,8 @@ class Recovery(smach.State):
 def setup_statemachine(robot):
     sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
     sm_top.userdata.operator = None
-    sm_top.userdata.current_operator = collections.deque()
-    sm_top.userdata.have_followed = None
+    #sm_top.userdata.current_operator = collections.deque()
+    #sm_top.userdata.have_followed = None
     with sm_top:
         smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
                                transitions={'follow': 'CON_FOLLOW',
@@ -489,7 +496,9 @@ def setup_statemachine(robot):
         smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
                                transitions={'follow': 'CON_FOLLOW',
                                             'Done': 'Done'},
-                               remapping={'current_operator_in': 'current_operator', 'have_followed_ask_finalize_out': 'have_followed'})
+                               remapping={'current_operator_in': 'current_operator'
+                                   #, 'have_followed_ask_finalize_out': 'have_followed'
+                                   })
         smach.StateMachine.add('RECOVERY', Recovery(robot),
                                transitions={'Failed': 'Failed',
                                             'follow': 'CON_FOLLOW'})
@@ -503,13 +512,13 @@ def setup_statemachine(robot):
                                                 #'recover_operator': {'FOLLOWBREAD': 'follow_bread',
                                                 #                     'TRACK': 'no_track'}
                                                 },
-                                  input_keys=['operator', 'have_followed'],
+                                  input_keys=['operator'],
                                   output_keys=['current_operator'])
 
         sm_con.userdata.buffer = collections.deque()
         sm_con.userdata.operator = None
-        sm_con.userdata.current_operator = collections.deque()
-        sm_con.userdata.have_followed = None
+        #sm_con.userdata.current_operator = collections.deque()
+        #sm_con.userdata.have_followed = None
         with sm_con:
             smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
                                                                     'buffer_track_out': 'buffer',
@@ -517,9 +526,10 @@ def setup_statemachine(robot):
 
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
                                                                            'buffer_follow_out': 'buffer',
-                                                                           'current_operator_out': 'current_operator',
-                                                                           'have_followed_follow_bread_in': 'have_followed',
-                                                                           'have_followed_follow_bread_out': 'have_followed'})
+                                                                           'current_operator_out': 'current_operator'
+                                                                           #,'have_followed_follow_bread_in': 'have_followed',
+                                                                           #'have_followed_follow_bread_out': 'have_followed'
+                                                                           })
 
 
 
