@@ -35,7 +35,6 @@ class LearnOperator(smach.State):
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
         operator = userdata.operator_learn_in
-        # import pdb; pdb.set_trace()
         while not operator:
             if self.preempt_requested():
                 return 'Failed'
@@ -59,7 +58,6 @@ class LearnOperator(smach.State):
                     num_detections = 0
                     while num_detections < 5: # 5:
                         if self._robot.perception.learn_person(self._operator_name):
-                            #self._robot.speech.speak("Succesfully detected you %i times" % (num_detections + 1),block = False)
                             print("Succesfully detected you %i times" % (num_detections + 1))
                             num_detections += 1
                         elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
@@ -79,7 +77,7 @@ class Track(smach.State):  # Updates the breadcrumb path
                               input_keys=['buffer_track_in', 'operator_track_in'],
                               output_keys=['buffer_track_out'])
         self.counter = 0
-        self._period = 2          #fix this magic number
+        self._period = 0.3          #fix this magic number
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._robot = robot
@@ -100,9 +98,9 @@ class Track(smach.State):  # Updates the breadcrumb path
 
         operator = self._robot.ed.get_entity(id=operator.id )
         if operator:
-            if (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            if len(buffer) == 8: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
                 self._robot.speech.speak("Not so fast!")
-
+                print len(buffer)
             self._last_operator = operator
             self._last_operator_id = operator.id
 
@@ -122,52 +120,11 @@ class Track(smach.State):  # Updates the breadcrumb path
                 else:
                     buffer.append(operator)
             else:
-                buffer.append(operator) # collections.deque([operator_pos])
-            # buffer.append([operator_pos])
+                buffer.append(operator)
             userdata.buffer_track_out = buffer
             return 'track'
 
         else:
-        #    if not self._last_operator:                                We leave this out for now, maybe it is necessary to implement it later.
-        #         if self._backup_register():
-        #             # If the operator is still tracked, it is also the last_operator
-        #             self._last_operator = self._operator
-        #
-        #             operator_pos = geometry_msgs.msg.PointStamped()
-        #             operator_pos.header.stamp = rospy.get_rostime()
-        #             operator_pos.header.frame_id = self._operator_id
-        #             operator_pos.point.x = 0.0
-        #             operator_pos.point.y = 0.0
-        #             operator_pos.point.z = 0.0
-        #             self._operator_pub.publish(operator_pos)
-        #
-        #             f = self._robot.base.get_location().frame
-        #             self._operator_distance = self._last_operator.distance_to_2d(f.p)
-        #
-        #             return True
-        #         else:
-        #             self._robot.speech.speak("I'm sorry, but I couldn't find a person to track")
-        #
-        #     f = self._robot.base.get_location().frame
-        #     self._operator_distance = self._last_operator.distance_to_2d(f.p)
-        #     # If the operator is lost, check if we still have an ID
-        #     if self._operator_id:
-        #         # At the moment when the operator is lost, tell him to slow down and clear operator ID
-        #         self._operator_id = None
-        #         self._robot.speech.speak("Stop! I lost you! Until I find you again, please wait there.", block=False)
-        #     return False
-
-
-        #     while not operator:
-        #         operator = self._robot.ed.get_entity(id=self._last_operator_id)
-        #         rospy.sleep(2)
-        #         self._robot.speech.speak(
-        #         "Oh no I lost you for a second, please stay where you are and I will come and find you again!")
-        #         return 'no_track'
-        #     buffer.append(operator)
-        #     return 'track'
-
-            # self._robot.speech.speak(
             rospy.sleep(2)
             operator = self._robot.ed.get_entity(id=self._last_operator_id)
             if not operator:
@@ -176,6 +133,7 @@ class Track(smach.State):  # Updates the breadcrumb path
                     self._lost_operator = True
                     return 'track'
 
+                self._robot.base.local_planner.cancelCurrentPlan()
                 return 'no_track'
             else:
                 return 'track'
@@ -185,98 +143,60 @@ class FollowBread(smach.State):
         smach.State.__init__(self,
                              outcomes=['follow_bread', 'no_follow_bread_ask_finalize', 'no_follow_bread_recovery'],
                              input_keys=['buffer_follow_in'],
-                             output_keys=['buffer_follow_out'
-                                 #, 'current_operator_out', 'have_followed_follow_bread_out']
-                             ])
+                             output_keys=['buffer_follow_out'])
         self._robot = robot
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
-        self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker,
-                                               queue_size=10)
+        #self._breadcrumb_pub = rospy.Publisher('/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+
+        self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        #self._plan_marker_pub = rospy.Publisher('/%s/follow_operator/test_path' % robot.robot_name, Marker, queue_size=10)
+
         self._plan_marker_pub = rospy.Publisher(
-            '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
+                '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._newest_crumb = None
         self._operator = None
-        self._last_operator = None
         self._have_followed = False
+        self._current_operator = collections.deque()
+
 
     def execute(self, userdata):
         buffer = userdata.buffer_follow_in
-        #if userdata.have_followed_follow_bread_in is not None:
-        #    self._have_followed = userdata.have_followed_follow_bread_in
-
-        #userdata.have_followed_follow_bread_out = None
-
-        # print list(userdata.buffer)
-        print len(buffer)
-        print self._have_followed
-        current_operator = collections.deque()
         if len(buffer) > 5: #5
-            print "hjyuuuuuuuuuaeig"
             self._have_followed = True
-        print self._have_followed
-            # self._have_followed = have_followed
 
         robot_position = self._robot.base.get_location().frame
         if not buffer:
             # if not self._have_followed:
-            rospy.sleep(1)      #magic number
+            rospy.sleep(2)      #magic number
 
         if buffer:
             self._newest_crumb = buffer[0]
             self._operator = buffer[-1]
-            self._last_operator = buffer[-1]
-        if len(buffer) > 1:
-            self._last_operator = buffer[-2]
 
         if self._operator:
-            print self._operator.id
-            if len(current_operator) > 1:
-                current_operator.popleft()
-            current_operator.append(self._robot.ed.get_entity(id=self._operator.id))
-
-        #print have_followed
+            operator = self._robot.ed.get_entity(id=self._operator.id)
         print len(buffer)
-        if len(buffer) == 1 and self._have_followed and current_operator[-1].distance_to_2d(robot_position.p) < 1.0: # The only crumb is the operator
-            print current_operator
-            self._have_followed = False
-            return 'no_follow_bread_ask_finalize'
+        print self._have_followed
+        if operator:
+            print operator.distance_to_2d(robot_position.p)
+            if len(buffer) == 1 and self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0: # The only crumb is the operator
+                self._have_followed = False
+                return 'no_follow_bread_ask_finalize'
 
         if not buffer:
             return 'no_follow_bread_recovery'
 
-        #if buffer:
-        #    self._newest_crumb = buffer[0]
-        #    self._operator = buffer[-1]
-        #    self._last_operator = buffer[-1]
-        #if len(buffer) > 1:
-        #    self._last_operator = buffer[-2]
-
+        print len(buffer)
         temp_buffer = collections.deque()
         for crumb in buffer:
             if crumb.distance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
                 temp_buffer.append(crumb)
-            #else:
-            #    temp_buffer = None
         buffer = temp_buffer
-
-        #print "Self operator before if statement %i" % self._operator.id
-        ## print "Buffer length after popping crumbs that are to close %i" % len(buffer)
-        #if self._operator.id:
-        #    self._current_operator = self._robot.ed.get_entity(id=self._operator.id)
-        #print "Buffer length where shit breaks %i" % len(buffer)
-        #print self._have_followed
-        #if not buffer and self._operator:
-        #    if self._have_followed: # and self._current_operator.distance_to_2d(robot_position.p) < 0.8:
-        #    # rospy.sleep(1)
-        #    #print self._current_operator.distance_to_2d(robot_position.p)
-        #        self._have_followed = False
-        #        userdata.current_operator_out = self._current_operator
-        #    return 'no_follow_bread'
-        self._robot.head.cancel_goal()
+        print len(buffer)
         f = self._robot.base.get_location().frame
         robot_position = f.p
-        operator_position = self._last_operator._pose.p
+        operator_position = self._operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
         p = PositionConstraint()
@@ -284,23 +204,14 @@ class FollowBread(smach.State):
                                                        self._operator_radius)
 
         o = OrientationConstraint()
-        if self._operator.id:
-            o.frame = self._operator.id
-        else:
-            o.frame = 'map'
-            o.look_at = kdl_conversions.kdlVectorToPointMsg(last_operator.pose.frame.p)
+        o.frame = self._operator.id
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05      ##magic number number 2
         kdl_plan = []
         previous_point = robot_position
 
-        #if operator:
-        #    buffer.append(operator)
-        #else:
-        #    buffer.append(last_operator)
         for crumb in buffer:
-            # assert isinstance(crumb, Entity)
             diff = crumb._pose.p - previous_point
             dx, dy = diff.x(), diff.y()
             length = crumb.distance_to_2d(previous_point)
@@ -327,12 +238,11 @@ class FollowBread(smach.State):
 
         ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
         # Check if plan is valid. If not, remove invalid points from the path
-        if not self._robot.base.global_planner.checkPlan(ros_plan):
-            print "Breadcrumb plan is blocked, removing blocked points"
-            # Go through plan from operator to robot and pick the first unoccupied point as goal point
-            ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
-            # print ros_plan
-            print "Length of rosplan %i" % len(ros_plan)
+        if len(ros_plan) > 0:
+            if not self._robot.base.global_planner.checkPlan(ros_plan):
+                print "Breadcrumb plan is blocked, removing blocked points"
+                # Go through plan from operator to robot and pick the first unoccupied point as goal point
+                ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
@@ -340,10 +250,10 @@ class FollowBread(smach.State):
         buffer_msg.header.stamp = rospy.get_rostime()
         buffer_msg.header.frame_id = "/map"
         buffer_msg.color.a = 1
-        buffer_msg.color.r = 0
-        buffer_msg.color.g = 1
-        buffer_msg.color.b = 1
-        buffer_msg.lifetime = rospy.Time(1.0)
+        buffer_msg.color.r = 1
+        buffer_msg.color.g = 0
+        buffer_msg.color.b = 0
+        #buffer_msg.lifetime = rospy.Time(.0)
         buffer_msg.id = 0
         buffer_msg.action = Marker.ADD
 
@@ -368,26 +278,17 @@ class FollowBread(smach.State):
 
         self._plan_marker_pub.publish(line_strip)
         self._breadcrumb_pub.publish(buffer_msg)
-        # self._visualize_plan(ros_plan)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         userdata.buffer_follow_out = buffer
-        print "Buffer length at the end of the follow state %i" % len(buffer)
         return 'follow_bread'
 
 
 class AskFinalize(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,  outcomes=['follow', 'Done'],
-                                    #input_keys=['current_operator_in'],
-                                    #output_keys=['have_followed_ask_finalize_out']
-                                    )
+        smach.State.__init__(self,  outcomes=['follow', 'Done'])
         self._robot = robot
 
     def execute(self, userdata=None):
-        #current_operator = userdata.current_operator_in
-        #print current_operator[-1]
-        #robot_position = self._robot.base.get_location().frame
-        #if current_operator[-1].distance_to_2d(robot_position.p) < 0.8:  #and self._have_followed:
         sentence = "Are we there yet?"
         self._robot.speech.speak(sentence, block=True)
         try:
@@ -401,12 +302,7 @@ class AskFinalize(smach.State):
                 self._robot.speech.speak("We reached our final destination!")
                 return 'Done'
             else:
-                #userdata.have_followed_ask_finalize_out = False
                 return 'follow'
-
-        #else:
-        #    userdata.have_followed_ask_finalize_out = True
-        #    return 'follow'
 
 class Recovery(smach.State):
     def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
@@ -451,11 +347,6 @@ class Recovery(smach.State):
             if i == len(head_goals):
                  i = 0
             self._robot.head.wait_for_motion_done()
-
-            # raw_detections is a list of Recognitions
-            # a recognition contains a CategoricalDistribution
-            # a CategoricalDistribution is a list of CategoryProbabilities
-            # a CategoryProbability has a label and a float
             raw_detections = self._robot.perception.detect_faces()
             best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
 
@@ -485,15 +376,13 @@ class Recovery(smach.State):
                     print "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
 
         self._robot.head.close()
-        # self._turn_towards_operator()
         rospy.sleep(2.0)
         return 'Failed'
 
 def setup_statemachine(robot):
     sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
     sm_top.userdata.operator = None
-    #sm_top.userdata.current_operator = collections.deque()
-    #sm_top.userdata.have_followed = None
+
     with sm_top:
         smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
                                transitions={'follow': 'CON_FOLLOW',
@@ -502,10 +391,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
                                transitions={'follow': 'CON_FOLLOW',
-                                            'Done': 'Done'}
-                               #remapping={'current_operator_in': 'current_operator'
-                                   #, 'have_followed_ask_finalize_out': 'have_followed'
-                                   )
+                                            'Done': 'Done'})
+
         smach.StateMachine.add('RECOVERY', Recovery(robot),
                                transitions={'Failed': 'Failed',
                                             'follow': 'CON_FOLLOW'})
@@ -515,29 +402,21 @@ def setup_statemachine(robot):
                                    outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread_ask_finalize',
                                                                  'TRACK': 'track'},
                                                 'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
-                                                                     'TRACK': 'no_track'},
+                                                                     'TRACK': 'no_track'}},
                                                 #'recover_operator': {'FOLLOWBREAD': 'follow_bread',
                                                 #                     'TRACK': 'no_track'}
-                                                },
-                                  input_keys=['operator']
-                                  #output_keys=['current_operator']
-                                  )
+                                  input_keys=['operator'])
 
         sm_con.userdata.buffer = collections.deque()
         sm_con.userdata.operator = None
-        #sm_con.userdata.current_operator = collections.deque()
-        #sm_con.userdata.have_followed = None
+
         with sm_con:
             smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
                                                                     'buffer_track_out': 'buffer',
                                                                     'operator_track_in': 'operator'})
 
             smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
-                                                                           'buffer_follow_out': 'buffer'
-                                                                           #'current_operator_out': 'current_operator'
-                                                                           #,'have_followed_follow_bread_in': 'have_followed',
-                                                                           #'have_followed_follow_bread_out': 'have_followed'
-                                                                           })
+                                                                           'buffer_follow_out': 'buffer'})
 
 
 
@@ -559,115 +438,3 @@ if __name__ == "__main__":
     rospy.init_node('test_follow_operator')
     startup(setup_statemachine, robot_name=robot_name)
 
-
-# import copy, threading
-
-# Sample code Janno
-# This class should rather be named Buffer instead of BreadCrumb: it is only used to pass data. The 'breadcrumb' is
-# the list that is kept in the execute function of the Follow state (hence NOT a member of the class)
-# class BreadCrumb(object):
-#     def __init__(self):
-#         self._breadcrumb = []
-#         self._lock = threading.Lock()
-#
-#     def set_data(self, data):
-#         # Dit moet waarschijnlijk iets van 'append' worden. Alleen zetten is niet voldoende: het kan zomaar zijn dat ik
-#         # meerdere malen een punt toe voeg voordat ik weer uitlees
-#         # Bij het 'appenden' kun je ook meteen een distance check doen.
-#         with self._lock:
-#             self._list = copy.deepcopy(data)
-#
-#             # Equivalent to
-#             # self._lock.acquire()
-#             # self._list = copy.deepcopy(data)
-#             # self._lock.release()
-#
-#     def append(self):
-#         # ToDo Josja
-#         pass
-#
-#     def get_data(self):
-#         with self._lock:
-#             result = self._breadcrumb
-#             self._breadcrumb = []
-#         return result
-#
-#
-# class Track(smach.State):
-#     def __init__(self, robot, breadcrumb):
-#         self.robot = robot
-#         self._breadcrumb = breadcrumb
-#
-#         # Possible new way:
-#         # self._tracking_sub = rospy.Subscriber("bla", bla_msgs.Blaat, self._tracking_callback)
-#
-#     def execute(self):
-#         while True:
-#             operator = self.robot.ed.get_person()
-#             self._breadcrumb.append(operator)
-#
-#             # self._breadcrumb.append(self._new_data)
-#             # self._new_data = []
-#
-#             # def _tracking_callback(self, msg):
-#             #     self._new_data = msg....
-#             #     self._breadcrumb.append(msg.data)
-#
-#
-# class Follow(smach.State):
-#     def __init__(self, robot, breadcrumb):
-#         self._breadcrumb = breadcrumb
-#
-#         self._lookat_radius = 1.0  # Something like that
-#
-#         def execute(self):
-#             breadcrumb = []  # Create an empty list at the top of our execute hook: we don't want any state remaining
-#
-#             while True:
-#                 new_list
-#                 self._breadcrumb.get_data()
-#                 breadcrumb = breadcrumb + new_list
-#
-#                 # Do smart stuff with breadcrumb
-#
-#                 # Pitfall: breadcrumb does still contain data when entering this hook the second time. How do we solve this?
-#
-#                 # ToDo: remove points that have been visited by the robot
-#
-#
-# class FollowMachine(smach.ConcurrentStateMachine):
-#     breadcrumb = BreadCrumb()
-#
-#     with sm:
-#         smach.StateMachine.add("track", Track(breadcrumb=breadcrumb))
-#         smach.StateMachine.add("Follow", Follow(breadcrumb=breadcrumb))
-#
-#
-#
-
-
-### new idea::
-# class BreadCrumb(object):
-#     def __init__(self):
-#         self._breadcrumb = collections.deque()
-#
-#     # def set_data(self, data):
-#     #     # Dit moet waarschijnlijk iets van 'append' worden. Alleen zetten is niet voldoende: het kan zomaar zijn dat ik
-#     #     # meerdere malen een punt toe voeg voordat ik weer uitlees
-#     #     # Bij het 'appenden' kun je ook meteen een distance check doen.
-#     #     with self._lock:
-#     #         self._list = copy.deepcopy(data)
-#     #
-#     #         # Equivalent to
-#     #         # self._lock.acquire()
-#     #         # self._list = copy.deepcopy(data)
-#     #         # self._lock.release()
-#
-#     def append(self, data):
-#         # ToDo Josja
-#         self._breadcrumb.append(data)
-#
-#
-## note that all the buffervariables are popped and placed in a different variable which can be used for planning
-#     def get_data(self):
-#         result = []
