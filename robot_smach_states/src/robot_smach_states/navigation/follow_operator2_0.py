@@ -96,11 +96,15 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator = self._operator
         buffer = userdata.buffer_track_in
 
-        operator = self._robot.ed.get_entity(id=operator.id )
+        operator = self._robot.ed.get_entity(id=operator.id)
+        print self._robot.base.local_planner.getDistanceToGoal()
+        if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            self._robot.speech.speak("Not so fast!")
+
         if operator:
-            if len(buffer) == 8: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
-                self._robot.speech.speak("Not so fast!")
-                print len(buffer)
+            #if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            #self._robot.speech.speak("Not so fast!")
+            #    print len(buffer)
             self._last_operator = operator
             self._last_operator_id = operator.id
 
@@ -123,7 +127,6 @@ class Track(smach.State):  # Updates the breadcrumb path
                 buffer.append(operator)
             userdata.buffer_track_out = buffer
             return 'track'
-
         else:
             rospy.sleep(2)
             operator = self._robot.ed.get_entity(id=self._last_operator_id)
@@ -132,7 +135,6 @@ class Track(smach.State):  # Updates the breadcrumb path
                     self._robot.speech.speak("Oh no I lost you for a second, please stay where you are and I will come and find you again!")
                     self._lost_operator = True
                     return 'track'
-
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return 'no_track'
             else:
@@ -147,9 +149,9 @@ class FollowBread(smach.State):
         self._robot = robot
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
-        #self._breadcrumb_pub = rospy.Publisher('/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        self._breadcrumb_pub = rospy.Publisher('/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
 
-        self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        #self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
         #self._plan_marker_pub = rospy.Publisher('/%s/follow_operator/test_path' % robot.robot_name, Marker, queue_size=10)
 
         self._plan_marker_pub = rospy.Publisher(
@@ -249,6 +251,7 @@ class FollowBread(smach.State):
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
         buffer_msg.scale.x = 0.05
+        buffer_msg.scale.y = 0.05
         buffer_msg.header.stamp = rospy.get_rostime()
         buffer_msg.header.frame_id = "/map"
         buffer_msg.color.a = 1
