@@ -8,12 +8,11 @@ time_out_seconds = 60.0
 time_out_seconds_door = 120.0
 
 commands = {
-    'follow': ['follow',  # 'Robot, follow me'
-               'follow me'],
-    'remember': ['remember location',  # 'Remember, this location is the car'
-                 'here is the car',
-                 'stop following',  # 'Stop following me'
-                 'stop following me']}
+    'no':  ['no', 'follow me'],# 'Robot, follow me'
+    'yes': ['yes', 'remember location',  # 'Remember, this location is the car'
+            'here is the car',
+            'stop following',  # 'Stop following me'
+            'stop following me']}
 
 destinations = common.location_rooms+common.location_names
 

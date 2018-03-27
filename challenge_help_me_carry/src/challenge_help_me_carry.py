@@ -67,15 +67,15 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                 'no_operator': 'ASK_FOR_TASK'})
 
             smach.StateMachine.add('ASK_FOR_TASK',
-                                   states.Say(robot, ["Are we at the car or should I follow you?"], block=True),
+                                   states.Say(robot, ["Are we at the car already?"], block=True),
                                    transitions={'spoken': 'WAIT_FOR_TASK'})
 
             smach.StateMachine.add('WAIT_FOR_TASK',
                                    hmc_states.WaitForOperatorCommand(robot,
                                                                      possible_commands=challenge_knowledge.commands.keys(),
                                                                      commands_as_outcomes=True),
-                                   transitions={'follow': 'FOLLOW_OPERATOR',
-                                                'remember': 'REMEMBER_CAR_LOCATION',
+                                   transitions={'no': 'FOLLOW_OPERATOR',
+                                                'yes': 'REMEMBER_CAR_LOCATION',
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add('REMEMBER_CAR_LOCATION',
