@@ -21,9 +21,9 @@ waypoint_car = {'id': 'car',
                 'radius': 0.5}
 
 default_item = 'coke'
-default_place = 'cabinet'
-default_area = 'on_top_of'
-default_target_radius = 0.25
+default_place = 'dinner_table'
+default_area = 'in_front_of'
+default_target_radius = 0.2
 
 carrying_bag_pose = 'carrying_bag_pose'
 drop_bag_pose = "drop_bag_pose"
