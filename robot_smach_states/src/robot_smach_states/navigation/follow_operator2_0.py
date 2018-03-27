@@ -161,6 +161,8 @@ class FollowBread(smach.State):
 
 
     def execute(self, userdata):
+        operator = None
+
         buffer = userdata.buffer_follow_in
         if len(buffer) > 5: #5
             self._have_followed = True
@@ -421,7 +423,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('CON_FOLLOW', sm_con,
-                               transitions={'recover_operator': 'Failed', # 'RECOVERY',
+                               transitions={'recover_operator': 'RECOVERY', # 'RECOVERY',
                                             'ask_finalize': 'ASK_FINALIZE',
                                             'keep_following': 'CON_FOLLOW'})
 
