@@ -14,7 +14,7 @@ commands = {
             'stop following',  # 'Stop following me'
             'stop following me']}
 
-destinations = common.location_rooms+common.location_names
+destinations = common.location_rooms
 
 # add or get from ~/ros/kinetic/system/src/ed_object_models/models/robotics_testlabs/model.yaml
 waypoint_car = {'id': 'car',
