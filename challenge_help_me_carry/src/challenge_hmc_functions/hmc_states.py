@@ -2,7 +2,6 @@
 
 import smach
 import robot_smach_states as states
-import robot_smach_states.util.designators as ds
 
 from robot_smach_states.util.designators import check_type
 from robot_skills.arms import Arm, GripperState
@@ -10,6 +9,7 @@ from hmi import TimeoutException
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
+
 
 class WaitForOperatorCommand(smach.State):
     """
@@ -72,9 +72,7 @@ class WaitForOperatorCommand(smach.State):
 
         if self._commands_as_userdata:
             userdata.command_recognized = command_recognized
-            print(command_recognized)
             self.target_destination.id_ = command_recognized
-            print(self.target_destination.id_)
 
         if self._commands_as_outcomes:
             return command_recognized
@@ -87,21 +85,16 @@ class StoreCarWaypoint(smach.State):
     The robot remembers the position of the car for future use
 
     """
-    def __init__(self, robot, car_id):
+    def __init__(self, robot):
         smach.State.__init__(self, outcomes=['success', 'abort'])
         self._robot = robot
-        self.car_id = car_id # this is for some reason a dict
-        #robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata=None):
-        print(challenge_knowledge.waypoint_car)
-        success = self._robot.ed.update_entity(id=self.car_id.resolve(), # this doesn't work
+        response = self._robot.ed.update_entity(id=challenge_knowledge.waypoint_car['id'],
                                                frame_stamped=self._robot.base.get_location(),
                                                type="waypoint")
-        e = self._robot.ed.get_entity(id=self.car_id.resolve())
-        print e
 
-        if success:
+        if not response.response:
             return "success"
         else:
             return "abort"

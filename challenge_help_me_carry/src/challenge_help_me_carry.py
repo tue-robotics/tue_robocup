@@ -67,7 +67,9 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                 'no_operator': 'ASK_FOR_TASK'})
 
             smach.StateMachine.add('ASK_FOR_TASK',
-                                   states.Say(robot, ["Are we at the car already?"], block=True),
+                                   states.Say(robot, ["Are we at the car already?"],
+                                              block=True,
+                                              look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_TASK'})
 
             smach.StateMachine.add('WAIT_FOR_TASK',
@@ -79,12 +81,14 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add('REMEMBER_CAR_LOCATION',
-                                   hmc_states.StoreCarWaypoint(robot, challenge_knowledge.waypoint_car),
+                                   hmc_states.StoreCarWaypoint(robot),
                                    transitions={'success': 'ASK_FOR_DESTINATION',
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add('ASK_FOR_DESTINATION',
-                                   states.Say(robot, ["Where should I bring the groceries?"], block=True),
+                                   states.Say(robot, ["Where should I bring the groceries?"],
+                                              block=True,
+                                              look_at_standing_person=True),
                                    transitions={'spoken': 'RECEIVE_DESTINATION'})
 
             smach.StateMachine.add('RECEIVE_DESTINATION',
@@ -120,12 +124,21 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    states.Say(robot, ["Let me bring in your groceries",
                                                       "Helping you carry stuff",
                                                       "I'm going back inside"],
-                                              block=True),
+                                              block=True,
+                                              look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_DESTINATION'})
 
             smach.StateMachine.add('GOTO_DESTINATION',
                                    states.NavigateToWaypoint(robot, self.target_destination,
                                                              challenge_knowledge.default_target_radius),
+                                   transitions={'arrived': 'PUTDOWN_ITEM',
+                                                'unreachable': 'GOTO_DESTINATION_BACKUP',
+                                                # implement avoid obstacle behaviour later
+                                                'goal_not_defined': 'Aborted'})
+
+            smach.StateMachine.add('GOTO_DESTINATION_BACKUP',
+                                   states.NavigateToWaypoint(robot, self.target_destination,
+                                                             challenge_knowledge.backup_target_radius),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
                                                 'unreachable': 'PUTDOWN_ITEM',
                                                 # implement avoid obstacle behaviour later
@@ -139,7 +152,9 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             smach.StateMachine.add('ASKING_FOR_HELP',
                                    # TODO: look and then face new operator
-                                   states.Say(robot, "Please follow me and help me carry groceries into the house"),
+                                   states.Say(robot, "Please follow me and help me carry groceries into the house",
+                                              block=True,
+                                              look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_CAR'})
 
             smach.StateMachine.add('GOTO_CAR',
@@ -160,13 +175,15 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    states.Say(robot, ["We arrived at the car, goodbye",
                                                       "You have reached your destination, goodbye",
                                                       "The car is right here, see you later!"],
-                                              block=True),
+                                              block=True,
+                                              look_at_standing_person=True),
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "help_me_carry")
 
-
 ############################## initializing program ##############################
+
+
 if __name__ == '__main__':
     rospy.init_node('help_me_carry_exec')
 
