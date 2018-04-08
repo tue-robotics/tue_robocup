@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from action_result import ActionResult
 import sys
@@ -15,8 +15,9 @@ PLACE_JOINT_CONFIG = [-0.8, 0.0, -1, 0.8, -0.3, 0.2, 0.0]
 RESET_JOINT_CONFIG = [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
 PLACE_TORSO_HEIGHT = 0.27
 HANDOVER_TORSO_HEIGHT = 0.35
-HANDOVER_POSE_RADIUS =0.20
+HANDOVER_POSE_RADIUS = 0.20
 ARM_SIDE = "left"
+
 
 def amigo_navigate_to_handover_pose(amigo, frame_id=BAR_ENTITY_FRAME_ID, dist_from_bar=DIST_FROM_BAR, side=ARM_SIDE):
     if side == "left":
@@ -35,6 +36,7 @@ def amigo_navigate_to_handover_pose(amigo, frame_id=BAR_ENTITY_FRAME_ID, dist_fr
         return ActionResult(ActionResult.SUCCEEDED, "Amigo: Arrived at handover pose")
     else:
         return ActionResult(ActionResult.FAILED, ("Amigo: handover pose %s",nav_res))
+
 
 # Return is (ActionResult, pose)  where pose is tuple (x, y, theta)
 def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
@@ -58,7 +60,7 @@ def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
     amigo.torso.wait_for_motion_done()
 
     # if res == ActionResult.SUCCEEDED:
-    (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s" % side)
+    (x, y, z), (rx, ry, rz, rw) = amigo.tf_listener.lookupTransform("/map", "/amigo/grippoint_%s" % side, rospy.Time(0))
     (roll, pitch, yaw) = tf.transformations.euler_from_quaternion([rx, ry, rz, rw])
     print "Amigo gripper height: %f" % z
     msg = "Amigo: I'm ready to place the drink at: %s" % json.dumps({'x': x, 'y': y, 'yaw': yaw})
@@ -67,6 +69,7 @@ def amigo_move_arm_to_place_position(amigo, side=ARM_SIDE):
     #     msg = "Amigo: Place joint goal could not be reached"
 
     return (ActionResult(res,msg), pose)
+
 
 def amigo_place(amigo, side=ARM_SIDE):
     res = ActionResult.FAILED
@@ -99,6 +102,7 @@ def amigo_place(amigo, side=ARM_SIDE):
     res = ActionResult.SUCCEEDED
     return ActionResult(res, "Amigo: Successfully placed item")
 
+
 def amigo_reset_arm(amigo, side=ARM_SIDE):
     amigo.head.close()
     if side == "left":
@@ -112,6 +116,7 @@ def amigo_reset_arm(amigo, side=ARM_SIDE):
 
     return ActionResult(ActionResult.SUCCEEDED, "Amigo: Reset arm succeeded")
 
+
 if __name__ == "__main__":
 
     side = "left"
@@ -119,14 +124,12 @@ if __name__ == "__main__":
         if sys.argv[1] == "--side":
             side = sys.argv[2]
 
-
-
     """ Test stuff """
     rospy.init_node("Test handover motions: Amigo")
     amigo = Amigo(wait_services=True)
 
-    amigo_reset_arm(amigo,"left")
-    amigo_reset_arm(amigo,"right")
+    amigo_reset_arm(amigo, "left")
+    amigo_reset_arm(amigo, "right")
 
     rospy.loginfo("AMIGO is loaded and will move to the pre-handover pose")
     result = amigo_navigate_to_handover_pose(amigo, side)

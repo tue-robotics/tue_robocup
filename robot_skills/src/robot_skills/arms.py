@@ -2,12 +2,10 @@
 import rospy
 import std_msgs.msg
 import PyKDL as kdl
-import tf_server
 
 import visualization_msgs.msg
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
-from diagnostic_msgs.msg import DiagnosticArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 # TU/e Robotics
@@ -285,7 +283,7 @@ class Arm(RobotPart):
             )
             if result == GoalStatus.SUCCEEDED:
 
-                result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link", self.robot_name + "/grippoint_{}".format(self.side))
+                result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link", self.robot_name + "/grippoint_{}".format(self.side), rospy.Time(0))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
                 dy = grasp_precompute_goal.goal.y - result_pose[0][1]
                 dz = grasp_precompute_goal.goal.z - result_pose[0][2]
