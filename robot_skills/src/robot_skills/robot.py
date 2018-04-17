@@ -19,7 +19,7 @@ import ebutton
 import lights
 
 # tf
-import tf
+import tf_server
 
 # Reasoning/world modeling
 import world_model_ed
@@ -39,7 +39,7 @@ class Robot(object):
     def __init__(self, robot_name="", wait_services=False):
 
         self.robot_name = robot_name
-        self.tf_listener = tf.TransformListener()
+        self.tf_listener = tf_server.TFClient()
 
         # Body parts
         self.parts = dict()
