@@ -191,7 +191,8 @@ class WaitForDoorOpen(smach.State):
         rospy.loginfo("Waiting for door...")
         r = Quaternion()
         _, (r.x, r.y, r.z, r.w) = self._robot.tf_listener.lookupTransform(self._robot.base_link_frame,
-                                                                          self._robot.robot_name + '/base_laser')
+                                                                          self._robot.robot_name + '/base_laser',
+                                                                          rospy.Time(0))
         laser_rotation = quaternion_msg_to_kdl_rotation(r)
         self.laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
         self.laser_yaw = laser_rotation.GetRPY()[2]

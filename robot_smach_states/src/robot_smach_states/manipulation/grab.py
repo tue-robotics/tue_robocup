@@ -4,7 +4,7 @@
 import PyKDL as kdl
 import rospy
 import smach
-import tf
+import tf2_ros
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -102,7 +102,7 @@ class PickUp(smach.State):
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
-        except tf.Exception, tfe:
+        except tf2_ros.TransformException as tfe:
             rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
             return 'failed'
 
@@ -150,17 +150,18 @@ class PickUp(smach.State):
                 return 'failed'
         else:
             # We do have a grasp pose, given as a kdl frame in map
-            if self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link"):
+            try:
+                self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link", rospy.Time(0),
+                                                       rospy.Duration(10))
                 # Transform to base link frame
                 goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
                 if goal_bl is None:
                     return 'failed'
-            else:
+            except tf2_ros.TransformException as tfe:
+                rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
                 return 'failed'
 
-        #except tf.Exception as tfe:
-        #    rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
-        #    return 'failed'
+
 
         # Pre-grasp --> this is only necessary when using visual servoing
         # rospy.loginfo('Starting Pre-grasp')
