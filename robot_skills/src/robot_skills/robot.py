@@ -68,6 +68,9 @@ class Robot(object):
         # Reasoning/world modeling
         self.parts['ed'] = world_model_ed.ED(self.robot_name, self.tf_listener)
 
+        # Ignore diagnostics: parts that are not present in the real robot
+        self._ignored_parts = []
+
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
@@ -206,7 +209,8 @@ class Robot(object):
             # Pass a dict mapping the name to the item.
             # Bodypart.handle_hardware_status needs to find the element relevant to itself
             # iterating over the array would be done be each bodypart, but with a dict they can just look theirs up.
-            part.process_hardware_status(diagnostic_dict)
+            if name not in self._ignored_parts:
+                part.process_hardware_status(diagnostic_dict)
 
     def __enter__(self):
         pass
