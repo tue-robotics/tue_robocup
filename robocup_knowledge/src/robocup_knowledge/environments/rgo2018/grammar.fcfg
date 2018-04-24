@@ -1,0 +1,468 @@
+T[{actions : <A1>}] -> C[A1]
+T[{actions : <A1, A2>}] -> C[A1] and C[A2]
+T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+
+C[{A}] -> VP[A]
+
+V_GUIDE -> guide | escort | take | lead | accompany
+
+DET -> the | a | an
+DET_I -> DET | some
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
+
+ROOMS[dining_room] -> dining_room
+ROOMS[bedroom] -> bedroom
+ROOMS[living_room] -> living_room
+ROOMS[kitchen] -> kitchen
+LOCATIONS[bookshelf] -> bookshelf
+LOCATIONS[sofa] -> sofa
+LOCATIONS[couch_table] -> couch_table
+LOCATIONS[side_table] -> side_table
+LOCATIONS[tv_stand] -> tv_stand
+LOCATIONS[kitchencounter] -> kitchencounter
+LOCATIONS[stove] -> stove
+LOCATIONS[desk] -> desk
+LOCATIONS[bar] -> bar
+LOCATIONS[bed] -> bed
+LOCATIONS[closet] -> closet
+LOCATIONS[dinner_table] -> dinner_table
+LOCATIONS[cabinet] -> cabinet
+ ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]
+OBJECT_NAMES[cereals] -> cereals
+OBJECT_NAMES[apple] -> apple
+OBJECT_NAMES[sponge] -> sponge
+OBJECT_NAMES[paper] -> paper
+OBJECT_NAMES[cornflakes] -> cornflakes
+OBJECT_NAMES[red_bowl] -> red_bowl
+OBJECT_NAMES[noodles] -> noodles
+OBJECT_NAMES[coffecup] -> coffecup
+OBJECT_NAMES[lemon] -> lemon
+OBJECT_NAMES[tomato_pasta] -> tomato_pasta
+OBJECT_NAMES[white_bowl] -> white_bowl
+OBJECT_NAMES[pringles] -> pringles
+OBJECT_NAMES[fork] -> fork
+OBJECT_NAMES[plate] -> plate
+OBJECT_NAMES[pepper] -> pepper
+OBJECT_NAMES[cappucino] -> cappucino
+OBJECT_NAMES[banana_milk] -> banana_milk
+OBJECT_NAMES[coke] -> coke
+OBJECT_NAMES[chocolate_cookies] -> chocolate_cookies
+OBJECT_NAMES[peas] -> peas
+OBJECT_NAMES[water] -> water
+OBJECT_NAMES[cloth] -> cloth
+OBJECT_NAMES[spoon] -> spoon
+OBJECT_NAMES[bread] -> bread
+OBJECT_NAMES[towel] -> towel
+OBJECT_NAMES[potato] -> potato
+OBJECT_NAMES[egg] -> egg
+OBJECT_NAMES[potato_soup] -> potato_soup
+OBJECT_NAMES[paprika] -> paprika
+OBJECT_NAMES[bag] -> bag
+OBJECT_NAMES[knife] -> knife
+OBJECT_NAMES[basket] -> basket
+OBJECT_NAMES[crackers] -> crackers
+OBJECT_NAMES[salt] -> salt
+OBJECT_NAMES[orange_drink] -> orange_drink
+OBJECT_NAMES[party_cracker] -> party_cracker
+MANIPULATION_AREA_LOCATIONS[bookshelf] -> MANIPULATION_AREA_DESCRIPTIONS the bookshelf
+MANIPULATION_AREA_LOCATIONS[couch_table] -> MANIPULATION_AREA_DESCRIPTIONS the couch_table
+MANIPULATION_AREA_LOCATIONS[side_table] -> MANIPULATION_AREA_DESCRIPTIONS the side_table
+MANIPULATION_AREA_LOCATIONS[kitchencounter] -> MANIPULATION_AREA_DESCRIPTIONS the kitchencounter
+MANIPULATION_AREA_LOCATIONS[stove] -> MANIPULATION_AREA_DESCRIPTIONS the stove
+MANIPULATION_AREA_LOCATIONS[desk] -> MANIPULATION_AREA_DESCRIPTIONS the desk
+MANIPULATION_AREA_LOCATIONS[bar] -> MANIPULATION_AREA_DESCRIPTIONS the bar
+MANIPULATION_AREA_LOCATIONS[closet] -> MANIPULATION_AREA_DESCRIPTIONS the closet
+MANIPULATION_AREA_LOCATIONS[dinner_table] -> MANIPULATION_AREA_DESCRIPTIONS the dinner_table
+MANIPULATION_AREA_LOCATIONS[cabinet] -> MANIPULATION_AREA_DESCRIPTIONS the cabinet
+OBJECT_NAMES[cleaning_stuff] -> cleaning_stuff
+OBJECT_NAMES[snack] -> snack
+OBJECT_NAMES[container] -> container
+OBJECT_NAMES[food] -> food
+OBJECT_NAMES[drink] -> drink
+OBJECT_NAMES[cutlery] -> cutlery
+V_FIND -> find | locate | look for | meet
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] in the ROOMS[Y]
+VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS in the ROOMS[Y]
+VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS near the LOCATIONS[Y]
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+
+FIND_PERSONS -> DET person
+FIND_PERSONS -> DET women
+FIND_PERSONS -> DET man
+FIND_PERSONS -> emma
+FIND_PERSONS -> olivia
+FIND_PERSONS -> sophia
+FIND_PERSONS -> ava
+FIND_PERSONS -> isabella
+FIND_PERSONS -> mia
+FIND_PERSONS -> abigail
+FIND_PERSONS -> emily
+FIND_PERSONS -> charlotte
+FIND_PERSONS -> harper
+FIND_PERSONS -> noah
+FIND_PERSONS -> liam
+FIND_PERSONS -> mason
+FIND_PERSONS -> jacob
+FIND_PERSONS -> william
+FIND_PERSONS -> ethan
+FIND_PERSONS -> james
+FIND_PERSONS -> alexander
+FIND_PERSONS -> michael
+FIND_PERSONS -> benjamin
+V_GOPL -> go to | navigate to
+V_GOR -> V_GOPL | enter
+
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOMS[X]
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
+
+V_PICKUP -> get | grasp | take | pick up
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+
+V_PLACE -> put | place
+
+VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+
+V_FOLLOW -> follow | go after | come after | V_GUIDE
+
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
+
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+
+VP["action": "follow", "location-from": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X]
+
+VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
+
+FOLLOW_PERSONS[the person] -> DET person
+FOLLOW_PERSONS[the woman] -> DET woman
+FOLLOW_PERSONS[the man] -> DET man
+FOLLOW_PERSONS[emma] -> emma
+FOLLOW_PERSONS[olivia] -> olivia
+FOLLOW_PERSONS[sophia] -> sophia
+FOLLOW_PERSONS[ava] -> ava
+FOLLOW_PERSONS[isabella] -> isabella
+FOLLOW_PERSONS[mia] -> mia
+FOLLOW_PERSONS[abigail] -> abigail
+FOLLOW_PERSONS[emily] -> emily
+FOLLOW_PERSONS[charlotte] -> charlotte
+FOLLOW_PERSONS[harper] -> harper
+FOLLOW_PERSONS[noah] -> noah
+FOLLOW_PERSONS[liam] -> liam
+FOLLOW_PERSONS[mason] -> mason
+FOLLOW_PERSONS[jacob] -> jacob
+FOLLOW_PERSONS[william] -> william
+FOLLOW_PERSONS[ethan] -> ethan
+FOLLOW_PERSONS[james] -> james
+FOLLOW_PERSONS[alexander] -> alexander
+FOLLOW_PERSONS[michael] -> michael
+FOLLOW_PERSONS[benjamin] -> benjamin
+V_BRING -> bring | deliver | take | carry | transport
+V_BRING_PERSON -> V_BRING | give | hand | hand over
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"id": X}, "source-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] from BRING_PERSONS to the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z]
+VP["action": "bring", "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z]
+
+BRING_PERSONS -> emma
+BRING_PERSONS -> olivia
+BRING_PERSONS -> sophia
+BRING_PERSONS -> ava
+BRING_PERSONS -> isabella
+BRING_PERSONS -> mia
+BRING_PERSONS -> abigail
+BRING_PERSONS -> emily
+BRING_PERSONS -> charlotte
+BRING_PERSONS -> harper
+BRING_PERSONS -> noah
+BRING_PERSONS -> liam
+BRING_PERSONS -> mason
+BRING_PERSONS -> jacob
+BRING_PERSONS -> william
+BRING_PERSONS -> ethan
+BRING_PERSONS -> james
+BRING_PERSONS -> alexander
+BRING_PERSONS -> michael
+BRING_PERSONS -> benjamin
+V_SAY -> tell | say | speak
+
+VP["action": "say", "sentence": X] -> V_SAY SAY_SENTENCE[X]
+
+SAY_SENTENCE["ROBOT_NAME"] -> your name
+SAY_SENTENCE["TIME"] -> the time | what time it is | what time is it
+SAY_SENTENCE["my team is tech united"] -> the name of your team
+SAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month
+SAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week
+SAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date
+SAY_SENTENCE["TOMORROW"] -> what day is tomorrow
+
+
+Parsing sentence:
+
+bring a banana_milk to emily from the tv_stand and come after ethan to the bedroom
+
+
+Result:
+
+{'actions': [{'action': 'bring', 'source-location': {'id': 'tv_stand'}, 'object': {'type': 'banana_milk'}, 'target-location': {'type': 'person'}}, {'action': 'follow', 'location-to': {'id': 'bedroom'}, 'target': {'id': 'ethan'}}]}
+
+T[{actions : <A1>}] -> C[A1]
+T[{actions : <A1, A2>}] -> C[A1] and C[A2]
+T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
+
+C[{A}] -> VP[A]
+
+V_GUIDE -> guide | escort | take | lead | accompany
+
+DET -> the | a | an
+DET_I -> DET | some
+MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
+
+ROOMS[dining_room] -> dining_room
+ROOMS[bedroom] -> bedroom
+ROOMS[living_room] -> living_room
+ROOMS[kitchen] -> kitchen
+LOCATIONS[bookshelf] -> bookshelf
+LOCATIONS[sofa] -> sofa
+LOCATIONS[couch_table] -> couch_table
+LOCATIONS[side_table] -> side_table
+LOCATIONS[tv_stand] -> tv_stand
+LOCATIONS[kitchencounter] -> kitchencounter
+LOCATIONS[stove] -> stove
+LOCATIONS[desk] -> desk
+LOCATIONS[bar] -> bar
+LOCATIONS[bed] -> bed
+LOCATIONS[closet] -> closet
+LOCATIONS[dinner_table] -> dinner_table
+LOCATIONS[cabinet] -> cabinet
+ ROOMS_AND_LOCATIONS[X] -> ROOMS[X] | LOCATIONS[X]
+OBJECT_NAMES[cereals] -> cereals
+OBJECT_NAMES[apple] -> apple
+OBJECT_NAMES[sponge] -> sponge
+OBJECT_NAMES[paper] -> paper
+OBJECT_NAMES[cornflakes] -> cornflakes
+OBJECT_NAMES[red_bowl] -> red_bowl
+OBJECT_NAMES[noodles] -> noodles
+OBJECT_NAMES[coffecup] -> coffecup
+OBJECT_NAMES[lemon] -> lemon
+OBJECT_NAMES[tomato_pasta] -> tomato_pasta
+OBJECT_NAMES[white_bowl] -> white_bowl
+OBJECT_NAMES[pringles] -> pringles
+OBJECT_NAMES[fork] -> fork
+OBJECT_NAMES[plate] -> plate
+OBJECT_NAMES[pepper] -> pepper
+OBJECT_NAMES[cappucino] -> cappucino
+OBJECT_NAMES[banana_milk] -> banana_milk
+OBJECT_NAMES[coke] -> coke
+OBJECT_NAMES[chocolate_cookies] -> chocolate_cookies
+OBJECT_NAMES[peas] -> peas
+OBJECT_NAMES[water] -> water
+OBJECT_NAMES[cloth] -> cloth
+OBJECT_NAMES[spoon] -> spoon
+OBJECT_NAMES[bread] -> bread
+OBJECT_NAMES[towel] -> towel
+OBJECT_NAMES[potato] -> potato
+OBJECT_NAMES[egg] -> egg
+OBJECT_NAMES[potato_soup] -> potato_soup
+OBJECT_NAMES[paprika] -> paprika
+OBJECT_NAMES[bag] -> bag
+OBJECT_NAMES[knife] -> knife
+OBJECT_NAMES[basket] -> basket
+OBJECT_NAMES[crackers] -> crackers
+OBJECT_NAMES[salt] -> salt
+OBJECT_NAMES[orange_drink] -> orange_drink
+OBJECT_NAMES[party_cracker] -> party_cracker
+MANIPULATION_AREA_LOCATIONS[bookshelf] -> MANIPULATION_AREA_DESCRIPTIONS the bookshelf
+MANIPULATION_AREA_LOCATIONS[couch_table] -> MANIPULATION_AREA_DESCRIPTIONS the couch_table
+MANIPULATION_AREA_LOCATIONS[side_table] -> MANIPULATION_AREA_DESCRIPTIONS the side_table
+MANIPULATION_AREA_LOCATIONS[kitchencounter] -> MANIPULATION_AREA_DESCRIPTIONS the kitchencounter
+MANIPULATION_AREA_LOCATIONS[stove] -> MANIPULATION_AREA_DESCRIPTIONS the stove
+MANIPULATION_AREA_LOCATIONS[desk] -> MANIPULATION_AREA_DESCRIPTIONS the desk
+MANIPULATION_AREA_LOCATIONS[bar] -> MANIPULATION_AREA_DESCRIPTIONS the bar
+MANIPULATION_AREA_LOCATIONS[closet] -> MANIPULATION_AREA_DESCRIPTIONS the closet
+MANIPULATION_AREA_LOCATIONS[dinner_table] -> MANIPULATION_AREA_DESCRIPTIONS the dinner_table
+MANIPULATION_AREA_LOCATIONS[cabinet] -> MANIPULATION_AREA_DESCRIPTIONS the cabinet
+OBJECT_NAMES[cleaning_stuff] -> cleaning_stuff
+OBJECT_NAMES[snack] -> snack
+OBJECT_NAMES[container] -> container
+OBJECT_NAMES[food] -> food
+OBJECT_NAMES[drink] -> drink
+OBJECT_NAMES[cutlery] -> cutlery
+V_FIND -> find | locate | look for | meet
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] in the ROOMS[Y]
+VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS in the ROOMS[Y]
+VP["action": "find", "object": {"type": "person"}, "location": {"id": Y}] -> V_FIND FIND_PERSONS near the LOCATIONS[Y]
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+
+FIND_PERSONS -> DET person
+FIND_PERSONS -> DET women
+FIND_PERSONS -> DET man
+FIND_PERSONS -> emma
+FIND_PERSONS -> olivia
+FIND_PERSONS -> sophia
+FIND_PERSONS -> ava
+FIND_PERSONS -> isabella
+FIND_PERSONS -> mia
+FIND_PERSONS -> abigail
+FIND_PERSONS -> emily
+FIND_PERSONS -> charlotte
+FIND_PERSONS -> harper
+FIND_PERSONS -> noah
+FIND_PERSONS -> liam
+FIND_PERSONS -> mason
+FIND_PERSONS -> jacob
+FIND_PERSONS -> william
+FIND_PERSONS -> ethan
+FIND_PERSONS -> james
+FIND_PERSONS -> alexander
+FIND_PERSONS -> michael
+FIND_PERSONS -> benjamin
+V_GOPL -> go to | navigate to
+V_GOR -> V_GOPL | enter
+
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOR the ROOMS[X]
+VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATIONS[X]
+
+V_PICKUP -> get | grasp | take | pick up
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_PICKUP DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+
+V_PLACE -> put | place
+
+VP["action": "place", "object": {"type": X}, "location": {"id": Y}] -> V_PLACE DET OBJECT_NAMES[X] MANIPULATION_AREA_LOCATIONS[Y]
+
+V_FOLLOW -> follow | go after | come after | V_GUIDE
+
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": "operator"}] -> V_FOLLOW me to the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "target": {"id": "operator"}] -> V_FOLLOW me
+
+VP["action": "follow", "location-from": {"id": X}, "location-to": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "follow", "location-to": {"id": X}, "location-from": {"id": Y}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+
+VP["action": "follow", "location-from": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] from the ROOMS_AND_LOCATIONS[X]
+VP["action": "follow", "location-to": {"id": X}, "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z] to the ROOMS_AND_LOCATIONS[X]
+
+VP["action": "follow", "target": {"id": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
+
+FOLLOW_PERSONS[the person] -> DET person
+FOLLOW_PERSONS[the woman] -> DET woman
+FOLLOW_PERSONS[the man] -> DET man
+FOLLOW_PERSONS[emma] -> emma
+FOLLOW_PERSONS[olivia] -> olivia
+FOLLOW_PERSONS[sophia] -> sophia
+FOLLOW_PERSONS[ava] -> ava
+FOLLOW_PERSONS[isabella] -> isabella
+FOLLOW_PERSONS[mia] -> mia
+FOLLOW_PERSONS[abigail] -> abigail
+FOLLOW_PERSONS[emily] -> emily
+FOLLOW_PERSONS[charlotte] -> charlotte
+FOLLOW_PERSONS[harper] -> harper
+FOLLOW_PERSONS[noah] -> noah
+FOLLOW_PERSONS[liam] -> liam
+FOLLOW_PERSONS[mason] -> mason
+FOLLOW_PERSONS[jacob] -> jacob
+FOLLOW_PERSONS[william] -> william
+FOLLOW_PERSONS[ethan] -> ethan
+FOLLOW_PERSONS[james] -> james
+FOLLOW_PERSONS[alexander] -> alexander
+FOLLOW_PERSONS[michael] -> michael
+FOLLOW_PERSONS[benjamin] -> benjamin
+V_BRING -> bring | deliver | take | carry | transport
+V_BRING_PERSON -> V_BRING | give | hand | hand over
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to the ROOMS_AND_LOCATIONS[Y]
+VP["action": "bring", "target-location": {"id": X}, "source-location": {"id": Y}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from the ROOMS_AND_LOCATIONS[Y]
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"id": X}, "source-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to the ROOMS_AND_LOCATIONS[X] from BRING_PERSONS | V_BRING DET OBJECT_NAMES[Z] from BRING_PERSONS to the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to BRING_PERSONS
+
+VP["action": "bring", "source-location": {"id": X}, "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X] to me | V_BRING me DET OBJECT_NAMES[Z] from the ROOMS_AND_LOCATIONS[X]
+VP["action": "bring", "target-location": {"type": "person", "id": "operator"}, "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z] to me | V_BRING me DET OBJECT_NAMES[Z]
+VP["action": "bring", "object": {"type": Z}] -> V_BRING DET OBJECT_NAMES[Z]
+
+BRING_PERSONS -> emma
+BRING_PERSONS -> olivia
+BRING_PERSONS -> sophia
+BRING_PERSONS -> ava
+BRING_PERSONS -> isabella
+BRING_PERSONS -> mia
+BRING_PERSONS -> abigail
+BRING_PERSONS -> emily
+BRING_PERSONS -> charlotte
+BRING_PERSONS -> harper
+BRING_PERSONS -> noah
+BRING_PERSONS -> liam
+BRING_PERSONS -> mason
+BRING_PERSONS -> jacob
+BRING_PERSONS -> william
+BRING_PERSONS -> ethan
+BRING_PERSONS -> james
+BRING_PERSONS -> alexander
+BRING_PERSONS -> michael
+BRING_PERSONS -> benjamin
+V_SAY -> tell | say | speak
+
+VP["action": "say", "sentence": X] -> V_SAY SAY_SENTENCE[X]
+
+SAY_SENTENCE["ROBOT_NAME"] -> your name
+SAY_SENTENCE["TIME"] -> the time | what time it is | what time is it
+SAY_SENTENCE["my team is tech united"] -> the name of your team
+SAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month
+SAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week
+SAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date
+SAY_SENTENCE["TOMORROW"] -> what day is tomorrow
+
+HIM_HER -> him | her
+
+VP["action": "find", "object": {"type": "person"}, "target": {"id": Z}] -> V_FIND MEET_PERSON[Z]
+VP["action": "navigate-to"] -> V_GUIDE HIM_HER
+
+MEET_PERSON[the person] -> DET person
+MEET_PERSON[the woman] -> DET woman
+MEET_PERSON[the man] -> DET man
+MEET_PERSON[emma] -> emma
+MEET_PERSON[olivia] -> olivia
+MEET_PERSON[sophia] -> sophia
+MEET_PERSON[ava] -> ava
+MEET_PERSON[isabella] -> isabella
+MEET_PERSON[mia] -> mia
+MEET_PERSON[abigail] -> abigail
+MEET_PERSON[emily] -> emily
+MEET_PERSON[charlotte] -> charlotte
+MEET_PERSON[harper] -> harper
+MEET_PERSON[noah] -> noah
+MEET_PERSON[liam] -> liam
+MEET_PERSON[mason] -> mason
+MEET_PERSON[jacob] -> jacob
+MEET_PERSON[william] -> william
+MEET_PERSON[ethan] -> ethan
+MEET_PERSON[james] -> james
+MEET_PERSON[alexander] -> alexander
+MEET_PERSON[michael] -> michael
+MEET_PERSON[benjamin] -> benjamin
+
+HE_SHE -> he | she | it
+
+VP["object": {"id": X}] -> HE_SHE is in the ROOMS_AND_LOCATIONS[X] | in the ROOMS_AND_LOCATIONS[X] | you could find HE_SHE in the ROOMS_AND_LOCATIONS[X]
+
+
+VP["object": {"id": Y}] -> the OBJECT_NAMES is DET OBJECT_NAMES[Y] | the OBJECT_NAMES is OBJECT_NAMES[Y] | OBJECT_NAMES[Y] | DET OBJECT_NAMES[Y]
+
