@@ -55,37 +55,82 @@ for cat in common.object_categories:
 ##############################################################################
 
 grammar += '''
-Q['answer': "Magdeburg"] -> what city are we in
-Q['answer': "Tech United"] -> what is the name of your team
-Q['answer': "Chewbacca"] -> name the big hairy creature in star wars
-Q['answer': "Isaac Asimov"] -> who wrote the three laws of robotics
-Q['answer': "The Jetsons"] -> from what series do you know rosie the robot
-Q['answer': "The Flintstones"] -> from what series do you know the baby bam bam
-Q['answer': "Neo"] -> who is the main character of the matrix
-Q['answer': "Peper and HSR"] -> name the two robocupathome standart platforms
-Q['answer': "In my SSD"] -> where do you store your memories
-Q['answer': "In Eindhoven The Netherlands"] -> where is your team located
+Q['answer': "the scientific study of robot"] -> what is robotics
+Q['answer': "joseph engelberger"] -> who is considered as the father of industrial robot	
+Q['answer': "aml a manufacturing language"] -> give one example for a computer programming language that can be used for robot programming
+Q['answer': "heavy investment"] -> what is the major disadvantage of using a robot
+Q['answer': "lisp and prolog"] -> name the language used in expert system
+Q['answer': "knowledge base"] -> name one of the most important parts in expert system
+Q['answer': "mycin"] -> which system was designed for diagnosis and therapy recommendation for infectious disease
+Q['answer': "human intelligence have certain limit in speed and accuracy it is interrupted due to the lack of presence of mind mood etc but a i systems have their own superb abilities"] -> what is the importance of a i
+Q['answer': "tim burners lee"] -> weaving the web was written by
+Q['answer': "trial test of a computer or software before the commercial launch"] -> what is beta test
+Q['answer': "portable document format"] -> what is the extension of pdf
+Q['answer': "relational data base management system"] -> expand rdbms
+Q['answer': "charles babbage"] -> difference engine was developed by
+Q['answer': "google"] -> orkut dot com is now owned by
+Q['answer': "intel 4004"] -> worlds first microprocessor is
+Q['answer': "structured query language"] -> what is sql
+Q['answer': "short message service"] -> what is the expansion of sms	 
+Q['answer': "ibm"] -> which it companys nickname is the big blue
+Q['answer': "institute of electric and electronic engineers"] -> what is the full form of ieee
+Q['answer': "raymond samuel tomlinson"] -> email was developed by
+Q['answer': "net citizen citizen who uses internet"] -> who is netizen
+Q['answer': "fake antivirus softwares"] -> what is scareware
 
 WHATWHICH -> what | which
 
-Q['answer': "basket"] -> WHATWHICH is the biggest object
-Q['answer': "egg"] -> WHATWHICH is the smallest object
-Q['answer': "pringles"] -> WHATWHICH is the biggest food
-Q['answer': "egg"] -> WHATWHICH is the smallest food
-Q['answer': "basket"] -> WHATWHICH is the biggest container
-Q['answer': "coffecup"] -> WHATWHICH is the smallest container
-Q['answer': "water"] -> WHATWHICH is the biggest drink
-Q['answer': "orange drink"] -> WHATWHICH is the smallest drink
-Q['answer': "paper"] -> WHATWHICH is the biggest cleaning stuff
-Q['answer': "sponge"] -> WHATWHICH is the smallest cleaning stuff
-Q['answer': "knife"] -> WHATWHICH is the biggest cutlery
-Q['answer': "fork"] -> WHATWHICH is the smallest cutlery
-
-Q['answer': "the bedroom has two doors"] -> how many doors has the bedroom
-Q['answer': "the dining room has two doors"] -> how many doors has the dining room
-Q['answer': "in the living room there are no doors"] -> how many doors has the living room
-Q['answer': "in the kitchen there are no doors"] -> how many doors has the kitchen
 '''
+	
+#Q['answer': "george devol"] -> who holds the patent for the first industrial robot
+#Q['answer': "manipulator, brain, power supply."] -> what are the three major components of a robot?
+#Q['answer': "manipulator."] -> which part controls the movement of robots hand
+#Q['answer': "as its controller"] -> what is the purpose of a computer in a robot system
+#Q['answer': " memory, cpu, a d and d a converters"] -> what are the hardwares essential in a computer controlled robot
+
+#Q['answer': "a combination of cad cam and robotics"] -> what is flexible manufacturing system or computerized manufacturing system
+
+#Q['answer': "1958"] -> the expert system was introduced in
+#Q['answer': "stanford."] -> the expert system was developed by which university
+#Q['answer': "dendral"] -> the first expert system was
+#Q['answer': "artificial intelligence"] -> in which field the expert system has application areas of a i
+
+#Q['answer': "research chemists"] -> dendral system is widely used by
+#Q['answer': "macsyma"] -> which system has been designed for solving mathematical problems
+#Q['answer': "prospector"] -> which system has been designed to assist geologist in mineral exploration
+#Q['answer': "artificial intelligence is a branch of computer science concerned with the study and creation of systems that exhibit some form of human intelligence"] -> what is artificial intelligence
+
+#Q['answer': "allen turing"] -> who is the father of artificial intelligence
+#Q['answer': "ipl"] -> which is the first test programming language
+#Q['answer': "1958"] -> the beginning of artificial intelligence in
+#Q['answer': "1 lisp 2 prolog 3 small talk and actor."] -> what are the languages used for artificial intelligence programming
+#Q['answer': "list programming language"] -> lisp is
+#Q['answer': "logic programming language"] -> prolog is
+#Q['answer': "object oriented programming language"] -> small talk and actor are
+#Q['answer': "1 expert system 2 natural language system 3 perception system"] -> what are the branches of artificial intelligence
+#['answer': "james t russel"] -> who invented compact disc 
+#Q['answer': "december 2"] -> which day is celebrated as world computer literacy day
+#Q['answer': "james a gosling"] -> who invented java
+#Q['answer': "windows vista"] -> longhorn was the code name of 	 
+#Q['answer': "shakunthala devi"] -> who is known as the human computer of india
+#Q['answer': "people who work with the computer"] -> what is mean by liveware
+#Q['answer': "jm coetzee"] -> which computer engineer got nobel prize for literature in 2003
+
+#Q['answer': "google"] -> do no evil is tag line of	 
+#Q['answer': "vivah"] -> first indian cinema released through internet is	 
+#Q['answer': "ajith balakrishnan and manish agarwal"] -> rediff dot com was founded by
+
+#Q['answer': "physically handicapped people"] -> mows is a type of mouse for dot dot dot people	 
+
+#Q['answer': "common business oriented language"] -> what is the expansion of cobol	 
+
+#Q['answer': "grace murry hopper"] -> who developed cobol
+
+#Q['answer': "web filter"] -> green dam is
+#Q['answer': "complementary metal oxide semoconductor"] -> what is the expanded form of cmos  	 
+
+#Q['answer': "1992 the ibm simon"] -> when was the first smart phone launched 	 	 
+
 
 ##############################################################################
 #
@@ -270,3 +315,6 @@ COLOR['green'] -> green
 COLOR['yellow'] -> yellow
 
 """
+
+if __name__ == "__main__":
+	print grammar

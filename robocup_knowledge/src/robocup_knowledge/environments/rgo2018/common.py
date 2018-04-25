@@ -1,27 +1,31 @@
 # COMMON KNOWLEDGE FILE RGO2018
 
-female_names = ["emma","olivia","sophia","ava","isabella","mia","abigail","emily","charlotte","harper"]
-male_names = ["noah","liam","mason","jacob","william","ethan","james","alexander","michael","benjamin"]
+female_names = ["angie", "mary", "amy", "kimberley", "lisa", "melissa", "michelle", "jennifer", "elizabeth", "julie"]
+male_names = ["brian","michael","christopher","william","john","david","james","robert","scott","richard"]
 names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'bookshelf',       'room':'living_room', 'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'sofa',            'room':'living_room', 'category': 'seat',    'manipulation':'no'  },
-    { 'name':'couch_table',     'room':'living_room', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'living_room', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'tv_stand',        'room':'living_room', 'category': 'beacon',  'manipulation':'no'  },
 
-    { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'stove',           'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'desk',            'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
+    { 'name':'bed',             'room':'bedroom',    'category': 'beacon',  'manipulation':'no'  },
+    { 'name':'desk',      	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'bookcase',   	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'side_table',      'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
 
-    { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
-    { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'bar', 		    'room':'kitchen',    'category': 'bar',     'manipulation':'yes' },
+    { 'name':'kitchen_table',   'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
+    { 'name':'kitchen_cabinet', 'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
+    { 'name':'sink',            'room':'kitchen',    'category': 'table',   'manipulation':'no'  },
 
-    { 'name':'dinner_table',    'room':'dining_room', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',   'manipulation':'yes' }
+    { 'name':'tv_table',       	'room':'living_room', 'category': 'table',  'manipulation':'yes' },
+    { 'name':'cupboard',        'room':'living_room', 'category': 'shelf',  'manipulation':'yes' },
+    { 'name':'couch',           'room':'living_room', 'category': 'seat',   'manipulation':'yes' },
+    { 'name':'couch_table',     'room':'living_room', 'category': 'beacon', 'manipulation':'yes' },
+    
+    { 'name':'dinning_table',   'room':'dining_room', 'category': 'beacon', 'manipulation':'yes' },
+    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' },
+    { 'name':'display_case',    'room':'dining_room', 'category': 'table',  'manipulation':'no'  },
+    { 'name':'storage_shelf',   'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' }
 
 ]
 
@@ -33,9 +37,9 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 # hack
 most_probable_location_in_room_map = {
     'dining_room': 'dinner_table',
-    'bedroom': 'closet',
+    'bedroom': 'bed',
     'living_room': 'couch_table',
-    'kitchen': 'desk'
+    'kitchen': 'bar'
 }
 
 
@@ -47,42 +51,35 @@ def get_location_from_room(room_id):
 # rooms = location_rooms + ["workshop"]
 
 objects = [
+
+    {'category': 'care',                'name': 'shower_gel'        },
+    {'category': 'care',                'name': 'soap'              },
+    {'category': 'care',                'name': 'toothpaste'        },
+    {'category': 'cleaning_stuff',      'name': 'sponge'            },
+    {'category': 'cleaning_stuff',      'name': 'wiper'             },
+    {'category': 'container',   	    'name': 'box'               },
+    {'category': 'container',   	    'name': 'tray'              },
+    {'category': 'drink',   	  	    'name': 'cacao'             },
+    {'category': 'drink',   	  	    'name': 'coke'              },
+    {'category': 'drink',   	  	    'name': 'malz'              },
+    {'category': 'drink',   	  	    'name': 'mixdrink'          },
+    {'category': 'drink',   	  	    'name': 'orange'            },
+    {'category': 'drink',   	  	    'name': 'perppermint'       },
+    {'category': 'drink',   	  	    'name': 'water'      	    },
+    {'category': 'snack',   	  	    'name': 'cookies'           },
+    {'category': 'snack',   	  	    'name': 'fruit'             }, 
+    {'category': 'snack',   	  	    'name': 'kinder'            },  
+    {'category': 'snack',   	  	    'name': 'nuts'              },
     {'category': 'food',                'name': 'apple'             },
-    {'category': 'food',                'name': 'bread'             },
-    {'category': 'food',                'name': 'cereals'           },
-    {'category': 'food',                'name': 'cornflakes'        },
-    {'category': 'food',                'name': 'crackers'          },
+    {'category': 'food',                'name': 'green'             },
+    {'category': 'food',                'name': 'kiwi'              },
     {'category': 'food',                'name': 'lemon'             },
     {'category': 'food',                'name': 'noodles'           },
-    {'category': 'food',                'name': 'paprika'           },
-    {'category': 'food',                'name': 'peas'              },
     {'category': 'food',                'name': 'pepper'            },
-    {'category': 'food',                'name': 'potato'            },
-    {'category': 'food',                'name': 'potato_soup'       },
     {'category': 'food',                'name': 'salt'              },
-    {'category': 'food',                'name': 'tomato_pasta'      },
-    {'category': 'container',           'name': 'bag'               },
-    {'category': 'container',           'name': 'basket'            },
-    {'category': 'container',           'name': 'coffecup'          },
-    {'category': 'container',           'name': 'plate'             },
-    {'category': 'container',           'name': 'red_bowl'          },
-    {'category': 'container',           'name': 'white_bowl'        },
-    {'category': 'drink',               'name': 'banana_milk'       },
-    {'category': 'drink',               'name': 'cappucino'         },
-    {'category': 'drink',               'name': 'coke'              },
-    {'category': 'drink',               'name': 'orange_drink'      },
-    {'category': 'drink',               'name': 'water'             },
-    {'category': 'snack',               'name': 'chocolate_cookies' },
-    {'category': 'snack',               'name': 'egg'               },
-    {'category': 'snack',               'name': 'party_cracker'     },
-    {'category': 'snack',               'name': 'pringles'          },
-    {'category': 'cleaning_stuff',      'name': 'cloth'             },
-    {'category': 'cleaning_stuff',      'name': 'paper'             },
-    {'category': 'cleaning_stuff',      'name': 'sponge'            },
-    {'category': 'cleaning_stuff',      'name': 'towel'             },
-    {'category': 'cutlery',             'name': 'fork'              },
-    {'category': 'cutlery',             'name': 'spoon'             },
-    {'category': 'cutlery',             'name': 'knife'             }
+    {'category': 'food',                'name': 'tomato'            },
+    {'category': 'help_me_carry',       'name': 'bag'               },    
+    {'category': 'dishwasher_test',     'name': 'dishwasher_tray'   }
 
 ]
 
