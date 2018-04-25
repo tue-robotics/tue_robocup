@@ -34,7 +34,8 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-# hack
+# hack 
+# update 2018: unsure if this adds something --> To Do!
 most_probable_location_in_room_map = {
     'dining_room': 'dinner_table',
     'bedroom': 'bed',
@@ -63,15 +64,15 @@ objects = [
     {'category': 'drink',   	  	    'name': 'coke'              },
     {'category': 'drink',   	  	    'name': 'malz'              },
     {'category': 'drink',   	  	    'name': 'mixdrink'          },
-    {'category': 'drink',   	  	    'name': 'orange'            },
-    {'category': 'drink',   	  	    'name': 'perppermint'       },
+    {'category': 'drink',   	  	    'name': 'orange_juice'      },
+    {'category': 'drink',   	  	    'name': 'perppermint_tea'   },
     {'category': 'drink',   	  	    'name': 'water'      	    },
     {'category': 'snack',   	  	    'name': 'cookies'           },
-    {'category': 'snack',   	  	    'name': 'fruit'             }, 
+    {'category': 'snack',   	  	    'name': 'fruit_bar'         }, 
     {'category': 'snack',   	  	    'name': 'kinder'            },  
     {'category': 'snack',   	  	    'name': 'nuts'              },
     {'category': 'food',                'name': 'apple'             },
-    {'category': 'food',                'name': 'green'             },
+    {'category': 'food',                'name': 'green_paprika'     },
     {'category': 'food',                'name': 'kiwi'              },
     {'category': 'food',                'name': 'lemon'             },
     {'category': 'food',                'name': 'noodles'           },
@@ -89,19 +90,19 @@ object_categories = list(set([ o["category"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-
-    "cutlery": {"cabinet": "shelf2"},
-    "container": {"bookshelf": "shelf1"},
-    "drink": {"kitchencounter": "on_top_of"},
+#To do! Fix in from bookcase and cabinet
+    "care": {"bookcase": ""},
+    "container": {"cupboard": "on_top_off"},
+    "drink": {"kitchen_table": "on_top_of"},
     "snack": {"couch_table": "on_top_of"},
-    "food": {"stove": "on_top_of"},
-    "cleaning_stuff": {"closet": "on_top_of"},
-    "fruit": {"desk": "on_top_of"}
+    "food": {"cabinet": ""},
+    "cleaning_stuff": {"closet": "on_top_of"}
 }
 
 inspect_areas = {
+#To do!
     "cabinet": ["shelf1", "shelf2", "shelf3", "shelf4"],
-    "bookshelf": ["shelf1", "shelf2", "shelf3", "shelf4"]
+    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4"]
 }
 
 inspect_positions = {

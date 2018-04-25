@@ -17,11 +17,10 @@ grammar_target = "T"
 
 grammar = """
 T[{actions : <A1>}] -> C[A1]
-T[{actions : <A1, A2>}] -> C[A1] and C[A2]
-T[{actions : <A1, A2, A3>}] -> C[A1] C[A2] and C[A3]
 
 C[{A}] -> Q[A]
 """
+
 
 ##############################################################################
 #
@@ -150,12 +149,15 @@ CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tel
 #
 ##############################################################################
 
+
+#To Do
 grammar += '''
 COUNT -> how many | the number of
-SEARCH -> where is | in WHATWHICH room is
+SEARCH -> where is located | in WHATWHICH room is
 
 Q[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
 Q[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
+Q[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many  has the ROOM[R]
 Q[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
 Q[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] are in the ROOM[R]
 '''
@@ -165,6 +167,8 @@ Q[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] ar
 # Object / Category questions
 #
 ##############################################################################
+
+#To Do
 
 grammar += '''
 Q[{"action" : "o_find", "entity" : O}] -> where can i find a OBJECT[O]
@@ -177,6 +181,8 @@ Q[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong 
 # Data
 #
 ##############################################################################
+
+
 
 grammar +='''
 
@@ -191,71 +197,90 @@ PEOPLE['women'] -> women
 PEOPLE['boys'] -> boys
 PEOPLE['girls'] -> girls
 
-PLACEMENT['bookshelf'] -> bookshelf | bookshelfs
-PLACEMENT['couch_table'] -> couch table | couch tables
-PLACEMENT['side_table'] -> side table | side_table
-PLACEMENT['kitchencounter'] -> kitchen counter | kitchen counters | kitchencounter | kitchencounters
-PLACEMENT['stove'] -> stove | stoves
+PLACEMENT['tv_table'] -> tv table | tv tables
+PLACEMENT['cupboard'] -> cupboard | cupboards
+PLACEMENT['couch'] -> couch | couches
+PLACEMENT['bed'] -> bed | beds
 PLACEMENT['desk'] -> desk |desks
-PLACEMENT['bar'] -> bar | bars
-PLACEMENT['closet'] -> closet | closets
-PLACEMENT['dinner_table'] -> dinner table | dinner tables
+PLACEMENT['bookcase'] -> bookcase | bookcases
+PLACEMENT['side_table'] -> side table | side tables
+PLACEMENT['sink] -> sink | sinks
+PLACEMENT['kitchen_table'] -> kitchen table | kitchen tables
 PLACEMENT['cabinet'] -> cabinet | cabinets
+PLACEMENT['display_case'] -> display_case | display_cases
+PLACEMENT['storage_shelf'] -> storage shelf | storage shelves
 
-BEACON['tv_stand'] -> tv stand | tv stands
-BEACON['bed'] -> bed | beds
-BEACON['sofa'] -> sofa | sofas
-BEACON['cupboard'] -> cupboard | cupboards
-BEACON['sink'] -> sink | sinks
-BEACON['counter'] -> counter | counters
+
+BEACON['couch_table'] -> couch table | couch tables
+BEACON['kitchen_cabinet'] -> kitchen_cabinet | kitchen_cabinets
+BEACON['bar'] -> bar | bars
+BEACON['dining_table'] -> dining table | dining tables
 
 ROOM['dining'] -> dining room
 ROOM['living'] -> living room
 ROOM['kitchen'] -> kitchen
 ROOM['bedroom'] -> bedroom
 
+OBJECT['shower_gel'] -> shower gel
+OBJECT['soap'] -> soap
+OBJECT['toothpaste'] -> toothpaste
+OBJECT['sponge'] -> sponge
+OBJECT['wiper'] -> wiper
+OBJECT['box'] -> box
+OBJECT['tray'] -> tray
+OBJECT['cacao'] -> cacao
+OBJECT['coke'] -> coke
+OBJECT['malz'] -> malz
+OBJECT['mixdrink'] -> mixdrink
+OBJECT['orange_juice'] -> orange juice
+OBJECT['perppermint_tea'] -> perppermint tea
+OBJECT['water'] -> water
+OBJECT['cookies'] -> cookies
+OBJECT['fruit_bar'] -> fruit bar
+OBJECT['kinder'] -> kinder
+OBJECT['nuts'] -> nuts
 OBJECT['apple'] -> apple
-OBJECT['bread'] -> bread
-OBJECT['cereals'] -> cereals
-OBJECT['cornflakes'] -> cornflakes
-OBJECT['crackers'] -> crackers
+OBJECT['green_paprika'] -> green paprika
+OBJECT['kiwi'] -> kiwi
 OBJECT['lemon'] -> lemon
 OBJECT['noodles'] -> noodles
-OBJECT['paprika'] -> paprika
-OBJECT['peas'] -> peas
 OBJECT['pepper'] -> pepper
-OBJECT['potato'] -> potato
-OBJECT['potato_soup'] -> potato soup
 OBJECT['salt'] -> salt
-OBJECT['tomato_pasta'] -> tomato pasta
+OBJECT['tomato'] -> tomato
 OBJECT['bag'] -> bag
-OBJECT['basket'] -> basket
-OBJECT['coffecup'] -> coffecup
-OBJECT['plate'] -> plate
-OBJECT['red_bowl'] -> red bowl
-OBJECT['white_bowl'] -> white bowl
-OBJECT['banana_milk'] -> banana milk
-OBJECT['cappucino'] -> cappucino
-OBJECT['coke'] -> coke
-OBJECT['orange_drink'] -> orange drink
-OBJECT['water'] -> water
-OBJECT['chocolate_cookies'] -> chocolate cookies
-OBJECT['egg'] -> egg
-OBJECT['party_cracker'] -> party cracker
-OBJECT['pringles'] -> pringles
-OBJECT['cloth'] -> cloth
-OBJECT['paper'] -> paper
-OBJECT['sponge'] -> sponge
-OBJECT['towel'] -> towel
-OBJECT['fork'] -> fork
-OBJECT['spoon'] -> spoon
-OBJECT['knife'] -> knife
+OBJECT['dishwasher_tray'] -> dishwasher tray
 
 CATEGORY['food'] -> food | foods
 CATEGORY['container'] -> container | containers
 CATEGORY['drink'] -> drink | drinks
 CATEGORY['cleaning_stuff'] -> cleaning stuff | cleaning stuffs
-CATEGORY['cutlery'] -> cutlery | cutleries
+CATEGORY['snack'] -> snack | snacks
+CATEGORY['care'] -> care | caring
+
+GENDER['male'] -> male
+GENDER['female'] -> female
+GENDER['man'] -> man
+GENDER['woman'] -> woman
+GENDER['boy'] -> boy
+GENDER['girl'] -> girl
+
+POSITION['standing'] -> standing
+POSITION['sitting'] -> sitting
+POSITION['lying'] -> lying
+
+GESTURE['waving'] -> waving
+GESTURE['rise_l_arm'] -> rising left arm
+GESTURE['rise_r_arm'] -> rising right arm
+GESTURE['left'] -> pointing left
+GESTURE['right'] -> pointing right
+
+COLOR['red'] -> red
+COLOR['blue'] -> blue
+COLOR['white'] -> white
+COLOR['black'] -> black
+COLOR['green'] -> green
+COLOR['yellow'] -> yellow
+
 '''
 
 old_grammar = """
