@@ -19,6 +19,60 @@ print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
 
+class LearnOperator(smach.State):
+    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout=10.0):
+        smach.State.__init__(self, outcomes=['learned', 'failed'])
+        self._robot = robot
+        self._operator_timeout = operator_timeout
+        self._ask_follow = ask_follow
+        self._learn_face = learn_face
+        self._learn_person_timeout = learn_person_timeout
+        self._operator_name = "operator"
+
+    def execute(self, userdata):
+        states.Say(self._robot, "I will memorize what you look like now.",
+                   block=True,
+                   look_at_standing_person=True)
+
+        start_time = rospy.Time.now()
+        self._robot.head.look_at_standing_person()
+        operator = None
+        while not operator:
+            if self.preempt_requested():
+                return 'failed'
+
+            if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
+                return 'failed'
+
+            operator = self._robot.ed.get_closest_laser_entity(
+                radius=0.5,
+                center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
+                                                           frame_id="/%s/base_link" % self._robot.robot_name))
+            rospy.loginfo("Operator: {op}".format(op=operator))
+            if not operator:
+                self._robot.speech.speak("Please stand in front of me")
+            else:
+                if self._learn_face:
+                    self._robot.speech.speak("Please look at me while I learn to recognize you.",
+                                             block=True)
+                    self._robot.head.look_at_standing_person()
+                    learn_person_start_time = rospy.Time.now()
+                    num_detections = 0
+                    while num_detections < 5:  # 5:
+                        if self._robot.perception.learn_person(self._operator_name):
+                            print("Succesfully detected you %i times" % (num_detections + 1))
+                            num_detections += 1
+                        elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
+                            self._robot.speech.speak("Please stand in front of me and look at me")
+                            operator = None
+                            break
+        print "We have a new operator: %s" % operator.id
+        self._robot.speech.speak("Gotcha! Please follow me to the car.", block=False)
+        self._robot.head.close()
+        userdata.operator_learn_out = operator
+        return 'learned'
+
+
 class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
@@ -173,7 +227,12 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    states.Say(robot, "Please follow me and help me carry groceries into the house",
                                               block=True,
                                               look_at_standing_person=True),
-                                   transitions={'spoken': 'GOTO_CAR'})
+                                   transitions={'spoken': 'LEARN_OPERATOR'})
+
+            smach.StateMachine.add('LEARN_OPERATOR',
+                                   LearnOperator(robot),
+                                   transitions={'learned': 'GOTO_CAR',
+                                                'failed': 'GOTO_CAR'})
 
             smach.StateMachine.add('GOTO_CAR',
                                    states.NavigateToWaypoint(robot, self.car_waypoint,
