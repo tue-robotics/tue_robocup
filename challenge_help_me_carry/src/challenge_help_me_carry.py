@@ -101,24 +101,34 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             # Grab the item (bag) the operator hands to the robot, when they are at the "car".
             smach.StateMachine.add('GRAB_ITEM',
-                                   states.HandoverFromHuman(robot, self.bag_arm_designator, "current_item",
-                                                            self.current_item,
-                                                            arm_configuration=challenge_knowledge.carrying_bag_pose),
-                                   transitions={'succeeded': 'ARM_DRIVING_POSE',
-                                                'timeout': 'BACKUP_CLOSE_GRIPPER',
-                                                # For now in simulation timeout is considered a success.
-                                                'failed': 'BACKUP_CLOSE_GRIPPER'})
+                                   # states.HandoverFromHuman(robot, self.bag_arm_designator, "current_item",
+                                   #                          self.current_item,
+                                   #                          arm_configuration=challenge_knowledge.carrying_bag_pose),
 
-            smach.StateMachine.add('BACKUP_CLOSE_GRIPPER',
-                                   states.SetGripper(robot, self.bag_arm_designator, gripperstate=GripperState.CLOSE),
-                                   transitions={'succeeded': 'ARM_DRIVING_POSE',
-                                                'failed': 'ARM_DRIVING_POSE'})
+                                   # transitions={'succeeded': 'ARM_DRIVING_POSE',
+                                   #              'timeout': 'BACKUP_CLOSE_GRIPPER',
+                                   #              # For now in simulation timeout is considered a success.
+                                   #              'failed': 'BACKUP_CLOSE_GRIPPER'})
+                                   states.Say(robot, ["I can't pick up the item since I don't have arms. Please place the item in my basket."],
+                                                block=True,
+                                                look_at_standing_person=True),
+                                   transitions={'spoken': 'WAIT_FOR_GRAB_ITEM'})
 
-            smach.StateMachine.add('ARM_DRIVING_POSE',
-                                   states.ArmToJointConfig(robot, self.bag_arm_designator,
-                                                           challenge_knowledge.driving_bag_pose),
-                                   transitions={'succeeded': 'SAY_GOING_TO_ROOM',
-                                                'failed': 'SAY_GOING_TO_ROOM'})
+            smach.StateMachine.add('WAIT_FOR_GRAB_ITEM',
+                                   states.WaitTime(robot),
+                                   transitions={'waited': 'SAY_GOING_TO_ROOM',
+                                                'preempted': 'Aborted'})
+
+            # smach.StateMachine.add('BACKUP_CLOSE_GRIPPER',
+            #                        states.SetGripper(robot, self.bag_arm_designator, gripperstate=GripperState.CLOSE),
+            #                        transitions={'succeeded': 'ARM_DRIVING_POSE',
+            #                                     'failed': 'ARM_DRIVING_POSE'})
+            #
+            # smach.StateMachine.add('ARM_DRIVING_POSE',
+            #                        states.ArmToJointConfig(robot, self.bag_arm_designator,
+            #                                                challenge_knowledge.driving_bag_pose),
+            #                        transitions={'succeeded': 'SAY_GOING_TO_ROOM',
+            #                                     'failed': 'SAY_GOING_TO_ROOM'})
 
             smach.StateMachine.add('SAY_GOING_TO_ROOM',
                                    states.Say(robot, ["Let me bring in your groceries",
@@ -146,9 +156,17 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             # Put the item (bag) down when the robot has arrived at the "drop-off" location (house).
             smach.StateMachine.add('PUTDOWN_ITEM',
-                                   hmc_states.DropBagOnGround(robot, self.bag_arm_designator,
-                                                              challenge_knowledge.drop_bag_pose),
-                                   transitions={'done': 'ASKING_FOR_HELP'})
+                                   # hmc_states.DropBagOnGround(robot, self.bag_arm_designator,
+                                   #                            challenge_knowledge.drop_bag_pose),
+                                   states.Say(robot, ["I can't put the item down since I have no arms. Please take the item from my basket and put it down."],
+                                              block=True,
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'WAIT_FOR_PUTDOWN_ITEM'})
+
+            smach.StateMachine.add('WAIT_FOR_PUTDOWN_ITEM',
+                                   states.WaitTime(robot),
+                                   transitions={'waited': 'ASKING_FOR_HELP',
+                                                'preempted': 'Aborted'})
 
             smach.StateMachine.add('ASKING_FOR_HELP',
                                    # TODO: look and then face new operator
