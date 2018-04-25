@@ -46,6 +46,8 @@ for loc in common.get_locations(pick_location=True, place_location=True):
     grammar += '\nMANIPULATION_AREA_LOCATIONS[%s] -> MANIPULATION_AREA_DESCRIPTIONS the %s' % (loc, loc)
 for cat in common.object_categories:
     grammar += '\nOBJECT_CATEGORIES[%s] -> %s' % (cat, cat)
+for place in common.location_names:
+    grammar += '\n PLACEMENTS_AND_BEACONS[%s] -> %s' % (place, place)
 
 ##############################################################################
 #
@@ -132,7 +134,6 @@ WHATWHICH -> what | which
 
 #Q['answer': "1992 the ibm simon"] -> when was the first smart phone launched 	 	 
 
-
 ##############################################################################
 #
 # Counting People
@@ -140,7 +141,7 @@ WHATWHICH -> what | which
 ##############################################################################
 
 grammar += '''
-CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tell me COUNT PEOPLE[P] in the crowd
+Q["action" : "count", "entity" : P] -> how many PEOPLE[P] are in the crowd | tell me the number of PEOPLE[P] in the crowd
 '''
 
 ##############################################################################
@@ -149,17 +150,11 @@ CP[{"action" : "count", "entity" : P}] -> COUNT PEOPLE[P] are in the crowd | tel
 #
 ##############################################################################
 
-
-#To Do
 grammar += '''
-COUNT -> how many | the number of
-SEARCH -> where is located | in WHATWHICH room is
+SEARCH -> where is | in WHATWHICH room is
 
-Q[{"action" : "a_find", "entity" : AP}] -> SEARCH the PLACEMENT[AP]
-Q[{"action" : "a_find", "entity" : AB}] -> SEARCH the BEACON[AB]
-Q[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many  has the ROOM[R]
-Q[{"action" : "a_count", "entity" : Y, "location" : R}] -> how many PLACEMENT[Y] are in the ROOM[R]
-Q[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] are in the ROOM[R]
+Q["action" : "find_placement", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
+Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
 '''
 
 ##############################################################################
@@ -168,12 +163,21 @@ Q[{"action" : "a_count", "entity" : Z, "location" : R}] -> how many BEACON[Z] ar
 #
 ##############################################################################
 
-#To Do
-
 grammar += '''
-Q[{"action" : "o_find", "entity" : O}] -> where can i find a OBJECT[O]
-Q[{"action" : "c_find", "entity" : C}] -> where can i find a CATEGORY[C]
-Q[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong the OBJECT[O]
+ADJR -> smaller | bigger
+
+Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
+Q["action" : "find_category", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
+Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
+Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAMES[O]
+Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
+Q["action" : "count_object", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
+
+NQ["action" : "count_object", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_object", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
+
+NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] which one is ADJR
 '''
 
 ##############################################################################
@@ -182,9 +186,7 @@ Q[{"action" : "return_category", "entity" : O}] -> to WHATWHICH category belong 
 #
 ##############################################################################
 
-
-
-grammar +='''
+grammar += '''
 
 PEOPLE['people'] -> people
 PEOPLE['children'] -> children
@@ -197,66 +199,6 @@ PEOPLE['women'] -> women
 PEOPLE['boys'] -> boys
 PEOPLE['girls'] -> girls
 
-PLACEMENT['tv_table'] -> tv table | tv tables
-PLACEMENT['cupboard'] -> cupboard | cupboards
-PLACEMENT['couch'] -> couch | couches
-PLACEMENT['bed'] -> bed | beds
-PLACEMENT['desk'] -> desk |desks
-PLACEMENT['bookcase'] -> bookcase | bookcases
-PLACEMENT['side_table'] -> side table | side tables
-PLACEMENT['sink] -> sink | sinks
-PLACEMENT['kitchen_table'] -> kitchen table | kitchen tables
-PLACEMENT['cabinet'] -> cabinet | cabinets
-PLACEMENT['display_case'] -> display_case | display_cases
-PLACEMENT['storage_shelf'] -> storage shelf | storage shelves
-
-
-BEACON['couch_table'] -> couch table | couch tables
-BEACON['kitchen_cabinet'] -> kitchen_cabinet | kitchen_cabinets
-BEACON['bar'] -> bar | bars
-BEACON['dining_table'] -> dining table | dining tables
-
-ROOM['dining'] -> dining room
-ROOM['living'] -> living room
-ROOM['kitchen'] -> kitchen
-ROOM['bedroom'] -> bedroom
-
-OBJECT['shower_gel'] -> shower gel
-OBJECT['soap'] -> soap
-OBJECT['toothpaste'] -> toothpaste
-OBJECT['sponge'] -> sponge
-OBJECT['wiper'] -> wiper
-OBJECT['box'] -> box
-OBJECT['tray'] -> tray
-OBJECT['cacao'] -> cacao
-OBJECT['coke'] -> coke
-OBJECT['malz'] -> malz
-OBJECT['mixdrink'] -> mixdrink
-OBJECT['orange_juice'] -> orange juice
-OBJECT['perppermint_tea'] -> perppermint tea
-OBJECT['water'] -> water
-OBJECT['cookies'] -> cookies
-OBJECT['fruit_bar'] -> fruit bar
-OBJECT['kinder'] -> kinder
-OBJECT['nuts'] -> nuts
-OBJECT['apple'] -> apple
-OBJECT['green_paprika'] -> green paprika
-OBJECT['kiwi'] -> kiwi
-OBJECT['lemon'] -> lemon
-OBJECT['noodles'] -> noodles
-OBJECT['pepper'] -> pepper
-OBJECT['salt'] -> salt
-OBJECT['tomato'] -> tomato
-OBJECT['bag'] -> bag
-OBJECT['dishwasher_tray'] -> dishwasher tray
-
-CATEGORY['food'] -> food | foods
-CATEGORY['container'] -> container | containers
-CATEGORY['drink'] -> drink | drinks
-CATEGORY['cleaning_stuff'] -> cleaning stuff | cleaning stuffs
-CATEGORY['snack'] -> snack | snacks
-CATEGORY['care'] -> care | caring
-
 GENDER['male'] -> male
 GENDER['female'] -> female
 GENDER['man'] -> man
@@ -280,68 +222,7 @@ COLOR['white'] -> white
 COLOR['black'] -> black
 COLOR['green'] -> green
 COLOR['yellow'] -> yellow
-
 '''
-
-old_grammar = """
-
-# People Positions/Gestures/Genders
-
-PP[{"action" : "c_count", "entity" : X}] -> how many people in the crowd are POSITION[X]
-PG[{"action" : "c_count", "entity" : W}] -> how many people in the crowd are GESTURE[W]
-PPG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
-PPGG[{"action" : "random_gender", "entity" : X}] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
-PGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER
-PGGG[{"action" : "random_gender", "entity" : W}] -> tell me if the GESTURE[W] person was a GENDER or GENDER
-PC[{"action" : "c_count", "entity" : L}] -> tell me how many people were wearing COLOR[L]
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# Object questions
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-CCOUNT[{"action" : "o_count", "entity" : C}] -> how many CATEGORY[C] there are
-
-OCOLOR[{"action" : "find_color", "entity" : O}] -> whats the colour of the OBJECT[O]
-OCAT[{"action" : "compare_category", "entity_a" : O, "entity_b" : A}] -> do the OBJECT[O] and OBJECT[A] belong to the same category
-
-CATPLACE[{"action" : "o_count", "entity" : C, "location" : PL}] -> how many CATEGORY[C] are in the PLACEMENT[PL]
-OBJPLACE[{"action" : "o_count", "entity" : O, "location" : PL}] -> how many OBJECT[O] are in the PLACEMENT[PL]
-CATLOC[{"action" : "category_at_loc", "location" : PL}] -> what objects are stored in the PLACEMENT[PL]
-
-OBJCOMP[{"action" : "compare", "entity_a" : O, "entity_b" : A}] -> between the OBJECT[O] and OBJECT[A] WHATWHICH one is ADJR
-
-ADJA -> smallest | biggest
-ADJR -> smaller | bigger
-
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-# D A T A
-# - - - - - - - - - - - - - - - - - - - - - - - - -
-
-POSITION['standing'] -> standing
-POSITION['sitting'] -> sitting
-POSITION['lying'] -> lying
-
-GENDER['male'] -> male
-GENDER['female'] -> female
-GENDER['man'] -> man
-GENDER['woman'] -> woman
-GENDER['boy'] -> boy
-GENDER['girl'] -> girl
-
-GESTURE['waving'] -> waving
-GESTURE['rise_l_arm'] -> rising left arm
-GESTURE['rise_r_arm'] -> rising right arm
-GESTURE['left'] -> pointing left
-GESTURE['right'] -> pointing right
-
-COLOR['red'] -> red
-COLOR['blue'] -> blue
-COLOR['white'] -> white
-COLOR['black'] -> black
-COLOR['green'] -> green
-COLOR['yellow'] -> yellow
-
-"""
 
 if __name__ == "__main__":
 	print grammar
