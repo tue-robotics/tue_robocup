@@ -162,7 +162,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    #              'timeout': 'BACKUP_CLOSE_GRIPPER',
                                    #              # For now in simulation timeout is considered a success.
                                    #              'failed': 'BACKUP_CLOSE_GRIPPER'})
-                                   states.Say(robot, ["I can't pick up the item since I don't have arms. Please place the item in my basket."],
+                                   states.Say(robot, ["I can't pick up the groceries since I don't have arms. Please place them in my basket."],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_GRAB_ITEM'})
@@ -211,7 +211,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
             smach.StateMachine.add('PUTDOWN_ITEM',
                                    # hmc_states.DropBagOnGround(robot, self.bag_arm_designator,
                                    #                            challenge_knowledge.drop_bag_pose),
-                                   states.Say(robot, ["I can't put the item down since I have no arms. Please take the item from my basket and put it down."],
+                                   states.Say(robot, ["I can't put the groceries down since I have no arms. Please take them from my basket and put it down."],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_PUTDOWN_ITEM'})
