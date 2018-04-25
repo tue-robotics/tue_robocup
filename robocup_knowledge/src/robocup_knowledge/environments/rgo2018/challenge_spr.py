@@ -55,28 +55,30 @@ for cat in common.object_categories:
 ##############################################################################
 
 grammar += '''
-Q['answer': "the scientific study of robot"] -> what is robotics
-Q['answer': "joseph engelberger"] -> who is considered as the father of industrial robot	
-Q['answer': "aml a manufacturing language"] -> give one example for a computer programming language that can be used for robot programming
-Q['answer': "heavy investment"] -> what is the major disadvantage of using a robot
-Q['answer': "lisp and prolog"] -> name the language used in expert system
-Q['answer': "knowledge base"] -> name one of the most important parts in expert system
-Q['answer': "mycin"] -> which system was designed for diagnosis and therapy recommendation for infectious disease
-Q['answer': "human intelligence have certain limit in speed and accuracy it is interrupted due to the lack of presence of mind mood etc but a i systems have their own superb abilities"] -> what is the importance of a i
-Q['answer': "tim burners lee"] -> weaving the web was written by
-Q['answer': "trial test of a computer or software before the commercial launch"] -> what is beta test
-Q['answer': "portable document format"] -> what is the extension of pdf
-Q['answer': "relational data base management system"] -> expand rdbms
-Q['answer': "charles babbage"] -> difference engine was developed by
-Q['answer': "google"] -> orkut dot com is now owned by
-Q['answer': "intel 4004"] -> worlds first microprocessor is
-Q['answer': "structured query language"] -> what is sql
-Q['answer': "short message service"] -> what is the expansion of sms	 
-Q['answer': "ibm"] -> which it companys nickname is the big blue
-Q['answer': "institute of electric and electronic engineers"] -> what is the full form of ieee
-Q['answer': "raymond samuel tomlinson"] -> email was developed by
-Q['answer': "net citizen citizen who uses internet"] -> who is netizen
-Q['answer': "fake antivirus softwares"] -> what is scareware
+
+
+Q["action" : "answer", "solution": "the scientific study of robot"] -> what is robotics
+Q["action" : "answer", "solution": "joseph engelberger"] -> who is considered as the father of industrial robot	
+Q["action" : "answer", "solution": "aml a manufacturing language"] -> give one example for a computer programming language that can be used for robot programming
+Q["action" : "answer", "solution": "heavy investment"] -> what is the major disadvantage of using a robot
+Q["action" : "answer", "solution": "lisp and prolog"] -> name the language used in expert system
+Q["action" : "answer", "solution": "knowledge base"] -> name one of the most important parts in expert system
+Q["action" : "answer", "solution": "mycin"] -> which system was designed for diagnosis and therapy recommendation for infectious disease
+Q["action" : "answer", "solution": "human intelligence have certain limit in speed and accuracy it is interrupted due to the lack of presence of mind mood etc but a i systems have their own superb abilities"] -> what is the importance of a i
+Q["action" : "answer", "solution": "tim burners lee"] -> weaving the web was written by
+Q["action" : "answer", "solution": "trial test of a computer or software before the commercial launch"] -> what is beta test
+Q["action" : "answer", "solution": "portable document format"] -> what is the extension of pdf
+Q["action" : "answer", "solution": "relational data base management system"] -> expand rdbms
+Q["action" : "answer", "solution": "charles babbage"] -> difference engine was developed by
+Q["action" : "answer", "solution": "google"] -> orkut dot com is now owned by
+Q["action" : "answer", "solution": "intel 4004"] -> worlds first microprocessor is
+Q["action" : "answer", "solution": "structured query language"] -> what is sql
+Q["action" : "answer", "solution": "short message service"] -> what is the expansion of sms	 
+Q["action" : "answer", "solution": "ibm"] -> which it companys nickname is the big blue
+Q["action" : "answer", "solution": "institute of electric and electronic engineers"] -> what is the full form of ieee
+Q["action" : "answer", "solution": "raymond samuel tomlinson"] -> email was developed by
+Q["action" : "answer", "solution": "net citizen citizen who uses internet"] -> who is netizen
+Q["action" : "answer", "solution": "fake antivirus softwares"] -> what is scareware
 
 WHATWHICH -> what | which
 
