@@ -15,11 +15,12 @@ import config
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
 
-    def __init__(self, robot, cabinet):
+    def __init__(self, robot, cabinet,inspection_result_designator):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'nothing_found'])
         self.robot = robot
         self.cabinet = cabinet
         self.object_shelves = config.OBJECT_SHELVES
+        self.inspection_result_designator = inspection_result_designator
 
     def execute(self, userdata=None):
 
@@ -87,9 +88,11 @@ class InspectShelves(smach.State):
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=e.id, parse=False)
                 config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+                self.inspection_result_designator.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
             config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1],
                                                         reverse=True)
+
 
         # Reset the head goal
         self.robot.head.cancel_goal()

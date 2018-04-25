@@ -15,14 +15,17 @@ from config import *
 from inspect_shelves import InspectShelves
 from manipulate_machine import ManipulateMachine
 from pdf import WritePdf
-
+from inspection_result_designator import InspectionResultDesignator
 
 class StoringGroceries(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
-        pdf_writer = WritePdf(robot=robot)
+        initial_inspection_ds = InspectionResultDesignator() 
+
+        #Filtering what was already written to pdf happens in pdf_writer
+        pdf_writer = WritePdf(robot=robot,initial_inspection_ds=initial_inspection_ds)
 
         with self:
             single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
@@ -44,6 +47,7 @@ class StoringGroceries(smach.StateMachine):
 
             cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
             room = ds.EntityByIdDesignator(robot, id=ROOM)
+            
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None, manipulate_machine=None):
@@ -82,17 +86,17 @@ class StoringGroceries(smach.StateMachine):
                                    states.NavigateToSymbolic(robot,
                                                              {cabinet: "in_front_of"},
                                                              cabinet),
-                                   transitions={'arrived': 'INSPECT_SHELVES',
-                                                'unreachable': 'INSPECT_SHELVES',
-                                                'goal_not_defined': 'INSPECT_SHELVES'})
+                                   transitions={'arrived': 'INSPECT_SHELVES_BEFORE',
+                                                'unreachable': 'INSPECT_SHELVES_BEFORE',
+                                                'goal_not_defined': 'INSPECT_SHELVES_BEFORE'})
 
-            smach.StateMachine.add("INSPECT_SHELVES",
-                                   InspectShelves(robot, cabinet),
-                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
-                                                'nothing_found': 'WRITE_PDF_SHELVES',
-                                                'failed': 'WRITE_PDF_SHELVES'})
+            smach.StateMachine.add("INSPECT_SHELVES_BEFORE",
+                                   InspectShelves(robot, cabinet,initial_inspection_ds),
+                                   transitions={'succeeded': 'WRITE_PDF_SHELVES_BEFORE',
+                                                'nothing_found': 'WRITE_PDF_SHELVES_BEFORE',
+                                                'failed': 'WRITE_PDF_SHELVES_BEFORE'})
 
-            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
+            smach.StateMachine.add("WRITE_PDF_SHELVES_BEFORE", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
 
             # Begin setup iterator
             # The exhausted argument should be set to the prefered state machine outcome
@@ -111,8 +115,26 @@ class StoringGroceries(smach.StateMachine):
             smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
                                    {'succeeded': 'AT_END',
                                     'failed': 'Aborted'})
+
             # End setup iterator
 
+            # smach.StateMachine.add("NAV_TO_END_INSPECTION",
+            #                        states.NavigateToSymbolic(robot,
+            #                                                  {cabinet: "in_front_of"},
+            #                                                  cabinet),
+            #                        transitions={'arrived': 'INSPECT_SHELVES_AFTER',
+            #                                     'unreachable': 'INSPECT_SHELVES_AFTER',
+            #                                     'goal_not_defined': 'INSPECT_SHELVES_AFTER'})
+
+            # smach.StateMachine.add("INSPECT_SHELVES_AFTER",
+            #                        InspectShelves(robot, cabinet,final_inspection_ds),
+            #                        transitions={'succeeded': 'WRITE_PDF_SHELVES_AFTER',
+            #                                     'nothing_found': 'WRITE_PDF_SHELVES_AFTER',
+            #                                     'failed': 'WRITE_PDF_SHELVES_AFTER'})
+
+            # smach.StateMachine.add("WRITE_PDF_SHELVES_AFTER", pdf_writer, transitions={"done": "AT_END"})
+
+          
             smach.StateMachine.add('AT_END',
                                    states.Say(robot, "Goodbye"),
                                    transitions={'spoken': 'Done'})

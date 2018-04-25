@@ -6,6 +6,7 @@ import numpy as np
 import os
 from PIL import Image
 from xhtml2pdf import pisa
+import time
 
 # ROS
 import rospy
@@ -22,7 +23,7 @@ class WritePdf(smach.State):
     """ Writes pdf based on entityinfo.
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot,initial_inspection_ds ):
         """ Constructor
 
         :param robot: robot object
@@ -30,8 +31,10 @@ class WritePdf(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
         self._robot = robot
-        self._items = {}  # Dict mapping entity id to tuples: entity, probability, and filename of images
+        self._items = {}  # Dict mapping entity id to tuples: entity, probability, filename of images, and during which inspection
         self._designator = None
+        self.initial_inspection_ds = initial_inspection_ds
+        #self.final_inspection_ds = final_inspection_ds
 
     def execute(self, userdata=None):
 
@@ -46,10 +49,16 @@ class WritePdf(smach.State):
         # ToDo: store probabilities in the world model
 
         # Get DETECTED_OBJECTS_WITH_PROBS, i.e., the detections resulting from inspection
-        for entity, probability in config.DETECTED_OBJECTS_WITH_PROBS:
+        for entity, probability in self.initial_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
             if entity.id not in self._items:
                 image = save_entity_image_to_file(self._robot.ed, entity.id)
-                self._items[entity.id] = (entity, probability, image)
+                self._items[entity.id] = (entity, probability, image,"initialinspection",len(self._items))
+
+        # for entity, probability in self.final_inspection_ds.DETECTED_OBJECTS_WITH_PROBS:
+        #     if entity.id not in self._items:
+        #         image = save_entity_image_to_file(self._robot.ed, entity.id)
+        #         self._items[entity.id] = (entity, probability, image,"finalinspection",len(self._items))
+
 
         # Try to get stuff from the designator if available
         if self._designator is not None:
@@ -60,11 +69,13 @@ class WritePdf(smach.State):
             #   the entity,
             #   the probability for the type it has
             #   an image
+            #   the location
+            #   index label
             for result in results:
                 if result.id not in self._items:
                     image = save_entity_image_to_file(self._robot.ed, result.id)
                     entity = self._robot.ed.get_entity(id=result.id)
-                    self._items[entity.id] = (entity, result.probability, image)
+                    self._items[entity.id] = (entity, result.probability, image,"fromtable",len(self._items))
 
         # Filter and sort based on probabilities
         # Items with a to low probability are dropped from the list and thus not rendered to the PDF later
@@ -72,6 +83,10 @@ class WritePdf(smach.State):
         items = [item for item in items if item[0].type not in config.SKIP_LIST]
         items = sorted(items, key=lambda item: item[1], reverse=True)
         items = items[:config.MAX_KNOWN_OBJECTS]
+
+        # Filter again based on when added to list, for PDF generation
+        items = sorted(items, key=lambda item: item[4])
+        rospy.loginfo([item[0].type for item in items])
 
         # Filter to get the unknowns
         # Based on classfication threshold
@@ -175,12 +190,19 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
 
     html += "<body>"
     html += "<h1>%s</h1>" % name
+    html += "<h1>date: %s</h1>" % time.strftime("%c")
+    html += "<hr>"
+    html += "<h1>Found in initial closet inspection:</h1>"
 
-    for item in items:
+    for index,item in enumerate(items):
         entity = item[0]
         image = item[2]
+        wherefound = item[3]
         if len(entity.id) == 32 and entity.type != "":
             # image = save_entity_image_to_file(world_model_ed, entity.id)
+            if wherefound == "fromtable" and items[index-1][3] == "initialinspection":
+                html+= "<h1>Found on table:</h1>"
+
             print "Created entry for %s (%s)" % (entity.id, entity.type)
             html += "<table border='1'><tr>"
             if image:
@@ -190,6 +212,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
             html += "<td><center>"
             html += "<h2>%s</h2>" % entity.id
             html += "<p><b>Type: </b>%s</p>" % entity.type
+            html += "<p><b>Found: </b>%s</p>" % wherefound
             html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>" % (entity._pose.p.x(),
                                                                           entity._pose.p.y(),
                                                                           entity._pose.p.z())
