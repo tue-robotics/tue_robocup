@@ -1,4 +1,9 @@
+# System
+import os
+import yaml
+
 # ROS
+import rospkg
 import rospy
 import visualization_msgs.msg
 
@@ -420,3 +425,34 @@ class ED(RobotPart):
         marker.color.r = 1
 
         self._marker_publisher.publish(marker)
+
+    def sync_furniture_poses(self):
+        """ Syncs the furniture poses of the world model to disc
+        """
+        # Get all entities
+        entities = self.get_entities()
+        furniture_objects = [e for e in entities if e.is_a("furniture")]
+
+        # Load the model.yaml of the current environment
+        # ToDo: make sure that this works
+        filename = os.path.join(rospkg.RosPack().get_path("ed_object_models"), "models", os.environ.get("ROBOT_ENV"),
+                                "model.yaml")
+        with open(filename, "r") as f:
+            file_data = yaml.load(f)
+
+        composition_list = file_data.get("composition", None)
+        if composition_list is None:
+            raise RuntimeError("No composition in {}".format(filename))
+
+        # Iterate over all furniture objects
+        for wm_object in furniture_objects:
+            for file_object in composition_list:
+                if wm_object.id == file_object.get("id", ""):
+                    # Yeehah, we found something we need to update
+                    _, _, Z = wm_object.pose.frame.M.GetRPY()
+                    pos = wm_object.pose.frame.p
+                    file_object['pose'] = {'x': pos.x(), 'y': pos.y(), 'z': pos.z(), 'Z': Z}
+
+        # Dump the data to file
+        with open(filename, "w") as f:
+            yaml.dump(file_data, f)
