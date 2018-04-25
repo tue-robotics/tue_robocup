@@ -34,58 +34,42 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-# hack 
-# update 2018: unsure if this adds something --> To Do!
-most_probable_location_in_room_map = {
-    'dining_room': 'dinner_table',
-    'bedroom': 'bed',
-    'living_room': 'couch_table',
-    'kitchen': 'bar'
-}
-
-
-def get_location_from_room(room_id):
-    if room_id in most_probable_location_in_room_map:
-        return most_probable_location_in_room_map[room_id]
-    return None
-
-# rooms = location_rooms + ["workshop"]
+rooms = location_rooms + ["workshop"]
 
 objects = [
-
-    {'category': 'care',                'name': 'shower_gel'        },
-    {'category': 'care',                'name': 'soap'              },
-    {'category': 'care',                'name': 'toothpaste'        },
-    {'category': 'cleaning_stuff',      'name': 'sponge'            },
-    {'category': 'cleaning_stuff',      'name': 'wiper'             },
-    {'category': 'container',   	    'name': 'box'               },
-    {'category': 'container',   	    'name': 'tray'              },
-    {'category': 'drink',   	  	    'name': 'cacao'             },
-    {'category': 'drink',   	  	    'name': 'coke'              },
-    {'category': 'drink',   	  	    'name': 'malz'              },
-    {'category': 'drink',   	  	    'name': 'mixdrink'          },
-    {'category': 'drink',   	  	    'name': 'orange_juice'      },
-    {'category': 'drink',   	  	    'name': 'perppermint_tea'   },
-    {'category': 'drink',   	  	    'name': 'water'      	    },
-    {'category': 'snack',   	  	    'name': 'cookies'           },
-    {'category': 'snack',   	  	    'name': 'fruit_bar'         }, 
-    {'category': 'snack',   	  	    'name': 'kinder'            },  
-    {'category': 'snack',   	  	    'name': 'nuts'              },
-    {'category': 'food',                'name': 'apple'             },
-    {'category': 'food',                'name': 'green_paprika'     },
-    {'category': 'food',                'name': 'kiwi'              },
-    {'category': 'food',                'name': 'lemon'             },
-    {'category': 'food',                'name': 'noodles'           },
-    {'category': 'food',                'name': 'pepper'            },
-    {'category': 'food',                'name': 'salt'              },
-    {'category': 'food',                'name': 'tomato'            },
-    {'category': 'help_me_carry',       'name': 'bag'               },    
-    {'category': 'dishwasher_test',     'name': 'dishwasher_tray'   }
-
+    {'category': 'care',                'name': 'shower_gel'        'color': 'dummy'},
+    {'category': 'care',                'name': 'soap'              'color': 'dummy'},
+    {'category': 'care',                'name': 'toothpaste'        'color': 'dummy'},
+    {'category': 'cleaning_stuff',      'name': 'sponge'            'color': 'dummy'},
+    {'category': 'cleaning_stuff',      'name': 'wiper'             'color': 'dummy'},
+    {'category': 'container',   	    'name': 'box'               'color': 'dummy'},
+    {'category': 'container',   	    'name': 'tray'              'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'cacao'             'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'coke'              'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'malz'              'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'mixdrink'          'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'orange_juice'      'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'perppermint_tea'   'color': 'dummy'},
+    {'category': 'drink',   	  	    'name': 'water'      	    'color': 'dummy'},
+    {'category': 'snack',   	  	    'name': 'cookies'           'color': 'dummy'},
+    {'category': 'snack',   	  	    'name': 'fruit_bar'         'color': 'dummy'},
+    {'category': 'snack',   	  	    'name': 'kinder'            'color': 'dummy'},
+    {'category': 'snack',   	  	    'name': 'nuts'              'color': 'dummy'},
+    {'category': 'food',                'name': 'apple'             'color': 'dummy'},
+    {'category': 'food',                'name': 'green_paprika'     'color': 'dummy'},
+    {'category': 'food',                'name': 'kiwi'              'color': 'dummy'},
+    {'category': 'food',                'name': 'lemon'             'color': 'dummy'},
+    {'category': 'food',                'name': 'noodles'           'color': 'dummy'},
+    {'category': 'food',                'name': 'pepper'            'color': 'dummy'},
+    {'category': 'food',                'name': 'salt'              'color': 'dummy'},
+    {'category': 'food',                'name': 'tomato'            'color': 'dummy'},
+    {'category': 'help_me_carry',       'name': 'bag'               'color': 'dummy'},
+    {'category': 'dishwasher_test',     'name': 'dishwasher_tray'   'color': 'dummy'},
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
+object_color = list(set([ o["color"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
@@ -110,9 +94,8 @@ inspect_positions = {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
+''' colors from printing on screen '''
 class bcolors:
-    ''' colors from printing on screen '''
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -124,17 +107,18 @@ class bcolors:
 
 
 '''
-	General function for printing shortcuts
-	name: name of the progam that instanciates make_prints
-	sentence: sentence to be displayed
+General function for printing shortcuts
+name: name of the program that instantiates make_prints
+sentence: sentence to be displayed
 
-	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
+Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
 '''
 
 
 def make_prints(name):
 
     prefix = bcolors.HEADER + name + bcolors.ENDC
+
     def printOk(sentence):
         print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
 
@@ -148,7 +132,6 @@ def make_prints(name):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
 def is_location(location):
     for loc in locations:
         if loc["name"] == location:
@@ -157,12 +140,14 @@ def is_location(location):
 
 
 def get_room(location):
-    if location in location_rooms:
-        return location
     for loc in locations:
         if loc["name"] == location:
             return loc["room"]
     return None
+
+
+def is_room(entity_id):
+    return (entity_id in rooms)
 
 
 def get_inspect_areas(location):
@@ -211,9 +196,14 @@ def get_object_category(obj):
             return o["category"]
     return None
 
+def get_object_color(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["color"]
+    return None
 
+# Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    # Returns (location, area_name)
     location = category_locations[obj_cat].keys()[0]
     area_name = category_locations[obj_cat].values()[0]
     return (location, area_name)
@@ -242,6 +232,7 @@ if __name__ == "__main__":
     print "Place locations:"
     for loc in get_locations(place_location=True):
         print "    {}".format(loc)
+
 
     print "\n-----------------------------------------------------------------------------"
     print "None-manipulation locations:"
