@@ -204,7 +204,7 @@ class Robot(object):
         """
 
         diagnostic_dict = {diagnostic_status.name:diagnostic_status for diagnostic_status in diagnostic_array.status}
-
+        
         for name, part in self.parts.iteritems():
             # Pass a dict mapping the name to the item.
             # Bodypart.handle_hardware_status needs to find the element relevant to itself
