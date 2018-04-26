@@ -155,18 +155,21 @@ class PlaceSingleItem(smach.State):
                 break
 
         if arm is None:
+            rospy.logwarn("Arm is None")
             return "failed"
 
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
         arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
-        sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self.place_designator, arm=arm_designator)
-        result = sm.execute()
+        place = states.Place(robot=self._robot, item_to_place=item, place_pose=self.place_designator, arm=arm_designator)
+        result = place.execute()
 
         # If failed, do handover to human in order to continue
         if result != "done":
-            sm = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
-            sm.execute()
+            rospy.loginfo("{place} resulted in {out}".format(place=place, out=result))
+
+            handover = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
+            handover.execute()
 
         return "succeeded" if result == "done" else "failed"
 
