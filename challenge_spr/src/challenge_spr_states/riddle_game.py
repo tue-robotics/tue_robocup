@@ -4,6 +4,7 @@ import rospy
 import smach
 import sys
 import random
+import traceback
 
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
@@ -125,7 +126,7 @@ def answer(robot, res, crowd_data):
                     break
 
         except Exception as e:
-            rospy.logerr(e)
+            rospy.logerr(traceback.format_exc())
             robot.speech.speak("Whoops")
 
     rospy.loginfo("Question was: '%s'?" % res.sentence)
