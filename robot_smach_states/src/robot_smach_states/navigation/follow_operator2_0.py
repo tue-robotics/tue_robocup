@@ -11,16 +11,23 @@ from robot_skills.util import kdl_conversions
 import PyKDL as kdl
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
+
+
 def vector_stampeds_to_point_stampeds(vector_stampeds):
     return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+
+
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
     return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
+
+
 import copy
 from visualization_msgs.msg import Marker
 from hmi import TimeoutException
 
+
 class LearnOperator(smach.State):
-    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
+    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout=10.0):
         smach.State.__init__(self, outcomes=['follow', 'Failed'],
                              input_keys=['operator_learn_in'],
                              output_keys=['operator_learn_out'])
@@ -39,7 +46,7 @@ class LearnOperator(smach.State):
             if self.preempt_requested():
                 return 'Failed'
 
-            if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
+            if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return 'Failed'
 
             operator = self._robot.ed.get_closest_laser_entity(
@@ -56,7 +63,7 @@ class LearnOperator(smach.State):
                     self._robot.head.look_at_standing_person()
                     learn_person_start_time = rospy.Time.now()
                     num_detections = 0
-                    while num_detections < 5: # 5:
+                    while num_detections < 5:  # 5:
                         if self._robot.perception.learn_person(self._operator_name):
                             print("Succesfully detected you %i times" % (num_detections + 1))
                             num_detections += 1
@@ -70,14 +77,15 @@ class LearnOperator(smach.State):
         userdata.operator_learn_out = operator
         return 'follow'
 
+
 class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self, robot):
         smach.State.__init__(self,
-                              outcomes=['track', 'no_track'],
-                              input_keys=['buffer_track_in', 'operator_track_in'],
-                              output_keys=['buffer_track_out'])
+                             outcomes=['track', 'no_track'],
+                             input_keys=['buffer_track_in', 'operator_track_in'],
+                             output_keys=['buffer_track_out'])
         self.counter = 0
-        self._period = 0.3          #fix this magic number
+        self._period = 0.3  # fix this magic number
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._robot = robot
@@ -98,12 +106,13 @@ class Track(smach.State):  # Updates the breadcrumb path
 
         operator = self._robot.ed.get_entity(id=operator.id)
         print self._robot.base.local_planner.getDistanceToGoal()
-        if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+        if len(
+            buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0:  # and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
             self._robot.speech.speak("Not so fast!")
 
         if operator:
-            #if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
-            #self._robot.speech.speak("Not so fast!")
+            # if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            # self._robot.speech.speak("Not so fast!")
             #    print len(buffer)
             self._last_operator = operator
             self._last_operator_id = operator.id
@@ -115,7 +124,7 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator_pos.point.y = 0.0
             operator_pos.point.z = 0.0
 
-            f = self._robot.base.get_location().frame #changes made in tf_server/src/tf_server/tf_client.py & robot_skills/src/robot_skills/robot.py
+            f = self._robot.base.get_location().frame  # changes made in tf_server/src/tf_server/tf_client.py & robot_skills/src/robot_skills/robot.py
             self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
             if buffer:
@@ -132,13 +141,15 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator = self._robot.ed.get_entity(id=self._last_operator_id)
             if not operator:
                 if not self._lost_operator:
-                    self._robot.speech.speak("Oh no I lost you for a second, please stay where you are and I will come and find you again!")
+                    self._robot.speech.speak(
+                        "Oh no I lost you for a second, please stay where you are and I will come and find you again!")
                     self._lost_operator = True
                     return 'track'
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return 'no_track'
             else:
                 return 'track'
+
 
 class FollowBread(smach.State):
     def __init__(self, robot, operator_radius=1, lookat_radius=1.2):
@@ -149,30 +160,30 @@ class FollowBread(smach.State):
         self._robot = robot
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
-        self._breadcrumb_pub = rospy.Publisher('/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        self._breadcrumb_pub = rospy.Publisher(
+            '/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
 
-        #self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
-        #self._plan_marker_pub = rospy.Publisher('/%s/follow_operator/test_path' % robot.robot_name, Marker, queue_size=10)
+        # self._breadcrumb_pub = rospy.Publisher('/%s/follow_operator/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        # self._plan_marker_pub = rospy.Publisher('/%s/follow_operator/test_path' % robot.robot_name, Marker, queue_size=10)
 
         self._plan_marker_pub = rospy.Publisher(
-                '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
+            '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._newest_crumb = None
         self._operator = None
         self._have_followed = False
         self._current_operator = collections.deque()
 
-
     def execute(self, userdata):
         operator = None
 
         buffer = userdata.buffer_follow_in
-        if len(buffer) > 5: #5
+        if len(buffer) > 5:  # 5
             self._have_followed = True
 
         robot_position = self._robot.base.get_location().frame
         if not buffer:
             # if not self._have_followed:
-            rospy.sleep(2)      #magic number
+            rospy.sleep(2)  # magic number
 
         if buffer:
             self._newest_crumb = buffer[0]
@@ -184,7 +195,8 @@ class FollowBread(smach.State):
         print self._have_followed
         if operator:
             print operator.distance_to_2d(robot_position.p)
-            if len(buffer) == 1 and self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0: # The only crumb is the operator
+            if len(buffer) == 1 and self._have_followed and operator.distance_to_2d(
+                robot_position.p) < 1.0:  # The only crumb is the operator
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
 
@@ -211,7 +223,7 @@ class FollowBread(smach.State):
         o.frame = self._operator.id
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
-        res = 0.05      ##magic number number 2
+        res = 0.05  ##magic number number 2
         kdl_plan = []
         previous_point = robot_position
 
@@ -258,7 +270,7 @@ class FollowBread(smach.State):
         buffer_msg.color.r = 1
         buffer_msg.color.g = 0
         buffer_msg.color.b = 0
-        #buffer_msg.lifetime = rospy.Time(.0)
+        # buffer_msg.lifetime = rospy.Time(.0)
         buffer_msg.id = 0
         buffer_msg.action = Marker.ADD
 
@@ -290,7 +302,7 @@ class FollowBread(smach.State):
 
 class AskFinalize(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,  outcomes=['follow', 'Done'])
+        smach.State.__init__(self, outcomes=['follow', 'Done'])
         self._robot = robot
 
     def execute(self, userdata=None):
@@ -308,6 +320,7 @@ class AskFinalize(smach.State):
                 return 'Done'
             else:
                 return 'follow'
+
 
 class Recovery(smach.State):
     def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
@@ -328,8 +341,8 @@ class Recovery(smach.State):
         operator_recovery_timeout = self._lost_timeout
         start_time = rospy.Time.now()
 
-        look_distance = 2.0     #magic number 4
-        look_angles = [0.0,          #magic numbers
+        look_distance = 2.0  # magic number 4
+        look_angles = [0.0,  # magic numbers
                        math.pi / 6,
                        math.pi / 4,
                        math.pi / 2.3,
@@ -350,7 +363,7 @@ class Recovery(smach.State):
             self._robot.head.look_at_point(head_goals[i])
             i += 1
             if i == len(head_goals):
-                 i = 0
+                i = 0
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
             best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
@@ -361,13 +374,13 @@ class Recovery(smach.State):
                 try:
                     operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
                 except Exception as e:
-                     rospy.logerr("head.project_roi failed: %s", e)
-                     return 'Failed'
+                    rospy.logerr("head.project_roi failed: %s", e)
+                    return 'Failed'
                 operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
                 self._face_pos_pub.publish(operator_pos_ros)
 
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                              center_point=operator_pos_kdl)
+                                                                             center_point=operator_pos_kdl)
                 if recovered_operator:
                     print "Found one!"
                     self._operator_id = recovered_operator.id
@@ -395,44 +408,44 @@ class FollowOperator2(smach.StateMachine):
         self.userdata.operator = None
 
         with self:
-                smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
-                                       transitions={'follow': 'CON_FOLLOW',
-                                                    'Failed': 'Failed'},
-                                       remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
+            smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
+                                   transitions={'follow': 'CON_FOLLOW',
+                                                'Failed': 'Failed'},
+                                   remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
 
-                smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
-                                       transitions={'follow': 'CON_FOLLOW',
-                                                    'Done': 'Done'})
+            smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
+                                   transitions={'follow': 'CON_FOLLOW',
+                                                'Done': 'Done'})
 
-                smach.StateMachine.add('RECOVERY', Recovery(robot),
-                                       transitions={'Failed': 'Failed',
-                                                    'follow': 'CON_FOLLOW'})
+            smach.StateMachine.add('RECOVERY', Recovery(robot),
+                                   transitions={'Failed': 'Failed',
+                                                'follow': 'CON_FOLLOW'})
 
-                sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
-                                           default_outcome='keep_following',
-                                           outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread_ask_finalize',
-                                                                         'TRACK': 'track'},
-                                                        'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
-                                                                             'TRACK': 'no_track'}},
-                                                        #'recover_operator': {'FOLLOWBREAD': 'follow_bread',
-                                                        #                     'TRACK': 'no_track'}
-                                           input_keys=['operator'])
+            sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
+                                       default_outcome='keep_following',
+                                       outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread_ask_finalize',
+                                                                     'TRACK': 'track'},
+                                                    'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
+                                                                         'TRACK': 'no_track'}},
+                                       # 'recover_operator': {'FOLLOWBREAD': 'follow_bread',
+                                       #                     'TRACK': 'no_track'}
+                                       input_keys=['operator'])
 
-                sm_con.userdata.buffer = collections.deque()
-                sm_con.userdata.operator = None
+            sm_con.userdata.buffer = collections.deque()
+            sm_con.userdata.operator = None
 
-                with sm_con:
-                    smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
-                                                                            'buffer_track_out': 'buffer',
-                                                                            'operator_track_in': 'operator'})
+            with sm_con:
+                smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
+                                                                        'buffer_track_out': 'buffer',
+                                                                        'operator_track_in': 'operator'})
 
-                    smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
-                                                                                   'buffer_follow_out': 'buffer'})
+                smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
+                                                                                    'buffer_follow_out': 'buffer'})
 
-                smach.StateMachine.add('CON_FOLLOW', sm_con,
-                                       transitions={'recover_operator': 'RECOVERY',
-                                                    'ask_finalize': 'ASK_FINALIZE',
-                                                    'keep_following': 'CON_FOLLOW'})
+            smach.StateMachine.add('CON_FOLLOW', sm_con,
+                                   transitions={'recover_operator': 'RECOVERY',
+                                                'ask_finalize': 'ASK_FINALIZE',
+                                                'keep_following': 'CON_FOLLOW'})
 
 
 # def setup_statemachine(robot):
