@@ -31,10 +31,9 @@ class LearnOperator(smach.State):
         self._operator = None
 
     def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
         self._robot.speech.speak("I will memorize what you look like now.",
-                                 block=True,
-                                 look_at_standing_person=True)
-
+                                 block=True)
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
         while not self._operator:
