@@ -31,6 +31,8 @@ class NavigateToObserve(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
+        rospy.logdebug("Navigating to grasp entity '{}'".format(e.id))
+
         try:
             ch = e.shape.convex_hull
         except NotImplementedError:

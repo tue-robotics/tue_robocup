@@ -187,7 +187,7 @@ class ED(RobotPart):
         Updates entity
         :param id: entity id
         :param type: entity type
-        :param posestamped: ???
+        :param frame_stamped: If specified, the entity is updated to be at this FrameStamped
         :param flags: (OBSOLETE, use add_flags and remove_flags): (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,  e.g., 'perception'
         :param add_flags: list of flags which will be added to the specified entity
         :param remove_flags: list of flags which will removed from the specified entity

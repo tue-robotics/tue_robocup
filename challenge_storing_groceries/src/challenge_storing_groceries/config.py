@@ -8,6 +8,7 @@ challenge_knowledge = load_knowledge('challenge_storing_groceries')
 
 # Location
 ENTITY_POSES = challenge_knowledge.entity_poses
+WORKSPACES = challenge_knowledge.workspaces
 
 # Inspection
 CABINET = challenge_knowledge.cabinet_amcl
