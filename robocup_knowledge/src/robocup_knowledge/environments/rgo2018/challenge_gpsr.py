@@ -21,7 +21,7 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[A] -> C[A] | amigo C[A]
+T[A] -> C[A]
 
 C[{"actions": <A1>}] -> VP[A1]
 C[{"actions": <A1, A2>}] -> VP[A1] and VP[A2]
