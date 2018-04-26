@@ -233,6 +233,7 @@ grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
+grammar += '\nSAY_SENTENCE["SOMETHING_ABOUT_SELF"] -> something about yourself'
 
 
 follow_action = "follow", {"location-from": {""}, "location-to": {}, "target": {}}
