@@ -34,8 +34,6 @@ table_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl
                FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(0.4, 1.92, 0.0)),
                             frame_id="map")]
 
-entity_poses = zip(cabinet_poses, table_poses, cabinet_amcl, grasp_surface, room, default_place_area)
-
 entity_poses = zip(cabinet_poses,       # Where should the cabinet go?
                    table_poses,         # Where should the table go?
                    cabinet_amcl,        # In what entity to place items
