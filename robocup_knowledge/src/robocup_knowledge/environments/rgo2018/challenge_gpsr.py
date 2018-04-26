@@ -199,11 +199,11 @@ BRING_TARGET[X] -> the ROOM_OR_LOCATION[X]
 
 OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT | PPN_OBJECT
 
-V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over
+V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over | place | put
 
-VP[{"action": "bring", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
+VP[{"action": "place", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
 
-VP[{"action": "bring", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
+VP[{"action": "place", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
 
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_NAME[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_NAME[Y] from the ROOM_OR_LOCATION[X]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
