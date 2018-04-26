@@ -29,8 +29,6 @@ C[{A}] -> Q[A]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
-
 DET -> the | a | an | some
 MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
 """
