@@ -57,6 +57,8 @@ class NavigateToSymbolic(NavigateTo):
             rospy.logerr("At least 1 designator in self.entity_designator_area_name_map failed")
             return None
 
+        rospy.logdebug("Navigating to symbolic {}".format(entity_id_area_name_map))
+
         pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
 
         # Orientation constraint is the entity itself...
