@@ -156,10 +156,10 @@ SEARCH -> where is located | in WHATWHICH room is
 
 Q["action" : "find_placement", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
 Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
-Q["action" : "answer", "solution": "1"] -> how many doors has the living room
-Q["action" : "answer", "solution": "3"] -> how many doors has the dining room
-Q["action" : "answer", "solution": "3"] -> how many doors has the bed room
-Q["action" : "answer", "solution": "1"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "0"] -> how many doors has the living room
+Q["action" : "answer", "solution": "2"] -> how many doors has the dining room
+Q["action" : "answer", "solution": "2"] -> how many doors has the bed room
+Q["action" : "answer", "solution": "0"] -> how many doors has the kitchen
 '''
 
 ##############################################################################
