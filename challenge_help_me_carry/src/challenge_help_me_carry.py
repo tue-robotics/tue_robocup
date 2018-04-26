@@ -49,7 +49,7 @@ class LearnOperator(smach.State):
                                                            frame_id="/%s/base_link" % self._robot.robot_name))
             rospy.loginfo("Operator: {op}".format(op=self._operator))
             if not self._operator:
-                self._robot.speech.speak("Please stand in front of me")
+                self._robot.speech.speak("Please stand in front of me", block=True)
             else:
                 if self._learn_face:
                     self._robot.speech.speak("Please look at me while I learn to recognize you.",
@@ -112,11 +112,11 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             # Follow the operator until (s)he states that you have arrived at the "car".
             smach.StateMachine.add('FOLLOW_OPERATOR',
-                                   states.FollowOperator(robot, operator_timeout=30, ask_follow=True, learn_face=True,
-                                                         replan=True),
-                                   transitions={'stopped': 'ASK_FOR_TASK',
-                                                'lost_operator': 'ASK_FOR_TASK',
-                                                'no_operator': 'ASK_FOR_TASK'})
+                                   states.FollowOperator2(robot #, operator_timeout=30, ask_follow=True, learn_face=True, replan=True
+                                                                ),
+                                   transitions={'Done': 'ASK_FOR_TASK',          # 'stopped'
+                                                'Failed': 'ASK_FOR_TASK',    # 'lost_operator'
+                                                'Aborted': 'ASK_FOR_TASK'})     # 'no_operator'
 
             smach.StateMachine.add('ASK_FOR_TASK',
                                    states.Say(robot, ["Are we at the car already?"],
