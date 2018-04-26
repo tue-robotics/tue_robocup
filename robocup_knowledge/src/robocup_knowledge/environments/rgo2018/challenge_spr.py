@@ -60,7 +60,7 @@ grammar += '''
 
 Q["action" : "answer", "solution": "the scientific study of robot"] -> what is robotics
 Q["action" : "answer", "solution": "joseph engelberger"] -> who is considered as the father of industrial robot	
-Q["action" : "answer", "solution": "aml a manufacturing language"] -> give one example for a computer programming language that can be used for robot programming
+Q["action" : "answer", "solution": "a m l a manufacturing language"] -> give one example for a computer programming language that can be used for robot programming
 Q["action" : "answer", "solution": "heavy investment"] -> what is the major disadvantage of using a robot
 Q["action" : "answer", "solution": "lisp and prolog"] -> name the language used in expert system
 Q["action" : "answer", "solution": "knowledge base"] -> name one of the most important parts in expert system
@@ -72,10 +72,11 @@ Q["action" : "answer", "solution": "portable document format"] -> what is the ex
 Q["action" : "answer", "solution": "relational data base management system"] -> expand rdbms
 Q["action" : "answer", "solution": "charles babbage"] -> difference engine was developed by
 Q["action" : "answer", "solution": "google"] -> orkut dot com is now owned by
+Q["action" : "answer", "solution": "google"] -> orkut com is now owned by
 Q["action" : "answer", "solution": "intel 4004"] -> worlds first microprocessor is
 Q["action" : "answer", "solution": "structured query language"] -> what is sql
 Q["action" : "answer", "solution": "short message service"] -> what is the expansion of sms	 
-Q["action" : "answer", "solution": "ibm"] -> which it companys nickname is the big blue
+Q["action" : "answer", "solution": "i b m"] -> which it companys nickname is the big blue
 Q["action" : "answer", "solution": "institute of electric and electronic engineers"] -> what is the full form of ieee
 Q["action" : "answer", "solution": "raymond samuel tomlinson"] -> email was developed by
 Q["action" : "answer", "solution": "net citizen citizen who uses internet"] -> who is netizen
@@ -84,7 +85,7 @@ Q["action" : "answer", "solution": "fake antivirus softwares"] -> what is scarew
 WHATWHICH -> what | which
 
 '''
-	
+
 #Q['answer': "george devol"] -> who holds the patent for the first industrial robot
 #Q['answer': "manipulator, brain, power supply."] -> what are the three major components of a robot?
 #Q['answer': "manipulator."] -> which part controls the movement of robots hand
@@ -111,28 +112,28 @@ WHATWHICH -> what | which
 #Q['answer': "logic programming language"] -> prolog is
 #Q['answer': "object oriented programming language"] -> small talk and actor are
 #Q['answer': "1 expert system 2 natural language system 3 perception system"] -> what are the branches of artificial intelligence
-#['answer': "james t russel"] -> who invented compact disc 
+#['answer': "james t russel"] -> who invented compact disc
 #Q['answer': "december 2"] -> which day is celebrated as world computer literacy day
 #Q['answer': "james a gosling"] -> who invented java
-#Q['answer': "windows vista"] -> longhorn was the code name of 	 
+#Q['answer': "windows vista"] -> longhorn was the code name of
 #Q['answer': "shakunthala devi"] -> who is known as the human computer of india
 #Q['answer': "people who work with the computer"] -> what is mean by liveware
 #Q['answer': "jm coetzee"] -> which computer engineer got nobel prize for literature in 2003
 
-#Q['answer': "google"] -> do no evil is tag line of	 
-#Q['answer': "vivah"] -> first indian cinema released through internet is	 
+#Q['answer': "google"] -> do no evil is tag line of
+#Q['answer': "vivah"] -> first indian cinema released through internet is
 #Q['answer': "ajith balakrishnan and manish agarwal"] -> rediff dot com was founded by
 
-#Q['answer': "physically handicapped people"] -> mows is a type of mouse for dot dot dot people	 
+#Q['answer': "physically handicapped people"] -> mows is a type of mouse for dot dot dot people
 
-#Q['answer': "common business oriented language"] -> what is the expansion of cobol	 
+#Q['answer': "common business oriented language"] -> what is the expansion of cobol
 
 #Q['answer': "grace murry hopper"] -> who developed cobol
 
 #Q['answer': "web filter"] -> green dam is
-#Q['answer': "complementary metal oxide semoconductor"] -> what is the expanded form of cmos  	 
+#Q['answer': "complementary metal oxide semoconductor"] -> what is the expanded form of cmos
 
-#Q['answer': "1992 the ibm simon"] -> when was the first smart phone launched 	 	 
+#Q['answer': "1992 the ibm simon"] -> when was the first smart phone launched
 
 ##############################################################################
 #
