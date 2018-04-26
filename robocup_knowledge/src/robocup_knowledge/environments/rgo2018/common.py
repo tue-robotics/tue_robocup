@@ -1,27 +1,31 @@
 # COMMON KNOWLEDGE FILE RGO2018
 
-female_names = ["emma","olivia","sophia","ava","isabella","mia","abigail","emily","charlotte","harper"]
-male_names = ["noah","liam","mason","jacob","william","ethan","james","alexander","michael","benjamin"]
+female_names = ["angie", "mary", "amy", "kimberley", "lisa", "melissa", "michelle", "jennifer", "elizabeth", "julie"]
+male_names = ["brian","michael","christopher","william","john","david","james","robert","scott","richard"]
 names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    { 'name':'bookshelf',       'room':'living_room', 'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'sofa',            'room':'living_room', 'category': 'seat',    'manipulation':'no'  },
-    { 'name':'couch_table',     'room':'living_room', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'living_room', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'tv_stand',        'room':'living_room', 'category': 'beacon',  'manipulation':'no'  },
 
-    { 'name':'kitchencounter',  'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'stove',           'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'desk',            'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'bar',             'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
+    { 'name':'bed',             'room':'bedroom',    'category': 'beacon',  'manipulation':'no'  },
+    { 'name':'desk',      	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'bookcase',   	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'side_table',      'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
 
-    { 'name':'bed',             'room':'bedroom',    'category': 'seat',    'manipulation':'no'  },
-    { 'name':'closet',          'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
+    { 'name':'bar', 		    'room':'kitchen',    'category': 'bar',     'manipulation':'yes' },
+    { 'name':'kitchen_table',   'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
+    { 'name':'kitchen_cabinet', 'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
+    { 'name':'sink',            'room':'kitchen',    'category': 'table',   'manipulation':'no'  },
 
-    { 'name':'dinner_table',    'room':'dining_room', 'category': 'table',   'manipulation':'yes' },
-    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',   'manipulation':'yes' }
+    { 'name':'tv_table',       	'room':'living_room', 'category': 'table',  'manipulation':'yes' },
+    { 'name':'cupboard',        'room':'living_room', 'category': 'shelf',  'manipulation':'yes' },
+    { 'name':'couch',           'room':'living_room', 'category': 'seat',   'manipulation':'yes' },
+    { 'name':'couch_table',     'room':'living_room', 'category': 'beacon', 'manipulation':'yes' },
+
+    { 'name':'dining_table',    'room':'dining_room', 'category': 'beacon', 'manipulation':'yes' },
+    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' },
+    { 'name':'display_case',    'room':'dining_room', 'category': 'table',  'manipulation':'no'  },
+    { 'name':'storage_shelf',   'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' }
 
 ]
 
@@ -30,81 +34,59 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-# hack
-most_probable_location_in_room_map = {
-    'dining_room': 'dinner_table',
-    'bedroom': 'closet',
-    'living_room': 'couch_table',
-    'kitchen': 'desk'
-}
-
-
-def get_location_from_room(room_id):
-    if room_id in most_probable_location_in_room_map:
-        return most_probable_location_in_room_map[room_id]
-    return None
-
-# rooms = location_rooms + ["workshop"]
+rooms = location_rooms + ["workshop"]
 
 objects = [
-    {'category': 'food',                'name': 'apple'             },
-    {'category': 'food',                'name': 'bread'             },
-    {'category': 'food',                'name': 'cereals'           },
-    {'category': 'food',                'name': 'cornflakes'        },
-    {'category': 'food',                'name': 'crackers'          },
-    {'category': 'food',                'name': 'lemon'             },
-    {'category': 'food',                'name': 'noodles'           },
-    {'category': 'food',                'name': 'paprika'           },
-    {'category': 'food',                'name': 'peas'              },
-    {'category': 'food',                'name': 'pepper'            },
-    {'category': 'food',                'name': 'potato'            },
-    {'category': 'food',                'name': 'potato_soup'       },
-    {'category': 'food',                'name': 'salt'              },
-    {'category': 'food',                'name': 'tomato_pasta'      },
-    {'category': 'container',           'name': 'bag'               },
-    {'category': 'container',           'name': 'basket'            },
-    {'category': 'container',           'name': 'coffecup'          },
-    {'category': 'container',           'name': 'plate'             },
-    {'category': 'container',           'name': 'red_bowl'          },
-    {'category': 'container',           'name': 'white_bowl'        },
-    {'category': 'drink',               'name': 'banana_milk'       },
-    {'category': 'drink',               'name': 'cappucino'         },
-    {'category': 'drink',               'name': 'coke'              },
-    {'category': 'drink',               'name': 'orange_drink'      },
-    {'category': 'drink',               'name': 'water'             },
-    {'category': 'snack',               'name': 'chocolate_cookies' },
-    {'category': 'snack',               'name': 'egg'               },
-    {'category': 'snack',               'name': 'party_cracker'     },
-    {'category': 'snack',               'name': 'pringles'          },
-    {'category': 'cleaning_stuff',      'name': 'cloth'             },
-    {'category': 'cleaning_stuff',      'name': 'paper'             },
-    {'category': 'cleaning_stuff',      'name': 'sponge'            },
-    {'category': 'cleaning_stuff',      'name': 'towel'             },
-    {'category': 'cutlery',             'name': 'fork'              },
-    {'category': 'cutlery',             'name': 'spoon'             },
-    {'category': 'cutlery',             'name': 'knife'             }
-
+    {'category': 'care',                'name': 'shower_gel',        'color': 'pink'  },
+    {'category': 'care',                'name': 'soap',              'color': 'white' },
+    {'category': 'care',                'name': 'toothpaste',        'color': 'green' },
+    {'category': 'cleaning_stuff',      'name': 'sponge',            'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'wiper',             'color': 'yellow'},
+    {'category': 'container',   	    'name': 'box',               'color': 'yellow'},
+    {'category': 'container',   	    'name': 'tray',              'color': 'white' },
+    {'category': 'drink',   	  	    'name': 'cacao',             'color': 'brown' },
+    {'category': 'drink',   	  	    'name': 'coke',              'color': 'red'   },
+    {'category': 'drink',   	  	    'name': 'malz',              'color': 'brown' },
+    {'category': 'drink',   	  	    'name': 'mixdrink',          'color': 'brown' },
+    {'category': 'drink',   	  	    'name': 'orange_juice',      'color': 'orange'},
+    {'category': 'drink',   	  	    'name': 'perppermint_tea',   'color': 'green' },
+    {'category': 'drink',   	  	    'name': 'water',      	     'color': 'transparent'},
+    {'category': 'snack',   	  	    'name': 'cookies',           'color': 'blue'  },
+    {'category': 'snack',   	  	    'name': 'fruit_bar',         'color': 'green' },
+    {'category': 'snack',   	  	    'name': 'kinder',            'color': 'white' },
+    {'category': 'snack',   	  	    'name': 'nuts',              'color': 'yellow'},
+    {'category': 'food',                'name': 'apple',             'color': 'green' },
+    {'category': 'food',                'name': 'green_paprika',     'color': 'green' },
+    {'category': 'food',                'name': 'kiwi',              'color': 'brown' },
+    {'category': 'food',                'name': 'lemon',             'color': 'yellow'},
+    {'category': 'food',                'name': 'noodles',           'color': 'yellow'},
+    {'category': 'food',                'name': 'pepper',            'color': 'brown' },
+    {'category': 'food',                'name': 'salt',              'color': 'salt'  },
+    {'category': 'food',                'name': 'tomato',            'color': 'red'   },
+    {'category': 'help_me_carry',       'name': 'bag',               'color': 'red'   },
+    {'category': 'dishwasher_test',     'name': 'dishwasher_tray',   'color': 'white' },
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
+object_color = list(set([ o["color"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-
-    "cutlery": {"cabinet": "shelf2"},
-    "container": {"bookshelf": "shelf1"},
-    "drink": {"kitchencounter": "on_top_of"},
+#To do! Fix in from bookcase and cabinet
+    "care": {"bookcase": ""},
+    "container": {"cupboard": "on_top_off"},
+    "drink": {"kitchen_table": "on_top_of"},
     "snack": {"couch_table": "on_top_of"},
-    "food": {"stove": "on_top_of"},
-    "cleaning_stuff": {"closet": "on_top_of"},
-    "fruit": {"desk": "on_top_of"}
+    "food": {"cabinet": ""},
+    "cleaning_stuff": {"closet": "on_top_of"}
 }
 
 inspect_areas = {
+#To do!
     "cabinet": ["shelf1", "shelf2", "shelf3", "shelf4"],
-    "bookshelf": ["shelf1", "shelf2", "shelf3", "shelf4"]
+    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4"]
 }
 
 inspect_positions = {
@@ -112,9 +94,8 @@ inspect_positions = {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
+''' colors from printing on screen '''
 class bcolors:
-    ''' colors from printing on screen '''
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -126,17 +107,18 @@ class bcolors:
 
 
 '''
-	General function for printing shortcuts
-	name: name of the progam that instanciates make_prints
-	sentence: sentence to be displayed
+General function for printing shortcuts
+name: name of the program that instantiates make_prints
+sentence: sentence to be displayed
 
-	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
+Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>"
 '''
 
 
 def make_prints(name):
 
     prefix = bcolors.HEADER + name + bcolors.ENDC
+
     def printOk(sentence):
         print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
 
@@ -150,7 +132,6 @@ def make_prints(name):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
 def is_location(location):
     for loc in locations:
         if loc["name"] == location:
@@ -159,12 +140,14 @@ def is_location(location):
 
 
 def get_room(location):
-    if location in location_rooms:
-        return location
     for loc in locations:
         if loc["name"] == location:
             return loc["room"]
     return None
+
+
+def is_room(entity_id):
+    return (entity_id in rooms)
 
 
 def get_inspect_areas(location):
@@ -213,9 +196,14 @@ def get_object_category(obj):
             return o["category"]
     return None
 
+def get_object_color(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["color"]
+    return None
 
+# Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    # Returns (location, area_name)
     location = category_locations[obj_cat].keys()[0]
     area_name = category_locations[obj_cat].values()[0]
     return (location, area_name)
@@ -244,6 +232,7 @@ if __name__ == "__main__":
     print "Place locations:"
     for loc in get_locations(place_location=True):
         print "    {}".format(loc)
+
 
     print "\n-----------------------------------------------------------------------------"
     print "None-manipulation locations:"

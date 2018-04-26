@@ -49,6 +49,9 @@ class StoringGroceries(smach.StateMachine):
             def move_table(userdata=None, manipulate_machine=None):
                 """ Moves the entities for this challenge to the correct poses"""
                 # Determine where to perform the challenge
+                # Apparently, the indices here come from:
+                # (cabinet_pose, table_pose, cabinet_amcl, grasp_surface, room, default_place_area)
+
                 robot_pose = robot.base.get_location()
                 ENTITY_POSES.sort(key=lambda tup: (tup[0].frame.p - robot_pose.frame.p).Norm())
                 cabinet_id = ENTITY_POSES[0][2]
@@ -63,7 +66,7 @@ class StoringGroceries(smach.StateMachine):
 
                 # Update designators
                 cabinet.id_ = ENTITY_POSES[0][2]
-                room.id_ = ENTITY_POSES[0][4]
+                room.id_ = ENTITY_POSES[0][4] # TODO: no usages besides this line and instantiation?
 
                 # Update manipulate machine
                 manipulate_machine.place_entity_designator.id_ = cabinet_id

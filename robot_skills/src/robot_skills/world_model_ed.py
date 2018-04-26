@@ -1,4 +1,9 @@
+# System
+import os
+import yaml
+
 # ROS
+import rospkg
 import rospy
 import visualization_msgs.msg
 
@@ -27,7 +32,8 @@ class Navigation(RobotPart):
 
     def get_position_constraint(self, entity_id_area_name_map):
         try:
-            res = self._get_constraint_srv(entity_ids=[ k for k in entity_id_area_name_map ], area_names=[ v for k,v in entity_id_area_name_map.iteritems() ])
+            res = self._get_constraint_srv(entity_ids=[k for k in entity_id_area_name_map],
+                                           area_names=[v for k, v in entity_id_area_name_map.iteritems()])
         except Exception, e:
             rospy.logerr(e)
             return None
@@ -54,17 +60,17 @@ class ED(RobotPart):
         self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed_msgs.srv.Reset)
         self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
                                                             ed_sensor_integration.srv.GetImage)
-        self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name, ed_sensor_integration.srv.RayTrace)
+        self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name,
+                                                            ed_sensor_integration.srv.RayTrace)
 
         self._tf_listener = tf_listener
 
         self.navigation = Navigation(robot_name, tf_listener)
 
-        self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker,
+        self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query", visualization_msgs.msg.Marker,
                                                  queue_size=10)
 
         self.robot_name = robot_name
-
 
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
@@ -81,13 +87,15 @@ class ED(RobotPart):
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self._tf_listener)
-        query = SimpleQueryRequest(id=id, type=type, center_point=kdl_vector_to_point_msg(center_point_in_map.vector), radius=radius)
+        query = SimpleQueryRequest(id=id, type=type, center_point=kdl_vector_to_point_msg(center_point_in_map.vector),
+                                   radius=radius)
 
         try:
-            entity_infos= self._ed_simple_query_srv(query).entities
+            entity_infos = self._ed_simple_query_srv(query).entities
             entities = map(from_entity_info, entity_infos)
         except Exception, e:
-            rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (id, type, str(center_point), str(radius)))
+            rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (
+            id, type, str(center_point), str(radius)))
             rospy.logerr("L____> [%s]" % e)
             return []
 
@@ -95,7 +103,7 @@ class ED(RobotPart):
 
     def get_closest_entity(self, type="", center_point=None, radius=0):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/"+self.robot_name+"/base_link")
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
 
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
@@ -117,7 +125,7 @@ class ED(RobotPart):
 
     def get_closest_room(self, center_point=None, radius=0):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/"+self.robot_name+"/base_link")
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
@@ -134,14 +142,16 @@ class ED(RobotPart):
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
         # HACK
-        entities = [ e for e in entities if e.shape and e.type == "" and e.id.endswith("-laser") ]
+        entities = [e for e in entities if e.shape and e.type == "" and e.id.endswith("-laser")]
 
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.projectToFrame("/%s/base_link"%self.robot_name, self._tf_listener).vector)) # TODO: adjust for robot
+            entities = sorted(entities, key=lambda entity: entity.distance_to_2d(
+                center_point.projectToFrame("/%s/base_link" % self.robot_name,
+                                            self._tf_listener).vector))  # TODO: adjust for robot
         except:
             print "Failed to sort entities"
             return None
@@ -197,7 +207,8 @@ class ED(RobotPart):
 
             Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
             t = frame_stamped.frame.p
-            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x(), t.y(), t.z(), X, Y, Z)
+            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (
+            t.x(), t.y(), t.z(), X, Y, Z)
 
         if flags or add_flags or remove_flags:
             json_entity += ', "flags": ['
@@ -211,10 +222,10 @@ class ED(RobotPart):
                     if not isinstance(flag, dict):
                         print "update_entity - Error: flags need to be a list of dicts or a dict"
                         return False
-                    for k,v in flag.iteritems():
+                    for k, v in flag.iteritems():
                         if not first:
                             json_entity += ','
-                        json_entity += '{"%s":"%s"}' % (k,v)
+                        json_entity += '{"%s":"%s"}' % (k, v)
                         first = False
 
             for flag in add_flags:
@@ -231,7 +242,7 @@ class ED(RobotPart):
 
             json_entity += ']'
 
-        json = '{"entities":[{%s}]}'%json_entity
+        json = '{"entities":[{%s}]}' % json_entity
         rospy.logdebug(json)
 
         return self._ed_update_srv(request=json)
@@ -256,8 +267,8 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room = ""):
-        #if isinstance(center_point, PointStamped):
+    def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room=""):
+        # if isinstance(center_point, PointStamped):
         #    center_point = self._transform_center_point_to_map(center_point)
         # ToDo: check frame ids
 
@@ -265,7 +276,7 @@ class ED(RobotPart):
 
         # HACK
         # entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
-        entities = [ e for e in entities if e.is_a('possible_human') ]
+        entities = [e for e in entities if e.is_a('possible_human')]
 
         if len(entities) == 0:
             return None
@@ -300,7 +311,7 @@ class ED(RobotPart):
         # Save the image (logging)
         self.save_image(path_suffix=area_description.replace(" ", "_"))
 
-        res = self._ed_kinect_update_srv(area_description = area_description, background_padding = background_padding)
+        res = self._ed_kinect_update_srv(area_description=area_description, background_padding=background_padding)
         if res.error_msg:
             rospy.logerr("Could not segment objects: %s" % res.error_msg)
 
@@ -322,16 +333,16 @@ class ED(RobotPart):
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
-
         posteriors = [dict(zip(distr.values, distr.probabilities)) for distr in res.posteriors]
 
         # Filter on types if types is not None
-       	return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr
-       				in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if types is None or exp_val in types]
+        return [ClassificationResult(_id, exp_val, exp_prob, distr) for _id, exp_val, exp_prob, distr
+                in zip(res.ids, res.expected_values, res.expected_value_probabilities, posteriors) if
+                types is None or exp_val in types]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def save_image(self, path = "", path_suffix = "", filename = ""):
+    def save_image(self, path="", path_suffix="", filename=""):
         import os
         import time
 
@@ -390,7 +401,8 @@ class ED(RobotPart):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def _transform_center_point_to_map(self, pointstamped):
-        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
+        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map",
+                                                    self._tf_listener)
         return point_in_map
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -413,3 +425,34 @@ class ED(RobotPart):
         marker.color.r = 1
 
         self._marker_publisher.publish(marker)
+
+    def sync_furniture_poses(self):
+        """ Syncs the furniture poses of the world model to disc
+        """
+        # Get all entities
+        entities = self.get_entities()
+        furniture_objects = [e for e in entities if e.is_a("furniture")]
+
+        # Load the model.yaml of the current environment
+        # ToDo: make sure that this works
+        filename = os.path.join(rospkg.RosPack().get_path("ed_object_models"), "models", os.environ.get("ROBOT_ENV"),
+                                "model.yaml")
+        with open(filename, "r") as f:
+            file_data = yaml.load(f)
+
+        composition_list = file_data.get("composition", None)
+        if composition_list is None:
+            raise RuntimeError("No composition in {}".format(filename))
+
+        # Iterate over all furniture objects
+        for wm_object in furniture_objects:
+            for file_object in composition_list:
+                if wm_object.id == file_object.get("id", ""):
+                    # Yeehah, we found something we need to update
+                    _, _, Z = wm_object.pose.frame.M.GetRPY()
+                    pos = wm_object.pose.frame.p
+                    file_object['pose'] = {'x': pos.x(), 'y': pos.y(), 'z': pos.z(), 'Z': Z}
+
+        # Dump the data to file
+        with open(filename, "w") as f:
+            yaml.dump(file_data, f)

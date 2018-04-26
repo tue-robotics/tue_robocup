@@ -4,6 +4,7 @@ import rospy
 import smach
 import sys
 import random
+import traceback
 
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
@@ -125,7 +126,7 @@ def answer(robot, res, crowd_data):
                     break
 
         except Exception as e:
-            rospy.logerr(e)
+            rospy.logerr(traceback.format_exc())
             robot.speech.speak("Whoops")
 
     rospy.loginfo("Question was: '%s'?" % res.sentence)
@@ -171,15 +172,19 @@ def answer_placement_location(action):
 
 def answer_count_placement(action):
     entity = action['entity']
+    location = action['location']
+
     locations = [loc for loc in common_knowledge.locations if loc['name'] == entity]
-    if len(locations) == 1:
-        room = locations[0]['room']
-        if loc == action['location']:
-            return 'There is one %s in the %s' % (entity, room)
-        else:
-            return 'There are no %s in the %s' % (entity, room)
-    else:
+    if not locations:
         return 'I should count but I dont know that object %s' % entity
+
+    locations = [loc for loc in locations if loc['room'] == location]
+    if not locations:
+        return 'There are no %s in the %s' % (entity, location)
+    elif len(locations) == 1:
+        return 'There is one %s in the %s' % (entity, location)
+    else:
+        return 'There are %d %s in the %s' % (len(locations), entity, location)
 
 def answer_find_objects(action):
     entity = action['entity']
