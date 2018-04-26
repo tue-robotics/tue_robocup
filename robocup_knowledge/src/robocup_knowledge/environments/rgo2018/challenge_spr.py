@@ -169,7 +169,8 @@ Q["action" : "answer", "solution": "1"] -> how many doors has the kitchen
 ##############################################################################
 
 grammar += '''
-ADJR -> smaller | bigger | heavier | lighter
+ADJR -> smaller | bigger 
+#| heavier | lighter
 
 Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
 Q["action" : "find_category", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
@@ -180,8 +181,9 @@ Q["action" : "count_object", "entity" : C] -> how many OBJECT_CATEGORIES[C] ther
 
 NQ["action" : "count_object", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
 NQ["action" : "count_object", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
+
+
 NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
-NQ
 NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] which one is ADJR
 '''
 
