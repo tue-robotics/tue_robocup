@@ -328,7 +328,8 @@ class FollowBread(smach.State):
 
 class Recovery(smach.State):
     def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
-        smach.State.__init__(self, outcomes=['Failed', 'follow'])
+        smach.State.__init__(self, outcomes=['Failed', 'follow'],
+                             output_keys=['recovered_operator'])
         self._robot = robot
         self._operator_name = "operator"
         self._lost_timeout = lost_timeout
@@ -367,7 +368,7 @@ class Recovery(smach.State):
             self._robot.head.look_at_point(head_goals[i])
             i += 1
             if i == len(head_goals):
-                 i = 0
+                i = 0
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
             best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
@@ -378,8 +379,8 @@ class Recovery(smach.State):
                 try:
                     operator_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
                 except Exception as e:
-                     rospy.logerr("head.project_roi failed: %s", e)
-                     return 'Failed'
+                    rospy.logerr("head.project_roi failed: %s", e)
+                    return 'Failed'
                 operator_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(operator_pos_kdl)
                 self._face_pos_pub.publish(operator_pos_ros)
 
@@ -393,6 +394,7 @@ class Recovery(smach.State):
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again", block=False)
                     self._robot.head.close()
                     self._time_started = rospy.Time.now()
+                    userdata.recovered_operator = recovered_operator
                     return 'follow'
                 else:
                     print "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
@@ -424,7 +426,8 @@ class FollowOperator2(smach.StateMachine):
 
                 smach.StateMachine.add('RECOVERY', Recovery(robot),
                                        transitions={'Failed': 'Failed',
-                                                    'follow': 'CON_FOLLOW'})
+                                                    'follow': 'CON_FOLLOW'},
+                                       remapping={'recovered_operator': 'operator'})
 
                 sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
                                            default_outcome='keep_following',
