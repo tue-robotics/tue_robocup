@@ -22,7 +22,7 @@ locations = [
     { 'name':'couch',           'room':'living_room', 'category': 'seat',   'manipulation':'yes' },
     { 'name':'couch_table',     'room':'living_room', 'category': 'beacon', 'manipulation':'yes' },
 
-    { 'name':'dinning_table',   'room':'dining_room', 'category': 'beacon', 'manipulation':'yes' },
+    { 'name':'dining_table',    'room':'dining_room', 'category': 'beacon', 'manipulation':'yes' },
     { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' },
     { 'name':'display_case',    'room':'dining_room', 'category': 'table',  'manipulation':'no'  },
     { 'name':'storage_shelf',   'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' }
