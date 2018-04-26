@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # ROS
+import rospy
 import PyKDL as kdl
 import smach
 
@@ -55,6 +56,8 @@ class StoringGroceries(smach.StateMachine):
                 robot_pose = robot.base.get_location()
                 WORKSPACES.sort(key=lambda ws: (ws.grasp_entity_conf.pose_estimate.frame.p - robot_pose.frame.p).Norm())
                 closest_workspace = WORKSPACES[0]
+                rospy.loginfo("Closest workspace: grasp from '{grasp}' and place on '{place}'".format(grasp=closest_workspace.grasp_entity_conf.entity_id,
+                                                                                                                                 place=closest_workspace.place_entity_conf.entity_id))
                 cabinet_id = closest_workspace.place_entity_conf.entity_id
                 table_id = closest_workspace.grasp_entity_conf.entity_id
 
@@ -63,15 +66,16 @@ class StoringGroceries(smach.StateMachine):
                 robot.ed.update_entity(id=table_id, frame_stamped=closest_workspace.grasp_entity_conf.pose_estimate)
 
                 # Update designators
-                cabinet.id_ = cabinet_id
+                cabinet.id_ = closest_workspace.place_entity_conf.entity_id
                 # room.id_ = ENTITY_POSES[0][4] # TODO: no usages besides this line and instantiation?
 
                 # Update manipulate machine
-                manipulate_machine.place_entity_designator.id_ = cabinet_id
-                manipulate_machine.place_designator._area = closest_workspace.place_entity_conf.manipulation_volumes[0]
-                manipulate_machine.place_designator.place_location_designator.id = cabinet_id
-                manipulate_machine.table_designator.id_ = table_id
-                manipulate_machine.cabinet.id_ = cabinet_id
+                manipulate_machine.table_designator.id_         = closest_workspace.grasp_entity_conf.entity_id
+
+                manipulate_machine.place_entity_designator.id_  = closest_workspace.place_entity_conf.entity_id
+                manipulate_machine.place_designator._area       = closest_workspace.place_entity_conf.manipulation_volumes[0]
+                manipulate_machine.place_designator.place_location_designator.id = closest_workspace.place_entity_conf.entity_id
+                manipulate_machine.cabinet.id_                  = closest_workspace.place_entity_conf.entity_id
 
                 return "done"
 
