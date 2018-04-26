@@ -57,10 +57,7 @@ class StoringGroceries(smach.StateMachine):
                 cabinet_id = ENTITY_POSES[0][2]
                 table_id = ENTITY_POSES[0][3]
 
-                # Update the world model
-                robot.ed.update_entity(id="balcony_shelf",
-                                       frame_stamped=FrameStamped(kdl.Frame(kdl.Rotation(), kdl.Vector(0.0, 3.0, 0.0)),
-                                                                  frame_id="map"))
+                # Update the world model by fitting the entities to the frame_stamped's given below.
                 robot.ed.update_entity(id=cabinet_id, frame_stamped=ENTITY_POSES[0][0])
                 robot.ed.update_entity(id=table_id, frame_stamped=ENTITY_POSES[0][1])
 
