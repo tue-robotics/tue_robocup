@@ -179,8 +179,8 @@ Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAME
 Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
 Q["action" : "count_object", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
 
-NQ["action" : "count_object", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "count_object", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_placement", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+Q["action" : "count_objects_placement", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
 
 
 NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]

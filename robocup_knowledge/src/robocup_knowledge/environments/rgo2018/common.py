@@ -82,7 +82,7 @@ category_locations = {
     "drink": {"kitchen_table": "on_top_of"},
     "snack": {"couch_table": "on_top_of"},
     "food": {"cabinet": "shelf2"},
-    "cleaning_stuff": {"closet": "on_top_of"}
+    "cleaning_stuff": {"kitchen_cabinet": "on_top_of"}
 }
 
 inspect_areas = {

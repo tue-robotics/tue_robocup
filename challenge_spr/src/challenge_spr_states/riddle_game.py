@@ -112,6 +112,7 @@ def answer(robot, res, crowd_data):
                    ('return_color',     answer_object_color),
                    ('compare_category', answer_compare_objects_categories),
                    ('count_object',     answer_count_objects_in_category),
+                   ('count_objects_placement', answer_count_objects_placement)
                    ]
 
     for action in res.semantics['actions']:
@@ -186,12 +187,34 @@ def answer_count_placement(action):
     else:
         return 'There are %d %s in the %s' % (len(locations), entity, location)
 
+
+def answer_count_objects_placement(action):
+    entity = action['entity']
+    location = action['location']
+
+    objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
+    if not objects:
+        return "I should count but I don't know that object %s" % entity
+
+    if objects[0]["category"] in common_knowledge.category_locations:
+        (found_location, area_name) = common_knowledge.get_object_category_location(objects[0]["category"])
+        if found_location == location:
+            return 'There is one %s in the %s' % (entity, location)
+    return 'There are no %s in the %s' % (entity, location)
+    #
+    # if not locations:
+    #     return 'There are no %s in the %s' % (entity, location)
+    # elif len(locations) == 1:
+    #     return 'There is one %s in the %s' % (entity, location)
+    # else:
+    #     return 'There are %d %s in the %s' % (len(locations), entity, location)
+
+
 def answer_find_objects(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         cat = objects[0]['category']
-        print cat
         loc, area_name = common_knowledge.get_object_category_location(cat)
         return 'You can find the %s %s %s' % (entity, area_name, loc)
     else:
