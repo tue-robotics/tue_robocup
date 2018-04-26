@@ -191,16 +191,18 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'GOTO_DESTINATION'})
 
             smach.StateMachine.add('GOTO_DESTINATION',
-                                   states.NavigateToWaypoint(robot, self.target_destination,
-                                                             challenge_knowledge.default_target_radius),
+                                   states.NavigateToSymbolic(robot,
+                                                             {self.target_destination: "in_front_of"},
+                                                             self.target_destination),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
                                                 'unreachable': 'GOTO_DESTINATION_BACKUP',
                                                 # implement avoid obstacle behaviour later
                                                 'goal_not_defined': 'Aborted'})
 
             smach.StateMachine.add('GOTO_DESTINATION_BACKUP',
-                                   states.NavigateToWaypoint(robot, self.target_destination,
-                                                             challenge_knowledge.backup_target_radius),
+                                   states.NavigateToSymbolic(robot,
+                                                             {self.target_destination: "in_front_of"},
+                                                             self.target_destination),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
                                                 'unreachable': 'PUTDOWN_ITEM',
                                                 # implement avoid obstacle behaviour later
