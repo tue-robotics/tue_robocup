@@ -63,9 +63,11 @@ objects = [
     {'category': 'food',                'name': 'pepper',            'color': 'brown' },
     {'category': 'food',                'name': 'salt',              'color': 'salt'  },
     {'category': 'food',                'name': 'tomato',            'color': 'red'   },
-    {'category': 'help_me_carry',       'name': 'bag',               'color': 'red'   },
-    {'category': 'dishwasher_test',     'name': 'dishwasher_tray',   'color': 'white' },
+
 ]
+
+# {'category': 'help_me_carry', 'name': 'bag', 'color': 'red'},
+# {'category': 'dishwasher_test', 'name': 'dishwasher_tray', 'color': 'white'},
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
@@ -74,18 +76,20 @@ object_color = list(set([ o["color"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-#To do! Fix in from bookcase and cabinet
-    "care": {"bookcase": ""},
+#Test
+    "care": {"bookcase": "shelf2"},
     "container": {"cupboard": "on_top_off"},
     "drink": {"kitchen_table": "on_top_of"},
     "snack": {"couch_table": "on_top_of"},
-    "food": {"cabinet": ""},
+    "food": {"cabinet": "shelf2"},
     "cleaning_stuff": {"closet": "on_top_of"}
 }
 
 inspect_areas = {
-#To do!
+#Test
     "cabinet": ["shelf1", "shelf2", "shelf3", "shelf4"],
+    "display_case": ["shelf1", "shelf2", "shelf3", "shelf4"],
+    "storage_shelf": ["shelf1", "shelf2", "shelf3", "shelf4"],
     "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4"]
 }
 
