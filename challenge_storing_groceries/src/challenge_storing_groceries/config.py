@@ -7,7 +7,6 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
 
 # Location
-ENTITY_POSES = challenge_knowledge.entity_poses
 WORKSPACES = challenge_knowledge.workspaces
 
 # Inspection
@@ -26,16 +25,9 @@ MIN_OBJECT_HEIGHT = 0.1
 SKIP_LIST = ["fork", "spoon", "chopsticks"]
 
 # Grasping
-TABLE = challenge_knowledge.grasp_surface
-# TABLE_POSE = FrameStamped(frame=challenge_knowledge.table_pose, frame_id="map")
 GRAB_SURFACE = "on_top_of"
-ROOM = challenge_knowledge.room
 MIN_GRAB_OBJECT_HEIGHT = 0.075
 MAX_GRAB_OBJECT_WIDTH = 0.15
-
-# Placing
-DEFAULT_PLACE_ENTITY = challenge_knowledge.default_place_entity
-DEFAULT_PLACE_AREA = challenge_knowledge.default_place_area
 
 # Debug
 DEBUG = False
