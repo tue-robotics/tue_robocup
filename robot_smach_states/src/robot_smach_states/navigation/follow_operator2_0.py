@@ -12,16 +12,16 @@ import PyKDL as kdl
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
 def vector_stampeds_to_point_stampeds(vector_stampeds):
-    return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+    return map(kdl_conversions.kdl_vector_stamped_to_point_stamped, vector_stampeds)
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
-    return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
+    return map(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg, frame_stampeds)
 import copy
 from visualization_msgs.msg import Marker
 from hmi import TimeoutException
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
-        smach.State.__init__(self, outcomes=['follow', 'Failed'],
+        smach.State.__init__(self, outcomes=['follow', 'Failed', 'Aborted'],
                              input_keys=['operator_learn_in'],
                              output_keys=['operator_learn_out'])
         self._robot = robot
@@ -35,40 +35,53 @@ class LearnOperator(smach.State):
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
         operator = userdata.operator_learn_in
-        while not operator:
-            if self.preempt_requested():
-                return 'Failed'
+        # Challenge erin gefietst
+        sentence = "Should I follow you?"
+        self._robot.speech.speak(sentence, block=True)
+        try:
+            answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+        except TimeoutException as e:
+            self._robot.speech.speak("I did not hear you!")
+            rospy.sleep(2)
+        else:
+            if answer.sentence == "yes":
+        # Challenge erin gefietst tot hier
+                while not operator:
+                    if self.preempt_requested():
+                        return 'Failed'
 
-            if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
-                return 'Failed'
+                    if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
+                        return 'Failed'
 
-            operator = self._robot.ed.get_closest_laser_entity(
-                radius=0.5,
-                center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
-                                                           frame_id="/%s/base_link" % self._robot.robot_name))
-            rospy.loginfo("Operator: {op}".format(op=operator))
-            if not operator:
-                self._robot.speech.speak("Please stand in front of me")
+                    operator = self._robot.ed.get_closest_laser_entity(
+                        radius=0.5,
+                        center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
+                                                                   frame_id="/%s/base_link" % self._robot.robot_name))
+                    rospy.loginfo("Operator: {op}".format(op=operator))
+                    if not operator:
+                        self._robot.speech.speak("Please stand in front of me")
+                    else:
+                        if self._learn_face:
+                            self._robot.speech.speak("Please look at me while I learn to recognize you.",
+                                                     block=True)
+                            self._robot.head.look_at_standing_person()
+                            learn_person_start_time = rospy.Time.now()
+                            num_detections = 0
+                            while num_detections < 5: # 5:
+                                if self._robot.perception.learn_person(self._operator_name):
+                                    print("Succesfully detected you %i times" % (num_detections + 1))
+                                    num_detections += 1
+                                elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
+                                    self._robot.speech.speak("Please stand in front of me and look at me")
+                                    operator = None
+                                    break
+                print "We have a new operator: %s" % operator.id
+                self._robot.speech.speak("Gotcha! I will follow you!", block=False)
+                self._robot.head.close()
+                userdata.operator_learn_out = operator
+                return 'follow'
             else:
-                if self._learn_face:
-                    self._robot.speech.speak("Please look at me while I learn to recognize you.",
-                                             block=True)
-                    self._robot.head.look_at_standing_person()
-                    learn_person_start_time = rospy.Time.now()
-                    num_detections = 0
-                    while num_detections < 5: # 5:
-                        if self._robot.perception.learn_person(self._operator_name):
-                            print("Succesfully detected you %i times" % (num_detections + 1))
-                            num_detections += 1
-                        elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
-                            self._robot.speech.speak("Please stand in front of me and look at me")
-                            operator = None
-                            break
-        print "We have a new operator: %s" % operator.id
-        self._robot.speech.speak("Gotcha! I will follow you!", block=False)
-        self._robot.head.close()
-        userdata.operator_learn_out = operator
-        return 'follow'
+                return 'Aborted'
 
 class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self, robot):
@@ -231,7 +244,7 @@ class FollowBread(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    kdl_plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
+                    kdl_plan.append(kdl_conversions.kdl_frame_stamped_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = copy.deepcopy(crumb._pose.p)
 
@@ -240,7 +253,11 @@ class FollowBread(smach.State):
         if len(kdl_plan) > cutoff:
             del kdl_plan[-cutoff:]
 
-        ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+        if kdl_plan:
+            ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+        else:
+            ros_plan = []
+
         # Check if plan is valid. If not, remove invalid points from the path
         if len(ros_plan) > 0:
             if not self._robot.base.global_planner.checkPlan(ros_plan):
@@ -263,7 +280,7 @@ class FollowBread(smach.State):
         buffer_msg.action = Marker.ADD
 
         for crumb in buffer:
-            buffer_msg.points.append(kdl_conversions.kdlVectorToPointMsg(crumb.pose.frame.p))
+            buffer_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
 
         line_strip = Marker()
         line_strip.type = Marker.LINE_STRIP
@@ -288,26 +305,26 @@ class FollowBread(smach.State):
         return 'follow_bread'
 
 
-class AskFinalize(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self,  outcomes=['follow', 'Done'])
-        self._robot = robot
-
-    def execute(self, userdata=None):
-        sentence = "Are we there yet?"
-        self._robot.speech.speak(sentence, block=True)
-        try:
-            answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
-        except TimeoutException as e:
-            self._robot.speech.speak("I did not hear you!")
-            rospy.sleep(2)
-            self._robot.speech.speak("Since I did not hear from you I assume we are done!")
-        else:
-            if answer.sentence == "yes":
-                self._robot.speech.speak("We reached our final destination!")
-                return 'Done'
-            else:
-                return 'follow'
+# class AskFinalize(smach.State):
+#     def __init__(self, robot):
+#         smach.State.__init__(self,  outcomes=['follow', 'Done'])
+#         self._robot = robot
+#
+#     def execute(self, userdata=None):
+#         sentence = "Are we there yet?"
+#         self._robot.speech.speak(sentence, block=True)
+#         try:
+#             answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
+#         except TimeoutException as e:
+#             self._robot.speech.speak("I did not hear you!")
+#             rospy.sleep(2)
+#             self._robot.speech.speak("Since I did not hear from you I assume we are done!")
+#         else:
+#             if answer.sentence == "yes":
+#                 self._robot.speech.speak("We reached our final destination!")
+#                 return 'Done'
+#             else:
+#                 return 'follow'
 
 class Recovery(smach.State):
     def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
@@ -363,7 +380,7 @@ class Recovery(smach.State):
                 except Exception as e:
                      rospy.logerr("head.project_roi failed: %s", e)
                      return 'Failed'
-                operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
+                operator_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(operator_pos_kdl)
                 self._face_pos_pub.publish(operator_pos_ros)
 
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
@@ -397,12 +414,13 @@ class FollowOperator2(smach.StateMachine):
         with self:
                 smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
                                        transitions={'follow': 'CON_FOLLOW',
-                                                    'Failed': 'Failed'},
+                                                    'Failed': 'Failed',
+                                                    'Aborted': 'Aborted'},
                                        remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
 
-                smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
-                                       transitions={'follow': 'CON_FOLLOW',
-                                                    'Done': 'Done'})
+                # smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
+                #                        transitions={'follow': 'CON_FOLLOW',
+                #                                     'Done': 'Done'})
 
                 smach.StateMachine.add('RECOVERY', Recovery(robot),
                                        transitions={'Failed': 'Failed',
@@ -431,7 +449,7 @@ class FollowOperator2(smach.StateMachine):
 
                 smach.StateMachine.add('CON_FOLLOW', sm_con,
                                        transitions={'recover_operator': 'RECOVERY',
-                                                    'ask_finalize': 'ASK_FINALIZE',
+                                                    'ask_finalize': 'Done',
                                                     'keep_following': 'CON_FOLLOW'})
 
 
