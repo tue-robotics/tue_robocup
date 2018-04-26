@@ -7,6 +7,7 @@ import PyKDL as kdl
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import FrameStamped
 from robocup_knowledge import knowledge_loader
+from collections import namedtuple
 
 # Common knowledge
 common = knowledge_loader.load_knowledge("common")
@@ -42,3 +43,55 @@ entity_poses = zip(cabinet_poses,       # Where should the cabinet go?
 
 # TODO: define a 'Workspace' class, that defines a name and estimated location for the grasp entity, the place entity, grasp/place volumes etc.
 # In storing_groceries/config, do a check that this Workspace is valid
+
+
+"""EntityConfiguration defines a name, an pose estimate for the Entity and which volumes of that entity to use for manipulation"""
+EntityConfiguration = namedtuple("EntityConfiguration", ["entity_id", "pose_estimate", "manipulation_volumes"])
+
+"""A Workspace for Storing Groceries has EntityConfigurations for the two main entities in the challenge:
+    the grasp_entity (usually a table) and a place_entity (usually some cabinet or shelf).
+    Additionally, it defines in which room the challenge takes place
+    """
+Workspace = namedtuple("Workspace", ["grasp_entity_conf", "place_entity_conf", "room"])
+
+cabinet_ws = Workspace(grasp_entity_conf=
+                       EntityConfiguration(entity_id="cabinet",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0),
+                                                                                      kdl.Vector(0.144, 3.274, 0.0)),
+                                                                      frame_id="map")
+                                           ),
+                       place_entity_conf=
+                       EntityConfiguration(entity_id="dining_table",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
+                                                                                      kdl.Vector(2.447, 1.1695, 0.0)),
+                                                                      frame_id="map")
+                                           ))
+
+storage_shelf_ws = Workspace(grasp_entity_conf=
+                       EntityConfiguration(entity_id="storage_shelf",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
+                                                                                      kdl.Vector(4.8, 2.5, 0.0)),
+                                                                      frame_id="map")
+                                           ),
+                       place_entity_conf=
+                       EntityConfiguration(entity_id="dining_table",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
+                                                                                      kdl.Vector(2.447, 1.1695, 0.0)),
+                                                                      frame_id="map")
+                                           ))
+bookcase_ws = Workspace(grasp_entity_conf=
+                       EntityConfiguration(entity_id="bookcase",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
+                                                                                      kdl.Vector(9.7, 2.0, 0.0)),
+                                                                      frame_id="map")
+                                           ),
+                       place_entity_conf=
+                       EntityConfiguration(entity_id="desk",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
+                                                                                      kdl.Vector(6.0, 2.5, 0.0)),
+                                                                      frame_id="map")
+                                           ))
+
+workspaces = [cabinet_ws, storage_shelf_ws, bookcase_ws]
+
+
