@@ -176,7 +176,7 @@ class RobotPart(object):
         diag = diagnostic_dict.get(self.__diagnostics_name, None)
 
         if not diag:
-            pass # rospy.logwarn('no diagnostic msg received for the %s' % self.__diagnostics_name)
+            rospy.logwarn('no diagnostic msg received for the %s' % self.__diagnostics_name)
         else:
             # TODO: diagnostic_msgs.DiagnosticStatus.OK instead of our own enumeration.
             # 0. Stale
