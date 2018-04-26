@@ -58,39 +58,48 @@ cabinet_ws = Workspace(grasp_entity_conf=
                        EntityConfiguration(entity_id="cabinet",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0),
                                                                                       kdl.Vector(0.144, 3.274, 0.0)),
-                                                                      frame_id="map")
+                                                                      frame_id="map"),
+                                           manipulation_volumes=['shelf2']
                                            ),
                        place_entity_conf=
                        EntityConfiguration(entity_id="dining_table",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                                       kdl.Vector(2.447, 1.1695, 0.0)),
-                                                                      frame_id="map")
-                                           ))
+                                                                      frame_id="map"),
+                                           manipulation_volumes=['on_top_of']
+                                           ),
+                       room="dining_room")
 
 storage_shelf_ws = Workspace(grasp_entity_conf=
                        EntityConfiguration(entity_id="storage_shelf",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                                       kdl.Vector(4.8, 2.5, 0.0)),
-                                                                      frame_id="map")
+                                                                      frame_id="map"),
+                                           manipulation_volumes=['shelf2']
                                            ),
                        place_entity_conf=
                        EntityConfiguration(entity_id="dining_table",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                                       kdl.Vector(2.447, 1.1695, 0.0)),
-                                                                      frame_id="map")
-                                           ))
+                                                                      frame_id="map"),
+                                           manipulation_volumes=['on_top_of']
+                                           ),
+                       room="dining_room")
 bookcase_ws = Workspace(grasp_entity_conf=
                        EntityConfiguration(entity_id="bookcase",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                                       kdl.Vector(9.7, 2.0, 0.0)),
-                                                                      frame_id="map")
+                                                                      frame_id="map"),
+                                           manipulation_volumes=['shelf2']
                                            ),
                        place_entity_conf=
                        EntityConfiguration(entity_id="desk",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                                       kdl.Vector(6.0, 2.5, 0.0)),
-                                                                      frame_id="map")
-                                           ))
+                                                                      frame_id="map"),
+                                           manipulation_volumes=['on_top_of']
+                                           ),
+                       room="bedroom")
 
 workspaces = [cabinet_ws, storage_shelf_ws, bookcase_ws]
 

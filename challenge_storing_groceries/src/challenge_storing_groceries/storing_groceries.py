@@ -53,24 +53,25 @@ class StoringGroceries(smach.StateMachine):
                 # (cabinet_pose, table_pose, cabinet_amcl, grasp_surface, room, default_place_area)
 
                 robot_pose = robot.base.get_location()
-                ENTITY_POSES.sort(key=lambda tup: (tup[0].frame.p - robot_pose.frame.p).Norm())
-                cabinet_id = ENTITY_POSES[0][2]
-                table_id = ENTITY_POSES[0][3]
+                WORKSPACES.sort(key=lambda ws: (ws.grasp_entity_conf.pose_estimate.frame.p - robot_pose.frame.p).Norm())
+                closest_workspace = WORKSPACES[0]
+                cabinet_id = closest_workspace.place_entity_conf.entity_id
+                table_id = closest_workspace.grasp_entity_conf.entity_id
 
                 # Update the world model by fitting the entities to the frame_stamped's given below.
-                robot.ed.update_entity(id=cabinet_id, frame_stamped=ENTITY_POSES[0][0])
-                robot.ed.update_entity(id=table_id, frame_stamped=ENTITY_POSES[0][1])
+                robot.ed.update_entity(id=cabinet_id, frame_stamped=closest_workspace.place_entity_conf.pose_estimate)
+                robot.ed.update_entity(id=table_id, frame_stamped=closest_workspace.grasp_entity_conf.pose_estimate)
 
                 # Update designators
-                cabinet.id_ = ENTITY_POSES[0][2]
-                room.id_ = ENTITY_POSES[0][4] # TODO: no usages besides this line and instantiation?
+                cabinet.id_ = cabinet_id
+                # room.id_ = ENTITY_POSES[0][4] # TODO: no usages besides this line and instantiation?
 
                 # Update manipulate machine
                 manipulate_machine.place_entity_designator.id_ = cabinet_id
-                manipulate_machine.place_designator._area = ENTITY_POSES[0][5]
+                manipulate_machine.place_designator._area = closest_workspace.place_entity_conf.manipulation_volumes[0]
                 manipulate_machine.place_designator.place_location_designator.id = cabinet_id
                 manipulate_machine.table_designator.id_ = table_id
-                manipulate_machine.cabinet.id_ = ENTITY_POSES[0][2]
+                manipulate_machine.cabinet.id_ = cabinet_id
 
                 return "done"
 
