@@ -384,53 +384,64 @@ class Recovery(smach.State):
         rospy.sleep(2.0)
         return 'Failed'
 
-def setup_statemachine(robot):
-    sm_top = smach.StateMachine(outcomes=['Done', 'Aborted', 'Failed'])
-    sm_top.userdata.operator = None
 
-    with sm_top:
-        smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
-                               transitions={'follow': 'CON_FOLLOW',
-                                            'Failed': 'Failed'},
-                               remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
+# Make the state machine to make is a callable function
+class FollowOperator2(smach.StateMachine):
+    def __init__(self, robot, speak=True):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Failed', 'Aborted'])
+        self.robot = robot
+        self.speak = speak
+        # Create the sub SMACH state machine, I think this is supposed to have different outcomes?
+        self.userdata.operator = None
 
-        smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
-                               transitions={'follow': 'CON_FOLLOW',
-                                            'Done': 'Done'})
+        with self:
+                smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
+                                       transitions={'follow': 'CON_FOLLOW',
+                                                    'Failed': 'Failed'},
+                                       remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
 
-        smach.StateMachine.add('RECOVERY', Recovery(robot),
-                               transitions={'Failed': 'Failed',
-                                            'follow': 'CON_FOLLOW'})
+                smach.StateMachine.add('ASK_FINALIZE', AskFinalize(robot),
+                                       transitions={'follow': 'CON_FOLLOW',
+                                                    'Done': 'Done'})
 
-        sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
-                                   default_outcome='keep_following',
-                                   outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread_ask_finalize',
-                                                                 'TRACK': 'track'},
-                                                'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
-                                                                     'TRACK': 'no_track'}},
-                                                #'recover_operator': {'FOLLOWBREAD': 'follow_bread',
-                                                #                     'TRACK': 'no_track'}
-                                  input_keys=['operator'])
+                smach.StateMachine.add('RECOVERY', Recovery(robot),
+                                       transitions={'Failed': 'Failed',
+                                                    'follow': 'CON_FOLLOW'})
 
-        sm_con.userdata.buffer = collections.deque()
-        sm_con.userdata.operator = None
+                sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
+                                           default_outcome='keep_following',
+                                           outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread_ask_finalize',
+                                                                         'TRACK': 'track'},
+                                                        'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
+                                                                             'TRACK': 'no_track'}},
+                                                        #'recover_operator': {'FOLLOWBREAD': 'follow_bread',
+                                                        #                     'TRACK': 'no_track'}
+                                           input_keys=['operator'])
 
-        with sm_con:
-            smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
-                                                                    'buffer_track_out': 'buffer',
-                                                                    'operator_track_in': 'operator'})
+                sm_con.userdata.buffer = collections.deque()
+                sm_con.userdata.operator = None
 
-            smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
-                                                                           'buffer_follow_out': 'buffer'})
+                with sm_con:
+                    smach.Concurrence.add('TRACK', Track(robot), remapping={'buffer_track_in': 'buffer',
+                                                                            'buffer_track_out': 'buffer',
+                                                                            'operator_track_in': 'operator'})
+
+                    smach.Concurrence.add('FOLLOWBREAD', FollowBread(robot), remapping={'buffer_follow_in': 'buffer',
+                                                                                   'buffer_follow_out': 'buffer'})
+
+                smach.StateMachine.add('CON_FOLLOW', sm_con,
+                                       transitions={'recover_operator': 'RECOVERY',
+                                                    'ask_finalize': 'ASK_FINALIZE',
+                                                    'keep_following': 'CON_FOLLOW'})
 
 
-
-        smach.StateMachine.add('CON_FOLLOW', sm_con,
-                               transitions={'recover_operator': 'RECOVERY', # 'RECOVERY',
-                                            'ask_finalize': 'ASK_FINALIZE',
-                                            'keep_following': 'CON_FOLLOW'})
-
-        return sm_top
+# def setup_statemachine(robot):
+#     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+#     with sm:
+#         smach.StateMachine.add('TEST', FollowOperator2(robot), transitions={'Done': 'Done',
+#                                                                             'Failed': 'Done',
+#                                                                             'Aborted': 'Done'})
+#         return sm
 
 
 if __name__ == "__main__":
@@ -440,6 +451,12 @@ if __name__ == "__main__":
         print "Please provide robot name as argument."
         exit(1)
 
-    rospy.init_node('test_follow_operator')
-    startup(setup_statemachine, robot_name=robot_name)
+    if robot_name == "amigo":
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == "sergio":
+        from robot_skills.sergio import Sergio as Robot
 
+    rospy.init_node('test_follow_operator')
+    robot = Robot()
+    sm = FollowOperator2(robot)
+    sm.execute()
