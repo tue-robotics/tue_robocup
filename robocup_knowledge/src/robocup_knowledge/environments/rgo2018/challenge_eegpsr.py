@@ -37,8 +37,8 @@ C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
-PPN_OBJECT -> it | them
-PPN_PERSON -> him | her | them
+PPN_OBJECT -> it
+PPN_PERSON -> him | her
 
 DET -> the | a | an | some
 NUMBER -> one | two | three
