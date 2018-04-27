@@ -35,10 +35,10 @@ C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
+V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
-PPN_OBJECT[{"type": "reference"}] -> it | them
-PPN_PERSON[{"type": "reference"}] -> him | her | them
+PPN_OBJECT -> it | them
+PPN_PERSON -> him | her | them
 
 DET -> the | a | an | some
 NUMBER -> one | two | three
@@ -65,6 +65,8 @@ for cat in common.object_categories:
 for name in common.names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
 
+grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
+
 ###############################################################################
 #
 # Demo
@@ -82,7 +84,7 @@ VP[{"action": "demo-presentation"}] -> introduce yourself | present yourself | p
 ###############################################################################
 
 grammar += """
-V_FIND -> find | locate | look for
+V_FIND -> find | locate | look for | pinpoint | spot
 V_FIND_PERSON -> meet | V_FIND
 
 OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
@@ -108,7 +110,7 @@ VP[{"action": "find", "object": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
 
 grammar += """
 V_GOPL -> go to | navigate to
-V_GOR -> V_GOPL | enter
+V_GOR -> V_GOPL | enter to
 
 VP[{"action": "navigate-to", "target-location": X}] -> V_GOR the ROOM[X]
 VP[{"action": "navigate-to", "target-location": X}] -> V_GOPL the LOCATION[X]
@@ -144,7 +146,7 @@ VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAM
 ###############################################################################
 
 grammar += """
-V_PLACE -> put | place
+V_PLACE -> put | place | set
 
 VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
 VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE PPN_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
@@ -197,7 +199,7 @@ BRING_NAME -> OPERATOR | BRING_PERSON
 
 BRING_TARGET[X] -> the ROOM_OR_LOCATION[X]
 
-OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT | PPN_OBJECT
+OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT
 
 V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over | place | put
 
@@ -208,6 +210,7 @@ VP[{"action": "place", "target-location": X, "object": {"type": "reference"}}] -
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_NAME[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_NAME[Y] from the ROOM_OR_LOCATION[X]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X]
+VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to BRING_PERSON[X]
 """
 
 for name in common.names:
