@@ -1,7 +1,7 @@
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
-starting_point = 'help_me_carry_starting_point'
+starting_point = "initial_pose" #'help_me_carry_starting_point'
 rotation = 0
 
 time_out_seconds = 60.0
@@ -21,11 +21,11 @@ waypoint_car = {'id': 'car',
                 'radius': 0.5}
 
 default_item = 'coke'
-default_place = 'dinner_table'
+default_place = 'dining_table'
 default_area = 'in_front_of'
 default_target_radius = 0.2
 backup_target_radius = 0.7
 
 carrying_bag_pose = 'carrying_bag_pose'
-drop_bag_pose = "drop_bag_pose"
+drop_bag_pose = 'drop_bag_pose'
 driving_bag_pose = 'driving_bag_pose'
