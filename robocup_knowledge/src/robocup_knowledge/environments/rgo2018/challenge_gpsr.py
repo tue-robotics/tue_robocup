@@ -230,6 +230,7 @@ VP[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 grammar += '\nSAY_SENTENCE["ROBOT_NAME"] -> your name'
 grammar += '\nSAY_SENTENCE["TIME"] -> the time | what time it is | what time is it'
 grammar += '\nSAY_SENTENCE["my team is tech united"] -> the name of your team'
+grammar += '\nSAY_SENTENCE["COUNTRY"] -> your teams country'
 grammar += '\nSAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month'
 grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
