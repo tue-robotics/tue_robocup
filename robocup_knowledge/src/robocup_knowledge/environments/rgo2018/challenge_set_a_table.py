@@ -1,16 +1,19 @@
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
+intermediate_1 = "registration_table1"
+
 initial_pose = "initial_pose"
 starting_pose = "gpsr_meeting_point"
+starting_point = "initial_pose"
 
 cupboard = "kitchen_cabinet"
 cupboard_surface = "on_top_of"
 
-kitchen = "kitchen_table"
+kitchen = "couch_table"
 kitchen_surface = "on_top_of"
 
-table = "dining_table"
+table = "kitchen_table"
 table_surface = "on_top_of"
 
 # options = {
@@ -19,9 +22,9 @@ table_surface = "on_top_of"
 # }
 
 options = {
-    "apple": {"drink1": "water", "drink2": "malz", "food": "apple",
+    "apple": {"drink1": "coke", "drink2": "mixdrink", "food": "apple",
               "difficult1": "fork", "difficult2": "spoon", "difficult3": "plate"},
-    "noodle": {"drink1": "coke", "drink2": "mixdrink", "food": "noodle",
+    "noodles": {"drink1": "coke", "drink2": "mixdrink", "food": "noodles",
               "difficult1": "fork", "difficult2": "spoon", "difficult3": "plate"}
 }
 

@@ -180,7 +180,7 @@ class GetBreakfastOrder(smach.State):
                                                                    self.options[choice]["drink2"]), block=False)
         self.robot.speech.speak("To eat, you will get {} and {}".format(self.options[choice]["difficult1"],
                                                                         self.options[choice]["difficult2"]), block=False)
-        self.robot.speech.speak("I will serve this all on a {}".format(self.options[choice]["difficult3"]), block=True)
+        # self.robot.speech.speak("I will serve this all on a {}".format(self.options[choice]["difficult3"]), block=True)
 
 
 # Standalone testing -----------------------------------------------------------------~
