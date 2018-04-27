@@ -94,7 +94,8 @@ VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_T
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] in the ROOM[Y]
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
+NEAR -> near | in
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] NEAR the LOCATION[Y]
 
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 VP[{"action": "find", "object": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
