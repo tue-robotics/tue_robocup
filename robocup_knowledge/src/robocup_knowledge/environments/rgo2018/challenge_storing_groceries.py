@@ -69,8 +69,11 @@ storage_shelf_ws = Workspace(
 
 bookcase_ws = Workspace(grasp_entity_conf=
                         EntityConfiguration(entity_id="cupboard",
-                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                                      kdl.Vector(8.5, 1.15, 0.0)),
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0,
+                                                                                                       math.pi/2), # right of shelf
+                                                                                                       # -math.pi/2), # left of shelf
+                                                                                      kdl.Vector(8.5, 1.15, 0.0)), # right of shelf
+                                                                                      # kdl.Vector(8.5, 3.15, 0.0)), # left of shelf
                                                                       frame_id="map"),
                                            manipulation_volumes=['on_top_of']
                                            ),
