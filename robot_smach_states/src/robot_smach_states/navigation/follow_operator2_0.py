@@ -18,6 +18,7 @@ def frame_stampeds_to_pose_stampeds(frame_stampeds):
 import copy
 from visualization_msgs.msg import Marker
 from hmi import TimeoutException
+import random
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
@@ -103,6 +104,7 @@ class Track(smach.State):  # Updates the breadcrumb path
         self._last_operator_id = None
         self._operator = None
         self._lost_operator = None
+        random.seed()
 
     def execute(self, userdata):
         if userdata.operator_track_in:
@@ -112,7 +114,7 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator = self._operator
         buffer = userdata.buffer_track_in
 
-        rospy.loginfo("Trying to get operator with id: {}".format(operator.id)) 
+        rospy.loginfo("Trying to get operator with id: {}".format(operator.id))
         operator = self._robot.ed.get_entity(id=operator.id)
         if operator is None:
             rospy.loginfo("Could not find operator")
@@ -123,8 +125,13 @@ class Track(smach.State):  # Updates the breadcrumb path
         else:
             rospy.loginfo("Found operator with id: {}".format(operator.id))
         rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
-        if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
-            self._robot.speech.speak("Not so fast!")
+        if buffer % 3 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            options = ["Not so fast!",
+                       "Please slow dowm.",
+                       "You seem to be in a hurry, is there ice cream in the groceries?",
+                       "Why are you in such a hurry to leave me, don't you like me?"]
+            sentence = random.choice(options)
+            self._robot.speech.speak(sentence)
 
         if operator:
             #if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
@@ -203,7 +210,7 @@ class FollowBread(smach.State):
             self._newest_crumb = buffer[0]
             self._operator = buffer[-1]
 
-        if self._operator:
+        if self._operator and len(buffer) > 1:
             operator = self._robot.ed.get_entity(id=self._operator.id)
         rospy.loginfo("Buffer lenght at start of FollowBread: {}, have followed: {}".format(len(buffer), self._have_followed))
         if operator:
