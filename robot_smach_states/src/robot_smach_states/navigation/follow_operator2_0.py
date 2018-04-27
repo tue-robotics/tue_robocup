@@ -43,10 +43,12 @@ class LearnOperator(smach.State):
         except TimeoutException as e:
             self._robot.speech.speak("I did not hear you!")
             rospy.sleep(2)
+            return 'Aborted'
         else:
             if answer.sentence == "yes":
         # Challenge erin gefietst tot hier
                 while not operator:
+                    r = rospy.Rate(1.0)
                     if self.preempt_requested():
                         return 'Failed'
 
@@ -75,6 +77,7 @@ class LearnOperator(smach.State):
                                     self._robot.speech.speak("Please stand in front of me and look at me")
                                     operator = None
                                     break
+                    r.sleep()
                 print "We have a new operator: %s" % operator.id
                 self._robot.speech.speak("Gotcha! I will follow you!", block=False)
                 self._robot.head.close()
@@ -86,7 +89,7 @@ class LearnOperator(smach.State):
 class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self, robot):
         smach.State.__init__(self,
-                              outcomes=['track', 'no_track'],
+                              outcomes=['track', 'no_track', 'Aborted'],
                               input_keys=['buffer_track_in', 'operator_track_in'],
                               output_keys=['buffer_track_out'])
         self.counter = 0
@@ -109,8 +112,11 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator = self._operator
         buffer = userdata.buffer_track_in
 
-        operator = self._robot.ed.get_entity(id=operator.id)
-        print self._robot.base.local_planner.getDistanceToGoal()
+        if operator:
+            operator = self._robot.ed.get_entity(id=operator.id)
+            print self._robot.base.local_planner.getDistanceToGoal()
+        else:
+            return 'Aborted'
         if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
             self._robot.speech.speak("Not so fast!")
 
@@ -363,7 +369,7 @@ class Recovery(smach.State):
         i = 0
         while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
             if self.preempt_requested():
-                return False
+                return 'Failed'
 
             self._robot.head.look_at_point(head_goals[i])
             i += 1
@@ -429,12 +435,13 @@ class FollowOperator2(smach.StateMachine):
                                                     'follow': 'CON_FOLLOW'},
                                        remapping={'recovered_operator': 'operator'})
 
-                sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following'],
+                sm_con = smach.Concurrence(outcomes=['recover_operator', 'ask_finalize', 'keep_following', 'Aborted'],
                                            default_outcome='keep_following',
                                            outcome_map={'ask_finalize': {'FOLLOWBREAD': 'no_follow_bread_ask_finalize',
                                                                          'TRACK': 'track'},
                                                         'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
-                                                                             'TRACK': 'no_track'}},
+                                                                             'TRACK': 'no_track'},
+                                                        'Aborted': {'TRACK': 'Aborted'}},
                                                         #'recover_operator': {'FOLLOWBREAD': 'follow_bread',
                                                         #                     'TRACK': 'no_track'}
                                            input_keys=['operator'])
@@ -453,7 +460,8 @@ class FollowOperator2(smach.StateMachine):
                 smach.StateMachine.add('CON_FOLLOW', sm_con,
                                        transitions={'recover_operator': 'RECOVERY',
                                                     'ask_finalize': 'Done',
-                                                    'keep_following': 'CON_FOLLOW'})
+                                                    'keep_following': 'CON_FOLLOW',
+                                                    'Aborted': 'Aborted'})
 
 
 # def setup_statemachine(robot):
