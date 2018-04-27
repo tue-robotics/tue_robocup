@@ -193,12 +193,12 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    states.Say(robot, "Please follow me and help me carry groceries into the house",
                                               block=True,
                                               look_at_standing_person=True),
-                                   transitions={'spoken': 'LEARN_OPERATOR'})
+                                   transitions={'spoken': 'GOTO_CAR'}) #'LEARN_OPERATOR'})
 
-            smach.StateMachine.add('LEARN_OPERATOR',
-                                   hmc_states.LearnOperator(robot),
-                                   transitions={'learned': 'GOTO_CAR',
-                                                'failed': 'GOTO_CAR'})
+            # smach.StateMachine.add('LEARN_OPERATOR',
+            #                        hmc_states.LearnOperator(robot),
+            #                        transitions={'learned': 'GOTO_CAR',
+            #                                     'failed': 'GOTO_CAR'})
 
             smach.StateMachine.add('GOTO_CAR',
                                    states.NavigateToWaypoint(robot, self.car_waypoint,
