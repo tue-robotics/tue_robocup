@@ -111,12 +111,18 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                 'error': 'FOLLOW_OPERATOR'})
 
             # Follow the operator until (s)he states that you have arrived at the "car".
+            # smach.StateMachine.add('FOLLOW_OPERATOR',
+            #                        states.FollowOperator(robot, operator_timeout=30, ask_follow=True, learn_face=True, replan=True),
+            #                        transitions={'stopped': 'ASK_FOR_TASK',
+            #                                     'lost_operator': 'ASK_FOR_TASK',
+            #                                     'no_operator': 'FOLLOW_OPERATOR'})
+
+            # Use NEW:
             smach.StateMachine.add('FOLLOW_OPERATOR',
-                                   states.FollowOperator2(robot #, operator_timeout=30, ask_follow=True, learn_face=True, replan=True
-                                                                ),
-                                   transitions={'Done': 'ASK_FOR_TASK',          # 'stopped'
-                                                'Failed': 'ASK_FOR_TASK',    # 'lost_operator'
-                                                'Aborted': 'ASK_FOR_TASK'})     # 'no_operator'
+                                   states.FollowOperator2(robot),
+                                   transitions={'Done': 'ASK_FOR_TASK',
+                                                'Failed': 'ASK_FOR_TASK',
+                                                'Aborted': 'FOLLOW_OPERATOR'})
 
             smach.StateMachine.add('ASK_FOR_TASK',
                                    states.Say(robot, ["Are we at the car already?"],
