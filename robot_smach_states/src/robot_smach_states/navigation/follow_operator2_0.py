@@ -112,11 +112,17 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator = self._operator
         buffer = userdata.buffer_track_in
 
-        if operator:
-            operator = self._robot.ed.get_entity(id=operator.id)
-            print self._robot.base.local_planner.getDistanceToGoal()
-        else:
+        rospy.loginfo("Trying to get operator with id: {}".format(operator.id)) 
+        operator = self._robot.ed.get_entity(id=operator.id)
+        if operator is None:
+            rospy.loginfo("Could not find operator")
+            _entities = self._robot.ed.get_entities()
+            _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
+            rospy.loginfo("Available laser IDs: {}".format(_laser_entity_ids))
             return 'Aborted'
+        else:
+            rospy.loginfo("Found operator with id: {}".format(operator.id))
+        rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
         if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
             self._robot.speech.speak("Not so fast!")
 
@@ -199,10 +205,9 @@ class FollowBread(smach.State):
 
         if self._operator:
             operator = self._robot.ed.get_entity(id=self._operator.id)
-        print len(buffer)
-        print self._have_followed
+        rospy.loginfo("Buffer lenght at start of FollowBread: {}, have followed: {}".format(len(buffer), self._have_followed))
         if operator:
-            print operator.distance_to_2d(robot_position.p)
+            rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
             if len(buffer) == 1 and self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0: # The only crumb is the operator
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
@@ -210,13 +215,13 @@ class FollowBread(smach.State):
         if not buffer:
             return 'no_follow_bread_recovery'
 
-        print len(buffer)
+        rospy.loginfo("Buffer length before radius check: {}".format(len(buffer)))
         temp_buffer = collections.deque()
         for crumb in buffer:
             if crumb.distance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
                 temp_buffer.append(crumb)
         buffer = temp_buffer
-        print len(buffer)
+        rospy.loginfo("Buffer length after radius check: {}".format(len(buffer)))
         f = self._robot.base.get_location().frame
         robot_position = f.p
         operator_position = self._operator._pose.p
