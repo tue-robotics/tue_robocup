@@ -68,9 +68,9 @@ storage_shelf_ws = Workspace(
                         room="dining_room")
 
 bookcase_ws = Workspace(grasp_entity_conf=
-                        EntityConfiguration(entity_id="desk",
+                        EntityConfiguration(entity_id="cupboard",
                                            pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                                      kdl.Vector(6.0, 2.5, 0.0)),
+                                                                                      kdl.Vector(8.5, 1.15, 0.0)),
                                                                       frame_id="map"),
                                            manipulation_volumes=['on_top_of']
                                            ),
