@@ -63,6 +63,12 @@ objects = [
     {'category': 'food',                'name': 'pepper',            'color': 'brown' },
     {'category': 'food',                'name': 'salt',              'color': 'salt'  },
     {'category': 'food',                'name': 'tomato',            'color': 'red'   },
+    {'category': 'kitchen_stuff',       'name': 'fork',              'color': 'green' },
+    {'category': 'kitchen_stuff',       'name': 'spoon',             'color': 'green' },
+    {'category': 'kitchen_stuff',       'name': 'knife',             'color': 'green' },
+    {'category': 'kitchen_stuff',       'name': 'plate',             'color': 'green' },
+    {'category': 'kitchen_stuff',       'name': 'cup',               'color': 'green' }
+
 
 ]
 
@@ -82,7 +88,8 @@ category_locations = {
     "drinks": {"kitchen_table": "on_top_of"},
     "snacks": {"couch_table": "on_top_of"},
     "food": {"cabinet": "shelf2"},
-    "cleaning_stuff": {"kitchen_cabinet": "on_top_of"}
+    "cleaning_stuff": {"kitchen_cabinet": "on_top_of"},
+    "kitchen_stuff" : {"kitchen_table": "on_top_of"}
 }
 
 inspect_areas = {
