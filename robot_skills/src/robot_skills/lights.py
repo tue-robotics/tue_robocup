@@ -29,6 +29,7 @@ class Lights(RobotPart):
         pass
 
     def set_color(self, r, g, b, a=1.0):
+        # type: (object, object, object, object) -> object
         """
         Set the color of the lights of the robot in RGBA values
         :param r: red value 0.0-1.0
@@ -71,3 +72,42 @@ class Lights(RobotPart):
         """
         rgb_msg = RGBLightCommand(show_color=False)
         self._topic.publish(rgb_msg)
+
+    def taste_the_rainbow(self):
+        """ Show awesome rainbow on the real amigo robot
+        """
+
+        # rood: \_
+        # groen: /\
+        # blauw: _/
+
+        def red(time_after_start):
+            if time_after_start < total_time/2:
+                rainbowr = 1.0 - (time_after_start/(total_time/2))
+            else:
+                rainbowr = 0.0
+            return rainbowr
+
+        def green(time_after_start):
+            if time_after_start < total_time/2:
+                rainbowg = (time_after_start/(total_time/2))
+            else:
+                rainbowg = 2 - (time_after_start/(total_time/2))
+            return rainbowg
+
+        def blue(time_after_start):
+            if time_after_start < total_time / 2:
+                rainbowb = 0.0
+            else:
+                rainbowb = -1 + (time_after_start / (total_time/2))
+            return rainbowb
+
+        import time
+        total_time = 2.0
+        t_start = time.time()
+        while time.time() - t_start < total_time:
+            time_after_start = time.time() - t_start
+            r, g, b = (red(time_after_start), green(time_after_start), blue(time_after_start))
+            # self.set_color(r, g, b)
+            print r, g, b
+            time.sleep(0.02)
