@@ -54,10 +54,10 @@ class StoringGroceries(smach.StateMachine):
                 # (cabinet_pose, table_pose, cabinet_amcl, grasp_surface, room, default_place_area)
 
                 robot_pose = robot.base.get_location()
-                WORKSPACES.sort(key=lambda ws: (ws.grasp_entity_conf.pose_estimate.frame.p - robot_pose.frame.p).Norm())
+                WORKSPACES.sort(key=lambda ws: (ws.place_entity_conf.pose_estimate.frame.p - robot_pose.frame.p).Norm())
                 closest_workspace = WORKSPACES[0]
                 rospy.loginfo("Closest workspace: grasp from '{grasp}' and place on '{place}'".format(grasp=closest_workspace.grasp_entity_conf.entity_id,
-                                                                                                                                 place=closest_workspace.place_entity_conf.entity_id))
+                                                                                                      place=closest_workspace.place_entity_conf.entity_id))
                 cabinet_id = closest_workspace.place_entity_conf.entity_id
                 table_id = closest_workspace.grasp_entity_conf.entity_id
 
