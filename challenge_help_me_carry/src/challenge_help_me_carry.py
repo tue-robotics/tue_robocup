@@ -19,58 +19,6 @@ print "==         CHALLENGE HELP ME CARRY          =="
 print "=============================================="
 
 
-class LearnOperator(smach.State):
-    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout=10.0):
-        smach.State.__init__(self, outcomes=['learned', 'failed'])
-        self._robot = robot
-        self._operator_timeout = operator_timeout
-        self._ask_follow = ask_follow
-        self._learn_face = learn_face
-        self._learn_person_timeout = learn_person_timeout
-        self._operator_name = "operator"
-        self._operator = None
-
-    def execute(self, userdata):
-        self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("I will memorize what you look like now.",
-                                 block=True)
-        start_time = rospy.Time.now()
-        self._robot.head.look_at_standing_person()
-        while not self._operator:
-            if self.preempt_requested():
-                return 'failed'
-
-            if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
-                return 'failed'
-
-            self._operator = self._robot.ed.get_closest_laser_entity(
-                radius=0.5,
-                center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
-                                                           frame_id="/%s/base_link" % self._robot.robot_name))
-            rospy.loginfo("Operator: {op}".format(op=self._operator))
-            if not self._operator:
-                self._robot.speech.speak("Please stand in front of me", block=True)
-            else:
-                if self._learn_face:
-                    self._robot.speech.speak("Please look at me while I learn to recognize you.",
-                                             block=True)
-                    self._robot.head.look_at_standing_person()
-                    learn_person_start_time = rospy.Time.now()
-                    num_detections = 0
-                    while num_detections < 5:  # 5:
-                        if self._robot.perception.learn_person(self._operator_name):
-                            print("Successfully detected you %i times" % (num_detections + 1))
-                            num_detections += 1
-                        elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
-                            self._robot.speech.speak("Please stand in front of me and look at me")
-                            self._operator = None
-                            break
-        print "We have a new operator: %s" % self._operator.id
-        self._robot.speech.speak("Gotcha! Please follow me to the car.", block=False)
-        self._robot.head.close()
-        return 'learned'
-
-
 class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
@@ -131,12 +79,17 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_TASK'})
 
             smach.StateMachine.add('WAIT_FOR_TASK',
-                                   hmc_states.WaitForOperatorCommand(robot,
-                                                                     possible_commands=challenge_knowledge.commands.keys(),
-                                                                     commands_as_outcomes=True),
+                                   states.HearOptions(robot, ['yes', 'no']),
                                    transitions={'no': 'FOLLOW_OPERATOR',
-                                                'yes': 'REMEMBER_CAR_LOCATION',
-                                                'abort': 'Aborted'})
+                                                'yes': 'CONFIRM_CAR_LOCATION',
+                                                'no_result': 'ASK_FOR_TASK'})
+
+            smach.StateMachine.add('CONFIRM_CAR_LOCATION',
+                                   states.Say(robot, [
+                                       "OK, I will remember this location as the car location."],
+                                              block=True,
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'REMEMBER_CAR_LOCATION'})
 
             smach.StateMachine.add('REMEMBER_CAR_LOCATION',
                                    hmc_states.StoreCarWaypoint(robot),
@@ -156,6 +109,13 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                                      target=self.target_destination),
                                    transitions={'success': 'GRAB_ITEM',
                                                 'abort': 'Aborted'})
+            #
+            # smach.StateMachine.add('CONFIRM_DESTINATION',
+            #                        states.Say(robot, [
+            #                            "I will deliver the groceries to the %s" % ds.EntityByIdDesignator(self.target_destination)],
+            #                                   block=True,
+            #                                   look_at_standing_person=True),
+            #                        transitions={'spoken': 'GRAB_ITEM'})
 
             # Grab the item (bag) the operator hands to the robot, when they are at the "car".
             smach.StateMachine.add('GRAB_ITEM',
@@ -236,7 +196,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                    transitions={'spoken': 'LEARN_OPERATOR'})
 
             smach.StateMachine.add('LEARN_OPERATOR',
-                                   LearnOperator(robot),
+                                   hmc_states.LearnOperator(robot),
                                    transitions={'learned': 'GOTO_CAR',
                                                 'failed': 'GOTO_CAR'})
 

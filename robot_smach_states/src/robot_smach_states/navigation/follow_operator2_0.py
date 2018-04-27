@@ -122,6 +122,7 @@ class Track(smach.State):  # Updates the breadcrumb path
             _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
             rospy.loginfo("Available laser IDs: {}".format(_laser_entity_ids))
             return 'Aborted'
+<<<<<<< Updated upstream
         else:
             rospy.loginfo("Found operator with id: {}".format(operator.id))
         rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
@@ -132,6 +133,10 @@ class Track(smach.State):  # Updates the breadcrumb path
                        "Why are you in such a hurry to leave me, don't you like me?"]
             sentence = random.choice(options)
             self._robot.speech.speak(sentence)
+=======
+        if buffer % 3 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            self._robot.speech.speak("Not so fast!")
+>>>>>>> Stashed changes
 
         if operator:
             #if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
