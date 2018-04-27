@@ -44,17 +44,17 @@ objects = [
     {'category': 'cleaning_stuff',      'name': 'wiper',             'color': 'yellow'},
     {'category': 'container',   	    'name': 'box',               'color': 'yellow'},
     {'category': 'container',   	    'name': 'tray',              'color': 'white' },
-    {'category': 'drink',   	  	    'name': 'cacao',             'color': 'brown' },
-    {'category': 'drink',   	  	    'name': 'coke',              'color': 'red'   },
-    {'category': 'drink',   	  	    'name': 'malz',              'color': 'brown' },
-    {'category': 'drink',   	  	    'name': 'mixdrink',          'color': 'brown' },
-    {'category': 'drink',   	  	    'name': 'orange_juice',      'color': 'orange'},
-    {'category': 'drink',   	  	    'name': 'perppermint_tea',   'color': 'green' },
-    {'category': 'drink',   	  	    'name': 'water',      	     'color': 'transparent'},
-    {'category': 'snack',   	  	    'name': 'cookies',           'color': 'blue'  },
-    {'category': 'snack',   	  	    'name': 'fruit_bar',         'color': 'green' },
-    {'category': 'snack',   	  	    'name': 'kinder',            'color': 'white' },
-    {'category': 'snack',   	  	    'name': 'nuts',              'color': 'yellow'},
+    {'category': 'drinks',   	  	    'name': 'cacao',             'color': 'brown' },
+    {'category': 'drinks',   	  	    'name': 'coke',              'color': 'red'   },
+    {'category': 'drinks',   	  	    'name': 'malz',              'color': 'brown' },
+    {'category': 'drinks',   	  	    'name': 'mixdrink',          'color': 'brown' },
+    {'category': 'drinks',   	  	    'name': 'orange_juice',      'color': 'orange'},
+    {'category': 'drinks',   	  	    'name': 'perppermint_tea',   'color': 'green' },
+    {'category': 'drinks',   	  	    'name': 'water',      	     'color': 'transparent'},
+    {'category': 'snacks',   	  	    'name': 'cookies',           'color': 'blue'  },
+    {'category': 'snacks',   	  	    'name': 'fruit_bar',         'color': 'green' },
+    {'category': 'snacks',   	  	    'name': 'kinder',            'color': 'white' },
+    {'category': 'snacks',   	  	    'name': 'nuts',              'color': 'yellow'},
     {'category': 'food',                'name': 'apple',             'color': 'green' },
     {'category': 'food',                'name': 'green_paprika',     'color': 'green' },
     {'category': 'food',                'name': 'kiwi',              'color': 'brown' },
@@ -63,9 +63,11 @@ objects = [
     {'category': 'food',                'name': 'pepper',            'color': 'brown' },
     {'category': 'food',                'name': 'salt',              'color': 'salt'  },
     {'category': 'food',                'name': 'tomato',            'color': 'red'   },
-    {'category': 'help_me_carry',       'name': 'bag',               'color': 'red'   },
-    {'category': 'dishwasher_test',     'name': 'dishwasher_tray',   'color': 'white' },
+
 ]
+
+# {'category': 'help_me_carry', 'name': 'bag', 'color': 'red'},
+# {'category': 'dishwasher_test', 'name': 'dishwasher_tray', 'color': 'white'},
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
@@ -74,19 +76,21 @@ object_color = list(set([ o["color"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-#To do! Fix in from bookcase and cabinet
-    "care": {"bookcase": ""},
+#Test
+    "care": {"bookcase": "shelf2"},
     "container": {"cupboard": "on_top_off"},
-    "drink": {"kitchen_table": "on_top_of"},
-    "snack": {"couch_table": "on_top_of"},
-    "food": {"cabinet": ""},
-    "cleaning_stuff": {"closet": "on_top_of"}
+    "drinks": {"kitchen_table": "on_top_of"},
+    "snacks": {"couch_table": "on_top_of"},
+    "food": {"cabinet": "shelf2"},
+    "cleaning_stuff": {"kitchen_cabinet": "on_top_of"}
 }
 
 inspect_areas = {
-#To do!
-    "cabinet": ["shelf1", "shelf2", "shelf3", "shelf4"],
-    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4"]
+#Test
+    "cabinet": ["shelf2", "shelf3", "shelf4"],
+    "display_case": ["shelf2", "shelf3", "shelf4"],
+    "storage_shelf": ["shelf2", "shelf3", "shelf4"],
+    "bookcase": ["shelf2", "shelf3", "shelf4"]
 }
 
 inspect_positions = {

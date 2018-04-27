@@ -41,6 +41,8 @@ class NavigateToExplore(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
+        rospy.logdebug("Navigating to explore entity '{}'".format(e.id))
+
         ch = e.convex_hull
 
         x = e.pose.frame.p.x()

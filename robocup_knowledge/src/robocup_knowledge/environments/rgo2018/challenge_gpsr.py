@@ -8,9 +8,9 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again"
     ]
 
-initial_pose = "initial_pose"
+initial_pose = "initial_pose_2"
 starting_pose = "gpsr_meeting_point"
-exit_waypoint = "gpsr_exit_door"
+exit_waypoint = "gpsr_exit_door_2"
 
 grammar_target = "T"
 
@@ -21,7 +21,7 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[A] -> C[A] | amigo C[A]
+T[A] -> C[A]
 
 C[{"actions": <A1>}] -> VP[A1]
 C[{"actions": <A1, A2>}] -> VP[A1] and VP[A2]
@@ -199,11 +199,11 @@ BRING_TARGET[X] -> the ROOM_OR_LOCATION[X]
 
 OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT | PPN_OBJECT
 
-V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over
+V_BRING -> bring | deliver | take | carry | transport | give | hand | hand over | place | put
 
-VP[{"action": "bring", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
+VP[{"action": "place", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_TARGET[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_TARGET[Y] from the ROOM_OR_LOCATION[X]
 
-VP[{"action": "bring", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
+VP[{"action": "place", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to BRING_TARGET[X]
 
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] from the ROOM_OR_LOCATION[X] to BRING_NAME[Y] | V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_NAME[Y] from the ROOM_OR_LOCATION[X]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING BRING_NAME[Y] OBJECT_TO_BE_BROUGHT[Z]
@@ -212,6 +212,8 @@ VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object":
 
 for name in common.names:
     grammar += '\nBRING_PERSON[{"type": "person", "id": "%s"}] -> %s' % (name, name)
+    for loc in common.get_locations():
+        grammar += '\nBRING_PERSON[{"type": "person", "id": "%s", "location": %s}] -> %s MANIPULATION_AREA_DESCRIPTION the %s' % (name, loc, name, loc)
 
 ##############################################################################
 #
@@ -233,6 +235,7 @@ grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["TOMORROW"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
+grammar += '\nSAY_SENTENCE["SOMETHING_ABOUT_SELF"] -> something about yourself'
 
 
 follow_action = "follow", {"location-from": {""}, "location-to": {}, "target": {}}

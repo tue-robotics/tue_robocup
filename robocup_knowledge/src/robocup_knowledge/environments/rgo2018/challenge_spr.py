@@ -29,8 +29,6 @@ C[{A}] -> Q[A]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
-
 DET -> the | a | an | some
 MANIPULATION_AREA_DESCRIPTIONS -> on top of | at | in | on
 """
@@ -152,10 +150,14 @@ Q["action" : "count", "entity" : P] -> how many PEOPLE[P] are in the crowd | tel
 ##############################################################################
 
 grammar += '''
-SEARCH -> where is | in WHATWHICH room is
+SEARCH -> where is located | in WHATWHICH room is
 
 Q["action" : "find_placement", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
 Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
+Q["action" : "answer", "solution": "0"] -> how many doors has the living room
+Q["action" : "answer", "solution": "2"] -> how many doors has the dining room
+Q["action" : "answer", "solution": "2"] -> how many doors has the bed room
+Q["action" : "answer", "solution": "0"] -> how many doors has the kitchen
 '''
 
 ##############################################################################
@@ -165,7 +167,8 @@ Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEM
 ##############################################################################
 
 grammar += '''
-ADJR -> smaller | bigger
+ADJR -> smaller | bigger 
+#| heavier | lighter
 
 Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
 Q["action" : "find_category", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
@@ -174,10 +177,11 @@ Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAME
 Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
 Q["action" : "count_object", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
 
-NQ["action" : "count_object", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "count_object", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_placement", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+Q["action" : "count_objects_placement", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
 
+
+NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
 NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] which one is ADJR
 '''
 
