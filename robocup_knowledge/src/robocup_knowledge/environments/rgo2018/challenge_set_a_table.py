@@ -7,7 +7,10 @@ starting_pose = "gpsr_meeting_point"
 cupboard = "kitchen_cabinet"
 cupboard_surface = "on_top_of"
 
-table = "kitchen_table"
+kitchen = "kitchen_table"
+kitchen_surface = "on_top_of"
+
+table = "dining_table"
 table_surface = "on_top_of"
 
 # options = {
@@ -16,9 +19,9 @@ table_surface = "on_top_of"
 # }
 
 options = {
-    "noodles": {"food": "noodles", "drink1": "water", "drink2": "malz",
+    "apple": {"drink1": "water", "drink2": "malz", "food": "apple",
               "difficult1": "fork", "difficult2": "spoon", "difficult3": "plate"},
-    "cookies": {"food": "cookies", "drink1": "coke", "drink2": "mixdrink",
+    "noodle": {"drink1": "coke", "drink2": "mixdrink", "food": "noodle",
               "difficult1": "fork", "difficult2": "spoon", "difficult3": "plate"}
 }
 

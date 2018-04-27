@@ -71,7 +71,7 @@ class ChallengeSetATable(smach.StateMachine):
                                                      grasp_designator1=grasp_designator1,
                                                      grasp_designator2=grasp_designator2,
                                                      grasp_designator3=grasp_designator3,
-                                                     grasp_furniture_id1=knowledge.cupboard,
+                                                     grasp_furniture_id1=knowledge.kitchen,
                                                      grasp_furniture_id3=knowledge.cupboard,
                                                      place_furniture_id=knowledge.table),
                                    transitions={'succeeded': 'ANNOUNCE_TASK_COMPLETION',
@@ -95,7 +95,7 @@ class ChallengeSetATable(smach.StateMachine):
 
             smach.StateMachine.add('CLEAR_UP',  # Clear the table
                                    ClearManipulateMachine(robot=robot, grasp_furniture_id=knowledge.table,
-                                                          place_furniture_id1=knowledge.cupboard,
+                                                          place_furniture_id1=knowledge.kitchen,
                                                           place_furniture_id3=knowledge.cupboard),
                                    transitions={'succeeded': 'END_CHALLENGE',
                                                 'failed': 'END_CHALLENGE'})
