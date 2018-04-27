@@ -212,6 +212,8 @@ VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object":
 
 for name in common.names:
     grammar += '\nBRING_PERSON[{"type": "person", "id": "%s"}] -> %s' % (name, name)
+    for loc in common.get_locations():
+        grammar += '\nBRING_PERSON[{"type": "person", "id": "%s", "location": %s}] -> %s MANIPULATION_AREA_DESCRIPTION the %s' % (name, loc, name, loc)
 
 ##############################################################################
 #
