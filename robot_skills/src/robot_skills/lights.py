@@ -103,11 +103,11 @@ class Lights(RobotPart):
             return rainbowb
 
         import time
-        total_time = 2.0
+        total_time = 5.0
         t_start = time.time()
         while time.time() - t_start < total_time:
             time_after_start = time.time() - t_start
             r, g, b = (red(time_after_start), green(time_after_start), blue(time_after_start))
-            # self.set_color(r, g, b)
+            self.set_color(r, g, b)
             print r, g, b
             time.sleep(0.02)
