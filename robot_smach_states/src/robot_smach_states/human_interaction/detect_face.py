@@ -17,8 +17,8 @@ class DetectFace(smach.State):
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
-        self._pub_image = rospy.Publisher(robot + '/photo_to_telegram', Image)
-        self._pub_label = rospy.Publisher(robot + '/message_to_telegram', String)
+        self._pub_image = rospy.Publisher(robot.robot_name + '/photo_to_telegram', Image, queue_size=1)
+        self._pub_label = rospy.Publisher(robot.robot_name + '/message_to_telegram', String, queue_size=1)
 
     def execute(self, userdata):
 
@@ -34,7 +34,7 @@ class DetectFace(smach.State):
         # Find the best match
         best_match = {}  # Contains index, face, label and probability
         for index, face in enumerate(faces):
-            for probability in face.probabilities:
+            for probability in face.categorical_distribution.probabilities:
                 if not best_match or probability.probability > best_match['probability']:
                     best_match = {'index': index, 'face': face, 'label': probability.label,
                                   'probability': probability.probability}
