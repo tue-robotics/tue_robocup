@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import rospy
-from sensor_msgs.msg import Image, RegionOfInterest
+from sensor_msgs.msg import Image
 from image_recognition_msgs.srv import Annotate, Recognize
-from image_recognition_msgs.msg import Annotation
+from image_recognition_msgs.msg import Annotation, Recognition
 
 
 def filter_on_area(recognitions):
@@ -14,9 +14,10 @@ def filter_on_area(recognitions):
     :return:
     """
     best_roi_area = 0
-    best_rec = RegionOfInterest()
+    best_rec = Recognition()
     for rec in recognitions:
         roi_area = rec.roi.height * rec.roi.width
+        rospy.logerr(roi_area)
         if roi_area > best_roi_area:
             best_rec = rec
     return best_rec
