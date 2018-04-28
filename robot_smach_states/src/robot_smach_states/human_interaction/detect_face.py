@@ -1,19 +1,24 @@
 # ROS
 import rospy
 import smach
+from std_msgs.msg import String
+from sensor_msg import Image
 
 
 class DetectFace(smach.State):
     """
     Detect face ToDo: expand docstring
     """
+
     def __init__(self, robot):
         """ Initialization
 
         :param robot: Robot API object
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.robot = robot
+        self._robot = robot
+        self._pub_image = rospy.Publisher(robot + '/photo_to_telegram', Image)
+        self._pub_label = rospy.Publisher(robot + '/message_to_telegram', String)
 
     def execute(self, userdata):
 
@@ -34,7 +39,9 @@ class DetectFace(smach.State):
                     best_match = {'index': index, 'face': face, 'label': probability.label,
                                   'probability': probability.probability}
 
+        self._pub_image.publish(image)
+        self._pub_label.publish(best_match.probability.label)
+
         # Return
         rospy.loginfo("DetectFace, best match: {}".format(best_match['label']))
-        # ToDo: what do we want to do with our best match???
         return 'succeeded'
