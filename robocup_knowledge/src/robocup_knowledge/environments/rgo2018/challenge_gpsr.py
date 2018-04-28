@@ -276,7 +276,7 @@ grammar += """
 
 HIM_HER -> him | her
 
-VP[{"action": "find", "object": {"type": "person"}, "target": {"id": Z}}] -> V_FIND MEET_PERSON[Z]
+VP[{"action": "find", "object": {"type": "person", "id": Z}}] -> V_FIND MEET_PERSON[Z]
 VP[{"action": "navigate-to"}] -> V_GUIDE HIM_HER
 """
 
