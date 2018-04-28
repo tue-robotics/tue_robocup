@@ -91,6 +91,8 @@ VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE
 
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 VP[{"action": "find", "object": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
+
+VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 """
 
 
