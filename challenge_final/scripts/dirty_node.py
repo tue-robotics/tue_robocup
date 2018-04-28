@@ -3,7 +3,7 @@
 import rospy
 from sensor_msgs.msg import Image
 from image_recognition_msgs.srv import Annotate, Recognize
-from image_recognition_msgs.msg import Annotation, Recognition
+from image_recognition_msgs.msg import Annotation
 
 
 def filter_on_area(recognitions):
@@ -54,6 +54,7 @@ class DirtyNode:
             return False
 
         recognition = filter_on_area(recognitions)
+        rospy.loginfo(recognition)
 
         rospy.loginfo('annotating that face as %s', name)
         try:
