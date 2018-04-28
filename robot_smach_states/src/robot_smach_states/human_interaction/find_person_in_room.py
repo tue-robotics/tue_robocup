@@ -79,7 +79,7 @@ class LearnOperator(smach.State):
 #########################################################################################################################
 
 class FindPerson(smach.State):
-    def __init__(self, robot, person_label='Henk', lost_timeout=60, look_distance=2.0):
+    def __init__(self, robot, person_label='Henk', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
         self._robot = robot
@@ -89,6 +89,7 @@ class FindPerson(smach.State):
         self._face_pos_pub = rospy.Publisher(
             '/%s/find_person/person_detected_face' % robot.robot_name,
             geometry_msgs.msg.PointStamped, queue_size=10)
+        self._probability_threshold = probability_threshold
 
     def execute(self, userdata=None):
         # person = loadPerson(person_label=self.person_label)
@@ -123,7 +124,8 @@ class FindPerson(smach.State):
                 i = 0
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
-            best_detection = self._robot.perception.get_best_face_recognition(raw_detections, self.person_label) # person.label)
+            best_detection = self._robot.perception.get_best_face_recognition(
+                raw_detections, self.person_label, probability_threshold=self._probability_threshold)
 
             rospy.loginfo("best_detection = {}".format(best_detection))
             if not best_detection:
