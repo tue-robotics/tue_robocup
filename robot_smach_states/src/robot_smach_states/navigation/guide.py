@@ -3,6 +3,7 @@ import smach
 
 # Smach states
 from robot_smach_states.human_interaction.human_interaction import Say
+from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
 
 # Navigation
@@ -21,10 +22,11 @@ def create_navigation_state(robot, target_location):
     # To handle strings, we need to create an EdEntityDesignator out of it
     if isinstance(target_location, str):
         target_location_designator = EdEntityDesignator(robot=robot, id=target_location)
-    elif isinstance(target_location, EdEntityDesignator):
+    elif isinstance(target_location, Designator):
         target_location_designator = target_location
     elif isinstance(target_location, dict):
         target_location_designator = None
+    # TODO: target location designator might be referenced before assignment
 
     # See if we can resolve the EdEntityDesignator
     entity = None
