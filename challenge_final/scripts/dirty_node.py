@@ -8,18 +8,18 @@ from image_recognition_msgs.msg import Annotation
 
 def filter_on_area(recognitions):
     """
-    return the biggest roi
+    return the recognition with the biggest roi
 
     :param recognitions:
     :return:
     """
     best_roi_area = recognitions[0].roi.height * recognitions[0].roi.width
     best_rec = recognitions[0]
-    for rec in recognitions:
+    for index, rec in enumerate(recognitions):
         roi_area = rec.roi.height * rec.roi.width
         rospy.logerr(roi_area)
         if roi_area > best_roi_area:
-            best_rec = rec
+            best_rec = recognitions[index]
     return best_rec
 
 
@@ -46,9 +46,9 @@ class DirtyNode:
         # recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.width > WIDTH_TRESHOLD]
         rospy.loginfo('found %d valid face(s)', len(recognitions))
 
-        # if len(recognitions) != 1:
-        #     rospy.loginfo("Too many faces: {}".format(len(recognitions)))
-        #     return False
+        if len(recognitions) != 1:
+            rospy.loginfo("Too many faces: {}".format(len(recognitions)))
+            # return False
 
         if not recognitions:
             return False
