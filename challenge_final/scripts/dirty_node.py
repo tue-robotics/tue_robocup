@@ -13,8 +13,8 @@ def filter_on_area(recognitions):
     :param recognitions:
     :return:
     """
-    best_roi_area = 0
-    best_rec = Recognition()
+    best_roi_area = recognitions[0].roi.height * recognitions[0].roi.width
+    best_rec = recognitions[0]
     for rec in recognitions:
         roi_area = rec.roi.height * rec.roi.width
         rospy.logerr(roi_area)
