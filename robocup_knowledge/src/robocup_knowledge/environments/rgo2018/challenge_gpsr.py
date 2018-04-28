@@ -283,7 +283,8 @@ VP[{"action": "navigate-to"}] -> V_GUIDE HIM_HER
 grammar += '\nMEET_PERSON[the person] -> DET person'
 grammar += '\nMEET_PERSON[the woman] -> DET woman'
 grammar += '\nMEET_PERSON[the man] -> DET man'
-for name in common.names:
+names = ['josha', 'lars', 'janno']
+for name in names:
     grammar += '\nMEET_PERSON[%s] -> %s' % (name, name)
 
 # FOLLOW PERSON : (PERSON is at the BEACON)
