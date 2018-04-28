@@ -160,32 +160,72 @@ class FindPerson(smach.State):
         return 'failed'
 
 
+class _DecideNavigateState(smach.State):
+    """ Helper state to decide whether to use a NavigateToWaypoint or a NavigateToRoom state
+    """
+    def __init__(self, robot, waypoint_designator, room_designator):
+        """ Initialize method
+
+        :param robot: Robot API object
+        :param waypoint_designator: EdEntityDesignator that should resolve to a waypoint
+        :param room_designator: EdEntityDesignator that should resolve to the room in which the waypoint is located
+        """
+        smach.State.__init__(self, outcomes=["waypoint", "room", "none"])
+        self._robot = robot
+        self._waypoint_designator = waypoint_designator
+        self._room_designator = room_designator
+
+    def execute(self, ud):
+
+        # First: see if the waypoint exists
+        entity = self._waypoint_designator.resolve()
+        if entity:
+            return "waypoint"
+
+        # If not: try the room
+        entity = self._room_designator.resolve()
+        if entity:
+            return "room"
+
+        return "none"
+
+
 class FindPersoninRoom(smach.StateMachine):
 
     def __init__(self, robot, area, name):
         """ Constructor
         :param robot: robot object
         """
-        smach.StateMachine.__init__(self, outcomes=["Found", "Not_found"])
+        smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        self.userdata.operator = None
-        self.robot = robot
-        # self.person_label = robot
+        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=area + "_waypoint")
+        room_designator = ds.EntityByIdDesignator(robot=robot, id=area)
 
         with self:
-            smach.StateMachine.add("NAVIGATE_TO_AREA", states.NavigateToWaypoint(robot=robot,
-                                                                                 waypoint_designator=ds.EntityByIdDesignator(
-                                                                                     robot=robot,
-                                                                                     id=area),
-                                                                                 radius=0.15),
+            smach.StateMachine.add("DECIDE_NAVIGATE_STATE",
+                                   _DecideNavigateState(robot=robot, waypoint_designator=waypoint_designator,
+                                                        room_designator=room_designator),
+                                   transitions={"waypoint": "NAVIGATE_TO_WAYPOINT",
+                                                "room": "NAVIGATE_TO_ROOM",
+                                                "none": "not_found"})
+
+            smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
+                                   states.NavigateToWaypoint(robot=robot,
+                                                             waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PERSON",
-                                                "unreachable": "Not_found",
-                                                "goal_not_defined": "Not_found"})
+                                                "unreachable": "not_found",
+                                                "goal_not_defined": "not_found"})
+
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
+                                                                             entity_designator_room=room_designator),
+                                   transitions={"arrived": "FIND_PERSON",
+                                                "unreachable": "not_found",
+                                                "goal_not_defined": "not_found"})
 
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name),
-                                   transitions={"found": "Found",
-                                                "failed": "Not_found"})
+                                   transitions={"found": "found",
+                                                "failed": "not_found"})
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
