@@ -73,41 +73,41 @@ class Lights(RobotPart):
         rgb_msg = RGBLightCommand(show_color=False)
         self._topic.publish(rgb_msg)
 
-    def taste_the_rainbow(self):
+    def taste_the_rainbow(self, duration=5.0):
         """ Show awesome rainbow on the real amigo robot
+
+        :param duration: (float) Indicates the total duration of the rainbow
         """
 
         # rood: \_
         # groen: /\
         # blauw: _/
 
-        def red(time_after_start):
-            if time_after_start < total_time/2:
-                rainbowr = 1.0 - (time_after_start/(total_time/2))
+        def red(t):
+            if t < duration / 2.0:
+                rainbowr = 1.0 - (t / (duration / 2.0))
             else:
                 rainbowr = 0.0
             return rainbowr
 
-        def green(time_after_start):
-            if time_after_start < total_time/2:
-                rainbowg = (time_after_start/(total_time/2))
+        def green(t):
+            if t < duration / 2.0:
+                rainbowg = (t / (duration / 2.0))
             else:
-                rainbowg = 2 - (time_after_start/(total_time/2))
+                rainbowg = 2 - (t / (duration / 2.0))
             return rainbowg
 
-        def blue(time_after_start):
-            if time_after_start < total_time / 2:
+        def blue(t):
+            if t < duration / 2.0:
                 rainbowb = 0.0
             else:
-                rainbowb = -1 + (time_after_start / (total_time/2))
+                rainbowb = -1.0 + (t / (duration / 2.0))
             return rainbowb
 
-        import time
-        total_time = 5.0
-        t_start = time.time()
-        while time.time() - t_start < total_time:
-            time_after_start = time.time() - t_start
+        t_start = rospy.Time.now().to_sec()
+        rate = rospy.Rate(20.0)
+        while (rospy.Time.now().to_sec() - t_start) < duration:
+            time_after_start = rospy.Time.now().to_sec() - t_start
             r, g, b = (red(time_after_start), green(time_after_start), blue(time_after_start))
             self.set_color(r, g, b)
-            print r, g, b
-            time.sleep(0.02)
+            rate.sleep()
