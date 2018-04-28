@@ -81,6 +81,7 @@ class LearnOperator(smach.State):
 
 class FindPerson(smach.State):
     def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
+
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
         self._robot = robot
