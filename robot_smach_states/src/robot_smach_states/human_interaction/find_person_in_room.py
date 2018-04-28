@@ -5,6 +5,7 @@ import math
 
 import geometry_msgs
 # ROS
+import PyKDL as kdl
 import rospy
 import smach
 import robot_smach_states as states
@@ -79,7 +80,7 @@ class LearnOperator(smach.State):
 #########################################################################################################################
 
 class FindPerson(smach.State):
-    def __init__(self, robot, person_label='Henk', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
+    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
         self._robot = robot
@@ -142,12 +143,17 @@ class FindPerson(smach.State):
             found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
                                                                    center_point=person_pos_kdl)
             if found_person:
-                self._robot.speech.speak("I found {}".format(self.person_label), block=False) # person.label), block=False)
+                self._robot.speech.speak("I found {}".format(self.person_label), block=False, mood="excited")
                 self._robot.head.close()
-                self._time_started = rospy.Time.now()
+
+                self._robot.ed.update_entity(
+                    id=self.person_label,
+                    frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "/map"),
+                    type="waypoint")
+
                 return 'found'
             else:
-                print "Could not find {} in the {}".format(self.person_label, self.area) #person.label, self.area)
+                print "Could not find {} in the {}".format(self.person_label, self.area)
 
         self._robot.head.close()
         rospy.sleep(2.0)
