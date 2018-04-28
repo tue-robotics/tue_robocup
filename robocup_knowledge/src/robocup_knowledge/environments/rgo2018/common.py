@@ -49,7 +49,7 @@ objects = [
     {'category': 'drinks',   	  	    'name': 'malz',              'color': 'brown' },
     {'category': 'drinks',   	  	    'name': 'mixdrink',          'color': 'brown' },
     {'category': 'drinks',   	  	    'name': 'orange_juice',      'color': 'orange'},
-    {'category': 'drinks',   	  	    'name': 'perppermint_tea',   'color': 'green' },
+    {'category': 'drinks',   	  	    'name': 'peppermint_tea',   'color': 'green' },
     {'category': 'drinks',   	  	    'name': 'water',      	     'color': 'transparent'},
     {'category': 'snacks',   	  	    'name': 'cookies',           'color': 'blue'  },
     {'category': 'snacks',   	  	    'name': 'fruit_bar',         'color': 'green' },

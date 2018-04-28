@@ -9,8 +9,8 @@ not_understood_sentences = [
     ]
 
 initial_pose = "initial_pose_2"
-starting_pose = "gpsr_meeting_point"
-exit_waypoint = "gpsr_exit_door_2"
+starting_pose = "eegpsr_pose_2"
+exit_waypoint = "eegpsr_exit_door_2"
 
 grammar_target = "T"
 
