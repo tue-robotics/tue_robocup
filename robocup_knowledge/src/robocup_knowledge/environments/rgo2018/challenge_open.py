@@ -66,7 +66,7 @@ for cat in common.object_categories:
 for name in names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
 
-grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> door | exit | entrance'
+grammar += '\nLOCATION[{"id": "exit_4_rips", "type": "waypoint"}] -> door | exit | entrance'
 
 
 ###############################################################################
