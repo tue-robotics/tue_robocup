@@ -2,7 +2,7 @@
 import rospy
 import smach
 from std_msgs.msg import String
-from sensor_msg import Image
+from sensor_msgs.msg import Image
 
 
 class DetectFace(smach.State):
