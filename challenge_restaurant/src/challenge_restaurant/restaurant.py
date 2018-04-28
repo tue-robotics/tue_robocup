@@ -141,7 +141,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('SAY_OBJECTS',
                                    states.Say(robot, "Hi there handsome, here are your objects, "
-                                                     "please take them from my basket", voice="gregory"),
+                                                     "please take them from my basket"),
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
