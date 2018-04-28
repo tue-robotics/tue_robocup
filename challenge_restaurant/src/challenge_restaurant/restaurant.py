@@ -140,8 +140,8 @@ class Restaurant(smach.StateMachine):
                                                 'goal_not_defined': 'RETURN_TO_START'})
 
             smach.StateMachine.add('SAY_OBJECTS',
-                                   states.Say(robot, "Dear guest, here are your objects, "
-                                                     "please take them from my basket"),
+                                   states.Say(robot, "Hi there handsome, here are your objects, "
+                                                     "please take them from my basket", voice=gregory),
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
