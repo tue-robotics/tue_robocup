@@ -23,8 +23,8 @@ class DetectFace(smach.State):
     def execute(self, userdata):
 
         # Acquire the image and detect the faces in it
-        image = self.robot.perception.get_image()
-        faces = self.robot.perception.detect_faces(image=image)
+        image = self._robot.perception.get_image()
+        faces = self._robot.perception.detect_faces(image=image)
 
         # Check result
         if not faces:
@@ -40,7 +40,7 @@ class DetectFace(smach.State):
                                   'probability': probability.probability}
 
         self._pub_image.publish(image)
-        self._pub_label.publish(best_match.probability.label)
+        self._pub_label.publish(best_match['label'])
 
         # Return
         rospy.loginfo("DetectFace, best match: {}".format(best_match['label']))
