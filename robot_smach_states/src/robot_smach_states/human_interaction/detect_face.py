@@ -42,7 +42,7 @@ class DetectFace(smach.State):
 
         self._pub_image.publish(image)
         self._pub_label.publish(best_match['label'])
-        self._robot.speech.speak("Hey, " + best_match['label'] + 'is at the door')
+        self._robot.speech.speak("Hey, " + best_match['label'] + ' is at the door')
 
         # Return
         rospy.loginfo("DetectFace, best match: {}".format(best_match['label']))
