@@ -1,24 +1,18 @@
 #!/usr/bin/env python
-import smach
-import rospy
-import sys
-import smach_ros
-import math
 import collections
-from robot_smach_states.util.startup import startup
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
-from robot_skills.util import kdl_conversions
-import PyKDL as kdl
+import math
+import sys
+import copy
+import random
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
-def vector_stampeds_to_point_stampeds(vector_stampeds):
-    return map(kdl_conversions.kdl_vector_stamped_to_point_stamped, vector_stampeds)
-def frame_stampeds_to_pose_stampeds(frame_stampeds):
-    return map(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg, frame_stampeds)
-import copy
+import rospy
+import smach
+
+from robot_skills.util import kdl_conversions
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 from visualization_msgs.msg import Marker
 from hmi import TimeoutException
-import random
 
 class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
@@ -31,61 +25,52 @@ class LearnOperator(smach.State):
         self._learn_face = learn_face
         self._learn_person_timeout = learn_person_timeout
         self._operator_name = "operator"
+        random.seed()
 
     def execute(self, userdata):
         start_time = rospy.Time.now()
         self._robot.head.look_at_standing_person()
         operator = userdata.operator_learn_in
-        # Challenge erin gefietst
-        sentence = "Should I follow you?"
-        self._robot.speech.speak(sentence, block=True)
-        try:
-            answer = self._robot.hmi.query(sentence, "T -> yes | no", "T")
-        except TimeoutException as e:
-            self._robot.speech.speak("I did not hear you!")
-            rospy.sleep(2)
-            return 'Aborted'
-        else:
-            if answer.sentence == "yes":
-        # Challenge erin gefietst tot hier
-                while not operator:
-                    r = rospy.Rate(1.0)
-                    if self.preempt_requested():
-                        return 'Failed'
+        while not operator:
+            r = rospy.Rate(1.0)
+            if self.preempt_requested():
+                return 'Failed'
 
-                    if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
-                        return 'Failed'
+            if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
+                return 'Failed'
 
-                    operator = self._robot.ed.get_closest_laser_entity(
-                        radius=0.5,
-                        center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
-                                                                   frame_id="/{}/base_link".format(self._robot.robot_name)))
-                    rospy.loginfo("Operator: {op}".format(op=operator))
-                    if not operator:
-                        self._robot.speech.speak("Please stand in front of me")
-                    else:
-                        if self._learn_face:
-                            self._robot.speech.speak("Please look at me while I learn to recognize you.",
-                                                     block=True)
-                            self._robot.head.look_at_standing_person()
-                            learn_person_start_time = rospy.Time.now()
-                            num_detections = 0
-                            while num_detections < 5: # 5:
-                                if self._robot.perception.learn_person(self._operator_name):
-                                    print("Succesfully detected you %i times" % (num_detections + 1))
-                                    num_detections += 1
-                                elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
-                                    self._robot.speech.speak("Please stand in front of me and look at me")
-                                    operator = None
-                                    break
-                    r.sleep()
-                print "We have a new operator: %s" % operator.id
-                self._robot.speech.speak("Gotcha! I will follow you!", block=False)
-                self._robot.head.close()
-                userdata.operator_learn_out = operator
-                return 'follow'
+            operator = self._robot.ed.get_closest_laser_entity(
+                radius=0.5,
+                center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
+                                                           frame_id="/{}/base_link".format(self._robot.robot_name)))
+            rospy.loginfo("Operator: {op}".format(op=operator))
+            if not operator:
+                options = ["Please stand in front of me.",
+                           "My laser can't see you, please get closer.",
+                           "Where are you? Please get closer."]
+                sentence = random.choice(options)
+                self._robot.speech.speak(sentence)
             else:
-                return 'Aborted'
+                # if self._learn_face:
+                self._robot.speech.speak("Please look at me while I learn to recognize you.",
+                                         block=False)
+                self._robot.head.look_at_standing_person()
+                learn_person_start_time = rospy.Time.now()
+                num_detections = 0
+                while num_detections < 5: # 5:
+                    if self._robot.perception.learn_person(self._operator_name):
+                        rospy.loginfo("Succesfully detected you %i times" % (num_detections + 1))
+                        num_detections += 1
+                    elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
+                        self._robot.speech.speak("Please stand in front of me and look at me")
+                        operator = None
+                        break
+            r.sleep()
+        rospy.loginfo("We have a new operator: %s" % operator.id)
+        self._robot.speech.speak("Gotcha! I will follow you!", block=False)
+        self._robot.head.close()
+        userdata.operator_learn_out = operator
+        return 'follow'
 
 class Track(smach.State):  # Updates the breadcrumb path
     def __init__(self, robot):
@@ -118,7 +103,7 @@ class Track(smach.State):  # Updates the breadcrumb path
         if len(buffer) % 3 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
             options = ["You seem to be in a hurry, is there ice cream in the groceries?",
                        "Not so fast!",
-                       "Please slow dowm.",
+                       "Please slow down.",
                        "Why are you in such a hurry to leave me, don't you like me?"]
             sentence = random.choice(options)
             if sentence == options[3]:
@@ -273,7 +258,7 @@ class FollowBread(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    kdl_plan.append(kdl_conversions.kdl_frame_stamped_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
+                    kdl_plan.append(kdl_conversions.kdl_frame_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = copy.deepcopy(crumb._pose.p)
 
@@ -283,7 +268,7 @@ class FollowBread(smach.State):
             del kdl_plan[-cutoff:]
 
         if kdl_plan:
-            ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
+            ros_plan = kdl_conversions.kdl_frame_to_pose_msg(kdl_plan)
         else:
             ros_plan = []
 
