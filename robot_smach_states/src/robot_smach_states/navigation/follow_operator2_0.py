@@ -59,7 +59,7 @@ class LearnOperator(smach.State):
                     operator = self._robot.ed.get_closest_laser_entity(
                         radius=0.5,
                         center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
-                                                                   frame_id="/%s/base_link" % self._robot.robot_name))
+                                                                   frame_id="/{}/base_link".format(self._robot.robot_name)))
                     rospy.loginfo("Operator: {op}".format(op=operator))
                     if not operator:
                         self._robot.speech.speak("Please stand in front of me")
@@ -98,13 +98,13 @@ class Track(smach.State):  # Updates the breadcrumb path
         self._operator_pub = rospy.Publisher('/%s/follow_operator/operator_position' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
         self._robot = robot
-        self._operator_distance = None
         self._breadcrumb_distance = 0.1
-        self._last_operator = None
-        self._last_operator_id = None
         self._operator = None
-        self._lost_operator = None
         random.seed()
+        # self._operator_distance = None
+        # self._last_operator = None
+        # self._last_operator_id = None
+        # self._lost_operator = None
 
     def execute(self, userdata):
         if userdata.operator_track_in:
@@ -114,6 +114,25 @@ class Track(smach.State):  # Updates the breadcrumb path
             operator = self._operator
         buffer = userdata.buffer_track_in
 
+        rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
+        if len(buffer) % 3 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
+            options = ["You seem to be in a hurry, is there ice cream in the groceries?",
+                       "Not so fast!",
+                       "Please slow dowm.",
+                       "Why are you in such a hurry to leave me, don't you like me?"]
+            sentence = random.choice(options)
+            if sentence == options[3]:
+                self._robot.speech.speak(sentence, mood='Sad')
+            else:
+                self._robot.speech.speak(sentence)
+
+        if random.randrange(25) == 1:
+            options = ["Your but is looking wonderful!",
+                       "Let's get your groceries!",
+                       "I'm happy you are back, I was so lonely while you were shopping"]
+            sentence = random.choice(options)
+            self._robot.speech.speak(sentence)
+
         rospy.loginfo("Trying to get operator with id: {}".format(operator.id))
         operator = self._robot.ed.get_entity(id=operator.id)
         if operator is None:
@@ -121,33 +140,36 @@ class Track(smach.State):  # Updates the breadcrumb path
             _entities = self._robot.ed.get_entities()
             _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
             rospy.loginfo("Available laser IDs: {}".format(_laser_entity_ids))
+
+            rospy.sleep(2)
+            operator = self._robot.ed.get_entity(id=self._last_operator_id)
+            if not operator:
+                if not self._lost_operator:
+                    options = ["Don't move, I'm losing you.",
+                               "Where did you go? Please stay where you are and I will find you.",
+                               "Oh no I lost you for a second, please stay where you are and I will come and find you!"]
+                    sentence = random.choice(options)
+                    self._robot.speech.speak(sentence)
+                    self._lost_operator = True
+                    return 'track'
+                self._robot.base.local_planner.cancelCurrentPlan()
+                return 'no_track'
+            else:
+                return 'track'
+
         else:
             rospy.loginfo("Found operator with id: {}".format(operator.id))
-        rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
-        if len(buffer) % 3 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:  #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
-            options = ["Not so fast!",
-                       "Please slow dowm.",
-                       "You seem to be in a hurry, is there ice cream in the groceries?",
-                       "Why are you in such a hurry to leave me, don't you like me?"]
-            sentence = random.choice(options)
-            self._robot.speech.speak(sentence)
+            # self._last_operator = operator
 
-        if operator:
-            #if len(buffer) == 8 and self._robot.base.local_planner.getDistanceToGoal() > 2.0: #and (rospy.Time.now().to_sec() - operator.last_update_time) > self._period:
-            #self._robot.speech.speak("Not so fast!")
-            #    print len(buffer)
-            self._last_operator = operator
-            self._last_operator_id = operator.id
+            # operator_pos = geometry_msgs.msg.PointStamped()
+            # operator_pos.header.stamp = rospy.get_rostime()
+            # operator_pos.header.frame_id = operator.id
+            # operator_pos.point.x = 0.0
+            # operator_pos.point.y = 0.0
+            # operator_pos.point.z = 0.0
 
-            operator_pos = geometry_msgs.msg.PointStamped()
-            operator_pos.header.stamp = rospy.get_rostime()
-            operator_pos.header.frame_id = operator.id
-            operator_pos.point.x = 0.0
-            operator_pos.point.y = 0.0
-            operator_pos.point.z = 0.0
-
-            f = self._robot.base.get_location().frame #changes made in tf_server/src/tf_server/tf_client.py & robot_skills/src/robot_skills/robot.py
-            self._operator_distance = self._last_operator.distance_to_2d(f.p)
+            # f = self._robot.base.get_location().frame  # changes made in tf_server/src/tf_server/tf_client.py & robot_skills/src/robot_skills/robot.py
+            # self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
             if buffer:
                 if buffer[-1].distance_to_2d(operator._pose.p) < self._breadcrumb_distance:
@@ -156,20 +178,10 @@ class Track(smach.State):  # Updates the breadcrumb path
                     buffer.append(operator)
             else:
                 buffer.append(operator)
+
             userdata.buffer_track_out = buffer
             return 'track'
-        else:
-            rospy.sleep(2)
-            operator = self._robot.ed.get_entity(id=self._last_operator_id)
-            if not operator:
-                if not self._lost_operator:
-                    self._robot.speech.speak("Oh no I lost you for a second, please stay where you are and I will come and find you again!")
-                    self._lost_operator = True
-                    return 'track'
-                self._robot.base.local_planner.cancelCurrentPlan()
-                return 'no_track'
-            else:
-                return 'track'
+
 
 class FollowBread(smach.State):
     def __init__(self, robot, operator_radius=1, lookat_radius=1.2):
@@ -208,18 +220,18 @@ class FollowBread(smach.State):
         if buffer:
             self._newest_crumb = buffer[0]
             self._operator = buffer[-1]
+        else:
+            return 'no_follow_bread_recovery'
 
         if self._operator and len(buffer) > 1:
             operator = self._robot.ed.get_entity(id=self._operator.id)
-        rospy.loginfo("Buffer lenght at start of FollowBread: {}, have followed: {}".format(len(buffer), self._have_followed))
+        rospy.loginfo("Buffer length at start of FollowBread: {}, have followed: {}".format(len(buffer),
+                                                                                            self._have_followed))
         if operator:
             rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
             if len(buffer) == 1 and self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0: # The only crumb is the operator
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
-
-        if not buffer:
-            return 'no_follow_bread_recovery'
 
         rospy.loginfo("Buffer length before radius check: {}".format(len(buffer)))
         temp_buffer = collections.deque()
