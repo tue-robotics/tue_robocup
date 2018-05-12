@@ -188,7 +188,7 @@ class Track(smach.State):
 
 
 class FollowBread(smach.State):
-    def __init__(self, robot, operator_radius=1, lookat_radius=1.2):
+    def __init__(self, robot, operator_radius=1, lookat_radius=1.3):
         """
 
         :param robot: robot object (amigo, sergio)
@@ -202,8 +202,8 @@ class FollowBread(smach.State):
         self._robot = robot
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
-        self._breadcrumb_pub = rospy.Publisher(
-                '/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        # self._breadcrumb_pub = rospy.Publisher(
+        #         '/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
         self._plan_marker_pub = rospy.Publisher(
                 '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._operator = None
@@ -223,54 +223,49 @@ class FollowBread(smach.State):
         operator = None
 
         buffer = userdata.buffer_follow_in
-        if len(buffer) > 5:
+        if self._robot.base.local_planner.getDistanceToGoal() < 2.0:  # len(buffer) > 5:
             self._have_followed = True
 
         robot_position = self._robot.base.get_location().frame
         if not buffer:
-            # if not self._have_followed:
             rospy.sleep(2)  # magic number, not necessary, can also return a different outcome that does not lead to
                             # recovery/ask finalize
 
         if buffer:
-            # self._nearest_crumb = buffer[0] # This is not used anywhere
             self._operator = buffer[-1]
         else:
             return 'no_follow_bread_recovery'
 
-        if self._operator and len(buffer) > 1:
+        if self._operator: #and len(buffer) > 1:
             operator = self._robot.ed.get_entity(id=self._operator.id)
         rospy.loginfo("Buffer length at start of FollowBread: {}, have followed: {}".format(len(buffer),
                                                                                             self._have_followed))
         if operator:
             rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
-            if len(buffer) == 1 and self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0:
+            if self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0:
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
 
         rospy.loginfo("Buffer length before radius check: {}".format(len(buffer)))
         temp_buffer = collections.deque()
         for crumb in buffer:
-            if crumb.distance_to_2d(robot_position.p) > self._lookat_radius + 0.1:
+            if crumb.distance_to_2d(robot_position.p) > self._lookat_radius:
                 temp_buffer.append(crumb)
         buffer = temp_buffer
         rospy.loginfo("Buffer length after radius check: {}".format(len(buffer)))
         f = self._robot.base.get_location().frame
-        robot_position = f.p
+        previous_point = f.p
         operator_position = self._operator._pose.p
 
         ''' Define end goal constraint, solely based on the (old) operator position '''
         p = PositionConstraint()
         p.constraint = "(x-%f)^2 + (y-%f)^2 < %f^2" % (operator_position.x(), operator_position.y(),
                                                        self._operator_radius)
-
         o = OrientationConstraint()
         o.frame = self._operator.id
-
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05      # magic number number 2
         kdl_plan = []
-        previous_point = robot_position
 
         for crumb in buffer:
             diff = crumb._pose.p - previous_point
@@ -293,9 +288,9 @@ class FollowBread(smach.State):
             previous_point = copy.deepcopy(crumb._pose.p)
 
         # Delete the elements from the plan within the operator radius from the robot
-        cutoff = int(self._operator_radius / (2.0 * res))
-        if len(kdl_plan) > cutoff:
-            del kdl_plan[-cutoff:]
+        # cutoff = int(self._operator_radius / (2.0 * res))
+        # if len(kdl_plan) > cutoff:
+        #     del kdl_plan[-cutoff:]
 
         if kdl_plan:
             ros_plan = kdl_conversions.kdl_frame_to_pose_msg(kdl_plan)
@@ -309,22 +304,22 @@ class FollowBread(smach.State):
                 # Go through plan from operator to robot and pick the first unoccupied point as goal point
                 ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
-        buffer_msg = Marker()
-        buffer_msg.type = Marker.POINTS
-        buffer_msg.scale.x = 0.05
-        buffer_msg.scale.y = 0.05
-        buffer_msg.header.stamp = rospy.get_rostime()
-        buffer_msg.header.frame_id = "/map"
-        buffer_msg.color.a = 1
-        buffer_msg.color.r = 1
-        buffer_msg.color.g = 0
-        buffer_msg.color.b = 0
-        #buffer_msg.lifetime = rospy.Time(.0)
-        buffer_msg.id = 0
-        buffer_msg.action = Marker.ADD
-
-        for crumb in buffer:
-            buffer_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
+        # buffer_msg = Marker()
+        # buffer_msg.type = Marker.POINTS
+        # buffer_msg.scale.x = 0.05
+        # buffer_msg.scale.y = 0.05
+        # buffer_msg.header.stamp = rospy.get_rostime()
+        # buffer_msg.header.frame_id = "/map"
+        # buffer_msg.color.a = 1
+        # buffer_msg.color.r = 1
+        # buffer_msg.color.g = 0
+        # buffer_msg.color.b = 0
+        # #buffer_msg.lifetime = rospy.Time(.0)
+        # buffer_msg.id = 0
+        # buffer_msg.action = Marker.ADD
+        #
+        # for crumb in buffer:
+        #     buffer_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
 
         line_strip = Marker()
         line_strip.type = Marker.LINE_STRIP
@@ -343,7 +338,7 @@ class FollowBread(smach.State):
             line_strip.points.append(pose_stamped.pose.position)
 
         self._plan_marker_pub.publish(line_strip)
-        self._breadcrumb_pub.publish(buffer_msg)
+        # self._breadcrumb_pub.publish(buffer_msg)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         userdata.buffer_follow_out = buffer
         return 'follow_bread'
@@ -374,9 +369,10 @@ class Recovery(smach.State):
     def __init__(self, robot, lost_timeout=60, lost_distance=0.8):
         """
 
-        :param robot: 
-        :param lost_timeout:
-        :param lost_distance:
+        :param robot: robot object (amigo, sergio)
+        :param lost_timeout: time allowed to take to find the operator
+        :param lost_distance: radius in which to find the laser entity of the operator based on the converted location
+                              from the RGBD image
         """
         smach.State.__init__(self, outcomes=['Failed', 'follow'],
                              output_keys=['recovered_operator'])
@@ -387,13 +383,15 @@ class Recovery(smach.State):
         self._face_pos_pub = rospy.Publisher('/%s/follow_operator/operator_detected_face' % robot.robot_name,
                                              geometry_msgs.msg.PointStamped, queue_size=10)
 
-    def execute(self, userdata=None):
-        rospy.loginfo("Trying to recover the operator")
+    def execute(self, userdata):
+        """
+        :return: Failed: when taking too long, can't transform RGBD image to point or when preempt requested
+                 follow: When successfully recovered operator
+        """
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("%s, please look at me while I am looking for you" % self._operator_name, block=False)
 
         # Wait for the operator and find his/her face
-        operator_recovery_timeout = self._lost_timeout
         start_time = rospy.Time.now()
 
         look_distance = 2.0     #magic number 4
@@ -411,7 +409,7 @@ class Recovery(smach.State):
                       for angle in look_angles]
 
         i = 0
-        while (rospy.Time.now() - start_time).to_sec() < operator_recovery_timeout:
+        while (rospy.Time.now() - start_time).to_sec() < self._lost_timeout:
             if self.preempt_requested():
                 return 'Failed'
 
@@ -450,16 +448,19 @@ class Recovery(smach.State):
                     print "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
 
         self._robot.head.close()
-        rospy.sleep(2.0)
+        # rospy.sleep(2.0)
         return 'Failed'
 
 
 # Make the state machine to make is a callable function
 class FollowOperator2(smach.StateMachine):
-    def __init__(self, robot, speak=True):
+    def __init__(self, robot):
+        """
+
+        :param robot: robot object (amigo, sergio)
+        """
         smach.StateMachine.__init__(self, outcomes=['Done', 'Failed', 'Aborted'])
         self.robot = robot
-        self.speak = speak
         # Create the sub SMACH state machine, I think this is supposed to have different outcomes?
         self.userdata.operator = None
 
