@@ -50,14 +50,7 @@ class FindPerson(smach.State):
         start_time = rospy.Time.now()
 
         look_distance = 2.0  # magic number 4
-        look_angles = [0.0,  # magic numbers
-                       math.pi / 6,
-                       math.pi / 4,
-                       math.pi / 2.3,
-                       0.0,
-                       -math.pi / 6,
-                       -math.pi / 4,
-                       -math.pi / 2.3]
+        look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
                                                     y=look_distance * math.sin(angle), z=1.7,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
@@ -93,10 +86,9 @@ class FindPerson(smach.State):
             if found_person:
                 self._robot.speech.speak("I found {}".format(self._person_label), block=False)
                 self._robot.head.close()
-                self._time_started = rospy.Time.now()
                 return 'found'
             else:
-                print "Could not find {} in the {}".format(self._person_label, self.area)
+                rospy.logwarn("Could not find {} in the {}".format(self._person_label, self.area))
 
         self._robot.head.close()
         rospy.sleep(2.0)
@@ -113,14 +105,10 @@ class FindPersoninRoom(smach.StateMachine):
 
         self.userdata.operator = None
         self.robot = robot
-        # self.person_label = robot
 
         with self:
-            smach.StateMachine.add("NAVIGATE_TO_AREA", states.NavigateToWaypoint(robot=robot,
-                                                                                 waypoint_designator=ds.EntityByIdDesignator(
-                                                                                     robot=robot,
-                                                                                     id=area),
-                                                                                 radius=0.15),
+            smach.StateMachine.add("NAVIGATE_TO_AREA", states.NavigateToWaypoint(
+                robot=robot, waypoint_designator=ds.EntityByIdDesignator(robot=robot, id=area), radius=0.15),
                                    transitions={"arrived": "FIND_PERSON",
                                                 "unreachable": "Not_found",
                                                 "goal_not_defined": "Not_found"})
@@ -134,8 +122,8 @@ class FindPersoninRoom(smach.StateMachine):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
-        area = sys.argv[2]
-        name = sys.argv[3]
+        _area = sys.argv[2]
+        _name = sys.argv[3]
     else:
         print "Please provide robot name as argument."
         exit(1)
@@ -146,6 +134,6 @@ if __name__ == "__main__":
         from robot_skills.sergio import Sergio as Robot
 
     rospy.init_node('test_follow_operator')
-    robot = Robot()
-    sm = FindPersoninRoom(robot, area, name)
+    _robot = Robot()
+    sm = FindPersoninRoom(_robot, _area, _name)
     sm.execute()
