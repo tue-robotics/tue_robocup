@@ -1,11 +1,14 @@
 #!/usr/bin/python
 
-import rospy
-import smach
-import sys
+# System
 import random
 import traceback
 
+# ROS
+import rospy
+import smach
+
+# TU/e Robotics
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from hmi import TimeoutException
@@ -84,6 +87,7 @@ def answer(robot, res, crowd_data):
     Robot answers the heard question
 
     Arguments:
+        robot: robot api object
         res: question or None
         crowd_data: data about the crowd
 
@@ -201,13 +205,6 @@ def answer_count_objects_placement(action):
         if found_location == location:
             return 'There is one %s in the %s' % (entity, location)
     return 'There are no %s in the %s' % (entity, location)
-    #
-    # if not locations:
-    #     return 'There are no %s in the %s' % (entity, location)
-    # elif len(locations) == 1:
-    #     return 'There is one %s in the %s' % (entity, location)
-    # else:
-    #     return 'There are %d %s in the %s' % (len(locations), entity, location)
 
 
 def answer_find_objects(action):
@@ -279,7 +276,7 @@ def answer_count_objects_in_category(action):
 
 class TestRiddleGame(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         self.userdata.crowd_data = {
             "males": 1,
@@ -303,7 +300,8 @@ class TestRiddleGame(smach.StateMachine):
             smach.StateMachine.add("RIDDLE_GAME",
                                    HearAndAnswerQuestions(robot, num_questions=3),
                                    transitions={'done': 'Done'},
-                                   remapping={'crowd_data':'crowd_data'})
+                                   remapping={'crowd_data': 'crowd_data'})
+
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
