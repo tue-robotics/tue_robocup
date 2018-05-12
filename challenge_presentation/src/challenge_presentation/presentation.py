@@ -11,10 +11,12 @@ class English(object):
     PURPOSE = "My purpose is to help people in domestic or care environments."
     IM_OMNIDIR = "I have an omnidirectional base instead of legs"
     EXPLAIN_BASE = "With this base, I can instantly move in any direction and turn around whenever I want"
+    NO_ARMS = "Sadly I don't have any arms."
     TWO_ARMS = "I have two arms. These have the dimensions and degrees of freedom of human arms"
     HUMAN_ARMS = "This makes me capable of moving my arms just like you would move your arms."
     END_OF_ARMS = "At the end of my arms, I have two grippers with which I can grasp objects"
     GRIPPERS = "My grippers can be opened and closed when I need to."
+    TORSO_SERGIO = "However I do have a moveable torso."
     TORSO = "My arms are mounted on a moveable torso. This way, I can grasp higher and lower"
     HEAD = "As a head, I have a 3D camera. I use this to detect and recognize objects and people"
     CAMERA = "My 3D camera is mounted on top of my torso and I can move my camera just like a human head."
@@ -29,10 +31,12 @@ class Dutch(object):
     PURPOSE = "Mijn doel is mensen te helpen in huis- en zorgomgevingen"
     IM_OMNIDIR = "In plaats van benen heb ik een omni-directioneel onderstel"
     EXPLAIN_BASE = "Met dit onderstel kan ik direct alle kanten op bewegen en omdraaien wanneer ik wil"
+    NO_ARMS = "Helaas heb ik geen armen."
     TWO_ARMS = "Ik heb ook twee armen. Deze hebben dezelfde afmetingen en bewegingsmogelijkheden als mensenarmen"
     HUMAN_ARMS = "Dit stelt mij in staat om mijn armen net zo te bewegen als jij de jouwe"
     END_OF_ARMS = "Aan het eind van mijn armen zitten grijpers waarmee ik dingen kan vastpakken"
     GRIPPERS = "Mijn grijpers kunnen open en dicht als ik dat wil"
+    TORSO_SERGIO = "Echter heb ik wel een beweegbare torso."
     TORSO = "Mijn armen zitten aan een beweegbare torso, zodat ik hoger en lager kan pakken"
     HEAD = "Als hoofd heb ik een 3D camera. Dat gebruik ik om mensen en dingen te herkennen"
     CAMERA = "Mijn hoofd zit bovenop mijn torso en ik kan rondkijken net als een mens"
@@ -86,23 +90,30 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.base.force_drive, 0, 0, 1.0, 6.28))     # Turn around
 
         # Arms
-        function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
-        function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-        function_list.append(partial(self.robot.rightArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
-        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
-        function_list.append(partial(self.robot.rightArm.send_gripper_goal, "open"))
-        function_list.append(partial(self.robot.rightArm.send_gripper_goal, "close"))
-        function_list.append(partial(self.robot.leftArm.reset))
-        function_list.append(partial(self.robot.rightArm.reset))
-        function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
+        if self.robot.robot_name == "amigo":
+            function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
+            function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
+            function_list.append(partial(self.robot.rightArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
+            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
+            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
+            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "open"))
+            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "close"))
+            function_list.append(partial(self.robot.leftArm.reset))
+            function_list.append(partial(self.robot.rightArm.reset))
+            function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
+        else:
+            function_list.append(partial(self.robot.speech.speak, self.trans.NO_ARMS, language=self.language, voice=self.voice, block=False))
+
 
         # Torso
-        function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
+        if self.robot.robot_name == "amigo":
+            function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
+        else:
+            function_list.append(partial(self.robot.speech.speak, self.trans.TORSO_SERGIO, language=self.language, voice=self.voice, block=False))
         function_list.append(partial(self.robot.torso.medium))
         function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
         function_list.append(partial(self.robot.torso.reset))
