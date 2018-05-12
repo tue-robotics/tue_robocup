@@ -19,7 +19,7 @@ from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDe
 
 # Set the table
 from challenge_set_a_table_states.fetch_command import HearFetchCommand, GetBreakfastOrder
-from challenge_set_a_table_states.manipulate_machine import ManipulateMachine, DefaultGrabDesignator
+from challenge_set_a_table_states.manipulate_machine import ManipulateMachine
 from challenge_set_a_table_states.clear_manipulate_machine import ClearManipulateMachine
 
 # Load all knowledge
@@ -63,12 +63,8 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'arrived': 'ANNOUNCEMENT',
                                                 'unreachable': 'ANNOUNCEMENT',
                                                 'goal_not_defined': 'ANNOUNCEMENT'})
-            # Part I: Set a table
-            # smach.StateMachine.add('ENTER_ROOM',  # Enter the room
-            #                        states.Initialize(robot),
-            #                        transitions={'initialized': 'ANNOUNCEMENT',
-            #                                     'abort': 'Aborted'})
 
+            # Part I: Set a table
             smach.StateMachine.add('ANNOUNCEMENT',
                                    states.Say(robot, "Let's see if my master has a task for me! ", block=True),
                                    transitions={'spoken': 'FETCH_COMMAND_I'})
@@ -129,6 +125,7 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "set_a_table")
+
 
 if __name__ == "__main__":
     rospy.init_node('set_a_table_exec')
