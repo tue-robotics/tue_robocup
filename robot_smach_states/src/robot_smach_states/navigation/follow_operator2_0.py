@@ -56,7 +56,7 @@ class Track(smach.State):
         buffer = userdata.buffer_track_in
 
         rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
-        if len(buffer) % 3 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:
+        if len(buffer) % 4 == 0 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:
             options = ["You seem to be in a hurry, is there ice cream in the groceries?",
                        "Not so fast!",
                        "Please slow down.",
@@ -67,8 +67,8 @@ class Track(smach.State):
             else:
                 self._robot.speech.speak(sentence)
 
-        if random.randrange(25) == 1:
-            options = ["Your but is looking wonderful!",
+        if random.randrange(40) == 1:
+            options = ["Your butt is looking wonderful!",
                        "Let's get your groceries!",
                        "I'm happy you are back, I was so lonely while you were shopping"]
             sentence = random.choice(options)
@@ -83,8 +83,8 @@ class Track(smach.State):
             rospy.loginfo("Available laser IDs: {}".format(_laser_entity_ids))
 
             rospy.sleep(2)  # Why is this sleep here? We gaan dit testen
-
-            operator = self._robot.ed.get_entity(id=self._last_operator_id)
+            if self._operator:
+                operator = self._robot.ed.get_entity(id=self._operator.id)
             if not operator:
                 options = ["Don't move, I'm losing you.",
                            "Where did you go? Please stay where you are and I will find you.",
@@ -113,6 +113,7 @@ class Track(smach.State):
             if buffer:
                 if buffer[-1].distance_to_2d(operator._pose.p) > self._breadcrumb_distance:
                     buffer.append(operator)
+                    rospy.loginfo("Appending operator, length of buffer: {}".format(len(buffer)))
                 # if buffer[-1].distance_to_2d(operator._pose.p) < self._breadcrumb_distance:
                 #     buffer[-1] = operator
                 # else:
@@ -157,10 +158,18 @@ class FollowBread(smach.State):
                  no_follow_bread_ask_finalize if the single remaining breadcrumb is the operator
                  no_follow_bread_recovery if buffer is completely empty
         """
+        ##### EXAMPLE ADDITION
+        while userdata.buffer_follow_in:
+            rospy.loginfo("Popping: {}".format(userdata.buffer_follow_in.popleft()))
+        return "follow_bread"
+        #####
+
+
+
         operator = None
 
         buffer = userdata.buffer_follow_in
-        if self._robot.base.local_planner.getDistanceToGoal() < 2.0:  # len(buffer) > 5:
+        if self._robot.base.local_planner.getDistanceToGoal() > 2.0:  # len(buffer) > 5:
             self._have_followed = True
 
         robot_position = self._robot.base.get_location().frame
@@ -184,12 +193,17 @@ class FollowBread(smach.State):
                 return 'no_follow_bread_ask_finalize'
 
         rospy.loginfo("Buffer length before radius check: {}".format(len(buffer)))
+
         temp_buffer = collections.deque()
         for crumb in buffer:
             if crumb.distance_to_2d(robot_position.p) > self._lookat_radius:
                 temp_buffer.append(crumb)
         buffer = temp_buffer
         rospy.loginfo("Buffer length after radius check: {}".format(len(buffer)))
+
+        if not buffer:
+            return 'no_follow_bread_recovery'
+
         f = self._robot.base.get_location().frame
         previous_point = f.p
         operator_position = self._operator._pose.p
@@ -220,19 +234,16 @@ class FollowBread(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    kdl_plan.append(kdl_conversions.kdl_frame_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
+                    kdl_plan.append(kdl_conversions.kdl_frame_stamped_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = copy.deepcopy(crumb._pose.p)
 
         # Delete the elements from the plan within the operator radius from the robot
-        # cutoff = int(self._operator_radius / (2.0 * res))
-        # if len(kdl_plan) > cutoff:
-        #     del kdl_plan[-cutoff:]
+        #cutoff = int(self._operator_radius / (2.0 * res))
+        #if len(kdl_plan) > cutoff:
+        #    del kdl_plan[-cutoff:]
 
-        if kdl_plan:
-            ros_plan = kdl_conversions.kdl_frame_to_pose_msg(kdl_plan)
-        else:
-            ros_plan = []
+        ros_plan = [kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg(frame) for frame in kdl_plan]
 
         # Check if plan is valid. If not, remove invalid points from the path
         if len(ros_plan) > 0:
@@ -278,6 +289,8 @@ class FollowBread(smach.State):
         # self._breadcrumb_pub.publish(buffer_msg)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         userdata.buffer_follow_out = buffer
+        # ToDo: make nice
+        rospy.sleep(rospy.Duration(0.5))
         return 'follow_bread'
 
 
