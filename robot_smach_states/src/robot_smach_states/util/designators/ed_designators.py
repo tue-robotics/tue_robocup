@@ -241,7 +241,6 @@ class EntityByIdDesignator(Designator):
         else:
             return None
 
-
 class ReasonedEntityDesignator(Designator):
     def __init__(self, robot, query, name=None):
         """

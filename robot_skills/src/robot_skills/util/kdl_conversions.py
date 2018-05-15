@@ -21,7 +21,7 @@ class FrameStamped(object):
         xyz = "(x={x}, y={y}, z={z})".format(x=self.frame.p.x(), y=self.frame.p.y(), z=self.frame.p.z())
         r, p, y = self.frame.M.GetRPY()
         rpy = "(r={x}, p={y}, y={z})".format(x=r, y=p, z=y)
-        return "pos:{pos}, rot:{rot} @ {fid}".format(pos=xyz, rot=rpy, fid=self.frame_id)
+        return "FrameStamped(pos:{pos}, rot:{rot} @ {fid})".format(pos=xyz, rot=rpy, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
@@ -64,7 +64,7 @@ class VectorStamped(object):
         self.frame_id = frame_id
 
     def __repr__(self):
-        return "{vector} @ {fid}".format(vector=self.vector, fid=self.frame_id)
+        return "VectorStamped({vector} @ {fid})".format(vector=self.vector, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
