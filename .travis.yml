@@ -15,6 +15,6 @@ before_install:
 script:
   - 'for PACKAGE in $PACKAGES;
      do
-     bash install-package.sh --package=$PACKAGE --branch=$TRAVIS_BRANCH --commit=$TRAVIS_COMMIT --pullrequest=$TRAVIS_PULL_REQUEST &&
+     bash install-package.sh --package=$PACKAGE --branch=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} --commit=$TRAVIS_COMMIT --pullrequest=$TRAVIS_PULL_REQUEST &&
      bash build-package.sh --package=$PACKAGE;
      done'
