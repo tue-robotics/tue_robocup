@@ -23,7 +23,7 @@
   <run_depend>challenge_restaurant</run_depend>
   <run_depend>challenge_rips</run_depend>
   <run_depend>challenge_robozoo</run_depend>
-  <run_depend>challenge_speech_recognition</run_depend>
+  <run_depend>challenge_spr</run_depend>
   <run_depend>challenge_storing_groceries</run_depend>
   <run_depend>challenge_spr</run_depend>
   <run_depend>challenge_set_a_table</run_depend>

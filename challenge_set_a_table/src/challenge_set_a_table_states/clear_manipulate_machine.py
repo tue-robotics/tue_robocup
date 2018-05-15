@@ -26,12 +26,12 @@ class ClearManipulateMachine(smach.StateMachine):
     - State place shelf
     - Place item
     """
-    def __init__(self, robot, grasp_furniture_id, place_furniture_id1, place_furniture_id3):
+    def __init__(self, robot, grasp_furniture_id, place_furniture_id1, place_furniture_id2):
         """ Constructor
         :param robot: robot object
         :param grasp_furniture_id: string identifying the furniture object where to grasp the objects
         :param place_furniture_id1: string identifying the furniture object where to place objects 1 and 2
-        :param place_furniture_id3: string identifying the furniture object where to place object 3
+        :param place_furniture_id2: string identifying the furniture object where to place object 3
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -49,7 +49,7 @@ class ClearManipulateMachine(smach.StateMachine):
                                                    place_location_designator=place_furniture_designator1,
                                                    area="on_top_of")
 
-        place_furniture_designator3 = ds.EntityByIdDesignator(robot, id=place_furniture_id3)
+        place_furniture_designator3 = ds.EntityByIdDesignator(robot, id=place_furniture_id2)
         place_designator3 = ds.EmptySpotDesignator(robot=robot,
                                                    place_location_designator=place_furniture_designator3,
                                                    area="on_top_of")

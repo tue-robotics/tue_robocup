@@ -168,7 +168,7 @@ class ManipulateMachine(smach.StateMachine):
     - Place item
     """
     def __init__(self, robot, grasp_designator1, grasp_designator2, grasp_designator3,
-                 grasp_furniture_id1, grasp_furniture_id3, place_furniture_id):
+                 grasp_furniture_id1, grasp_furniture_id2, place_furniture_id):
         """ Constructor
         :param robot: robot object
         :param grasp_designator1: EdEntityDesignator designating the first item to grab.
@@ -182,7 +182,7 @@ class ManipulateMachine(smach.StateMachine):
 
         # Create designators
         grasp_furniture_designator1 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id1)
-        grasp_furniture_designator3 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id3)
+        grasp_furniture_designator2 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id2)
 
         place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
         place_designator = ds.EmptySpotDesignator(robot=robot,
@@ -250,8 +250,8 @@ class ManipulateMachine(smach.StateMachine):
             # Move back to the grasp surface to grasp the third item
             smach.StateMachine.add("MOVE_TO_GRASP_SURFACE3",
                                    states.NavigateToSymbolic(robot,
-                                                             {grasp_furniture_designator3: "in_front_of"},
-                                                             grasp_furniture_designator3),
+                                                             {grasp_furniture_designator2: "in_front_of"},
+                                                             grasp_furniture_designator2),
                                    transitions={'arrived': 'INSPECT_GRASP_SURFACE2',
                                                 'unreachable': 'MOVE_TO_GRASP_SURFACE4',
                                                 'goal_not_defined': 'INSPECT_GRASP_SURFACE2'})
@@ -259,15 +259,15 @@ class ManipulateMachine(smach.StateMachine):
             # Backup for moving back to the grasp location
             smach.StateMachine.add("MOVE_TO_GRASP_SURFACE4",
                                    states.NavigateToSymbolic(robot,
-                                                             {grasp_furniture_designator3: "large_in_front_of"},
-                                                             grasp_furniture_designator3),
+                                                             {grasp_furniture_designator2: "large_in_front_of"},
+                                                             grasp_furniture_designator2),
                                    transitions={'arrived': 'INSPECT_GRASP_SURFACE2',
                                                 'unreachable': 'INSPECT_GRASP_SURFACE2',
                                                 'goal_not_defined': 'INSPECT_GRASP_SURFACE2'})
 
             # Inspect grasp furniture
             smach.StateMachine.add("INSPECT_GRASP_SURFACE2", states.Inspect(robot=robot,
-                                                                            entityDes=grasp_furniture_designator3,
+                                                                            entityDes=grasp_furniture_designator2,
                                                                             objectIDsDes=None,
                                                                             searchArea="shelf2",
                                                                             navigation_area="in_front_of"),

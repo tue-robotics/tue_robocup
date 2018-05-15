@@ -50,13 +50,17 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    WaitForCustomer(robot, caller_id, kitchen_designator),
-                                   transitions={'succeeded': 'NAVIGATE_TO_CUSTOMER',
+                                   transitions={'succeeded': 'SAY_NAVIGATE_TO_CUSTOMER',
                                                 'aborted': 'STOP',
                                                 'rejected': 'WAIT_FOR_CUSTOMER'})
 
+            smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER',
+                                   states.Say(robot, "I am at your service, I will be there shortly! Coming your way my amigo!", block=True),
+                                   transitions={'spoken': 'NAVIGATE_TO_CUSTOMER'})
+
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
@@ -71,7 +75,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER_FALLBACK',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'RETURN_TO_START',
                                                 'goal_not_defined': 'RETURN_TO_START'})
@@ -119,7 +123,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('BRING_OBJECTS',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_BRING_OBJECTS_FALLBACK',
                                                 'goal_not_defined': 'RETURN_TO_START'})
@@ -134,13 +138,13 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('BRING_OBJECTS_FALLBACK',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_OBJECTS',
                                                 'goal_not_defined': 'RETURN_TO_START'})
 
             smach.StateMachine.add('SAY_OBJECTS',
-                                   states.Say(robot, "Dear mister, here are your objects, "
+                                   states.Say(robot, "Hi there handsome, here are your objects, "
                                                      "please take them from my basket"),
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
