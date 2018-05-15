@@ -1,0 +1,28 @@
+#!/usr/bin/python
+
+# System
+import sys
+
+# ROS
+import rospy
+
+# Detect face
+from robot_smach_states import DetectFace
+
+
+if __name__ == "__main__":
+
+    rospy.init_node('test_detect_faces')
+    robot_name = sys.argv[1]
+    if robot_name == 'amigo':
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == 'sergio':
+        from robot_skills.sergio import Sergio as Robot
+    else:
+        print "unknown robot"
+        sys.exit()
+
+    robot = Robot()
+
+    detect_state = DetectFace(robot=robot)
+    detect_state.execute(None)

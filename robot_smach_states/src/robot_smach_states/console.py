@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
         print '\n\tTo load state machines or designators, enter:\n'
         print '\t"import robot_skills.util.msg_constructors as msgs"'
-        print '\t"robot_smach_states.util.designators as ds"'
+        print '\t"import robot_smach_states.util.designators as ds"'
         print '\t"import robot_smach_states as states"\n'
 
         parts = arguments['--part']

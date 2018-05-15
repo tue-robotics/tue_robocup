@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+import PyKDL as kdl
+import rospy
+import tf
+import math
+from geometry_msgs.msg import PoseStamped
+from robot_skills.world_model_ed import ED
+from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame
+
+
+def callback(msg):
+    kdl_frame = pose_msg_to_kdl_frame(msg.pose)
+    rx, ry, rz = kdl_frame.M.GetRPY()
+    base = math.pi * 0.25
+    kdl_frame.MZ = round(base * round(float(rz)/base), 4)
+    kdl_frame.M = kdl.Rotation.RPY(rx, ry, kdl_frame.MZ)
+    ed.update_entity(entity_id, frame_stamped=FrameStamped(kdl_frame, msg.header.frame_id))
+
+if __name__ == "__main__":
+    rospy.init_node("update_ed_entity_pose")
+    entity_id = rospy.get_param("~entity_id")
+    sub = rospy.Subscriber("update_entity_pose", PoseStamped, callback)
+    ed = ED(rospy.get_param("~robot_name"), tf.TransformListener())
+    rospy.loginfo("Listening on topic {}".format(sub.name))
+    rospy.spin()

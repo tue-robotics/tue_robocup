@@ -34,6 +34,8 @@ class NavigateToWaypoint(NavigateTo):
             rospy.logerr("NavigateToWaypoint::generateConstraint: No entity could be resolved from designator '%s'" % self.waypoint_designator)
             return None
 
+        rospy.logdebug("Navigating to waypoint '{}'".format(e.id))
+
         try:
             x = e.pose.frame.p.x()
             y = e.pose.frame.p.y()
