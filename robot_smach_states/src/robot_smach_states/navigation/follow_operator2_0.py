@@ -25,7 +25,10 @@ class CrumbWaypoint:
         self.waypoint = None
 
     def __repr__(self):
-        result = ""
+        result = "{}".format(self.crumb)
+        result += "\n{}".format(self.waypoint)
+
+        return result
 
 
 
@@ -131,7 +134,7 @@ class Track(smach.State):
             # else:
             #     buffer.append(operator)
 
-            userdata.buffer_track_out = buffer
+            # userdata.buffer_track_out = buffer
             return 'track'
 
 
@@ -173,8 +176,8 @@ class FollowBread(smach.State):
         while self._buffer:
             crumb = self._buffer.popleft()
 
-            if not self._breadcrumb or self._buffer[-1].distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
-                self._breadcrumb.append(CrumbWaypoint(crumb))  # Don't use a tuple, that doesn't work...
+            if not self._breadcrumb or self._buffer[-1].crumb.distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
+                self._breadcrumb.append(CrumbWaypoint(crumb))
 
             #     if self._buffer[-1].distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
             #         self._breadcrumb.append(crumb)
@@ -182,7 +185,7 @@ class FollowBread(smach.State):
             #
             # self._breadcrumb.append((crumb, None))  # Don't use a tuple, that doesn't work...
 
-
+        print self._breadcrumb
 
         # buffer = userdata.buffer_follow_in
         if self._robot.base.local_planner.getDistanceToGoal() > 2.0:  # len(buffer) > 5:
@@ -194,7 +197,7 @@ class FollowBread(smach.State):
                             # recovery/ask finalize
 
         if self._breadcrumb:
-            self._operator = self._breadcrumb[-1]
+            self._operator = self._breadcrumb[-1].crumb
         else:
             return 'no_follow_bread_recovery'
 
@@ -211,8 +214,8 @@ class FollowBread(smach.State):
         rospy.loginfo("Buffer length before radius check: {}".format(len(self._breadcrumb)))
 
         # Throw away crumbs that are too close
-        self._breadcrumb = [crumb for crumb in self._breadcrumb
-                            if crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
+        self._breadcrumb = [crwp for crwp in self._breadcrumb
+                            if crwp.crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
 
         rospy.loginfo("Buffer length after radius check: {}".format(len(self._buffer)))
 
