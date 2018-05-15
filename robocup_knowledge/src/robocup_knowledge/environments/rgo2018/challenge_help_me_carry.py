@@ -1,10 +1,31 @@
-default_item = "coke"
-default_place = "couch_table"
-default_area = "on_top_of"
+from robocup_knowledge import knowledge_loader
+common = knowledge_loader.load_knowledge("common")
 
-# add or get from ed_object_models/models/<world>/model.yaml
-waypoints = {
-    'kitchen':              {'id': 'explore1', 'radius':  1}  # TODO: update waypoint, target
-}
+starting_point = "initial_pose" #'help_me_carry_starting_point'
+rotation = 0
 
-waypoint_car = {'id': 'car', 'radius': 1}
+time_out_seconds = 60.0
+time_out_seconds_door = 120.0
+
+commands = {
+    'no':  ['no', 'follow me'],# 'Robot, follow me'
+    'yes': ['yes', 'remember location',  # 'Remember, this location is the car'
+            'here is the car',
+            'stop following',  # 'Stop following me'
+            'stop following me']}
+
+destinations = common.location_rooms + common.location_names
+
+# add or get from ~/ros/kinetic/system/src/ed_object_models/models/robotics_testlabs/model.yaml
+waypoint_car = {'id': 'car',
+                'radius': 0.5}
+
+default_item = 'coke'
+default_place = 'dining_table'
+default_area = 'in_front_of'
+default_target_radius = 0.2
+backup_target_radius = 0.7
+
+carrying_bag_pose = 'carrying_bag_pose'
+drop_bag_pose = 'drop_bag_pose'
+driving_bag_pose = 'driving_bag_pose'
