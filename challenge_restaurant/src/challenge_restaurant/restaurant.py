@@ -60,7 +60,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
@@ -75,7 +75,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER_FALLBACK',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'RETURN_TO_START',
                                                 'goal_not_defined': 'RETURN_TO_START'})
@@ -123,7 +123,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('BRING_OBJECTS',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_BRING_OBJECTS_FALLBACK',
                                                 'goal_not_defined': 'RETURN_TO_START'})
@@ -138,7 +138,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('BRING_OBJECTS_FALLBACK',
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=0.85),
+                                                            radius=1.1),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_OBJECTS',
                                                 'goal_not_defined': 'RETURN_TO_START'})
