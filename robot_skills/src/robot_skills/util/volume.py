@@ -83,6 +83,9 @@ class BoxVolume(Volume):
                self._min_corner.y() < point.y() < self._max_corner.y() and \
                self._min_corner.z() < point.z() < self._max_corner.z()
 
+    def __repr__(self):
+        return "BoxVolume(min_corner={}, max_corner={})".format(self.min_corner, self.max_corner)
+
 
 class OffsetVolume(Volume):
     """ Represents a volume with a certain offset from the convex hull of the entity """
@@ -93,6 +96,9 @@ class OffsetVolume(Volume):
         """
         super(OffsetVolume, self).__init__()
         self._offset = offset
+
+    def __repr__(self):
+        return "OffsetVolume(offset={})".format(self._offset)
 
 
 def volumes_from_entity_info_data(data):

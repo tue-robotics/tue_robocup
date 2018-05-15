@@ -72,7 +72,7 @@ class WaitForCustomer(smach.State):
         # pose = kitchen_entity.pose.extractVectorStamped()
         # pose.vector[2] = 1.5
 
-        # self._robot.head.look_at_point(head_target)
+        self._robot.head.look_at_point(head_target)
 
         self._robot.speech.speak("I have seen a waving person, should I continue?")
 
