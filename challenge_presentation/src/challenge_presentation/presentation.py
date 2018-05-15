@@ -86,27 +86,29 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.base.force_drive, 0, 0, 1.0, 6.28))     # Turn around
 
         # Arms
-        function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
-        function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-        function_list.append(partial(self.robot.rightArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
-        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
-        function_list.append(partial(self.robot.rightArm.send_gripper_goal, "open"))
-        function_list.append(partial(self.robot.rightArm.send_gripper_goal, "close"))
-        function_list.append(partial(self.robot.leftArm.reset))
-        function_list.append(partial(self.robot.rightArm.reset))
-        function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
+	if self.robot.robot_name == "amigo":
+            function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
+            function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
+            function_list.append(partial(self.robot.rightArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
+            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
+            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
+            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "open"))
+            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "close"))
+            function_list.append(partial(self.robot.leftArm.reset))
+            function_list.append(partial(self.robot.rightArm.reset))
+            function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
 
         # Torso
-        function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.torso.medium))
-        function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
-        function_list.append(partial(self.robot.torso.reset))
-        function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
+        if self.robot.robot_name == "amigo":
+            function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
+            function_list.append(partial(self.robot.torso.medium))
+            function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
+            function_list.append(partial(self.robot.torso.reset))
+            function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
 
         # Kinect
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language, voice=self.voice, block=False))

@@ -15,14 +15,17 @@ from robocup_knowledge import load_knowledge
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, analyse_designators
 
 # Set the table
 from challenge_set_a_table_states.fetch_command import HearFetchCommand, GetBreakfastOrder
-from challenge_set_a_table_states.manipulate_machine import ManipulateMachine, DefaultGrabDesignator
+from challenge_set_a_table_states.manipulate_machine import ManipulateMachine
 from challenge_set_a_table_states.clear_manipulate_machine import ClearManipulateMachine
 
 # Load all knowledge
 knowledge = load_knowledge('challenge_set_a_table')
+INTERMEDIATE_1 = knowledge.intermediate_1
+STARTING_POINT = knowledge.starting_point
 
 
 class ChallengeSetATable(smach.StateMachine):
@@ -40,12 +43,28 @@ class ChallengeSetATable(smach.StateMachine):
         start_rz = start_pose.frame.M.GetRPY()[2]
 
         with self:
-            # Part I: Set a table
-            smach.StateMachine.add('ENTER_ROOM',  # Enter the room
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'ANNOUNCEMENT',
-                                                'abort': 'Aborted'})
+            # Start challenge via StartChallengeRobust
+            smach.StateMachine.add("START_CHALLENGE_ROBUST",
+                                   states.StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
+                                   transitions={"Done": "GO_TO_INTERMEDIATE_WAYPOINT",
+                                                "Aborted": "GO_TO_INTERMEDIATE_WAYPOINT",
+                                                "Failed": "GO_TO_INTERMEDIATE_WAYPOINT"})
+            # There is no transition to Failed in StartChallengeRobust (28 May)
 
+            smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
+                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1),
+                                                             radius=0.5),
+                                   transitions={'arrived': 'ANNOUNCEMENT',
+                                                'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
+                                                'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1'})
+            smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
+                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1),
+                                                             radius=0.7),
+                                   transitions={'arrived': 'ANNOUNCEMENT',
+                                                'unreachable': 'ANNOUNCEMENT',
+                                                'goal_not_defined': 'ANNOUNCEMENT'})
+
+            # Part I: Set a table
             smach.StateMachine.add('ANNOUNCEMENT',
                                    states.Say(robot, "Let's see if my master has a task for me! ", block=True),
                                    transitions={'spoken': 'FETCH_COMMAND_I'})
@@ -71,9 +90,9 @@ class ChallengeSetATable(smach.StateMachine):
                                                      grasp_designator1=grasp_designator1,
                                                      grasp_designator2=grasp_designator2,
                                                      grasp_designator3=grasp_designator3,
-                                                     grasp_furniture_id1=knowledge.cupboard,
-                                                     grasp_furniture_id3=knowledge.cupboard,
-                                                     place_furniture_id=knowledge.table),
+                                                     grasp_furniture_id1=knowledge.grasp_furniture_id1,
+                                                     grasp_furniture_id2=knowledge.grasp_furniture_id2,
+                                                     place_furniture_id=knowledge.place_furniture_id),
                                    transitions={'succeeded': 'ANNOUNCE_TASK_COMPLETION',
                                                 'failed': 'RETURN_TO_START_2'})
 
@@ -94,9 +113,9 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'done': 'CLEAR_UP'})
 
             smach.StateMachine.add('CLEAR_UP',  # Clear the table
-                                   ClearManipulateMachine(robot=robot, grasp_furniture_id=knowledge.table,
-                                                          place_furniture_id1=knowledge.cupboard,
-                                                          place_furniture_id3=knowledge.cupboard),
+                                   ClearManipulateMachine(robot=robot, grasp_furniture_id=knowledge.place_furniture_id,
+                                                          place_furniture_id1=knowledge.grasp_furniture_id1,
+                                                          place_furniture_id2=knowledge.grasp_furniture_id2),
                                    transitions={'succeeded': 'END_CHALLENGE',
                                                 'failed': 'END_CHALLENGE'})
 
@@ -106,6 +125,7 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "set_a_table")
+
 
 if __name__ == "__main__":
     rospy.init_node('set_a_table_exec')
