@@ -108,13 +108,12 @@ Q["action" : "count", "entity" : P] -> how many PEOPLE[P] are in the crowd | tel
 
 grammar += '''
 
-NQ["action" : "c_count", "entity" : X] -> how many people in the crowd are POSITION[X]
-NQ["action" : "c_count", "entity" : W] -> how many people in the crowd are GESTURE[W]
-NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
-NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
-NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
-NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER
-NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER or GENDER
+NQ["action" : "count_pos", "entity" : X] -> how many people in the crowd are POSITION[X]
+NQ["action" : "count_ges", "entity" : W] -> how many people in the crowd are GESTURE[W]
+NQ["action" : "count_col", "entity" : L] -> tell me how many people were wearing COLOR[L]
+
+NQ["action" : "gender_pos", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER | the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
+NQ["action" : "gender_ges", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER | tell me if the GESTURE[W] person was a GENDER or GENDER
 '''
 
 ##############################################################################
@@ -185,7 +184,7 @@ GENDER['girl'] -> girl
 
 POSITION['standing'] -> standing
 POSITION['sitting'] -> sitting
-POSITION['lying'] -> lying
+POSITION['lying'] -> laying
 
 GESTURE['waving'] -> waving
 GESTURE['rise_l_arm'] -> rising left arm
