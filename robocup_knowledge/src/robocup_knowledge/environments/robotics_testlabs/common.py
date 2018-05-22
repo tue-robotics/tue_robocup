@@ -82,10 +82,9 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-    "food": {"bookcase": "shelf3"},
+    "food": {"bookcase": "on_top_of"},
     "container": {"flight_case": "in"},
     "drink": {"dinner_table": "on_top_of"},
-    "snack": {"bookcase": "on_top_of"},
     "cleaning_stuff": {"cabinet": "on_top_of"},
     "cutlery": {"bar": "on_top_of"}
 }
@@ -103,7 +102,7 @@ most_probable_location_in_room_map = {
     'livingroom': 'dinner_table',
     'bedroom': 'nightstand',
     'workshop': 'workbench',
-    'kitchen': 'desk',
+    'kitchen': 'cabinet',
     'hallway': 'hallway_table'
 }
 
