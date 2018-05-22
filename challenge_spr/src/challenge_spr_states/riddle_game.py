@@ -109,7 +109,8 @@ def answer(robot, res, crowd_data):
                    'find_category':    answer_find_category,
                    'return_category':  answer_object_category,
                    'return_color':     answer_object_color,
-                   'compare_sizes': 	answer_compare_objects_sizes,
+                   'compare_sizes':    answer_compare_objects_sizes,
+                   'compare_weight':   answer_compare_objects_weight,
                    'compare_category': answer_compare_objects_categories,
                    'count_object':     answer_count_objects_in_category,
                    }
@@ -222,6 +223,7 @@ def answer_object_color(action):
     else:
         return 'I should name the color but I dont know %s' % entity
 
+
 def answer_compare_objects_sizes(action):
     entity_a = action['entity_a']
     entity_b = action['entity_b']
@@ -238,6 +240,25 @@ def answer_compare_objects_sizes(action):
         	return 'The objects %s and %s have exactly the same volume' % (entity_a, entity_b)
     else:
         return 'I dont know these objects'
+
+
+def answer_compare_objects_weight(action):
+    entity_a = action['entity_a']
+    entity_b = action['entity_b']
+    objects_a = [obj for obj in common_knowledge.objects if obj['name'] == entity_a]
+    objects_b = [obj for obj in common_knowledge.objects if obj['name'] == entity_b]
+    if len(objects_a) == 1 and len(objects_b) == 1:
+        w_a = objects_a[0]['weight']
+        w_b = objects_b[0]['weight']
+        if w_a > w_b:
+            return 'The object %s is heavier than the object %s' % (entity_a, entity_b)
+        elif w_a < w_b:
+            return 'The object %s is lighter than the object %s' % (entity_a, entity_b)
+        else:
+            return 'The objects %s and %s have exactly the same weight' % (entity_a, entity_b)
+    else:
+        return 'I dont know these objects'
+
 
 def answer_compare_objects_categories(action):
     entity_a = action['entity_a']
