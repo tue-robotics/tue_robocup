@@ -192,12 +192,11 @@ class ManipulateMachine(smach.StateMachine):
     - State place shelf
     - Place item
     """
-    def __init__(self, robot, grab_designator_1=None, grab_designator_2=None, place_designator=None, pdf_writer=None):
+    def __init__(self, robot, grab_designator_1=None, grab_designator_2=None, place_designator=None):
         """ Constructor
         :param robot: robot object
         :param grab_designator_1: EdEntityDesignator designating the item to grab
         :param grab_designator_2: EdEntityDesignator designating the item to grab
-        :param pdf_writer: WritePDF object to save images of recognized objects to pdf files
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -236,26 +235,8 @@ class ManipulateMachine(smach.StateMachine):
                                                 'unreachable': 'INSPECT_TABLE',
                                                 'goal_not_defined': 'INSPECT_TABLE'})
 
-            if pdf_writer:
-                # Designator to store the classificationresults
-                # The Inspect-state (INSPECT_TABLE) gathers a list of ClassificationResults for Entities on the table
-                # These are passed to the pdf_writer
-                class_designator = ds.VariableDesignator(
-                    [], resolve_type=[robot_skills.classification_result.ClassificationResult])
 
-                # Add the designator to the pdf writer state
-                pdf_writer.set_designator(class_designator)
-
-                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
-                                                                       objectIDsDes=class_designator,
-                                                                       searchArea=GRAB_SURFACE,
-                                                                       navigation_area="in_front_of"),
-                                       transitions={"done": "WRITE_PDF",
-                                                    "failed": "failed"})
-
-                smach.StateMachine.add("WRITE_PDF", pdf_writer, transitions={"done": "GRAB_ITEM_1"})
-            else:
-                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
+            smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=None, searchArea=GRAB_SURFACE,
                                                                        navigation_area="in_front_of"),
                                        transitions={"done": "GRAB_ITEM_1",
