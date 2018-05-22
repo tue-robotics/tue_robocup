@@ -25,7 +25,9 @@
 		The robot must leave the arena/test area after all questions have been asked or
 		when instructed to do so.
 
-## Scoring sheet of 2017, Japan:
+## Scoring sheet of 2018, Montreal:
+
+	The maximum time for this test is 5 minutes!
 
 	Crowd:
 		State crowd’s size:								5
@@ -44,6 +46,8 @@
 		Answering all 5 blind man’s bluff questions: 	5
 
 	Total score (excluding penalties and bonuses):		200
+
+	Outstanding performance:							20
 
 ## Testing
 

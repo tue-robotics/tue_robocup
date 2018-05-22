@@ -100,19 +100,19 @@ def answer(robot, res, crowd_data):
     def answer_crowd_questions(action):
         return answer_count_people(action, crowd_data)
 
-    assignments = {'random_gender':    answer_random_gender,
-                   'answer':           answer_predefined_questions,
-                   'count':            answer_crowd_questions,
-                   'find_placement':   answer_placement_location,
-                   'count_placement':  answer_count_placement,
-                   'find_object':      answer_find_objects,
-                   'find_category':    answer_find_category,
-                   'return_category':  answer_object_category,
-                   'return_color':     answer_object_color,
-                   'compare_sizes':    answer_compare_objects_sizes,
-                   'compare_weight':   answer_compare_objects_weight,
-                   'compare_category': answer_compare_objects_categories,
-                   'count_object':     answer_count_objects_in_category,
+    assignments = {'random_gender':     answer_random_gender,
+                   'answer':            answer_predefined_questions,
+                   'count':             answer_crowd_questions,
+                   'find_placement':    answer_placement_location,
+                   'count_placement':   answer_count_placement,
+                   'find_object':       answer_find_objects,
+                   'find_category':     answer_find_category,
+                   'return_category':   answer_object_category,
+                   'return_color':      answer_object_color,
+                   'compare_sizes':     answer_compare_objects_sizes,
+                   'compare_weight':    answer_compare_objects_weight,
+                   'compare_category':  answer_compare_objects_categories,
+                   'count_object_cat':  answer_count_objects_in_category,
                    }
 
     ans = None
