@@ -24,7 +24,7 @@ class Person(object):
     Loy, Matthijs, Kevin, Josja, Lars, Ainse.
     """
 class LearnOperator(smach.State):
-    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout = 10.0):
+    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout=10.0):
         smach.State.__init__(self, outcomes=['follow', 'Failed', 'Aborted'],
                              input_keys=['operator_learn_in'],
                              output_keys=['operator_learn_out'])
