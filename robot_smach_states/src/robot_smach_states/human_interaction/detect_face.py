@@ -7,7 +7,9 @@ from sensor_msgs.msg import Image
 
 class DetectFace(smach.State):
     """
-    Detect face ToDo: expand docstring
+    Smach state to detect a face. It tries to match these with 'known' faces (either loaded from file or learned
+    earlier). If one or more faces have been recognized in the image, the image is published over the /photo_to_telegram
+    topic and the corresponding best matched label is published over the message to telegram topic.
     """
 
     def __init__(self, robot):
