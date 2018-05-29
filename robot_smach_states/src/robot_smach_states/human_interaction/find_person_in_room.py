@@ -191,10 +191,17 @@ class _DecideNavigateState(smach.State):
 
 
 class FindPersoninRoom(smach.StateMachine):
+    """ Uses NavigateToWaypoint or NavigateToRoom and subsequently tries to find a person
+    in that room.
+
+    """
 
     def __init__(self, robot, area, name):
         """ Constructor
         :param robot: robot object
+        :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
+        to this waypoint. Else, it will navigate to the room called "<area>"
+        :param name: (str) Name of the person to look for
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
@@ -226,6 +233,7 @@ class FindPersoninRoom(smach.StateMachine):
             smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
