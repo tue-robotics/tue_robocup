@@ -29,7 +29,6 @@ class Lights(RobotPart):
         pass
 
     def set_color(self, r, g, b, a=1.0):
-        # type: (object, object, object, object) -> object
         """
         Set the color of the lights of the robot in RGBA values
         :param r: red value 0.0-1.0
