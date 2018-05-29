@@ -90,9 +90,9 @@ class ChallengeSetATable(smach.StateMachine):
                                                      grasp_designator1=grasp_designator1,
                                                      grasp_designator2=grasp_designator2,
                                                      grasp_designator3=grasp_designator3,
-                                                     grasp_furniture_id1=knowledge.kitchen,
-                                                     grasp_furniture_id3=knowledge.cupboard,
-                                                     place_furniture_id=knowledge.table),
+                                                     grasp_furniture_id1=knowledge.grasp_furniture_id1,
+                                                     grasp_furniture_id2=knowledge.grasp_furniture_id2,
+                                                     place_furniture_id=knowledge.place_furniture_id),
                                    transitions={'succeeded': 'ANNOUNCE_TASK_COMPLETION',
                                                 'failed': 'RETURN_TO_START_2'})
 
