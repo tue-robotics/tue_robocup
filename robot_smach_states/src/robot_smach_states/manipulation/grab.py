@@ -1,17 +1,16 @@
 #! /usr/bin/env python
-import math
+
+# ROS
 import PyKDL as kdl
 import rospy
 import smach
-import tf
+import tf2_ros
 
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, VectorStamped
-
+# TU/e Robotics
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
-
-from robot_skills.arms import Arm
+from robot_skills.arms import Arm, GripperMeasurement
 from robot_smach_states.util.designators import check_type
-
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 
@@ -103,7 +102,7 @@ class PickUp(smach.State):
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
-        except tf.Exception, tfe:
+        except tf2_ros.TransformException as tfe:
             rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
             return 'failed'
 
@@ -151,17 +150,18 @@ class PickUp(smach.State):
                 return 'failed'
         else:
             # We do have a grasp pose, given as a kdl frame in map
-            if self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link"):
+            try:
+                self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link", rospy.Time(0),
+                                                       rospy.Duration(10))
                 # Transform to base link frame
                 goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
                 if goal_bl is None:
                     return 'failed'
-            else:
+            except tf2_ros.TransformException as tfe:
+                rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
                 return 'failed'
 
-        #except tf.Exception as tfe:
-        #    rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
-        #    return 'failed'
+
 
         # Pre-grasp --> this is only necessary when using visual servoing
         # rospy.loginfo('Starting Pre-grasp')
@@ -229,10 +229,24 @@ class PickUp(smach.State):
         # rospy.loginfo('start moving to carrying pose')
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
+        # Check if the object is present in the gripper
+        if arm.object_in_gripper_measurement.is_empty:
+            # If state is empty, grasp has failed
+            result = "failed"
+            rospy.logerr("Gripper is not holding an object")
+            self.robot.speech.speak("Whoops, something went terribly wrong")
+            arm.occupied_by = None  # Set the object the arm is holding to None
+        else:
+            # State is holding, grasp succeeded.
+            # If unknown: sensor not there, assume gripper is holding and hope for the best
+            result = "succeeded"
+            if arm.object_in_gripper_measurement.is_unknown:
+                rospy.logwarn("GripperMeasurement unknown")
+
         # Reset head
         self.robot.head.cancel_goal()
 
-        return 'succeeded'
+        return result
 
     def associate(self, original_entity):
         """ Tries to associate the original entity with one of the entities in the world model. This is useful if

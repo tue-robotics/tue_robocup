@@ -1,4 +1,6 @@
+# ROS
 import rospy
+
 
 def deprecated(func_or_cls):
     """Print a deprecation warning once on first use of the function.
@@ -19,6 +21,7 @@ def deprecated(func_or_cls):
                 print func_or_cls.__name__, 'is deprecated'
         return func_or_cls(*args, **kwargs)
     return wrapper
+
 
 def deprecated_replace_with(replacement):
     #import ipdb; ipdb.set_trace()

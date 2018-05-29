@@ -1,12 +1,17 @@
 #! /usr/bin/env python
+# System
 import sys
+
+# ROS
 import rospy
 import smach
 
+# TU/e Robotics
+from robot_skills.util.entity import Entity
+
+from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_stamped_from_point_stamped_msg
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
-from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped, kdlVectorStampedFromPointStampedMsg
 
 
 class LookAtEntity(State):
@@ -22,15 +27,16 @@ class LookAtEntity(State):
         if not entity:
             return 'failed'
 
-        #Entities define their own frame, so there is no need to transform the pose to /map.
-        #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
-        #The added benefit is that the entity's frame actually moves because the entity is tracked.
-        #This makes the head track the entity
+        # Entities define their own frame, so there is no need to transform the pose to /map.
+        # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
+        # The added benefit is that the entity's frame actually moves because the entity is tracked.
+        # This makes the head track the entity
         vs = VectorStamped(frame_id="/"+entity.id)
         rospy.loginfo('Look at %s' % (repr(vs)))
         robot.head.look_at_point(vs)
         rospy.sleep(rospy.Duration(waittime))
         return "succeeded"
+
 
 class LookAtArea(State):
     """ Class to look at the center point of a specific area of an entity
@@ -52,10 +58,10 @@ class LookAtArea(State):
         if not entity:
             return 'failed'
 
-        #Entities define their own frame, so there is no need to transform the pose to /map.
-        #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
-        #The added benefit is that the entity's frame actually moves because the entity is tracked.
-        #This makes the head track the entity
+        # Entities define their own frame, so there is no need to transform the pose to /map.
+        # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
+        # The added benefit is that the entity's frame actually moves because the entity is tracked.
+        # This makes the head track the entity
         frame_id = "/"+entity.id
 
         if area in entity.volumes:
@@ -79,6 +85,7 @@ class LookAtArea(State):
         rospy.logwarn("Cannot find {0} in {1}".format(area, entity.id))
         return "failed"
 
+
 class LookOnTopOfEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
         ds.check_type(entity, Entity)
@@ -92,10 +99,10 @@ class LookOnTopOfEntity(State):
         if not entity:
             return 'failed'
 
-        #Entities define their own frame, so there is no need to transform the pose to /map.
-        #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
-        #The added benefit is that the entity's frame actually moves because the entity is tracked.
-        #This makes the head track the entity
+        # Entities define their own frame, so there is no need to transform the pose to /map.
+        # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
+        # The added benefit is that the entity's frame actually moves because the entity is tracked.
+        # This makes the head track the entity
         center_point = VectorStamped(frame_id="/"+entity.id)
 
         center_point.vector.z(entity.shape.z_max)
@@ -107,6 +114,7 @@ class LookOnTopOfEntity(State):
 
 # Testing
 
+
 def setup_statemachine(robot):
     entity = ds.EntityByIdDesignator(robot, id='hallway_couch')
 
@@ -116,6 +124,7 @@ def setup_statemachine(robot):
                                LookAtEntity(robot, entity),
                                transitions={'succeeded': 'Done'})
     return sm
+
 
 if __name__ == "__main__":
     import doctest

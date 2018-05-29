@@ -1,14 +1,11 @@
-#! /usr/bin/env python
-import math
-
+# ROS
 import rospy
 from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
+# TU/e Robotics
 from robot_part import RobotPart
-
-from .util import msg_constructors as msgs
-from .util.kdl_conversions import kdlVectorStampedToPointStamped, VectorStamped
+from .util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
 
 
 class Head(RobotPart):
@@ -18,6 +15,8 @@ class Head(RobotPart):
                                                                     HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
+
+        self.subscribe_hardware_status('head')
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
@@ -78,7 +77,7 @@ class Head(RobotPart):
 
     def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=0.8, timeout=0):
         assert isinstance(vector_stamped, VectorStamped)
-        point_stamped = kdlVectorStampedToPointStamped(vector_stamped)
+        point_stamped = kdl_vector_stamped_to_point_stamped(vector_stamped)
         self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
 
     def cancel_goal(self):
@@ -127,12 +126,3 @@ class Head(RobotPart):
     def __doneCallback(self, terminal_state, result):
         self._goal = None
         self._at_setpoint = False
-
-#######################################
-
-
-if __name__ == "__main__":
-    import tf_server
-    tf_listener = tf_server.TFClient()
-    rospy.init_node('amigo_head_executioner', anonymous=True)
-    head = Head("amigo", tf_listener)

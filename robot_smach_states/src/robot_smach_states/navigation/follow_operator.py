@@ -1,29 +1,31 @@
 #!/usr/bin/env python
 
-import smach, rospy, sys
-from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import VariableDesignator
-import robot_smach_states as states
-from hmi import TimeoutException
-from visualization_msgs.msg import Marker
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
-from robot_skills.util import kdl_conversions
-from robot_skills.util.entity import Entity
+# System
 import copy
-import threading
-import time
-import itertools
-import PyKDL as kdl
-import geometry_msgs  # Only used for publishing markers
-import geometry_msgs.msg
 import math
 
+# ROS
+import geometry_msgs  # Only used for publishing markers
+import geometry_msgs.msg
+import PyKDL as kdl
+import smach, rospy, sys
+from visualization_msgs.msg import Marker
+
+# TU/e Robotics
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from hmi import TimeoutException
+from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
+from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import VariableDesignator
+
+
 def vector_stampeds_to_point_stampeds(vector_stampeds):
-    return map(kdl_conversions.kdlVectorStampedToPointStamped, vector_stampeds)
+    return map(kdl_conversions.kdl_vector_stamped_to_point_stamped, vector_stampeds)
 
 
 def frame_stampeds_to_pose_stampeds(frame_stampeds):
-    return map(kdl_conversions.kdlFrameStampedToPoseStampedMsg, frame_stampeds)
+    return map(kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg, frame_stampeds)
 
 
 class FollowOperator(smach.State):
@@ -351,7 +353,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.action = Marker.ADD
 
         for crumb in self._breadcrumbs:
-            breadcrumbs_msg.points.append(kdl_conversions.kdlVectorToPointMsg(crumb.pose.frame.p))
+            breadcrumbs_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
 
         self._breadcrumb_pub.publish(breadcrumbs_msg)
 
@@ -393,7 +395,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = kdl_conversions.kdlVectorToPointMsg(self._last_operator.pose.frame.p)
+            o.look_at = kdl_conversions.kdl_vector_to_point_msg(self._last_operator.pose.frame.p)
 
         ''' Calculate global plan from robot position, through breadcrumbs, to the operator '''
         res = 0.05
@@ -422,7 +424,7 @@ class FollowOperator(smach.State):
                 for i in range(start, end):
                     x = previous_point.x() + i * dx_norm * res
                     y = previous_point.y() + i * dy_norm * res
-                    kdl_plan.append(kdl_conversions.kdlFrameStampedFromXYZRPY(x=x, y=y, z=0, yaw=yaw))
+                    kdl_plan.append(kdl_conversions.kdl_frame_stamped_from_XYZRPY(x=x, y=y, z=0, yaw=yaw))
 
             previous_point = copy.deepcopy(crumb._pose.p)
 
@@ -495,7 +497,7 @@ class FollowOperator(smach.State):
                 except Exception as e:
                     rospy.logerr("head.project_roi failed: %s", e)
                     return False
-                operator_pos_ros = kdl_conversions.kdlVectorStampedToPointStamped(operator_pos_kdl)
+                operator_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(operator_pos_kdl)
 
                 self._face_pos_pub.publish(operator_pos_ros)
 
@@ -533,7 +535,7 @@ class FollowOperator(smach.State):
             o.frame = self._operator_id
         else:
             o.frame = 'map'
-            o.look_at = kdl_conversions.kdlVectorToPointMsg(self._last_operator.pose.frame.p)
+            o.look_at = kdl_conversions.kdl_vector_to_point_msg(self._last_operator.pose.frame.p)
 
         dx = operator_position.x() - robot_position.x()
         dy = operator_position.y() - robot_position.y()

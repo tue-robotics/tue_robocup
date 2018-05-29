@@ -12,21 +12,19 @@ Examples:
   robot-console amigo sergio
 """
 
-import sys
+# System
+from docopt import docopt, DocoptExit
 import importlib
 import traceback
 
+# ROS
 import rospy
-from docopt import docopt, DocoptExit
 
-# load state machines
-import robot_smach_states as state_machine
-import robot_smach_states.util.designators as ds
-import robot_skills.util.msg_constructors as msgs
+# TU/e Robotics
 
 # Load convenient data types (DO NOT REMOVE)
 import PyKDL as kdl
-from robot_skills.util.kdl_conversions import frame_stamped
+from robot_skills.util.kdl_conversions import frame_stamped, FrameStamped
 
 
 class bcolors:
@@ -36,6 +34,7 @@ class bcolors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
 
 def load_robot(robot_name, parts=None):
     modules = [robot_name] if not parts else parts
@@ -64,6 +63,7 @@ def load_robot(robot_name, parts=None):
     if not len(loaded):
         raise DocoptExit("error: no robots or parts loaded")
 
+
 if __name__ == '__main__':
     try:
         arguments = docopt(__doc__)
@@ -74,8 +74,10 @@ if __name__ == '__main__':
         | TU/e Robot Console - version 0.1                                |
         -------------------------------------------------------------------\033[1;m"""
 
-        print bcolors.OKGREEN+'\tSuccesfully loaded statemachines as "state_machine"'+bcolors.ENDC
-        print bcolors.OKGREEN+'\tSuccesfully loaded designators as "ds"'+bcolors.ENDC
+        print '\n\tTo load state machines or designators, enter:\n'
+        print '\t"import robot_skills.util.msg_constructors as msgs"'
+        print '\t"import robot_smach_states.util.designators as ds"'
+        print '\t"import robot_smach_states as states"\n'
 
         parts = arguments['--part']
         parts = parts.split(',') if parts else None

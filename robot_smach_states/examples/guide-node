@@ -1,0 +1,34 @@
+#!/usr/bin/python
+
+# System
+import sys
+
+# ROS
+import rospy
+
+# Smach states
+from robot_smach_states import Guide
+
+
+if __name__ == "__main__":
+
+    rospy.init_node('simple_navigate')
+
+    robot_name = sys.argv[1]
+    if robot_name == 'amigo':
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == 'sergio':
+        from robot_skills.sergio import Sergio as Robot
+    else:
+        print "unknown robot"
+        sys.exit()
+
+    robot = Robot()
+
+    if len(sys.argv) > 2:
+        location = sys.argv[2]
+    else:
+        location = "kitchen"
+
+    sm = Guide(robot, location)
+    sm.execute()

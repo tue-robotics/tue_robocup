@@ -1,29 +1,32 @@
 #! /usr/bin/env python
-import random
-from collections import defaultdict
 
-import geometry_msgs
+# System
+from collections import defaultdict
 import mock
+import random
+
+# ROS
+import geometry_msgs
+import PyKDL as kdl
 import rospy
 import std_msgs.msg
 import tf
+
+# TU/e Robotics
+import arms
 from dragonfly_speech_recognition.msg import Choice
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
-
-import arms
 from robot_skills import robot
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
-import robot_skills.util.msg_constructors as msgs
-import PyKDL as kdl
-
 from robot_skills.util.entity import from_entity_info
+
 
 def random_kdl_frame():
     return kdl.Frame(kdl.Rotation.RPY(random.random(), random.random(), random.random()),
-                                     kdl.Vector(random.random(), random.random(), random.random()))
+                     kdl.Vector(random.random(), random.random(), random.random()))
 
 
 class Arm(arms.Arm):
@@ -220,6 +223,7 @@ class ED(object):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
 
+
 class Mockbot(robot.Robot):
     """
     Interface to all parts of Mockbot. When initializing Mockbot, you can choose a list of components
@@ -272,6 +276,7 @@ class Mockbot(robot.Robot):
         if any((exception_type, exception_val, trace)):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
+
 
 if __name__ == "__main__":
     print "     _              __"

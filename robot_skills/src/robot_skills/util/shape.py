@@ -1,5 +1,5 @@
 # Robot skills
-from robot_skills.util.kdl_conversions import pointMsgToKdlVector
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
 
 
 class Shape(object):
@@ -11,49 +11,56 @@ class Shape(object):
         return self._calc_convex_hull()
 
     def _calc_convex_hull(self):
-        raise NotImplementedError("_calc_convex_hull must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_convex_hull must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def x_min(self):
         return self._calc_x_min()
 
     def _calc_x_min(self):
-        raise NotImplementedError("_calc_x_min must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_x_min must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def x_max(self):
         return self._calc_x_max()
 
     def _calc_x_max(self):
-        raise NotImplementedError("_calc_x_max must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_x_max must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def y_min(self):
         return self._calc_y_min()
 
     def _calc_y_min(self):
-        raise NotImplementedError("_calc_y_min must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_y_min must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def y_max(self):
         return self._calc_y_max()
 
     def _calc_y_max(self):
-        raise NotImplementedError("_calc_y_max must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_y_max must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def z_min(self):
         return self._calc_z_min()
 
     def _calc_z_min(self):
-        raise NotImplementedError("_calc_z_min must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_z_min must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def z_max(self):
         return self._calc_z_max()
 
     def _calc_z_max(self):
-        raise NotImplementedError("_calc_z_max must be implemented by subclasses. Class {cls} has no implementation".format(cls=self.__class__.__name__))
+        raise NotImplementedError("_calc_z_max must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
 
 class RightPrism(Shape):
@@ -97,7 +104,6 @@ class RightPrism(Shape):
         return self._convex_hull
 
 
-
 def shape_from_entity_info(e):
     """ Creates a shape from the convex_hull, z_min and z_max of the EntityInfo object. If no convex hull is present,
     an empty Shape object is returned
@@ -109,6 +115,6 @@ def shape_from_entity_info(e):
     if not e.convex_hull:
         return Shape()
 
-    return RightPrism(convex_hull=[pointMsgToKdlVector(p) for p in e.convex_hull],
+    return RightPrism(convex_hull=[point_msg_to_kdl_vector(p) for p in e.convex_hull],
                       z_min=e.z_min,
                       z_max=e.z_max)

@@ -45,15 +45,20 @@ class DefaultGrabDesignator(ds.Designator):
         # Get all entities and check which ones are on the table
         all_entities = self._robot.ed.get_entities()
         entities = []
+
+        rospy.loginfo("Gathering all entities in {vol} of surface {ent}".format(vol=self._area_description, ent=surface))
+        # import ipdb; ipdb.set_trace()
         for e in all_entities:
             point = robot_skills.util.kdl_conversions.VectorStamped(frame_id=e.frame_id, vector=e._pose.p)
             if surface.in_volume(point=point, volume_id=self._area_description):
                 entities.append(e)
+        rospy.loginfo("{l} entities in {vol} of surface {ent}".format(l=len(entities), vol=self._area_description, ent=surface.id))
 
         # Remove all entities that are too large or too small
         entities = [e for e in entities if (e.shape.z_max - e.shape.z_min) > MIN_GRAB_OBJECT_HEIGHT]
         entities = [e for e in entities if (e.shape.y_max - e.shape.y_min) < MAX_GRAB_OBJECT_WIDTH]
         entities = [e for e in entities if (e.shape.x_max - e.shape.x_min) < MAX_GRAB_OBJECT_WIDTH]
+        rospy.loginfo("Keeping {l} entities in {vol} of surface {ent} that are not too big".format(l=len(entities), vol=self._area_description, ent=surface.id))
 
         # Check if there are any
         if not entities:
@@ -155,18 +160,21 @@ class PlaceSingleItem(smach.State):
                 break
 
         if arm is None:
+            rospy.logwarn("Arm is None")
             return "failed"
 
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
         arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
-        sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self.place_designator, arm=arm_designator)
-        result = sm.execute()
+        place = states.Place(robot=self._robot, item_to_place=item, place_pose=self.place_designator, arm=arm_designator)
+        result = place.execute()
 
         # If failed, do handover to human in order to continue
         if result != "done":
-            sm = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
-            sm.execute()
+            rospy.loginfo("{place} resulted in {out}".format(place=place, out=result))
+
+            handover = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
+            handover.execute()
 
         return "succeeded" if result == "done" else "failed"
 
@@ -222,7 +230,7 @@ class ManipulateMachine(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_TO_TABLE2",
                                    states.NavigateToSymbolic(robot,
-                                                             {self.table_designator: "large_in_front_of"},
+                                                             {self.table_designator: "in_front_of"},
                                                              self.table_designator),
                                    transitions={'arrived': 'INSPECT_TABLE',
                                                 'unreachable': 'INSPECT_TABLE',
@@ -230,6 +238,8 @@ class ManipulateMachine(smach.StateMachine):
 
             if pdf_writer:
                 # Designator to store the classificationresults
+                # The Inspect-state (INSPECT_TABLE) gathers a list of ClassificationResults for Entities on the table
+                # These are passed to the pdf_writer
                 class_designator = ds.VariableDesignator(
                     [], resolve_type=[robot_skills.classification_result.ClassificationResult])
 

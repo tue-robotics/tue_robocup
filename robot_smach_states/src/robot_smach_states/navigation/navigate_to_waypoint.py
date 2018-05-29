@@ -1,16 +1,14 @@
-#! /usr/bin/env python
+# ROS
+from geometry_msgs.msg import *
+import rospy
 
-from robot_smach_states.navigation import NavigateTo
-
+# TU/e Robotics
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
-from geometry_msgs.msg import *
-
-from robot_smach_states.util.designators import check_resolve_type
 from robot_skills.util.entity import Entity
-from robot_skills.util import transformations as tf
+from robot_smach_states.navigation import NavigateTo
+from robot_smach_states.util.designators import check_resolve_type
 
-import rospy
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -35,6 +33,8 @@ class NavigateToWaypoint(NavigateTo):
         if not e:
             rospy.logerr("NavigateToWaypoint::generateConstraint: No entity could be resolved from designator '%s'" % self.waypoint_designator)
             return None
+
+        rospy.logdebug("Navigating to waypoint '{}'".format(e.id))
 
         try:
             x = e.pose.frame.p.x()

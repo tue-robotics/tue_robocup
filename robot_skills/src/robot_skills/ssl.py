@@ -1,7 +1,12 @@
+# System
+import math
+
+# ROS
+from geometry_msgs.msg import PoseStamped
 import rospy
 import tf
-import math
-from geometry_msgs.msg import PoseStamped
+
+# TU/e Robotics
 from robot_part import RobotPart
 
 
@@ -22,9 +27,13 @@ class SSL(RobotPart):
         :param tf_listener: tf_server.TFClient()
         """
         super(SSL, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._sub = rospy.Subscriber('/{}/ssl/direction_of_arrival'.format(self.robot_name), PoseStamped, self._callback, queue_size=1)
+        self._sub = self.create_subscriber('/{}/ssl/direction_of_arrival'.format(self.robot_name), PoseStamped, self._callback, queue_size=1)
         self._last_msg = None
         self._last_received_time = rospy.Time(0)
+
+    @property
+    def operational(self):
+        return self._sub.get_num_connections() >= 1
 
     def _callback(self, msg):
         """

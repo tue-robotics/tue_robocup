@@ -1,7 +1,8 @@
-#! /usr/bin/env python
+# ROS
 import rospy
 from std_msgs.msg import ColorRGBA
 
+# TU/e Robotics
 from amigo_msgs.msg import RGBLightCommand
 from robot_part import RobotPart
 
@@ -21,12 +22,14 @@ class Lights(RobotPart):
         :param tf_listener: tf_server.TFClient()
         """
         super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand, queue_size=10)
+        self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand,
+                                      queue_size=10)
 
     def close(self):
         pass
 
     def set_color(self, r, g, b, a=1.0):
+        # type: (object, object, object, object) -> object
         """
         Set the color of the lights of the robot in RGBA values
         :param r: red value 0.0-1.0
@@ -69,3 +72,42 @@ class Lights(RobotPart):
         """
         rgb_msg = RGBLightCommand(show_color=False)
         self._topic.publish(rgb_msg)
+
+    def taste_the_rainbow(self, duration=5.0):
+        """ Show awesome rainbow on the real amigo robot
+
+        :param duration: (float) Indicates the total duration of the rainbow
+        """
+
+        # rood: \_
+        # groen: /\
+        # blauw: _/
+
+        def red(t):
+            if t < duration / 2.0:
+                rainbowr = 1.0 - (t / (duration / 2.0))
+            else:
+                rainbowr = 0.0
+            return rainbowr
+
+        def green(t):
+            if t < duration / 2.0:
+                rainbowg = (t / (duration / 2.0))
+            else:
+                rainbowg = 2 - (t / (duration / 2.0))
+            return rainbowg
+
+        def blue(t):
+            if t < duration / 2.0:
+                rainbowb = 0.0
+            else:
+                rainbowb = -1.0 + (t / (duration / 2.0))
+            return rainbowb
+
+        t_start = rospy.Time.now().to_sec()
+        rate = rospy.Rate(20.0)
+        while (rospy.Time.now().to_sec() - t_start) < duration:
+            time_after_start = rospy.Time.now().to_sec() - t_start
+            r, g, b = (red(time_after_start), green(time_after_start), blue(time_after_start))
+            self.set_color(r, g, b)
+            rate.sleep()

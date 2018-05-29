@@ -1,12 +1,14 @@
-#! /usr/bin/env python
+# System
 import threading
 
+# ROS
+from actionlib_msgs.msg import GoalStatus
 import control_msgs.msg
 import rospy
-import trajectory_msgs.msg
-from actionlib_msgs.msg import GoalStatus
 from sensor_msgs.msg import JointState
+import trajectory_msgs.msg
 
+# TU/e Robotics
 from robot_part import RobotPart
 from .util import concurrent_util
 
@@ -31,8 +33,10 @@ class Torso(RobotPart):
                                                               control_msgs.msg.FollowJointTrajectoryAction)
 
         # Init joint measurement subscriber
-        self.torso_sub = rospy.Subscriber('/' + self.robot_name + '/sergio/torso/measurements', JointState,
-                                          self._receive_torso_measurement)
+        self.torso_sub = self.create_subscriber('/' + self.robot_name + '/torso/measurements',
+                                                JointState, self._receive_torso_measurement)
+
+        self.subscribe_hardware_status('spindle')
 
     def close(self):
         """

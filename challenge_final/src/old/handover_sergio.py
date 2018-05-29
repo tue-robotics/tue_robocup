@@ -97,7 +97,7 @@ def move_sergio_to_handover_pose(sergio, x_gripper_map, y_gripper_map, yaw_gripp
 
         # # Check the current offset
         # try:
-        #     t, r = sergio.tf_listener.lookupTransform("sergio/base_link", source_frame)
+        #     t, r = sergio.tf_listener.lookupTransform("sergio/base_link", source_frame, rospy.Time(0))
         # (x, y, z), (rx, ry, rz, rw) =
         # except:
         #     print "TF error"

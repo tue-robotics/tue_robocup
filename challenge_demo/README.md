@@ -2,14 +2,16 @@ Responsible: Matthijs
 
 # Start-up
 
-    <robot>-demo
+    <robot>-demo-<location>
+    robot: AMIGO/SERGIO
+    For location you can use "intern" or "extern" (these are currently identical).
 
 # Scenario
 
 1. Empty map
 2. Mapping
 3. Add objects to map
-4. Activate AMIGO by trigger, each time you want it something to do.
+4. Activate robot by trigger, each time you want it something to do.
 
 # Possible commands for the robot:
 

@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 __author__ = 'loy'
-from deprecation_warnings import deprecated, get_caller_info
+from deprecation_warnings import get_caller_info
 import unittest
+
 
 class Designator(object):
 

@@ -1,15 +1,19 @@
 #! /usr/bin/env python
 """Plot a smach state machine"""
 
-import os
-import smach
-from robot_smach_states.util.designators.core import Designator, VariableWriter, VariableDesignator
+# System
+from functools import wraps
 from graphviz import Digraph
+import os
+
+# ROS
+import smach
+
 
 def gv_safe(string):
     return str(string).replace("=", "_").replace(" ", "_").replace(".", "_").replace(">", "").replace("<", "")
 
-from functools import wraps
+
 def make_calls_unique(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -212,7 +216,7 @@ visualization_classes = [type(None), StateViz, StateMachineViz, TransitionViz, C
 
 def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot = Digraph(statemachine_name, comment=statemachine_name, format=fmt)
-    
+
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 

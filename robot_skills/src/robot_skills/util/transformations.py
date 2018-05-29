@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+# System
 import math
 
+# ROS
 import geometry_msgs.msg
 import rospy
 import tf
@@ -19,7 +21,7 @@ def euler_z_to_quaternion(angle):
     """
     orientation_goal = geometry_msgs.msg.Quaternion()
     try:
-        quaternion = tf.transformations.quaternion_from_euler(0,0,angle)
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, angle)
     except TypeError, te:
         rospy.logerr(str(angle) + " cannot be parsed as a float: {0}".format(te))
     orientation_goal.x = quaternion[0]
@@ -124,7 +126,7 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener):
         ps.header.frame_id = inputframe
         ps.header.stamp = rospy.Time()
 
-    output_coordinates = tf_listener.transformPoint(outputframe, ps, fixed_frame=inputframe)
+    output_coordinates = tf_listener.transformPoint(outputframe, ps)
     return output_coordinates.point
 
 

@@ -5,7 +5,8 @@ import yaml
 import rospy
 import PyKDL as kdl
 
-from robot_skills.util.kdl_conversions import poseMsgToKdlFrame, kdlFrameToPoseMsg, FrameStamped
+# TU/e Robotics
+from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
 from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.shape import shape_from_entity_info
 
@@ -119,7 +120,7 @@ class Entity(object):
     @pose.setter
     def pose(self, pose):
         """ Setter """
-        self._pose = poseMsgToKdlFrame(pose)
+        self._pose = pose_msg_to_kdl_frame(pose)
 
     def __repr__(self):
         return "Entity(id='{id}', type='{type}', frame={frame})".format(id=self.id, type=self.type, frame=self.pose)
@@ -134,7 +135,7 @@ def from_entity_info(e):
     identifier = e.id
     object_type = e.type
     frame_id = "/map"  # ED has all poses in map
-    pose = poseMsgToKdlFrame(e.pose)
+    pose = pose_msg_to_kdl_frame(e.pose)
     shape = shape_from_entity_info(e)
 
     last_update_time = e.last_update_time.to_sec()

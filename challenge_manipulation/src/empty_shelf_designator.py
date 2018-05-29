@@ -6,7 +6,7 @@ from robot_smach_states.util.designators import Designator
 import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
 import robot_skills.util.msg_constructors as msg_constructors
-from robot_skills.util.kdl_conversions import FrameStamped, poseMsgToKdlFrame, kdlFrameStampedFromPoseStampedMsg, kdlFrameStampedFromXYZRPY
+from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame, kdl_frame_stamped_from_XYZRPY
 import PyKDL as kdl
 import copy
 
@@ -144,10 +144,10 @@ class EmptyShelfDesignator(Designator):
                     rospy.logerr("Spacing of empty spot designator is too large!!!")
                     continue
 
-                frame_stamped = kdlFrameStampedFromXYZRPY(  x=box.max_corner.x() - self._edge_distance,
-                                                            y=y,
-                                                            z=box.min_corner.z() - 0.04,  # 0.04 is the usual offset)
-                                                            frame_id=e.id)
+                frame_stamped = kdl_frame_stamped_from_XYZRPY(x=box.max_corner.x() - self._edge_distance,
+                                                              y=y,
+                                                              z=box.min_corner.z() - 0.04,  # 0.04 is the usual offset)
+                                                              frame_id=e.id)
 
                 # e.convex_hull = []
                 # e.convex_hull.append(gm.Point(box['min']['x'], box['min']['y'], box['min']['z']))  # 1
@@ -186,10 +186,10 @@ class EmptyShelfDesignator(Designator):
     #
     #     ''' Convert convex hull to map frame '''
     #
-    #     center_pose = poseMsgToKdlFrame(e.pose)
+    #     center_pose = pose_msg_to_kdl_frame(e.pose)
     #     ch = list()
     #     for point in e.convex_hull:
-    #         p = pointMsgToKdlVector(point)
+    #         p = point_msg_to_kdl_vector(point)
     #         # p = center_pose * p
     #         # p = p * center_pose
     #         pf = kdl.Frame(kdl.Rotation(), p)

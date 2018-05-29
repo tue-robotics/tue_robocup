@@ -1,15 +1,16 @@
 #! /usr/bin/env python
+# ROS
 import rospy
 import smach
 
-from robot_skills.util.kdl_conversions import kdlFrameStampedFromXYZRPY, kdlVectorToPointMsg, FrameStamped
+# TU/e Robotics
+from robot_skills.arms import Arm
+from robot_skills.util.entity import Entity
+from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from robot_smach_states.navigation import NavigateToPlace, NavigateToSymbolic
 from robot_smach_states.world_model import UpdateEntityPose
 from robot_smach_states.util.designators.ed_designators import EdEntityDesignator, EmptySpotDesignator
-
 from robot_smach_states.util.designators import check_type
-from robot_skills.util.entity import Entity
-from robot_skills.arms import Arm
 
 
 class PreparePlace(smach.State):
@@ -121,30 +122,30 @@ class Put(smach.State):
             height = 0.8
 
         # Pre place
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
-                                                       place_pose_bl.frame.p.y(),
-                                                       height+0.15, 0.0, 0.0, 0.0,
-                                                       frame_id="/{0}/base_link".format(self._robot.robot_name)),
-                                                       timeout=10,
-                                                       pre_grasp=True):
+        if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
+                                                           place_pose_bl.frame.p.y(),
+                                                           height+0.15, 0.0, 0.0, 0.0,
+                                                           frame_id="/{0}/base_link".format(self._robot.robot_name)),
+                             timeout=10,
+                             pre_grasp=True):
             # If we can't place, try a little closer
             place_pose_bl.frame.p.x(place_pose_bl.frame.p.x() - 0.025)
 
             rospy.loginfo("Retrying preplace")
-            if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
-                                                           place_pose_bl.frame.p.y(),
-                                                           height+0.15, 0.0, 0.0, 0.0,
-                                                           frame_id="/{0}/base_link".format(self._robot.robot_name)),
+            if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
+                                                               place_pose_bl.frame.p.y(),
+                                                               height+0.15, 0.0, 0.0, 0.0,
+                                                               frame_id="/{0}/base_link".format(self._robot.robot_name)),
                                  timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
                 arm.cancel_goals()
                 return 'failed'
 
         # Place
-        if not arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x(),
-                                                       place_pose_bl.frame.p.y(),
-                                                       height+0.1, 0.0, 0.0, 0.0,
-                                                       frame_id="/{0}/base_link".format(self._robot.robot_name)),
+        if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
+                                                           place_pose_bl.frame.p.y(),
+                                                           height+0.1, 0.0, 0.0, 0.0,
+                                                           frame_id="/{0}/base_link".format(self._robot.robot_name)),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
@@ -162,10 +163,10 @@ class Put(smach.State):
         arm.occupied_by = None
 
         # Retract
-        arm.send_goal(kdlFrameStampedFromXYZRPY(place_pose_bl.frame.p.x() - 0.1,
-                                                place_pose_bl.frame.p.y(),
-                                                place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
-                                                frame_id='/'+self._robot.robot_name+'/base_link'),
+        arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x() - 0.1,
+                                                    place_pose_bl.frame.p.y(),
+                                                    place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
+                                                    frame_id='/'+self._robot.robot_name+'/base_link'),
                       timeout=0.0)
 
         self._robot.base.force_drive(-0.125, 0, 0, 1.5)

@@ -1,16 +1,19 @@
-__author__ = 'amigo'
-
-import rospy
-import smach
+# System
 import numpy as np
-from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import PolygonStamped, Point, PoseStamped, Pose
 from threading import Event
+
+# ROS
+from geometry_msgs.msg import PolygonStamped, Point, PoseStamped, Pose
+import rospy
+from sensor_msgs.msg import LaserScan
+import smach
 from visualization_msgs.msg import Marker, MarkerArray
+
+# TU/e Robotics
 from cb_planner_msgs_srvs.msg import PositionConstraint
+from ed_msgs.msg import EntityInfo
 from robot_skills.base import computePathLength
 import robot_smach_states as states
-from ed_msgs.msg import EntityInfo
 import robot_smach_states.util.designators as ds
 
 

@@ -1,8 +1,9 @@
-#! /usr/bin/env python
+# ROS
 import rospy
-from text_to_speech.srv import Speak, SpeakRequest
 
+# TU/e Robotics
 from robot_part import RobotPart
+from text_to_speech.srv import Speak, SpeakRequest
 
 
 class Speech(RobotPart):
@@ -88,7 +89,3 @@ class Speech(RobotPart):
             self._post_hook()
 
         return result
-
-if __name__ == "__main__":
-    rospy.init_node("amigo_speech_executioner", anonymous=True)
-    speech = Speech("amigo")

@@ -1,15 +1,13 @@
-#! /usr/bin/env python
+# ROS
+from geometry_msgs.msg import *
+import rospy
 
-from robot_smach_states.navigation import NavigateTo
-
+# TU/e Robotics
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
-from geometry_msgs.msg import *
-
-from robot_smach_states.util.designators import check_resolve_type
 import ed_msgs.msg
-
-import rospy
+from robot_smach_states.navigation import NavigateTo
+from robot_smach_states.util.designators import check_resolve_type
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -42,6 +40,8 @@ class NavigateToExplore(NavigateTo):
         if not e:
             rospy.logerr("No such entity")
             return None
+
+        rospy.logdebug("Navigating to explore entity '{}'".format(e.id))
 
         ch = e.convex_hull
 
