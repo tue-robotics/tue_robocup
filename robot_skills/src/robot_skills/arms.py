@@ -740,6 +740,10 @@ class FakeArm(RobotPart):
     def send_joint_trajectory(self, configuration, timeout=5):
         return False
 
+    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5), joint_names = None):
+	rospy.logwarn("_send_joint_trajectory called on FakeArm.")
+        return False
+
     def reset(self, timeout=0.0):
         return False
 
