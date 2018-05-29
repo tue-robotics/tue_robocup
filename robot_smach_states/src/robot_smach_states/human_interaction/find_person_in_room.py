@@ -14,10 +14,6 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
-from robocup_knowledge import load_knowledge
-
-
-challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
 
 class FindPerson(smach.State):
