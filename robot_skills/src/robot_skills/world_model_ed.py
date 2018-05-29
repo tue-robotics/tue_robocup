@@ -267,26 +267,31 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, type="", center_point=VectorStamped(), radius=0, room=""):
-        # if isinstance(center_point, PointStamped):
-        #    center_point = self._transform_center_point_to_map(center_point)
-        # ToDo: check frame ids
+    def get_closest_possible_person_entity(self, center_point=VectorStamped(), radius=0):
+        """ Returns the 'possible_human' entity closest to a certain center point.
 
+        :param center_point: (VectorStamped) indicating where the human should be close to
+        :param radius: (float) radius to look for possible humans
+        :return: (Entity) entity (if found), None otherwise
+        """
+        assert center_point.frame_id.endswith("map"), "Other frame ids not yet implemented"
+
+        # Get all entities
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
-        # HACK
-        # entities = [ e for e in entities if e.convex_hull and e.type == "" and 'possible_human' in e.flags ]
+        # Filter on 'possible humans'
         entities = [e for e in entities if e.is_a('possible_human')]
 
+        # If nothing found, return None
         if len(entities) == 0:
             return None
 
         # Sort by distance
         try:
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.vector))
-            print "entities sorted closest to robot = ", entities
+            rospy.logdebug("entities sorted closest to robot = {}".format(entities))
         except:
-            print "Failed to sort entities"
+            rospy.logerr("Failed to sort entities")
             return None
 
         return entities[0]
