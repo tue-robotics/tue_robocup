@@ -113,9 +113,9 @@ class ChallengeSetATable(smach.StateMachine):
                                    transitions={'done': 'CLEAR_UP'})
 
             smach.StateMachine.add('CLEAR_UP',  # Clear the table
-                                   ClearManipulateMachine(robot=robot, grasp_furniture_id=knowledge.table,
-                                                          place_furniture_id1=knowledge.kitchen,
-                                                          place_furniture_id3=knowledge.cupboard),
+                                   ClearManipulateMachine(robot=robot, grasp_furniture_id=knowledge.place_furniture_id,
+                                                          place_furniture_id1=knowledge.grasp_furniture_id1,
+                                                          place_furniture_id2=knowledge.grasp_furniture_id2),
                                    transitions={'succeeded': 'END_CHALLENGE',
                                                 'failed': 'END_CHALLENGE'})
 
