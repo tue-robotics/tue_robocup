@@ -432,7 +432,13 @@ class ED(RobotPart):
         self._marker_publisher.publish(marker)
 
     def sync_furniture_poses(self):
-        """ Syncs the furniture poses of the world model to disc
+        """ Syncs the furniture poses of the world model to disc. Hereto, it
+        i) gets all entities and filters these on being furniture
+        ii) loads the current ed object models file
+        iii) iterates over the furniture object entities (i) and the data in the dict (ii). If the IDs match, the pose
+        of (ii) is updated with the pose of (i)
+        iv) dump the updated dict to the models file
+
         """
         # Get all entities
         entities = self.get_entities()
