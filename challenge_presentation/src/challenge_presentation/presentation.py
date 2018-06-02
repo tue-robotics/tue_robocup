@@ -103,8 +103,8 @@ class Presentation(smach.State):
             function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
 
         # Torso
-        function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
         if self.robot.robot_name == "amigo":
+            function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
             function_list.append(partial(self.robot.torso.medium))
             function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
             function_list.append(partial(self.robot.torso.reset))
