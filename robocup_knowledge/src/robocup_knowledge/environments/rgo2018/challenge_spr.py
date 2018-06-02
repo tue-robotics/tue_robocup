@@ -181,4 +181,4 @@ COLOR['yellow'] -> yellow
 '''
 
 if __name__ == "__main__":
-	print grammar
+    print grammar
