@@ -84,55 +84,6 @@ WHATWHICH -> what | which
 
 '''
 
-#Q['answer': "george devol"] -> who holds the patent for the first industrial robot
-#Q['answer': "manipulator, brain, power supply."] -> what are the three major components of a robot?
-#Q['answer': "manipulator."] -> which part controls the movement of robots hand
-#Q['answer': "as its controller"] -> what is the purpose of a computer in a robot system
-#Q['answer': " memory, cpu, a d and d a converters"] -> what are the hardwares essential in a computer controlled robot
-
-#Q['answer': "a combination of cad cam and robotics"] -> what is flexible manufacturing system or computerized manufacturing system
-
-#Q['answer': "1958"] -> the expert system was introduced in
-#Q['answer': "stanford."] -> the expert system was developed by which university
-#Q['answer': "dendral"] -> the first expert system was
-#Q['answer': "artificial intelligence"] -> in which field the expert system has application areas of a i
-
-#Q['answer': "research chemists"] -> dendral system is widely used by
-#Q['answer': "macsyma"] -> which system has been designed for solving mathematical problems
-#Q['answer': "prospector"] -> which system has been designed to assist geologist in mineral exploration
-#Q['answer': "artificial intelligence is a branch of computer science concerned with the study and creation of systems that exhibit some form of human intelligence"] -> what is artificial intelligence
-
-#Q['answer': "allen turing"] -> who is the father of artificial intelligence
-#Q['answer': "ipl"] -> which is the first test programming language
-#Q['answer': "1958"] -> the beginning of artificial intelligence in
-#Q['answer': "1 lisp 2 prolog 3 small talk and actor."] -> what are the languages used for artificial intelligence programming
-#Q['answer': "list programming language"] -> lisp is
-#Q['answer': "logic programming language"] -> prolog is
-#Q['answer': "object oriented programming language"] -> small talk and actor are
-#Q['answer': "1 expert system 2 natural language system 3 perception system"] -> what are the branches of artificial intelligence
-#['answer': "james t russel"] -> who invented compact disc
-#Q['answer': "december 2"] -> which day is celebrated as world computer literacy day
-#Q['answer': "james a gosling"] -> who invented java
-#Q['answer': "windows vista"] -> longhorn was the code name of
-#Q['answer': "shakunthala devi"] -> who is known as the human computer of india
-#Q['answer': "people who work with the computer"] -> what is mean by liveware
-#Q['answer': "jm coetzee"] -> which computer engineer got nobel prize for literature in 2003
-
-#Q['answer': "google"] -> do no evil is tag line of
-#Q['answer': "vivah"] -> first indian cinema released through internet is
-#Q['answer': "ajith balakrishnan and manish agarwal"] -> rediff dot com was founded by
-
-#Q['answer': "physically handicapped people"] -> mows is a type of mouse for dot dot dot people
-
-#Q['answer': "common business oriented language"] -> what is the expansion of cobol
-
-#Q['answer': "grace murry hopper"] -> who developed cobol
-
-#Q['answer': "web filter"] -> green dam is
-#Q['answer': "complementary metal oxide semoconductor"] -> what is the expanded form of cmos
-
-#Q['answer': "1992 the ibm simon"] -> when was the first smart phone launched
-
 ##############################################################################
 #
 # Counting People
@@ -230,4 +181,4 @@ COLOR['yellow'] -> yellow
 '''
 
 if __name__ == "__main__":
-	print grammar
+    print grammar
