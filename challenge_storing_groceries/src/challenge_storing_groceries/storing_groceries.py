@@ -67,7 +67,6 @@ class StoringGroceries(smach.StateMachine):
 
                 # Update designators
                 cabinet.id_ = closest_workspace.place_entity_conf.entity_id
-                # room.id_ = ENTITY_POSES[0][4] # TODO: no usages besides this line and instantiation?
 
                 # Update manipulate machine
                 manipulate_machine.table_designator.id_         = closest_workspace.grasp_entity_conf.entity_id
