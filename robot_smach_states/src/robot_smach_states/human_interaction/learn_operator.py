@@ -17,7 +17,7 @@ class LearnOperator(smach.State):
         :param operator_timeout: maximum time to locate a possible operator
         :param learn_person_timeout: maximum time it is allowed to take to learn an operator
         """
-        smach.State.__init__(self, outcomes=['follow', 'Failed'],
+        smach.State.__init__(self, outcomes=['done', 'failed', 'aborted'],
                              input_keys=['operator_learn_in'],
                              output_keys=['operator_learn_out'])
         self._robot = robot
@@ -30,8 +30,9 @@ class LearnOperator(smach.State):
         """ In this function an operator is located and their face is learned
 
         :param userdata: contains operator which is initially none, for global definition purposes
-        :return Failed in case something went wrong
-                follow if an operator is found
+        :return failed in case something went wrong
+                done if an operator is found
+                aborted if preempt is requested
         """
 
         start_time = rospy.Time.now()
@@ -40,10 +41,10 @@ class LearnOperator(smach.State):
         while not operator:
             r = rospy.Rate(1.0)
             if self.preempt_requested():
-                return 'Failed'
+                return 'aborted'
 
             if(rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
-                return 'Failed'
+                return 'failed'
 
             operator = self._robot.ed.get_closest_laser_entity(
                 radius=0.5,
@@ -64,7 +65,7 @@ class LearnOperator(smach.State):
                 num_detections = 0
                 while num_detections < 5: # 5:
                     if self._robot.perception.learn_person(self._operator_name):
-                        rospy.loginfo("Succesfully detected you %i times" % (num_detections + 1))
+                        rospy.loginfo("Successfully detected you %i times" % (num_detections + 1))
                         num_detections += 1
                     elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                         self._robot.speech.speak("Please stand in front of me and look at me")
@@ -74,4 +75,4 @@ class LearnOperator(smach.State):
         rospy.loginfo("We have a new operator: %s" % operator.id)
         self._robot.head.close()
         userdata.operator_learn_out = operator
-        return 'follow'
+        return 'done'
