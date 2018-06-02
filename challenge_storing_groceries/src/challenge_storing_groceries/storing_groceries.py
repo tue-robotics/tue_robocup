@@ -44,7 +44,6 @@ class StoringGroceries(smach.StateMachine):
                                                 'no_response': 'AWAIT_START'})
 
             cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
-            # room = ds.EntityByIdDesignator(robot, id=ROOM)
 
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None, manipulate_machine=None):
