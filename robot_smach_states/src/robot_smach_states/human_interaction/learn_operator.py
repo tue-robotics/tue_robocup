@@ -72,7 +72,6 @@ class LearnOperator(smach.State):
                         break
             r.sleep()
         rospy.loginfo("We have a new operator: %s" % operator.id)
-        self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._robot.head.close()
         userdata.operator_learn_out = operator
         return 'follow'
