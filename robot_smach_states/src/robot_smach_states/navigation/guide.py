@@ -67,7 +67,7 @@ class Guide(smach.StateMachine):
         nav_machine = create_navigation_state(robot, target_location)
 
         # ToDo: update
-        loc_sentence = "Follow me if you want to make it out of here alive"
+        loc_sentence = "Follow me"
         arrived_sentence = "Yeehah, we have arrived"
         failed_sentence = "I lost my way, I'm so sorry"
         no_goal_sentence = "I'm not sure where I'm supposed to go"
