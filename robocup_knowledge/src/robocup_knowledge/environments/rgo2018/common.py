@@ -1,31 +1,31 @@
 # COMMON KNOWLEDGE FILE RGO2018
 
 female_names = ["angie", "mary", "amy", "kimberley", "lisa", "melissa", "michelle", "jennifer", "elizabeth", "julie"]
-male_names = ["brian","michael","christopher","william","john","david","james","robert","scott","richard"]
+male_names = ["brian", "michael", "christopher", "william", "john", "david", "james", "robert", "scott", "richard"]
 names = female_names + male_names
 
 # This dict holds all locations
 locations = [
 
-    { 'name':'bed',             'room':'bedroom',    'category': 'beacon',  'manipulation':'no'  },
-    { 'name':'desk',      	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'bookcase',   	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
+    {'name': 'bed',             'room': 'bedroom',    'category': 'beacon',  'manipulation': 'no'},
+    {'name': 'desk',            'room': 'bedroom',    'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'bookcase',        'room': 'bedroom',    'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'side_table',      'room': 'bedroom',    'category': 'table',   'manipulation': 'yes'},
 
-    { 'name':'bar', 		    'room':'kitchen',    'category': 'bar',     'manipulation':'yes' },
-    { 'name':'kitchen_table',   'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'kitchen_cabinet', 'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'sink',            'room':'kitchen',    'category': 'table',   'manipulation':'no'  },
+    {'name': 'bar',             'room': 'kitchen',    'category': 'bar',     'manipulation': 'yes'},
+    {'name': 'kitchen_table',   'room': 'kitchen',    'category': 'table',   'manipulation': 'yes'},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',    'category': 'table',   'manipulation': 'yes'},
+    {'name': 'sink',            'room': 'kitchen',    'category': 'table',   'manipulation': 'no'},
 
-    { 'name':'tv_table',       	'room':'living_room', 'category': 'table',  'manipulation':'yes' },
-    { 'name':'cupboard',        'room':'living_room', 'category': 'shelf',  'manipulation':'yes' },
-    { 'name':'couch',           'room':'living_room', 'category': 'seat',   'manipulation':'yes' },
-    { 'name':'couch_table',     'room':'living_room', 'category': 'beacon', 'manipulation':'yes' },
+    {'name': 'tv_table',        'room': 'living_room', 'category': 'table',  'manipulation': 'yes'},
+    {'name': 'cupboard',        'room': 'living_room', 'category': 'shelf',  'manipulation': 'yes'},
+    {'name': 'couch',           'room': 'living_room', 'category': 'seat',   'manipulation': 'yes'},
+    {'name': 'couch_table',     'room': 'living_room', 'category': 'beacon', 'manipulation': 'yes'},
 
-    { 'name':'dining_table',    'room':'dining_room', 'category': 'beacon', 'manipulation':'yes' },
-    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' },
-    { 'name':'display_case',    'room':'dining_room', 'category': 'table',  'manipulation':'no'  },
-    { 'name':'storage_shelf',   'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' }
+    {'name': 'dining_table',    'room': 'dining_room', 'category': 'beacon', 'manipulation': 'yes'},
+    {'name': 'cabinet',         'room': 'dining_room', 'category': 'shelf',  'manipulation': 'yes'},
+    {'name': 'display_case',    'room': 'dining_room', 'category': 'table',  'manipulation': 'no'},
+    {'name': 'storage_shelf',   'room': 'dining_room', 'category': 'shelf',  'manipulation': 'yes'}
 
 ]
 
