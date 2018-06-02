@@ -569,3 +569,79 @@ class Arm(RobotPart):
 
     def __repr__(self):
         return "Arm(side='{side}')".format(side=self.side)
+
+
+class FakeArm(RobotPart):
+    def __init__(self, robot_name, tf_listener, side):
+        super(FakeArm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        self.side = side
+        if (self.side is "left") or (self.side is "right"):
+            pass
+        else:
+            raise Exception("Side should be either: left or right")
+
+        self._operational = False
+
+        # Get stuff from the parameter server
+        offset = self.load_param('skills/arm/offset/' + self.side)
+        self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
+                                kdl.Vector(offset["x"], offset["y"], offset["z"]))
+
+        self.marker_to_grippoint_offset = self.load_param('skills/arm/offset/marker_to_grippoint')
+
+        self.joint_names = self.load_param('skills/arm/joint_names')
+        self.joint_names = [name + "_" + self.side for name in self.joint_names]
+        self.torso_joint_names = self.load_param('skills/torso/joint_names')
+
+        self.default_configurations = self.load_param('skills/arm/default_configurations')
+        self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
+
+    @property
+    def operational(self):
+        return False
+
+    def cancel_goals(self):
+        pass
+
+    def close(self):
+        pass
+
+    def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
+                  allowed_touch_objects=[]):
+        return False
+
+    def send_joint_goal(self, configuration, timeout=5.0):
+        return False
+
+    def send_joint_trajectory(self, configuration, timeout=5):
+        return False
+
+    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5), joint_names = None):
+        rospy.logwarn("_send_joint_trajectory called on FakeArm.")
+        return False
+
+    def reset(self, timeout=0.0):
+        return False
+
+    @property
+    def occupied_by(self):
+        return None
+
+    def send_gripper_goal(self, state, timeout=5.0):
+        return False
+
+    def handover_to_human(self, timeout=10):
+        return False
+
+    def handover_to_robot(self, timeout=10):
+        return False
+
+    def wait_for_motion_done(self, timeout=10.0, cancel=False):
+        return False
+
+    @property
+    def object_in_gripper_measurement(self):
+        return GripperMeasurement(0.0)
+
+    def __repr__(self):
+        return "FakeArm(side='{side}')".format(side=self.side)
