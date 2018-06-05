@@ -16,7 +16,7 @@ class English(object):
     HUMAN_ARMS = "This makes me capable of moving my arms just like you would move your arms."
     END_OF_ARMS = "At the end of my arms, I have two grippers with which I can grasp objects"
     GRIPPERS = "My grippers can be opened and closed when I need to."
-    TORSO_NO_ARMS = "Furthermore I have a moveable torso so I can grasp higher and lower once I get my arms."
+    TORSO_NO_ARMS = "Furthermore I have a moveable torso so I can grasp higher and lower once I get my arms operational"
     TORSO = "My arms are mounted on a moveable torso. This way, I can grasp higher and lower"
     HEAD = "As a head, I have a 3D camera. I use this to detect and recognize objects and people"
     CAMERA = "My 3D camera is mounted on top of my torso and I can move my camera just like a human head."
@@ -36,7 +36,7 @@ class Dutch(object):
     HUMAN_ARMS = "Dit stelt mij in staat om mijn armen net zo te bewegen als jij de jouwe"
     END_OF_ARMS = "Aan het eind van mijn armen zitten grijpers waarmee ik dingen kan vastpakken"
     GRIPPERS = "Mijn grijpers kunnen open en dicht als ik dat wil"
-    TORSO_NO_ARMS = "Verder heb ik een beweegbare torso zodat ik hoger en lager kan pakken wanneer ik mijn armen krijg."
+    TORSO_NO_ARMS = "Verder heb ik een beweegbare torso zodat ik hoger en lager kan pakken wanneer mijn armen werken."
     TORSO = "Mijn armen zitten aan een beweegbare torso, zodat ik hoger en lager kan pakken"
     HEAD = "Als hoofd heb ik een 3D camera. Dat gebruik ik om mensen en dingen te herkennen"
     CAMERA = "Mijn hoofd zit bovenop mijn torso en ik kan rondkijken net als een mens"
@@ -90,7 +90,7 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.base.force_drive, 0, 0, 1.0, 6.28))     # Turn around
 
         # Arms
-        if self.robot.arms:
+        if bool(self.robot.arms):
             if self.robot.rightArm.operational:
                 function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
                 function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
@@ -132,10 +132,15 @@ class Presentation(smach.State):
 
         # Torso
         if self.robot.torso.operational:
-            if self.robot.arms:
-                function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
+            if bool(self.robot.arms):
+                if self.robot.rightArm.operational or self.robot.leftArm.operational:
+                    function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
+                else:
+                    function_list.append(partial(self.robot.speech.speak, self.trans.TORSO_NO_ARMS, language=self.language, voice=self.voice, block=False))
             else:
                 function_list.append(partial(self.robot.speech.speak, self.trans.TORSO_NO_ARMS, language=self.language, voice=self.voice, block=False))
+
+        if self.robot.torso.operational:
             function_list.append(partial(self.robot.torso.medium))
             function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
             function_list.append(partial(self.robot.torso.reset))
