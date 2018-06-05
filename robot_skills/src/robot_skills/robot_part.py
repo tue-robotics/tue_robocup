@@ -176,7 +176,8 @@ class RobotPart(object):
         diag = diagnostic_dict.get(self.__diagnostics_name, None)
 
         if not diag:
-            rospy.logwarn('no diagnostic msg received for the %s' % self.__diagnostics_name)
+            # (Logwarn throttle: show this message once every day (24 * 3600 seconds)
+            rospy.logwarn_throttle(86400.0, 'no diagnostic msg received for the %s' % self.__diagnostics_name)
         else:
             # TODO: diagnostic_msgs.DiagnosticStatus.OK instead of our own enumeration.
             # 0. Stale
