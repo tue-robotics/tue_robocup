@@ -79,23 +79,23 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_TABLE",
                                    smach.CBState(move_table, cb_args=[single_item]),
-                                   transitions={'done': 'NAV_TO_START'})
+                                   transitions={'done': 'RANGE_ITERATOR'})
 
-            smach.StateMachine.add("NAV_TO_START",
-                                   states.NavigateToSymbolic(robot,
-                                                             {cabinet: "in_front_of"},
-                                                             cabinet),
-                                   transitions={'arrived': 'INSPECT_SHELVES',
-                                                'unreachable': 'INSPECT_SHELVES',
-                                                'goal_not_defined': 'INSPECT_SHELVES'})
-
-            smach.StateMachine.add("INSPECT_SHELVES",
-                                   InspectShelves(robot, cabinet),
-                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
-                                                'nothing_found': 'WRITE_PDF_SHELVES',
-                                                'failed': 'WRITE_PDF_SHELVES'})
-
-            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
+            # smach.StateMachine.add("NAV_TO_START",
+            #                        states.NavigateToSymbolic(robot,
+            #                                                  {cabinet: "in_front_of"},
+            #                                                  cabinet),
+            #                        transitions={'arrived': 'INSPECT_SHELVES',
+            #                                     'unreachable': 'INSPECT_SHELVES',
+            #                                     'goal_not_defined': 'INSPECT_SHELVES'})
+            #
+            # smach.StateMachine.add("INSPECT_SHELVES",
+            #                        InspectShelves(robot, cabinet),
+            #                        transitions={'succeeded': 'WRITE_PDF_SHELVES',
+            #                                     'nothing_found': 'WRITE_PDF_SHELVES',
+            #                                     'failed': 'WRITE_PDF_SHELVES'})
+            #
+            # smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
 
             # Begin setup iterator
             # The exhausted argument should be set to the prefered state machine outcome
