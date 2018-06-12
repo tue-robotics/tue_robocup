@@ -80,7 +80,7 @@ class StoringGroceries(smach.StateMachine):
             smach.StateMachine.add("MOVE_TABLE",
                                    smach.CBState(move_table, cb_args=[single_item]),
                                    transitions={'done': 'RANGE_ITERATOR'})
-
+            # If you want to reinstate cabinet inspection uncomment section below and change transition above
             # smach.StateMachine.add("NAV_TO_START",
             #                        states.NavigateToSymbolic(robot,
             #                                                  {cabinet: "in_front_of"},
