@@ -345,7 +345,12 @@ class Arm(RobotPart):
         The 'occupied_by' property will return the current entity that is in the gripper of this arm.
         :return: robot_skills.util.entity, ED entity
         """
-        return self._occupied_by
+        occupied_by = rospy.get_param(self.__occupied_by_param)
+        if occupied_by != "unoccupied":
+            entity = self._world_model.get_entity(id=occupied_by)
+            return entity
+        else:
+            return None
 
     @occupied_by.setter
     def occupied_by(self, value):
@@ -354,7 +359,11 @@ class Arm(RobotPart):
         :param value: robot_skills.util.entity, ED entity
         :return: no return
         """
-        self._occupied_by = value
+        if value:
+            assert isinstance(value, Entity)
+            rospy.set_param(self.__occupied_by_param, value.id)
+        else:
+            rospy.set_param(self.__occupied_by_param, "unoccupied")
 
     def send_gripper_goal(self, state, timeout=5.0):
         """
