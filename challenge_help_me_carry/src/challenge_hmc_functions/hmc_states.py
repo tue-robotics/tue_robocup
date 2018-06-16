@@ -54,7 +54,7 @@ class WaitForOperatorCommand(smach.State):
                 if command_recognized == "no":
                     self._robot.speech.speak("OK")
                 else:
-                    self._robot.speech.speak("OK, I will remember this location")
+                    self._robot.speech.speak("OK, I will go to {}".format(command_recognized))
                 return "success", command_recognized
             else:
                 self._robot.speech.speak(
