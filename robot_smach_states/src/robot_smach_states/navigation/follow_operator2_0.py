@@ -87,7 +87,6 @@ class Track(smach.State):
         rospy.loginfo("Trying to get operator with id: {}".format(operator.id))
         operator = self._robot.ed.get_entity(id=operator.id)
         if operator is None:
-            print"no"
             rospy.loginfo("Could not find operator")
             _entities = self._robot.ed.get_entities()
             _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
@@ -122,9 +121,6 @@ class Track(smach.State):
             # self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
             self._buffer.append(operator)
-
-            print "yes"
-
             # if self._buffer:
             #     if self._buffer[-1].distance_to_2d(operator._pose.p) > self._breadcrumb_distance:
             #         buffer.append(operator)
@@ -180,15 +176,10 @@ class FollowBread(smach.State):
 
             if self.preempt_requested():
                 return 'aborted'
-
-            rospy.loginfo("Buffer length at start of FollowBread: {}, have followed: {}".format(len(self._buffer),
-                                                                                                self._have_followed))
             crumb = self._buffer.popleft()
-            rospy.loginfo("I have found a crumb, len=%d", len(self._breadcrumb))
             if not self._breadcrumb or self._breadcrumb[-1].crumb.distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
                 self._breadcrumb.append(CrumbWaypoint(crumb))
-            else:
-                rospy.loginfo('Not appending')
+
 
             #     if self._buffer[-1].distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
             #         self._breadcrumb.append(crumb)
@@ -221,13 +212,11 @@ class FollowBread(smach.State):
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
 
-        rospy.loginfo("Breadcrumb length before radius check: {}".format(len(self._breadcrumb)))
 
         # Throw away crumbs that are too close
         self._breadcrumb = [crwp for crwp in self._breadcrumb
                             if crwp.crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
 
-        rospy.loginfo("Breadcrumb length after radius check: {}".format(len(self._breadcrumb)))
 
         if not self._breadcrumb:
             return 'no_follow_bread_recovery'
@@ -309,21 +298,21 @@ class FollowBread(smach.State):
         # for crumb in buffer:
         #     buffer_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
 
-        # line_strip = Marker()
-        # line_strip.type = Marker.LINE_STRIP
-        # line_strip.scale.x = 0.05
-        # line_strip.header.frame_id = "/map"
-        # line_strip.header.stamp = rospy.Time.now()
-        # line_strip.color.a = 1
-        # line_strip.color.r = 0
-        # line_strip.color.g = 1
-        # line_strip.color.b = 1
-        # line_strip.id = 0
-        # line_strip.action = Marker.ADD
-        #
-        # # Push back all pnts
-        # for pose_stamped in ros_plan:
-        #     line_strip.points.append(pose_stamped.crumb._pose.p)
+        line_strip = Marker()
+        line_strip.type = Marker.LINE_STRIP
+        line_strip.scale.x = 0.05
+        line_strip.header.frame_id = "/map"
+        line_strip.header.stamp = rospy.Time.now()
+        line_strip.color.a = 1
+        line_strip.color.r = 0
+        line_strip.color.g = 1
+        line_strip.color.b = 1
+        line_strip.id = 0
+        line_strip.action = Marker.ADD
+
+        # Push back all pnts
+        for crwp in ros_plan:
+            line_strip.points.append(crwp)
 
         # self._plan_marker_pub.publish(line_strip)
         # self._breadcrumb_pub.publish(buffer_msg)
