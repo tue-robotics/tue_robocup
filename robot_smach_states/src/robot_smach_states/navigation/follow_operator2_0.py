@@ -37,10 +37,10 @@ class Track(smach.State):
         """ Constructor
 
         :param robot: robot object (amigo, sergio)
-        :param _buffer: #TODO add docstring
+        :param _buffer:
         """
         smach.State.__init__(self,
-                             outcomes=['track', 'no_track', 'Aborted'],
+                             outcomes=['track', 'no_track', 'aborted'],
                              input_keys=['operator_track_in'])
         self.counter = 0
         self._period = 0.3          #fix this magic number
@@ -87,6 +87,7 @@ class Track(smach.State):
         rospy.loginfo("Trying to get operator with id: {}".format(operator.id))
         operator = self._robot.ed.get_entity(id=operator.id)
         if operator is None:
+            print"no"
             rospy.loginfo("Could not find operator")
             _entities = self._robot.ed.get_entities()
             _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
@@ -121,6 +122,8 @@ class Track(smach.State):
             # self._operator_distance = self._last_operator.distance_to_2d(f.p)
 
             self._buffer.append(operator)
+
+            print "yes"
 
             # if self._buffer:
             #     if self._buffer[-1].distance_to_2d(operator._pose.p) > self._breadcrumb_distance:
@@ -174,10 +177,18 @@ class FollowBread(smach.State):
         operator = None
 
         while self._buffer:
-            crumb = self._buffer.popleft()
 
-            if not self._breadcrumb or self._buffer[-1].crumb.distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
+            if self.preempt_requested():
+                return 'aborted'
+
+            rospy.loginfo("Buffer length at start of FollowBread: {}, have followed: {}".format(len(self._buffer),
+                                                                                                self._have_followed))
+            crumb = self._buffer.popleft()
+            rospy.loginfo("I have found a crumb, len=%d", len(self._breadcrumb))
+            if not self._breadcrumb or self._breadcrumb[-1].crumb.distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
                 self._breadcrumb.append(CrumbWaypoint(crumb))
+            else:
+                rospy.loginfo('Not appending')
 
             #     if self._buffer[-1].distance_to_2d(crumb._pose.p) > self._breadcrumb_distance:
             #         self._breadcrumb.append(crumb)
@@ -185,16 +196,16 @@ class FollowBread(smach.State):
             #
             # self._breadcrumb.append((crumb, None))  # Don't use a tuple, that doesn't work...
 
-        print self._breadcrumb
+        rospy.loginfo("Self._breadcrumb length: {}".format(len(self._breadcrumb)))
 
         # buffer = userdata.buffer_follow_in
         if self._robot.base.local_planner.getDistanceToGoal() > 2.0:  # len(buffer) > 5:
             self._have_followed = True
 
         robot_position = self._robot.base.get_location().frame
-        if not self._breadcrumb:
-            rospy.sleep(2)  # magic number, not necessary, can also return a different outcome that does not lead to
-                            # recovery/ask finalize
+        # if not self._breadcrumb:
+        #     rospy.sleep(2)  # magic number, not necessary, can also return a different outcome that does not lead to
+        #                     # recovery/ask finalize
 
         if self._breadcrumb:
             self._operator = self._breadcrumb[-1].crumb
@@ -203,21 +214,20 @@ class FollowBread(smach.State):
 
         if self._operator: #and len(buffer) > 1:
             operator = self._robot.ed.get_entity(id=self._operator.id)
-        rospy.loginfo("Buffer length at start of FollowBread: {}, have followed: {}".format(len(self._breadcrumb),
-                                                                                            self._have_followed))
+
         if operator:
             rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
             if self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0:
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
 
-        rospy.loginfo("Buffer length before radius check: {}".format(len(self._breadcrumb)))
+        rospy.loginfo("Breadcrumb length before radius check: {}".format(len(self._breadcrumb)))
 
         # Throw away crumbs that are too close
         self._breadcrumb = [crwp for crwp in self._breadcrumb
                             if crwp.crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
 
-        rospy.loginfo("Buffer length after radius check: {}".format(len(self._buffer)))
+        rospy.loginfo("Breadcrumb length after radius check: {}".format(len(self._breadcrumb)))
 
         if not self._breadcrumb:
             return 'no_follow_bread_recovery'
@@ -266,14 +276,21 @@ class FollowBread(smach.State):
         # ros_plan = [kdl_conversions.kdl_frame_stamped_to_pose_stamped_msg(frame) for frame in kdl_plan]
 
         # Check if plan is valid. If not, remove invalid points from the path
+
         if len(self._breadcrumb) > 0:
+            rospy.loginfo("Buffer length voor planning: {}, have followed: {}".format(len(self._buffer),
+                                                                                                self._have_followed))
             ros_plan = [crwp.waypoint for crwp in self._breadcrumb]
             if not self._robot.base.global_planner.checkPlan(ros_plan):
                 print "Breadcrumb plan is blocked, removing blocked points"
                 # Go through plan from operator to robot and pick the first unoccupied point as goal point
                 # ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
-                self._breadcrumb = [crwp for crwp in self._breadcrumb
+                rospy.loginfo("Breadcrumbs before removing blocked points: {}, have followed: {}".format(len(self._breadcrumb),
+                                                                                                    self._have_followed))
+                ros_plan = [crwp.waypoint for crwp in self._breadcrumb
                                     if self._robot.base.global_planner.checkPlan([crwp.waypoint])]
+                rospy.loginfo("Breadcrumbs length after removing blocked points: {}, have followed: {}".format(len(self._breadcrumb),
+                                                                                                    self._have_followed))
 
         # buffer_msg = Marker()
         # buffer_msg.type = Marker.POINTS
@@ -292,23 +309,23 @@ class FollowBread(smach.State):
         # for crumb in buffer:
         #     buffer_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
 
-        line_strip = Marker()
-        line_strip.type = Marker.LINE_STRIP
-        line_strip.scale.x = 0.05
-        line_strip.header.frame_id = "/map"
-        line_strip.header.stamp = rospy.Time.now()
-        line_strip.color.a = 1
-        line_strip.color.r = 0
-        line_strip.color.g = 1
-        line_strip.color.b = 1
-        line_strip.id = 0
-        line_strip.action = Marker.ADD
+        # line_strip = Marker()
+        # line_strip.type = Marker.LINE_STRIP
+        # line_strip.scale.x = 0.05
+        # line_strip.header.frame_id = "/map"
+        # line_strip.header.stamp = rospy.Time.now()
+        # line_strip.color.a = 1
+        # line_strip.color.r = 0
+        # line_strip.color.g = 1
+        # line_strip.color.b = 1
+        # line_strip.id = 0
+        # line_strip.action = Marker.ADD
+        #
+        # # Push back all pnts
+        # for pose_stamped in ros_plan:
+        #     line_strip.points.append(pose_stamped.crumb._pose.p)
 
-        # Push back all pnts
-        for pose_stamped in ros_plan:
-            line_strip.points.append(pose_stamped.pose.position)
-
-        self._plan_marker_pub.publish(line_strip)
+        # self._plan_marker_pub.publish(line_strip)
         # self._breadcrumb_pub.publish(buffer_msg)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         # userdata.buffer_follow_out = buffer
@@ -439,9 +456,9 @@ class FollowOperator2(smach.StateMachine):
 
         with self:
                 smach.StateMachine.add('LEARN_OPERATOR', LearnOperator(robot),
-                                       transitions={'follow': 'CON_FOLLOW',
-                                                    'Failed': 'Failed',
-                                                    # 'Aborted': 'Aborted'
+                                       transitions={'done': 'CON_FOLLOW',
+                                                    'failed': 'Failed',
+                                                    'aborted': 'Aborted'
                                                     },
                                        remapping={'operator_learn_in': 'operator', 'operator_learn_out': 'operator'})
 
