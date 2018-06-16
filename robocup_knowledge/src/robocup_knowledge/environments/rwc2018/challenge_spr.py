@@ -60,16 +60,56 @@ for place in common.location_names:
 ##############################################################################
 
 grammar += '''
-Q["action" : "answer", "solution": "Magdeburg"] -> what city are we in
+Q["action" : "answer", "solution": "I think that Justin Trudeau is very handsome"] -> who is the most handsome person in canada
+Q["action" : "answer", "solution": "Canada spans almost 10 million square kilometres and comprises 6 time zones"] -> how many time zones are there in canada
+Q["action" : "answer", "solution": "Yonge Street in Ontario is the longest street in the world"] -> what is the longest street in the world
+Q["action" : "answer", "solution": "Yonge street is almost 2000 kilometres, starting at Lake Ontario and running north to the Minnesota border"] -> how long is yonge street in ontario
+Q["action" : "answer", "solution": "The bear cub was named Winnipeg. It inspired the stories of Winnie the Pooh"] -> what is the name of the bear cub exported from canada to the london zoo in 1915
+Q["action" : "answer", "solution": "It was developed in Ontario at Research In Motions Waterloo offices"] -> where was the blackberry smartphone developed
+Q["action" : "answer", "solution": "The Big Nickel in Sudbury Ontario. It is nine meters in diameter"] -> what is the worlds largest coin
+Q["action" : "answer", "solution": "The first time that the USA invaded Canada was in 1775"] -> in what year was canada invaded by the USA for the first time
+Q["action" : "answer", "solution": "The USA invaded Canada a second time in 1812"] -> what year was canada invaded by the USA for the second time
+Q["action" : "answer", "solution": "Canada does! With 14 Golds at the 2010 Vancouver Winter Olympics"] -> what country holds the record for the most gold medals at the winter olympics
+Q["action" : "answer", "solution": "Sandy Gardiner a journalist of the Ottawa Journal"] -> who coined the term beatlemania
+Q["action" : "answer", "solution": "French explorers misunderstood the local native word Kanata which means village"] -> why is canada named canada
+Q["action" : "answer", "solution": "The Mounted Police was formed in 1873"] -> when was the mounted police formed
+Q["action" : "answer", "solution": "In 1920, when The Mounted Police merged with the Dominion Police"] -> when was the royal canadian mounted police formed
+Q["action" : "answer", "solution": "Today the RCMP has close to 30 thousand members"] -> how big is the RCMP
+Q["action" : "answer", "solution": "Montreal is often called the City of Saints or the City of a Hundred Bell Towers"] -> what else is montreal called
+Q["action" : "answer", "solution": "The Hotel de Glace is in Quebec"] -> where is the hotel de glace located
+Q["action" : "answer", "solution": "The Hotel de Glace requires about 400 tons of ice"] -> how many tons of ice are required to build the hotel de glace
+Q["action" : "answer", "solution": "Every year 12 thousand tons of snow are used for The Hotel de Glace"] -> how many tons of snow are required to build the hotel de glace
+Q["action" : "answer", "solution": "No. Every summer it melts away only to be rebuilt the following winter"] -> can i visit the hotel de glace in summer
+Q["action" : "answer", "solution": "Canadas only desert is British Columbia"] -> where is canadas only desert
+Q["action" : "answer", "solution": "The British Columbia desert is only 15 miles long"] -> how big is canadas only desert
+Q["action" : "answer", "solution": "Leonard Cohen Keanu Reeves and Jim Carrey"] -> name three famous male canadians
+Q["action" : "answer", "solution": "Celine Dion Pamela Anderson and Avril Lavigne"] -> name three famous female canadians
+Q["action" : "answer", "solution": "Comic Sans is based on Dave Gibbons lettering in the Watchmen comic books"] -> what is the origin of the comic sans font
 Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Chewbacca"] -> name the big hairy creature in star wars
-Q["action" : "answer", "solution": "Isaac Asimov"] -> who wrote the three laws of robotics
-Q["action" : "answer", "solution": "The Jetsons"] -> from what series do you know rosie the robot
-Q["action" : "answer", "solution": "The Flintstones"] -> from what series do you know the baby bam bam
-Q["action" : "answer", "solution": "Neo"] -> who is the main character of the matrix
-Q["action" : "answer", "solution": "Peper and HSR"] -> name the two robocupathome standard platforms
-Q["action" : "answer", "solution": "In my SSD"] -> where do you store your memories
-Q["action" : "answer", "solution": "In Eindhoven The Netherlands"] -> where is your team located
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
 
 WHATWHICH -> what | which
 
