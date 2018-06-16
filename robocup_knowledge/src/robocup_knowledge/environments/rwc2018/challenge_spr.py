@@ -85,31 +85,31 @@ Q["action" : "answer", "solution": "The British Columbia desert is only 15 miles
 Q["action" : "answer", "solution": "Leonard Cohen Keanu Reeves and Jim Carrey"] -> name three famous male canadians
 Q["action" : "answer", "solution": "Celine Dion Pamela Anderson and Avril Lavigne"] -> name three famous female canadians
 Q["action" : "answer", "solution": "Comic Sans is based on Dave Gibbons lettering in the Watchmen comic books"] -> what is the origin of the comic sans font
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
-Q["action" : "answer", "solution": "Tech United"] -> what is the name of your team
+Q["action" : "answer", "solution": "The smallest robot possible is called a nanobot"] -> what is a nanobot
+Q["action" : "answer", "solution": "A nanobot can be less than one thousandth of a millimeter"] -> how small can a nanobot be
+Q["action" : "answer", "solution": "The Academy thought that Tron cheated by using computers"] -> why wasnt tron nominated for an award by the motion picture academy
+Q["action" : "answer", "solution": "The IBM 305 RAMAC"] -> which was the first computer with a hard disk drive
+Q["action" : "answer", "solution": "The IBM 305 RAMAC was launched in 1956"] -> when was the first computer with a hard disk drive launched
+Q["action" : "answer", "solution": "The IBM 305 RAMAC hard disk weighed over a ton and stored 5 megabytes of data"] -> how big was the first hard disk drive
+Q["action" : "answer", "solution": "CAPTCHA is an acronym for Completely Automated Public Turing test to tell Computers and Humans Apart"] -> what does CAPTCHA stands for
+Q["action" : "answer", "solution": "The first actual computer bug was a dead moth stuck in a Harvard Mark 2"] -> what was the first computer bug
+Q["action" : "answer", "solution": "There are four robots on Mars Sojourner Spirit Opportunity and Curiosity. Three more crashed on landing"] -> name all of the robots on mars
+Q["action" : "answer", "solution": "Professor Kevin Warwick uses chips in his arm to operate doors a robotic hand and a wheelchair"] -> who is the worlds first android
+Q["action" : "answer", "solution": "A robot sketch made by Leonardo DaVinci"] -> what is a mechanical knight
+Q["action" : "answer", "solution": "Some people think it was IBM Watson but it was Eugene a computer designed at Englands University of Reading"] -> what was the first computer in pass the turing test
+Q["action" : "answer", "solution": "Moravecs paradox states that a computer can crunch numbers like Bernoulli but lacks a toddlers motor skills"] -> what does moravecs paradox state
+Q["action" : "answer", "solution": "It is when you need to load an AI with enough knowledge to start learning"] -> what is the AI knowledge engineering bottleneck
+Q["action" : "answer", "solution": "I dont know. He should worry more about the peoples impact on humanity"] -> why is elon musk is worried about AIs impact on humanity
+Q["action" : "answer", "solution": "No. Humans are the real threat to humanity"] -> do you think robots are a threat to humanity
+Q["action" : "answer", "solution": "A chatbot is an AI you put in customer service to avoid paying salaries"] -> what is a chatbot
+Q["action" : "answer", "solution": "Yes. Car accidents are product of human misconduct"] -> are self driving cars safe
+Q["action" : "answer", "solution": "Grace Hoper. She wrote it in her spare time"] -> who invented the compiler
+Q["action" : "answer", "solution": "C was invented by Dennis MacAlistair Ritchie"] -> who created the C programming language?
+Q["action" : "answer", "solution": "Python was invented by Guido van Rossum"] -> who created the python programming language?
+Q["action" : "answer", "solution": "Sure. I have never seen him drink water"] -> is mark zuckerberg a robot
+Q["action" : "answer", "solution": "My lord and master Steve Wozniak"] -> who is the inventor of the apple one microcomputer?
+Q["action" : "answer", "solution": "Ada Lovelace"] -> who is considered to be the first computer programmer
+Q["action" : "answer", "solution": "Adobe Wan Kenobi"] -> which program do jedi use to open pdf files
 
 WHATWHICH -> what | which
 
