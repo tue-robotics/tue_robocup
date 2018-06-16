@@ -56,7 +56,7 @@ class FindPerson(smach.State):
                       for angle in look_angles]
 
         i = 0
-        while (rospy.Time.now() - start_time).to_sec() < self._lost_timeout:
+        while (rospy.Time.now() - start_time).to_sec() < self._timeout:
             if self.preempt_requested():
                 return 'failed'
 
