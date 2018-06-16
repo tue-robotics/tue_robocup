@@ -307,6 +307,10 @@ class EmptySpotDesignator(Designator):
         self.marker_array = MarkerArray()
 
     def _resolve(self):
+        """
+        :return: Where can an object be placed
+        :returns: FrameStamped
+        """
         place_location = self.place_location_designator.resolve()
         place_frame = FrameStamped(frame=place_location._pose, frame_id="/map")
 
