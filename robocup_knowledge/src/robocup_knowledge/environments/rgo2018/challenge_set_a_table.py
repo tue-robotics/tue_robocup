@@ -7,14 +7,14 @@ initial_pose = "initial_pose"
 starting_pose = "gpsr_meeting_point"
 starting_point = "initial_pose"
 
-cupboard = "kitchen_cabinet"
-cupboard_surface = "on_top_of"
+grasp_furniture_id1 = "couch_table"
+grasp_furniture_id1_area = "on_top_of"
 
-kitchen = "couch_table"
-kitchen_surface = "on_top_of"
+grasp_furniture_id2 = "kitchen_cabinet"
+grasp_furniture_id2_area = "on_top_of"
 
-table = "kitchen_table"
-table_surface = "on_top_of"
+place_furniture_id = "kitchen_table"
+place_furniture_id_area = "on_top_of"
 
 # options = {
 #     "fries": ["fries", "coke", "aquarius", "fork", "spoon", "plate"],

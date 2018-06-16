@@ -11,4 +11,3 @@ from follow_operator import *
 from follow_operator2_0 import FollowOperator2
 from door_opening import *
 from find import Find
-from guide import Guide

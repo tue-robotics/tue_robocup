@@ -14,10 +14,6 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
-from robocup_knowledge import load_knowledge
-
-
-challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
 
 class FindPerson(smach.State):
@@ -31,7 +27,7 @@ class FindPerson(smach.State):
 
         :param robot: robot api object
         :param person_label: (str) person label
-        :param _timeout: (float) maximum time the robot is allowed to search
+        :param lost_timeout: (float) maximum time the robot is allowed to search
         :param look_distance: (float) robot only considers laser entities within this radius
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])

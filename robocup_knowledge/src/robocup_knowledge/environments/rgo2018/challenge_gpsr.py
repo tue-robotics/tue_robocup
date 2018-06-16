@@ -1,8 +1,6 @@
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
-names = ['josha', 'lars', 'janno']
-
 not_understood_sentences = [
         "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
         "I am deeply sorry. Please try again, but wait for the ping!",
@@ -64,7 +62,7 @@ for loc in common.get_locations(pick_location=True, place_location=True):
 for cat in common.object_categories:
     grammar += "\nOBJECT_CATEGORY[{'category': '%s'}] -> %s" % (cat, cat)
 
-for name in names:
+for name in common.names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
 
 grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
@@ -184,7 +182,7 @@ VP[{"action": "follow", "target": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
 grammar += '\nFOLLOW_PERSONS[the person] -> DET person'
 grammar += '\nFOLLOW_PERSONS[the woman] -> DET woman'
 grammar += '\nFOLLOW_PERSONS[the man] -> DET man'
-for name in names:
+for name in common.names:
     grammar += '\nFOLLOW_PERSONS[%s] -> %s' % (name, name)
 
 ###############################################################################
@@ -216,7 +214,7 @@ VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}
 VP[{"action": "hand-over", "target-location": X, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_PERSON[X]
 """
 
-for name in names:
+for name in common.names:
     grammar += '\nBRING_PERSON[{"type": "person", "id": "%s"}] -> %s' % (name, name)
     for loc in common.get_locations():
         grammar += '\nBRING_PERSON[{"type": "person", "id": "%s", "location": %s}] -> %s MANIPULATION_AREA_DESCRIPTION the %s' % (name, loc, name, loc)
@@ -286,7 +284,7 @@ VP[{"action": "navigate-to"}] -> V_GUIDE HIM_HER
 grammar += '\nMEET_PERSON[the person] -> DET person'
 grammar += '\nMEET_PERSON[the woman] -> DET woman'
 grammar += '\nMEET_PERSON[the man] -> DET man'
-for name in names:
+for name in common.names:
     grammar += '\nMEET_PERSON[%s] -> %s' % (name, name)
 
 # FOLLOW PERSON : (PERSON is at the BEACON)

@@ -1,31 +1,31 @@
 # COMMON KNOWLEDGE FILE RGO2018
 
 female_names = ["angie", "mary", "amy", "kimberley", "lisa", "melissa", "michelle", "jennifer", "elizabeth", "julie"]
-male_names = ["brian","michael","christopher","william","john","david","james","robert","scott","richard"]
+male_names = ["brian", "michael", "christopher", "william", "john", "david", "james", "robert", "scott", "richard"]
 names = female_names + male_names
 
 # This dict holds all locations
 locations = [
 
-    { 'name':'bed',             'room':'bedroom',    'category': 'beacon',  'manipulation':'no'  },
-    { 'name':'desk',      	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'bookcase',   	    'room':'bedroom',    'category': 'shelf',   'manipulation':'yes' },
-    { 'name':'side_table',      'room':'bedroom',    'category': 'table',   'manipulation':'yes' },
+    {'name': 'bed',             'room': 'bedroom',    'category': 'beacon',  'manipulation': 'no'},
+    {'name': 'desk',            'room': 'bedroom',    'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'bookcase',        'room': 'bedroom',    'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'side_table',      'room': 'bedroom',    'category': 'table',   'manipulation': 'yes'},
 
-    { 'name':'bar', 		    'room':'kitchen',    'category': 'bar',     'manipulation':'yes' },
-    { 'name':'kitchen_table',   'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'kitchen_cabinet', 'room':'kitchen',    'category': 'table',   'manipulation':'yes' },
-    { 'name':'sink',            'room':'kitchen',    'category': 'table',   'manipulation':'no'  },
+    {'name': 'bar',             'room': 'kitchen',    'category': 'bar',     'manipulation': 'yes'},
+    {'name': 'kitchen_table',   'room': 'kitchen',    'category': 'table',   'manipulation': 'yes'},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',    'category': 'table',   'manipulation': 'yes'},
+    {'name': 'sink',            'room': 'kitchen',    'category': 'table',   'manipulation': 'no'},
 
-    { 'name':'tv_table',       	'room':'living_room', 'category': 'table',  'manipulation':'yes' },
-    { 'name':'cupboard',        'room':'living_room', 'category': 'shelf',  'manipulation':'yes' },
-    { 'name':'couch',           'room':'living_room', 'category': 'seat',   'manipulation':'yes' },
-    { 'name':'couch_table',     'room':'living_room', 'category': 'beacon', 'manipulation':'yes' },
+    {'name': 'tv_table',        'room': 'living_room', 'category': 'table',  'manipulation': 'yes'},
+    {'name': 'cupboard',        'room': 'living_room', 'category': 'shelf',  'manipulation': 'yes'},
+    {'name': 'couch',           'room': 'living_room', 'category': 'seat',   'manipulation': 'yes'},
+    {'name': 'couch_table',     'room': 'living_room', 'category': 'beacon', 'manipulation': 'yes'},
 
-    { 'name':'dining_table',    'room':'dining_room', 'category': 'beacon', 'manipulation':'yes' },
-    { 'name':'cabinet',         'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' },
-    { 'name':'display_case',    'room':'dining_room', 'category': 'table',  'manipulation':'no'  },
-    { 'name':'storage_shelf',   'room':'dining_room', 'category': 'shelf',  'manipulation':'yes' }
+    {'name': 'dining_table',    'room': 'dining_room', 'category': 'beacon', 'manipulation': 'yes'},
+    {'name': 'cabinet',         'room': 'dining_room', 'category': 'shelf',  'manipulation': 'yes'},
+    {'name': 'display_case',    'room': 'dining_room', 'category': 'table',  'manipulation': 'no'},
+    {'name': 'storage_shelf',   'room': 'dining_room', 'category': 'shelf',  'manipulation': 'yes'}
 
 ]
 
@@ -37,38 +37,38 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 rooms = location_rooms + ["workshop"]
 
 objects = [
-    # {'category': 'care',                'name': 'shower_gel',        'color': 'pink'  },
-    # {'category': 'care',                'name': 'soap',              'color': 'white' },
-    # {'category': 'care',                'name': 'toothpaste',        'color': 'green' },
-    # {'category': 'cleaning_stuff',      'name': 'sponge',            'color': 'yellow'},
-    # {'category': 'cleaning_stuff',      'name': 'wiper',             'color': 'yellow'},
-    # {'category': 'container',   	    'name': 'box',               'color': 'yellow'},
-    # {'category': 'container',   	    'name': 'tray',              'color': 'white' },
-    {'category': 'drinks',   	  	    'name': 'beer',              'color': 'yellow' },
-    {'category': 'drinks',   	  	    'name': 'cacao',             'color': 'brown' },
-    {'category': 'drinks',   	  	    'name': 'coke',              'color': 'red'   },
-    {'category': 'drinks',   	  	    'name': 'malz',              'color': 'brown' },
-    {'category': 'drinks',   	  	    'name': 'mixdrink',          'color': 'brown' },
+    {'category': 'care',                'name': 'shower_gel',        'color': 'pink'},
+    {'category': 'care',                'name': 'soap',              'color': 'white'},
+    {'category': 'care',                'name': 'toothpaste',        'color': 'green'},
+    {'category': 'cleaning_stuff',      'name': 'sponge',            'color': 'yellow'},
+    {'category': 'cleaning_stuff',      'name': 'wiper',             'color': 'yellow'},
+    {'category': 'container',   	    'name': 'box',               'color': 'yellow'},
+    {'category': 'container',   	    'name': 'tray',              'color': 'white'},
+    {'category': 'drinks',   	  	    'name': 'beer',              'color': 'yellow'},
+    {'category': 'drinks',   	  	    'name': 'cacao',             'color': 'brown'},
+    {'category': 'drinks',   	  	    'name': 'coke',              'color': 'red'},
+    {'category': 'drinks',   	  	    'name': 'malz',              'color': 'brown'},
+    {'category': 'drinks',   	  	    'name': 'mixdrink',          'color': 'brown'},
     {'category': 'drinks',   	  	    'name': 'orange_juice',      'color': 'orange'},
-    {'category': 'drinks',   	  	    'name': 'peppermint_tea',   'color': 'green' },
+    {'category': 'drinks',   	  	    'name': 'peppermint_tea',    'color': 'green'},
     {'category': 'drinks',   	  	    'name': 'water',      	     'color': 'transparent'},
-    # {'category': 'snacks',   	  	    'name': 'cookies',           'color': 'blue'  },
-    # {'category': 'snacks',   	  	    'name': 'fruit_bar',         'color': 'green' },
-    # {'category': 'snacks',   	  	    'name': 'kinder',            'color': 'white' },
-    # {'category': 'snacks',   	  	    'name': 'nuts',              'color': 'yellow'},
-    # {'category': 'food',                'name': 'apple',             'color': 'green' },
-    # {'category': 'food',                'name': 'green_paprika',     'color': 'green' },
-    # {'category': 'food',                'name': 'kiwi',              'color': 'brown' },
-    # {'category': 'food',                'name': 'lemon',             'color': 'yellow'},
-    # {'category': 'food',                'name': 'noodles',           'color': 'yellow'},
-    # {'category': 'food',                'name': 'pepper',            'color': 'brown' },
-    # {'category': 'food',                'name': 'salt',              'color': 'salt'  },
-    # {'category': 'food',                'name': 'tomato',            'color': 'red'   },
-    # {'category': 'kitchen_stuff',       'name': 'fork',              'color': 'green' },
-    # {'category': 'kitchen_stuff',       'name': 'spoon',             'color': 'green' },
-    # {'category': 'kitchen_stuff',       'name': 'knife',             'color': 'green' },
-    # {'category': 'kitchen_stuff',       'name': 'plate',             'color': 'green' },
-    # {'category': 'kitchen_stuff',       'name': 'cup',               'color': 'green' }
+    {'category': 'snacks',   	  	    'name': 'cookies',           'color': 'blue'},
+    {'category': 'snacks',   	  	    'name': 'fruit_bar',         'color': 'green'},
+    {'category': 'snacks',   	  	    'name': 'kinder',            'color': 'white'},
+    {'category': 'snacks',   	  	    'name': 'nuts',              'color': 'yellow'},
+    {'category': 'food',                'name': 'apple',             'color': 'green'},
+    {'category': 'food',                'name': 'green_paprika',     'color': 'green'},
+    {'category': 'food',                'name': 'kiwi',              'color': 'brown'},
+    {'category': 'food',                'name': 'lemon',             'color': 'yellow'},
+    {'category': 'food',                'name': 'noodles',           'color': 'yellow'},
+    {'category': 'food',                'name': 'pepper',            'color': 'brown'},
+    {'category': 'food',                'name': 'salt',              'color': 'salt'},
+    {'category': 'food',                'name': 'tomato',            'color': 'red'},
+    {'category': 'kitchen_stuff',       'name': 'fork',              'color': 'green'},
+    {'category': 'kitchen_stuff',       'name': 'spoon',             'color': 'green'},
+    {'category': 'kitchen_stuff',       'name': 'knife',             'color': 'green'},
+    {'category': 'kitchen_stuff',       'name': 'plate',             'color': 'green'},
+    {'category': 'kitchen_stuff',       'name': 'cup',               'color': 'green'}
 
 
 ]
