@@ -1,10 +1,14 @@
 #!/usr/bin/python
 
+# System
+import random
+import traceback
+
+# ROS
 import rospy
 import smach
-import sys
-import random
 
+# TU/e Robotics
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from hmi import TimeoutException
@@ -83,6 +87,7 @@ def answer(robot, res, crowd_data):
     Robot answers the heard question
 
     Arguments:
+        robot: robot api object
         res: question or None
         crowd_data: data about the crowd
 
@@ -127,7 +132,7 @@ def answer(robot, res, crowd_data):
                 ans = func(action)              
 
         except Exception as e:
-            rospy.logerr(e)
+            rospy.logerr(traceback.format_exc())
             robot.speech.speak("Whoops")
 
     if ans is None:
@@ -176,22 +181,41 @@ def answer_placement_location(action):
 
 def answer_count_placement(action):
     entity = action['entity']
+    location = action['location']
+
     locations = [loc for loc in common_knowledge.locations if loc['name'] == entity]
-    if len(locations) == 1:
-        room = locations[0]['room']
-        if loc == action['location']:
-            return 'There is one %s in the %s' % (entity, room)
-        else:
-            return 'There are no %s in the %s' % (entity, room)
-    else:
+    if not locations:
         return 'I should count but I dont know that object %s' % entity
+
+    locations = [loc for loc in locations if loc['room'] == location]
+    if not locations:
+        return 'There are no %s in the %s' % (entity, location)
+    elif len(locations) == 1:
+        return 'There is one %s in the %s' % (entity, location)
+    else:
+        return 'There are %d %s in the %s' % (len(locations), entity, location)
+
+
+def answer_count_objects_placement(action):
+    entity = action['entity']
+    location = action['location']
+
+    objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
+    if not objects:
+        return "I should count but I don't know that object %s" % entity
+
+    if objects[0]["category"] in common_knowledge.category_locations:
+        (found_location, area_name) = common_knowledge.get_object_category_location(objects[0]["category"])
+        if found_location == location:
+            return 'There is one %s in the %s' % (entity, location)
+    return 'There are no %s in the %s' % (entity, location)
+
 
 def answer_find_objects(action):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         cat = objects[0]['category']
-        print cat
         loc, area_name = common_knowledge.get_object_category_location(cat)
         return 'You can find the %s %s %s' % (entity, area_name, loc)
     else:
@@ -292,7 +316,7 @@ def answer_count_objects_in_category(action):
 
 class TestRiddleGame(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         self.userdata.crowd_data = {
             "males": 3,
@@ -316,7 +340,8 @@ class TestRiddleGame(smach.StateMachine):
             smach.StateMachine.add("RIDDLE_GAME",
                                    HearAndAnswerQuestions(robot, num_questions=3),
                                    transitions={'done': 'Done'},
-                                   remapping={'crowd_data':'crowd_data'})
+                                   remapping={'crowd_data': 'crowd_data'})
+
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
