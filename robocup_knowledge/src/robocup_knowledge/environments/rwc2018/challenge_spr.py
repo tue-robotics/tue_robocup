@@ -113,23 +113,18 @@ Q["action" : "answer", "solution": "Adobe Wan Kenobi"] -> which program do jedi 
 
 WHATWHICH -> what | which
 
-Q["action" : "answer", "solution": "basket"] -> WHATWHICH is the biggest object
-Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest object
+Q["action" : "answer", "solution": "tray"] -> WHATWHICH is the biggest object
+Q["action" : "answer", "solution": "scrubby"] -> WHATWHICH is the smallest object
 Q["action" : "answer", "solution": "pringles"] -> WHATWHICH is the biggest food
 Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest food
-Q["action" : "answer", "solution": "basket"] -> WHATWHICH is the biggest container
-Q["action" : "answer", "solution": "coffecup"] -> WHATWHICH is the smallest container
-Q["action" : "answer", "solution": "water"] -> WHATWHICH is the biggest drink
-Q["action" : "answer", "solution": "orange drink"] -> WHATWHICH is the smallest drink
-Q["action" : "answer", "solution": "paper"] -> WHATWHICH is the biggest cleaning stuff
-Q["action" : "answer", "solution": "sponge"] -> WHATWHICH is the smallest cleaning stuff
-Q["action" : "answer", "solution": "knife"] -> WHATWHICH is the biggest cutlery
-Q["action" : "answer", "solution": "fork"] -> WHATWHICH is the smallest cutlery
+Q["action" : "answer", "solution": "orange and grape juice"] -> WHATWHICH is the biggest drink
+Q["action" : "answer", "solution": "coke and sprite"] -> WHATWHICH is the smallest drink
 
-Q["action" : "answer", "solution": "the bedroom has two doors"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "in the dining room there are no doors"] -> how many doors has the diningroom
 Q["action" : "answer", "solution": "the living room has two doors"] -> how many doors has the livingroom
-Q["action" : "answer", "solution": "the kitchen has one door"] -> how many doors has the kitchen
-Q["action" : "answer", "solution": "in the workshop there are no doors"] -> how many doors has the workshop
+Q["action" : "answer", "solution": "the bedroom has two doors"] -> how many doors has the bedroom
+Q["action" : "answer", "solution": "the kitchen has only one door"] -> how many doors has the kitchen
+Q["action" : "answer", "solution": "the corridor has only one door"] -> how many doors has the corridor
 '''
 
 ##############################################################################
