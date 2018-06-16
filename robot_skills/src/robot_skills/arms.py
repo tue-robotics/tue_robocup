@@ -14,8 +14,10 @@ from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
 from robot_part import RobotPart
+from util.entity import Entity
 
 # If the grasp sensor distance is smaller than this value, the gripper is holding an object
+
 GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
 GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
 GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.02, 0.18]))
@@ -119,7 +121,7 @@ class Arm(RobotPart):
     #To open left gripper
     >>> left.send_gripper_goal_open(10)
     """
-    def __init__(self, robot_name, tf_listener, side):
+    def __init__(self, robot_name, tf_listener, side, world_model):
         """
         constructor
         :param robot_name: robot_name
@@ -133,7 +135,10 @@ class Arm(RobotPart):
         else:
             raise Exception("Side should be either: left or right")
 
-        self._occupied_by = None
+        self._world_model = world_model
+
+        self.__occupied_by_param = self.robot_name + '/' + self.side + '/occupied_by'
+
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
@@ -340,7 +345,12 @@ class Arm(RobotPart):
         The 'occupied_by' property will return the current entity that is in the gripper of this arm.
         :return: robot_skills.util.entity, ED entity
         """
-        return self._occupied_by
+        occupied_by = rospy.get_param(self.__occupied_by_param, 'unoccupied')
+        if occupied_by != "unoccupied":
+            entity = self._world_model.get_entity(id=occupied_by)
+            return entity
+        else:
+            return None
 
     @occupied_by.setter
     def occupied_by(self, value):
@@ -349,7 +359,11 @@ class Arm(RobotPart):
         :param value: robot_skills.util.entity, ED entity
         :return: no return
         """
-        self._occupied_by = value
+        if value:
+            assert isinstance(value, Entity)
+            rospy.set_param(self.__occupied_by_param, value.id)
+        else:
+            rospy.set_param(self.__occupied_by_param, "unoccupied")
 
     def send_gripper_goal(self, state, timeout=5.0):
         """
