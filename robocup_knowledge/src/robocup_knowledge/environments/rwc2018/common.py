@@ -31,28 +31,28 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-rooms = location_rooms + ["workshop"]
+rooms = location_rooms
 
 objects = [
-    {'category': 'cleaning_stuff',      'name': 'cloth',            'color': 'purple',      'volume': 315,      'weight': 100},
-    {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellow',      'volume': 161,      'weight': 100},
-    {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'pink',        'volume': 314,      'weight': 100},
-    {'category': 'container',           'name': 'basket',           'color': 'green',       'volume': 3487,     'weight': 100},
-    {'category': 'container',           'name': 'tray',             'color': 'blue',        'volume': 617,      'weight': 100},
-    {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brown',       'volume': 388,      'weight': 100},
-    {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 376,      'weight': 335},
-    {'category': 'drink',               'name': 'grape_juice',      'color': 'blue',        'volume': 378,      'weight': 100},
-    {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 376,      'weight': 335},
-    {'category': 'drink',               'name': 'sprite',           'color': 'yellow',      'volume': 376,      'weight': 335},
-    {'category': 'food',                'name': 'cereal',           'color': 'green',       'volume': 301,      'weight': 100},  
-    {'category': 'food',                'name': 'noodles',          'color': 'yellow',      'volume': 320,      'weight': 100},
-    {'category': 'food',                'name': 'sausages',         'color': 'red',         'volume': 254,      'weight': 100},
-    {'category': 'fruit',               'name': 'apple',            'color': 'green',       'volume': 1485,     'weight': 100},
-    {'category': 'fruit',               'name': 'orange',           'color': 'orange',      'volume': 352,      'weight': 100},
-    {'category': 'fruit',               'name': 'paprika',          'color': 'yellow',      'volume': 240,      'weight': 100},
-    {'category': 'snack',               'name': 'crackers',         'color': 'blueish',     'volume': 300,      'weight': 100},
-    {'category': 'snack',               'name': 'potato_chips',     'color': 'green',       'volume': 239,      'weight': 100},
-    {'category': 'snack',               'name': 'pringles',         'color': 'black',       'volume': 1125,     'weight': 100}
+    {'category': 'cleaning_stuff',      'name': 'cloth',            'color': 'purple',      'volume': 315,      'weight': 37},
+    {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 161,      'weight': 22},
+    {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 314,      'weight': 15},
+    {'category': 'container',           'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
+    {'category': 'container',           'name': 'tray',             'color': 'white',       'volume': 617,      'weight': 65},
+    {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brownish',    'volume': 388,      'weight': 325},
+    {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 376,      'weight': 330},
+    {'category': 'drink',               'name': 'grape_juice',      'color': 'purplish',    'volume': 378,      'weight': 200},
+    {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 376,      'weight': 200},
+    {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 376,      'weight': 330},
+    {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 301,      'weight': 21},  
+    {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 320,      'weight': 85},
+    {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 254,      'weight': 113},
+    {'category': 'fruit',               'name': 'apple',            'color': 'greenred',    'volume': 1485,     'weight': 85},
+    {'category': 'fruit',               'name': 'orange',           'color': 'orange',      'volume': 352,      'weight': 140},
+    {'category': 'fruit',               'name': 'paprika',          'color': 'red',         'volume': 240,      'weight': 90},
+    {'category': 'snack',               'name': 'crackers',         'color': 'orange',      'volume': 300,      'weight': 28},
+    {'category': 'snack',               'name': 'potato_chips',     'color': 'black',       'volume': 239,      'weight': 200},
+    {'category': 'snack',               'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
