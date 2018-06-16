@@ -41,13 +41,17 @@ class Robot(object):
         self.robot_name = robot_name
         self.tf_listener = tf.TransformListener()
 
-        # Body parts
         self.parts = dict()
+
+        # Reasoning/world modeling
+        self.parts['ed'] = world_model_ed.ED(self.robot_name, self.tf_listener)
+
+        # Body parts
         self.parts['base'] = base.Base(self.robot_name, self.tf_listener)
         self.parts['torso'] = torso.Torso(self.robot_name, self.tf_listener)
 
-        self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
-        self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
+        self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left", world_model=self.parts['ed'])
+        self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right", world_model=self.parts['ed'])
 
         self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
         self.parts['perception'] = perception.Perception(self.robot_name, self.tf_listener)
@@ -66,9 +70,6 @@ class Robot(object):
                                        lambda: self.lights.set_color_colorRGBA(lights.RESET))
 
         self.parts['ebutton'] = ebutton.EButton(self.robot_name, self.tf_listener)
-
-        # Reasoning/world modeling
-        self.parts['ed'] = world_model_ed.ED(self.robot_name, self.tf_listener)
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
