@@ -23,7 +23,7 @@ DET -> a | an
 
 # Add drinks
 for d in common.objects:
-    if d["category"] == "drinks":
+    if d["category"] == "drink":
         order_grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
     elif d["category"] == "food":
         order_grammar += "\nFOOD['{}'] -> {}".format(d["name"], d["name"].replace('_', ' '))
