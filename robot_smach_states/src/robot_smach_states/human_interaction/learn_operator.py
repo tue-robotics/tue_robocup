@@ -63,7 +63,7 @@ class LearnOperator(smach.State):
                 self._robot.head.look_at_standing_person()
                 learn_person_start_time = rospy.Time.now()
                 num_detections = 0
-                while num_detections < 1: # 5:
+                while num_detections < 5: # 5:
                     if self._robot.perception.learn_person(self._operator_name):
                         rospy.loginfo("Successfully detected you %i times" % (num_detections + 1))
                         num_detections += 1
@@ -73,6 +73,7 @@ class LearnOperator(smach.State):
                         break
             r.sleep()
         rospy.loginfo("We have a new operator: %s" % operator.id)
+        self._robot.speech.speak("Who is that handsome person? Oah it is you!")
         self._robot.head.close()
         userdata.operator_learn_out = operator
         return 'done'
