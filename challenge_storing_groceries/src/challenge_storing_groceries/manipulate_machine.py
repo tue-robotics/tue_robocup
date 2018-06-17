@@ -80,16 +80,22 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
     """Find a FrameStamped where to place an object if a class 'A' besides another object of class 'A'
     """
 
-    def __init__(self, robot, entity_to_place_designator, place_location_designator, areas=None, name=None):
+    def __init__(self, robot, entity_to_place_designator, place_location_designator, areas=None, name=None, debug=False):
         super(PlaceWithAlikeObjectDesignator, self).__init__(robot, place_location_designator, name)
 
+        self.entity_to_place_designator = entity_to_place_designator
         self.areas = areas
+
+        self._debug = debug
 
     def _resolve(self):
         """
         :return: Where can an object be placed to put it besides an object of the same type
         :returns: FrameStamped
         """
+        if self._debug:
+            import ipdb; ipdb.set_trace()
+
         entity_to_place = self.entity_to_place_designator.resolve()
         assert isinstance(entity_to_place, Entity)
 
