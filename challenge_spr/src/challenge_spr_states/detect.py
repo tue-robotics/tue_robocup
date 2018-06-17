@@ -69,7 +69,7 @@ class DetectCrowd(smach.State):
         if best_image:  # at least one face detected
             faces = img_cutout(best_image, img_recognitions_to_rois(best_detection))
 
-            rospy.loginfo('Calling Skybiometry...')
+            rospy.loginfo('Processing faces...')
             return self.robot.perception.get_face_properties(faces=faces)
         else:
             rospy.logerr("No faces detected during all {} tries".format(tries))
