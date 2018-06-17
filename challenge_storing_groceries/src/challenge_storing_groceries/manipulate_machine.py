@@ -1,5 +1,6 @@
 # system
 import math
+import numpy as np
 
 # ROS
 import rospy
@@ -11,7 +12,7 @@ import robot_skills
 from robot_skills.util.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills.util.kdl_conversions import FrameStamped
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_stamped_from_XYZRPY
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
@@ -102,7 +103,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
 
         rospy.loginfo("The grasped entity is a '{}'".format(entity_to_place.type))
 
-        all_entities = self.robot.ed.get_entities()  # type: List[Entity]
+        all_entities = self.robot.ed.get_entities(parse=False)  # type: List[Entity]
         place_location = self.place_location_designator.resolve()
         entities_inside_placement = []
         for area in self.areas:
@@ -135,7 +136,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
             return best_placement
         else:
             rospy.logwarn("Could not find an entity we could place besides so just placing somewhere")
-            return super(PlaceWithAlikeObjectDesignator, self).resolve()
+            return super(PlaceWithAlikeObjectDesignator, self)._resolve()
 
     def _same_class(self, entity_a, entity_b):
         if entity_a.type == entity_b.type:
@@ -146,7 +147,23 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
             return False
 
     def _generate_placements_beside(self, entity):
-        return [entity.pose]
+        placements = self._generate_around(entity.pose, 0.15, 8)
+
+        # TODO: This is an ugly hack to make select_best_feasible_poi work, because super().determine_points_of_interest() also does this.
+        for placement in placements:
+            setattr(placement, 'edge_score', 0)
+        return placements
+
+    @staticmethod
+    def _generate_around(framestamped, radius, n):
+        angles = np.linspace(0, 2 * np.pi, n)
+        vector = framestamped.extractVectorStamped().vector
+        x, y, z = vector.x(), vector.y(), vector.z()
+        xs = np.cos(angles) + x
+        ys = np.sin(angles) + y
+        frame_stampeds = [kdl_frame_stamped_from_XYZRPY(xi, yi, z, 0, 0, 0, frame_id=framestamped.frame_id) for
+                                   xi, yi in zip(xs, ys)]
+        return frame_stampeds
 
 
 class GrabSingleItem(smach.StateMachine):
