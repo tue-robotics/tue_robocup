@@ -325,13 +325,13 @@ class EmptySpotDesignator(Designator):
 
         open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
 
+        return self.select_best_feasible_poi(open_POIs)
+
+    def select_best_feasible_poi(self, open_POIs):
         # List with tuples containing both the POI and the distance the
         # robot needs to travel in order to place there
         open_POIs_dist = [(poi, self.distance_to_poi_area(poi)) for poi in open_POIs]
 
-        return self.select_best_feasible_poi(open_POIs_dist)
-
-    def select_best_feasible_poi(self, open_POIs_dist):
         # Feasible POIS: discard
         feasible_POIs = []
         for tup in open_POIs_dist:
