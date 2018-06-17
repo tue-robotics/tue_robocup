@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import math
+from Queue import Queue, Empty
 
 import PyKDL as kdl
 import rospy
@@ -23,10 +24,13 @@ class WaitForCustomer(smach.State):
         self._robot = robot
         self._caller_id = caller_id
         self._kitchen_designator = kitchen_designator
-        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb)
-        self.rate = 10
-        self.head_samples = 20
-        self.people_received = People()
+        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
+        self.people_queue = Queue(maxsize=1)
+
+    def people_cb(self, persons):
+        if persons.people:
+            rospy.logdebug('Received %d persons in the people cb', len(persons.people))
+        self.people_queue.put(persons)
 
     def execute(self, userdata=None):
         """ Does the actual work
@@ -36,34 +40,35 @@ class WaitForCustomer(smach.State):
         """
 
         self._robot.head.reset()
-        rospy.sleep(1)
+        self._robot.head.wait_for_motion_done()
 
         self._robot.speech.speak("I'm waiting for a waving person")
+
+        head_samples = 20
+        look_distance = 3.0
+        look_angles = [0,
+                       0,
+                       0,
+                       10,
+                       -10,
+                       20,
+                       -20]
+
+        self.clear_queue()
+
         waving_persons = []
-
-        look_distance = 3.0  # ToDo: magic number
-        look_angles = [0.0,  # ToDo: magic number
-                       math.pi / 6,
-                       math.pi / 4,
-                       math.pi / 2.3,
-                       0.0,
-                       -math.pi / 6,
-                       -math.pi / 4,
-                       -math.pi / 2.3]
-        head_goals = [VectorStamped(x=look_distance * math.cos(angle),
-                                    y=look_distance * math.sin(angle), z=1.3,
-                                    frame_id="/%s/base_link" % self._robot.robot_name) for angle in look_angles]
-
         i = 0
         while not rospy.is_shutdown() and not waving_persons:
-            self._robot.head.look_at_point(head_goals[int(math.floor((i/self.head_samples))) % len(head_goals)])
-            self._robot.head.wait_for_motion_done()
-            i = i + 1
+            waving_persons = self.wait_for_waving_person(head_samples=head_samples)
 
-            rospy.sleep(1/self.rate)
-            for person in self.people_received.people:
-                if {'RWave', 'LWave'}.intersection(set(person.tags)):
-                    waving_persons.append(person)
+            angle = look_angles[i % len(look_angles)]
+            rospy.loginfo('Still waiting... looking at %d degrees', angle)
+            angle = math.radians(angle)
+            head_goal = VectorStamped(x=look_distance * math.cos(angle),
+                                      y=look_distance * math.sin(angle), z=1.3,
+                                      frame_id="/%s/base_link" % self._robot.robot_name)
+            self._robot.head.look_at_point(head_goal)
+            i += 1
 
         if not waving_persons:
             return 'aborted'
@@ -92,8 +97,40 @@ class WaitForCustomer(smach.State):
 
         return 'succeeded'
 
-    def people_cb(self, persons):
-        self.people_received = persons
+    def clear_queue(self):
+        while True:
+            try:
+                self.people_queue.get_nowait()
+            except Empty:
+                # There is probably an old measurement blocking in the callback thread, also remove that one
+                self.people_queue.get()
+                return
+
+    def wait_for_waving_person(self, head_samples):
+        waving_persons = []
+        for i in range(0, head_samples):
+            if rospy.is_shutdown():
+                return
+
+            people_received = self.wait_for_cb()
+            rospy.logdebug('Got sample %d with seq %s', i, people_received.header.seq)
+            for person in people_received.people:
+                if {'RWave', 'LWave'}.intersection(set(person.tags)):
+                    waving_persons.append(person)
+
+            if waving_persons:
+                break
+        return waving_persons
+
+    def wait_for_cb(self):
+        timeout = 1
+
+        people_received = People()
+        while not rospy.is_shutdown() and not people_received.people:
+            try:
+                return self.people_queue.get(timeout=timeout)
+            except Empty:
+                rospy.logwarn('No people message received within %d seconds', timeout)
 
 
 class WaitForClickedCustomer(smach.State):
