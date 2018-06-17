@@ -18,6 +18,7 @@ from entity_description_designator import EntityDescriptionDesignator
 # from config import TABLE, GRAB_SURFACE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA, CABINET
 from config import GRAB_SURFACE
 from config import MIN_GRAB_OBJECT_HEIGHT, MAX_GRAB_OBJECT_WIDTH
+from inspect_shelves import InspectShelves
 
 
 class DefaultGrabDesignator(ds.Designator):
@@ -331,9 +332,17 @@ class ManipulateMachine(smach.StateMachine):
                                    states.NavigateToSymbolic(robot,
                                                              {self.cabinet: "in_front_of"},
                                                              self.cabinet),
-                                   transitions={'arrived': 'PLACE_ITEM_1',
-                                                'unreachable': 'PLACE_ITEM_1',
-                                                'goal_not_defined': 'PLACE_ITEM_1'})
+                                   transitions={'arrived': 'INSPECT_SHELVES',
+                                                'unreachable': 'INSPECT_SHELVES',
+                                                'goal_not_defined': 'INSPECT_SHELVES'})
+
+            smach.StateMachine.add("INSPECT_SHELVES",
+                                   InspectShelves(robot, self.cabinet),
+                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
+                                                'nothing_found': 'WRITE_PDF_SHELVES',
+                                                'failed': 'WRITE_PDF_SHELVES'})
+
+            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "PLACE_ITEM_1"})
 
             smach.StateMachine.add("PLACE_ITEM_1", self.placeaction1,
                                    transitions={"succeeded": "UNLOCK_ITEM_1_SUCCEED",

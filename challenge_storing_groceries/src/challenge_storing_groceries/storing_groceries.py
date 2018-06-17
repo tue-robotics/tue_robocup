@@ -13,7 +13,6 @@ from robot_smach_states.util.geometry_helpers import *
 
 # Challenge storing groceries
 from config import *
-from inspect_shelves import InspectShelves
 from manipulate_machine import ManipulateMachine
 from pdf import WritePdf
 
