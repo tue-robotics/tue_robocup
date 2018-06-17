@@ -16,6 +16,7 @@ from robot_smach_states.util.startup import startup
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.image_operations import img_recognitions_to_rois, img_cutout
 from robocup_knowledge import load_knowledge
+from tue_msgs.msg import People
 
 timeout = 10
 
@@ -27,6 +28,7 @@ class DetectCrowd(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['crowd_data'])
         self.robot = robot
+        self.people_received = People()
 
     def execute(self, userdata=None):
         tries = 3
@@ -83,6 +85,11 @@ class DetectCrowd(smach.State):
         :return: crowd properties
         :rtype: dict
         """
+        waving_persons = []
+        laying_persons = []
+        sitting_persons = []
+        lpointing_persons = []
+        rpointing_persons = []
         num_males = 0
         num_females = 0
         num_women = 0
@@ -90,6 +97,29 @@ class DetectCrowd(smach.State):
         num_men = 0
         num_boys = 0
         num_elders = 0
+        num_waving = 0
+        num_lpointing = 0
+        num_rpointing = 0
+        num_laying = 0
+        num_sitting = 0
+
+        for person in self.people_received.people:
+                if {'RWave', 'LWave'}.intersection(set(person.tags)):
+                    waving_persons.append(person)
+                elif {'RPointing'}.intersection(set(person.tags)):
+                    rpointing_persons.append(person)
+                elif {'LPointing'}.intersection(set(person.tags)):
+                    lpointing_persons.append(person)
+                elif {'RLaying', 'LLaying'}.intersection(set(person.tags)):
+                    laying_persons.append(person)
+                elif {'RSitting', 'LSitting'}.intersection(set(person.tags)):
+                    sitting_persons.append(person)
+
+        num_waving = len(waving_persons)
+        num_lpointing = len(lpointing_persons)
+        num_rpointing = len(rpointing_persons)
+        num_laying = len(laying_persons)
+        num_sitting = len(sitting_persons)
 
         if not all(detections):
             rospy.loginfo('making a random guess for %d people', len(detections))
@@ -130,7 +160,12 @@ class DetectCrowd(smach.State):
             "children": num_boys + num_girls,
             "adults": num_men + num_women,
             "elders": num_elders,
-            "crowd_size": num_females + num_males + num_elders
+            "crowd_size": num_females + num_males + num_elders,
+            "waiving": num_waving,
+            "pointing_left": num_lpointing,
+            "pointing_right": num_rpointing,
+            "laying": num_laying,
+            "sitting": num_sitting
         }
 
 

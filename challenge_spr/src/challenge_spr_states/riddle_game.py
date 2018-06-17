@@ -108,7 +108,7 @@ def answer(robot, res, crowd_data):
 
     assignments = {'random_gender':     answer_random_gender,
                    'answer':            answer_predefined_questions,
-                   'count':             answer_count_people,
+                   'count':             answer_crowd_questions,
                    'find_placement':    answer_placement_location,
                    'count_placement':   answer_count_placement,
                    'find_object':       answer_find_objects,
