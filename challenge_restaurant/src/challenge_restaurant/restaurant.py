@@ -5,7 +5,7 @@ import robot_smach_states as states
 import smach
 
 from store_waypoint import StoreWaypoint
-from take_orders import TakeOrder, ReciteOrders
+from take_orders import TakeOrder, ReciteOrders, ClearOrders
 from wait_for_customer import WaitForCustomer, AskTakeTheOrder
 
 
@@ -112,7 +112,11 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('RECITE_ORDER',
                                    ReciteOrders(robot=robot, orders=orders),
-                                   transitions={'spoken': 'SAY_CANNOT_GRASP'})
+                                   transitions={'spoken': 'CLEAR_ORDER'})
+
+            smach.StateMachine.add('CLEAR_ORDER',
+                                   ClearOrders(orders=orders),
+                                   transitions={'succeeded': 'SAY_CANNOT_GRASP'})
 
             smach.StateMachine.add('SAY_CANNOT_GRASP',
                                    states.Say(robot, "I am unable to grasp my own order,"
