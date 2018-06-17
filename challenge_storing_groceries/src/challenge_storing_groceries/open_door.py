@@ -78,8 +78,6 @@ class OpenDoor(smach.State):
         self._rate = rospy.Rate(10)
         self._goal_position_tolerance = 0.01
         self._goal_rotation_tolerance = 0.1
-        self._position_gain = 1.0
-        self._rotation_gain = 1.0
 
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
@@ -94,7 +92,7 @@ class OpenDoor(smach.State):
     def _goal_reached(self, dx, dy, dyaw):
         return math.hypot(dx, dy) < self._goal_position_tolerance and abs(dyaw) < self._goal_rotation_tolerance
 
-    def _control_to_pose(self, goal_pose):
+    def _control_to_pose(self, goal_pose, position_gain, rotation_gain, abs_vx, abs_vy, abs_vyaw):
         if self._goal_reached(*self._get_target_delta_in_robot_frame(goal_pose)):
             rospy.loginfo("We are already there")
             return
@@ -110,23 +108,41 @@ class OpenDoor(smach.State):
 
             self._cmd_vel_publisher.publish(Twist(
                 linear=Vector3(
-                    x=_clamp(0.5, self._position_gain * dx),
-                    y=_clamp(0.5, self._position_gain * dy)
+                    x=_clamp(abs_vx, position_gain * dx),
+                    y=_clamp(abs_vy, position_gain * dy)
                 ),
-                angular=Vector3(z=_clamp(0.5, self._rotation_gain * dyaw))
+                angular=Vector3(z=_clamp(abs_vyaw, rotation_gain * dyaw))
             ))
 
             self._rate.sleep()
 
         rospy.loginfo("Goal reached")
 
-    def execute(self, userdata=None):
+    def _align_with_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet_id
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-        goal_pose.pose.position.x = 0.6
-        self._control_to_pose(goal_pose)
+        goal_pose.pose.position.x = 0.5
+        self._control_to_pose(goal_pose, 1.0, 1.0, 0.5, 0.5, 0.5)
+
+    def _move_arm_in_cabinet(self):
+        self.robot.leftArm._send_joint_trajectory([[-0.101, 0.119, 0.200, 1.363, 0.230, 0.688, 0.280]])
+        self.robot.leftArm._send_joint_trajectory([[-0.574, 0.802, 0.691, 1.021, 0.750, 0.535, 0.378]])
+        self.robot.leftArm._send_joint_trajectory([[-0.042, 0.720, 0.846, 1.039, 0.849, 0.534, 0.377]])
+
+    def _drive_to_open_cabinet(self):
+        goal_pose = PoseStamped()
+        goal_pose.header.stamp = rospy.Time.now()
+        goal_pose.header.frame_id = self.cabinet_id
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.5))
+        goal_pose.pose.position.x = 0.8
+        self._control_to_pose(goal_pose, 1.0, 1.0, 0.05, 0.05, 0.05)
+
+    def execute(self, userdata=None):
+        self._align_with_cabinet()
+        self._move_arm_in_cabinet()
+        self._drive_to_open_cabinet()
 
         return 'succeeded'
 
@@ -160,6 +176,8 @@ if __name__ == '__main__':
 
     robot = Amigo()
     robot.ed.reset()
+    robot.leftArm.reset()
+    robot.torso.reset()
 
     # Nothing at shelf 6 but we are only interest in update of the pose
     sm = OpenDoorMachine(robot, 'cupboard', 'in_front_of', 'shelf6')
