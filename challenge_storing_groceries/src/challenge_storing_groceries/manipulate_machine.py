@@ -144,6 +144,9 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         else:
             return False
 
+    def _generate_placements_beside(self, entity):
+        return [entity.pose]
+
 
 class GrabSingleItem(smach.StateMachine):
     """ Lock an object, announce it and grab it """
