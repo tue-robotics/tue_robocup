@@ -6,6 +6,7 @@ male_names = ["alex", "charlie", "francis", "james", "john", "michael", "robert"
 names = female_names + male_names
 
 # This dict holds all locations
+# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 locations = [
     {'name': 'couch_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
     {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
@@ -40,21 +41,21 @@ objects = [
 
     {'category': 'container',           'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
     {'category': 'container',           'name': 'tray',             'color': 'white',       'volume': 617,      'weight': 65},
-    
+
     {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brownish',    'volume': 388,      'weight': 325},
     {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 376,      'weight': 330},
     {'category': 'drink',               'name': 'grape_juice',      'color': 'purplish',    'volume': 378,      'weight': 200},
     {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 376,      'weight': 200},
     {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 376,      'weight': 330},
-    
-    {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 301,      'weight': 21},  
+
+    {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 301,      'weight': 21},
     {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 320,      'weight': 85},
     {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 254,      'weight': 113},
-    
+
     {'category': 'fruit',               'name': 'apple',            'color': 'greenred',    'volume': 1485,     'weight': 85},
     {'category': 'fruit',               'name': 'orange',           'color': 'orange',      'volume': 352,      'weight': 140},
     {'category': 'fruit',               'name': 'paprika',          'color': 'red',         'volume': 240,      'weight': 90},
-    
+
     {'category': 'snack',               'name': 'crackers',         'color': 'orange',      'volume': 300,      'weight': 28},
     {'category': 'snack',               'name': 'potato_chips',     'color': 'black',       'volume': 239,      'weight': 200},
     {'category': 'snack',               'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156}
@@ -68,6 +69,7 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
+# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 category_locations = {
     "food": {"bookcase": "on_top_of"},
     "container": {"flight_case": "in"},
@@ -76,6 +78,7 @@ category_locations = {
     "cutlery": {"bar": "on_top_of"}
 }
 
+# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 inspect_areas = {
     "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
 }
@@ -85,6 +88,7 @@ inspect_positions = {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 most_probable_location_in_room_map = {
     'livingroom': 'dinner_table',
     'bedroom': 'nightstand',
