@@ -6,25 +6,22 @@ male_names = ["alex", "charlie", "francis", "james", "john", "michael", "robert"
 names = female_names + male_names
 
 # This dict holds all locations
-# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 locations = [
-    {'name': 'couch_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'bar',           'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'bookcase',      'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'side_table',      'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'bed',             'room': 'bedroom',          'category': 'utility',      'manipulation': 'no'},
+    {'name': 'desk',            'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
+    
+    {'name': 'cupboard',        'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'storage_table',   'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'sink',            'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
+    {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
+    {'name': 'counter',         'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
 
-    {'name': 'cabinet',       'room': 'kitchen',    'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'trashbin',      'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
-    {'name': 'plant',         'room': 'kitchen',    'category': 'plant',   'manipulation': 'no'},
-
-    {'name': 'bed',           'room': 'bedroom',    'category': 'seat',    'manipulation': 'yes'},
-    {'name': 'nightstand',    'room': 'bedroom',    'category': 'table',   'manipulation': 'yes'},
-
-    {'name': 'flight_case',   'room': 'diningroom',   'category': 'table',   'manipulation': 'no'},
-    {'name': 'battery_table', 'room': 'diningroom',   'category': 'table',   'manipulation': 'no'},
-    {'name': 'workbench',     'room': 'diningroom',   'category': 'table',   'manipulation': 'yes'},
-
-    {'name': 'hallway_table', 'room': 'corridor',    'category': 'table',   'manipulation': 'yes'}
+    {'name': 'dining_table',    'room': 'dining_room',      'category': 'table',        'manipulation': 'yes'},
+    
+    {'name': 'end_table',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'couch',           'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
+    {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -32,34 +29,44 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-rooms = location_rooms
+rooms = location_rooms + ['corridor']
 
 objects = [
     {'category': 'cleaning_stuff',      'name': 'cloth',            'color': 'purple',      'volume': 315,      'weight': 37},
     {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 161,      'weight': 22},
     {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 314,      'weight': 15},
 
-    {'category': 'container',           'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
-    {'category': 'container',           'name': 'tray',             'color': 'white',       'volume': 617,      'weight': 65},
+    {'category': 'containers',          'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
+    {'category': 'containers',          'name': 'tray',             'color': 'white',       'volume': 617,      'weight': 65},
 
-    {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brownish',    'volume': 388,      'weight': 325},
-    {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 376,      'weight': 330},
-    {'category': 'drink',               'name': 'grape_juice',      'color': 'purplish',    'volume': 378,      'weight': 200},
-    {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 376,      'weight': 200},
-    {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 376,      'weight': 330},
+    {'category': 'cuttlery',            'name': 'fork',             'color': 'green',       'volume': 388,      'weight': 10},
+    {'category': 'cuttlery',            'name': 'knife',            'color': 'green',       'volume': 376,      'weight': 10},
+    {'category': 'cuttlery',            'name': 'spoon',            'color': 'green',       'volume': 378,      'weight': 10},
+
+    {'category': 'drinks',              'name': 'chocolate_drink',  'color': 'brownish',    'volume': 388,      'weight': 325},
+    {'category': 'drinks',              'name': 'coke',             'color': 'red',         'volume': 376,      'weight': 330},
+    {'category': 'drinks',              'name': 'grape_juice',      'color': 'purplish',    'volume': 378,      'weight': 200},
+    {'category': 'drinks',              'name': 'orange_juice',     'color': 'orange',      'volume': 376,      'weight': 200},
+    {'category': 'drinks',              'name': 'sprite',           'color': 'bluegreen',   'volume': 376,      'weight': 330},
 
     {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 301,      'weight': 21},
     {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 320,      'weight': 85},
     {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 254,      'weight': 113},
 
-    {'category': 'fruit',               'name': 'apple',            'color': 'greenred',    'volume': 1485,     'weight': 85},
-    {'category': 'fruit',               'name': 'orange',           'color': 'orange',      'volume': 352,      'weight': 140},
-    {'category': 'fruit',               'name': 'paprika',          'color': 'red',         'volume': 240,      'weight': 90},
+    {'category': 'fruits',              'name': 'apple',            'color': 'greenred',    'volume': 1485,     'weight': 85},
+    {'category': 'fruits',              'name': 'orange',           'color': 'orange',      'volume': 352,      'weight': 140},
+    {'category': 'fruits',              'name': 'paprika',          'color': 'red',         'volume': 240,      'weight': 90},
 
-    {'category': 'snack',               'name': 'crackers',         'color': 'orange',      'volume': 300,      'weight': 28},
-    {'category': 'snack',               'name': 'potato_chips',     'color': 'black',       'volume': 239,      'weight': 200},
-    {'category': 'snack',               'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156}
+    {'category': 'snacks',              'name': 'crackers',         'color': 'orange',      'volume': 300,      'weight': 28},
+    {'category': 'snacks',              'name': 'potato_chips',     'color': 'black',       'volume': 239,      'weight': 200},
+    {'category': 'snacks',              'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156},
+
+    {'category': 'tableware',           'name': 'bowl',             'color': 'green',       'volume': 300,      'weight': 28},
+    {'category': 'tableware',           'name': 'cup',              'color': 'green',       'volume': 239,      'weight': 200},
+    {'category': 'tableware',           'name': 'dish',             'color': 'green',       'volume': 1125,     'weight': 156}
 ]
+
+{'category': 'help_me_carry', 'name': 'bag', 'color': 'pink'},
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
@@ -69,18 +76,19 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
-# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 category_locations = {
-    "food": {"bookcase": "on_top_of"},
-    "container": {"flight_case": "in"},
-    "drink": {"dinner_table": "on_top_of"},
-    "cleaning_stuff": {"cabinet": "on_top_of"},
-    "cutlery": {"bar": "on_top_of"}
+    "drinks": {"counter": "on_top_of"},
+    "cleaning_stuff": {"side_table": "on_top_of"},
+    "snacks": {"bookcase": "shelf3"},
+    "fruits": {"bookcase": "shelf2"},
+    "container": {"end_table": "on_top_of"},
+    "food": {"cupboard": "shelf2"},
+    "kitchen_stuff": {"storage_table": "on_top_of"}
 }
 
-# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 inspect_areas = {
-    "bookcase": ["shelf1", "shelf2", "shelf3", "shelf4", "shelf5"]
+    "bookcase": ["shelf2", "shelf3", "shelf4"],
+    "cupboard": ["shelf2", "shelf3", "shelf4"]
 }
 
 inspect_positions = {
@@ -88,15 +96,12 @@ inspect_positions = {
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# ToDo: FIX WHEN MORE INFO ABOUT ARENA
 most_probable_location_in_room_map = {
-    'livingroom': 'dinner_table',
-    'bedroom': 'nightstand',
-    'workshop': 'workbench',
-    'kitchen': 'cabinet',
-    'hallway': 'hallway_table'
+    'bedroom': 'side_table',
+    'kitchen': 'cupboard',
+    'dining_room': 'dining_table',
+    'living_room': 'end_table'
 }
-
 
 def get_location_from_room(room_id):
     if room_id in most_probable_location_in_room_map:
