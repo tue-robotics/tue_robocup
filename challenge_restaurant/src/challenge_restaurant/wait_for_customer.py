@@ -1,17 +1,13 @@
 #!/usr/bin/python
 
-# System
 import math
 
-# ROS
 import PyKDL as kdl
 import rospy
 import smach
-
-# TU/e Robotics
-from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from hmi import TimeoutException
 from geometry_msgs.msg import PointStamped
+from hmi import TimeoutException
+from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from tue_msgs.msg import People
 
 
@@ -23,7 +19,7 @@ class WaitForCustomer(smach.State):
 
         :param robot: robot object
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'rejected'])
+        smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
         self._robot = robot
         self._caller_id = caller_id
         self._kitchen_designator = kitchen_designator
@@ -92,43 +88,23 @@ class WaitForCustomer(smach.State):
         # pose.vector[2] = 1.5
 
         self._robot.head.look_at_point(head_target)
+        self._robot.head.wait_for_motion_done()
 
-        self._robot.speech.speak("I have seen a waving person, should I continue?")
-
-        if self._confirm():
-            self._robot.head.cancel_goal()
-            return 'succeeded'
-        else:
-            self._robot.head.cancel_goal()
-            return 'rejected'
+        return 'succeeded'
 
     def people_cb(self, persons):
         self.people_received = persons
-
-    def _confirm(self):
-        cgrammar = """
-        C[True] -> amigo take the order
-        C[False] -> amigo wait
-        """
-        for i in range(3):
-            try:
-                speech_result = self._robot.hmi.query(description="Should I get the order?",
-                                                      grammar=cgrammar, target="C")
-                return speech_result.semantics
-            except TimeoutException:
-                pass
-        return False
 
 
 class WaitForClickedCustomer(smach.State):
     """ Wait for the waiving person """
 
-    def __init__(self, robot, caller_id):
+    def __init__(self, robot, caller_id, kitchen_designator):
         """ Constructor
 
         :param robot: robot object
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'aborted', 'rejected'])
+        smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
         self._robot = robot
         self._caller_id = caller_id
         self._sub = rospy.Subscriber("/clicked_point", PointStamped, self.callback)
@@ -155,6 +131,29 @@ class WaitForClickedCustomer(smach.State):
         pose = frame_stamped("map", self._point.point.x, self._point.point.y, 0.0)
         self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
         return 'succeeded'
+
+
+class AskTakeTheOrder(smach.State):
+    """ Wait for the waiving person """
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['yes', 'wait', 'timeout'])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+        cgrammar = """
+        C['yes'] -> amigo take the order
+        C['wait'] -> amigo wait
+        """
+        for i in range(3):
+            try:
+                speech_result = self.robot.hmi.query(description="Should I get the order?",
+                                                     grammar=cgrammar, target="C")
+                return speech_result.semantics
+            except TimeoutException:
+                pass
+        return 'timeout'
 
 
 if __name__ == '__main__':

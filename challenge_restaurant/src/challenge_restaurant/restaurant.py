@@ -1,17 +1,12 @@
 #!/usr/bin/python
-
-# ROS
 import math
+
+import robot_smach_states as states
 import smach
 
-# TU/e Robotics
-import robot_smach_states as states
-
-
-# Challenge restaurant
 from store_waypoint import StoreWaypoint
 from take_orders import TakeOrder, ReciteOrders
-from wait_for_customer import WaitForCustomer
+from wait_for_customer import WaitForCustomer, AskTakeTheOrder
 
 
 class Restaurant(smach.StateMachine):
@@ -50,9 +45,17 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    WaitForCustomer(robot, caller_id, kitchen_designator),
-                                   transitions={'succeeded': 'SAY_NAVIGATE_TO_CUSTOMER',
-                                                'aborted': 'STOP',
-                                                'rejected': 'WAIT_FOR_CUSTOMER'})
+                                   transitions={'succeeded': 'SAY_I_HAVE_SEEN',
+                                                'aborted': 'STOP'})
+
+            smach.StateMachine.add('SAY_I_HAVE_SEEN',
+                                   states.Say(robot, 'I have seen a waving person, should I continue?'),
+                                   transitions={"spoken": 'WAIT_FOR_START'})
+
+            smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
+                                   transitions={'yes': 'SAY_NAVIGATE_TO_CUSTOMER',
+                                                'wait': 'WAIT_FOR_CUSTOMER',
+                                                'timeout': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER',
                                    states.Say(robot, "I am at your service, I will be there shortly! Coming your way my amigo!", block=True),
