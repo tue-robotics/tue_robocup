@@ -66,7 +66,7 @@ class Track(smach.State):
             operator = self._operator
 
         rospy.loginfo("Distance to goal: {}".format(self._robot.base.local_planner.getDistanceToGoal()))
-        if random.randrange(10) == 1 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:
+        if random.randrange(20) == 1 and self._robot.base.local_planner.getDistanceToGoal() > 2.5:
             options = ["You seem to be in a hurry, is there ice cream in the groceries?",
                        "Not so fast!",
                        "Please slow down.",
@@ -77,7 +77,7 @@ class Track(smach.State):
             else:
                 self._robot.speech.speak(sentence)
 
-        if random.randrange(40) == 1:
+        if random.randrange(80) == 1:
             options = ["Your butt is looking wonderful!",
                        "Let's get your groceries!",
                        "I'm happy you are back, I was so lonely while you were shopping"]
