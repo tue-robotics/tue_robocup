@@ -56,7 +56,7 @@ class FindPerson(smach.State):
                       for angle in look_angles]
 
         i = 0
-        while (rospy.Time.now() - start_time).to_sec() < self._timeout:
+        while (rospy.Time.now() - start_time).to_sec() < self._lost_timeout:
             if self.preempt_requested():
                 return 'failed'
 
@@ -131,7 +131,7 @@ class _DecideNavigateState(smach.State):
         return "none"
 
 
-class FindPersoninRoom(smach.StateMachine):
+class FindPersonInRoom(smach.StateMachine):
     """ Uses NavigateToWaypoint or NavigateToRoom and subsequently tries to find a person
     in that room.
 
@@ -192,5 +192,5 @@ if __name__ == "__main__":
 
     rospy.init_node('test_follow_operator')
     _robot = Robot()
-    sm = FindPersoninRoom(_robot, _area, _name)
+    sm = FindPersonInRoom(_robot, _area, _name)
     sm.execute()
