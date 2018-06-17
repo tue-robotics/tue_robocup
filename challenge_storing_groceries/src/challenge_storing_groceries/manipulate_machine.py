@@ -164,10 +164,6 @@ class GrabSingleItem(smach.StateMachine):
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
 
         with self:
-            smach.StateMachine.add("LOCK_ITEM",
-                                   states.LockDesignator(self.grab_designator),
-                                   transitions={'locked': 'ANNOUNCE_ITEM'})
-
             smach.StateMachine.add("ANNOUNCE_ITEM",
                                    states.Say(robot, EntityDescriptionDesignator(self.grab_designator,
                                                                                  name="current_item_desc"),
@@ -310,12 +306,20 @@ class ManipulateMachine(smach.StateMachine):
                 smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=None, searchArea=GRAB_SURFACE,
                                                                        navigation_area="in_front_of"),
-                                       transitions={"done": "GRAB_ITEM_1",
+                                       transitions={"done": "LOCK_ITEM_1",
                                                     "failed": "failed"})
 
+            smach.StateMachine.add("LOCK_ITEM_1",
+                                   states.LockDesignator(grab_designator_1),
+                                   transitions={'locked': 'GRAB_ITEM_1'})
+
             smach.StateMachine.add("GRAB_ITEM_1", GrabSingleItem(robot=robot, grab_designator=grab_designator_1),
-                                   transitions={"succeeded": "GRAB_ITEM_2",
-                                                "failed": "GRAB_ITEM_2"})
+                                   transitions={"succeeded": "LOCK_ITEM_1",
+                                                "failed": "LOCK_ITEM_1"})
+
+            smach.StateMachine.add("LOCK_ITEM_2",
+                                   states.LockDesignator(grab_designator_2),
+                                   transitions={'locked': 'GRAB_ITEM_2'})
 
             smach.StateMachine.add("GRAB_ITEM_2", GrabSingleItem(robot=robot, grab_designator=grab_designator_2),
                                    transitions={"succeeded": "MOVE_TO_PLACE",
