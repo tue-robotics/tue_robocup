@@ -541,7 +541,7 @@ class LockToId(Designator):
                 return self.robot.ed.get_entity(id=self._locked_to_id)
         else:
             entity = self.to_be_locked.resolve()
-            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity.id))
+            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity))
             return entity
 
     def __repr__(self):
