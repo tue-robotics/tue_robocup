@@ -6,7 +6,6 @@ import random
 # ROS
 import rospy
 import smach
-
 # TU/e Robotics
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
@@ -133,3 +132,20 @@ class ReciteOrders(smach.State):
         self._robot.head.cancel_goal()
 
         return "spoken"
+
+
+class ClearOrders(smach.State):
+    """ Clears the orders dict"""
+
+    def __init__(self, orders):
+        """ Constructor
+
+        :param orders: Python dict with orders
+        """
+        smach.State.__init__(self, outcomes=["succeeded"])
+
+        self._orders = orders
+
+    def execute(self, userdata=None):
+        self.orders.clear()
+        return 'succeeded'
