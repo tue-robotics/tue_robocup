@@ -33,37 +33,37 @@ rooms = location_rooms + ['corridor']
 
 objects = [
     {'category': 'cleaning_stuff',      'name': 'cloth',            'color': 'purple',      'volume': 315,      'weight': 37},
-    {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 161,      'weight': 22},
-    {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 314,      'weight': 15},
+    {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 100,      'weight': 22},
+    {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 247,      'weight': 15},
 
     {'category': 'containers',          'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
-    {'category': 'containers',          'name': 'tray',             'color': 'white',       'volume': 617,      'weight': 65},
+    {'category': 'containers',          'name': 'tray',             'color': 'white',       'volume': 4508,     'weight': 120},
 
-    {'category': 'cuttlery',            'name': 'fork',             'color': 'green',       'volume': 388,      'weight': 10},
-    {'category': 'cuttlery',            'name': 'knife',            'color': 'green',       'volume': 376,      'weight': 10},
-    {'category': 'cuttlery',            'name': 'spoon',            'color': 'green',       'volume': 378,      'weight': 10},
+    {'category': 'cuttlery',            'name': 'fork',             'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'cuttlery',            'name': 'knife',            'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'cuttlery',            'name': 'spoon',            'color': 'green',       'volume': 23,       'weight': 10},
 
-    {'category': 'drinks',              'name': 'chocolate_drink',  'color': 'brownish',    'volume': 388,      'weight': 325},
-    {'category': 'drinks',              'name': 'coke',             'color': 'red',         'volume': 376,      'weight': 330},
-    {'category': 'drinks',              'name': 'grape_juice',      'color': 'purplish',    'volume': 378,      'weight': 200},
-    {'category': 'drinks',              'name': 'orange_juice',     'color': 'orange',      'volume': 376,      'weight': 200},
-    {'category': 'drinks',              'name': 'sprite',           'color': 'bluegreen',   'volume': 376,      'weight': 330},
+    {'category': 'drinks',              'name': 'chocolate_drink',  'color': 'brownish',    'volume': 404,      'weight': 325},
+    {'category': 'drinks',              'name': 'coke',             'color': 'red',         'volume': 270,      'weight': 222},
+    {'category': 'drinks',              'name': 'grape_juice',      'color': 'purplish',    'volume': 216,      'weight': 200},
+    {'category': 'drinks',              'name': 'orange_juice',     'color': 'orange',      'volume': 216,      'weight': 200},
+    {'category': 'drinks',              'name': 'sprite',           'color': 'bluegreen',   'volume': 270,      'weight': 222},
 
-    {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 301,      'weight': 21},
-    {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 320,      'weight': 85},
-    {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 254,      'weight': 113},
+    {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 336,      'weight': 21},
+    {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 297,      'weight': 85},
+    {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 223,      'weight': 113},
 
-    {'category': 'fruits',              'name': 'apple',            'color': 'greenred',    'volume': 1485,     'weight': 85},
-    {'category': 'fruits',              'name': 'orange',           'color': 'orange',      'volume': 352,      'weight': 140},
-    {'category': 'fruits',              'name': 'paprika',          'color': 'red',         'volume': 240,      'weight': 90},
+    {'category': 'fruits',              'name': 'apple',            'color': 'greenred',    'volume': 360,      'weight': 85},
+    {'category': 'fruits',              'name': 'orange',           'color': 'orange',      'volume': 380,      'weight': 140},
+    {'category': 'fruits',              'name': 'paprika',          'color': 'red',         'volume': 402,      'weight': 90},
 
-    {'category': 'snacks',              'name': 'crackers',         'color': 'orange',      'volume': 300,      'weight': 28},
-    {'category': 'snacks',              'name': 'potato_chips',     'color': 'black',       'volume': 239,      'weight': 200},
+    {'category': 'snacks',              'name': 'crackers',         'color': 'orange',      'volume': 243,      'weight': 28},
+    {'category': 'snacks',              'name': 'potato_chips',     'color': 'black',       'volume': 4080,     'weight': 200},
     {'category': 'snacks',              'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156},
 
-    {'category': 'tableware',           'name': 'bowl',             'color': 'green',       'volume': 300,      'weight': 28},
-    {'category': 'tableware',           'name': 'cup',              'color': 'green',       'volume': 239,      'weight': 200},
-    {'category': 'tableware',           'name': 'dish',             'color': 'green',       'volume': 1125,     'weight': 156}
+    {'category': 'tableware',           'name': 'bowl',             'color': 'green',       'volume': 458,      'weight': 65},
+    {'category': 'tableware',           'name': 'cup',              'color': 'green',       'volume': 300,      'weight': 50},
+    {'category': 'tableware',           'name': 'dish',             'color': 'green',       'volume': 672,      'weight': 70}
 ]
 
 {'category': 'help_me_carry', 'name': 'bag', 'color': 'pink'},
