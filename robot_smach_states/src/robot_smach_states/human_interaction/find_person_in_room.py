@@ -22,13 +22,15 @@ class FindPerson(smach.State):
         """
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
-    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
+    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
+                 discard_other_labels=True):
         """ Initialization method
 
         :param robot: robot api object
         :param person_label: (str) person label
         :param lost_timeout: (float) maximum time the robot is allowed to search
         :param look_distance: (float) robot only considers laser entities within this radius
+        :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -40,6 +42,7 @@ class FindPerson(smach.State):
             '/%s/find_person/person_detected_face' % robot.robot_name,
             geometry_msgs.msg.PointStamped, queue_size=10)
         self._probability_threshold = probability_threshold
+        self._discard_other_labels = discard_other_labels
 
     def execute(self, userdata=None):
         rospy.loginfo("Trying to find {}".format(self._person_label))
@@ -66,8 +69,15 @@ class FindPerson(smach.State):
                 i = 0
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
-            best_detection = self._robot.perception.get_best_face_recognition(
-                raw_detections, self._person_label, probability_threshold=self._probability_threshold)
+            if self._discard_other_labels:
+                best_detection = self._robot.perception.get_best_face_recognition(
+                    raw_detections, self._person_label, probability_threshold=self._probability_threshold)
+            else:
+                if raw_detections:
+                    # Take the biggest ROI
+                    best_detection = max(raw_detections, key=lambda r: r.roi.height)
+                else:
+                    best_detection = None
 
             rospy.loginfo("best_detection = {}".format(best_detection))
             if not best_detection:
@@ -137,12 +147,13 @@ class FindPersonInRoom(smach.StateMachine):
 
     """
 
-    def __init__(self, robot, area, name):
+    def __init__(self, robot, area, name, discard_other_labels=True):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
         to this waypoint. Else, it will navigate to the room called "<area>"
         :param name: (str) Name of the person to look for
+        :param discard_other_labels: (bool) Whether or not to discard faces based on label
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
@@ -171,7 +182,8 @@ class FindPersonInRoom(smach.StateMachine):
                                                 "goal_not_defined": "not_found"})
 
             # Wait for the operator to appear and detect what he's pointing at
-            smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name),
+            smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name,
+                                                             discard_other_labels=discard_other_labels),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
