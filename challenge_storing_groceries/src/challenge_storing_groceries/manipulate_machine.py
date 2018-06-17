@@ -88,7 +88,7 @@ class GrabSingleItem(smach.StateMachine):
 
         # Create designators
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
-        self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
+        self.grab_designator = grab_designator
 
         with self:
             smach.StateMachine.add("ANNOUNCE_ITEM",
@@ -221,25 +221,27 @@ class ManipulateMachine(smach.StateMachine):
 
         # Create designators
         self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
+
+        # import ipdb; ipdb.set_trace()
         if self.grab_designator_1 is None:
-            self.grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+            self.grab_designator_1 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
-                                                      name="grab_1")
+                                                      name="grab_1"))
         if self.grab_designator_2 is None:
-            self.grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+            self.grab_designator_2 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
-                                                      name="grab_2")
+                                                      name="grab_2"))
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_designator1 = LockToFrameStamped(PlaceWithAlikeObjectDesignator(robot=robot,
-                                                                                   entity_to_place_designator=grab_designator_1,
+                                                                                   entity_to_place_designator=self.grab_designator_1,
                                                                                    place_location_designator=self.cabinet,
                                                                                    areas=['shelf2', 'shelf3'],
                                                                                    name="place_1",
                                                                                    debug=False
                                                                                    ))
         self.place_designator2 = LockToFrameStamped(PlaceWithAlikeObjectDesignator(robot=robot,
-                                                                                   entity_to_place_designator=grab_designator_2,
+                                                                                   entity_to_place_designator=self.grab_designator_2,
                                                                                    place_location_designator=self.cabinet,
                                                                                    areas=['shelf2', 'shelf3'],
                                                                                    name="place_2",
@@ -284,7 +286,7 @@ class ManipulateMachine(smach.StateMachine):
                                        transitions={"done": "WRITE_PDF",
                                                     "failed": "failed"})
 
-                smach.StateMachine.add("WRITE_PDF", pdf_writer, transitions={"done": "GRAB_ITEM_1"})
+                smach.StateMachine.add("WRITE_PDF", pdf_writer, transitions={"done": "LOCK_ALL"})
             else:
                 smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=None, searchArea=GRAB_SURFACE,
@@ -294,10 +296,16 @@ class ManipulateMachine(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["locked"])
             def lock(userdata=None):
+                # import ipdb; ipdb.set_trace()
                 self.grab_designator_1.lock()
                 self.grab_designator_2.lock()
                 self.place_designator1.lock()
                 self.place_designator2.lock()
+
+                rospy.loginfo(self.grab_designator_1)
+                rospy.loginfo(self.grab_designator_2)
+                rospy.loginfo(self.place_designator1)
+                rospy.loginfo(self.place_designator2)
 
                 rospy.loginfo("All designators locked")
 
@@ -305,10 +313,16 @@ class ManipulateMachine(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["unlocked"])
             def unlock(userdata=None):
+                # import ipdb; ipdb.set_trace()
                 self.grab_designator_1.unlock()
                 self.grab_designator_2.unlock()
                 self.place_designator1.unlock()
                 self.place_designator2.unlock()
+
+                rospy.loginfo(self.grab_designator_1)
+                rospy.loginfo(self.grab_designator_2)
+                rospy.loginfo(self.place_designator1)
+                rospy.loginfo(self.place_designator2)
 
                 rospy.loginfo("All designators UNlocked")
 

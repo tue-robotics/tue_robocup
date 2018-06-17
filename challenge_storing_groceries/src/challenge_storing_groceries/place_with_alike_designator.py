@@ -9,7 +9,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
     """
 
     def __init__(self, robot, entity_to_place_designator, place_location_designator, areas=None, name=None, debug=False):
-        super(PlaceWithAlikeObjectDesignator, self).__init__(robot, place_location_designator, name)
+        super(PlaceWithAlikeObjectDesignator, self).__init__(robot, place_location_designator, name, area=areas[0])
 
         self.entity_to_place_designator = entity_to_place_designator
         self.areas = areas
