@@ -60,7 +60,7 @@ for place in common.location_names:
 ##############################################################################
 
 grammar += '''
-Q["action" : "answer", "solution": "I think that Justin Trudeau is very handsome"] -> who is the most handsome person in canada
+Q["action" : "answer", "solution": "I know that Justin Trudeau is very handsome"] -> who is the most handsome person in canada
 Q["action" : "answer", "solution": "Canada spans almost 10 million square kilometres and comprises 6 time zones"] -> how many time zones are there in canada
 Q["action" : "answer", "solution": "Yonge Street in Ontario is the longest street in the world"] -> what is the longest street in the world
 Q["action" : "answer", "solution": "Yonge street is almost 2000 kilometres, starting at Lake Ontario and running north to the Minnesota border"] -> how long is yonge street in ontario
