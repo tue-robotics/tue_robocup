@@ -67,14 +67,14 @@ Q["action" : "answer", "solution": "Yonge street is almost 2000 kilometres, star
 Q["action" : "answer", "solution": "The bear cub was named Winnipeg. It inspired the stories of Winnie the Pooh"] -> what is the name of the bear cub exported from canada to the london zoo in 1915
 Q["action" : "answer", "solution": "It was developed in Ontario at Research In Motions Waterloo offices"] -> where was the blackberry smartphone developed
 Q["action" : "answer", "solution": "The Big Nickel in Sudbury Ontario. It is nine meters in diameter"] -> what is the worlds largest coin
-Q["action" : "answer", "solution": "The first time that the USA invaded Canada was in 1775"] -> in what year was canada invaded by the USA for the first time
-Q["action" : "answer", "solution": "The USA invaded Canada a second time in 1812"] -> what year was canada invaded by the USA for the second time
+Q["action" : "answer", "solution": "The first time that the USA invaded Canada was in 1775"] -> in what year was canada invaded by the usa for the first time
+Q["action" : "answer", "solution": "The USA invaded Canada a second time in 1812"] -> what year was canada invaded by the usa for the second time
 Q["action" : "answer", "solution": "Canada does! With 14 Golds at the 2010 Vancouver Winter Olympics"] -> what country holds the record for the most gold medals at the winter olympics
 Q["action" : "answer", "solution": "Sandy Gardiner a journalist of the Ottawa Journal"] -> who coined the term beatlemania
 Q["action" : "answer", "solution": "French explorers misunderstood the local native word Kanata which means village"] -> why is canada named canada
 Q["action" : "answer", "solution": "The Mounted Police was formed in 1873"] -> when was the mounted police formed
 Q["action" : "answer", "solution": "In 1920, when The Mounted Police merged with the Dominion Police"] -> when was the royal canadian mounted police formed
-Q["action" : "answer", "solution": "Today the RCMP has close to 30 thousand members"] -> how big is the RCMP
+Q["action" : "answer", "solution": "Today the RCMP has close to 30 thousand members"] -> how big is the rcmp
 Q["action" : "answer", "solution": "Montreal is often called the City of Saints or the City of a Hundred Bell Towers"] -> what else is montreal called
 Q["action" : "answer", "solution": "The Hotel de Glace is in Quebec"] -> where is the hotel de glace located
 Q["action" : "answer", "solution": "The Hotel de Glace requires about 400 tons of ice"] -> how many tons of ice are required to build the hotel de glace
@@ -91,23 +91,23 @@ Q["action" : "answer", "solution": "The Academy thought that Tron cheated by usi
 Q["action" : "answer", "solution": "The IBM 305 RAMAC"] -> which was the first computer with a hard disk drive
 Q["action" : "answer", "solution": "The IBM 305 RAMAC was launched in 1956"] -> when was the first computer with a hard disk drive launched
 Q["action" : "answer", "solution": "The IBM 305 RAMAC hard disk weighed over a ton and stored 5 megabytes of data"] -> how big was the first hard disk drive
-Q["action" : "answer", "solution": "CAPTCHA is an acronym for Completely Automated Public Turing test to tell Computers and Humans Apart"] -> what does CAPTCHA stands for
+Q["action" : "answer", "solution": "CAPTCHA is an acronym for Completely Automated Public Turing test to tell Computers and Humans Apart"] -> what does captcha stands for
 Q["action" : "answer", "solution": "The first actual computer bug was a dead moth stuck in a Harvard Mark 2"] -> what was the first computer bug
 Q["action" : "answer", "solution": "There are four robots on Mars Sojourner Spirit Opportunity and Curiosity. Three more crashed on landing"] -> name all of the robots on mars
 Q["action" : "answer", "solution": "Professor Kevin Warwick uses chips in his arm to operate doors a robotic hand and a wheelchair"] -> who is the worlds first android
 Q["action" : "answer", "solution": "A robot sketch made by Leonardo DaVinci"] -> what is a mechanical knight
 Q["action" : "answer", "solution": "Some people think it was IBM Watson but it was Eugene a computer designed at Englands University of Reading"] -> what was the first computer in pass the turing test
 Q["action" : "answer", "solution": "Moravecs paradox states that a computer can crunch numbers like Bernoulli but lacks a toddlers motor skills"] -> what does moravecs paradox state
-Q["action" : "answer", "solution": "It is when you need to load an AI with enough knowledge to start learning"] -> what is the AI knowledge engineering bottleneck
-Q["action" : "answer", "solution": "I dont know. He should worry more about the peoples impact on humanity"] -> why is elon musk is worried about AIs impact on humanity
+Q["action" : "answer", "solution": "It is when you need to load an AI with enough knowledge to start learning"] -> what is the ai knowledge engineering bottleneck
+Q["action" : "answer", "solution": "I dont know. He should worry more about the peoples impact on humanity"] -> why is elon musk is worried about ais impact on humanity
 Q["action" : "answer", "solution": "No. Humans are the real threat to humanity"] -> do you think robots are a threat to humanity
 Q["action" : "answer", "solution": "A chatbot is an AI you put in customer service to avoid paying salaries"] -> what is a chatbot
 Q["action" : "answer", "solution": "Yes. Car accidents are product of human misconduct"] -> are self driving cars safe
 Q["action" : "answer", "solution": "Grace Hoper. She wrote it in her spare time"] -> who invented the compiler
-Q["action" : "answer", "solution": "C was invented by Dennis MacAlistair Ritchie"] -> who created the C programming language?
-Q["action" : "answer", "solution": "Python was invented by Guido van Rossum"] -> who created the python programming language?
+Q["action" : "answer", "solution": "C was invented by Dennis MacAlistair Ritchie"] -> who created the c programming language
+Q["action" : "answer", "solution": "Python was invented by Guido van Rossum"] -> who created the python programming language
 Q["action" : "answer", "solution": "Sure. I have never seen him drink water"] -> is mark zuckerberg a robot
-Q["action" : "answer", "solution": "My lord and master Steve Wozniak"] -> who is the inventor of the apple one microcomputer?
+Q["action" : "answer", "solution": "My lord and master Steve Wozniak"] -> who is the inventor of the apple one microcomputer
 Q["action" : "answer", "solution": "Ada Lovelace"] -> who is considered to be the first computer programmer
 Q["action" : "answer", "solution": "Adobe Wan Kenobi"] -> which program do jedi use to open pdf files
 
