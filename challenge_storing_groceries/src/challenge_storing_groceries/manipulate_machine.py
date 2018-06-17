@@ -1,11 +1,17 @@
+# system
+import math
+
 # ROS
 import rospy
 import smach
 
 # TU/e
+from cb_planner_msgs_srvs.msg import PositionConstraint
 import robot_skills
+from robot_skills.util.entity import Entity
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_skills.util.kdl_conversions import FrameStamped
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
@@ -68,6 +74,69 @@ class DefaultGrabDesignator(ds.Designator):
         base_pose = self._robot.base.get_location().frame
         entities = sorted(entities, key=lambda e: e.distance_to_2d(base_pose.p))
         return entities[0]
+
+
+class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
+    """Find a FrameStamped where to place an object if a class 'A' besides another object of class 'A'
+    """
+
+    def __init__(self, robot, entity_to_place_designator, place_location_designator, areas=None, name=None):
+        super(PlaceWithAlikeObjectDesignator, self).__init__(robot, place_location_designator, name)
+
+        self.areas = areas
+
+    def _resolve(self):
+        """
+        :return: Where can an object be placed to put it besides an object of the same type
+        :returns: FrameStamped
+        """
+        entity_to_place = self.entity_to_place_designator.resolve()
+        assert isinstance(entity_to_place, Entity)
+
+        rospy.loginfo("The grasped entity is a '{}'".format(entity_to_place.type))
+
+        all_entities = self.robot.ed.get_entities()  # type: List[Entity]
+        place_location = self.place_location_designator.resolve()
+        entities_inside_placement = []
+        for area in self.areas:
+            entities_inside_placement += place_location.entities_in_volume(all_entities, area)
+
+        rospy.loginfo("{l} entities inside the place_location '{pl}': {eip}".format(l=len(entities_inside_placement),
+                                                                                    pl=place_location.id,
+                                                                                    eip=[(e.id[:6], e.type) for e in entities_inside_placement]))
+
+        # Entities that the entity_to_place could be placed besides (of same or similar type)
+        candidate_entities_for_pairing = [e for e in entities_inside_placement if self._same_class(entity_to_place, e)]  # type: List[Entity]
+
+        rospy.loginfo("Entities we could pair with: {}".format([(e.id[:6], e.type) for e in candidate_entities_for_pairing]))
+
+        # FrameStamped's the entity_to_place could be placed at. Each maps to the entity it is besides.
+        # This way can relate and refer to the entity we pick eventually and say something about it
+        all_placement_candidates = {}  # type: List[FrameStamped]
+
+        for candidate_ent in candidate_entities_for_pairing:
+            placements = self._generate_placements_beside(candidate_ent)
+            for placement in placements:
+                all_placement_candidates[placement] = candidate_ent
+
+        unoccupied_placement_candidates = filter(self.is_poi_occupied, all_placement_candidates.keys())
+
+        best_placement = self.select_best_feasible_poi(unoccupied_placement_candidates)
+        if best_placement:
+            place_besides = all_placement_candidates[best_placement]
+            rospy.loginfo("Placing besides {} at {}".format(place_besides, best_placement))
+            return best_placement
+        else:
+            rospy.logwarn("Could not find an entity we could place besides so just placing somewhere")
+            return super._resolve()
+
+    def _same_class(self, entity_a, entity_b):
+        if entity_a.type == entity_b.type:
+            return True
+        elif entity_b.super_types and entity_a.is_a(entity_b.super_types[0]):
+            return True
+        else:
+            return False
 
 
 class GrabSingleItem(smach.StateMachine):
