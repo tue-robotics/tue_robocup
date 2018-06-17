@@ -322,20 +322,20 @@ class ManipulateMachine(smach.StateMachine):
                                                                          name="grab_2"))
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
-        self.place_designator1 = PlaceWithAlikeObjectDesignator(robot=robot,
+        self.place_designator1 = LockToFrameStamped(PlaceWithAlikeObjectDesignator(robot=robot,
                                                                 entity_to_place_designator=grab_designator_1,
                                                                 place_location_designator=self.cabinet,
                                                                 areas=['shelf2', 'shelf3'],
                                                                 name="place_1",
-                                                                debug=True
-                                                                )
-        self.place_designator2 = PlaceWithAlikeObjectDesignator(robot=robot,
+                                                                debug=False
+                                                                ))
+        self.place_designator2 = LockToFrameStamped(PlaceWithAlikeObjectDesignator(robot=robot,
                                                                 entity_to_place_designator=grab_designator_2,
                                                                 place_location_designator=self.cabinet,
                                                                 areas=['shelf2', 'shelf3'],
                                                                 name="place_2",
-                                                                debug=True
-                                                                )
+                                                                debug=False
+                                                                ))
 
         self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator1)
         self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator2)
@@ -413,7 +413,11 @@ class ManipulateMachine(smach.StateMachine):
                                                 'nothing_found': 'WRITE_PDF_SHELVES',
                                                 'failed': 'WRITE_PDF_SHELVES'})
 
-            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "PLACE_ITEM_1"})
+            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "LOCK_PLACEMENT_1"})
+
+            smach.StateMachine.add("LOCK_PLACEMENT_1",
+                                   states.LockDesignator(self.place_designator1),
+                                   transitions={'locked': 'PLACE_ITEM_1'})
 
             smach.StateMachine.add("PLACE_ITEM_1", self.placeaction1,
                                    transitions={"succeeded": "UNLOCK_ITEM_1_SUCCEED",
@@ -421,11 +425,15 @@ class ManipulateMachine(smach.StateMachine):
 
             smach.StateMachine.add("UNLOCK_ITEM_1_SUCCEED",
                                    states.UnlockDesignator(grab_designator_1),
-                                   transitions={'unlocked': 'PLACE_ITEM_2'})
+                                   transitions={'unlocked': 'LOCK_PLACEMENT_2'})
 
             smach.StateMachine.add("UNLOCK_ITEM_1_FAIL",
                                    states.UnlockDesignator(grab_designator_1),
-                                   transitions={'unlocked': 'PLACE_ITEM_2'})
+                                   transitions={'unlocked': 'LOCK_PLACEMENT_2'})
+
+            smach.StateMachine.add("LOCK_PLACEMENT_2",
+                                   states.LockDesignator(self.place_designator1),
+                                   transitions={'locked': 'PLACE_ITEM_2'})
 
             smach.StateMachine.add("PLACE_ITEM_2", self.placeaction2,
                                    transitions={"succeeded": "UNLOCK_ITEM_2_SUCCEED",
