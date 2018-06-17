@@ -216,14 +216,17 @@ class ManipulateMachine(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
+        self.grab_designator_1 = grab_designator_1
+        self.grab_designator_2 = grab_designator_2
+
         # Create designators
         self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
-        if grab_designator_1 is None:
-            grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+        if self.grab_designator_1 is None:
+            self.grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
                                                       name="grab_1")
-        if grab_designator_2 is None:
-            grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+        if self.grab_designator_2 is None:
+            self.grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
                                                       name="grab_2")
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
@@ -291,8 +294,8 @@ class ManipulateMachine(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["locked"])
             def lock(userdata=None):
-                grab_designator1.lock()
-                grab_designator2.lock()
+                self.grab_designator_1.lock()
+                self.grab_designator_2.lock()
                 self.place_designator1.lock()
                 self.place_designator2.lock()
 
@@ -302,8 +305,8 @@ class ManipulateMachine(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["unlocked"])
             def unlock(userdata=None):
-                grab_designator1.unlock()
-                grab_designator2.unlock()
+                self.grab_designator_1.unlock()
+                self.grab_designator_2.unlock()
                 self.place_designator1.unlock()
                 self.place_designator2.unlock()
 
@@ -315,11 +318,11 @@ class ManipulateMachine(smach.StateMachine):
                                    smach.CBState(lock),
                                    transitions={'locked': 'GRAB_ITEM_1'})
 
-            smach.StateMachine.add("GRAB_ITEM_1", GrabSingleItem(robot=robot, grab_designator=grab_designator_1),
+            smach.StateMachine.add("GRAB_ITEM_1", GrabSingleItem(robot=robot, grab_designator=self.grab_designator_1),
                                    transitions={"succeeded": "GRAB_ITEM_2",
                                                 "failed": "GRAB_ITEM_2"})
 
-            smach.StateMachine.add("GRAB_ITEM_2", GrabSingleItem(robot=robot, grab_designator=grab_designator_2),
+            smach.StateMachine.add("GRAB_ITEM_2", GrabSingleItem(robot=robot, grab_designator=self.grab_designator_2),
                                    transitions={"succeeded": "MOVE_TO_PLACE",
                                                 "failed": "MOVE_TO_PLACE"})
 
