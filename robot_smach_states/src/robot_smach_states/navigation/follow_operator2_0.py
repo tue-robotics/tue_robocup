@@ -129,8 +129,8 @@ class FollowBread(smach.State):
         self._operator_radius = operator_radius
         self._lookat_radius = lookat_radius
         self._breadcrumb_distance = 0.1
-        # self._breadcrumb_pub = rospy.Publisher(
-        #         '/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
+        self._breadcrumb_pub = rospy.Publisher(
+                '/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
         self._plan_marker_pub = rospy.Publisher(
             '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._operator = None
@@ -239,40 +239,49 @@ class FollowBread(smach.State):
                     len(ros_plan),
                     self._have_followed))
 
-        # buffer_msg = Marker()
-        # buffer_msg.type = Marker.POINTS
-        # buffer_msg.scale.x = 0.05
-        # buffer_msg.scale.y = 0.05
-        # buffer_msg.header.stamp = rospy.get_rostime()
-        # buffer_msg.header.frame_id = "/map"
-        # buffer_msg.color.a = 1
-        # buffer_msg.color.r = 1
-        # buffer_msg.color.g = 0
-        # buffer_msg.color.b = 0
-        # #buffer_msg.lifetime = rospy.Time(.0)
-        # buffer_msg.id = 0
-        # buffer_msg.action = Marker.ADD
+        buffer_msg = Marker()
+        buffer_msg.type = Marker.POINTS
+        buffer_msg.header.stamp = rospy.get_rostime()
+        buffer_msg.header.frame_id = "/map"
+        buffer_msg.id = 0
+        buffer_msg.action = Marker.DELETEALL
+        self._breadcrumb_pub.publish(buffer_msg)
+
+        buffer_msg = Marker()
+        buffer_msg.type = Marker.POINTS
+        buffer_msg.scale.x = 0.05
+        buffer_msg.scale.y = 0.05
+        buffer_msg.header.stamp = rospy.get_rostime()
+        buffer_msg.header.frame_id = "/map"
+        buffer_msg.color.a = 1
+        buffer_msg.color.r = 1
+        buffer_msg.color.g = 0
+        buffer_msg.color.b = 0
+        # buffer_msg.lifetime = rospy.Time(1)
+        buffer_msg.id = 0
+        buffer_msg.action = Marker.ADD
+
+        for crumb in self._breadcrumb:
+            buffer_msg.points.append(crumb.waypoint.pose.position)
+
+        self._breadcrumb_pub.publish(buffer_msg)
+
+        # line_strip = Marker()
+        # line_strip.type = Marker.LINE_STRIP
+        # line_strip.scale.x = 0.05
+        # line_strip.header.frame_id = "/map"
+        # line_strip.header.stamp = rospy.Time.now()
+        # line_strip.color.a = 1
+        # line_strip.color.r = 0
+        # line_strip.color.g = 1
+        # line_strip.color.b = 1
+        # line_strip.id = 0
+        # line_strip.action = Marker.ADD
         #
-        # for crumb in buffer:
-        #     buffer_msg.points.append(kdl_conversions.kdl_vector_to_point_msg(crumb.pose.frame.p))
-
-        line_strip = Marker()
-        line_strip.type = Marker.LINE_STRIP
-        line_strip.scale.x = 0.05
-        line_strip.header.frame_id = "/map"
-        line_strip.header.stamp = rospy.Time.now()
-        line_strip.color.a = 1
-        line_strip.color.r = 0
-        line_strip.color.g = 1
-        line_strip.color.b = 1
-        line_strip.id = 0
-        line_strip.action = Marker.ADD
-
-        for crwp in ros_plan:
-            line_strip.points.append(crwp)
+        # for crwp in ros_plan:
+        #     line_strip.points.append(crwp)
 
         #self._plan_marker_pub.publish(line_strip)
-        # self._breadcrumb_pub.publish(buffer_msg)
         self._robot.base.local_planner.setPlan(ros_plan, p, o)
         rospy.sleep(rospy.Duration(0.5))
         return 'follow_bread'
