@@ -183,6 +183,7 @@ class LockToFrameStamped(ds.Designator):
                 fs = self.to_be_locked.resolve()  # Then find out what we should remember
                 if fs:  # If we can find what to remember
                     self._locked_value = fs  # remember!
+                return fs
             else:  # If we do remember something already, recall that remembered ID:
                 return self._locked_value
         else:
