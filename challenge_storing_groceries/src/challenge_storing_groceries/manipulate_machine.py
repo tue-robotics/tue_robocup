@@ -135,7 +135,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
             return best_placement
         else:
             rospy.logwarn("Could not find an entity we could place besides so just placing somewhere")
-            return super._resolve()
+            return super(PlaceWithAlikeObjectDesignator, self).resolve()
 
     def _same_class(self, entity_a, entity_b):
         if entity_a.type == entity_b.type:
