@@ -313,13 +313,13 @@ class ManipulateMachine(smach.StateMachine):
         # Create designators
         self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
         if grab_designator_1 is None:
-            grab_designator_1 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+            grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
-                                                                         name="grab_1"))
+                                                      name="grab_1")
         if grab_designator_2 is None:
-            grab_designator_2 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+            grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
-                                                                         name="grab_2"))
+                                                      name="grab_2")
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_designator1 = LockToFrameStamped(PlaceWithAlikeObjectDesignator(robot=robot,
@@ -380,20 +380,38 @@ class ManipulateMachine(smach.StateMachine):
                 smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=None, searchArea=GRAB_SURFACE,
                                                                        navigation_area="in_front_of"),
-                                       transitions={"done": "LOCK_ITEM_1",
+                                       transitions={"done": "LOCK_ALL",
                                                     "failed": "failed"})
 
-            smach.StateMachine.add("LOCK_ITEM_1",
-                                   states.LockDesignator(grab_designator_1),
+            @smach.cb_interface(outcomes=["locked"])
+            def lock(userdata=None):
+                grab_designator1.lock()
+                grab_designator2.lock()
+                self.place_designator1.lock()
+                self.place_designator2.lock()
+
+                rospy.loginfo("All designators locked")
+
+                return "locked"
+
+            @smach.cb_interface(outcomes=["unlocked"])
+            def unlock(userdata=None):
+                grab_designator1.unlock()
+                grab_designator2.unlock()
+                self.place_designator1.unlock()
+                self.place_designator2.unlock()
+
+                rospy.loginfo("All designators UNlocked")
+
+                return "unlocked"
+
+            smach.StateMachine.add("LOCK_ALL",
+                                   smach.CBState(lock),
                                    transitions={'locked': 'GRAB_ITEM_1'})
 
             smach.StateMachine.add("GRAB_ITEM_1", GrabSingleItem(robot=robot, grab_designator=grab_designator_1),
-                                   transitions={"succeeded": "LOCK_ITEM_2",
-                                                "failed": "LOCK_ITEM_2"})
-
-            smach.StateMachine.add("LOCK_ITEM_2",
-                                   states.LockDesignator(grab_designator_2),
-                                   transitions={'locked': 'GRAB_ITEM_2'})
+                                   transitions={"succeeded": "GRAB_ITEM_2",
+                                                "failed": "GRAB_ITEM_2"})
 
             smach.StateMachine.add("GRAB_ITEM_2", GrabSingleItem(robot=robot, grab_designator=grab_designator_2),
                                    transitions={"succeeded": "MOVE_TO_PLACE",
@@ -413,36 +431,21 @@ class ManipulateMachine(smach.StateMachine):
                                                 'nothing_found': 'WRITE_PDF_SHELVES',
                                                 'failed': 'WRITE_PDF_SHELVES'})
 
-            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "LOCK_PLACEMENT_1"})
-
-            smach.StateMachine.add("LOCK_PLACEMENT_1",
-                                   states.LockDesignator(self.place_designator1),
-                                   transitions={'locked': 'PLACE_ITEM_1'})
+            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "PLACE_ITEM_1"})
 
             smach.StateMachine.add("PLACE_ITEM_1", self.placeaction1,
-                                   transitions={"succeeded": "UNLOCK_ITEM_1_SUCCEED",
-                                                "failed": "UNLOCK_ITEM_1_FAIL"})
-
-            smach.StateMachine.add("UNLOCK_ITEM_1_SUCCEED",
-                                   states.UnlockDesignator(grab_designator_1),
-                                   transitions={'unlocked': 'LOCK_PLACEMENT_2'})
-
-            smach.StateMachine.add("UNLOCK_ITEM_1_FAIL",
-                                   states.UnlockDesignator(grab_designator_1),
-                                   transitions={'unlocked': 'LOCK_PLACEMENT_2'})
-
-            smach.StateMachine.add("LOCK_PLACEMENT_2",
-                                   states.LockDesignator(self.place_designator1),
-                                   transitions={'locked': 'PLACE_ITEM_2'})
+                                   transitions={"succeeded": "PLACE_ITEM_2",
+                                                "failed": "PLACE_ITEM_2"})
 
             smach.StateMachine.add("PLACE_ITEM_2", self.placeaction2,
-                                   transitions={"succeeded": "UNLOCK_ITEM_2_SUCCEED",
-                                                "failed": "UNLOCK_ITEM_2_FAIL"})
+                                   transitions={"succeeded": "UNLOCK_ALL_SUCCEEDED",
+                                                "failed": "UNLOCK_ALL_FAILED"})
 
-            smach.StateMachine.add("UNLOCK_ITEM_2_SUCCEED",
-                                   states.UnlockDesignator(grab_designator_1),
+            smach.StateMachine.add("UNLOCK_ALL_SUCCEEDED",
+                                   smach.CBState(unlock),
                                    transitions={'unlocked': 'succeeded'})
-
-            smach.StateMachine.add("UNLOCK_ITEM_2_FAIL",
-                                   states.UnlockDesignator(grab_designator_1),
+            smach.StateMachine.add("UNLOCK_ALL_FAILED",
+                                   smach.CBState(unlock),
                                    transitions={'unlocked': 'failed'})
+
+
