@@ -14,6 +14,8 @@ from collections import namedtuple
 # Common knowledge
 common = knowledge_loader.load_knowledge("common")
 
+table_name = "storage_table"
+
 # Detection
 cabinet_amcl = ["cabinet", "storage_shelf"]
 cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0), kdl.Vector(0.144, 3.274, 0.0)),
@@ -41,7 +43,7 @@ Additionally, it defines in which room the challenge takes place
 Workspace = namedtuple("Workspace", ["grasp_entity_conf", "place_entity_conf", "room"])
 
 cabinet_ws = Workspace(grasp_entity_conf=
-                       EntityConfiguration(entity_id="dining_table",
+                       EntityConfiguration(entity_id=table_name,
                                            pose_estimate=
                                            FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                         kdl.Vector(2.447, 1.1695, 0.0)),
@@ -59,7 +61,7 @@ cabinet_ws = Workspace(grasp_entity_conf=
 
 storage_shelf_ws = Workspace(
                         grasp_entity_conf=
-                        EntityConfiguration(entity_id="dining_table",
+                        EntityConfiguration(entity_id=table_name,
                                             pose_estimate=
                                             FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
                                                                          kdl.Vector(2.447, 1.1695, 0.0)),
