@@ -36,30 +36,30 @@ objects = [
     {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 100,      'weight': 22},
     {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 247,      'weight': 15},
 
-    {'category': 'container',          'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
-    {'category': 'container',          'name': 'tray',             'color': 'white',       'volume': 4508,     'weight': 120},
+    {'category': 'container',           'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
+    {'category': 'container',           'name': 'tray',             'color': 'white',       'volume': 4508,     'weight': 120},
 
-    {'category': 'cutlery',            'name': 'fork',             'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'cutlery',            'name': 'knife',            'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'cutlery',            'name': 'spoon',            'color': 'green',       'volume': 23,       'weight': 10},
+    {'category': 'cutlery',             'name': 'fork',             'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'cutlery',             'name': 'knife',            'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'cutlery',             'name': 'spoon',            'color': 'green',       'volume': 23,       'weight': 10},
 
-    {'category': 'drinks',              'name': 'chocolate_drink',  'color': 'brownish',    'volume': 404,      'weight': 325},
-    {'category': 'drinks',              'name': 'coke',             'color': 'red',         'volume': 270,      'weight': 222},
-    {'category': 'drinks',              'name': 'grape_juice',      'color': 'purplish',    'volume': 216,      'weight': 200},
-    {'category': 'drinks',              'name': 'orange_juice',     'color': 'orange',      'volume': 216,      'weight': 200},
-    {'category': 'drinks',              'name': 'sprite',           'color': 'bluegreen',   'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brownish',    'volume': 404,      'weight': 325},
+    {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'grape_juice',      'color': 'purplish',    'volume': 216,      'weight': 200},
+    {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 216,      'weight': 200},
+    {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 270,      'weight': 222},
 
     {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 336,      'weight': 21},
     {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 297,      'weight': 85},
     {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 223,      'weight': 113},
 
-    {'category': 'fruits',              'name': 'apple',            'color': 'greenred',    'volume': 360,      'weight': 85},
-    {'category': 'fruits',              'name': 'orange',           'color': 'orange',      'volume': 380,      'weight': 140},
-    {'category': 'fruits',              'name': 'paprika',          'color': 'red',         'volume': 402,      'weight': 90},
+    {'category': 'fruit',               'name': 'apple',            'color': 'greenred',    'volume': 360,      'weight': 85},
+    {'category': 'fruit',               'name': 'orange',           'color': 'orange',      'volume': 380,      'weight': 140},
+    {'category': 'fruit',               'name': 'paprika',          'color': 'red',         'volume': 402,      'weight': 90},
 
-    {'category': 'snacks',              'name': 'crackers',         'color': 'orange',      'volume': 243,      'weight': 28},
-    {'category': 'snacks',              'name': 'potato_chips',     'color': 'black',       'volume': 4080,     'weight': 200},
-    {'category': 'snacks',              'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156},
+    {'category': 'snack',               'name': 'crackers',         'color': 'orange',      'volume': 243,      'weight': 28},
+    {'category': 'snack',               'name': 'potato_chips',     'color': 'black',       'volume': 4080,     'weight': 200},
+    {'category': 'snack',               'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156},
 
     {'category': 'tableware',           'name': 'bowl',             'color': 'green',       'volume': 458,      'weight': 65},
     {'category': 'tableware',           'name': 'cup',              'color': 'green',       'volume': 300,      'weight': 50},
@@ -78,10 +78,10 @@ category_locations = {
     "drinks": {"counter": "on_top_of"},
     "cleaning_stuff": {"side_table": "on_top_of"},
     "cutlery": {"storage_table": "on_top_of"},
-    "snacks": {"bookcase": "shelf3"},  # educated guess
-    "fruits": {"bookcase": "shelf2"},  # educated guess
+    "snacks": {"bookcase": "shelf3"},               # educated guess
+    "fruits": {"bookcase": "shelf2"},               # educated guess
     "container": {"end_table": "on_top_of"},
-    "food": {"cupboard": "shelf2"},  # educated guess
+    "food": {"cupboard": "shelf2"},                 # educated guess
     "tableware": {"storage_table": "on_top_of"}
 }
 
@@ -96,10 +96,10 @@ inspect_positions = {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 most_probable_location_in_room_map = {
-    'bedroom': 'side_table',
-    'kitchen': 'cupboard',
-    'dining_room': 'dining_table',
-    'living_room': 'end_table'
+    'bedroom': 'side_table',        # educated guess
+    'kitchen': 'cupboard',          # educated guess
+    'dining_room': 'dining_table',  # educated guess
+    'living_room': 'end_table'      # educated guess
 }
 
 def get_location_from_room(room_id):
