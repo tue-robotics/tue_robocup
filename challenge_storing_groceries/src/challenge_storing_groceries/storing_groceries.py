@@ -69,9 +69,9 @@ class StoringGroceries(smach.StateMachine):
                 # Update manipulate machine
                 manipulate_machine.table_designator.id_         = closest_workspace.grasp_entity_conf.entity_id
 
-                manipulate_machine.place_entity_designator.id_  = closest_workspace.place_entity_conf.entity_id
-                manipulate_machine.place_designator._area       = closest_workspace.place_entity_conf.manipulation_volumes[0]
-                manipulate_machine.place_designator.place_location_designator.id = closest_workspace.place_entity_conf.entity_id
+                # manipulate_machine.place_entity_designator.id_  = closest_workspace.place_entity_conf.entity_id
+                # manipulate_machine.place_designator._area       = closest_workspace.place_entity_conf.manipulation_volumes[0]
+                # manipulate_machine.place_designator.place_location_designator.id = closest_workspace.place_entity_conf.entity_id
                 manipulate_machine.cabinet.id_                  = closest_workspace.place_entity_conf.entity_id
 
                 return "done"

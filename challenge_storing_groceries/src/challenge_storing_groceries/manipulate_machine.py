@@ -262,12 +262,23 @@ class ManipulateMachine(smach.StateMachine):
                                                                          name="grab_2"))
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
-        self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
-        self.place_designator = ds.EmptySpotDesignator(robot=robot,
-                                                       place_location_designator=self.place_entity_designator,
-                                                       area="temp")
-        self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
-        self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
+        self.place_designator1 = PlaceWithAlikeObjectDesignator(robot=robot,
+                                                                entity_to_place_designator=grab_designator_1,
+                                                                place_location_designator=self.cabinet,
+                                                                areas=['shelf2', 'shelf3'],
+                                                                name="place_1",
+                                                                debug=True
+                                                                )
+        self.place_designator2 = PlaceWithAlikeObjectDesignator(robot=robot,
+                                                                entity_to_place_designator=grab_designator_2,
+                                                                place_location_designator=self.cabinet,
+                                                                areas=['shelf2', 'shelf3'],
+                                                                name="place_2",
+                                                                debug=True
+                                                                )
+
+        self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator1)
+        self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator2)
 
         with self:
 
