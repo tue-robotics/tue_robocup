@@ -129,6 +129,9 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
 
         unoccupied_placement_candidates = filter(self.is_poi_occupied, all_placement_candidates.keys())
 
+        self.marker_array.markers = [self.create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()) for fs in unoccupied_placement_candidates]
+        self.marker_pub.publish(self.marker_array)
+
         best_placement = self.select_best_feasible_poi(unoccupied_placement_candidates)
         if best_placement:
             place_besides = all_placement_candidates[best_placement]
@@ -243,6 +246,46 @@ class PlaceSingleItem(smach.State):
             handover.execute()
 
         return "succeeded" if result == "done" else "failed"
+
+
+class LockToFrameStamped(ds.Designator):
+    """A designator for FrameStamped may generate a different FrameStamped every time.
+    By locking, it returns the same f.s. everytime while locked"""
+
+    def __init__(self, to_be_locked, name=None):
+        """ Constructor
+
+        :param robot: robot object
+        :param to_be_locked: designator to be locked
+        :param name: (optional) might come in handy for debugging
+        """
+        super(LockToFrameStamped, self).__init__(resolve_type=to_be_locked.resolve_type, name=name)
+        self.to_be_locked = to_be_locked
+        self._locked = False
+
+        self._locked_value = None
+
+    def lock(self):
+        self._locked = True
+
+    def unlock(self):
+        self._locked = False
+
+    def _resolve(self):
+        if self._locked:  # If we should resolve to a remembered thing
+            if not self._locked_value:  # but we haven't remembered anything yet
+                fs = self.to_be_locked.resolve()  # Then find out what we should remember
+                if fs:  # If we can find what to remember
+                    self._locked_value = fs  # remember!
+            else:  # If we do remember something already, recall that remembered ID:
+                return self._locked_value
+        else:
+            fs = self.to_be_locked.resolve()
+            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, fs))
+            return fs
+
+    def __repr__(self):
+        return "LockToFrameStamped({})._locked = {}".format(self.to_be_locked, self._locked)
 
 
 class ManipulateMachine(smach.StateMachine):
