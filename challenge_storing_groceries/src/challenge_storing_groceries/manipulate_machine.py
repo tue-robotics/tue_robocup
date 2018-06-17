@@ -314,8 +314,8 @@ class ManipulateMachine(smach.StateMachine):
                                    transitions={'locked': 'GRAB_ITEM_1'})
 
             smach.StateMachine.add("GRAB_ITEM_1", GrabSingleItem(robot=robot, grab_designator=grab_designator_1),
-                                   transitions={"succeeded": "LOCK_ITEM_1",
-                                                "failed": "LOCK_ITEM_1"})
+                                   transitions={"succeeded": "LOCK_ITEM_2",
+                                                "failed": "LOCK_ITEM_2"})
 
             smach.StateMachine.add("LOCK_ITEM_2",
                                    states.LockDesignator(grab_designator_2),
