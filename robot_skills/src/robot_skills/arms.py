@@ -641,6 +641,10 @@ class FakeArm(RobotPart):
     def occupied_by(self):
         return None
 
+    @occupied_by.setter
+    def occupied_by(self, value):
+        pass
+
     def send_gripper_goal(self, state, timeout=5.0):
         return False
 
