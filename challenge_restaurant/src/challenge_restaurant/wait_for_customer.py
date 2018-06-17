@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# System
+import math
+
 # ROS
 import PyKDL as kdl
 import rospy
@@ -26,6 +29,7 @@ class WaitForCustomer(smach.State):
         self._kitchen_designator = kitchen_designator
         self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb)
         self.rate = 10
+        self.head_samples = 20
         self.people_received = People()
 
     def execute(self, userdata=None):
@@ -40,7 +44,26 @@ class WaitForCustomer(smach.State):
 
         self._robot.speech.speak("I'm waiting for a waving person")
         waving_persons = []
+
+        look_distance = 3.0  # ToDo: magic number
+        look_angles = [0.0,  # ToDo: magic number
+                       math.pi / 6,
+                       math.pi / 4,
+                       math.pi / 2.3,
+                       0.0,
+                       -math.pi / 6,
+                       -math.pi / 4,
+                       -math.pi / 2.3]
+        head_goals = [VectorStamped(x=look_distance * math.cos(angle),
+                                    y=look_distance * math.sin(angle), z=1.3,
+                                    frame_id="/%s/base_link" % self._robot.robot_name) for angle in look_angles]
+
+        i = 0
         while not rospy.is_shutdown() and not waving_persons:
+            self._robot.head.look_at_point(head_goals[int(math.floor((i/self.head_samples))) % len(head_goals)])
+            self._robot.head.wait_for_motion_done()
+            i = i + 1
+
             rospy.sleep(1/self.rate)
             for person in self.people_received.people:
                 if {'RWave', 'LWave'}.intersection(set(person.tags)):
@@ -58,10 +81,6 @@ class WaitForCustomer(smach.State):
         pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
         rospy.loginfo('update customer position to %s', pose)
         self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
-        # customer_point_msg_stamped_camera = PointStamped()
-        # customer_point_msg_stamped_camera = self.people_received.header
-        # customer_point_msg_stamped_camera = waving_persons[0].position
-        # self.robot.tf_listener.
 
         # look at the barman
         kitchen_entity = self._kitchen_designator.resolve()
@@ -150,9 +169,9 @@ if __name__ == '__main__':
         smach.StateMachine.add('STORE_WAYPOINT',
                                WaitForCustomer(robot),
                                transitions={
-                                    'succeeded' : 'done',
-                                    'aborted' : 'done',
-                                    'rejected' : 'done'})
+                                    'succeeded': 'done',
+                                    'aborted': 'done',
+                                    'rejected': 'done'})
 
     # states.startup(setup_statemachine, challenge_name="automatic_side_detection")
     sm.execute()
