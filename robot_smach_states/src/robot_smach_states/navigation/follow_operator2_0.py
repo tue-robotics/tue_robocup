@@ -223,12 +223,12 @@ class FollowBread(smach.State):
             if not self._robot.base.global_planner.checkPlan(ros_plan):
                 rospy.loginfo("Breadcrumb plan is blocked, removing blocked points")
                 rospy.loginfo(
-                    "Breadcrumbs before removing blocked points: {}, have followed: {}".format(len(self._breadcrumb),
+                    "Breadcrumbs before removing blocked points: {}, have followed: {}".format(len(ros_plan),
                                                                                                self._have_followed))
                 ros_plan = [crwp.waypoint for crwp in self._breadcrumb
                             if self._robot.base.global_planner.checkPlan([crwp.waypoint])]
                 rospy.loginfo("Breadcrumbs length after removing blocked points: {}, have followed: {}".format(
-                    len(self._breadcrumb),
+                    len(ros_plan),
                     self._have_followed))
 
         # buffer_msg = Marker()
