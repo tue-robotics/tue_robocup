@@ -24,14 +24,14 @@ class DefaultGrabDesignator(ds.Designator):
     """ Designator to pick the closest item on top of the table to grab. This is used for testing
 
     """
-    def __init__(self, robot, surface_designator, area_description):
+    def __init__(self, robot, surface_designator, area_description, name=None):
         """ Constructor
 
         :param robot: robot object
         :param surface_designator: designator for the object to grab from
         :param area_description: string with id of the area where the object should be located in
         """
-        super(DefaultGrabDesignator, self).__init__(resolve_type=robot_skills.util.entity.Entity)
+        super(DefaultGrabDesignator, self).__init__(resolve_type=robot_skills.util.entity.Entity, name=name)
 
         self._robot = robot
         self._surface_designator = surface_designator
@@ -253,10 +253,12 @@ class ManipulateMachine(smach.StateMachine):
         self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
         if grab_designator_1 is None:
             grab_designator_1 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
-                                                      area_description=GRAB_SURFACE))
+                                                      area_description=GRAB_SURFACE,
+                                                                         name="grab_1"))
         if grab_designator_2 is None:
             grab_designator_2 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
-                                                      area_description=GRAB_SURFACE))
+                                                      area_description=GRAB_SURFACE,
+                                                                         name="grab_2"))
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
