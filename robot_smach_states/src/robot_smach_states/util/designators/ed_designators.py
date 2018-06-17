@@ -241,6 +241,9 @@ class EntityByIdDesignator(Designator):
         else:
             return None
 
+    def __repr__(self):
+        return "EntityByIdDesignator(id={}, name={})".format(self.id_, self.name)
+
 class ReasonedEntityDesignator(Designator):
     def __init__(self, robot, query, name=None):
         """
@@ -494,6 +497,9 @@ class EmptySpotDesignator(Designator):
         self.marker_pub.publish(self.marker_array)
 
         return points
+
+    def __repr__(self):
+        return "EmptySpotDesignator(place_location_designator={}, name='{}', area='{}')".format(self.place_location_designator, self._name, self._area)
 
 
 class LockToId(Designator):
