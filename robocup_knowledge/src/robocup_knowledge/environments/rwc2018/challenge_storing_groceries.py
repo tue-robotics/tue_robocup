@@ -30,7 +30,7 @@ default_place_entity = cabinet_amcl
 
 
 """
-EntityConfiguration defines a name, an pose estimate for the Entity and which volumes of that entity to use for 
+EntityConfiguration defines a name, an pose estimate for the Entity and which volumes of that entity to use for
 manipulation
 """
 EntityConfiguration = namedtuple("EntityConfiguration", ["entity_id", "pose_estimate", "manipulation_volumes"])
@@ -42,62 +42,40 @@ Additionally, it defines in which room the challenge takes place
 """
 Workspace = namedtuple("Workspace", ["grasp_entity_conf", "place_entity_conf", "room"])
 
-cabinet_ws = Workspace(grasp_entity_conf=
-                       EntityConfiguration(entity_id=table_name,
+cupboard_ws = Workspace(grasp_entity_conf=
+                       EntityConfiguration(entity_id="storage_table",
                                            pose_estimate=
                                            FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                        kdl.Vector(2.447, 1.1695, 0.0)),
+                                                                        kdl.Vector(-2.82, 5.73, 0.0)),
                                                         frame_id="map"),
                                            manipulation_volumes=['on_top_of']
                                            ),
                        place_entity_conf=
-                       EntityConfiguration(entity_id="cabinet",
-                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0),
-                                                                                      kdl.Vector(0.144, 3.274, 0.0)),
+                       EntityConfiguration(entity_id="cupboard",
+                                           pose_estimate=FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
+                                                                                      kdl.Vector(-2.69, 6.45, 0.0)),
                                                                       frame_id="map"),
                                            manipulation_volumes=['shelf2']
                                            ),
-                       room="dining_room")
+                       room="kitchen")
 
-storage_shelf_ws = Workspace(
+bookcase_ws = Workspace(
                         grasp_entity_conf=
-                        EntityConfiguration(entity_id=table_name,
+                        EntityConfiguration(entity_id="storage_table",
                                             pose_estimate=
-                                            FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                         kdl.Vector(2.447, 1.1695, 0.0)),
+                                            FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi/2),
+                                                                         kdl.Vector(-2.46, 1.24, 0.0)),
                                                          frame_id="map"),
                                             manipulation_volumes=['on_top_of']
                                             ),
                         place_entity_conf=
-                        EntityConfiguration(entity_id="storage_shelf",
+                        EntityConfiguration(entity_id="bookcase",
                                             pose_estimate=
-                                            FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                         kdl.Vector(4.8, 2.5, 0.0)),
+                                            FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi/2),
+                                                                         kdl.Vector(-1.46, 0.24, 0.0)),
                                                          frame_id="map"),
                                             manipulation_volumes=['shelf2']
                                             ),
                         room="dining_room")
 
-bookcase_ws = Workspace(grasp_entity_conf=
-                        EntityConfiguration(entity_id="cupboard",
-                                            pose_estimate=FrameStamped(
-                                                frame=kdl.Frame(kdl.Rotation.RPY(
-                                                    0.0, 0.0,
-                                                    math.pi/2),  # right of shelf
-                                                    # -math.pi/2), # left of shelf
-                                                    kdl.Vector(8.5, 1.15, 0.0)), # right of shelf
-                                                    # kdl.Vector(8.5, 3.15, 0.0)), # left of shelf
-                                                    frame_id="map"),
-                                            manipulation_volumes=['on_top_of']
-                                            ),
-                        place_entity_conf=
-                        EntityConfiguration(entity_id="bookcase",
-                                            pose_estimate=FrameStamped(
-                                                frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                                 kdl.Vector(9.7, 2.0, 0.0)),
-                                                frame_id="map"),
-                                            manipulation_volumes=['shelf2']
-                                            ),
-                        room="bedroom")
-
-workspaces = [cabinet_ws, storage_shelf_ws, bookcase_ws]
+workspaces = [cupboard_ws, bookcase_ws]
