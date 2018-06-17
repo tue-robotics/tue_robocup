@@ -164,18 +164,8 @@ class GrabSingleItem(smach.StateMachine):
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
 
         with self:
-            @smach.cb_interface(outcomes=["locked"])
-            def lock(userdata=None):
-                """ 'Locks' a locking designator """
-                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
-                self.grab_designator.lock()
-                if self.grab_designator.resolve():
-                    rospy.loginfo("Current_item is now locked to {0}".format(self.grab_designator.resolve().id))
-
-                return "locked"
-
             smach.StateMachine.add("LOCK_ITEM",
-                                   smach.CBState(lock),
+                                   states.LockDesignator(self.grab_designator),
                                    transitions={'locked': 'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add("ANNOUNCE_ITEM",
@@ -186,24 +176,8 @@ class GrabSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("GRAB_ITEM",
                                    states.Grab(robot, self.grab_designator, self.empty_arm_designator),
-                                   transitions={'done': 'UNLOCK_ITEM_SUCCEED',
-                                                'failed': 'UNLOCK_ITEM_FAIL'})
-
-            @smach.cb_interface(outcomes=["unlocked"])
-            def lock(userdata=None):
-                """ 'Locks' a locking designator """
-                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
-                self.grab_designator.unlock()
-
-                return "unlocked"
-
-            smach.StateMachine.add("UNLOCK_ITEM_SUCCEED",
-                                   smach.CBState(lock),
-                                   transitions={'unlocked': 'succeeded'})
-
-            smach.StateMachine.add("UNLOCK_ITEM_FAIL",
-                                   smach.CBState(lock),
-                                   transitions={'unlocked': 'failed'})
+                                   transitions={'done': 'succeeded',
+                                                'failed': 'failed'})
 
 
 class PlaceSingleItem(smach.State):
@@ -356,9 +330,25 @@ class ManipulateMachine(smach.StateMachine):
                                                 'goal_not_defined': 'PLACE_ITEM_1'})
 
             smach.StateMachine.add("PLACE_ITEM_1", self.placeaction1,
-                                   transitions={"succeeded": "PLACE_ITEM_2",
-                                                "failed": "PLACE_ITEM_2"})
+                                   transitions={"succeeded": "UNLOCK_ITEM_1_SUCCEED",
+                                                "failed": "UNLOCK_ITEM_1_FAIL"})
+
+            smach.StateMachine.add("UNLOCK_ITEM_1_SUCCEED",
+                                   states.UnlockDesignator(grab_designator_1),
+                                   transitions={'unlocked': 'PLACE_ITEM_2'})
+
+            smach.StateMachine.add("UNLOCK_ITEM_1_FAIL",
+                                   states.UnlockDesignator(grab_designator_1),
+                                   transitions={'unlocked': 'PLACE_ITEM_2'})
 
             smach.StateMachine.add("PLACE_ITEM_2", self.placeaction2,
-                                   transitions={"succeeded": "succeeded",
-                                                "failed": "failed"})
+                                   transitions={"succeeded": "UNLOCK_ITEM_2_SUCCEED",
+                                                "failed": "UNLOCK_ITEM_2_FAIL"})
+
+            smach.StateMachine.add("UNLOCK_ITEM_2_SUCCEED",
+                                   states.UnlockDesignator(grab_designator_1),
+                                   transitions={'unlocked': 'succeeded'})
+
+            smach.StateMachine.add("UNLOCK_ITEM_2_FAIL",
+                                   states.UnlockDesignator(grab_designator_1),
+                                   transitions={'unlocked': 'failed'})
