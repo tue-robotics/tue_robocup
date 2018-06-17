@@ -115,7 +115,7 @@ class Track(smach.State):
 
 
 class FollowBread(smach.State):
-    def __init__(self, robot, _buffer, operator_radius=1, lookat_radius=1.3):
+    def __init__(self, robot, _buffer, operator_radius=1, lookat_radius=0.5):
         """
 
         :param robot: robot object (amigo, sergio)
@@ -180,8 +180,16 @@ class FollowBread(smach.State):
                 self._have_followed = False
                 return 'no_follow_bread_ask_finalize'
 
-        self._breadcrumb = [crwp for crwp in self._breadcrumb
-                            if crwp.crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
+        # self._breadcrumb = [crwp for crwp in self._breadcrumb
+        #                     if crwp.crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
+
+        current_index = -1
+        for i, crumb in enumerate(self._breadcrumb):
+            if crumb.crumb.distance_to_2d(robot_position.p) < self._lookat_radius:
+                current_index = i
+
+        # throw away all breadcrumbs before where we are
+        self._breadcrumb = self._breadcrumb[current_index+1:]
 
         if not self._breadcrumb:
             return 'no_follow_bread_recovery'
