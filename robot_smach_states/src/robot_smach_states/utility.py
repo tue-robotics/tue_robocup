@@ -25,8 +25,10 @@ class Initialize(smach.State):
         self.robot.base.local_planner._action_client.cancel_all_goals()
         self.robot.head.reset()
         self.robot.leftArm.reset()
+        self.robot.leftArm.occupied_by = None
         self.robot.leftArm.send_gripper_goal('close', 0.0)
         self.robot.rightArm.reset()
+        self.robot.rightArm.occupied_by = None
         self.robot.rightArm.send_gripper_goal('close', 0.0)
         self.robot.ed.reset()
         self.robot.torso.reset()
