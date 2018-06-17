@@ -36,12 +36,12 @@ objects = [
     {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 100,      'weight': 22},
     {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 247,      'weight': 15},
 
-    {'category': 'containers',          'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
-    {'category': 'containers',          'name': 'tray',             'color': 'white',       'volume': 4508,     'weight': 120},
+    {'category': 'container',          'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
+    {'category': 'container',          'name': 'tray',             'color': 'white',       'volume': 4508,     'weight': 120},
 
-    {'category': 'cuttlery',            'name': 'fork',             'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'cuttlery',            'name': 'knife',            'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'cuttlery',            'name': 'spoon',            'color': 'green',       'volume': 23,       'weight': 10},
+    {'category': 'cutlery',            'name': 'fork',             'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'cutlery',            'name': 'knife',            'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'cutlery',            'name': 'spoon',            'color': 'green',       'volume': 23,       'weight': 10},
 
     {'category': 'drinks',              'name': 'chocolate_drink',  'color': 'brownish',    'volume': 404,      'weight': 325},
     {'category': 'drinks',              'name': 'coke',             'color': 'red',         'volume': 270,      'weight': 222},
@@ -66,8 +66,6 @@ objects = [
     {'category': 'tableware',           'name': 'dish',             'color': 'green',       'volume': 672,      'weight': 70}
 ]
 
-{'category': 'help_me_carry', 'name': 'bag', 'color': 'pink'},
-
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
 object_color = list(set([ o["color"] for o in objects ]))
@@ -79,11 +77,12 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 category_locations = {
     "drinks": {"counter": "on_top_of"},
     "cleaning_stuff": {"side_table": "on_top_of"},
-    "snacks": {"bookcase": "shelf3"},
-    "fruits": {"bookcase": "shelf2"},
+    "cutlery": {"storage_table": "on_top_of"},
+    "snacks": {"bookcase": "shelf3"},  # educated guess
+    "fruits": {"bookcase": "shelf2"},  # educated guess
     "container": {"end_table": "on_top_of"},
-    "food": {"cupboard": "shelf2"},
-    "kitchen_stuff": {"storage_table": "on_top_of"}
+    "food": {"cupboard": "shelf2"},  # educated guess
+    "tableware": {"storage_table": "on_top_of"}
 }
 
 inspect_areas = {
