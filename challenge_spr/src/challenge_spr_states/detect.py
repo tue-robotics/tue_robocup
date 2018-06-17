@@ -54,7 +54,7 @@ class DetectCrowd(smach.State):
 
         for i in range(0, tries):
             self.robot.speech.speak(sentences[i % (tries - 1)], block=False)
-            self.robot.head.look_at_point(VectorStamped(100, 0, 1.5, self.robot.robot_name + "/base_link"))
+            self.robot.head.look_at_point(VectorStamped(6, 0, 0, self.robot.robot_name + "/base_link"))
             self.robot.head.wait_for_motion_done()
             rospy.sleep(1)
 
