@@ -48,8 +48,8 @@ Workspace = namedtuple("Workspace", ["grasp_entity_conf", "place_entity_conf", "
 cupboard_ws = Workspace(grasp_entity_conf=
                        EntityConfiguration(entity_id="storage_table",
                                            pose_estimate=
-                                           FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi),
-                                                                        kdl.Vector(-2.82, 5.73, 0.0)),
+                                           FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, -math.pi/2),
+                                                                        kdl.Vector(-3.7, 7.2, 0.0)),
                                                         frame_id="map"),
                                            manipulation_volumes=['on_top_of']
                                            ),
