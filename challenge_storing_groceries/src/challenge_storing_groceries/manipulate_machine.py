@@ -233,7 +233,7 @@ class ManipulateMachine(smach.StateMachine):
         self.place_designator1 = LockToFrameStamped(PlaceWithAlikeObjectDesignator(robot=robot,
                                                                                    entity_to_place_designator=self.grab_designator_1,
                                                                                    place_location_designator=self.cabinet,
-                                                                                   areas=['shelf2', 'shelf3'],
+                                                                                   areas=['shelf3'],
                                                                                    name="place_1",
                                                                                    debug=False
                                                                                    ))

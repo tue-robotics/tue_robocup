@@ -94,7 +94,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
             return False
 
     def _generate_placements_beside(self, entity):
-        placements = self._generate_around(entity.pose, 0.2, 8)
+        placements = self._generate_around(entity, 0.2, 8)
 
         # TODO: This is an ugly hack to make select_best_feasible_poi work, because super().determine_points_of_interest() also does this.
         for placement in placements:
@@ -102,10 +102,11 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         return placements
 
     @staticmethod
-    def _generate_around(framestamped, radius, n):
+    def _generate_around(entity, radius, n):
+        framestamped = entity.pose
         angles = np.linspace(0, 2 * np.pi, n)
         vector = framestamped.extractVectorStamped().vector
-        x, y, z = vector.x(), vector.y(), vector.z()
+        x, y, z = vector.x(), vector.y(), vector.z() + entity.shape.z_min
         xs = radius*np.cos(angles) + x
         ys = radius*np.sin(angles) + y
         frame_stampeds = [kdl_frame_stamped_from_XYZRPY(xi, yi, z, 0, 0, 0, frame_id=framestamped.frame_id) for
