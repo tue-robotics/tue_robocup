@@ -1,26 +1,42 @@
 #!/usr/bin/env python
 import rospy
-from robocup_knowledge import load_knowledge
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say
+from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find
 from robot_smach_states.util import startup
-from robot_smach_states.util.designators import EntityByIdDesignator
-from smach import StateMachine, State
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
+from smach import StateMachine
 
-challenge_knowledge = load_knowledge('challenge_dishwasher')
+STARTING_POINT = "initial_pose"
 
-STARTING_POINT = challenge_knowledge.starting_point
+object_type = 'coke'  # TODO: should be cup, but this is for simulation
+source_entity = 'dining_table'
 
-EXIT_1 = challenge_knowledge.exit_1
-EXIT_2 = challenge_knowledge.exit_2
-EXIT_3 = challenge_knowledge.exit_3
+EXIT_1 = "exit_1_rips"
+EXIT_2 = "exit_2_rips"
+EXIT_3 = "exit_3_rips"
 
 
-class Find(State):
-    def __init__(self, robot, object_type):
-        State.__init__(self, outcomes=['found'])
+class FindObject(StateMachine):
+    def __init__(self, robot):
+        StateMachine.__init__(self, outcomes=['found'])
 
-    def execute(self, ud):
-        return 'found'
+        source_entity_designator = EdEntityDesignator(robot, id=source_entity)
+        description_designator = VariableDesignator({
+            'type': 'cup'
+        })
+        area_name_designator = VariableDesignator('on_top_of')
+        navigation_area_designator = VariableDesignator('in_front_of')
+        found_entity_designator = VariableDesignator(resolve_type=dict)
+
+        with self:
+            StateMachine.add('SAY_LOOKING', Say(robot, ["I'm going to look for the cup"], block=False),
+                             transitions={'spoken': 'FIND'})
+
+            StateMachine.add('FIND',
+                             Find(robot, source_entity_designator, description_designator, area_name_designator,
+                                  navigation_area_designator, found_entity_designator),
+                             transitions={'succeeded': 'found',
+                                          'inspect_failed': 'found',
+                                          'not_found': 'found'})
 
 
 def setup_statemachine(robot):
@@ -34,7 +50,7 @@ def setup_statemachine(robot):
                                       'Aborted': 'done',
                                       'Failed': 'FIND_THE_CUP'})
 
-        StateMachine.add('FIND_THE_CUP', Find(robot, 'cup'),
+        StateMachine.add('FIND_THE_CUP', FindObject(robot),
                          transitions={'found': 'SAY_EXIT'})
 
         StateMachine.add('SAY_EXIT',
