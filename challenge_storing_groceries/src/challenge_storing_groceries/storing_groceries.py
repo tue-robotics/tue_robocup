@@ -112,7 +112,7 @@ class StoringGroceries(smach.StateMachine):
             # The exhausted argument should be set to the prefered state machine outcome
             range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
                                             input_keys=[], output_keys=[],
-                                            it=lambda: range(5),
+                                            it=lambda: range(20),
                                             it_label='index',
                                             exhausted_outcome='succeeded')
 
