@@ -222,7 +222,7 @@ GENDER['boy'] -> boy
 GENDER['girl'] -> girl
 
 POSITION['sitting'] -> sitting
-POSITION['laying'] -> laying
+POSITION['laying'] -> laying | laying down
 
 GESTURE['waving'] -> waving
 GESTURE['raising_left'] -> raising their left arm
