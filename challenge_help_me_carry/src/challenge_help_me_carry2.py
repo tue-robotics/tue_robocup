@@ -55,7 +55,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
             smach.StateMachine.add('SET_INITIAL_POSE',
                                    states.SetInitialPose(robot, challenge_knowledge.starting_point),
                                    transitions={'done': 'FOLLOW_OPERATOR',
-                                                "preempted": 'Aborted',
+                                                'preempted': 'Aborted',
                                                 'error': 'FOLLOW_OPERATOR'})
 
             # Follow the operator until (s)he states that you have arrived at the "car".
