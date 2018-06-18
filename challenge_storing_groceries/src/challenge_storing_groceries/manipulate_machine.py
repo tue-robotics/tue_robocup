@@ -315,7 +315,7 @@ class ManipulateMachine(smach.StateMachine):
 
             smach.StateMachine.add("GRAB_ITEM_1", GrabSingleItem(robot=robot, grab_designator=self.grab_designator_1),
                                    transitions={"succeeded": "MOVE_TO_PLACE",
-                                                "failed": "MOVE_TO_PLACE"})
+                                                "failed": "failed"})
 
             smach.StateMachine.add("MOVE_TO_PLACE",
                                    states.NavigateToSymbolic(robot,
