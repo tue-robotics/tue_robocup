@@ -52,10 +52,10 @@ def _wrap_angle_pi(angle):
 
 
 class UpdateCabinetPose(smach.State):
-    def __init__(self, robot, cabinet_id, cabinet_inspect_area):
+    def __init__(self, robot, cabinet, cabinet_inspect_area):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
-        self.cabinet_id = cabinet_id
+        self.cabinet = cabinet
         self.cabinet_inspect_area = cabinet_inspect_area
 
     def execute(self, userdata=None):
@@ -64,16 +64,16 @@ class UpdateCabinetPose(smach.State):
 
         rospy.sleep(1)
         # Now update the pose of the cabinet
-        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet_id))
+        self.robot.ed.update_kinect("{} {}".format(self.cabinet_inspect_area, self.cabinet.id_))
 
         return 'succeeded'
 
 
 class OpenDoor(smach.State):
-    def __init__(self, robot, cabinet_id):
+    def __init__(self, robot, cabinet):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
-        self.cabinet_id = cabinet_id
+        self.cabinet = cabinet
 
         self._rate = rospy.Rate(10)
         self._goal_position_tolerance = 0.01
@@ -121,7 +121,7 @@ class OpenDoor(smach.State):
     def _align_with_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet_id
+        goal_pose.header.frame_id = self.cabinet.id_
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
         goal_pose.pose.position.x = 0.6
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
@@ -129,7 +129,7 @@ class OpenDoor(smach.State):
     def _return_from_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet_id
+        goal_pose.header.frame_id = self.cabinet.id_
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
         goal_pose.pose.position.x = 1.0
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.5, 0.5, 0.5)
@@ -143,7 +143,7 @@ class OpenDoor(smach.State):
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.cabinet_id
+        goal_pose.header.frame_id = self.cabinet.id_
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.8))
         goal_pose.pose.position.x = 0.75
         goal_pose.pose.position.y = -0.02
@@ -164,22 +164,22 @@ class OpenDoorMachine(smach.StateMachine):
     def __init__(self, robot, cabinet_id, cabinet_navigate_area, cabinet_inspect_area):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        cabinet = ds.EdEntityDesignator(robot=robot, id=cabinet_id)
+        self.cabinet = ds.EntityByIdDesignator(robot=robot, id=cabinet_id)
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_CABINET",
-                                   states.NavigateToSymbolic(robot, {cabinet: cabinet_navigate_area}, cabinet),
+                                   states.NavigateToSymbolic(robot, {self.cabinet: cabinet_navigate_area}, self.cabinet),
                                    transitions={'arrived': 'UPDATE_CABINET_POSE',
                                                 'unreachable': 'failed',
                                                 'goal_not_defined': 'failed'})
 
             smach.StateMachine.add("UPDATE_CABINET_POSE",
-                                   UpdateCabinetPose(robot, cabinet_id, cabinet_inspect_area),
+                                   UpdateCabinetPose(robot, self.cabinet, cabinet_inspect_area),
                                    transitions={'succeeded': 'OPEN_DOOR',
                                                 'failed': 'failed'})
 
             smach.StateMachine.add("OPEN_DOOR",
-                                   OpenDoor(robot, cabinet_id),
+                                   OpenDoor(robot, self.cabinet),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'})
 
