@@ -230,6 +230,7 @@ class PickUp(smach.State):
         # rospy.loginfo('start moving to carrying pose')
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
+        result = 'succeeded'
         if self._check_occupancy:
             # Check if the object is present in the gripper
             if arm.object_in_gripper_measurement.is_empty:
