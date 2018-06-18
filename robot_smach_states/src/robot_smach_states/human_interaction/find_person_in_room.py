@@ -104,7 +104,7 @@ class FindPerson(smach.State):
 
                 return 'found'
             else:
-                rospy.logwarn("Could not find {} in the {}".format(self._person_label, self.area))
+                rospy.logwarn("Could not find {}".format(self._person_label))
 
         self._robot.head.close()
         rospy.sleep(2.0)
