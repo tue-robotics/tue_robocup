@@ -59,6 +59,7 @@ class NavigateToPlace(NavigateTo):
             return None
 
         # Outer radius
+        radius -= 0.1
         ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
         # pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
