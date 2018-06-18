@@ -28,6 +28,8 @@ object_types = [obj["name"] for obj in common.objects]
 # Placing
 default_place_entity = cabinet_amcl
 
+# Superclasses
+superclasses = {obj['name']:obj['category'] for obj in common.objects}
 
 """
 EntityConfiguration defines a name, an pose estimate for the Entity and which volumes of that entity to use for
