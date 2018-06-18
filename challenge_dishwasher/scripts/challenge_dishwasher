@@ -6,7 +6,7 @@ from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Fi
 from robot_smach_states.util import startup
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, \
     UnoccupiedArmDesignator
-from smach import StateMachine
+from smach import StateMachine, State
 
 STARTING_POINT = "initial_pose"
 
@@ -22,7 +22,7 @@ EXIT_3 = "exit_3_rips"
 
 class FindObject(StateMachine):
     def __init__(self, robot, item):
-        StateMachine.__init__(self, outcomes=['found'])
+        StateMachine.__init__(self, outcomes=['found', 'not_found'])
 
         source_entity_designator = EdEntityDesignator(robot, id=source_entity)
         description_designator = VariableDesignator({
@@ -39,13 +39,25 @@ class FindObject(StateMachine):
                              Find(robot, source_entity_designator, description_designator, area_name_designator,
                                   navigation_area_designator, item),
                              transitions={'succeeded': 'found',
-                                          'inspect_failed': 'found',
-                                          'not_found': 'found'})
+                                          'inspect_failed': 'not_found',
+                                          'not_found': 'not_found'})
+
+
+class CustomPlace(State):
+    def __init__(self, robot, arm):
+        State.__init__(self, outcomes=['placed'])
+        self.robot = robot
+        self.arm = arm
+
+    def execute(self, ud):
+        return 'placed'
 
 
 def setup_statemachine(robot):
     item = VariableDesignator(resolve_type=Entity)
     dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+    arm = UnoccupiedArmDesignator(robot.arms, None).lockable()
+    arm.lock()
 
     sm = StateMachine(outcomes=['done'])
 
@@ -69,12 +81,21 @@ def setup_statemachine(robot):
                                       'failed': 'FIND_OBJECT'})
 
         StateMachine.add('FIND_OBJECT', FindObject(robot, item),
-                         transitions={'found': 'GRAB'})
+                         transitions={'found': 'GRAB',
+                                      'not_found': 'SAY_EXIT'})
 
-        arm = UnoccupiedArmDesignator(robot.arms, None)
         StateMachine.add('GRAB', Grab(robot, item, arm),
-                         transitions={'done': 'SAY_EXIT',
+                         transitions={'done': 'NAVIGATE_BACK_TO_DISHWASHER',
                                       'failed': 'SAY_EXIT'})
+
+        StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER",
+                         NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
+                         transitions={'arrived': 'CUSTOM_PLACE',
+                                      'unreachable': 'SAY_EXIT',
+                                      'goal_not_defined': 'SAY_EXIT'})
+
+        StateMachine.add('CUSTOM_PLACE', CustomPlace(robot, arm),
+                         transitions={'placed': 'SAY_EXIT'})
 
         StateMachine.add('SAY_EXIT', Say(robot, ["I will move to the exit now. See you guys later!"], block=False),
                          transitions={'spoken': 'GO_TO_EXIT'})
