@@ -1,13 +1,26 @@
 #!/usr/bin/env python
 import rospy
 from robocup_knowledge import load_knowledge
-from robot_smach_states import StartChallengeRobust
+from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say
 from robot_smach_states.util import startup
-from smach import StateMachine
+from robot_smach_states.util.designators import EntityByIdDesignator
+from smach import StateMachine, State
 
 challenge_knowledge = load_knowledge('challenge_dishwasher')
 
 STARTING_POINT = challenge_knowledge.starting_point
+
+EXIT_1 = challenge_knowledge.exit_1
+EXIT_2 = challenge_knowledge.exit_2
+EXIT_3 = challenge_knowledge.exit_3
+
+
+class Find(State):
+    def __init__(self, robot, object_type):
+        State.__init__(self, outcomes=['found'])
+
+    def execute(self, ud):
+        return 'found'
 
 
 def setup_statemachine(robot):
@@ -15,11 +28,38 @@ def setup_statemachine(robot):
 
     with sm:
         # Start challenge via StartChallengeRobust
-        StateMachine.add("START_CHALLENGE_ROBUST",
+        StateMachine.add('START_CHALLENGE_ROBUST',
                          StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
-                         transitions={"Done": "done",
-                                      "Aborted": "done",
-                                      "Failed": "done"})
+                         transitions={'Done': 'FIND_THE_CUP',
+                                      'Aborted': 'done',
+                                      'Failed': 'FIND_THE_CUP'})
+
+        StateMachine.add('FIND_THE_CUP', Find(robot, 'cup'),
+                         transitions={'found': 'SAY_EXIT'})
+
+        StateMachine.add('SAY_EXIT',
+                         Say(robot,
+                             ["I will move to the exit now. See you guys later!"],
+                             block=False),
+                         transitions={'spoken': 'GO_TO_EXIT'})
+
+        StateMachine.add('GO_TO_EXIT',
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_1), radius=0.7),
+                         transitions={'arrived': 'done',
+                                      'unreachable': 'GO_TO_EXIT_2',
+                                      'goal_not_defined': 'GO_TO_EXIT_2'})
+
+        StateMachine.add('GO_TO_EXIT_2',
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_2), radius=0.5),
+                         transitions={'arrived': 'done',
+                                      'unreachable': 'GO_TO_EXIT_3',
+                                      'goal_not_defined': 'GO_TO_EXIT_3'})
+
+        StateMachine.add('GO_TO_EXIT_3',
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_3), radius=0.5),
+                         transitions={'arrived': 'done',
+                                      'unreachable': 'done',
+                                      'goal_not_defined': 'done'})
     return sm
 
 
