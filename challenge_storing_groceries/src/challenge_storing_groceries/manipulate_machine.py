@@ -139,7 +139,7 @@ class PlaceSingleItem(smach.State):
             return "failed"
 
         # Try to place the object
-        item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
+        item = ds.Designator(arm.occupied_by)
         arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
         place = states.Place(robot=self._robot, item_to_place=item, place_pose=self.place_designator, arm=arm_designator)
         result = place.execute()
