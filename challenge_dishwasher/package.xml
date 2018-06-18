@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>challenge_dishwasher</name>
+  <version>0.0.0</version>
+  <description>The challenge_dishwasher package</description>
+
+  <maintainer email="rayman747@hotmail.com">Ramon Wijnands</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
