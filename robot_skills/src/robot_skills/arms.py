@@ -349,6 +349,8 @@ class Arm(RobotPart):
         # rospy.loginfo("Get {}.occupied_by = {}".format(self, occupied_by))
         if occupied_by != "unoccupied":
             entity = self._world_model.get_entity(id=occupied_by)
+            if not entity:
+                rospy.logwarn("No entity with id '{}'".format(occupied_by))
             return entity
         else:
             return None
