@@ -144,13 +144,15 @@ Q["action" : "count", "entity" : P] -> how many PEOPLE[P] are in the crowd | tel
 ##############################################################################
 
 grammar += '''
+MF -> male | female | boy | girl
 
-NQ["action" : "count_pos", "entity" : X] -> how many people in the crowd are POSITION[X]
-NQ["action" : "count_ges", "entity" : W] -> how many people in the crowd are GESTURE[W]
+Q["action" : "count", "entity" : X] -> how many people in the crowd are POSITION[X]
+Q["action" : "count", "entity" : W] -> how many people in the crowd are GESTURE[W]
+Q["action" : "count", "entity" : X] -> the POSITION[X] person was MF | tell me if the POSITION[X] person was a MF | the POSITION[X] person was MF or MF | tell me if the POSITION[X] person was a MF or MF
+Q["action" : "count", "entity" : W] -> tell me if the GESTURE[W] person was a MF | tell me if the GESTURE[W] person was a MF or MF
+
 NQ["action" : "count_col", "entity" : L] -> tell me how many people were wearing COLOR[L]
 
-NQ["action" : "gender_pos", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER | the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
-NQ["action" : "gender_ges", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER | tell me if the GESTURE[W] person was a GENDER or GENDER
 '''
 
 ##############################################################################
@@ -219,15 +221,14 @@ GENDER['woman'] -> woman
 GENDER['boy'] -> boy
 GENDER['girl'] -> girl
 
-POSITION['standing'] -> standing
 POSITION['sitting'] -> sitting
-POSITION['lying'] -> laying
+POSITION['laying'] -> laying
 
 GESTURE['waving'] -> waving
-GESTURE['rise_l_arm'] -> rising left arm
-GESTURE['rise_r_arm'] -> rising right arm
-GESTURE['left'] -> pointing left
-GESTURE['right'] -> pointing right
+GESTURE['raising_left'] -> raising their left arm
+GESTURE['raising_right'] -> raising their right arm
+GESTURE['pointing_left'] -> pointing left
+GESTURE['pointing_right'] -> pointing right
 
 COLOR['red'] -> red
 COLOR['blue'] -> blue

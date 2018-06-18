@@ -86,6 +86,8 @@ class DetectCrowd(smach.State):
         :rtype: dict
         """
         waving_persons = []
+        rarm_persons = []
+        larm_persons = []
         laying_persons = []
         sitting_persons = []
         lpointing_persons = []
@@ -98,6 +100,8 @@ class DetectCrowd(smach.State):
         num_boys = 0
         num_elders = 0
         num_waving = 0
+        num_rarm = 0
+        num_larm = 0
         num_lpointing = 0
         num_rpointing = 0
         num_laying = 0
@@ -106,6 +110,10 @@ class DetectCrowd(smach.State):
         for person in self.people_received.people:
                 if {'RWave', 'LWave'}.intersection(set(person.tags)):
                     waving_persons.append(person)
+                elif {'RWave'}.intersection(set(person.tags)):
+                    rarm_persons.append(person)
+                elif {'LWave'}.intersection(set(person.tags)):
+                    larm_persons.append(person)
                 elif {'RPointing'}.intersection(set(person.tags)):
                     rpointing_persons.append(person)
                 elif {'LPointing'}.intersection(set(person.tags)):
@@ -116,8 +124,10 @@ class DetectCrowd(smach.State):
                     sitting_persons.append(person)
 
         num_waving = len(waving_persons)
-        num_lpointing = len(lpointing_persons)
+        num_rarm = len(rarm_persons)
+        num_larm = len(larm_persons)
         num_rpointing = len(rpointing_persons)
+        num_lpointing = len(lpointing_persons)
         num_laying = len(laying_persons)
         num_sitting = len(sitting_persons)
 
@@ -162,6 +172,8 @@ class DetectCrowd(smach.State):
             "elders": num_elders,
             "crowd_size": num_females + num_males + num_elders,
             "waiving": num_waving,
+            "raising_left": num_larm,
+            "raising_right": num_rarm,
             "pointing_left": num_lpointing,
             "pointing_right": num_rpointing,
             "laying": num_laying,

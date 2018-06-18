@@ -162,7 +162,14 @@ def answer_count_people(action, crowd_data):
                         ('men', 'men'),
                         ('women', 'women'),
                         ('boys', 'boys'),
-                        ('girls', 'girls')]
+                        ('girls', 'girls'),
+                        ('waiving', 'waiving'),
+                        ('raising_left', 'raising_left'),
+                        ('raising_right', 'raising_right'),
+                        ('pointing_left', 'pointing_left'),
+                        ('pointing_right', 'pointing_right'),
+                        ('laying', 'laying'),
+                        ('sitting', 'sitting')]
 
     for property_name, property_value in crowd_properties:
         if action['entity'] == property_name:
