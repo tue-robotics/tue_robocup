@@ -104,7 +104,7 @@ class OpenDoor(smach.State):
             if self._goal_reached(dx, dy, dyaw):
                 break
 
-            rospy.loginfo_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
+            rospy.loginfo_throttle(1.0, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
 
             self._cmd_vel_publisher.publish(Twist(
                 linear=Vector3(
