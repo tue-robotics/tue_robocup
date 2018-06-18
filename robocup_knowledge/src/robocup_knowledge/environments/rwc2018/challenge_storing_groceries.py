@@ -22,7 +22,7 @@ cabinet_poses = [FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0), kdl
                               frame_id="map"),
                  FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, math.pi), kdl.Vector(4.8, 2.5, 0.0)),
                               frame_id="map")]
-object_shelves = ["shelf1", "shelf3", "shelf4"] #, "shelf5"] We can't manipulate in the upper shelves so don't bother looking
+object_shelves = ["shelf1", "shelf2", "shelf3", "shelf4"] #, "shelf5"] We can't manipulate in the upper shelves so don't bother looking
 object_types = [obj["name"] for obj in common.objects]
 
 # Placing
