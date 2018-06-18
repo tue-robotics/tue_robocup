@@ -14,6 +14,7 @@ from robot_smach_states.util.geometry_helpers import *
 # Challenge storing groceries
 from config import *
 from manipulate_machine import ManipulateMachine
+from open_door import OpenDoorMachine
 from pdf import WritePdf
 
 
@@ -29,13 +30,8 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'SAY_UNABLE_TO_OPEN_DOOR',
+                                   transitions={'initialized': 'AWAIT_START',
                                                 'abort': 'Aborted'})
-
-            smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
-                                   states.Say(robot, "I am unable to open the shelf door, "
-                                                     "can you please open it for me?"),
-                                   transitions={'spoken': 'AWAIT_START'})
 
             smach.StateMachine.add("AWAIT_START",
                                    states.AskContinue(robot),
@@ -78,7 +74,18 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_TABLE",
                                    smach.CBState(move_table, cb_args=[single_item]),
-                                   transitions={'done': 'RANGE_ITERATOR'})
+                                   transitions={'done': 'OPEN_DOOR'})
+
+            smach.StateMachine.add("OPEN_DOOR",
+                                   OpenDoorMachine(robot, 'cupboard', 'in_front_of', 'shelf6'),
+                                   transitions={'succeeded': 'RANGE_ITERATOR',
+                                                'failed': 'SAY_UNABLE_TO_OPEN_DOOR'})
+
+            smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
+                                   states.Say(robot, "I am unable to open the shelf door, "
+                                                     "can you please open it for me?"),
+                                   transitions={'spoken': 'RANGE_ITERATOR'})
+
             # If you want to reinstate cabinet inspection uncomment section below and change transition above
             # smach.StateMachine.add("NAV_TO_START",
             #                        states.NavigateToSymbolic(robot,
