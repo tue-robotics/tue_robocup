@@ -122,27 +122,40 @@ class OpenDoor(smach.State):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet_id
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
+        goal_pose.pose.position.x = 0.6
+        self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
+
+    def _return_from_cabinet(self):
+        goal_pose = PoseStamped()
+        goal_pose.header.stamp = rospy.Time.now()
+        goal_pose.header.frame_id = self.cabinet_id
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-        goal_pose.pose.position.x = 0.5
-        self._control_to_pose(goal_pose, 1.0, 1.0, 0.5, 0.5, 0.5)
+        goal_pose.pose.position.x = 1.0
+        self._control_to_pose(goal_pose, 0.5, 1.0, 0.5, 0.5, 0.5)
 
     def _move_arm_in_cabinet(self):
         self.robot.leftArm._send_joint_trajectory([[-0.101, 0.119, 0.200, 1.363, 0.230, 0.688, 0.280]])
         self.robot.leftArm._send_joint_trajectory([[-0.574, 0.802, 0.691, 1.021, 0.750, 0.535, 0.378]])
-        self.robot.leftArm._send_joint_trajectory([[-0.042, 0.720, 0.846, 1.039, 0.849, 0.534, 0.377]])
+        #self.robot.leftArm._send_joint_trajectory([[-0.042, 0.720, 0.846, 1.039, 0.849, 0.534, 0.377]])
+        self.robot.leftArm._send_joint_trajectory([[-0.04446312115056816, 0.8908744970312501, 0.9101328212542089, 0.9240762995414635, 1.0067001691414637, 0.3949460482219828, 0.1621731308728449]])
 
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet_id
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.5))
-        goal_pose.pose.position.x = 0.8
-        self._control_to_pose(goal_pose, 1.0, 1.0, 0.05, 0.05, 0.05)
+        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.8))
+        goal_pose.pose.position.x = 0.75
+        goal_pose.pose.position.y = -0.02
+        self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
 
     def execute(self, userdata=None):
         self._align_with_cabinet()
         self._move_arm_in_cabinet()
         self._drive_to_open_cabinet()
+        self.robot.leftArm.reset()
+        rospy.sleep(1)
+        self._return_from_cabinet()
 
         return 'succeeded'
 
