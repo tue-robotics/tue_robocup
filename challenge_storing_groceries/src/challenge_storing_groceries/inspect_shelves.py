@@ -77,8 +77,9 @@ class InspectShelves(smach.State):
             # print "Types and probs: {}".format(entity_types_and_probs)
 
             # Recite entities
-            for etp in entity_types_and_probs:
-                self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
+            types = [etp.type for etp in entity_types_and_probs]
+            types_desc = ", ".join([t for t in types[:-1]]) + " and " + types[-1]
+            self.robot.speech.speak("I have seen {0}".format(types_desc, block=False))
 
             # Lock entities
             self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
