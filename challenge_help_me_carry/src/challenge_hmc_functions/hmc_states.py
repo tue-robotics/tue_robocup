@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import math
 import smach
 import robot_smach_states as states
 
@@ -99,6 +100,19 @@ class StoreCarWaypoint(smach.State):
         else:
             return "abort"
 
+class TurnToReplan(smach.State):
+    """
+    Turn 180 degrees to attempt to find a new (reachable) plan
+    """
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['success', 'abort'])
+        self._robot = robot
+
+    def execute(self, userdata=None):
+        robot_frame = self._robot.base.get_location().frame
+        robot_pose = robot_frame.p
+        r, p, y = robot_frame.M.GetRPY()
+        states.NavigateToPose(self._robot, robot_pose.position.x, robot_pose.position.y, y+math.pi)
 
 class DropBagOnGround(smach.StateMachine):
     """

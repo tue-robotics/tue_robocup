@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import math
 import rospy
 import smach
 import datetime
@@ -161,9 +161,17 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                              {self.target_destination: "in_front_of"},
                                                              self.target_destination),
                                    transitions={'arrived': 'PUTDOWN_ITEM',
-                                                'unreachable': 'GOTO_DESTINATION_BACKUP',
+                                                'unreachable': 'TURN_180_TO_REPLAN',
                                                 # implement avoid obstacle behaviour later
                                                 'goal_not_defined': 'Aborted'})
+
+            smach.StateMachine.add('TURN_180_TO_REPLAN',
+                                   hmc_states.TurnToReplan(robot),
+                                   transitions={'success': 'GOTO_DESTINATION',
+                                                'abort': 'GOTO_DESTINATION_BACKUP',
+                                                # implement avoid obstacle behaviour later
+                                                #'goal_not_defined': 'Aborted'})
+                                                })
 
             smach.StateMachine.add('GOTO_DESTINATION_BACKUP',
                                    states.NavigateToSymbolic(robot,

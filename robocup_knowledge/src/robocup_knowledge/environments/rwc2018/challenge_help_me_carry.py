@@ -3,7 +3,7 @@
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
-starting_point = "initial_pose" #'help_me_carry_starting_point'
+starting_point = 'help_me_carry_starting_point'
 rotation = 0
 
 time_out_seconds = 60.0
