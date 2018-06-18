@@ -10,7 +10,6 @@ import tf2_geometry_msgs  # required for transforms
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
 # TU/e
-from robot_skills.util.kdl_conversions import VectorStamped
 
 # Challenge storing groceries
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -19,6 +18,8 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import robot_smach_states as states
 
 import robot_smach_states.util.designators as ds
+
+from robot_skills.util.kdl_conversions import frame_stamped
 
 
 def _clamp(abs_value, value):
@@ -109,7 +110,11 @@ class OpenDishwasher(smach.State):
 
     def _grab_handle(self):
         self.robot.leftArm.send_gripper_goal("open")
-        self.robot.leftArm._send_joint_trajectory([[-0.042, 0.720, 0.846, 1.039, 0.849, 0.534, 0.377]])
+        fs = frame_stamped("dishwasher", 0.45, 0, 0.78, roll=-math.pi / 2, pitch=0, yaw=math.pi)
+        self.robot.leftArm.send_goal(fs.projectToFrame(self.robot.robot_name + "/base_link", self.robot.tf_listener))
+
+        fs = frame_stamped("dishwasher", 0.35, 0, 0.78, roll=-math.pi / 2, pitch=0, yaw=math.pi)
+        self.robot.leftArm.send_goal(fs.projectToFrame(self.robot.robot_name + "/base_link", self.robot.tf_listener))
         self.robot.leftArm.send_gripper_goal("close")
 
     def _drive_to_open_dishwasher(self):
