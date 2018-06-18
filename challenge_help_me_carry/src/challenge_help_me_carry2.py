@@ -167,7 +167,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
 
             smach.StateMachine.add('TURN_180_TO_REPLAN',
                                    hmc_states.TurnToReplan(robot),
-                                   transitions={'success': 'GOTO_DESTINATION',
+                                   transitions={'success': 'GOTO_DESTINATION_BACKUP',
                                                 'abort': 'GOTO_DESTINATION_BACKUP',
                                                 # implement avoid obstacle behaviour later
                                                 #'goal_not_defined': 'Aborted'})
