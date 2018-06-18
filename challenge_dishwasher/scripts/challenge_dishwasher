@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import rospy
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find
+from robot_skills.util.entity import Entity
+from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find, Grab
 from robot_smach_states.util import startup
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, \
+    UnoccupiedArmDesignator
 from smach import StateMachine
 
 STARTING_POINT = "initial_pose"
 
-object_type = 'coke'  # TODO: should be cup, but this is for simulation
+object_type = 'cup'
 source_entity = 'dining_table'
 
 EXIT_1 = "exit_1_rips"
@@ -16,7 +18,7 @@ EXIT_3 = "exit_3_rips"
 
 
 class FindObject(StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, item):
         StateMachine.__init__(self, outcomes=['found'])
 
         source_entity_designator = EdEntityDesignator(robot, id=source_entity)
@@ -25,7 +27,6 @@ class FindObject(StateMachine):
         })
         area_name_designator = VariableDesignator('on_top_of')
         navigation_area_designator = VariableDesignator('in_front_of')
-        found_entity_designator = VariableDesignator(resolve_type=dict)
 
         with self:
             StateMachine.add('SAY_LOOKING', Say(robot, ["I'm going to look for the cup"], block=False),
@@ -33,30 +34,34 @@ class FindObject(StateMachine):
 
             StateMachine.add('FIND',
                              Find(robot, source_entity_designator, description_designator, area_name_designator,
-                                  navigation_area_designator, found_entity_designator),
+                                  navigation_area_designator, item),
                              transitions={'succeeded': 'found',
                                           'inspect_failed': 'found',
                                           'not_found': 'found'})
 
 
 def setup_statemachine(robot):
+    item = VariableDesignator(resolve_type=Entity)
+
     sm = StateMachine(outcomes=['done'])
 
     with sm:
         # Start challenge via StartChallengeRobust
         StateMachine.add('START_CHALLENGE_ROBUST',
                          StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
-                         transitions={'Done': 'FIND_THE_CUP',
+                         transitions={'Done': 'FIND_OBJECT',
                                       'Aborted': 'done',
-                                      'Failed': 'FIND_THE_CUP'})
+                                      'Failed': 'FIND_OBJECT'})
 
-        StateMachine.add('FIND_THE_CUP', FindObject(robot),
-                         transitions={'found': 'SAY_EXIT'})
+        StateMachine.add('FIND_OBJECT', FindObject(robot, item),
+                         transitions={'found': 'GRAB'})
 
-        StateMachine.add('SAY_EXIT',
-                         Say(robot,
-                             ["I will move to the exit now. See you guys later!"],
-                             block=False),
+        arm = UnoccupiedArmDesignator(robot.arms, None)
+        StateMachine.add('GRAB', Grab(robot, item, arm),
+                         transitions={'done': 'SAY_EXIT',
+                                      'failed': 'SAY_EXIT'})
+
+        StateMachine.add('SAY_EXIT', Say(robot, ["I will move to the exit now. See you guys later!"], block=False),
                          transitions={'spoken': 'GO_TO_EXIT'})
 
         StateMachine.add('GO_TO_EXIT',
