@@ -37,10 +37,8 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         all_entities = self.robot.ed.get_entities(parse=False)  # type: List[Entity]
         place_location = self.place_location_designator.resolve()
         entities_inside_placement = []
-        map_entity2volume = {}
         for area in self.areas:
             entities_inside_placement += place_location.entities_in_volume(all_entities, area)
-            map_entity2volume.update({ent:place_location.volumes[area] for ent in entities_inside_placement})
 
         rospy.loginfo("{l} entities inside the place_location '{pl}': {eip}".format(l=len(entities_inside_placement),
                                                                                     pl=place_location.id,
@@ -56,7 +54,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         all_placement_candidates = {}  # type: List[FrameStamped]
 
         for candidate_ent in candidate_entities_for_pairing:
-            placements = self._generate_placements_beside(candidate_ent, place_location, volume_to_place_in=map_entity2volume[candidate_ent])
+            placements = self._generate_placements_beside(candidate_ent)
             for placement in placements:
                 all_placement_candidates[placement] = candidate_ent
 
@@ -95,11 +93,8 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         else:
             return False
 
-    def _generate_placements_beside(self, besides_entity, inside_entity, volume_to_place_in):
-        top_z = volume_to_place_in.min_corner.z() - 0.04  # 0.04 is the usual offset
-
-
-        placements = self._generate_around(besides_entity.pose, 0.2, 8, inside_entity._pose, top_z)
+    def _generate_placements_beside(self, entity):
+        placements = self._generate_around(entity.pose, 0.2, 8)
 
         # TODO: This is an ugly hack to make select_best_feasible_poi work, because super().determine_points_of_interest() also does this.
         for placement in placements:
@@ -107,16 +102,12 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         return placements
 
     @staticmethod
-    def _generate_around(framestamped, radius, n, center_frame, z_max):
+    def _generate_around(framestamped, radius, n):
         angles = np.linspace(0, 2 * np.pi, n)
         vector = framestamped.extractVectorStamped().vector
         x, y, z = vector.x(), vector.y(), vector.z()
         xs = radius*np.cos(angles) + x
         ys = radius*np.sin(angles) + y
-        frame_stampeds = [kdl_frame_stamped_from_XYZRPY(xi,
-                                                        yi,
-                                                        center_frame.p.z() + z_max,
-                                                        # z_min + 0.06,
-                                                        0, 0, 0, frame_id=framestamped.frame_id) for
+        frame_stampeds = [kdl_frame_stamped_from_XYZRPY(xi, yi, z, 0, 0, 0, frame_id=framestamped.frame_id) for
                                    xi, yi in zip(xs, ys)]
         return frame_stampeds
