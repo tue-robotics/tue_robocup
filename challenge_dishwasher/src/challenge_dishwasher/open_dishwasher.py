@@ -86,7 +86,7 @@ class OpenDishwasher(smach.State):
             if self._goal_reached(dx, dy, dyaw):
                 break
 
-            rospy.loginfo_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
+            rospy.logdebug_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
 
             self._cmd_vel_publisher.publish(Twist(
                 linear=Vector3(
@@ -121,16 +121,20 @@ class OpenDishwasher(smach.State):
         self.robot.leftArm.send_goal(fs.projectToFrame(self.robot.robot_name + "/base_link", self.robot.tf_listener))
         self.robot.leftArm.send_gripper_goal("close")
         self.robot.head.reset()
-        self.robot.speech.speak('Okay, now what!')
+        self.robot.speech.speak('Okay, now what!', block=False)
 
     def _drive_to_open_dishwasher(self):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.dishwasher_id
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-        goal_pose.pose.position.x = 1.5
+        goal_pose.pose.position.x = 1.4
 
-        self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
+        self.robot.torso.low()
+        self._control_to_pose(goal_pose, 0.8, 1.0, 1, 0.1, 0.1)
+
+        goal_pose.pose.position.x = 1.6
+        self._control_to_pose(goal_pose, 1.0, 1.0, 0.5, 0.1, 0.1)
 
     def execute(self, userdata=None):
         self._pre_grab_handle()
