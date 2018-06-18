@@ -28,12 +28,22 @@ class DetectCrowd(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['crowd_data'])
         self.robot = robot
+        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
         self.people_received = People()
+        self.triggered = False
+
+    def people_cb(self, persons):
+        if self.triggered and persons.people:
+            if len(persons.people) > len(self.people_received.people):
+                rospy.logdebug('Received %d persons in the people cb', len(persons.people))
+                self.people_received = persons
 
     def execute(self, userdata=None):
+        self.triggered = True
         tries = 3
         detections = self.recognize(tries)
 
+        self.triggered = False
         crowd_data = self.describe_crowd(detections)
         userdata.crowd_data = crowd_data
 
@@ -108,24 +118,22 @@ class DetectCrowd(smach.State):
         num_sitting = 0
 
         for person in self.people_received.people:
-                if {'RWave', 'LWave'}.intersection(set(person.tags)):
-                    waving_persons.append(person)
-                elif {'RWave'}.intersection(set(person.tags)):
+                if {'RWave'}.intersection(set(person.tags)):
                     rarm_persons.append(person)
                 elif {'LWave'}.intersection(set(person.tags)):
                     larm_persons.append(person)
-                elif {'RPointing'}.intersection(set(person.tags)):
+                if {'RPointing'}.intersection(set(person.tags)):
                     rpointing_persons.append(person)
                 elif {'LPointing'}.intersection(set(person.tags)):
                     lpointing_persons.append(person)
-                elif {'RLaying', 'LLaying'}.intersection(set(person.tags)):
+                if {'RLaying', 'LLaying'}.intersection(set(person.tags)):
                     laying_persons.append(person)
                 elif {'RSitting', 'LSitting'}.intersection(set(person.tags)):
                     sitting_persons.append(person)
 
-        num_waving = len(waving_persons)
         num_rarm = len(rarm_persons)
         num_larm = len(larm_persons)
+        num_waving = num_rarm + num_larm
         num_rpointing = len(rpointing_persons)
         num_lpointing = len(lpointing_persons)
         num_laying = len(laying_persons)
