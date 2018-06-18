@@ -115,6 +115,7 @@ class OpenDishwasher(smach.State):
     def _grab_handle(self):
         self.robot.leftArm.wait_for_motion_done()
         self.robot.speech.speak('I hope this goes right!')
+        self.robot.speech.speak('Ah, at least it is worth a try for 50 points, here we go!')
         self.robot.head.look_at_point(VectorStamped(y=100, frame_id="/"+self.robot.robot_name+"/base_link"))
         fs = frame_stamped("dishwasher", 0.35, 0, 0.78, roll=-math.pi / 2, pitch=0, yaw=math.pi)
         self.robot.leftArm.send_goal(fs.projectToFrame(self.robot.robot_name + "/base_link", self.robot.tf_listener))
