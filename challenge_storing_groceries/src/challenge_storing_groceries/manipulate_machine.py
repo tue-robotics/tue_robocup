@@ -225,7 +225,7 @@ class ManipulateMachine(smach.StateMachine):
 
         # import ipdb; ipdb.set_trace()
         if self.grab_designator_1 is None:
-            self.grab_designator_1 = ds.LockToId(robot, DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
+            self.grab_designator_1 = ds.LockingDesignator(DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
                                                       area_description=GRAB_SURFACE,
                                                       name="grab_1"))
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
