@@ -351,7 +351,7 @@ class Arm(RobotPart):
             return self._occupied_by
         else:
             occupied_by = rospy.get_param(self.__occupied_by_param, 'unoccupied')
-            rospy.logwarn("Get {}.occupied_by = {} from rosparam".format(self, occupied_by))
+            rospy.logdebug("Get {}.occupied_by = {} from rosparam".format(self, occupied_by))
             if occupied_by != "unoccupied":
                 entity = self._world_model.get_entity(id=occupied_by)
                 if not entity:
