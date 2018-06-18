@@ -120,11 +120,11 @@ Q["action" : "answer", "solution": "egg"] -> WHATWHICH is the smallest food
 Q["action" : "answer", "solution": "orange and grape juice"] -> WHATWHICH is the biggest drink
 Q["action" : "answer", "solution": "coke and sprite"] -> WHATWHICH is the smallest drink
 
-Q["action" : "answer", "solution": "in the dining room there are no doors"] -> how many doors has the diningroom
-Q["action" : "answer", "solution": "the living room has two doors"] -> how many doors has the livingroom
-Q["action" : "answer", "solution": "the bedroom has two doors"] -> how many doors has the bedroom
-Q["action" : "answer", "solution": "the kitchen has only one door"] -> how many doors has the kitchen
-Q["action" : "answer", "solution": "the corridor has only one door"] -> how many doors has the corridor
+Q["action" : "answer", "solution": "in the dining room there are no doors"] -> how many doors has the diningroom | how many doors does the diningroom have
+Q["action" : "answer", "solution": "the living room has two doors"] -> how many doors has the livingroom | how many doors does the livingroom have
+Q["action" : "answer", "solution": "the bedroom has two doors"] -> how many doors has the kitchen | how many doors does the kitchen have
+Q["action" : "answer", "solution": "the kitchen has only one door"] -> how many doors has the kitchen | how many doors does the kitchen have
+Q["action" : "answer", "solution": "the corridor has only one door"] -> how many doors has the corridor | how many doors does the corridor have
 '''
 
 ##############################################################################
@@ -164,8 +164,8 @@ NQ["action" : "count_col", "entity" : L] -> tell me how many people were wearing
 grammar += '''
 SEARCH -> where is | in WHATWHICH room is
 
-Q["action" : "find_placement", "entity" : Y] -> SEARCH the PLACEMENTS_AND_BEACONS[Y]
-Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R]
+Q["action" : "find_placement", "entity" : Y] -> SEARCH DET PLACEMENTS_AND_BEACONS[Y] | SEARCH DET PLACEMENTS_AND_BEACONS[Y] located
+Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEMENTS_AND_BEACONS[Y] are in the ROOMS[R] | how many PLACEMENTS_AND_BEACONS[Y] does the ROOMS[R] have
 '''
 
 ##############################################################################
@@ -182,17 +182,17 @@ LH -> lighter | heavier
 Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
 Q["action" : "find_category", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
 
-Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
-Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAMES[O]
+Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong DET OBJECT_NAMES[O]
+Q["action" : "return_color", "entity" : O] -> whats DET color of DET OBJECT_NAMES[O]
 
-Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] belong to the same category
+Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] belong to DET same category | do DET OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to DET same category
 Q["action" : "compare_sizes", "entity_a" : O, "entity_b" : A] -> between DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] which one is SB
 Q["action" : "compare_weight", "entity_a" : O, "entity_b" : A] -> between DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] which one is LH
 
 Q["action" : "count_object_cat", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
 
-NQ["action" : "count_object_loc", "location" : Y] -> how many objects are in the PLACEMENTS_AND_BEACONS[Y] | what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "count_object_cat_loc", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_object_loc", "location" : Y] -> how many objects are in DET PLACEMENTS_AND_BEACONS[Y] | what objects are stored in DET PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_object_cat_loc", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in DET PLACEMENTS_AND_BEACONS[Y]
 '''
 
 ##############################################################################
@@ -222,7 +222,7 @@ GENDER['boy'] -> boy
 GENDER['girl'] -> girl
 
 POSITION['sitting'] -> sitting
-POSITION['laying'] -> laying
+POSITION['laying'] -> laying | laying down
 
 GESTURE['waving'] -> waving
 GESTURE['raising_left'] -> raising their left arm
