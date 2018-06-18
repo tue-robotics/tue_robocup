@@ -239,9 +239,10 @@ class FollowBread(smach.State):
                     len(ros_plan),
                     self._have_followed))
 
-        if not ros_plan:
+            if not ros_plan:
+                return 'no_follow_bread_recovery'
+        else:
             return 'no_follow_bread_recovery'
-
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
         buffer_msg.header.stamp = rospy.get_rostime()
