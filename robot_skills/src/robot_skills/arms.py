@@ -137,6 +137,7 @@ class Arm(RobotPart):
 
         self._world_model = world_model
 
+        self._occupied_by = None
         self.__occupied_by_param = self.robot_name + '/' + self.side + '/occupied_by'
 
         self._operational = True  # In simulation, there will be no hardware cb
@@ -345,15 +346,19 @@ class Arm(RobotPart):
         The 'occupied_by' property will return the current entity that is in the gripper of this arm.
         :return: robot_skills.util.entity, ED entity
         """
-        occupied_by = rospy.get_param(self.__occupied_by_param, 'unoccupied')
-        # rospy.loginfo("Get {}.occupied_by = {}".format(self, occupied_by))
-        if occupied_by != "unoccupied":
-            entity = self._world_model.get_entity(id=occupied_by)
-            if not entity:
-                rospy.logwarn("No entity with id '{}'".format(occupied_by))
-            return entity
+
+        if self._occupied_by:
+            return self._occupied_by
         else:
-            return None
+            occupied_by = rospy.get_param(self.__occupied_by_param, 'unoccupied')
+            rospy.logwarn("Get {}.occupied_by = {} from rosparam".format(self, occupied_by))
+            if occupied_by != "unoccupied":
+                entity = self._world_model.get_entity(id=occupied_by)
+                if not entity:
+                    rospy.logwarn("No entity with id '{}'".format(occupied_by))
+                return entity
+            else:
+                return None
 
     @occupied_by.setter
     def occupied_by(self, value):
@@ -363,6 +368,8 @@ class Arm(RobotPart):
         :return: no return
         """
         rospy.loginfo("Set {}.occupied_by = {}".format(self, value))
+        self._occupied_by = value
+
         if value:
             assert isinstance(value, Entity)
             rospy.set_param(self.__occupied_by_param, value.id)
