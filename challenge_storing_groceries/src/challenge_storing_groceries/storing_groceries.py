@@ -40,6 +40,8 @@ class StoringGroceries(smach.StateMachine):
 
             cabinet = ds.EntityByIdDesignator(robot, id=CABINET)
 
+            open_door = OpenDoorMachine(robot, 'temp', 'in_front_of', 'shelf6') # cabinet_id is overwritten by 'move_table' below
+
             @smach.cb_interface(outcomes=["done"])
             def move_table(userdata=None, manipulate_machine=None):
                 """ Moves the entities for this challenge to the correct poses"""
@@ -69,6 +71,7 @@ class StoringGroceries(smach.StateMachine):
                 # manipulate_machine.place_designator._area       = closest_workspace.place_entity_conf.manipulation_volumes[0]
                 # manipulate_machine.place_designator.place_location_designator.id = closest_workspace.place_entity_conf.entity_id
                 manipulate_machine.cabinet.id_                  = closest_workspace.place_entity_conf.entity_id
+                open_door.cabinet_id                            = closest_workspace.place_entity_conf.entity_id
 
                 return "done"
 
@@ -77,7 +80,7 @@ class StoringGroceries(smach.StateMachine):
                                    transitions={'done': 'OPEN_DOOR'})
 
             smach.StateMachine.add("OPEN_DOOR",
-                                   OpenDoorMachine(robot, 'cupboard', 'in_front_of', 'shelf6'),
+                                   open_door,
                                    transitions={'succeeded': 'RANGE_ITERATOR',
                                                 'failed': 'SAY_UNABLE_TO_OPEN_DOOR'})
 
