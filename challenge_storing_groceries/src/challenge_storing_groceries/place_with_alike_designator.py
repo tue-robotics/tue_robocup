@@ -88,6 +88,7 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         elif entity_b.super_types and entity_a.is_a(entity_b.super_types[0]):
             return True
         elif SUPERCLASSES[entity_a.type] == SUPERCLASSES[entity_b.type]:
+            rospy.loginfo("Superclass of {a} & {b} is {s}".format(a=entity_a.type, b=entity_b.type, s=SUPERCLASSES[entity_a.type]))
             return True
         else:
             return False
