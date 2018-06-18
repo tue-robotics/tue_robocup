@@ -25,7 +25,9 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
             import ipdb; ipdb.set_trace()
 
         entity_to_place = self.entity_to_place_designator.resolve()
-        assert isinstance(entity_to_place, Entity)
+        if not isinstance(entity_to_place, Entity):
+            rospy.logerr("{} resolved to {}".format(self.entity_to_place_designator, entity_to_place))
+            return None
 
         rospy.loginfo("The grasped entity is a '{}'".format(entity_to_place.type))
 
