@@ -133,7 +133,7 @@ class OpenDishwasher(smach.State):
         return 'succeeded'
 
 
-class OpenDishwasherMachine(smach.StateMachine):
+class TestOpenDishwasher(smach.StateMachine):
     def __init__(self, robot, dishwasher_id, dishwasher_navigate_area):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -160,6 +160,5 @@ if __name__ == '__main__':
     robot.leftArm.reset()
     robot.torso.reset()
 
-    # Nothing at shelf 6 but we are only interest in update of the pose
-    sm = OpenDishwasherMachine(robot, 'dishwasher', 'in_front_of')
+    sm = TestOpenDishwasher(robot, 'dishwasher', 'in_front_of')
     sm.execute()

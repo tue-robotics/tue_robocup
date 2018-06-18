@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import rospy
+from challenge_dishwasher.open_dishwasher import OpenDishwasher
 from robot_skills.util.entity import Entity
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find, Grab
+from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find, Grab, NavigateToSymbolic
 from robot_smach_states.util import startup
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, \
     UnoccupiedArmDesignator
@@ -11,6 +12,8 @@ STARTING_POINT = "initial_pose"
 
 object_type = 'cup'
 source_entity = 'dining_table'
+dishwasher_id = 'dishwasher'
+dishwasher_navigate_area = 'in_front_of'
 
 EXIT_1 = "exit_1_rips"
 EXIT_2 = "exit_2_rips"
@@ -42,6 +45,7 @@ class FindObject(StateMachine):
 
 def setup_statemachine(robot):
     item = VariableDesignator(resolve_type=Entity)
+    dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
 
     sm = StateMachine(outcomes=['done'])
 
@@ -49,9 +53,20 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         StateMachine.add('START_CHALLENGE_ROBUST',
                          StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
-                         transitions={'Done': 'FIND_OBJECT',
+                         transitions={'Done': 'NAVIGATE_TO_DISHWASHER',
                                       'Aborted': 'done',
-                                      'Failed': 'FIND_OBJECT'})
+                                      'Failed': 'NAVIGATE_TO_DISHWASHER'})
+
+        StateMachine.add("NAVIGATE_TO_DISHWASHER",
+                         NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
+                         transitions={'arrived': 'OPEN_DISHWASHER',
+                                      'unreachable': 'FIND_OBJECT',
+                                      'goal_not_defined': 'FIND_OBJECT'})
+
+        StateMachine.add("OPEN_DISHWASHER",
+                         OpenDishwasher(robot, dishwasher_id),
+                         transitions={'succeeded': 'FIND_OBJECT',
+                                      'failed': 'FIND_OBJECT'})
 
         StateMachine.add('FIND_OBJECT', FindObject(robot, item),
                          transitions={'found': 'GRAB'})
