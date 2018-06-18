@@ -346,7 +346,7 @@ class Arm(RobotPart):
         :return: robot_skills.util.entity, ED entity
         """
         occupied_by = rospy.get_param(self.__occupied_by_param, 'unoccupied')
-        rospy.loginfo("Get {}.occupied_by = {}".format(self, occupied_by))
+        # rospy.loginfo("Get {}.occupied_by = {}".format(self, occupied_by))
         if occupied_by != "unoccupied":
             entity = self._world_model.get_entity(id=occupied_by)
             return entity
