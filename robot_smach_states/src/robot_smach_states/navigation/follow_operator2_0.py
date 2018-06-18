@@ -191,9 +191,6 @@ class FollowBread(smach.State):
         # throw away all breadcrumbs before where we are
         self._breadcrumb = self._breadcrumb[current_index+1:]
 
-        if not self._breadcrumb:
-            return 'no_follow_bread_recovery'
-
         f = self._robot.base.get_location().frame
         previous_point = f.p
         operator_position = self._operator._pose.p
@@ -238,6 +235,9 @@ class FollowBread(smach.State):
                 rospy.loginfo("Breadcrumbs length after removing blocked points: {}, have followed: {}".format(
                     len(ros_plan),
                     self._have_followed))
+
+        if not ros_plan:
+            return 'no_follow_bread_recovery'
 
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
