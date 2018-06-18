@@ -94,7 +94,7 @@ class Track(smach.State):
             _entities = self._robot.ed.get_entities()
             _laser_entity_ids = [e.id for e in _entities if "laser" in e.id]
             rospy.loginfo("Available laser IDs: {}".format(_laser_entity_ids))
-            # rospy.sleep(2)  # Why is this sleep here? We gaan dit testen
+            rospy.sleep(2)  # Crucial sleep! Do not remove!
 
             if self._operator:
                 operator = self._robot.ed.get_entity(id=self._operator.id)
