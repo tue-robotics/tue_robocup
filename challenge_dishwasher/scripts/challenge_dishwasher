@@ -1,3 +1,28 @@
 #!/usr/bin/env python
+import rospy
+from robocup_knowledge import load_knowledge
+from robot_smach_states import StartChallengeRobust
+from robot_smach_states.util import startup
+from smach import StateMachine
 
-print 'Hello world!'
+challenge_knowledge = load_knowledge('challenge_dishwasher')
+
+STARTING_POINT = challenge_knowledge.starting_point
+
+
+def setup_statemachine(robot):
+    sm = StateMachine(outcomes=['done'])
+
+    with sm:
+        # Start challenge via StartChallengeRobust
+        StateMachine.add("START_CHALLENGE_ROBUST",
+                         StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
+                         transitions={"Done": "done",
+                                      "Aborted": "done",
+                                      "Failed": "done"})
+    return sm
+
+
+if __name__ == '__main__':
+    rospy.init_node('dishwasher_exec')
+    startup(setup_statemachine, challenge_name="rips")
