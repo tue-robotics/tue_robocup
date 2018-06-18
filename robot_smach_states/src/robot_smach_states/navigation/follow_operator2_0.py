@@ -163,7 +163,7 @@ class FollowBread(smach.State):
                 self._breadcrumb.append(CrumbWaypoint(crumb))
         rospy.loginfo("Self._breadcrumb length: {}".format(len(self._breadcrumb)))
 
-        if self._robot.base.local_planner.getDistanceToGoal() > 2.0:  # len(buffer) > 5:
+        if self._robot.base.local_planner.getDistanceToGoal() > 1.5:  # len(buffer) > 5:
             self._have_followed = True
 
         robot_position = self._robot.base.get_location().frame
@@ -240,8 +240,10 @@ class FollowBread(smach.State):
                     self._have_followed))
 
             if not ros_plan:
-                return 'no_follow_bread_recovery'
+                self._have_followed = False
+	    	return 'no_follow_bread_recovery'
         else:
+	    self._have_followed = False
             return 'no_follow_bread_recovery'
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
@@ -344,7 +346,7 @@ class Recovery(smach.State):
                 i = 0
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
-            best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator")
+            best_detection = self._robot.perception.get_best_face_recognition(raw_detections, "operator", probability_threshold=3.0)
 
             rospy.loginfo("best_detection = {}".format(best_detection))
             if best_detection:
