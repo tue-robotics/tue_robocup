@@ -105,19 +105,19 @@ class OpenDishwasher(smach.State):
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.dishwasher_id
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-        goal_pose.pose.position.x = 0.8
+        goal_pose.pose.position.x = 0.85
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
 
     def _pre_grab_handle(self):
         self.robot.leftArm.send_gripper_goal("open", timeout=0)
-        self.robot.leftArm._send_joint_trajectory([[0, 0.19052373022729913, 0.7746500794619434, 1.3944848321343395, -1.829999276180074, 0.6947045024700284, 0.1889253710114966]], timeout=rospy.Duration(0))
+        self.robot.leftArm._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395, -1.829999276180074, 0.6947045024700284, 0.1889253710114966]], timeout=rospy.Duration(0))
 
     def _grab_handle(self):
         self.robot.leftArm.wait_for_motion_done()
         self.robot.speech.speak('I hope this goes right!', block=False)
         self.robot.speech.speak('Ah, at least it is worth a try for 50 points, here we go!', block=False)
         self.robot.head.look_at_point(VectorStamped(y=100, frame_id="/"+self.robot.robot_name+"/base_link"))
-        fs = frame_stamped("dishwasher", 0.35, 0, 0.78, roll=-math.pi / 2, pitch=0, yaw=math.pi)
+        fs = frame_stamped("dishwasher", 0.41, 0, 0.83, roll=-math.pi / 2, pitch=0, yaw=math.pi)
         self.robot.leftArm.send_goal(fs.projectToFrame(self.robot.robot_name + "/base_link", self.robot.tf_listener))
         self.robot.leftArm.send_gripper_goal("close")
         self.robot.head.reset()
