@@ -4,6 +4,9 @@ import robot_smach_states.util.designators as ds
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped, kdl_frame_stamped_from_XYZRPY
 
+from config import SUPERCLASSES
+
+
 class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
     """Find a FrameStamped where to place an object if a class 'A' besides another object of class 'A'
     """
@@ -83,6 +86,9 @@ class PlaceWithAlikeObjectDesignator(ds.EmptySpotDesignator):
         if entity_a.type == entity_b.type:
             return True
         elif entity_b.super_types and entity_a.is_a(entity_b.super_types[0]):
+            return True
+        elif SUPERCLASSES[entity_a.type] == SUPERCLASSES[entity_b.type]:
+            rospy.loginfo("Superclass of {a} & {b} is {s}".format(a=entity_a.type, b=entity_b.type, s=SUPERCLASSES[entity_a.type]))
             return True
         else:
             return False
