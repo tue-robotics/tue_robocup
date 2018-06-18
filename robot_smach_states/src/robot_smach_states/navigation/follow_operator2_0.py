@@ -82,7 +82,10 @@ class Track(smach.State):
                        "Let's get your groceries!",
                        "I'm happy you are back, I was so lonely while you were shopping"]
             sentence = random.choice(options)
-            self._robot.speech.speak(sentence)
+            if sentence == options[0]:
+                self._robot.speech.speak(sentence, voice='gregory', mood='Excited')
+            else:
+                self._robot.speech.speak(sentence)
 
         rospy.loginfo("Trying to get operator with id: {}".format(operator.id))
         operator = self._robot.ed.get_entity(id=operator.id)
