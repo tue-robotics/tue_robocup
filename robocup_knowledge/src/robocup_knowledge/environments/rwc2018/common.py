@@ -75,11 +75,11 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-    "drinks": {"counter": "on_top_of"},
+    "drink": {"counter": "on_top_of"},
     "cleaning_stuff": {"side_table": "on_top_of"},
     "cutlery": {"storage_table": "on_top_of"},
-    "snacks": {"bookcase": "shelf3"},               # educated guess
-    "fruits": {"bookcase": "shelf2"},               # educated guess
+    "snack": {"bookcase": "shelf3"},               # educated guess
+    "fruit": {"bookcase": "shelf2"},               # educated guess
     "container": {"end_table": "on_top_of"},
     "food": {"cupboard": "shelf2"},                 # educated guess
     "tableware": {"storage_table": "on_top_of"}
