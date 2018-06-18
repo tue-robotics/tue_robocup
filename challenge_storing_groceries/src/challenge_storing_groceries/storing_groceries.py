@@ -25,6 +25,8 @@ class StoringGroceries(smach.StateMachine):
 
         pdf_writer = WritePdf(robot=robot)
 
+        skip_door = rospy.get_param("~skip_door", False)
+
         with self:
             single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
 
@@ -77,7 +79,7 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_TABLE",
                                    smach.CBState(move_table, cb_args=[single_item]),
-                                   transitions={'done': 'OPEN_DOOR'})
+                                   transitions={'done': 'OPEN_DOOR' if not skip_door else "SAY_UNABLE_TO_OPEN_DOOR"})
 
             smach.StateMachine.add("OPEN_DOOR",
                                    open_door,
