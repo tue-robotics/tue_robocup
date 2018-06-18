@@ -59,7 +59,7 @@ class WaitForCustomer(smach.State):
         waving_persons = []
         i = 0
         while not rospy.is_shutdown() and not waving_persons:
-            waving_persons = self.wait_for_waving_person(head_samples=head_samples)
+            header, waving_persons = self.wait_for_waving_person(head_samples=head_samples)
 
             angle = look_angles[i % len(look_angles)]
             rospy.loginfo('Still waiting... looking at %d degrees', angle)
@@ -77,7 +77,6 @@ class WaitForCustomer(smach.State):
         if len(waving_persons) > 1:
             rospy.logwarn('using the first person')
 
-        header = self.people_received.header
         point = waving_persons[0].position
         pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
         rospy.loginfo('update customer position to %s', pose)
@@ -120,7 +119,7 @@ class WaitForCustomer(smach.State):
 
             if waving_persons:
                 break
-        return waving_persons
+        return people_received.header, waving_persons
 
     def wait_for_cb(self):
         timeout = 1

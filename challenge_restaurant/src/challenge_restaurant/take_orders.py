@@ -144,7 +144,7 @@ class ClearOrders(smach.State):
         """
         smach.State.__init__(self, outcomes=["succeeded"])
 
-        self._orders = orders
+        self.orders = orders
 
     def execute(self, userdata=None):
         self.orders.clear()
