@@ -29,7 +29,7 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
 
     if not isinstance(entity_description, dict):
         return []
-    if 'type' not in entity_description:
+    if 'type' not in entity_description and 'category' not in entity_description:
         return []
 
     # Get all entities from the world model
@@ -43,15 +43,21 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
         for id in list_of_entity_ids:
             robot.ed.update_entity(id=id, action='remove')
     else:
-        # Select entities based on the description (only type for now)
-        try:
+        # Select entities based on the description
+        # First case is the old behavior, not nice, but keeping it to be sure nothing breaks TODO: clean this up.
+        if 'type' in entity_description and entity_description['type']:
             if entity_description['type'] in knowledge.object_categories:
                 entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['type']]
             else:
                 entities = [e for e in entities if e.type == entity_description['type']]
-        except:
-            entities = [e for e in entities if e.type == entity_description['type']]
-
+        elif 'category' in entity_description and entity_description['category']:
+            if entity_description['category'] in knowledge.object_categories:
+                entities = [e for e in entities if knowledge.get_object_category(e.type) ==
+                            entity_description['category']]
+            else:
+                entities = []
+        else:
+            entities = []
 
         # If we have a list of entities to choose from, select based on that list
         if list_of_entity_ids:
