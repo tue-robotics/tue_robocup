@@ -24,6 +24,9 @@ class DetectFace(smach.State):
 
     def execute(self, userdata):
         # Acquire the image and detect the faces in it
+        self._robot.head.look_at_standing_person()
+        rospy.sleep(1.0)
+
         image = self._robot.perception.get_image()
         faces = self._robot.perception.detect_faces(image=image)
 
