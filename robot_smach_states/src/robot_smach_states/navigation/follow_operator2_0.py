@@ -6,6 +6,7 @@ import copy
 import math
 import random
 import sys
+import hmi
 
 # ROS
 import geometry_msgs  # Only used for publishing markers
@@ -134,25 +135,20 @@ class FollowBread(smach.State):
         self._breadcrumb_distance = 0.1
         self._breadcrumb_pub = rospy.Publisher(
                 '/%s/global_planner/visualization/markers/breadcrumbs' % robot.robot_name, Marker, queue_size=10)
-        self._plan_marker_pub = rospy.Publisher(
-            '/%s/global_planner/visualization/markers/global_plan' % robot.robot_name, Marker, queue_size=10)
         self._operator = None
-        self._have_followed = False
         self._current_operator = collections.deque()
         self._buffer = _buffer
         self._breadcrumb = []
         self._resolution = 0.05
-        ros_plan = []
+        # ros_plan = []
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ A concurrent state machine which follows and afterwards deletes breadcrumbs from the buffer variable
 
         :return: follow_bread if the list of breadcrumbs is not empty
                  no_follow_bread_ask_finalize if the single remaining breadcrumb is the operator
                  no_follow_bread_recovery if buffer is completely empty
         """
-
-        operator = None
         while self._buffer:
 
             if self.preempt_requested():
@@ -163,8 +159,9 @@ class FollowBread(smach.State):
                 self._breadcrumb.append(CrumbWaypoint(crumb))
         rospy.loginfo("Self._breadcrumb length: {}".format(len(self._breadcrumb)))
 
-        if self._robot.base.local_planner.getDistanceToGoal() > 1.5:  # len(buffer) > 5:
-            self._have_followed = True
+        # We don't want to base this on distance since that relies on the operator behavior
+        # if self._robot.base.local_planner.getDistanceToGoal() > 0.65:  # 2.0:  # len(buffer) > 5:
+        #     self._have_followed = True
 
         robot_position = self._robot.base.get_location().frame
 
@@ -173,15 +170,31 @@ class FollowBread(smach.State):
 
         else:
             return 'no_follow_bread_recovery'
+        #
+        # if self._operator:
+        #     operator = self._robot.ed.get_entity(id=self._operator.id)
 
-        if self._operator:
-            operator = self._robot.ed.get_entity(id=self._operator.id)
+        while True:  # Should be timer, I think
+            try:
+                self._robot.hmi.query(description="", grammar="T -> %s stop" % robot_name, target="T")
+                timeout_count = 0  # how does this count work....
+                break
+            except hmi.TimeoutException:
+                if timeout_count >= 3:
+                    robot.hmi.restart_dragonfly()
+                    timeout_count = 0
+                    rospy.logwarn("[GPSR] Dragonfly restart")
+                else:
+                    timeout_count += 1
+                    rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
 
-        if operator:
-            rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
-            if self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0:
-                self._have_followed = False
-                return 'no_follow_bread_ask_finalize'
+        return 'no_follow_bread_ask_finalize'
+
+        # if operator:
+        #     rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
+        #     if self._have_followed and operator.distance_to_2d(robot_position.p) < 1.0:
+        #         self._have_followed = False
+        #         return 'no_follow_bread_ask_finalize'
 
         # self._breadcrumb = [crwp for crwp in self._breadcrumb
         #                     if crwp.crumb.distance_to_2d(robot_position.p) > self._lookat_radius]
@@ -230,21 +243,17 @@ class FollowBread(smach.State):
             ros_plan = [crwp.waypoint for crwp in self._breadcrumb]
             if not self._robot.base.global_planner.checkPlan(ros_plan):
                 rospy.loginfo("Breadcrumb plan is blocked, removing blocked points")
-                rospy.loginfo(
-                    "Breadcrumbs before removing blocked points: {}, have followed: {}".format(len(ros_plan),
-                                                                                               self._have_followed))
+                rospy.loginfo("Breadcrumbs before removing blocked points: {}".format(len(ros_plan)))
                 ros_plan = [crwp.waypoint for crwp in self._breadcrumb
                             if self._robot.base.global_planner.checkPlan([crwp.waypoint])]
-                rospy.loginfo("Breadcrumbs length after removing blocked points: {}, have followed: {}".format(
-                    len(ros_plan),
-                    self._have_followed))
+                rospy.loginfo("Breadcrumbs length after removing blocked points: {}".format(len(ros_plan)))
 
-            if not ros_plan:
-                self._have_followed = False
-	    	return 'no_follow_bread_recovery'
+            # if the new ros plan is empty, we do have an operator but there are no breadcrumbs that we can reach
+            # if not ros_plan:
+            #     return 'no_follow_bread_recovery'
         else:
-	    self._have_followed = False
             return 'no_follow_bread_recovery'
+
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
         buffer_msg.header.stamp = rospy.get_rostime()
@@ -409,7 +418,7 @@ class FollowOperator2(smach.StateMachine):
                                                                      'TRACK': 'track'},
                                                     'recover_operator': {'FOLLOWBREAD': 'no_follow_bread_recovery',
                                                                          'TRACK': 'no_track'},
-                                                    'Aborted': {'TRACK': 'Aborted'}},
+                                                    'Aborted': {'TRACK': 'aborted'}},
                                        input_keys=['operator'])
 
             _buffer = collections.deque()

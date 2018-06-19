@@ -74,6 +74,8 @@ class LearnOperator(smach.State):
             r.sleep()
         rospy.loginfo("We have a new operator: %s" % operator.id)
         self._robot.speech.speak("Who is that handsome person? Oh, it is you!", mood='Excited')
+        self._robot.speech.speak(
+            "I will follow you now, please say , {}, stop , when we are at the car.".format(self._robot.robot_name))
         self._robot.head.close()
         userdata.operator_learn_out = operator
         return 'done'
