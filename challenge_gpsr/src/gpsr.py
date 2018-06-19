@@ -187,6 +187,10 @@ def main():
         # Dump the output json object to a string
         task_specification = json.dumps(semantics)
 
+        # Sleep for the TC to get in position.
+        robot.speech.speak("I will wait for you guys to get in position. ", block=False)
+        rospy.sleep(3.0)
+
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
         print task_result.missing_field
