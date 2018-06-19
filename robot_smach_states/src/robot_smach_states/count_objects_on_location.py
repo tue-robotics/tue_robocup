@@ -60,20 +60,30 @@ class CountObjectsOnLocation(smach.State):
 
 # Standalone testing -----------------------------------------------------------------
 
-class TestCountObjects(smach.StateMachine):
-    def __init__(self, robot):
+class InspectAndCount(smach.StateMachine):
+    def __init__(self, robot, where_to_count_designator, type_to_count_designator):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         count = ds.VariableDesignator(-1)
 
         with self:
-            smach.StateMachine.add('INITIALIZE',
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'COUNT',
-                                                'abort': 'Aborted'})
+            smach.StateMachine.add("MOVE_TO_INSPECT",
+                                   states.NavigateToSymbolic(robot,
+                                                             {where_to_count_designator: "in_front_of"},
+                                                             where_to_count_designator),
+                                   transitions={'arrived': 'INSPECT_TABLE',
+                                                'unreachable': 'INSPECT_TABLE',
+                                                'goal_not_defined': 'INSPECT_TABLE'})
+
+            smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=where_to_count_designator,
+                                                                   objectIDsDes=type_to_count_designator,
+                                                                   searchArea=GRAB_SURFACE,
+                                                                   navigation_area="in_front_of"),
+                                   transitions={"done": "WRITE_PDF",
+                                                "failed": "failed"})
 
             smach.StateMachine.add("COUNT",
-                                   CountObjectsOnLocation(robot, 'counter', object_type='apple',
+                                   CountObjectsOnLocation(robot, where_to_count_designator, object_type=type_to_count_designator,
                                                          num_objects_designator=count.writeable),
                                    transitions={'done': 'Done',
                                                 'failed':'Aborted'})
@@ -82,4 +92,4 @@ class TestCountObjects(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('gpsr_function_exec')
 
-    startup(TestCountObjects, challenge_name="gpsr_function")
+    startup(InspectAndCount, challenge_name="gpsr_function")
