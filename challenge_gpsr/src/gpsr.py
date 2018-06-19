@@ -236,45 +236,45 @@ def main():
 
             break
 
-        # Dump the output json object to a string
-        task_specification = json.dumps(semantics)
-
-        # Send the task specification to the action server
-        task_result = action_client.send_task(task_specification)
-
-        print task_result.missing_field
-        # # Ask for missing information
-        # while task_result.missing_field:
-        #     request_missing_field(knowledge.task_result.missing_field)
-        #     task_result = action_client.send_task(task_specification)
-
-        # Write a report to bring to the operator
-        report = task_result_to_report(task_result)
-
-        robot.lights.set_color(0,0,1)  #be sure lights are blue
-
-        robot.head.look_at_standing_person()
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close',0.0)
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close',0.0)
-        robot.torso.reset()
-
-        if task_result.succeeded:
-            # Keep track of the number of performed tasks
-            no_of_tasks_performed += 1
-            if no_of_tasks_performed >= no_of_tasks:
-                finished = True
-
-            # If we succeeded, we can say something optimistic after reporting to the operator
-            if no_of_tasks_performed == 1:
-                task_word = "task"
-            else:
-                task_word = "tasks"
-            report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
-
-        if rospy.get_time() - start_time > (60 * time_limit - 45) and no_of_tasks_performed >= 1:
-            finished = True
+        # # Dump the output json object to a string
+        # task_specification = json.dumps(semantics)
+        #
+        # # Send the task specification to the action server
+        # task_result = action_client.send_task(task_specification)
+        #
+        # print task_result.missing_field
+        # # # Ask for missing information
+        # # while task_result.missing_field:
+        # #     request_missing_field(knowledge.task_result.missing_field)
+        # #     task_result = action_client.send_task(task_specification)
+        #
+        # # Write a report to bring to the operator
+        # report = task_result_to_report(task_result)
+        #
+        # robot.lights.set_color(0,0,1)  #be sure lights are blue
+        #
+        # robot.head.look_at_standing_person()
+        # robot.leftArm.reset()
+        # robot.leftArm.send_gripper_goal('close',0.0)
+        # robot.rightArm.reset()
+        # robot.rightArm.send_gripper_goal('close',0.0)
+        # robot.torso.reset()
+        #
+        # if task_result.succeeded:
+        #     # Keep track of the number of performed tasks
+        #     no_of_tasks_performed += 1
+        #     if no_of_tasks_performed >= no_of_tasks:
+        #         finished = True
+        #
+        #     # If we succeeded, we can say something optimistic after reporting to the operator
+        #     if no_of_tasks_performed == 1:
+        #         task_word = "task"
+        #     else:
+        #         task_word = "tasks"
+        #     report += " I performed {} {} so far, still going strong!".format(no_of_tasks_performed, task_word)
+        #
+        # if rospy.get_time() - start_time > (60 * time_limit - 45) and no_of_tasks_performed >= 1:
+        #     finished = True
 
 
 # ------------------------------------------------------------------------------------------------------------------------
