@@ -129,12 +129,13 @@ class OpenDishwasher(smach.State):
         goal_pose.header.frame_id = self.dishwasher_id
         goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
         goal_pose.pose.position.x = 1.4
+        goal_pose.pose.position.y = 0.2
 
         self.robot.torso.low()
-        self._control_to_pose(goal_pose, 0.8, 1.0, 1, 0.1, 0.1)
+        self._control_to_pose(goal_pose, 0.8, 1.0, 0.5, 0.1, 0.1)
 
         goal_pose.pose.position.x = 1.6
-        self._control_to_pose(goal_pose, 1.0, 1.0, 0.5, 0.1, 0.1)
+        self._control_to_pose(goal_pose, 0.5, 1.0, 0.15, 0.1, 0.1)
 
     def execute(self, userdata=None):
         self._pre_grab_handle()
