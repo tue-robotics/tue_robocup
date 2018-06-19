@@ -29,6 +29,9 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.knowledge = knowledge
         self.timeout_count = 0
         self.test = False
+        self.skip = False
+        self.tasks_to_be_done = 999
+        self.tasks_done = 0
 
     def _say_to_user(self, message):
         rospy.loginfo("_say_to_user('{}')".format(message))
@@ -36,10 +39,35 @@ class ConversationEngineWithHmi(ConversationEngine):
 
     def _on_task_successful(self, message):
         rospy.loginfo("_on_task_successful('{}')".format(message))
-        self._say_to_user(message)
 
-        # TODO: check number of tasks, if enough done move to exit
-        self._start_wait_for_command()
+        self.tasks_done += 1
+
+        # TODO: check number of tasks, if enough done move to exit else go to meeting point
+        # Navigate to the GPSR meeting point
+        if not self.skip:
+            self.robot.speech.speak("Moving to the meeting point.", block=False)
+            nwc = NavigateToWaypoint(robot=self.robot,
+                                     waypoint_designator=EntityByIdDesignator(robot=self.robot,
+                                                                              id=self.knowledge.starting_pose),
+                                     radius=0.3)
+            nwc.execute()
+            # Report to the user and ask for a new task
+
+        if self.tasks_done >= self.tasks_to_be_done and not self.skip:
+            nwc = NavigateToWaypoint(robot=self.robot,
+                                     waypoint_designator=EntityByIdDesignator(robot=self.robot,
+                                                                              id=self.knowledge.exit_waypoint),
+                                     radius=0.3)
+            self.robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)
+            nwc.execute()
+            return
+
+        # Report to the user
+        self.robot.head.look_at_standing_person()
+        self._say_to_user(message)
+        self.timeout_count = 0
+
+        self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
 
     def _on_request_missing_information(self, description, grammar, target):
         rospy.loginfo("_request_missing_information('{}', '{}...', '{}')".format(description, grammar[:10], target))
@@ -61,47 +89,25 @@ class ConversationEngineWithHmi(ConversationEngine):
         rospy.loginfo("_on_task_outcome_unknown('{}')".format(message))
         self._say_to_user(message)
 
-    def _start_wait_for_command(self):
+    def _start_wait_for_command(self, grammar, target):
         rospy.loginfo("_start_wait_for_command()")
         self.robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
 
-        while True and not self.test:
-            try:
-                self.robot.hmi.query(description="", grammar="T -> %s" % self.robot.robot_name, target="T")
-                timeout_count = 0
-                break
-            except hmi.TimeoutException:
-                if self.timeout_count >= 3:
-                    self.robot.hmi.restart_dragonfly()
-                    timeout_count = 0
-                    rospy.logwarn("[GPSR] Dragonfly restart")
-                else:
-                    self.timeout_count += 1
-                    rospy.logwarn("[GPSR] Timeout_count: {}".format(self.timeout_count))
+        self.wait_to_be_called()
 
         while True:
             try:
                 sentence, semantics = self.robot.hmi.query(description="",
-                                                      grammar=self.knowledge.grammar,
-                                                      target=self.knowledge.grammar_target)
+                                                      grammar=grammar,
+                                                      target=target)
                 self.timeout_count = 0
                 if not self.test:
-                    # check if we have heard this correctly
-                    self.robot.speech.speak('I heard %s, is this correct?' % sentence)
-                    try:
-                        if 'no' == self.robot.hmi.query('', 'T -> yes | no', 'T').sentence:
-                            self.robot.speech.speak('Sorry')
-                            continue
-                        else:
-                            rospy.loginfo("{} was correct".format(sentence))
-                            self.user_to_robot_text(sentence)
-                    except hmi.TimeoutException:
-                        # robot did not hear the confirmation, so lets assume its correct
-
+                    if self.heard_correct(sentence):
                         # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                         self.user_to_robot_text(sentence)
-                # return sentence, semantics
+                        break
             except hmi.TimeoutException:
+                rospy.logwarn("HMI timed out when getting command")
                 self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
                 if self.timeout_count >= 3:
                     self.robot.hmi.restart_dragonfly()
@@ -111,7 +117,34 @@ class ConversationEngineWithHmi(ConversationEngine):
                     self.timeout_count += 1
                     rospy.logwarn("[GPSR] Timeout_count: {}".format(self.timeout_count))
 
+    def wait_to_be_called(self):
+        while True and not self.test:
+            try:
+                self.robot.hmi.query(description="", grammar="T -> %s" % self.robot.robot_name, target="T")
+                self.timeout_count = 0
+                break
+            except hmi.TimeoutException:
+                rospy.logwarn("HMI timed out when waiting for name")
+                if self.timeout_count >= 3:
+                    self.robot.hmi.restart_dragonfly()
+                    self.timeout_count = 0
+                    rospy.logwarn("[GPSR] Dragonfly restart")
+                else:
+                    self.timeout_count += 1
+                    rospy.logwarn("[GPSR] Timeout_count: {}".format(self.timeout_count))
 
+    def heard_correct(self, sentence):
+        self.robot.speech.speak('I heard %s, is this correct?' % sentence)
+        try:
+            if 'no' == self.robot.hmi.query('', 'T -> yes | no', 'T').sentence:
+                self.robot.speech.speak('Sorry')
+                return False
+            else:
+                rospy.loginfo("'{}' was correct".format(sentence))
+                return True
+        except hmi.TimeoutException:
+            rospy.logwarn("HMI timed out when getting confirmation")
+            return True
 
 
 def task_result_to_report(task_result):
@@ -174,6 +207,8 @@ def main():
 
     conversation_engine = ConversationEngineWithHmi(robot, knowledge.grammar, knowledge.grammar_target, knowledge)
     conversation_engine.test = test
+    conversation_engine.skip = skip
+    conversation_engine.tasks_to_be_done = no_of_tasks
 
     no_of_tasks_performed = 0
 
@@ -203,21 +238,21 @@ def main():
     finished = False
     start_time = rospy.get_time()
 
-    while True:
-        # Navigate to the GPSR meeting point
-        if not skip:
-            robot.speech.speak("Moving to the meeting point.", block=False)
-            nwc = NavigateToWaypoint(robot=robot,
-                                     waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                              id=knowledge.starting_pose),
-                                     radius=0.3)
-            nwc.execute()
-            # Report to the user and ask for a new task
-
-        # Report to the user
-        robot.head.look_at_standing_person()
-        robot.speech.speak(report, block=True)
-        timeout_count = 0
+    # while True:
+        # # Navigate to the GPSR meeting point
+        # if not skip:
+        #     robot.speech.speak("Moving to the meeting point.", block=False)
+        #     nwc = NavigateToWaypoint(robot=robot,
+        #                              waypoint_designator=EntityByIdDesignator(robot=robot,
+        #                                                                       id=knowledge.starting_pose),
+        #                              radius=0.3)
+        #     nwc.execute()
+        #     # Report to the user and ask for a new task
+        #
+        # # Report to the user
+        # robot.head.look_at_standing_person()
+        # robot.speech.speak(report, block=True)
+        # timeout_count = 0
 
         # if finished and not skip:
         #     nwc = NavigateToWaypoint(robot=robot,
@@ -227,9 +262,9 @@ def main():
         #     robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)
         #     nwc.execute()
         #     break
-
-        conversation_engine._start_wait_for_command()
-
+    # import ipdb; ipdb.set_trace()
+    conversation_engine._start_wait_for_command(knowledge.grammar, knowledge.grammar_target)
+    rospy.spin()
 
         # # Dump the output json object to a string
         # task_specification = json.dumps(semantics)
