@@ -1,0 +1,48 @@
+count and tell:
+tell me how many coke there are on the dining_table
+
+
+ask name and tell:
+tell me the name of the person at the dining_table
+tell me the name of the person in the kitchen
+
+
+answer question:
+answer a question to john at the dining_table
+find john in the kitchen and answer a question
+find someone in the kitchen and answer a question
+navigate to the kitchen find john and answer a question
+navigate to the kitchen find someone and answer a question
+
+
+find:
+find the coke in the kitchen
+find the drink in the kitchen
+
+
+hand over:
+bring me the coke
+bring me the coke from the dining_table
+bring the coke to john at the dining_table
+bring the coke to me
+bring to john at the dining_table the coke from the dining_table
+grasp the coke from the dining_table and bring it to john at the dining_table
+grasp the coke from the dining_table and bring it to me
+navigate to the dining_table find the coke and bring it to john at the dining_table
+navigate to the dining_table find the coke and bring it to me
+
+
+say something:
+find john in the kitchen and tell a joke
+find someone in the kitchen and tell a joke
+navigate to the kitchen find john and tell a joke
+tell a joke to john at the dining_table
+navigate to the kitchen find someone and tell a joke
+
+
+place:
+bring the coke to the dining_table
+grasp the coke from the dining_table and place it on the dining_table
+bring the coke from the dining_table to the dining_table
+navigate to the dining_table find the coke and place it on the dining_table
+place the coke on the dining_table
