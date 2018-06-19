@@ -33,7 +33,7 @@ class FindPerson(smach.State):
         """
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
-    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
+    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=0.5, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
 
