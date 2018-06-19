@@ -30,6 +30,7 @@ class DetectFace(smach.State):
 
         # Check result
         if not faces:
+            self._pub_image.publish(image)
             rospy.logerr("DetectFaces: did not detect any faces")
             return 'failed'
 
