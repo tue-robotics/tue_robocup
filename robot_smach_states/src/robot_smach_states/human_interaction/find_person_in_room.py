@@ -105,19 +105,17 @@ class FindPerson(smach.State):
             person_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(person_pos_kdl)
             self._face_pos_pub.publish(person_pos_ros)
 
+            found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
+                                                                   center_point=person_pos_kdl)
+
             if self._room:
                 room_entity = self._robot.ed.get_entity(id=self._room)
-                if room_entity.in_volume(person_pos_kdl, 'in'):
-                    found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
-                                                                           center_point=person_pos_kdl)
-                else:
-                    continue
-            else:
-                found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
-                                                                       center_point=person_pos_kdl)
+                if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
+                    found_person = None
 
             if found_person:
-                self._robot.speech.speak("I found {} at {}".format(self._person_label, found_person.pose.p), block=False)
+                rospy.loginfo("I found {} at {}".format(self._person_label, found_person.pose.extractVectorStamped(), block=False))
+                self._robot.speech.speak("I found {}.".format(self._person_label, block=False))
                 self._robot.head.close()
 
                 self._robot.ed.update_entity(
