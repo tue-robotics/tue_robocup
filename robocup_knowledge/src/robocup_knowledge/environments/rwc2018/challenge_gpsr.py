@@ -65,10 +65,14 @@ for cat in common.object_categories:
 
 for name in common.names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
+    grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': 'gpsr_entrance', 'type': 'waypoint'}}] -> %s at the entrance" % (
+    name, name)
+    grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': 'gpsr_exit_door', 'type': 'waypoint'}}] -> %s at the exit" % (
+        name, name)
     for loc in common.get_locations():
         grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
 
-grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "gpsr_exit_door", "type": "waypoint"}] -> exit'
 grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 
 ###############################################################################
