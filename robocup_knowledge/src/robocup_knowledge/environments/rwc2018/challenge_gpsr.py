@@ -69,6 +69,7 @@ for name in common.names:
         grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
 
 grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "initial_pose", "type": "waypoint"}] -> entrance'
 
 ###############################################################################
 #
