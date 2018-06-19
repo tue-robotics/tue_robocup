@@ -19,6 +19,15 @@ C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 
 ##############################################################################
 #
+# Names for this specific challenge
+# 
+##############################################################################
+female_names = ["josja"]
+male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs"]
+names = female_names + male_names
+
+##############################################################################
+#
 # Verbs & shared stuff
 #
 ##############################################################################
@@ -52,7 +61,7 @@ for loc in common.get_locations(pick_location=True, place_location=True):
 for cat in common.object_categories:
     grammar += "\nOBJECT_CATEGORY[{'category': '%s'}] -> %s" % (cat, cat)
 
-for name in common.names:
+for name in names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
     for loc in common.get_locations():
         grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
