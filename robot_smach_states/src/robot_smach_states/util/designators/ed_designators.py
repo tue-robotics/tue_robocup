@@ -368,6 +368,7 @@ class EmptySpotDesignator(Designator):
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
         x = frame_stamped.frame.p.x()
         y = frame_stamped.frame.p.y()
+        radius -= 0.1
         ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
         pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.frame_id)

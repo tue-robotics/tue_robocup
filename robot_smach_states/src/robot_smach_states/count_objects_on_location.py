@@ -4,9 +4,10 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.startup import startup
+from robot_skills.classification_result import ClassificationResult
 
 class CountObjectsOnLocation(smach.State):
-    def __init__(self, robot, location, num_objects_designator, segmentation_area='on_top_of', object_type='', threshold=0.0):
+    def __init__(self, robot, location, segmented_objects_designator, num_objects_designator, segmentation_area='on_top_of', object_type='', threshold=0.0):
         """ Constructor
 
         :param robot: robot object
@@ -26,33 +27,35 @@ class CountObjectsOnLocation(smach.State):
         ds.checks.is_writeable(num_objects_designator)
         ds.checks.check_resolve_type(num_objects_designator, int)
         self.num_objects_designator = num_objects_designator
+        self.segmented_objects_designator = segmented_objects_designator
 
     def execute(self, userdata=None):
-        res = self.robot.ed.update_kinect("{} {}".format(self.segmentation_area, self.location))
-        segmented_object_ids = res.new_ids + res.updated_ids
+        # res = self.robot.ed.update_kinect("{} {}".format(self.segmentation_area, self.location))
+        # entities = self.segmented_objects_designator.resolve()
+        # segmented_object_ids = entities.new_ids + entities.updated_ids
+        object_classifications = self.segmented_objects_designator.resolve()
 
-        rospy.loginfo("Segmented %d objects" % len(segmented_object_ids))
-        if segmented_object_ids:
-            object_classifications = self.robot.ed.classify(ids=segmented_object_ids)
+        rospy.loginfo("Segmented %d objects" % len(object_classifications))
+        if object_classifications:
+            # object_classifications = self.robot.ed.classify(ids=segmented_object_ids)
 
-            if object_classifications:
-                for idx, obj in enumerate(object_classifications):
-                    rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.type, id=obj.id, p=obj.probability))
+            for idx, obj in enumerate(object_classifications):
+                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.type, id=obj.id, p=obj.probability))
 
-                over_threshold = object_classifications
-                if self.threshold:
-                    over_threshold = [obj for obj in object_classifications if obj.probability >= self.threshold]
+            over_threshold = object_classifications
+            if self.threshold:
+                over_threshold = [obj for obj in object_classifications if obj.probability >= self.threshold]
 
-                dropped = {obj.id: obj.probability for obj in object_classifications if obj.probability < self.threshold}
-                rospy.loginfo("Dropping {l} entities due to low class. score (< {th}): {dropped}"
-                              .format(th=self.threshold, dropped=dropped, l=len(dropped)))
+            dropped = {obj.id: obj.probability for obj in object_classifications if obj.probability < self.threshold}
+            rospy.loginfo("Dropping {l} entities due to low class. score (< {th}): {dropped}"
+                          .format(th=self.threshold, dropped=dropped, l=len(dropped)))
 
-                object_classifications = over_threshold
+            object_classifications = over_threshold
 
-                list_objects = [obj for obj in object_classifications if obj.type == self.object_type]
-                num_objects = len(list_objects)
-                rospy.loginfo("Counted {} objects matching the query".format(num_objects))
-                self.num_objects_designator.write(num_objects)
+            list_objects = [obj for obj in object_classifications if obj.type == self.object_type.resolve()]
+            num_objects = len(list_objects)
+            rospy.loginfo("Counted {} objects matching the query".format(num_objects))
+            self.num_objects_designator.write(num_objects)
             return 'done'
         else:
             return 'failed'
@@ -60,26 +63,31 @@ class CountObjectsOnLocation(smach.State):
 
 # Standalone testing -----------------------------------------------------------------
 
-class TestCountObjects(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+class InspectAndCount(smach.StateMachine):
+    def __init__(self, robot, where_to_count_designator, type_to_count_designator, count_designator):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        count = ds.VariableDesignator(-1)
+        entities = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
-            smach.StateMachine.add('INITIALIZE',
-                                   states.Initialize(robot),
-                                   transitions={'initialized': 'COUNT',
-                                                'abort': 'Aborted'})
+            smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=where_to_count_designator,
+                                                                   objectIDsDes=entities,
+                                                                   searchArea="on_top_of",
+                                                                   navigation_area="in_front_of"),
+                                   transitions={"done": "COUNT",
+                                                "failed": "Aborted"})
 
             smach.StateMachine.add("COUNT",
-                                   CountObjectsOnLocation(robot, 'counter', object_type='apple',
-                                                         num_objects_designator=count.writeable),
+                                   CountObjectsOnLocation(robot,
+                                                          location=where_to_count_designator,
+                                                          segmented_objects_designator=entities,
+                                                          object_type=type_to_count_designator,
+                                                          num_objects_designator=count_designator.writeable),
                                    transitions={'done': 'Done',
-                                                'failed':'Aborted'})
+                                                'failed': 'Aborted'})
 
 
 if __name__ == "__main__":
     rospy.init_node('gpsr_function_exec')
 
-    startup(TestCountObjects, challenge_name="gpsr_function")
+    startup(InspectAndCount, challenge_name="gpsr_function")

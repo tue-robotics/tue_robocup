@@ -14,7 +14,18 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
-
+# class CheckIfPersonInRoom(smach.State):
+#     def __init__(self, robot, room):
+#         """
+#
+#         :param robot: robot api object
+#         :param room: room where person should be found
+#         """
+#         smach.State.__init__(self, outcomes=['true', 'false'])
+#         self._robot = robot
+#         self._room = room
+#
+#     def execute(self, userdata=None):
 
 class FindPerson(smach.State):
     """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.
@@ -22,8 +33,8 @@ class FindPerson(smach.State):
         """
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
-    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
-                 discard_other_labels=True):
+    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=1.0, probability_threshold=1.5,
+                 discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
 
         :param robot: robot api object
@@ -31,6 +42,7 @@ class FindPerson(smach.State):
         :param lost_timeout: (float) maximum time the robot is allowed to search
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
+        :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -43,6 +55,8 @@ class FindPerson(smach.State):
             geometry_msgs.msg.PointStamped, queue_size=10)
         self._probability_threshold = probability_threshold
         self._discard_other_labels = discard_other_labels
+        self._found_entity_designator = found_entity_designator
+        self._room = room
 
     def execute(self, userdata=None):
         rospy.loginfo("Trying to find {}".format(self._person_label))
@@ -93,14 +107,24 @@ class FindPerson(smach.State):
 
             found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
                                                                    center_point=person_pos_kdl)
+
+            if self._room:
+                room_entity = self._robot.ed.get_entity(id=self._room)
+                if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
+                    found_person = None
+
             if found_person:
-                self._robot.speech.speak("I found {}".format(self._person_label), block=False)
+                rospy.loginfo("I found {} at {}".format(self._person_label, found_person.pose.extractVectorStamped(), block=False))
+                self._robot.speech.speak("I found {}.".format(self._person_label, block=False))
                 self._robot.head.close()
 
                 self._robot.ed.update_entity(
                     id=self._person_label,
                     frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "/map"),
                     type="waypoint")
+
+                if self._found_entity_designator:
+                    self._found_entity_designator.write(found_person)
 
                 return 'found'
             else:
@@ -147,13 +171,14 @@ class FindPersonInRoom(smach.StateMachine):
 
     """
 
-    def __init__(self, robot, area, name, discard_other_labels=True):
+    def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
         to this waypoint. Else, it will navigate to the room called "<area>"
         :param name: (str) Name of the person to look for
         :param discard_other_labels: (bool) Whether or not to discard faces based on label
+        :param found_entity_designator: (Designator) A designator that will resolve to the found object
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
@@ -183,7 +208,8 @@ class FindPersonInRoom(smach.StateMachine):
 
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name,
-                                                             discard_other_labels=discard_other_labels),
+                                                             discard_other_labels=discard_other_labels,
+                                                             found_entity_designator=found_entity_designator),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 

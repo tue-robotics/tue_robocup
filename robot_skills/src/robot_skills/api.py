@@ -37,16 +37,17 @@ class Api(RobotPart):
         if callable(self._pre_hook):
             self._pre_hook()
 
-        self.restart_dragonfly()
         try:
             answer = self._client.query(description, grammar, target, timeout)
         except TimeoutException as e:
             if callable(self._post_hook):
                 self._post_hook()
+            self.restart_dragonfly()
             raise e
 
         if callable(self._post_hook):
             self._post_hook()
+        self.restart_dragonfly()
 
         return answer
 
