@@ -23,7 +23,7 @@ C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 #
 ##############################################################################
 female_names = ["josja"]
-male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs", "lieven"]
+male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs", "lieve"]
 names = female_names + male_names
 
 ##############################################################################
