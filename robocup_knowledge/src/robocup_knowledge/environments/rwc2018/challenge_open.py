@@ -20,7 +20,7 @@ C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 ##############################################################################
 #
 # Names for this specific challenge
-# 
+#
 ##############################################################################
 female_names = ["josja"]
 male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs"]
@@ -67,6 +67,7 @@ for name in names:
         grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
 
 grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 
 ###############################################################################
 #
@@ -126,7 +127,7 @@ VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE at the RO
 grammar += """
 V_GUIDE -> guide 
 
-VP[{"action": "guide", "object": X, "target-location": Y}] -> V_GUIDE NAMED_PERSON[X] to the ROOM_OR_LOCATION[Y]
+VP[{"action": "guide", "object": X, "target-location": Y, "source-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the ROOM_OR_LOCATION[Z] to the ROOM_OR_LOCATION[Y]
 """
 
 ###############################################################################
