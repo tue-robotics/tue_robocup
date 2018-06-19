@@ -19,8 +19,8 @@ class DetectFace(smach.State):
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
-        self._pub_image = rospy.Publisher(robot.robot_name + '/photo_to_telegram', Image, queue_size=1)
-        self._pub_label = rospy.Publisher(robot.robot_name + '/message_to_telegram', String, queue_size=1)
+        self._pub_image = rospy.Publisher(robot.robot_name + '/image_from_ros', Image, queue_size=1)
+        self._pub_label = rospy.Publisher(robot.robot_name + '/message_from_ros', String, queue_size=1)
 
     def execute(self, userdata):
 
