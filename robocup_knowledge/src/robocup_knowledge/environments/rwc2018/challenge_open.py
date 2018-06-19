@@ -220,6 +220,7 @@ V_SAY -> tell | say
 
 VP[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 VP[{"action": "say", "sentence": X, "object": Y}] -> V_SAY SAY_SENTENCE[X] to PERSON_AT_LOCATION[Y]
+VP[{"action": "say", "sentence": "party"}] -> lets get the party started
 """
 
 grammar += '\nSAY_SENTENCE["time"] -> the time'
