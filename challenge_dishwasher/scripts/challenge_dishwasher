@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import rospy
+from challenge_dishwasher.custom_place import CustomPlace
 from challenge_dishwasher.open_dishwasher import OpenDishwasher
 from robot_skills.util.entity import Entity
 from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find, Grab, NavigateToSymbolic, \
     HearOptions
 from robot_smach_states.util import startup
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, \
-    UnoccupiedArmDesignator
-from smach import StateMachine, State
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, Designator
+from smach import StateMachine
 
 STARTING_POINT = "initial_pose"
 
@@ -44,21 +44,10 @@ class FindObject(StateMachine):
                                           'not_found': 'not_found'})
 
 
-class CustomPlace(State):
-    def __init__(self, robot, arm):
-        State.__init__(self, outcomes=['placed'])
-        self.robot = robot
-        self.arm = arm
-
-    def execute(self, ud):
-        return 'placed'
-
-
 def setup_statemachine(robot):
     item = VariableDesignator(resolve_type=Entity)
     dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
-    arm = UnoccupiedArmDesignator([robot.leftArm], None).lockable()
-    arm.lock()
+    arm = Designator(robot.leftArm)
 
     sm = StateMachine(outcomes=['done'])
 
@@ -103,8 +92,9 @@ def setup_statemachine(robot):
                          transitions={'continue': 'CUSTOM_PLACE',
                                       'no_result': 'ASK_CONTINUE'})
 
-        StateMachine.add('CUSTOM_PLACE', CustomPlace(robot, arm),
-                         transitions={'placed': 'SAY_EXIT'})
+        StateMachine.add('CUSTOM_PLACE', CustomPlace(robot, dishwasher_id, arm),
+                         transitions={'succeeded': 'SAY_EXIT',
+                                      'failed': 'SAY_EXIT'})
 
         StateMachine.add('SAY_EXIT', Say(robot, ["I will move to the exit now. See you guys later!"], block=False),
                          transitions={'spoken': 'GO_TO_EXIT'})

@@ -2,19 +2,20 @@ import rospy
 import tf2_geometry_msgs
 from robot_skills.amigo import Amigo
 from robot_smach_states import NavigateToSymbolic
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, Designator
 from smach import StateMachine, cb_interface, CBState
+
 
 _ = tf2_geometry_msgs
 
 
 class CustomPlace(StateMachine):
-    def __init__(self, robot, dishwasher_id):
+    def __init__(self, robot, dishwasher_id, arm):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         @cb_interface(outcomes=['done'])
         def pre_place_pose(ud):
-            robot.leftArm._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395,
+            arm.resolve()._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395,
                                                    -1.829999276180074, 0.6947045024700284, 0.1889253710114966]],
                                                  timeout=rospy.Duration(0))
             return 'done'
@@ -29,7 +30,7 @@ class CustomPlace(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def open_gripper(ud):
-            robot.leftArm.send_gripper_goal("open", timeout=0)
+            arm.resolve().send_gripper_goal("open", timeout=0)
             return 'done'
 
         @cb_interface(outcomes=['done'])
@@ -38,7 +39,7 @@ class CustomPlace(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def reset_arms(ud):
-            robot.leftArm.reset()
+            arm.resolve().reset()
             return 'done'
 
         with self:
@@ -56,6 +57,7 @@ class TestCustomPlace(StateMachine):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+        arm = Designator(robot.leftArm)
 
         with self:
             StateMachine.add("NAVIGATE_TO_DISHWASHER",
@@ -65,7 +67,7 @@ class TestCustomPlace(StateMachine):
                                           'goal_not_defined': 'failed'})
 
             StateMachine.add("OPEN_DISHWASHER",
-                             CustomPlace(robot, dishwasher_id),
+                             CustomPlace(robot, dishwasher_id, arm),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 
