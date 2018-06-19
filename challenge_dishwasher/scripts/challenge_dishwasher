@@ -57,7 +57,7 @@ class CustomPlace(State):
 def setup_statemachine(robot):
     item = VariableDesignator(resolve_type=Entity)
     dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
-    arm = UnoccupiedArmDesignator(robot.arms, None).lockable()
+    arm = UnoccupiedArmDesignator([robot.leftArm], None).lockable()
     arm.lock()
 
     sm = StateMachine(outcomes=['done'])
