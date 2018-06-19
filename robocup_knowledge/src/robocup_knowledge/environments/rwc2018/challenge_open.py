@@ -23,7 +23,7 @@ C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 #
 ##############################################################################
 female_names = ["josja"]
-male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs"]
+male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs", "lieven"]
 names = female_names + male_names
 
 ##############################################################################
@@ -130,7 +130,7 @@ VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE at the RO
 ###############################################################################
 
 grammar += """
-V_GUIDE -> guide 
+V_GUIDE -> guide
 
 VP[{"action": "guide", "object": X, "target-location": Y, "source-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the ROOM_OR_LOCATION[Z] to the ROOM_OR_LOCATION[Y]
 """
