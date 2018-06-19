@@ -9,7 +9,7 @@ from robot_skills.amigo import Amigo
 from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from robot_smach_states import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
-from smach import StateMachine, State
+from smach import StateMachine, State, cb_interface, CBState
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 _ = tf2_geometry_msgs
@@ -105,61 +105,65 @@ class ControlToPose(State):
         return math.hypot(dx, dy) < self._goal_position_tolerance and abs(dyaw) < self._goal_rotation_tolerance
 
 
-class OpenDishwasher(State):
+class OpenDishwasher(StateMachine):
     def __init__(self, robot, dishwasher_id):
-        State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.robot = robot
-        self.dishwasher_id = dishwasher_id
+        StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-    def _pre_grab_handle(self):
-        self.robot.leftArm.send_gripper_goal("open", timeout=0)
-        self.robot.leftArm._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395,
-                                                    -1.829999276180074, 0.6947045024700284, 0.1889253710114966]],
-                                                  timeout=rospy.Duration(0))
+        @cb_interface(outcomes=['done'])
+        def _pre_grab_handle(ud):
+            robot.leftArm.send_gripper_goal("open", timeout=0)
+            robot.leftArm._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395,
+                                                   -1.829999276180074, 0.6947045024700284, 0.1889253710114966]],
+                                                 timeout=rospy.Duration(0))
+            return 'done'
 
-    def _grab_handle(self):
-        self.robot.leftArm.wait_for_motion_done()
-        self.robot.speech.speak('I hope this goes right!', block=False)
-        self.robot.speech.speak('Ah, at least it is worth a try for 50 points, here we go!', block=False)
-        self.robot.head.look_at_point(VectorStamped(y=100, frame_id="/" + self.robot.robot_name + "/base_link"))
-        fs = frame_stamped("dishwasher", 0.41, 0, 0.83, roll=-math.pi / 2, pitch=0, yaw=math.pi)
-        self.robot.leftArm.send_goal(fs.projectToFrame(self.robot.robot_name + "/base_link", self.robot.tf_listener))
-        self.robot.leftArm.send_gripper_goal("close")
-        self.robot.head.reset()
-        self.robot.speech.speak('Okay, now what!', block=False)
+        @cb_interface(outcomes=['done'])
+        def _grab_handle(ud):
+            robot.leftArm.wait_for_motion_done()
+            robot.speech.speak('I hope this goes right!', block=False)
+            robot.speech.speak('Ah, at least it is worth a try for 50 points, here we go!', block=False)
+            robot.head.look_at_point(VectorStamped(y=100, frame_id="/" + robot.robot_name + "/base_link"))
+            fs = frame_stamped("dishwasher", 0.41, 0, 0.83, roll=-math.pi / 2, pitch=0, yaw=math.pi)
+            robot.leftArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_listener))
+            robot.leftArm.send_gripper_goal("close")
+            robot.head.reset()
+            robot.speech.speak('Okay, now what!', block=False)
+            return 'done'
 
-    def _align_with_dishwasher(self):
-        goal_pose = PoseStamped()
-        goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.dishwasher_id
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-        goal_pose.pose.position.x = 0.85
-        ControlToPose(self.robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3)).execute({})
+        @cb_interface(outcomes=['done'])
+        def _align_with_dishwasher(ud):
+            goal_pose = PoseStamped()
+            goal_pose.header.stamp = rospy.Time.now()
+            goal_pose.header.frame_id = dishwasher_id
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.position.x = 0.85
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3)).execute({})
+            return 'done'
 
-    def _drive_to_open_dishwasher(self):
-        goal_pose = PoseStamped()
-        goal_pose.header.stamp = rospy.Time.now()
-        goal_pose.header.frame_id = self.dishwasher_id
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-        goal_pose.pose.position.x = 1.4
-        goal_pose.pose.position.y = 0.2
+        @cb_interface(outcomes=['done'])
+        def _drive_to_open_dishwasher(ud):
+            goal_pose = PoseStamped()
+            goal_pose.header.stamp = rospy.Time.now()
+            goal_pose.header.frame_id = dishwasher_id
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.position.x = 1.4
+            goal_pose.pose.position.y = 0.2
 
-        self.robot.torso.low()
-        ControlToPose(self.robot, goal_pose, ControlParameters(0.8, 1.0, 0.5, 0.1, 0.1)).execute({})
+            robot.torso.low()
+            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.5, 0.1, 0.1)).execute({})
 
-        goal_pose.pose.position.x = 1.6
-        ControlToPose(self.robot, goal_pose, ControlParameters(0.5, 1.0, 0.15, 0.1, 0.1)).execute({})
+            goal_pose.pose.position.x = 1.6
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.15, 0.1, 0.1)).execute({})
 
-    def execute(self, userdata=None):
-        self._pre_grab_handle()
-        self._align_with_dishwasher()
-        self._grab_handle()
-        self._drive_to_open_dishwasher()
+            robot.leftArm.reset()
+            robot.torso.reset()
+            return 'done'
 
-        self.robot.leftArm.reset()
-        self.robot.torso.reset()
-
-        return 'succeeded'
+        with self:
+            self.add_auto('PRE_GRAB_HANDLE', CBState(_pre_grab_handle), ['done'])
+            self.add_auto('ALIGN_WITH_DISHWASHER', CBState(_align_with_dishwasher), ['done'])
+            self.add_auto('GRAB_HANDLE', CBState(_grab_handle), ['done'])
+            self.add('DRIVE_TO_OPEN_DISHWASHER', CBState(_drive_to_open_dishwasher), transitions={'done': 'succeeded'})
 
 
 class TestOpenDishwasher(StateMachine):
