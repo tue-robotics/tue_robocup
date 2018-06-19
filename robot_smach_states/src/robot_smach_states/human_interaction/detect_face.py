@@ -42,6 +42,9 @@ class DetectFace(smach.State):
                     best_match = {'index': index, 'face': face, 'label': probability.label,
                                   'probability': probability.probability}
 
+
+
+
         self._pub_image.publish(image)
         self._pub_label.publish(best_match['label'])
 

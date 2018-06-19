@@ -14,7 +14,18 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
-
+# class CheckIfPersonInRoom(smach.State):
+#     def __init__(self, robot, room):
+#         """
+#
+#         :param robot: robot api object
+#         :param room: room where person should be found
+#         """
+#         smach.State.__init__(self, outcomes=['true', 'false'])
+#         self._robot = robot
+#         self._room = room
+#
+#     def execute(self, userdata=None):
 
 class FindPerson(smach.State):
     """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.
@@ -23,7 +34,11 @@ class FindPerson(smach.State):
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
     def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
+<<<<<<< Updated upstream
                  discard_other_labels=True, found_entity_designator=None):
+=======
+                 discard_other_labels=True, room='bedroom'):
+>>>>>>> Stashed changes
         """ Initialization method
 
         :param robot: robot api object
@@ -31,6 +46,7 @@ class FindPerson(smach.State):
         :param lost_timeout: (float) maximum time the robot is allowed to search
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
+        :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -43,7 +59,11 @@ class FindPerson(smach.State):
             geometry_msgs.msg.PointStamped, queue_size=10)
         self._probability_threshold = probability_threshold
         self._discard_other_labels = discard_other_labels
+<<<<<<< Updated upstream
         self._found_entity_designator = found_entity_designator
+=======
+        self._room = room
+>>>>>>> Stashed changes
 
     def execute(self, userdata=None):
         rospy.loginfo("Trying to find {}".format(self._person_label))
@@ -92,8 +112,13 @@ class FindPerson(smach.State):
             person_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(person_pos_kdl)
             self._face_pos_pub.publish(person_pos_ros)
 
-            found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
+            room_entity = self._robot.ed.get_entity(id=self._room)
+            if room_entity.in_volume(self, person_pos_ros, 'in'):
+                found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
                                                                    center_point=person_pos_kdl)
+            else:
+                continue
+
             if found_person:
                 self._robot.speech.speak("I found {}".format(self._person_label), block=False)
                 self._robot.head.close()
