@@ -33,7 +33,7 @@ class FindPerson(smach.State):
         """
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
-    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=0.5, probability_threshold=1.5,
+    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=1.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
 
@@ -117,7 +117,7 @@ class FindPerson(smach.State):
                                                                        center_point=person_pos_kdl)
 
             if found_person:
-                self._robot.speech.speak("I found {}".format(self._person_label), block=False)
+                self._robot.speech.speak("I found {} at {}".format(self._person_label, found_person.pose.p), block=False)
                 self._robot.head.close()
 
                 self._robot.ed.update_entity(
