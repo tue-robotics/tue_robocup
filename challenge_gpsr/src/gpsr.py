@@ -188,8 +188,7 @@ def main():
         task_specification = json.dumps(semantics)
 
         # Sleep for the TC to get in position.
-        robot.speech.speak("I will wait for you guys to get in position. ", block=False)
-        rospy.sleep(3.0)
+        rospy.sleep(6.0)
 
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
