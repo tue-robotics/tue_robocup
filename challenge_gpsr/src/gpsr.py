@@ -218,7 +218,7 @@ def main():
         robot.rightArm.send_gripper_goal('close',0.0)
         robot.torso.reset()
 
-        if task_result.succeeded:
+        if task_result.succeeded or task_result.result == task_result.RESULT_TASK_EXECUTION_FAILED:
             # Keep track of the number of performed tasks
             no_of_tasks_performed += 1
             if no_of_tasks_performed >= no_of_tasks:
