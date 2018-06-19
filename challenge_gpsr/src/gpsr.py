@@ -131,8 +131,6 @@ def main():
 
     robot = Robot()
 
-    action_client = ActionClient(robot.robot_name)
-
     if eegpsr:
         knowledge = load_knowledge('challenge_eegpsr')
     else:
@@ -233,8 +231,6 @@ def main():
 
                     # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                     conversation_engine.user_to_robot_text(sentence)
-
-            break
 
         # # Dump the output json object to a string
         # task_specification = json.dumps(semantics)
