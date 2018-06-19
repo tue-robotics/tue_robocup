@@ -67,7 +67,6 @@ class InspectAndCount(smach.StateMachine):
     def __init__(self, robot, where_to_count_designator, type_to_count_designator, count_designator):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        # count = ds.VariableDesignator(-1)
         entities = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
