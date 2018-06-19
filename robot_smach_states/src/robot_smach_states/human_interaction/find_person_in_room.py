@@ -34,11 +34,7 @@ class FindPerson(smach.State):
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
     def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
-<<<<<<< Updated upstream
-                 discard_other_labels=True, found_entity_designator=None):
-=======
-                 discard_other_labels=True, room='bedroom'):
->>>>>>> Stashed changes
+                 discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
 
         :param robot: robot api object
@@ -59,11 +55,8 @@ class FindPerson(smach.State):
             geometry_msgs.msg.PointStamped, queue_size=10)
         self._probability_threshold = probability_threshold
         self._discard_other_labels = discard_other_labels
-<<<<<<< Updated upstream
         self._found_entity_designator = found_entity_designator
-=======
         self._room = room
->>>>>>> Stashed changes
 
     def execute(self, userdata=None):
         rospy.loginfo("Trying to find {}".format(self._person_label))
@@ -112,12 +105,16 @@ class FindPerson(smach.State):
             person_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(person_pos_kdl)
             self._face_pos_pub.publish(person_pos_ros)
 
-            room_entity = self._robot.ed.get_entity(id=self._room)
-            if room_entity.in_volume(self, person_pos_ros, 'in'):
-                found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
-                                                                   center_point=person_pos_kdl)
+            if self._room:
+                room_entity = self._robot.ed.get_entity(id=self._room)
+                if room_entity.in_volume(person_pos_kdl, 'in'):
+                    found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
+                                                                           center_point=person_pos_kdl)
+                else:
+                    continue
             else:
-                continue
+                found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
+                                                                       center_point=person_pos_kdl)
 
             if found_person:
                 self._robot.speech.speak("I found {}".format(self._person_label), block=False)
