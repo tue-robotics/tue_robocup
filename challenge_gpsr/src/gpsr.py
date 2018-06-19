@@ -187,8 +187,18 @@ def main():
         # Dump the output json object to a string
         task_specification = json.dumps(semantics)
 
+        # Sleep for the TC to get in position.
+        rospy.sleep(6.0)
+
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
+        print task_result.missing_field
+        if task_result.result == task_result.RESULT_MISSING_INFORMATION:
+            if "location" in task_result.missing_field:
+                robot.speech.speak('I am missing some information about the location, please give me the full command')
+            else:
+                robot.speech.speak('I am missing some information, please give me the full command')
+            continue
 
         print task_result.missing_field
         # # Ask for missing information
