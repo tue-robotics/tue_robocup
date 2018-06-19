@@ -22,7 +22,7 @@ locations = [
     {'name': 'end_table',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'couch',           'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
     {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'},
-    {'name': 'door',            'room': 'living_room',      'category': 'utility',      'manipulation': 'no'}
+    {'name': 'door',            'room': 'corridor',      'category': 'utility',      'manipulation': 'no'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
