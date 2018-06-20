@@ -118,7 +118,7 @@ VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
-VP[{"action": "guide", "target-location": Y}] -> V_GUIDE PPN_PERSON to the ROOM_OR_LOCATION[Y]
+VP[{"action": "guide", "target-location": Y, "object": {"type": "reference"}}] -> V_GUIDE PPN_PERSON to the ROOM_OR_LOCATION[Y]
 """
 
 
