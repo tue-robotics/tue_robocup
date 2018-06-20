@@ -151,7 +151,6 @@ class ConversationEngineWithHmi(ConversationEngine):
                 self.timeout_count = 0
                 if not self.test:
                     if self.heard_correct(sentence):
-                        self.robot.speech.speak(random.choice(["Sure", "Allright"]))
                         # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                         self.user_to_robot_text(sentence)
                         break
