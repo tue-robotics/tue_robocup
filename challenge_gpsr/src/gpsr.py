@@ -38,6 +38,8 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.finished = False
         self.start_time = rospy.get_time()
 
+        self._tc_fuckup_time = 6.0 # The TC usually needs some time to get in position and out the way of the robot
+
     def _say_to_user(self, message):
         rospy.loginfo("_say_to_user('{}')".format(message))
         self.robot.speech.speak(message)
@@ -89,11 +91,15 @@ class ConversationEngineWithHmi(ConversationEngine):
         sentence, semantics = self.robot.hmi.query(description=description,
                                                    grammar=grammar,
                                                    target=target)
+        rospy.logwarn("Waiting a little bit for the referees to get out the way")
+        rospy.sleep(self._tc_fuckup_time)
         self.user_to_robot_text(sentence)
 
     def _on_task_outcome_failed(self, message):
         rospy.loginfo("_on_task_outcome_failed('{}')".format(message))
         self._say_to_user(message)
+
+        self.tasks_done += 1
 
         self.task_finished(message)
 
@@ -129,6 +135,8 @@ class ConversationEngineWithHmi(ConversationEngine):
                 self.timeout_count = 0
                 if not self.test:
                     if self.heard_correct(sentence):
+                        rospy.logwarn("Waiting a little bit for the referees to get out the way")
+                        rospy.sleep(self._tc_fuckup_time)
                         # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                         self.user_to_robot_text(sentence)
                         break
