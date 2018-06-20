@@ -81,19 +81,19 @@ grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 grammar += """
 V_FIND -> find | locate | look for | pinpoint | spot
 
-OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
+TYPE_OR_CATEGORY -> NAMED_OBJECT | OBJECT_CATEGORY
 UNNAMED_PERSON -> a person | someone
 
 VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] MEETING_PP the ROOM_OR_LOCATION[Y]
 
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET TYPE_OR_CATEGORY[X] in the ROOM[Y]
 
 VP[{"action": "find"}] -> V_FIND DET object
 VP[{"action": "find", "source-location": Y}] -> V_FIND DET object in the ROOM[Y]
 
-VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
+VP[{"action": "find", "object": X}] -> V_FIND DET TYPE_OR_CATEGORY[X]
 """
 
 
@@ -155,8 +155,8 @@ VP[{"action": "inspect", "object": X}] -> V_INSPECT the LOCATION[X]
 grammar += """
 V_PICKUP -> get | grasp | take | pick up | grab | retrieve
 
-VP[{"action": "pick-up", "object": X}] -> V_PICKUP DET NAMED_OBJECT[X]
-VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAMED_OBJECT[X] from the LOCATION[Y]
+VP[{"action": "pick-up", "object": X}] -> V_PICKUP DET TYPE_OR_CATEGORY[X]
+VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET TYPE_OR_CATEGORY[X] from the LOCATION[Y]
 """
 
 ###############################################################################
@@ -182,9 +182,8 @@ VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object":
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to PERSON_AT_LOCATION[Y]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to OPERATOR[Y]
 
-
-VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to PERSON_AT_LOCATION[X]
-VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to OPERATOR[X]
+VPS[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to PERSON_AT_LOCATION[X]
+VPS[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to OPERATOR[X]
 """
 
 ###############################################################################
@@ -196,12 +195,6 @@ VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}
 grammar += """
 V_PLACE -> put | place | leave | set
 
-VPS[{"action": "place", "target-location": Y, "object": Z}] -> V_BRING PPN_OBJECT to the LOCATION[Y]
-VP[{"action": "place", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
-VP[{"action": "place", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] from the LOCATION[X] to the LOCATION[Y]
-"""
-
-grammar += """
 VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
 VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
 
