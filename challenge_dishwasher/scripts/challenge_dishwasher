@@ -142,17 +142,9 @@ def setup_statemachine(robot):
 
         StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER",
                          NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
-                         transitions={'arrived': 'ASK_CONTINUE',
+                         transitions={'arrived': 'CUSTOM_PLACE',
                                       'unreachable': 'SAY_EXIT',
                                       'goal_not_defined': 'SAY_EXIT'})
-
-        StateMachine.add('ASK_CONTINUE', Say(robot, ["Could you please open the rack, and say continue"]),
-                         transitions={'spoken': 'HEAR_CONTINUE'})
-
-        StateMachine.add('HEAR_CONTINUE',
-                         HearOptions(robot, ['continue'], rospy.Duration(10)),
-                         transitions={'continue': 'CUSTOM_PLACE',
-                                      'no_result': 'ASK_CONTINUE'})
 
         StateMachine.add('CUSTOM_PLACE', CustomPlace(robot, dishwasher_id, arm),
                          transitions={'succeeded': 'SAY_EXIT',

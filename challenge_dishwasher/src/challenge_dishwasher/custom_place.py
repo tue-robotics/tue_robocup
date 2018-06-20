@@ -28,9 +28,11 @@ class CustomPlace(StateMachine):
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.01, 0.1)).execute({})
 
             robot.torso.wait_for_motion_done()
+            robot.speech.speak('I am now raising my arm')
 
-            arm.resolve()._send_joint_trajectory([[-0.92, 0.044, 0.80, 0.297, 0.934, -0.95, 0.4]],
+            arm.resolve()._send_joint_trajectory([[-1.1, 0.044, 0.80, 0.297, 0.934, -0.95, 0.4]],
                                                  timeout=rospy.Duration(0))
+            arm.resolve().wait_for_motion_done()
 
             goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, 1.9656259917))
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.01, 0.1)).execute({})
@@ -39,6 +41,8 @@ class CustomPlace(StateMachine):
 
             arm.resolve()._send_joint_trajectory([[-0.92, 0.044, 0.80, 0.497, 0.934, -0.95, 0.4]],
                                                  timeout=rospy.Duration(0))
+            arm.resolve().wait_for_motion_done()
+            rospy.sleep(1.0)
 
             return 'done'
 
@@ -46,17 +50,24 @@ class CustomPlace(StateMachine):
         def place_pose(ud):
             robot.torso._send_goal([0.35])
             robot.torso.wait_for_motion_done()
+            rospy.sleep(1.0)
             return 'done'
 
         @cb_interface(outcomes=['done'])
         def open_gripper(ud):
             arm.resolve().send_gripper_goal("open", timeout=0)
+            rospy.sleep(3.0)
+            robot.speech.speak("This is where I usually place my cup")
             return 'done'
 
         @cb_interface(outcomes=['done'])
         def move_away(ud):
             robot.torso.high()
             robot.torso.wait_for_motion_done()
+
+            arm.resolve()._send_joint_trajectory([[-1.1, 0.044, 0.80, 0.297, 0.934, -0.95, 0.4]],
+                                                 timeout=rospy.Duration(0))
+            arm.resolve().wait_for_motion_done()
 
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
@@ -72,6 +83,8 @@ class CustomPlace(StateMachine):
         def reset_arms(ud):
             robot.torso.reset()
             arm.resolve().reset()
+            robot.torso.wait_for_motion_done()
+            arm.resolve().wait_for_motion_done()
             return 'done'
 
         with self:
