@@ -25,7 +25,7 @@ DET -> a | an
 for d in common.objects:
     if d["category"] == "drink":
         order_grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
-    elif d["category"] == "food":
+    elif d["category"] == "food" or d["category"] == "snack":
         order_grammar += "\nFOOD['{}'] -> {}".format(d["name"], d["name"].replace('_', ' '))
 
 if __name__ == "__main__":
