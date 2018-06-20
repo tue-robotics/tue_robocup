@@ -82,7 +82,7 @@ grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 ###############################################################################
 
 grammar += """
-V_FIND -> find | locate | look for
+V_FIND -> find | locate | look for | spot | pinpoint
 
 OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
 UNNAMED_PERSON -> a person | someone

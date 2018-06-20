@@ -6,10 +6,6 @@ and follow him
 and follow him to the dining table
 and follow him to the exit
 and follow him to the kitchen
-and follow it
-and follow it to the dining table
-and follow it to the exit
-and follow it to the kitchen
 and go behind him
 and go behind it
 and place it on the dining table
