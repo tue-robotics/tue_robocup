@@ -30,6 +30,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.timeout_count = 0
         self.test = False
         self.skip = False
+        self.give_examples = False
         self.tasks_to_be_done = 999
         self.tasks_done = 0
 
