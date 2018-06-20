@@ -4,6 +4,7 @@ import numpy as np
 import rospy
 import tf2_geometry_msgs
 from geometry_msgs.msg import PointStamped, Point
+from robot_skills.amigo import Amigo
 from sensor_msgs.msg import LaserScan
 from smach import StateMachine, State
 from visualization_msgs.msg import MarkerArray, Marker
@@ -21,14 +22,26 @@ class CustomFindCup(State):
         self._box_size_y = box_size_y
         self._box_size_x = box_size_x
 
-    def _extract_cup_pose(self, exclude_points=[], exclude_radius=0.1, cluster_max_distance=0.05,
+    @staticmethod
+    def _get_points_from_scan_msg(msg):
+        scan_points = []
+        for i, r in enumerate(msg.ranges):
+            if math.isnan(r):
+                continue
+
+            x = r * math.cos(msg.angle_min + i * msg.angle_increment)
+            y = r * math.sin(msg.angle_min + i * msg.angle_increment)
+            scan_points.append((x, y))
+        return scan_points
+
+    def _extract_cup_pose(self, exclude_points=[], exclude_radius=0.05, cluster_max_distance=0.05,
                           cluster_min_points=10):
         def distance(p1, p2):
             return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
 
         def to_close_to_one_of_these_points(p, points, radius):
             for e_p in points:
-                if distance((e_p, p)) < radius:
+                if distance(e_p, p) < radius:
                     return True
             return False
 
@@ -46,13 +59,7 @@ class CustomFindCup(State):
 
         clusters = []
         current_cluster = []
-        for i, r in enumerate(msg.ranges):
-            if math.isnan(r):
-                continue
-
-            x = r * math.cos(msg.angle_min + i * msg.angle_increment)
-            y = r * math.sin(msg.angle_min + i * msg.angle_increment)
-
+        for (x, y) in self._get_points_from_scan_msg(msg):
             # Skip if too close to exclude points
             if to_close_to_one_of_these_points((x, y), exclude_points, exclude_radius):
                 continue
@@ -136,9 +143,21 @@ class CustomFindCup(State):
         )
 
     def execute(self, ud):
-        while True:
-            rospy.loginfo("Exctracted cup pose: %s", self._extract_cup_pose())
-        ud.position = PointStamped
+        self._robot.torso._send_goal([0.25])
+        self._robot.torso.wait_for_motion_done()
+        rospy.sleep(0.5)
+
+        msg = rospy.wait_for_message("/amigo/torso_laser/scan", LaserScan)
+        if msg is None:
+            return 'failed'
+
+        exclude_points = self._get_points_from_scan_msg(msg)
+
+        self._robot.torso._send_goal([0.2])
+        self._robot.torso.wait_for_motion_done()
+        rospy.sleep(0.5)
+
+        ud.position = self._extract_cup_pose(exclude_points)
         return 'succeeded'
 
 
@@ -156,10 +175,10 @@ class TestCustomFindCup(StateMachine):
 if __name__ == '__main__':
     rospy.init_node('test_custom_find_cup')
 
-    # robot = Amigo()
-    # robot.ed.reset()
-    # robot.leftArm.reset()
-    # robot.torso.reset()
+    robot = Amigo()
+    robot.ed.reset()
+    robot.leftArm.reset()
+    robot.torso.reset()
 
-    sm = TestCustomFindCup(None)
+    sm = TestCustomFindCup(robot)
     sm.execute()

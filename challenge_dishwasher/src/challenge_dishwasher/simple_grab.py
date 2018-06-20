@@ -1,9 +1,14 @@
+import math
+
 import PyKDL as kdl
 import rospy
 import tf2_geometry_msgs
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from challenge_dishwasher.custom_find_cup import CustomFindCup
 from geometry_msgs.msg import PointStamped, Point
 from robot_skills.amigo import Amigo
 from robot_skills.util.kdl_conversions import frame_stamped
+from robot_smach_states import NavigateTo
 from robot_smach_states.util.designators import Designator
 from smach import StateMachine, State, cb_interface, CBState
 from tf2_ros import Header
@@ -11,7 +16,43 @@ from tf2_ros import Header
 _ = tf2_geometry_msgs
 
 
-class SimpleGrab(State):
+class SimpleNavigateToGrasp(NavigateTo):
+    def __init__(self, robot, arm):
+        super(SimpleNavigateToGrasp, self).__init__(robot, reset_head=False, input_keys=['position'])
+        self.arm = arm
+        self.point = None
+
+    def execute(self, ud):
+        self.point = ud.position
+        return super(SimpleNavigateToGrasp, self).execute(ud)
+
+    def generateConstraint(self):
+        point = self.point
+        arm = self.arm.resolve()
+
+        if arm == self.robot.arms['left']:
+            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+        elif arm == self.robot.arms['right']:
+            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+        else:
+            raise IndexError('Arm not found')
+        radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+
+        x = point.point.x
+        y = point.point.y
+        frame_id = point.header.frame_id
+
+        # Outer radius
+        radius -= 0.1
+        ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
+        ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
+        pc = PositionConstraint(constraint=ri + " and " + ro, frame=frame_id)
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame=frame_id, angle_offset=angle_offset)
+
+        return pc, oc
+
+
+class SimplePickup(State):
     def __init__(self, robot, arm):
         State.__init__(self, outcomes=['succeeded', 'failed'], input_keys=['position'])
         self.robot = robot
@@ -92,6 +133,21 @@ class SimpleGrab(State):
         return 'succeeded'
 
 
+class SimpleGrab(StateMachine):
+    def __init__(self, robot, arm):
+        StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=['position'])
+
+        with self:
+            StateMachine.add("SIMPLE_NAVIGATE_TO_GRASP", SimpleNavigateToGrasp(robot, arm),
+                             transitions={'unreachable': 'failed',
+                                          'arrived': 'SIMPLE_PICKUP',
+                                          'goal_not_defined': 'failed'})
+
+            StateMachine.add("SIMPLE_PICKUP", SimplePickup(robot, arm),
+                             transitions={'succeeded': 'succeeded',
+                                          'failed': 'failed'})
+
+
 class TestSimpleGrab(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"])
@@ -112,6 +168,22 @@ class TestSimpleGrab(StateMachine):
                                           'failed': 'failed'})
 
 
+class TestFindAndGrab(StateMachine):
+    def __init__(self, robot):
+        StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        arm = Designator(robot.leftArm)
+
+        with self:
+            StateMachine.add("FIND_CUP", CustomFindCup(robot),
+                             transitions={'succeeded': 'GRAB',
+                                          'failed': 'failed'})
+
+            StateMachine.add("GRAB", SimpleGrab(robot, arm),
+                             transitions={'succeeded': 'succeeded',
+                                          'failed': 'failed'})
+
+
 if __name__ == '__main__':
     rospy.init_node('test_open_dishwasher')
 
@@ -120,5 +192,5 @@ if __name__ == '__main__':
     robot.leftArm.reset()
     robot.torso.reset()
 
-    sm = TestSimpleGrab(robot)
+    sm = TestFindAndGrab(robot)
     sm.execute()
