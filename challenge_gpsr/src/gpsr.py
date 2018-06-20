@@ -89,11 +89,27 @@ class ConversationEngineWithHmi(ConversationEngine):
         description += " For example: '{}'".format(example)
         self._say_to_user(description)
 
-        sentence, semantics = self.robot.hmi.query(description=description,
-                                                   grammar=grammar,
-                                                   target=target)
-        self.robot.speech.speak(random.choice(["Got it!", "Okidoki"]))
-        self.user_to_robot_text(sentence)
+        while True:
+            try:
+                sentence, semantics = self.robot.hmi.query(description=description,
+                                                           grammar=grammar,
+                                                           target=target)
+                self.timeout_count = 0
+                if not self.test:
+                    if self.heard_correct(sentence):
+                        # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
+                        self.user_to_robot_text(sentence)
+                        break
+            except hmi.TimeoutException:
+                rospy.logwarn("HMI timed out when getting command")
+                self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
+                if self.timeout_count >= 3:
+                    self.robot.hmi.restart_dragonfly()
+                    self.timeout_count = 0
+                    rospy.logwarn("[GPSR] Dragonfly restart")
+                else:
+                    self.timeout_count += 1
+                    rospy.logwarn("[GPSR] Timeout_count: {}".format(self.timeout_count))
 
     def _on_task_outcome_failed(self, message):
         rospy.loginfo("_on_task_outcome_failed('{}')".format(message))
