@@ -70,6 +70,8 @@ class ConversationEngineWithHmi(ConversationEngine):
             self.timeout_count = 0
 
             self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
+        else:
+            rospy.logwarn("Not going to meeting point, challenge has param skip:=true set")
 
         if self.tasks_done >= self.tasks_to_be_done and not self.skip:
             nwc = NavigateToWaypoint(robot=self.robot,
