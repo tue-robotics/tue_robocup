@@ -15,7 +15,7 @@ _ = tf2_geometry_msgs
 
 
 class CustomFindCup(State):
-    def __init__(self, robot, box_offset_x=1, box_size_y=1.5, box_size_x=1):
+    def __init__(self, robot, box_offset_x=0.7, box_size_y=1.2, box_size_x=0.9):
         State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['position'])
         self._visualization_publisher = rospy.Publisher('find_cup_visualization', MarkerArray, queue_size=1)
 
@@ -152,9 +152,9 @@ class CustomFindCup(State):
         )
 
     def execute(self, ud):
-        self._robot.torso._send_goal([0.25])
+        self._robot.torso._send_goal([0.16])
         self._robot.torso.wait_for_motion_done()
-        rospy.sleep(0.5)
+        rospy.sleep(2.0)
 
         msg = rospy.wait_for_message("/amigo/torso_laser/scan", LaserScan)
         if msg is None:
@@ -162,9 +162,9 @@ class CustomFindCup(State):
 
         exclude_points = self._get_points_from_scan_msg(msg)
 
-        self._robot.torso._send_goal([0.2])
+        self._robot.torso._send_goal([0.14])
         self._robot.torso.wait_for_motion_done()
-        rospy.sleep(0.5)
+        rospy.sleep(2.0)
 
         point = self._extract_cup_pose(exclude_points)
         if point is None:
@@ -182,7 +182,7 @@ class TestCustomFindCup(StateMachine):
             StateMachine.add("FIND_CUP",
                              CustomFindCup(robot),
                              transitions={'succeeded': 'succeeded',
-                                          'failed': 'failed'})
+                                          'failed': 'FIND_CUP'})
 
 
 if __name__ == '__main__':

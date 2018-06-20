@@ -91,8 +91,8 @@ class FindObject(StateMachine):
         #     'type': 'cup'
         # })
         area_name_designator = VariableDesignator('on_top_of')
-        navigation_area_designator1 = VariableDesignator('in_front_of')
-        navigation_area_designator2 = VariableDesignator('in_back_of')
+        navigation_area_designator1 = VariableDesignator('in_back_of')
+        navigation_area_designator2 = VariableDesignator('in_front_of')
 
         with self:
             StateMachine.add('FIND', CustomFind(robot, source_entity_designator, area_name_designator,
