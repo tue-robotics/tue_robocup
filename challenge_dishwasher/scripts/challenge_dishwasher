@@ -172,7 +172,7 @@ def setup_statemachine(robot):
                                       'failed': 'NAVIGATE_TO_INSPECT2'})
 
         StateMachine.add("NAVIGATE_TO_INSPECT2",
-                         NavigateToSymbolic(robot, {source_entity_designator: navigation_area_designator1}, source_entity_designator),
+                         NavigateToSymbolic(robot, {source_entity_designator: navigation_area_designator2}, source_entity_designator),
                          transitions={'arrived': 'SIMPLE_GRASP2',
                                       'unreachable': 'SAY_EXIT',
                                       'goal_not_defined': 'SAY_EXIT'})
