@@ -150,7 +150,9 @@ class ConversationEngineWithHmi(ConversationEngine):
                 self.timeout_count = 0
                 if not self.test:
                     if self.heard_correct(sentence):
-                        # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
+                        # Pass the heard sentence to the conv.engine. This parses it again.
+                        # The difference is that the conv.engine does some minor preprocessing
+                        # to handle more free-format input (like spaces to underscores etc.)
                         self.user_to_robot_text(sentence)
                         break
             except (hmi.TimeoutException, Exception) as e:
