@@ -91,9 +91,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         sentence, semantics = self.robot.hmi.query(description=description,
                                                    grammar=grammar,
                                                    target=target)
-        rospy.logwarn("Waiting a little bit for the referees to get out the way")
-        self.robot.speech.speak(random.choice(["Got it! Please step aside now and let me get to work right now!",
-                                               "Okidoki, please step aside now and watch a real man do this job"]))
+        self.robot.speech.speak(random.choice(["Got it!", "Okidoki"]))
         self.user_to_robot_text(sentence)
 
     def _on_task_outcome_failed(self, message):
@@ -136,9 +134,7 @@ class ConversationEngineWithHmi(ConversationEngine):
                 self.timeout_count = 0
                 if not self.test:
                     if self.heard_correct(sentence):
-                        rospy.logwarn("Waiting a little bit for the referees to get out the way")
-                        self.robot.speech.speak(random.choice(["Sure, please step aside now and let me get to work!",
-                                                               "Allright, Please step aside now and watch a real man do this"]))
+                        self.robot.speech.speak(random.choice(["Sure", "Allright"]))
                         # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                         self.user_to_robot_text(sentence)
                         break
