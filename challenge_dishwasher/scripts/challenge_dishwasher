@@ -16,7 +16,7 @@ STARTING_POINT = "initial_pose"
 object_type = 'cup'
 source_entity = 'dining_table'
 dishwasher_id = 'dishwasher'
-dishwasher_navigate_area = 'in_front_of'
+dishwasher_navigate_area = 'to_the_side_of'
 
 EXIT_1 = "exit_1_rips"
 EXIT_2 = "exit_2_rips"
