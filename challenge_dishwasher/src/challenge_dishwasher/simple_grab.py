@@ -139,7 +139,25 @@ class SimpleGrab(StateMachine):
     def __init__(self, robot, arm):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=['position'])
 
+        @cb_interface(outcomes=['succeeded'])
+        def prepare_grasp(ud):
+            # Open gripper (non-blocking)
+            arm.resolve().send_gripper_goal('open', timeout=0)
+
+            # Torso up (non-blocking)
+            robot.torso.high()
+
+            # Arm to position in a safe way
+            arm.resolve().send_joint_trajectory('prepare_grasp', timeout=0)
+
+            # Open gripper
+            arm.resolve().send_gripper_goal('open', timeout=0.0)
+            return 'succeeded'
+
         with self:
+            StateMachine.add("PREPARE_GRASP", CBState(prepare_grasp),
+                             transitions={'succeeded': 'SIMPLE_NAVIGATE_TO_GRASP'})
+
             StateMachine.add("SIMPLE_NAVIGATE_TO_GRASP", SimpleNavigateToGrasp(robot, arm),
                              transitions={'unreachable': 'failed',
                                           'arrived': 'SIMPLE_PICKUP',
