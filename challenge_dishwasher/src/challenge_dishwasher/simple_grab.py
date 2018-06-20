@@ -27,7 +27,6 @@ class SimpleNavigateToGrasp(NavigateTo):
         return super(SimpleNavigateToGrasp, self).execute(ud)
 
     def generateConstraint(self):
-        point = self.point
         arm = self.arm.resolve()
 
         if arm == self.robot.arms['left']:
@@ -38,9 +37,9 @@ class SimpleNavigateToGrasp(NavigateTo):
             raise IndexError('Arm not found')
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
-        x = point.point.x
-        y = point.point.y
-        frame_id = point.header.frame_id
+        x = self.point.point.x
+        y = self.point.point.y
+        frame_id = self.point.header.frame_id
 
         # Outer radius
         radius -= 0.1
@@ -72,11 +71,14 @@ class SimplePickup(State):
         # look_at_point function finishes
         rospy.sleep(rospy.Duration(0.5))
 
-        goal_point = ud.position
-        x = goal_point.point.x
-        y = goal_point.point.y
-        z = goal_point.point.z
-        goal_bl = frame_stamped(goal_point.header.frame_id, x, y, z, roll=0, pitch=0, yaw=0)
+        # Take the last available, not at detection timestamp
+        ud.position.header.stamp = rospy.Time(0)
+        goal_point_base_link = self.robot.tf_listener.transformPoint('/amigo/base_link', ud.position)
+
+        x = goal_point_base_link.point.x
+        y = goal_point_base_link.point.y
+        z = goal_point_base_link.point.z
+        goal_bl = frame_stamped(goal_point_base_link.header.frame_id, x, y, z, roll=0, pitch=0, yaw=-0.0463)
 
         # Grasp
         rospy.loginfo('Start grasping')
