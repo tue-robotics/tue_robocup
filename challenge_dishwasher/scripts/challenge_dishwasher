@@ -103,6 +103,16 @@ class FindObject(StateMachine):
             StateMachine.add('FIND2', CustomFind(robot, source_entity_designator, area_name_designator,
                                                 navigation_area_designator2, item),
                              transitions={'found': 'found',
+                                          'not_found': 'FIND3'})
+
+            StateMachine.add('FIND3', CustomFind(robot, source_entity_designator, area_name_designator,
+                                                 navigation_area_designator1, item),
+                             transitions={'found': 'found',
+                                          'not_found': 'FIND4'})
+
+            StateMachine.add('FIND4', CustomFind(robot, source_entity_designator, area_name_designator,
+                                                navigation_area_designator2, item),
+                             transitions={'found': 'found',
                                           'not_found': 'not_found'})
 
 
@@ -138,9 +148,26 @@ def setup_statemachine(robot):
 
         StateMachine.add('GRAB', Grab(robot, item, arm),
                          transitions={'done': 'NAVIGATE_BACK_TO_DISHWASHER',
+                                      'failed': 'FIND_OBJECT2'})
+
+        StateMachine.add('FIND_OBJECT2', FindObject(robot, item),
+                         transitions={'found': 'GRAB2',
+                                      'not_found': 'SAY_EXIT'})
+
+        StateMachine.add('GRAB2', Grab(robot, item, arm),
+                         transitions={'done': 'NAVIGATE_BACK_TO_DISHWASHER',
                                       'failed': 'SAY_EXIT'})
 
         StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER",
+                         NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
+                         transitions={'arrived': 'CUSTOM_PLACE',
+                                      'unreachable': 'SAY_DISHWASHER_NOT_REACHABLE',
+                                      'goal_not_defined': 'SAY_DISHWASHER_NOT_REACHABLE'})
+
+        StateMachine.add('SAY_DISHWASHER_NOT_REACHABLE', Say(robot, ["I cannot reach the dishwasher, let me try again in a couple of seconds! Hopefully this will go right this time."], block=True),
+                         transitions={'spoken': 'NAVIGATE_BACK_TO_DISHWASHER2'})
+
+        StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER2",
                          NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
                          transitions={'arrived': 'CUSTOM_PLACE',
                                       'unreachable': 'SAY_EXIT',
