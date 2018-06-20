@@ -113,9 +113,9 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         StateMachine.add('START_CHALLENGE_ROBUST',
                          StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
-                         transitions={'Done': 'FIND_OBJECT',
+                         transitions={'Done': 'NAVIGATE_TO_DISHWASHER',
                                       'Aborted': 'done',
-                                      'Failed': 'FIND_OBJECT'})
+                                      'Failed': 'NAVIGATE_TO_DISHWASHER'})
 
         StateMachine.add("NAVIGATE_TO_DISHWASHER",
                          NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
