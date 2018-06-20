@@ -111,6 +111,7 @@ class OpenDishwasher(StateMachine):
 
         base_y_position_door = 0
         base_y_position_rack = -0.75
+        base_y_position_rack2 = -0.65
         base_yaw_position_rack = 3.7
 
         @cb_interface(outcomes=['done'])
@@ -119,6 +120,7 @@ class OpenDishwasher(StateMachine):
             robot.rightArm._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395,
                                                    -1.829999276180074, 0.6947045024700284, 0.1889253710114966]],
                                                  timeout=rospy.Duration(0))
+            robot.rightArm.wait_for_motion_done()
             return 'done'
 
         @cb_interface(outcomes=['done'])
@@ -126,12 +128,9 @@ class OpenDishwasher(StateMachine):
             robot.rightArm.wait_for_motion_done()
             robot.speech.speak('I hope this goes right!', block=False)
             robot.speech.speak('Ah, at least it is worth a try for 50 points, here we go!', block=False)
-            robot.head.look_at_point(VectorStamped(y=100, frame_id="/" + robot.robot_name + "/base_link"))
-            fs = frame_stamped("dishwasher", 0.41, 0, 0.83, roll=math.pi / 2, pitch=0, yaw=math.pi)
+            fs = frame_stamped("dishwasher", 0.42, 0, 0.8, roll=math.pi / 2, pitch=0, yaw=math.pi)
             robot.rightArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_listener))
             robot.rightArm.send_gripper_goal("close")
-            robot.head.reset()
-            robot.speech.speak('Okay, now what!', block=False)
             return 'done'
 
         @cb_interface(outcomes=['done'])
@@ -157,34 +156,81 @@ class OpenDishwasher(StateMachine):
             robot.torso.low()
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.5)).execute({})
 
-            # Retract and reset robot
+            return 'done'
+
+        @cb_interface(outcomes=['done'])
+        def _fully_open_dishwasher_door(ud):
+            # Stand in front of the door and rotate
+            robot.torso.high()
+            robot.rightArm._send_joint_trajectory([[0, 0, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
+            goal_pose = PoseStamped()
+            goal_pose.header.stamp = rospy.Time.now()
+            goal_pose.header.frame_id = dishwasher_id
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, - math.pi / 2))
+            goal_pose.pose.position.x = 1.4
+            goal_pose.pose.position.y = base_y_position_door
+            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.5, 0.5, 0.5, 0.05, 0.1)).execute({})
+            robot.torso.wait_for_motion_done()
+            robot.rightArm.wait_for_motion_done()
+
+            # Move arm to the other side of the door
+            robot.rightArm._send_joint_trajectory([[0, 1.57, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
+            robot.rightArm.wait_for_motion_done()
+            robot.rightArm._send_joint_trajectory([[-1.5, 1.57, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
+            robot.rightArm.wait_for_motion_done()
+
+            robot.rightArm._send_joint_trajectory([[-1.5, 0, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
+            robot.rightArm.wait_for_motion_done()
+
+            # Go down
+            robot.torso._send_goal([0.1])
+            robot.torso.wait_for_motion_done()
+
+            robot.rightArm._send_joint_trajectory([[-0.8, 0, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
+            robot.rightArm.wait_for_motion_done()
+
+            # Drive away from the door so we open the door with our stretched arm
+            goal_pose = PoseStamped()
+            goal_pose.header.stamp = rospy.Time.now()
+            goal_pose.header.frame_id = dishwasher_id
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, - math.pi / 2))
             goal_pose.pose.position.x = 1.9
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.15, 0.2, 0.2, 0.05, 0.5)).execute({})
+            goal_pose.pose.position.y = base_y_position_door
+            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.1, 0.1, 0.1, 0.05, 0.1)).execute({})
+
+            robot.rightArm.reset()
+            robot.rightArm.wait_for_motion_done()
+
             return 'done'
 
         @cb_interface(outcomes=['done'])
         def _align_with_dishwasher_to_open_rack(ud):
-            # Arm in the right position so we can drive in the dishwasher with the arm
-            robot.rightArm._send_joint_trajectory([[-1.4, 0, 0, 0.5, 0., 0.4, -0.1]], timeout=rospy.Duration(0))
-            robot.rightArm.wait_for_motion_done()
+            robot.torso.low()
 
             # Drive sideways around the open door
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
-            goal_pose.pose.position.x = 1.9
-            goal_pose.pose.position.y = base_y_position_rack
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.2)).execute({})
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.position.x = 1.4
+            goal_pose.pose.position.y = base_y_position_rack - 0.15
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.1, 0.1, 0.1, 0.02, 0.2)).execute({})
+
+            # Arm in the right position so we can drive in the dishwasher with the arm
+            robot.rightArm._send_joint_trajectory([[-1.48, 0, 0, 0.5, 1.57, 0, -0.1]], timeout=rospy.Duration(0))
+            robot.rightArm.wait_for_motion_done()
+            robot.torso.wait_for_motion_done()
 
             # Drive aside the open door, with arm in the dishwasher
             goal_pose.pose.position.x = 0.8
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.2)).execute({})
+            goal_pose.pose.position.y = base_y_position_rack2
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 0.5, 0.1, 0.1, 0.1, 0.02, 0.2)).execute({})
             return 'done'
 
         @cb_interface(outcomes=['done'])
         def _arm_in_rack(ud):
-            robot.rightArm._send_joint_trajectory([[-1.4, 0, 0, 0.5, 0., 0.4, 0.6]], timeout=rospy.Duration(0))
+            robot.rightArm._send_joint_trajectory([[-1.4, 0, 0, 0.45, 1.57, 0.8, -0.1]], timeout=rospy.Duration(0))
             robot.rightArm.wait_for_motion_done()
             return 'done'
 
@@ -195,28 +241,27 @@ class OpenDishwasher(StateMachine):
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
             goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
-            goal_pose.pose.position.x = 1.4
-            goal_pose.pose.position.y = base_y_position_rack
-            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.5)).execute({})
+            goal_pose.pose.position.x = 1.25
+            goal_pose.pose.position.y = base_y_position_rack2
+            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.2)).execute({})
 
             return 'done'
 
         @cb_interface(outcomes=['done'])
         def _retract_arm_from_rack(ud):
-            robot.rightArm._send_joint_trajectory([[-1.57, 0, 0, 0.5, 0., 0.4, -0.4]], timeout=rospy.Duration(0))
-            robot.rightArm.wait_for_motion_done()
+            robot.torso.reset()
+            robot.torso.wait_for_motion_done()
 
-            # Open the dishwasher rack
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
-            goal_pose.pose.position.x = 1.8
-            goal_pose.pose.position.y = base_y_position_rack
-            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.5)).execute({})
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, 0.9 * math.pi))
+            goal_pose.pose.position.x = 1.25
+            goal_pose.pose.position.y = base_y_position_rack2
+            ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.4, 0.1, 0.2)).execute({})
 
             robot.rightArm.reset()
-            robot.torso.reset()
+            robot.rightArm.wait_for_motion_done()
             return 'done'
 
         with self:
@@ -224,6 +269,7 @@ class OpenDishwasher(StateMachine):
             self.add_auto('ALIGN_WITH_DISHWASHER', CBState(_align_with_dishwasher), ['done'])
             self.add_auto('GRAB_HANDLE', CBState(_grab_handle), ['done'])
             self.add_auto('DRIVE_TO_OPEN_DISHWASHER', CBState(_drive_to_open_dishwasher), ['done'])
+            self.add_auto('FULLY_OPEN_DISHWASHER_DOOR', CBState(_fully_open_dishwasher_door), ['done'])
             self.add_auto('ALIGN_WITH_DISHWASHER_TO_OPEN_RACK', CBState(_align_with_dishwasher_to_open_rack), ['done'])
             self.add_auto('ARM_IN_RACK', CBState(_arm_in_rack), ['done'])
             self.add_auto('DRIVE_TO_OPEN_RACK', CBState(_drive_to_open_rack), ['done'])
