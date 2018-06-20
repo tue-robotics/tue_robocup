@@ -85,11 +85,13 @@ OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
 UNNAMED_PERSON -> a person | someone
 
 VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
-VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_FIND UNNAMED_PERSON in the ROOM[Y]
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM_OR_LOCATION[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] MEETING_PP the ROOM_OR_LOCATION[Y]
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+
+VP[{"action": "find"}] -> V_FIND DET object
+VP[{"action": "find", "source-location": Y}] -> V_FIND DET object in the ROOM[Y]
 
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 """
