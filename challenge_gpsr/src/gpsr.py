@@ -243,6 +243,14 @@ def main():
         s = StartChallengeRobust(robot, knowledge.initial_pose)
         s.execute()
 
+        if not skip:
+            robot.speech.speak("Moving to the meeting point.", block=False)
+            nwc = NavigateToWaypoint(robot=robot,
+                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                              id=knowledge.starting_pose),
+                                     radius=0.3)
+            nwc.execute()
+
         # Move to the start location
         robot.speech.speak("Let's see if my operator has a task for me!", block=False)
 
