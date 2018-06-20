@@ -23,8 +23,6 @@ grammar_target = "T"
 grammar = """
 T[A] -> COURTESY_PREFIX C[A] | C[A]
 
-C[{"actions": <A1>}] -> VP[A1]
-C[{"actions": <A1, A2>}] -> VP[A1] and VPT[A2]
 C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VPT[A3]
 
 VPT -> VP | VPS
@@ -38,18 +36,14 @@ COURTESY_PREFIX -> robot please | could you | could you please
 #
 ##############################################################################
 
-
-
-
-
 grammar += """
 PPN_OBJECT -> it
-PPN_PERSON -> him | her | it
+PPN_PERSON -> him | her
 
 DET -> the | a
 NUMBER -> one | two | three
 MEETING_PP -> at | in
-MANIPULATION_PP -> on
+MANIPULATION_PP -> on | to
 """
 
 for room in common.location_rooms:
@@ -110,7 +104,7 @@ VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 grammar += """
 V_FOLLOW -> come behind | come after | follow | go after | go behind
 
-VP[{"action": "follow"}] -> V_FOLLOW PPN_PERSON
+VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 """
 
 ###############################################################################
@@ -122,7 +116,7 @@ VP[{"action": "follow"}] -> V_FOLLOW PPN_PERSON
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
-VP[{"action": "guide", "object": X, "target-location": Y, "source-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the ROOM_OR_LOCATION[Z] to the ROOM_OR_LOCATION[Y]
+VP[{"action": "guide", "target-location": Y}] -> V_GUIDE PPN_PERSON to the ROOM_OR_LOCATION[Y]
 """
 
 
@@ -164,20 +158,6 @@ VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAM
 
 ###############################################################################
 #
-# Place
-#
-###############################################################################
-
-grammar += """
-V_PLACE -> put | place | leave | set
-
-VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-VP[{"action": "place", "target-location": X, "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT MANIPULATION_PP the LOCATION[X]
-"""
-
-###############################################################################
-#
 # Hand over
 #
 ###############################################################################
@@ -211,8 +191,19 @@ VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}
 ###############################################################################
 
 grammar += """
+V_PLACE -> put | place | leave | set
+
+VPS[{"action": "place", "target-location": Y, "object": Z}] -> V_BRING PPN_OBJECT to the LOCATION[Y]
 VP[{"action": "place", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
 VP[{"action": "place", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] from the LOCATION[X] to the LOCATION[Y]
+"""
+
+grammar += """
+VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
+VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
+
+VP[{"action": "place", "target-location": X, "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT on the LOCATION[X]
+VP[{"action": "place", "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT to the ROOM
 """
 
 ##############################################################################
@@ -223,7 +214,9 @@ VP[{"action": "place", "source-location": X, "target-location": Y, "object": Z}]
 
 grammar += """
 V_SAY -> tell | say
+V_SAY_UNDEFINED -> speak | say something
 
+VPS[{"action": "say"}] -> V_SAY_UNDEFINED
 VPS[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 """
 
