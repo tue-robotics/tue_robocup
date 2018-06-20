@@ -23,14 +23,13 @@ from conversation_engine import ConversationEngine
 
 class ConversationEngineWithHmi(ConversationEngine):
     def __init__(self, robot, grammar, command_target, knowledge):
-        super(ConversationEngineWithHmi, self).__init__(robot.robot_name, grammar, command_target)
+        super(ConversationEngineWithHmi, self).__init__(robot.robot_name, grammar, command_target, give_examples=False)
 
         self.robot = robot
         self.knowledge = knowledge
         self.timeout_count = 0
         self.test = False
         self.skip = False
-        self.give_examples = False
 
         self.time_limit = 0
         self.tasks_to_be_done = 999
