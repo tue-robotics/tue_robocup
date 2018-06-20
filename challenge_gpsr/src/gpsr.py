@@ -95,6 +95,8 @@ class ConversationEngineWithHmi(ConversationEngine):
 
         self.wait_to_be_called()
 
+        self.robot.speech.speak("What can I do for you?", block=True)
+
         while True:
             try:
                 sentence, semantics = self.robot.hmi.query(description="",
