@@ -182,12 +182,12 @@ class OpenDishwasher(StateMachine):
             robot.rightArm._send_joint_trajectory([[-1.5, 0, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
             robot.rightArm.wait_for_motion_done()
 
+            # Go down
+            robot.torso._send_goal([0.1])
+            robot.torso.wait_for_motion_done()
+
             robot.rightArm._send_joint_trajectory([[-0.8, 0, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
             robot.rightArm.wait_for_motion_done()
-
-            # Go down
-            robot.torso._send_goal([0.2])
-            robot.torso.wait_for_motion_done()
 
             # Drive away from the door so we open the door with our stretched arm
             goal_pose = PoseStamped()
@@ -214,7 +214,7 @@ class OpenDishwasher(StateMachine):
             goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 1.4
             goal_pose.pose.position.y = base_y_position_rack - 0.15
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.2)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.1, 0.1, 0.1, 0.02, 0.2)).execute({})
 
             # Arm in the right position so we can drive in the dishwasher with the arm
             robot.rightArm._send_joint_trajectory([[-1.48, 0, 0, 0.5, 1.57, 0, -0.1]], timeout=rospy.Duration(0))
@@ -225,7 +225,7 @@ class OpenDishwasher(StateMachine):
             goal_pose.pose.position.x = 0.8
             goal_pose.pose.position.y = base_y_position_rack2
             goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 0.5, 0.3, 0.3, 0.1, 0.02, 0.2)).execute({})
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 0.5, 0.1, 0.1, 0.1, 0.02, 0.2)).execute({})
             return 'done'
 
         @cb_interface(outcomes=['done'])
