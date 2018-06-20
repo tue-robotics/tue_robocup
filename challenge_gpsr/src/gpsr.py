@@ -116,8 +116,6 @@ class ConversationEngineWithHmi(ConversationEngine):
         rospy.loginfo("_on_task_outcome_failed('{}')".format(message))
         self._say_to_user(message)
 
-        self.tasks_done += 1
-
         self.task_finished(message)
 
     def _on_task_outcome_unknown(self, message):
