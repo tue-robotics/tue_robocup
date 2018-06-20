@@ -134,17 +134,6 @@ V_GOTO -> go to | navigate to | enter to
 VP[{"action": "navigate-to", "target-location": X}] -> V_GOTO the ROOM_OR_LOCATION[X]
 """
 
-###############################################################################
-#
-# Inspect
-#
-###############################################################################
-
-grammar += """
-V_INSPECT -> inspect
-
-VP[{"action": "inspect", "object": X}] -> V_INSPECT the LOCATION[X]
-"""
 
 ###############################################################################
 #
