@@ -38,9 +38,11 @@ COURTESY_PREFIX -> robot please | could you | could you please
 #
 ##############################################################################
 
-grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
+
+
+
+grammar += """
 PPN_OBJECT -> it
 PPN_PERSON -> him | her | it
 
@@ -91,7 +93,7 @@ UNNAMED_PERSON -> a person | someone
 VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
 VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_FIND UNNAMED_PERSON in the ROOM[Y]
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM_OR_LOCATION[Y]
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
 
@@ -108,7 +110,19 @@ VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 grammar += """
 V_FOLLOW -> come behind | come after | follow | go after | go behind
 
-VP[{"action": "follow"}] -> V_FOLLOW
+VP[{"action": "follow"}] -> V_FOLLOW PPN_PERSON
+"""
+
+###############################################################################
+#
+# Guide
+#
+###############################################################################
+
+grammar += """
+V_GUIDE -> guide | escort | take | lead | accompany | conduct
+
+VP[{"action": "guide", "object": X, "target-location": Y, "source-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the ROOM_OR_LOCATION[Z] to the ROOM_OR_LOCATION[Y]
 """
 
 
