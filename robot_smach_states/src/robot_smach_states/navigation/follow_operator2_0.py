@@ -140,6 +140,7 @@ class FollowBread(smach.State):
         self._buffer = _buffer
         self._breadcrumb = []
         self._resolution = 0.05
+        self._timeout_count = 0
         # ros_plan = []
 
     def execute(self, userdata=None):
@@ -174,21 +175,15 @@ class FollowBread(smach.State):
         # if self._operator:
         #     operator = self._robot.ed.get_entity(id=self._operator.id)
 
-        while True:  # Should be timer, I think
-            try:
-                self._robot.hmi.query(description="", grammar="T -> %s stop" % robot_name, target="T")
-                timeout_count = 0  # how does this count work....
-                break
-            except hmi.TimeoutException:
-                if timeout_count >= 3:
-                    robot.hmi.restart_dragonfly()
-                    timeout_count = 0
-                    rospy.logwarn("[GPSR] Dragonfly restart")
-                else:
-                    timeout_count += 1
-                    rospy.logwarn("[GPSR] Timeout_count: {}".format(timeout_count))
+        # while True:  # Should be timer, I think
+        try:
+            _, semantics = self._robot.hmi.query(description="", grammar="T[true] -> %s stop" % self._robot.robot_name, target="T")
+            if semantics:
+                return 'no_follow_bread_ask_finalize'
+        except hmi.TimeoutException:
+            rospy.logwarn("[HMC] Listening timeout")
 
-        return 'no_follow_bread_ask_finalize'
+        # return 'no_follow_bread_ask_finalize'
 
         # if operator:
         #     rospy.loginfo("Distance to operator: {}".format(operator.distance_to_2d(robot_position.p)))
