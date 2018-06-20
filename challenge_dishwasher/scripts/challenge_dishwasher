@@ -2,13 +2,13 @@
 import rospy
 from challenge_dishwasher.custom_place import CustomPlace
 from challenge_dishwasher.open_dishwasher import OpenDishwasher
-from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Find, Grab, NavigateToSymbolic, \
+from robot_skills.util.entity import Entity
+from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, Grab, NavigateToSymbolic, \
     HearOptions
 from robot_smach_states.util import startup
-from robot_smach_states.world_model import Inspect
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, Designator
+from robot_smach_states.world_model import Inspect
 from smach import StateMachine, State
 
 STARTING_POINT = "initial_pose"
@@ -27,6 +27,7 @@ class GetCupId(State):
     """
     Check if a described entity is in the world model
     """
+
     def __init__(self, robot, found_entity_designator, candidate_entities_designator=None):
         State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
@@ -56,7 +57,7 @@ class GetCupId(State):
             return 'failed'
 
 
-class customFind(StateMachine):
+class CustomFind(StateMachine):
     def __init__(self, robot, source_entity_designator, area_name_designator, navigation_area_designator,
                  found_entity_designator):
         StateMachine.__init__(self, outcomes=['found', 'not_found'])
@@ -64,18 +65,19 @@ class customFind(StateMachine):
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
-            StateMachine.add('INSPECT_SOURCE_ENTITY',
-                             Inspect(robot=robot,
-                             entityDes=source_entity_designator,
-                             objectIDsDes=segmented_entities_designator,
-                             searchArea=area_name_designator,
-                             navigation_area=navigation_area_designator),
+            StateMachine.add('SAY_LOOKING', Say(robot, ["I'm going to look for the cup"], block=False),
+                             transitions={'spoken': 'INSPECT_SOURCE_ENTITY'})
+
+            StateMachine.add('INSPECT_SOURCE_ENTITY', Inspect(robot=robot,
+                                                              entityDes=source_entity_designator,
+                                                              objectIDsDes=segmented_entities_designator,
+                                                              searchArea=area_name_designator,
+                                                              navigation_area=navigation_area_designator),
                              transitions={'done': 'GET_CUP_ID',
                                           'failed': 'not_found'})
-            StateMachine.add('GET_CUP_ID',
-                             GetCupId(robot=robot,
-                                      found_entity_designator=found_entity_designator.writeable,
-                                      candidate_entities_designator=segmented_entities_designator),
+            StateMachine.add('GET_CUP_ID', GetCupId(robot=robot,
+                                                    found_entity_designator=found_entity_designator.writeable,
+                                                    candidate_entities_designator=segmented_entities_designator),
                              transitions={'succeeded': 'found',
                                           'failed': 'not_found'})
 
@@ -89,15 +91,17 @@ class FindObject(StateMachine):
         #     'type': 'cup'
         # })
         area_name_designator = VariableDesignator('on_top_of')
-        navigation_area_designator = VariableDesignator('in_front_of')
+        navigation_area_designator1 = VariableDesignator('in_front_of')
+        navigation_area_designator2 = VariableDesignator('in_back_of')
 
         with self:
-            StateMachine.add('SAY_LOOKING', Say(robot, ["I'm going to look for the cup"], block=False),
-                             transitions={'spoken': 'FIND'})
+            StateMachine.add('FIND', CustomFind(robot, source_entity_designator, area_name_designator,
+                                                navigation_area_designator1, item),
+                             transitions={'found': 'found',
+                                          'not_found': 'FIND2'})
 
-            StateMachine.add('FIND',
-                             customFind(robot, source_entity_designator, area_name_designator,
-                                  navigation_area_designator, item),
+            StateMachine.add('FIND2', CustomFind(robot, source_entity_designator, area_name_designator,
+                                                navigation_area_designator2, item),
                              transitions={'found': 'found',
                                           'not_found': 'not_found'})
 
