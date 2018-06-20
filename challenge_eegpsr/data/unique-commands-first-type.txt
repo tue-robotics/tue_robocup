@@ -6,8 +6,7 @@ and follow him
 and follow him to the dining table
 and follow him to the exit
 and follow him to the kitchen
-and go behind him
-and go behind it
+and follow it
 and place it on the dining table
 and place it on the kitchen
 and place it on the navigate to dining table
@@ -23,13 +22,4 @@ pick up the orange juice from the kitchen
 place orange juice on the dining table
 place orange juice on the kitchen
 place orange juice on the navigate to dining table
-and say a joke
-and say something about yourself
-and say the day of the week
-and say the time
-and say what day is today
-and say what day is tomorrow
-and say whether you dream or not on electric sheep
-and say your team's affiliation
-and say your team's country
-and say your team's name
+say bla

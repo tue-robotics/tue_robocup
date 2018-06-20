@@ -41,8 +41,4 @@ navigate to the furniture
 navigate to the room
 pick up the object from the furniture
 place object on the furniture
-and say a joke
-and say something about yourself
-and say what day is today
-and say whether you dream or not on electric sheep
-and say your team's affiliation
+say bla
