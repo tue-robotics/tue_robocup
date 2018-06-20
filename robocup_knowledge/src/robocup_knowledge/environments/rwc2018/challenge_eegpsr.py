@@ -155,6 +155,7 @@ VP[{"action": "inspect", "object": X}] -> V_INSPECT the LOCATION[X]
 grammar += """
 V_PICKUP -> get | grasp | take | pick up | grab | retrieve
 
+VP[{"action": "pick-up", "object": X}] -> V_PICKUP DET NAMED_OBJECT[X]
 VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAMED_OBJECT[X] from the LOCATION[Y]
 """
 
