@@ -31,8 +31,12 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.test = False
         self.skip = False
         self.give_examples = False
+
+        self.time_limit = 0
         self.tasks_to_be_done = 999
         self.tasks_done = 0
+        self.finished = False
+        self.start_time = rospy.get_time()
 
     def _say_to_user(self, message):
         rospy.loginfo("_say_to_user('{}')".format(message))
@@ -43,9 +47,14 @@ class ConversationEngineWithHmi(ConversationEngine):
 
         self.tasks_done += 1
 
-        # TODO: check number of tasks, if enough done move to exit else go to meeting point
+        self.task_finished(message)
+
+    def task_finished(self, message):
         # Navigate to the GPSR meeting point
-        if not self.skip:
+
+        self.finished = rospy.get_time() - self.start_time > (60 * self.time_limit - 45) and self.tasks_done >= 1
+
+        if not self.skip and not self.finished:
             self.robot.speech.speak("Moving to the meeting point.", block=False)
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
@@ -53,6 +62,13 @@ class ConversationEngineWithHmi(ConversationEngine):
                                      radius=0.3)
             nwc.execute()
             # Report to the user and ask for a new task
+            #  Report to the user
+            self.robot.head.look_at_standing_person()
+            self._say_to_user(message)
+            self._say_to_user("I performed {} {} so far, still going strong!".format(self.tasks_done, "tasks" if self.tasks_done == 1 else "tasks"))
+            self.timeout_count = 0
+
+            self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
 
         if self.tasks_done >= self.tasks_to_be_done and not self.skip:
             nwc = NavigateToWaypoint(robot=self.robot,
@@ -62,13 +78,6 @@ class ConversationEngineWithHmi(ConversationEngine):
             self.robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)
             nwc.execute()
             return
-
-        # Report to the user
-        self.robot.head.look_at_standing_person()
-        self._say_to_user(message)
-        self.timeout_count = 0
-
-        self._start_wait_for_command(self.knowledge.grammar, self.knowledge.grammar_target)
 
     def _on_request_missing_information(self, description, grammar, target):
         rospy.loginfo("_request_missing_information('{}', '{}...', '{}')".format(description, grammar[:10], target))
@@ -86,12 +95,26 @@ class ConversationEngineWithHmi(ConversationEngine):
         rospy.loginfo("_on_task_outcome_failed('{}')".format(message))
         self._say_to_user(message)
 
+        self.task_finished(message)
+
     def _on_task_outcome_unknown(self, message):
         rospy.loginfo("_on_task_outcome_unknown('{}')".format(message))
         self._say_to_user(message)
 
+        self.task_finished(message)
+
     def _start_wait_for_command(self, grammar, target):
         rospy.loginfo("_start_wait_for_command()")
+
+        self.robot.lights.set_color(0,0,1)  #be sure lights are blue
+
+        self.robot.head.look_at_standing_person()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close',0.0)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close',0.0)
+        self.robot.torso.reset()
+
         self.robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
 
         self.wait_to_be_called()
@@ -212,15 +235,7 @@ def main():
     conversation_engine.test = test
     conversation_engine.skip = skip
     conversation_engine.tasks_to_be_done = no_of_tasks
-
-    no_of_tasks_performed = 0
-
-    user_instruction = "What can I do for you?"
-    report = ""
-
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Start
+    conversation_engine.time_limit = time_limit
 
     if not skip and not restart:
 
@@ -241,31 +256,6 @@ def main():
     finished = False
     start_time = rospy.get_time()
 
-    # while True:
-        # # Navigate to the GPSR meeting point
-        # if not skip:
-        #     robot.speech.speak("Moving to the meeting point.", block=False)
-        #     nwc = NavigateToWaypoint(robot=robot,
-        #                              waypoint_designator=EntityByIdDesignator(robot=robot,
-        #                                                                       id=knowledge.starting_pose),
-        #                              radius=0.3)
-        #     nwc.execute()
-        #     # Report to the user and ask for a new task
-        #
-        # # Report to the user
-        # robot.head.look_at_standing_person()
-        # robot.speech.speak(report, block=True)
-        # timeout_count = 0
-
-        # if finished and not skip:
-        #     nwc = NavigateToWaypoint(robot=robot,
-        #                              waypoint_designator=EntityByIdDesignator(robot=robot,
-        #                                                                       id=knowledge.exit_waypoint),
-        #                              radius=0.3)
-        #     robot.speech.speak("I'm done now. Thank you very much, and goodbye!", block=True)
-        #     nwc.execute()
-        #     break
-    # import ipdb; ipdb.set_trace()
     conversation_engine._start_wait_for_command(knowledge.grammar, knowledge.grammar_target)
     rospy.spin()
 
