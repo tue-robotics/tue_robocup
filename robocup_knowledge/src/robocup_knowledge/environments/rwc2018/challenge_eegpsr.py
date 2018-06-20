@@ -10,9 +10,9 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again"
     ]
 
-initial_pose = "initial_pose_2"
-starting_pose = "eegpsr_pose_2"
-exit_waypoint = "eegpsr_exit_door_2"
+initial_pose = "initial_pose"
+starting_pose = "gpsr_meeting_point"
+exit_waypoint = "gpsr_exit_door"
 
 grammar_target = "T"
 
