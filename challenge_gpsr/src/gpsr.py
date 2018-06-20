@@ -85,13 +85,13 @@ class ConversationEngineWithHmi(ConversationEngine):
     def _on_request_missing_information(self, description, grammar, target):
         rospy.loginfo("_request_missing_information('{}', '{}...', '{}')".format(description, grammar[:10], target))
 
-        if self.give_examples:
-            example = self._parser.get_random_sentence(self._state.target)
-            description += " For example: '{}'".format(example)
-        self._say_to_user(description)
-
         while True:
             try:
+                if self.give_examples:
+                    example = self._parser.get_random_sentence(self._state.target)
+                    description += " For example: '{}'".format(example)
+                self._say_to_user(description)
+
                 sentence, semantics = self.robot.hmi.query(description=description,
                                                            grammar=grammar,
                                                            target=target)
