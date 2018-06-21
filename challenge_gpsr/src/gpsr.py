@@ -95,12 +95,21 @@ class ConversationEngineWithHmi(ConversationEngine):
                 sentence, semantics = self.robot.hmi.query(description=description,
                                                            grammar=grammar,
                                                            target=target)
+
+
+                if not self.is_text_valid_input(sentence):
+                    self._say_to_user("I don't understand what you're saying, please rephrase")
+                    continue
+
                 self.timeout_count = 0
-                if not self.test:
-                    if self.heard_correct(sentence):
-                        # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
-                        self.user_to_robot_text(sentence)
-                        break
+                correct = True
+                if self.test:
+                    correct = self.heard_correct(sentence)
+
+                if correct:
+                    # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
+                    self.user_to_robot_text(sentence)
+                    break
             except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
                 rospy.logwarn("HMI failed when getting command: {}" .format(e))
                 self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
@@ -147,14 +156,19 @@ class ConversationEngineWithHmi(ConversationEngine):
                 sentence, semantics = self.robot.hmi.query(description="",
                                                       grammar=grammar,
                                                       target=target)
+                if not self.is_text_valid_input(sentence):
+                    self._say_to_user("I don't understand what you're saying, please rephrase")
+                    continue
+
                 self.timeout_count = 0
-                if not self.test:
-                    if self.heard_correct(sentence):
-                        # Pass the heard sentence to the conv.engine. This parses it again.
-                        # The difference is that the conv.engine does some minor preprocessing
-                        # to handle more free-format input (like spaces to underscores etc.)
-                        self.user_to_robot_text(sentence)
-                        break
+                correct = True
+                if self.test:
+                    correct = self.heard_correct(sentence)
+
+                if correct:
+                    # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
+                    self.user_to_robot_text(sentence)
+                    break
             except (hmi.TimeoutException , hmi.GoalNotSucceededException) as e:
                 rospy.logwarn("HMI failed when getting command: {}" .format(e))
                 self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
