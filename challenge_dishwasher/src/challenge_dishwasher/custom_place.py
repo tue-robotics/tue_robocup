@@ -12,8 +12,10 @@ _ = tf2_geometry_msgs
 
 
 class CustomPlace(StateMachine):
-    def __init__(self, robot, dishwasher_id, arm):
+    def __init__(self, robot):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        arm = robot.leftArm
 
         @cb_interface(outcomes=['done'])
         def pre_place_pose(ud):

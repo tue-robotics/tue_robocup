@@ -2,7 +2,7 @@
 import rospy
 from challenge_dishwasher.custom_place import CustomPlace
 from challenge_dishwasher.open_dishwasher import OpenDishwasher
-from challenge_dishwasher.simple_grab import TestFindAndGrab
+from challenge_dishwasher.simple_grab import FindAndGrab
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, NavigateToSymbolic
@@ -101,7 +101,7 @@ class FindObject(StateMachine):
                                           'not_found': 'FIND2'})
 
             StateMachine.add('FIND2', CustomFind(robot, source_entity_designator, area_name_designator,
-                                                navigation_area_designator2, item),
+                                                 navigation_area_designator2, item),
                              transitions={'found': 'found',
                                           'not_found': 'FIND3'})
 
@@ -111,39 +111,108 @@ class FindObject(StateMachine):
                                           'not_found': 'FIND4'})
 
             StateMachine.add('FIND4', CustomFind(robot, source_entity_designator, area_name_designator,
-                                                navigation_area_designator2, item),
+                                                 navigation_area_designator2, item),
                              transitions={'found': 'found',
                                           'not_found': 'not_found'})
 
 
+class NavigateAndOpenDishwasher(StateMachine):
+    def __init__(self, robot):
+        StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+
+        with self:
+            StateMachine.add("NAVIGATE_TO_DISHWASHER",
+                             NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
+                             transitions={'arrived': 'OPEN_DISHWASHER',
+                                          'unreachable': 'failed',
+                                          'goal_not_defined': 'failed'})
+
+            StateMachine.add("OPEN_DISHWASHER",
+                             OpenDishwasher(robot, dishwasher_id),
+                             transitions={'succeeded': 'succeeded',
+                                          'failed': 'failed'})
+
+
+class NavigateAndPlaceDishwasher(StateMachine):
+    def __init__(self, robot):
+        StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
+
+        with self:
+            StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER",
+                             NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
+                             transitions={'arrived': 'CUSTOM_PLACE',
+                                          'unreachable': 'SAY_DISHWASHER_NOT_REACHABLE',
+                                          'goal_not_defined': 'SAY_DISHWASHER_NOT_REACHABLE'})
+
+            StateMachine.add('SAY_DISHWASHER_NOT_REACHABLE', Say(robot, [
+                "I cannot reach the dishwasher, let me try again in a couple of seconds! Hopefully this will go right this time."],
+                                                                 block=True),
+                             transitions={'spoken': 'NAVIGATE_BACK_TO_DISHWASHER2'})
+
+            StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER2",
+                             NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
+                             transitions={'arrived': 'CUSTOM_PLACE',
+                                          'unreachable': 'failed',
+                                          'goal_not_defined': 'failed'})
+
+            StateMachine.add('CUSTOM_PLACE', CustomPlace(robot),
+                             transitions={'succeeded': 'succeeded',
+                                          'failed': 'failed'})
+
+
+class GrabRobust(StateMachine):
+    def __init__(self, robot):
+        StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        source_entity_designator = EdEntityDesignator(robot, id=source_entity)
+        navigation_area_designator1 = VariableDesignator('in_front_of')
+        navigation_area_designator2 = VariableDesignator('in_back_of')
+
+        with self:
+            StateMachine.add("NAVIGATE_TO_INSPECT",
+                             NavigateToSymbolic(robot, {source_entity_designator: navigation_area_designator1},
+                                                source_entity_designator),
+                             transitions={'arrived': 'SIMPLE_GRASP',
+                                          'unreachable': 'NAVIGATE_TO_INSPECT2',
+                                          'goal_not_defined': 'NAVIGATE_TO_INSPECT2'})
+
+            StateMachine.add('SIMPLE_GRASP', FindAndGrab(robot),
+                             transitions={'succeeded': 'succeeded',
+                                          'failed': 'NAVIGATE_TO_INSPECT2'})
+
+            StateMachine.add("NAVIGATE_TO_INSPECT2",
+                             NavigateToSymbolic(robot, {source_entity_designator: navigation_area_designator2},
+                                                source_entity_designator),
+                             transitions={'arrived': 'SIMPLE_GRASP2',
+                                          'unreachable': 'failed',
+                                          'goal_not_defined': 'failed'})
+
+            StateMachine.add('SIMPLE_GRASP2', FindAndGrab(robot),
+                             transitions={'succeeded': 'succeeded',
+                                          'failed': 'failed'})
+
+
 def setup_statemachine(robot):
     item = VariableDesignator(resolve_type=Entity)
-    dishwasher = EdEntityDesignator(robot=robot, id=dishwasher_id)
     arm = Designator(robot.leftArm)
 
-    source_entity_designator = EdEntityDesignator(robot, id=source_entity)
-    navigation_area_designator1 = VariableDesignator('in_front_of')
-    navigation_area_designator2 = VariableDesignator('in_back_of')
     sm = StateMachine(outcomes=['done'])
 
     with sm:
         # Start challenge via StartChallengeRobust
         StateMachine.add('START_CHALLENGE_ROBUST',
                          StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
-                         transitions={'Done': 'NAVIGATE_TO_DISHWASHER',
+                         transitions={'Done': 'OPEN_DISHWASHER',
                                       'Aborted': 'done',
-                                      'Failed': 'NAVIGATE_TO_DISHWASHER'})
+                                      'Failed': 'OPEN_DISHWASHER'})
 
-        StateMachine.add("NAVIGATE_TO_DISHWASHER",
-                         NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
-                         transitions={'arrived': 'OPEN_DISHWASHER',
-                                      'unreachable': 'NAVIGATE_TO_INSPECT',
-                                      'goal_not_defined': 'NAVIGATE_TO_INSPECT'})
-
-        StateMachine.add("OPEN_DISHWASHER",
-                         OpenDishwasher(robot, dishwasher_id),
-                         transitions={'succeeded': 'NAVIGATE_TO_INSPECT',
-                                      'failed': 'NAVIGATE_TO_INSPECT'})
+        StateMachine.add('OPEN_DISHWASHER', NavigateAndOpenDishwasher(robot),
+                         transitions={'succeeded': 'GRAB',
+                                      'failed': 'GRAB'})
 
         # StateMachine.add('FIND_OBJECT', FindObject(robot, item),
         #                  transitions={'found': 'GRAB',
@@ -161,42 +230,11 @@ def setup_statemachine(robot):
         #                  transitions={'done': 'NAVIGATE_BACK_TO_DISHWASHER',
         #                               'failed': 'SAY_EXIT'})
 
-        StateMachine.add("NAVIGATE_TO_INSPECT",
-                         NavigateToSymbolic(robot, {source_entity_designator: navigation_area_designator1}, source_entity_designator),
-                         transitions={'arrived': 'SIMPLE_GRASP',
-                                      'unreachable': 'NAVIGATE_TO_INSPECT2',
-                                      'goal_not_defined': 'NAVIGATE_TO_INSPECT2'})
-
-        StateMachine.add('SIMPLE_GRASP', TestFindAndGrab(robot),
-                         transitions={'succeeded': 'NAVIGATE_BACK_TO_DISHWASHER',
-                                      'failed': 'NAVIGATE_TO_INSPECT2'})
-
-        StateMachine.add("NAVIGATE_TO_INSPECT2",
-                         NavigateToSymbolic(robot, {source_entity_designator: navigation_area_designator2}, source_entity_designator),
-                         transitions={'arrived': 'SIMPLE_GRASP2',
-                                      'unreachable': 'SAY_EXIT',
-                                      'goal_not_defined': 'SAY_EXIT'})
-
-        StateMachine.add('SIMPLE_GRASP2', TestFindAndGrab(robot),
-                         transitions={'succeeded': 'NAVIGATE_BACK_TO_DISHWASHER',
+        StateMachine.add('GRAB', GrabRobust(robot),
+                         transitions={'succeeded': 'PLACE_DISHWASHER',
                                       'failed': 'SAY_EXIT'})
 
-        StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER",
-                         NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
-                         transitions={'arrived': 'CUSTOM_PLACE',
-                                      'unreachable': 'SAY_DISHWASHER_NOT_REACHABLE',
-                                      'goal_not_defined': 'SAY_DISHWASHER_NOT_REACHABLE'})
-
-        StateMachine.add('SAY_DISHWASHER_NOT_REACHABLE', Say(robot, ["I cannot reach the dishwasher, let me try again in a couple of seconds! Hopefully this will go right this time."], block=True),
-                         transitions={'spoken': 'NAVIGATE_BACK_TO_DISHWASHER2'})
-
-        StateMachine.add("NAVIGATE_BACK_TO_DISHWASHER2",
-                         NavigateToSymbolic(robot, {dishwasher: dishwasher_navigate_area}, dishwasher),
-                         transitions={'arrived': 'CUSTOM_PLACE',
-                                      'unreachable': 'SAY_EXIT',
-                                      'goal_not_defined': 'SAY_EXIT'})
-
-        StateMachine.add('CUSTOM_PLACE', CustomPlace(robot, dishwasher_id, arm),
+        StateMachine.add('PLACE_DISHWASHER', NavigateAndPlaceDishwasher(robot),
                          transitions={'succeeded': 'SAY_EXIT',
                                       'failed': 'SAY_EXIT'})
 
