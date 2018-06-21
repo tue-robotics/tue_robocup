@@ -15,7 +15,7 @@ _ = tf2_geometry_msgs
 
 
 class CustomFindCup(State):
-    def __init__(self, robot, box_offset_x=0.7, box_size_y=1.2, box_size_x=0.9):
+    def __init__(self, robot, box_offset_x=0.5, box_size_y=0.9, box_size_x=0.5):
         State.__init__(self, outcomes=['succeeded', 'failed'], output_keys=['position'])
         self._visualization_publisher = rospy.Publisher('find_cup_visualization', MarkerArray, queue_size=1)
 
@@ -126,6 +126,7 @@ class CustomFindCup(State):
         m_candidate.pose.orientation.w = 1
         m_candidate.pose.position.x = candidate[0]
         m_candidate.pose.position.y = candidate[1]
+        m_candidate.pose.position.z = -0.02
         m_candidate.scale.x = m_candidate.scale.y = m_candidate.scale.z = 0.08
         m_candidate.type = Marker.SPHERE
         m_candidate.ns = 'candidate'

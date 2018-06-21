@@ -127,7 +127,6 @@ class OpenDishwasher(StateMachine):
         def _grab_handle(ud):
             robot.rightArm.wait_for_motion_done()
             robot.speech.speak('I hope this goes right!', block=False)
-            robot.speech.speak('Ah, at least it is worth a try for 50 points, here we go!', block=False)
             fs = frame_stamped("dishwasher", 0.42, 0, 0.8, roll=math.pi / 2, pitch=0, yaw=math.pi)
             robot.rightArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_listener))
             robot.rightArm.send_gripper_goal("close")
