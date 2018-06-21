@@ -129,7 +129,7 @@ VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE at the RO
 grammar += """
 V_GUIDE -> guide
 
-VP[{"action": "guide", "object": {"type": "reference"}, "target-location": X}] -> V_GUIDE NAMED_PERSON to the ROOM_OR_LOCATION[X]
+VP[{"action": "guide-final-challenge", "object": {"type": "reference"}, "target-location": X}] -> guide him to the ROOM_OR_LOCATION[X]
 """
 
 ###############################################################################
