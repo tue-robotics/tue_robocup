@@ -63,6 +63,21 @@ class CustomFindCup(State):
         m_points.scale.x = m_points.scale.y = m_points.scale.z = 0.04
         m_points.color.r = m_points.color.a = 1.0
 
+        m = Marker()
+        m.header = msg.header
+        m.pose.orientation.w = 1
+        m.pose.position.x = self._box_offset_x
+        m.scale.x = self._box_size_x
+        m.scale.y = self._box_size_y
+        m.scale.z = 0.1
+        m.type = Marker.CUBE
+        m.ns = 'box'
+        m.color.g = 1.0
+        m.color.a = 0.5
+        self._visualization_publisher.publish(
+            MarkerArray(markers=[m, m_points])
+        )
+
         clusters = []
         current_cluster = []
         for (x, y) in self._get_points_from_scan_msg(msg):
@@ -153,7 +168,7 @@ class CustomFindCup(State):
         )
 
     def execute(self, ud):
-        self._robot.torso._send_goal([0.16])
+        self._robot.torso._send_goal([0.18])
         self._robot.torso.wait_for_motion_done()
         rospy.sleep(2.0)
 
