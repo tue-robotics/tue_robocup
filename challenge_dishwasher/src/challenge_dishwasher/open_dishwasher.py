@@ -177,7 +177,6 @@ class OpenDishwasher(StateMachine):
             robot.rightArm.wait_for_motion_done()
             robot.rightArm._send_joint_trajectory([[-1.5, 1.57, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
             robot.rightArm.wait_for_motion_done()
-
             robot.rightArm._send_joint_trajectory([[-1.5, 0, 0, 0, 0, 0, 0]], timeout=rospy.Duration(0))
             robot.rightArm.wait_for_motion_done()
 
