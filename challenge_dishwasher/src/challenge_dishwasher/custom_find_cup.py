@@ -139,7 +139,7 @@ class CustomFindCup(State):
         m_candidate = Marker()
         m_candidate.header = msg.header
         m_candidate.pose.orientation.w = 1
-        m_candidate.pose.position.x = candidate[0]
+        m_candidate.pose.position.x = candidate[0] + 0.05
         m_candidate.pose.position.y = candidate[1]
         m_candidate.pose.position.z = -0.02
         m_candidate.scale.x = m_candidate.scale.y = m_candidate.scale.z = 0.08

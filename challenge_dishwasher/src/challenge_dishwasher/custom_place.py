@@ -15,7 +15,7 @@ class CustomPlace(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        arm = robot.leftArm
+        arm = Designator(robot.leftArm)
 
         @cb_interface(outcomes=['done'])
         def pre_place_pose(ud):
