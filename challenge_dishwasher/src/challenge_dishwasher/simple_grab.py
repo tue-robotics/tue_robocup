@@ -188,7 +188,7 @@ class TestSimpleGrab(StateMachine):
                                           'failed': 'failed'})
 
 
-class TestFindAndGrab(StateMachine):
+class FindAndGrab(StateMachine):
     def __init__(self, robot):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -212,5 +212,5 @@ if __name__ == '__main__':
     robot.leftArm.reset()
     robot.torso.reset()
 
-    sm = TestFindAndGrab(robot)
+    sm = FindAndGrab(robot)
     sm.execute()

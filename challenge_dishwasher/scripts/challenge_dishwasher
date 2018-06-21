@@ -2,7 +2,7 @@
 import rospy
 from challenge_dishwasher.custom_place import CustomPlace
 from challenge_dishwasher.open_dishwasher import OpenDishwasher
-from challenge_dishwasher.simple_grab import TestFindAndGrab
+from challenge_dishwasher.simple_grab import FindAndGrab
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, NavigateToSymbolic
@@ -167,7 +167,7 @@ def setup_statemachine(robot):
                                       'unreachable': 'NAVIGATE_TO_INSPECT2',
                                       'goal_not_defined': 'NAVIGATE_TO_INSPECT2'})
 
-        StateMachine.add('SIMPLE_GRASP', TestFindAndGrab(robot),
+        StateMachine.add('SIMPLE_GRASP', FindAndGrab(robot),
                          transitions={'succeeded': 'NAVIGATE_BACK_TO_DISHWASHER',
                                       'failed': 'NAVIGATE_TO_INSPECT2'})
 
@@ -177,7 +177,7 @@ def setup_statemachine(robot):
                                       'unreachable': 'SAY_EXIT',
                                       'goal_not_defined': 'SAY_EXIT'})
 
-        StateMachine.add('SIMPLE_GRASP2', TestFindAndGrab(robot),
+        StateMachine.add('SIMPLE_GRASP2', FindAndGrab(robot),
                          transitions={'succeeded': 'NAVIGATE_BACK_TO_DISHWASHER',
                                       'failed': 'SAY_EXIT'})
 
