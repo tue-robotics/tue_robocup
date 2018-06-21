@@ -101,8 +101,8 @@ class ConversationEngineWithHmi(ConversationEngine):
                         # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                         self.user_to_robot_text(sentence)
                         break
-            except hmi.TimeoutException:
-                rospy.logwarn("HMI timed out when getting command")
+            except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
+                rospy.logwarn("HMI failed when getting command: {}" .format(e))
                 self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
                 if self.timeout_count >= 3:
                     self.robot.hmi.restart_dragonfly()
@@ -155,8 +155,8 @@ class ConversationEngineWithHmi(ConversationEngine):
                         # to handle more free-format input (like spaces to underscores etc.)
                         self.user_to_robot_text(sentence)
                         break
-            except hmi.TimeoutException as e:
-                rospy.logwarn("HMI timed out when getting command: {}" .format(e))
+            except (hmi.TimeoutException , hmi.GoalNotSucceededException) as e:
+                rospy.logwarn("HMI failed when getting command: {}" .format(e))
                 self.robot.speech.speak(random.sample(self.knowledge.not_understood_sentences, 1)[0])
                 if self.timeout_count >= 3:
                     self.robot.hmi.restart_dragonfly()
@@ -172,8 +172,8 @@ class ConversationEngineWithHmi(ConversationEngine):
                 self.robot.hmi.query(description="", grammar="T -> %s" % self.robot.robot_name, target="T")
                 self.timeout_count = 0
                 break
-            except hmi.TimeoutException as e:
-                rospy.logwarn("HMI timed out when waiting for name: {}" .format(e))
+            except (hmi.TimeoutException , hmi.GoalNotSucceededException) as e:
+                rospy.logwarn("HMI failed when waiting for name: {}" .format(e))
                 if self.timeout_count >= 3:
                     self.robot.hmi.restart_dragonfly()
                     self.timeout_count = 0
@@ -191,8 +191,8 @@ class ConversationEngineWithHmi(ConversationEngine):
             else:
                 rospy.loginfo("'{}' was correct".format(sentence))
                 return True
-        except hmi.TimeoutException as e:
-            rospy.logwarn("HMI timed out when getting confirmation: {}" .format(e))
+        except (hmi.TimeoutException , hmi.GoalNotSucceededException) as e:
+            rospy.logwarn("HMI failed when getting confirmation: {}" .format(e))
             return True
 
 
