@@ -152,7 +152,7 @@ VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAM
 ###############################################################################
 
 grammar += """
-VP[{"action": "clear-table"}] -> clear the dining table 
+VP[{"action": "clear-table"}] -> clear the dining_table
 """
 
 
