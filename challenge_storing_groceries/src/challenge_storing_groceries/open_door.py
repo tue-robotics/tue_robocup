@@ -138,7 +138,7 @@ class OpenDoor(smach.State):
         self.robot.leftArm._send_joint_trajectory([[-0.101, 0.119, 0.200, 1.363, 0.230, 0.688, 0.280]])
         self.robot.leftArm._send_joint_trajectory([[-0.574, 0.802, 0.691, 1.021, 0.750, 0.535, 0.378]])
         #self.robot.leftArm._send_joint_trajectory([[-0.042, 0.720, 0.846, 1.039, 0.849, 0.534, 0.377]])
-        self.robot.leftArm._send_joint_trajectory([[-0.04446312115056816, 0.8908744970312501, 0.9101328212542089, 0.9240762995414635, 1.0067001691414637, 0.3949460482219828, 0.1621731308728449]])
+        self.robot.leftArm._send_joint_trajectory([[-0.04446312115056816, 0.9908744970312501, 0.9101328212542089, 0.9240762995414635, 1.0067001691414637, 0.3949460482219828, 0.1621731308728449]])
 
     def _drive_to_open_cabinet(self):
         goal_pose = PoseStamped()
