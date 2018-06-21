@@ -144,6 +144,33 @@ V_PICKUP -> get | grasp | take | pick up | grab
 VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAMED_OBJECT[X] from the LOCATION[Y]
 """
 
+###############################################################################
+#
+# Place
+#
+###############################################################################
+
+grammar += """
+V_PLACE -> put | place
+
+VP[{"action": "put", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] on the LOCATION[Y]
+"""
+
+###############################################################################
+#
+# Gripper goal
+#
+###############################################################################
+
+grammar += """
+GOAL[open] -> open
+GOAL[close] -> close
+
+SIDE[left] -> left
+SIDE[right] -> right
+VP[{"action": "gripper-goal", "side": X, "goal": Y}] -> GOAL[Y] your SIDE[X] gripper
+"""
+
 
 ###############################################################################
 #
