@@ -46,13 +46,8 @@ class Robot(object):
         self.parts['base'] = base.Base(self.robot_name, self.tf_listener)
         self.parts['torso'] = torso.Torso(self.robot_name, self.tf_listener)
 
-        # ToDo: move this to subclasses
-        if robot_name == 'sergio':
-            self.parts['leftArm'] = arms.FakeArm(self.robot_name, self.tf_listener, side="left")
-            self.parts['rightArm'] = arms.FakeArm(self.robot_name, self.tf_listener, side="right")
-        else:
-            self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
-            self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
+        self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
+        self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
 
         self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
         self.parts['perception'] = perception.Perception(self.robot_name, self.tf_listener)

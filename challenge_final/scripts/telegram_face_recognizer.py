@@ -23,12 +23,12 @@ def filter_on_area(recognitions):
     return best_rec
 
 
-class DirtyNode:
+class TelegramFaceRecognizer:
     def __init__(self):
         self._img_sub = rospy.Subscriber('photo_from_telegram', Image, self._image_cb)
         self._recognize_srv = rospy.ServiceProxy('face_recognition/recognize', Recognize)
         self._annotate_srv = rospy.ServiceProxy('face_recognition/annotate', Annotate)
-        rospy.loginfo("Starting the vieze node")
+        rospy.loginfo("Starting the TelegramFaceRecognizer")
 
     def _image_cb(self, image):
         self.learn_person(image=image)
@@ -68,8 +68,8 @@ class DirtyNode:
 
 if __name__ == '__main__':
 
-    rospy.init_node("dirty_node")
+    rospy.init_node("telegram_face_recognizer")
 
-    node = DirtyNode()
+    node = TelegramFaceRecognizer()
 
     rospy.spin()
