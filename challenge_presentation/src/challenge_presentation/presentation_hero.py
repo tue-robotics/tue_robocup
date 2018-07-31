@@ -6,22 +6,24 @@ from functools import partial
 from robot_smach_states.utility import Initialize
 
 class English(object):
-    HI_MY_NAME_IS = "Hello, my name is {}"
+    HI_MY_NAME_IS = "Hello, my name is Hero"
     IM_A_SERVICE_ROBOT = "I am one of the service robots of the Eindhoven University of Technology"
+    MADE_BY_TOYOTA = "I am a Human Support Robot developed by the Toyota Motor Company."
     PURPOSE = "My purpose is to help people in domestic or care environments."
     IM_OMNIDIR = "I have an omnidirectional base instead of legs"
-    EXPLAIN_BASE = "With this base, I can instantly move in any direction and turn around whenever I want"
-    TWO_ARMS = "I have two arms. These have the dimensions and degrees of freedom of human arms"
-    HUMAN_ARMS = "This makes me capable of moving my arms just like you would move your arms."
-    END_OF_ARMS = "At the end of my arms, I have two grippers with which I can grasp objects"
-    GRIPPERS = "My grippers can be opened and closed when I need to."
-    TORSO = "My arms are mounted on a moveable torso. This way, I can grasp higher and lower"
-    HEAD = "As a head, I have a 3D camera. I use this to detect and recognize objects and people"
-    CAMERA = "My 3D camera is mounted on top of my torso and I can move my camera just like a human head."
-    TWO_LRFs = "Furthermore, I have two laser range finders to help me to see where I am"
-    LRF_LOCS = "One laser is mounted on my torso and the other one is at the bottom of my base"
+    EXPLAIN_BASE = "With this base, I can move in any direction and turn around whenever I want"
+    ONE_ARM = "I have one arm. It can move along my extendable torso, which allows me to assist people in many ways."
+    END_OF_ARM = "At the end of my arm, I have a gripper with which I can grasp objects."
+    GRIPPER = "My gripper can be opened and closed when I need it to be."
+    GRIPPER_CAMERA = "My gripper has its own camera, so I have perfect hand-eye coordination."
+    TORSO = "My arm is mounted on a movable torso. This way, I can grasp higher and lower."
+    CAMERA = "On my head, I have a 3D camera. I use this to detect and recognize objects and people."
+    SCREEN = "My head also has a screen, which I can use to communicate with people around me."
+    HEAD = "I can move my head up and down as well as sideways to look around me."
+    LRF = "Furthermore, I have a laser range finder to help me to see where I am."
+    LRF_LOCS = "The laser is mounted on top of my base."
     MICROPHONE = "Finally, I have a microphone on my head so that I can hear what you are saying"
-    END_OF_INTRO = "Thank you for your attention, I hope that you like what you see and have a nice day."
+    END_OF_INTRO = "Thank you for your attention, I hope you enjoyed my presentation and have a nice day."
 
 class Dutch(object):
     HI_MY_NAME_IS = "Hallo, mijn naam is {}"
@@ -53,11 +55,11 @@ class Presentation(smach.State):
 
         self.robot = robot
         self.language = language
-        self.trans = {"en":English, "nl":Dutch}[language]
-        if self.language=="nl":
-            self.voice="marjolijn"
+        self.trans = {"en": English, "nl": Dutch}[language]
+        if self.language == "nl":
+            self.voice = "marjolijn"
         else:
-            self.voice="kyle"
+            self.voice = "kyle"
 
     def execute(self, userdata=None):
         """ Execute function
@@ -72,13 +74,20 @@ class Presentation(smach.State):
         # Add all functions to function_list by using partial to prevent the function from executing before it is callled in the for loop
 
         # Introduction
-        function_list.append(partial(self.robot.speech.speak, self.trans.HI_MY_NAME_IS.format(self.robot.robot_name), language=self.language, voice=self.voice, block=True))
-        function_list.append(partial(self.robot.speech.speak, self.trans.IM_A_SERVICE_ROBOT, language=self.language, voice=self.voice, block=True))
-        function_list.append(partial(self.robot.speech.speak, self.trans.PURPOSE, language=self.language, voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.HI_MY_NAME_IS, language=self.language,
+                                     voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.IM_A_SERVICE_ROBOT, language=self.language,
+                                     voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.MADE_BY_TOYOTA, language=self.language,
+                                     voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.PURPOSE, language=self.language,
+                                     voice=self.voice, block=True))
 
         # Base
-        function_list.append(partial(self.robot.speech.speak, self.trans.IM_OMNIDIR, language=self.language, voice=self.voice, block=True ))
-        function_list.append(partial(self.robot.speech.speak, self.trans.EXPLAIN_BASE, language=self.language, voice=self.voice, block=False))
+        function_list.append(partial(self.robot.speech.speak, self.trans.IM_OMNIDIR, language=self.language,
+                                     voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.EXPLAIN_BASE, language=self.language,
+                                     voice=self.voice, block=False))
         function_list.append(partial(self.robot.base.force_drive, 0.1, 0, 0, 1.0))      # Forward
         function_list.append(partial(self.robot.base.force_drive, 0, 0.1, 0, 1.0))      # Left
         function_list.append(partial(self.robot.base.force_drive, -0.1, 0, 0, 1.0))     # Backwards
@@ -86,53 +95,55 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.base.force_drive, 0, 0, 1.0, 6.28))     # Turn around
 
         # Arms
-	if self.robot.robot_name == "amigo":
-            function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
-            function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-            function_list.append(partial(self.robot.rightArm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
-            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
-            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "open"))
-            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "close"))
-            function_list.append(partial(self.robot.leftArm.reset))
-            function_list.append(partial(self.robot.rightArm.reset))
-            function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
+        function_list.append(partial(self.robot.speech.speak, self.trans.ONE_ARM, language=self.language,
+                                     voice=self.voice, block=False))
+        # function_list.append(partial(self.robot.arm.send_joint_trajectory, "wave_front"))
+        function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARM, language=self.language,
+                                     voice=self.voice, block=False))
+        function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
+                                     voice=self.voice, block=False))
+        # function_list.append(partial(self.robot.arm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
+        # function_list.append(partial(self.robot.arm.send_gripper_goal, "open"))
+        # function_list.append(partial(self.robot.arm.send_gripper_goal, "close"))
+        function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
+                                     voice=self.voice, block=False))
+        # function_list.append(partial(self.robot.arm.reset))
+        # function_list.append(partial(self.robot.arm.wait_for_motion_done))
 
         # Torso
-        if self.robot.robot_name == "amigo":
-            function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.torso.medium))
-            function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
-            function_list.append(partial(self.robot.torso.reset))
-            function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
+        function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language,
+                                     voice=self.voice, block=False))
+        # function_list.append(partial(self.robot.torso.medium))
+        # function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
+        # function_list.append(partial(self.robot.torso.reset))
+        # function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
 
-        # Kinect
-        function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language, voice=self.voice, block=False))
-        #Removed this part to increase the tempo of the presentation
-        # function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "point_to_kinect"))
-        function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.head.look_at_hand, "right"))
-        function_list.append(partial(self.robot.head.wait_for_motion_done))
-        function_list.append(partial(self.robot.head.look_at_hand, "left"))
-        function_list.append(partial(self.robot.head.wait_for_motion_done))
-        function_list.append(partial(self.robot.head.reset))
-        function_list.append(partial(self.robot.head.wait_for_motion_done))
+        # RGBD Camera
+        function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language,
+                                     voice=self.voice, block=False))
+        function_list.append(partial(self.robot.speech.speak, self.trans.SCREEN, language=self.language,
+                                     voice=self.voice, block=False))
+        function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language,
+                                     voice=self.voice, block=False))
+        # function_list.append(partial(self.robot.head.send_trajectory, "look_at_???")) # Set nice path for moving head
+        # function_list.append(partial(self.robot.head.wait_for_motion_done))
+        # function_list.append(partial(self.robot.head.reset))
+        # function_list.append(partial(self.robot.head.wait_for_motion_done))
 
         # Lasers
-        function_list.append(partial(self.robot.speech.speak, self.trans.TWO_LRFs, language=self.language, voice=self.voice, block=True))
-        function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language, voice=self.voice, block=False))
-        #Removed this part to increase the tempo of the presentation
-        #function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser"))
+        function_list.append(partial(self.robot.speech.speak, self.trans.LRF, language=self.language,
+                                     voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language,
+                                     voice=self.voice, block=False))
+        # function_list.append(partial(self.robot.arm.send_joint_trajectory, "to_laser")) # Maybe takes too long
 
         # Microphone
-        function_list.append(partial(self.robot.speech.speak, self.trans.MICROPHONE, language=self.language, voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.MICROPHONE, language=self.language,
+                                     voice=self.voice, block=True))
 
         # Final
-        function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_INTRO, language=self.language, voice=self.voice, block=True))
+        function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_INTRO, language=self.language,
+                                     voice=self.voice, block=True))
 
         # Loop through all functions while checking for preempt between every function
         # When preempt, reset all parts and wait for the motion to be done before preempting
@@ -140,17 +151,14 @@ class Presentation(smach.State):
             function()
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
-                self.robot.leftArm.reset()
-                self.robot.rightArm.reset()
-                self.robot.leftArm.send_gripper_goal("close")
-                self.robot.rightArm.send_gripper_goal("close")
-                self.robot.torso.reset()
-                self.robot.head.reset()
-
-                self.robot.leftArm.wait_for_motion_done()
-                self.robot.rightArm.wait_for_motion_done()
-                self.robot.torso.wait_for_motion_done()
-                self.robot.head.wait_for_motion_done()
+                # self.robot.arm.reset()
+                # self.robot.arm.send_gripper_goal("close")
+                # self.robot.torso.reset()
+                # self.robot.head.reset()
+                #
+                # self.robot.arm.wait_for_motion_done()
+                # self.robot.torso.wait_for_motion_done()
+                # self.robot.head.wait_for_motion_done()
                 return 'preempted'
 
         return "done"
