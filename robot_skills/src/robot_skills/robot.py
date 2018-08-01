@@ -101,6 +101,10 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
+    def initialize(self):
+        for part in self.parts:
+            part.reset()
+
     def standby(self):
         if not self.robot_name == 'amigo':
             rospy.logerr('Standby only works for amigo')
