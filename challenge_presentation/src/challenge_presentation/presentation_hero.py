@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
 # ROS
+import rospy
 import smach
+import sys
 from functools import partial
 
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
+from robot_smach_states.util.startup import startup
 
 class English(object):
     HI_MY_NAME_IS = "Hello, my name is Hero"
