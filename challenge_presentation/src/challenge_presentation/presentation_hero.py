@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # ROS
 import smach
 from functools import partial
@@ -179,3 +181,25 @@ class PresentationMachine(smach.StateMachine):
 
                 smach.StateMachine.add("PRESENT", Presentation(robot=robot, language=language),
                                        transitions={"done": "done", "preempted": "preempted"})
+
+def setup_statemachine(robot):
+        sm = smach.StateMachine(outcomes=["done", "aborted", "preempted"])
+        with sm:
+                smach.StateMachine.add("INITIALIZE", Initialize(robot=robot),
+                                       transitions={"initialized": "PRESENT",
+                                                    "abort": "aborted"})
+
+                smach.StateMachine.add("PRESENT", Presentation(robot=robot, language=language),
+                                       transitions={"done": "done", "preempted": "preempted"})
+                return sm
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+    else:
+        print "Please provide robot name as argument."
+        exit(1)
+
+    rospy.init_node('test_presentation')
+    startup(setup_statemachine, robot_name=robot_name)
+
