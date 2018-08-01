@@ -237,6 +237,10 @@ class Base(RobotPart):
 
         return True
 
+    def reset(self):
+        self.local_planner._action_client.cancel_all_goals()
+        return True
+
     ########################################################
     ###### Are the following functions deprecated ??? ######
     ########################################################

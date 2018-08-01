@@ -29,3 +29,6 @@ class EButton(RobotPart):
 
     def read_ebutton(self):
         return self._ebuttonstatus
+
+    def reset(self):
+        pass
