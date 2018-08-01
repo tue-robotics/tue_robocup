@@ -31,22 +31,24 @@ class English(object):
     END_OF_INTRO = "Thank you for your attention, I hope you enjoyed my presentation and have a nice day."
 
 class Dutch(object):
-    HI_MY_NAME_IS = "Hallo, mijn naam is {}"
+    HI_MY_NAME_IS = "Hallo, mijn naam is Hero"
     IM_A_SERVICE_ROBOT = "Ik ben een van de zorgrobots van de Technische Universiteit Eindhoven"
-    PURPOSE = "Mijn doel is mensen te helpen in huis- en zorgomgevingen"
+    MADE_BY_TOYOTA = "Ik ben een hulp robot ontwikkeld door Toyota."
+    PURPOSE = "Mijn doel is mensen helpen in huis- en zorgomgevingen"
     IM_OMNIDIR = "In plaats van benen heb ik een omni-directioneel onderstel"
-    EXPLAIN_BASE = "Met dit onderstel kan ik direct alle kanten op bewegen en omdraaien wanneer ik wil"
-    TWO_ARMS = "Ik heb ook twee armen. Deze hebben dezelfde afmetingen en bewegingsmogelijkheden als mensenarmen"
-    HUMAN_ARMS = "Dit stelt mij in staat om mijn armen net zo te bewegen als jij de jouwe"
-    END_OF_ARMS = "Aan het eind van mijn armen zitten grijpers waarmee ik dingen kan vastpakken"
-    GRIPPERS = "Mijn grijpers kunnen open en dicht als ik dat wil"
-    TORSO = "Mijn armen zitten aan een beweegbare torso, zodat ik hoger en lager kan pakken"
-    HEAD = "Als hoofd heb ik een 3D camera. Dat gebruik ik om mensen en dingen te herkennen"
-    CAMERA = "Mijn hoofd zit bovenop mijn torso en ik kan rondkijken net als een mens"
-    TWO_LRFs = "Verder heb ik twee lezer afstandsmeters, waarmee ik beter kan zien waar ik ben" # laser = lezer :-)
-    LRF_LOCS = "1 lezer zit op mijn torso en de andere onderaan mijn onderstel"
+    EXPLAIN_BASE = "Met dit onderstel kan ik alle kanten op bewegen en omdraaien wanneer ik wil"
+    ONE_ARM = "Ik heb 1 arm. Deze kan ik via mij uitschuifbare nek bewegen, zo kan ik mensen met veel dingen helpen."
+    END_OF_ARM = "Aan het eind van mijn arm zit 1 grijper waarmee ik dingen kan vastpakken."
+    GRIPPER  = "Mijn grijper kan open en dicht wanneer ik dat wil"
+    GRIPPER_CAMERA = "Mijn grijper heeft zijn eigen camera, ik heb dus perfecte hand-oog coordinatie."
+    TORSO = "Mijn arm zit vast aan een beweegbare torso, zo kan ik de koekjes van de bovenste plank pakken."
+    CAMERA = "Op mijn hoofd heb ik een 3D camera. Deze gebruik ik om objecten en mensen om me heen te herkennen."
+    SCREEN = "Mijn hoofd heeft ook een scherm, waarmee ik met mensen kan communiceren."
+    HEAD = "Ik kan mijn hoofd naar boven en beneden bewegen, en ook opzij!"
+    LRF = "Verder heb ik 1 lezer afstandsmeter, waarmee ik beter kan zien waar ik ben." # laser = lezer :-)
+    LRF_LOCS = "Deze lezer zit op mijn onderstel"
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
-    END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je het leuk vond en ik wens je nog een fijne dag"
+    END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je mijn presentatie leuk vond en ik wens je nog een fijne dag"
 
 
 class Presentation(smach.State):
