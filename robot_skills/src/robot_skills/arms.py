@@ -332,7 +332,7 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        return self.send_joint_goal('reset', timeout=timeout)
+        return self.send_joint_goal('reset', timeout=timeout) and self.send_gripper_goal('close', 0.0)
 
     @property
     def occupied_by(self):
