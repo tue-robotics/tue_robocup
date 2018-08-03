@@ -16,7 +16,9 @@ class Hero(robot.Robot):
         # remap topics in base
         self.parts['base']._cmd_vel = rospy.Publisher('/hsrb/command_velocity', geometry_msgs.msg.Twist, queue_size=10)
 
-	    self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
+	#rename joint names
+	self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
+
         self.parts['rightArm'] = robot.arms.FakeArm(self.robot_name, self.tf_listener, side="right")
 
         for partname, bodypart in self.parts.iteritems():
