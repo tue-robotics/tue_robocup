@@ -102,26 +102,26 @@ class Presentation(smach.State):
         # Arms
         function_list.append(partial(self.robot.speech.speak, self.trans.ONE_ARM, language=self.language,
                                      voice=self.voice, block=False))
-        # function_list.append(partial(self.robot.arm.send_joint_trajectory, "wave_front"))
+        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
         function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARM, language=self.language,
                                      voice=self.voice, block=False))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
-        # function_list.append(partial(self.robot.arm._send_joint_trajectory, [[0, 0, 0, 1.7, 0, 0, 0]]))
-        # function_list.append(partial(self.robot.arm.send_gripper_goal, "open"))
-        # function_list.append(partial(self.robot.arm.send_gripper_goal, "close"))
+        function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
+        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
+        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
                                      voice=self.voice, block=False))
-        # function_list.append(partial(self.robot.arm.reset))
-        # function_list.append(partial(self.robot.arm.wait_for_motion_done))
+        function_list.append(partial(self.robot.leftArm.reset))
+        function_list.append(partial(self.robot.leftArm.wait_for_motion_done))
 
         # Torso
         function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language,
                                      voice=self.voice, block=False))
-        # function_list.append(partial(self.robot.torso.medium))
-        # function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
-        # function_list.append(partial(self.robot.torso.reset))
-        # function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
+        function_list.append(partial(self.robot.torso.medium))
+        function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
+        function_list.append(partial(self.robot.torso.reset))
+        function_list.append(partial(self.robot.torso.wait_for_motion_done, 5.0))
 
         # RGBD Camera
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language,
@@ -130,10 +130,10 @@ class Presentation(smach.State):
                                      voice=self.voice, block=False))
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language,
                                      voice=self.voice, block=False))
-        # function_list.append(partial(self.robot.head.send_trajectory, "look_at_???")) # Set nice path for moving head
-        # function_list.append(partial(self.robot.head.wait_for_motion_done))
-        # function_list.append(partial(self.robot.head.reset))
-        # function_list.append(partial(self.robot.head.wait_for_motion_done))
+        function_list.append(partial(self.robot.head.look_at_standing_person)) # Set nice path for moving head
+        function_list.append(partial(self.robot.head.wait_for_motion_done))
+        function_list.append(partial(self.robot.head.reset))
+        function_list.append(partial(self.robot.head.wait_for_motion_done))
 
         # Lasers
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF, language=self.language,
@@ -156,14 +156,14 @@ class Presentation(smach.State):
             function()
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
-                # self.robot.arm.reset()
-                # self.robot.arm.send_gripper_goal("close")
-                # self.robot.torso.reset()
-                # self.robot.head.reset()
-                #
-                # self.robot.arm.wait_for_motion_done()
-                # self.robot.torso.wait_for_motion_done()
-                # self.robot.head.wait_for_motion_done()
+                self.robot.leftArm.reset()
+                self.robot.leftArm.send_gripper_goal("close")
+                self.robot.torso.reset()
+                self.robot.head.reset()
+                
+                self.robot.leftArm.wait_for_motion_done()
+                self.robot.torso.wait_for_motion_done()
+                self.robot.head.wait_for_motion_done()
                 return 'preempted'
 
         return "done"
@@ -192,7 +192,7 @@ def setup_statemachine(robot):
                                        transitions={"initialized": "PRESENT",
                                                     "abort": "aborted"})
 
-                smach.StateMachine.add("PRESENT", Presentation(robot=robot, language=language),
+                smach.StateMachine.add("PRESENT", Presentation(robot=robot, language="en"),
                                        transitions={"done": "done", "preempted": "preempted"})
                 return sm
 
