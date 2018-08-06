@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 
 class Hero(robot.Robot):
-    """docstring for Sergio"""
+    """docstring for Hero"""
     def __init__(self, wait_services=False):
         super(Hero, self).__init__(robot_name="hero", wait_services=wait_services)
 
