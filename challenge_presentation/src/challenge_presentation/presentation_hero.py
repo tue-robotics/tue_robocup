@@ -49,7 +49,7 @@ class Dutch(object):
     HEAD = "Ik kan mijn hoofd naar boven en beneden bewegen, en ook opzij!"
     LRF = "Verder heb ik 1 lezer afstandsmeter, waarmee ik beter kan zien waar ik ben." # laser = lezer :-)
     LRF_LOCS = "Deze lezer zit op mijn onderstel"
-    LRF_LOCS2 = "Kijk daar zit ie"   
+    LRF_LOCS2 = "Kijk daar zit ie"
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
     END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je mijn presentatie leuk vond en ik wens je nog een fijne dag"
 
@@ -116,7 +116,7 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
         function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
-                                     voice=self.voice, block=True))
+                                     voice=self.voice, block=False))
         function_list.append(partial(self.robot.leftArm.reset))
         function_list.append(partial(self.robot.leftArm.wait_for_motion_done))
 
@@ -141,7 +141,6 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.head.wait_for_motion_done))
         function_list.append(partial(self.robot.head.look_at_point, VectorStamped(-1,0,1.0, frame_id="/hero/base_link"))) # Set nice path for moving head
         function_list.append(partial(self.robot.head.wait_for_motion_done))
-
         function_list.append(partial(self.robot.head.reset))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
 
@@ -175,7 +174,7 @@ class Presentation(smach.State):
                 self.robot.leftArm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
-                
+
                 self.robot.leftArm.wait_for_motion_done()
                 self.robot.torso.wait_for_motion_done()
                 self.robot.head.wait_for_motion_done()
