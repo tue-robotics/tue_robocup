@@ -9,6 +9,7 @@ from functools import partial
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 from robot_smach_states.util.startup import startup
+from robot_skills.util.kdl_conversions import VectorStamped
 
 class English(object):
     HI_MY_NAME_IS = "Hello, my name is Hero"
@@ -27,6 +28,7 @@ class English(object):
     HEAD = "I can move my head up and down as well as sideways to look around me."
     LRF = "Furthermore, I have a laser range finder to help me to see where I am."
     LRF_LOCS = "The laser is mounted on top of my base."
+    LRF_LOCS2 = "Look it's right there"
     MICROPHONE = "Finally, I have a microphone on my head so that I can hear what you are saying"
     END_OF_INTRO = "Thank you for your attention, I hope you enjoyed my presentation and have a nice day."
 
@@ -47,6 +49,7 @@ class Dutch(object):
     HEAD = "Ik kan mijn hoofd naar boven en beneden bewegen, en ook opzij!"
     LRF = "Verder heb ik 1 lezer afstandsmeter, waarmee ik beter kan zien waar ik ben." # laser = lezer :-)
     LRF_LOCS = "Deze lezer zit op mijn onderstel"
+    LRF_LOCS2 = "Kijk daar zit ie"   
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
     END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je mijn presentatie leuk vond en ik wens je nog een fijne dag"
 
@@ -106,14 +109,14 @@ class Presentation(smach.State):
                                      voice=self.voice, block=False))
         function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
         function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARM, language=self.language,
-                                     voice=self.voice, block=False))
+                                     voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
         function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
         function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
         function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
-                                     voice=self.voice, block=False))
+                                     voice=self.voice, block=True))
         function_list.append(partial(self.robot.leftArm.reset))
         function_list.append(partial(self.robot.leftArm.wait_for_motion_done))
 
@@ -127,13 +130,18 @@ class Presentation(smach.State):
 
         # RGBD Camera
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language,
-                                     voice=self.voice, block=False))
+                                     voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.SCREEN, language=self.language,
-                                     voice=self.voice, block=False))
+                                     voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.robot.head.look_at_standing_person)) # Set nice path for moving head
+        function_list.append(partial(self.robot.head.look_at_point, VectorStamped(1,1,1.75, frame_id="/hero/base_link"))) # Set nice path for moving head
         function_list.append(partial(self.robot.head.wait_for_motion_done))
+        function_list.append(partial(self.robot.head.look_at_point, VectorStamped(1,-1,1.0, frame_id="/hero/base_link"))) # Set nice path for moving head
+        function_list.append(partial(self.robot.head.wait_for_motion_done))
+        function_list.append(partial(self.robot.head.look_at_point, VectorStamped(-1,0,1.0, frame_id="/hero/base_link"))) # Set nice path for moving head
+        function_list.append(partial(self.robot.head.wait_for_motion_done))
+
         function_list.append(partial(self.robot.head.reset))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
 
@@ -142,7 +150,12 @@ class Presentation(smach.State):
                                      voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language,
                                      voice=self.voice, block=False))
-        # function_list.append(partial(self.robot.arm.send_joint_trajectory, "to_laser")) # Maybe takes too long
+        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser", 20.0)) # Maybe takes too long
+        function_list.append(partial(self.robot.leftArm.wait_for_motion_done))
+        function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS2, language=self.language,
+                                     voice=self.voice, block=True))
+        function_list.append(partial(self.robot.leftArm.reset))
+
 
         # Microphone
         function_list.append(partial(self.robot.speech.speak, self.trans.MICROPHONE, language=self.language,
