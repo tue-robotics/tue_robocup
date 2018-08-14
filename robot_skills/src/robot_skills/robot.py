@@ -81,7 +81,7 @@ class Robot(object):
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         # Grasp offsets
-        go = rospy.get_param('skills/arm/offset/grasp_offset')
+        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
         self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
         # Create attributes from dict
