@@ -44,9 +44,6 @@ class Navigation(RobotPart):
 
         return PositionConstraint(constraint=res.position_constraint_map_frame, frame="/map")
 
-    def reset(self):
-        pass
-
 
 class ED(RobotPart):
 

@@ -87,9 +87,6 @@ class LocalPlanner(RobotPart):
         self._dtg = dtg
         self._plan = plan
 
-    def reset(self):
-        pass
-
 
 class GlobalPlanner(RobotPart):
     def __init__(self, robot_name, tf_listener, analyzer):

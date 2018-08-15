@@ -31,9 +31,6 @@ class SSL(RobotPart):
         self._last_msg = None
         self._last_received_time = rospy.Time(0)
 
-    def reset(self):
-        pass
-
     @property
     def operational(self):
         return self._sub.get_num_connections() >= 1
