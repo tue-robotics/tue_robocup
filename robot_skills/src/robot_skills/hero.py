@@ -16,12 +16,14 @@ class Hero(robot.Robot):
         # remap topics in base
         self.parts['base']._cmd_vel = rospy.Publisher('/hsrb/command_velocity', geometry_msgs.msg.Twist, queue_size=10)
 
-	#rename joint names
-	self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
+    	#rename joint names
+	    self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
+        self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
 
-        self.parts['rightArm'] = robot.arms.FakeArm(self.robot_name, self.tf_listener, side="right")
+        # This is still very ugly, because there is a lof of double code, but atleast it is only in sergio.
+        #self.parts['rightArm'] = robot.arms.FakeArm(self.robot_name, self.tf_listener, side="right")
 
-        for partname, bodypart in self.parts.iteritems():
-            setattr(self, partname, bodypart)
+        #for partname, bodypart in self.parts.iteritems():
+        #    setattr(self, partname, bodypart)
 
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
