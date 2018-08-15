@@ -30,6 +30,3 @@ class Ears(RobotPart):
             self._post_hook()
 
         return answer
-
-    def reset(self):
-        pass

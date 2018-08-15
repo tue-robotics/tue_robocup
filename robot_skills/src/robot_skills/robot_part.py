@@ -2,7 +2,6 @@
 
 # System
 import os
-import abc
 
 # ROS
 import rospy
@@ -14,7 +13,6 @@ SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"
 
 class RobotPart(object):
     """ Base class for robot parts """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, robot_name, tf_listener):
         """
@@ -193,10 +191,5 @@ class RobotPart(object):
             else:
                 self._operational = True
 
-    @abc.abstractmethod
     def reset(self):
-        """
-        The initialize state requires each robot part to have a reset function,
-        if a robot part does not require resetting, the function may simply include a pass.
-        """
-        # pass
+        pass

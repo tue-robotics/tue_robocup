@@ -23,9 +23,6 @@ class Speech(RobotPart):
     def close(self):
         pass
 
-    def reset(self):
-        pass
-
     def speak(self, sentence, language=None, personality=None, voice=None, mood=None, block=True, replace={"_": " "}):
         """
         Send a sentence to the text to speech module.
