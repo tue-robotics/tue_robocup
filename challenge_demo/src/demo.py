@@ -61,6 +61,8 @@ def main():
         from robot_skills.amigo import Amigo as Robot
     elif robot_name == 'sergio':
         from robot_skills.sergio import Sergio as Robot
+    elif robot_name == 'hero':
+        from robot_skills.hero import Hero as Robot
     else:
         raise ValueError('unknown robot')
 
