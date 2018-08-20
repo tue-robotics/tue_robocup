@@ -99,7 +99,7 @@ def main():
     finished = False
     start_time = rospy.get_time()
 
-    trigger = WaitForTrigger(robot, ["gpsr"], "/" + robot_name + "trigger")
+    trigger = WaitForTrigger(robot, ["gpsr"], "/" + robot_name + "/trigger")
 
     while True:
         # Navigate to the GPSR meeting point
