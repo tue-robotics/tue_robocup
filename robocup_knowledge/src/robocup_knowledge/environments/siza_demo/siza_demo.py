@@ -93,7 +93,7 @@ V_FIND -> find | locate | look for | pinpoint | spot
 V_FIND_PERSON -> meet | V_FIND
 
 OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
-PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | NAMED_PERSON | someone
+PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | someone
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
@@ -187,8 +187,6 @@ VP[{"action": "follow", "target": Z}] -> V_FOLLOW FOLLOW_PERSONS[Z]
 grammar += '\nFOLLOW_PERSONS[the person] -> DET person'
 grammar += '\nFOLLOW_PERSONS[the woman] -> DET woman'
 grammar += '\nFOLLOW_PERSONS[the man] -> DET man'
-for name in common.names:
-    grammar += '\nFOLLOW_PERSONS[%s] -> %s' % (name, name)
 
 ###############################################################################
 #
@@ -218,12 +216,6 @@ VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object":
 VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to BRING_PERSON[X]
 VP[{"action": "hand-over", "target-location": X, "object": Z}] -> V_BRING OBJECT_TO_BE_BROUGHT[Z] to BRING_PERSON[X]
 """
-
-for name in common.names:
-    grammar += '\nBRING_PERSON[{"type": "person", "id": "%s"}] -> %s' % (name, name)
-    for loc in common.get_locations():
-        grammar += '\nBRING_PERSON[{"type": "person", "id": "%s", "location": %s}] -> %s MANIPULATION_AREA_DESCRIPTION the %s' % (name, loc, name, loc)
-
 ##############################################################################
 #
 # SAY
