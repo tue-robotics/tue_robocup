@@ -55,9 +55,10 @@ class Clear(smach.StateMachine):
                                                               entityDes=source_location,
                                                               objectIDsDes=segmented_entities_designator,
                                                               searchArea=source_searchArea,
-                                                              navigation_area=source_navArea,
+                                                              navigation_area=source_navArea
+                                                              ),
                                    transitions={'done': 'CHECK_IF_ENTITY_FOUND',
-                                                'failed': 'failed'})
+                                                'failed': 'failed'}
                                    )
 
             smach.StateMachine.add('DETERMINE_IF_CLEAR',
