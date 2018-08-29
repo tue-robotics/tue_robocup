@@ -192,7 +192,7 @@ class PickUp(smach.State):
         arm.occupied_by = grab_entity
 
         # Lift
-	goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)       
         # rospy.loginfo('Start lifting')
         if arm.side == "left":
             roll = 0.3
@@ -206,7 +206,7 @@ class PickUp(smach.State):
             rospy.logerr('Failed lift')
 
         # Retract
-	goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
+	goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
        	# rospy.loginfo('Start retracting')
         if arm.side == "left":
             roll = 0.6
@@ -219,7 +219,7 @@ class PickUp(smach.State):
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed retract')
-
+        arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
         # Update Kinect once again to make sure the object disappears from ED

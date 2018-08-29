@@ -49,7 +49,7 @@ class PreparePlace(smach.State):
         arm.send_joint_trajectory('prepare_place', timeout=0)
 
         # Torso up (non-blocking)
-        self._robot.torso.high()
+ #       self._robot.torso.high()
 
         # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
         # Hence, we want the torso to go to the place height - 0.6
@@ -113,7 +113,7 @@ class Put(smach.State):
                                                     tf_listener=self._robot.tf_listener)
 
         # Wait for torso and arm to finish their motions
-        self._robot.torso.wait_for_motion_done()
+  #      self._robot.torso.wait_for_motion_done()
         arm.wait_for_motion_done()
 
         try:
@@ -142,6 +142,8 @@ class Put(smach.State):
                 return 'failed'
 
         # Place
+        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+                                                    tf_listener=self._robot.tf_listener)
         if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.1, 0.0, 0.0, 0.0,
@@ -163,12 +165,15 @@ class Put(smach.State):
         arm.occupied_by = None
 
         # Retract
+        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+                                                    tf_listener=self._robot.tf_listener)
         arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x() - 0.1,
                                                     place_pose_bl.frame.p.y(),
                                                     place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
                                                     frame_id='/'+self._robot.robot_name+'/base_link'),
                       timeout=0.0)
 
+        arm.wait_for_motion_done()
         self._robot.base.force_drive(-0.125, 0, 0, 1.5)
 
         if not arm.wait_for_motion_done(timeout=5.0):
