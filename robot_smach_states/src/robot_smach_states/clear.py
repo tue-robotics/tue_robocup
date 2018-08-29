@@ -26,10 +26,11 @@ class isitclear(smach.State):
         self._object_designator = objectIDsDes
 
     def execute(self, userdata=None):
-        ids_to_select_from = [e.id for e in self._candidate_entities_designator.resolve()]
-        rospy.logdebug('list of entities to select from: {}'.format(ids_to_select_from))
-
-        return 'clear'
+        rospy.loginfo("{}".format(self._object_designator.resolve()))
+        if self._object_designator.resolve():
+            return 'not_clear'
+        else:
+            return 'clear'
 
 
 class Clear(smach.StateMachine):
