@@ -1,5 +1,5 @@
 # COMMON KNOWLEDGE FILE SIZA DEMO
-
+names = ['peter','josja']
 # This dict holds all locations
 locations = [
     {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
@@ -42,7 +42,8 @@ category_locations = {
 
 inspect_positions = {
 }
-
+inspect_areas = {
+}
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 most_probable_location_in_room_map = {
@@ -126,6 +127,17 @@ def is_pick_location(location):
             return True
     return False
 
+def get_inspect_areas(location):
+    if location in inspect_areas:
+        return inspect_areas[location]
+    else:
+        return ["on_top_of"]
+
+def get_inspect_position(location, area=""):
+    if location in inspect_positions and area in inspect_positions[location]:
+        return inspect_positions[location][area]
+    else:
+        return "in_front_of"
 
 def is_place_location(location):
     for loc in locations:

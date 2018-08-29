@@ -74,8 +74,8 @@ class Clear(smach.StateMachine):
         arm_des = UnoccupiedArmDesignator(robot.arms, robot.arms['left']).lockable()
         arm_des.lock()
 
-        place_position = states.util.designators.EmptySpotDesignator(self._robot, EdEntityDesignator(
-                                                                        self._robot, id=self.context.location.id),
+        place_position = states.util.designators.EmptySpotDesignator(robot, EdEntityDesignator(
+                                                                        robot, id=target_location.id),
                                                                      area="on_top_of"
                                                                      )
 
@@ -107,5 +107,5 @@ class Clear(smach.StateMachine):
 
             smach.StateMachine.add('PLACE',
                                    states.Place(robot, selected_entity_designator, place_position, arm_des),
-                                   transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
+                                   transitions={"done": "done", "failed": "failed"})
 

@@ -49,7 +49,7 @@ class PrepareEdGrasp(smach.State):
         arm.send_gripper_goal('open', timeout=0)
 
         # Torso up (non-blocking)
-        self.robot.torso.high()
+        #self.robot.torso.high()
 
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
@@ -107,7 +107,7 @@ class PickUp(smach.State):
             return 'failed'
 
         # Make sure the torso and the arm are done
-        self.robot.torso.wait_for_motion_done(cancel=True)
+        #self.robot.torso.wait_for_motion_done(cancel=True)
         arm.wait_for_motion_done(cancel=True)
 
         # This is needed because the head is not entirely still when the
@@ -192,6 +192,7 @@ class PickUp(smach.State):
         arm.occupied_by = grab_entity
 
         # Lift
+	goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
         # rospy.loginfo('Start lifting')
         if arm.side == "left":
             roll = 0.3
@@ -205,7 +206,8 @@ class PickUp(smach.State):
             rospy.logerr('Failed lift')
 
         # Retract
-        # rospy.loginfo('Start retracting')
+	goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
+       	# rospy.loginfo('Start retracting')
         if arm.side == "left":
             roll = 0.6
         else:
