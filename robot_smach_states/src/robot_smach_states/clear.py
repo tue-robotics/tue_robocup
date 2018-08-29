@@ -11,7 +11,27 @@ from robot_skills.classification_result import ClassificationResult
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import check_type
-from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator
+from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator
+
+class SelectEntity(smach.State):
+    def __init__(self, robot, entitity_classifications_designator, selected_entity_designator):
+        smach.State.__init__(self, outcomes=["entity_selected", "no_entities_left"])
+        self._robot = robot
+        self._entity_classifications_designator = entitity_classifications_designator
+        self._selected_entity_designator = selected_entity_designator
+
+    def execute(self, userdata):
+
+        # Try to pop item from entities_ids_designator
+        try:
+            entity_classification = self._entity_classifications_designator.resolve().pop()
+        except:
+            return "no_entities_left"
+
+        rospy.loginfo("We have selected the entity with id %s" % entity_classification.id)
+        self._selected_entity_designator.id_ = entity_classification.id
+
+        return "entity_selected"
 
 class isitclear(smach.State):
     """
@@ -49,6 +69,10 @@ class Clear(smach.StateMachine):
         #check_type(target_location, Entity)
 
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
+        selected_entity_designator = EntityByIdDesignator(robot, "TBD", name='selected_entity_designator', )
+
+        arm_des = UnoccupiedArmDesignator(robot.arms, robot.arms['left']).lockable()
+        arm_des.lock()
 
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',
@@ -62,8 +86,25 @@ class Clear(smach.StateMachine):
                                                 'failed': 'failed'}
                                    )
 
+            #smach.StateMachine.add('DETERMINE_IF_CLEAR',
+            #                       isitclear(robot=robot,
+            #                                 objectIDsDes=segmented_entities_designator),
+            #                       transitions={'clear': 'done',
+            #                                    'not_clear': 'failed'})
+
             smach.StateMachine.add('DETERMINE_IF_CLEAR',
-                                   isitclear(robot=robot,
-                                             objectIDsDes=segmented_entities_designator),
-                                   transitions={'clear': 'done',
-                                                'not_clear': 'failed'})
+                                   SelectEntity(robot=robot,
+                                                entitity_classifications_designator = segmented_entities_designator,
+                                                selected_entity_designator = selected_entity_designator),
+                                   transitions={'no_entities_left': 'done',
+                                                'entity_selected': 'failed'}
+                                   )
+
+            smach.StateMachine.add('GRAB',
+                                   states.grab.Grab(robot = robot,
+                                                    item = selected_entity_designator,
+                                                    arm = arm_des)
+                                   )
+            self._fsm = robot_smach_states.grab.Grab(self._robot,
+                                                     item=config.context['object-designator'],
+                                                     arm=arm_des)
