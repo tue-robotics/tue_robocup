@@ -57,7 +57,7 @@ class Clear(smach.StateMachine):
                                                               searchArea=source_searchArea,
                                                               navigation_area=source_navArea
                                                               ),
-                                   transitions={'done': 'CHECK_IF_ENTITY_FOUND',
+                                   transitions={'done': 'DETERMINE_IF_CLEAR',
                                                 'failed': 'failed'}
                                    )
 
