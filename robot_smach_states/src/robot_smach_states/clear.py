@@ -103,8 +103,7 @@ class Clear(smach.StateMachine):
             smach.StateMachine.add('GRAB',
                                    states.grab.Grab(robot = robot,
                                                     item = selected_entity_designator,
-                                                    arm = arm_des)
+                                                    arm = arm_des),
+                                   transitions={'done': 'done',
+                                                'failed': 'failed'}
                                    )
-            self._fsm = robot_smach_states.grab.Grab(self._robot,
-                                                     item=config.context['object-designator'],
-                                                     arm=arm_des)
