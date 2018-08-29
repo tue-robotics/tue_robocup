@@ -74,14 +74,15 @@ class Clear(smach.StateMachine):
         arm_des = UnoccupiedArmDesignator(robot.arms, robot.arms['left']).lockable()
         arm_des.lock()
 
+        place_position = states.util.designators.EmptySpotDesignator(self._robot, EdEntityDesignator(
+                                                                        self._robot, id=self.context.location.id),
+                                                                     area="on_top_of"
+                                                                     )
+
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',
-                                   states.world_model.Inspect(robot=robot,
-                                                              entityDes=source_location,
-                                                              objectIDsDes=segmented_entities_designator,
-                                                              searchArea=source_searchArea,
-                                                              navigation_area=source_navArea
-                                                              ),
+                                   states.Inspect(robot, source_location, objectIDsDes=segmented_entities_designator,
+                                                  searchArea=source_searchArea, navigation_area=source_navArea),
                                    transitions={'done': 'DETERMINE_IF_CLEAR',
                                                 'failed': 'failed'}
                                    )
@@ -93,17 +94,18 @@ class Clear(smach.StateMachine):
             #                                    'not_clear': 'failed'})
 
             smach.StateMachine.add('DETERMINE_IF_CLEAR',
-                                   SelectEntity(robot=robot,
-                                                entitity_classifications_designator = segmented_entities_designator,
-                                                selected_entity_designator = selected_entity_designator),
+                                   SelectEntity(robot, segmented_entities_designator, selected_entity_designator),
                                    transitions={'no_entities_left': 'done',
-                                                'entity_selected': 'failed'}
+                                                'entity_selected': 'GRAB'}
                                    )
 
             smach.StateMachine.add('GRAB',
-                                   states.grab.Grab(robot = robot,
-                                                    item = selected_entity_designator,
-                                                    arm = arm_des),
-                                   transitions={'done': 'done',
+                                   states.Grab(robot, selected_entity_designator, arm_des),
+                                   transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
+
+            smach.StateMachine.add('PLACE',
+                                   states.Place(robot, selected_entity_designator, place_position, arm_des),
+                                   transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
+
