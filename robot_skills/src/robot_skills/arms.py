@@ -151,7 +151,7 @@ class Arm(RobotPart):
         self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
 
         # listen to the hardware status to determine if the arm is available
-        self.subscribe_hardware_status(self.side + '_arm')
+#        self.subscribe_hardware_status(self.side + '_arm')
 
         # Init gripper actionlib
         self._ac_gripper = self.create_simple_action_client(
