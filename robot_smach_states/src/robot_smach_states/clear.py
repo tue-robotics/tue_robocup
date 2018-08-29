@@ -7,6 +7,7 @@ import tf2_ros
 
 # TU/e Robotics
 from robot_skills.util.entity import Entity
+from robot_skills.classification_result import ClassificationResult
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import check_type
@@ -32,7 +33,7 @@ class isitclear(smach.StateMachine):
 
 
 class Clear(smach.Statemachine):
-    def __init__(self, robot, source_location, source_searchArea="on_top_of", source_navArea, target_location, target_placeArea="on_top_of", target_navArea):
+    def __init__(self, robot, source_location, source_navArea, target_location, target_navArea, target_placeArea="on_top_of", source_searchArea="on_top_of"):
         """
         Let the given robot move to a location and remove all entities from that table one at a time
         :param robot: Robot to use
@@ -56,14 +57,11 @@ class Clear(smach.Statemachine):
                                                               searchArea=source_searchArea,
                                                               navigation_area=source_navArea,
                                    transitions={'done': 'CHECK_IF_ENTITY_FOUND',
-                                                'failed': 'inspect_failed'})
+                                                'failed': 'failed'})
+                                   )
 
             smach.StateMachine.add('DETERMINE_IF_CLEAR',
                                    isitclear(robot=robot,
                                              objectIDsDes=segmented_entities_designator),
                                    transitions={'clear': 'done',
-                                                'not_clear': 'MOVE_OBJECT'})
-
-            smach.StateMachine.add("MOVE OBJECT",
-                                   move_to_thingy(),
-                                   transitions={"done": "INSPECT_%d" % next_i})
+                                                'not_clear': 'failed'})
