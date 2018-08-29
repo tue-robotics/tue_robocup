@@ -13,7 +13,7 @@ import robot_smach_states as states
 from robot_smach_states.util.designators import check_type
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator
 
-class isitclear(smach.StateMachine):
+class isitclear(smach.State):
     """
     Check if there are entities on the object in the world model
     """
@@ -32,7 +32,7 @@ class isitclear(smach.StateMachine):
         return 'clear'
 
 
-class Clear(smach.Statemachine):
+class Clear(smach.StateMachine):
     def __init__(self, robot, source_location, source_navArea, target_location, target_navArea, target_placeArea="on_top_of", source_searchArea="on_top_of"):
         """
         Let the given robot move to a location and remove all entities from that table one at a time
