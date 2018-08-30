@@ -50,6 +50,7 @@ class isitclear(smach.State):
         if self._object_designator.resolve():
             return 'not_clear'
         else:
+            self._robot.speech.speak("I cleaned everything up! Isn't that awesome?")
             return 'clear'
 
 
