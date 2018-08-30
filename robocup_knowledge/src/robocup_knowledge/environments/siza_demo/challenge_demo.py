@@ -40,8 +40,13 @@ NUMBER -> one | two | three
 MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 
+for room in common.location_rooms:
+    grammar += "\nROOM[{'type': 'room', 'id': '%s'}] -> %s" % (room, room)
+
 for loc in common.get_locations():
-    grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
+    grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
+
+grammar += '\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]'
 
 for obj in common.object_names:
     grammar += '\nNAMED_OBJECT[%s] -> %s' % (obj, obj)
