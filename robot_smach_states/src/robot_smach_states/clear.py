@@ -102,11 +102,20 @@ class Clear(smach.StateMachine):
 
             smach.StateMachine.add('GRAB',
                                    states.Grab(robot, selected_entity_designator, arm_des),
+                                   transitions={'done': 'INSPECT_TARGET',
+                                                'failed': 'failed'}
+                                   )
+
+            smach.StateMachine.add('INSPECT_TARGET',
+                                   states.Inspect(robot, target_location, searchArea=target_placeArea,
+                                                  navigation_area=target_navArea),
                                    transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
 
             smach.StateMachine.add('PLACE',
                                    states.Place(robot, selected_entity_designator, place_position, arm_des),
-                                   transitions={'done': 'INSPECT_SOURCE_ENTITY', 'failed': 'failed'})
+                                   transitions={'done': 'INSPECT_SOURCE_ENTITY',
+                                                'failed': 'failed'}
+                                   )
 
