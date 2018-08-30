@@ -68,15 +68,49 @@ VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 
 ###############################################################################
 #
+# Clear
+#
+###############################################################################
+
+grammar += """
+V_CLEAR -> clear | clean up | clean-up | empty
+
+VP[{"action": "clear", "source-location": X, "target-location": {"id":"trashbin"}}] -> V_CLEAR the ROOM_OR_LOCATION[X]
+VP[{"action": "clear", "source-location": X, "target-location": Y}] -> V_CLEAR the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
+"""
+
+###############################################################################
+#
+# Return
+#
+###############################################################################
+
+grammar += """
+V_RETURN -> bye | no thank you | no bye | go away
+
+VP[{"action": "navigate-to", "target-location": {"type":"waypoint", "id":"hero_home"}}] -> V_RETURN
+"""
+
+###############################################################################
+#
 # Find objects
 #
 ###############################################################################
 
 grammar += """
-V_FIND -> find | locate | look for
+V_FIND -> find | locate | look for | pinpoint | spot
+V_FIND_PERSON -> meet | V_FIND
 
-VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-VP["action": "find", "object": {"type": X}] -> V_FIND DET NAMED_OBJECT[X]
+OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
+PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | someone | me
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+VP["action": "find", "object": {"type": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
+
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
+VP[{"action": "find", "object": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
 """
 
 ###############################################################################
