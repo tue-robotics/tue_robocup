@@ -8,6 +8,8 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again"
     ]
 
+initial_pose = "hero_home"
+
 grammar_target = "T"
 
 ##############################################################################
@@ -17,9 +19,12 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[{actions : <A1>}] -> C[A1]
+T[A] -> C[A] | COURTESY C[A]
 
-C[{A}] -> VP[A]
+COURTESY -> please | robot please | could you | would you | hero | hero please
+C[{"actions": <A1>}] -> VP[A1]
+C[{"actions": <A1, A2>}] -> VP[A1] and VP[A2]
+C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 """
 
 ##############################################################################
@@ -29,7 +34,6 @@ C[{A}] -> VP[A]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
 
 DET -> the | a | an | some
 NUMBER -> one | two | three
@@ -170,16 +174,6 @@ grammar += '\nSAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month'
 grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
-
-###############################################################################
-#
-# Sound Source Localization (SSL)
-#
-###############################################################################
-
-grammar += """
-VP["action": "turn-toward-sound", "duration": "30"] -> show your sound source localization | look at me when i am talking to you
-"""
 
 ###############################################################################
 #
