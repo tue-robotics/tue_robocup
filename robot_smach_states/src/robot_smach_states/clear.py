@@ -26,6 +26,7 @@ class SelectEntity(smach.State):
         try:
             entity_classification = self._entity_classifications_designator.resolve().pop()
         except:
+            self._robot.speech.speak("I cleaned everything up! Isn't that awesome?")
             return "no_entities_left"
 
         rospy.loginfo("We have selected the entity with id %s" % entity_classification.id)
@@ -50,7 +51,6 @@ class isitclear(smach.State):
         if self._object_designator.resolve():
             return 'not_clear'
         else:
-            self._robot.speech.speak("I cleaned everything up! Isn't that awesome?")
             return 'clear'
 
 

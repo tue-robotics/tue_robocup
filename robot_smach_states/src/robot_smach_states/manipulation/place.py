@@ -183,9 +183,9 @@ class Put(smach.State):
         # Close gripper
         arm.send_gripper_goal('close', timeout=0.0)
 
-        self._robot.torso.reset()
         arm.reset()
         arm.wait_for_motion_done()
+        self._robot.torso.reset()
 
         return 'succeeded'
 

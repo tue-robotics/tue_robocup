@@ -53,7 +53,7 @@ class PrepareEdGrasp(smach.State):
 
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
-
+        arm.wait_for_motion_done()
         # Open gripper
         arm.send_gripper_goal('open', timeout=0.0)
 
@@ -293,7 +293,7 @@ class ResetOnFailure(smach.StateMachine):
             arm = self._robot.get_arm(userdata.arm)[0]  # Using userdata makes sure we don't need more arm designator magic
         else:
             arm = None
-        self._robot.torso.high()  # Move up to make resetting of the arm safer
+#        self._robot.torso.high()  # Move up to make resetting of the arm safer
         if arm is not None:
             arm.send_gripper_goal('close')
         self._robot.head.reset()  # Sends a goal
