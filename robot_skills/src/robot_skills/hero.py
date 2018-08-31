@@ -4,7 +4,7 @@ import rospy
 import geometry_msgs.msg
 
 from collections import OrderedDict
-
+from sensor_msgs.msg import Image
 
 class Hero(robot.Robot):
     """docstring for Hero"""
@@ -27,3 +27,5 @@ class Hero(robot.Robot):
         #    setattr(self, partname, bodypart)
 
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
+
+	self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
