@@ -77,6 +77,16 @@ VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 
 ###############################################################################
 #
+# Send picture attempt
+#
+###############################################################################
+grammar += """
+V_SEND_PICTURE -> check what is on | show me what is on
+VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE the ROOM_OR_LOCATION[X]
+"""
+
+###############################################################################
+#
 # Clear
 #
 ###############################################################################
