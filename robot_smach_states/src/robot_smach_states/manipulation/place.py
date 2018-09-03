@@ -8,7 +8,7 @@ from robot_skills.arms import Arm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from robot_smach_states.navigation import NavigateToPlace, NavigateToSymbolic
-from robot_smach_states.world_model import UpdateEntityPose
+from robot_smach_states.world_model import UpdateEntityPose, Inspect
 from robot_smach_states.util.designators.ed_designators import EdEntityDesignator, EmptySpotDesignator
 from robot_smach_states.util.designators import check_type
 
@@ -241,18 +241,23 @@ class Place(smach.StateMachine):
                 else:
                     next_state = "PREPARE_PLACE"
 
+                smach.StateMachine.add('INSPECT',
+                                       Inspect(robot, furniture_designator, navigation_area="in_front_of"),
+                                       transitions={'done': 'PREPARE_PLACE',
+                                                    'failed': 'failed'}
+                                       )
                 # Add navigation
-                smach.StateMachine.add('NAVIGATE_TO_UPDATE',
-                                       NavigateToSymbolic(robot, {furniture_designator: 'in_front_of'},
-                                                          furniture_designator),
-                                       transitions={'arrived': next_state,
-                                                    'unreachable': 'PREPARE_PLACE',
-                                                    'goal_not_defined': 'PREPARE_PLACE'})
+                #smach.StateMachine.add('NAVIGATE_TO_UPDATE',
+                #                       NavigateToSymbolic(robot, {furniture_designator: 'in_front_of'},
+                #                                          furniture_designator),
+                #                       transitions={'arrived': next_state,
+                #                                    'unreachable': 'PREPARE_PLACE',
+                #                                    'goal_not_defined': 'PREPARE_PLACE'})
 
-                if update_supporting_entity:
-                    smach.StateMachine.add('UPDATE_ENTITY',
-                                           UpdateEntityPose(robot=robot, entity_designator=furniture_designator),
-                                           transitions={'done': 'PREPARE_PLACE'})
+                #if update_supporting_entity:
+                #    smach.StateMachine.add('UPDATE_ENTITY',
+                #                           UpdateEntityPose(robot=robot, entity_designator=furniture_designator),
+                #                           transitions={'done': 'PREPARE_PLACE'})
 
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
                                    transitions={'succeeded': 'NAVIGATE_TO_PLACE',
