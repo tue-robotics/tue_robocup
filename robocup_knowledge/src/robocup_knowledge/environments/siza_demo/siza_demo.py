@@ -19,7 +19,7 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[A] -> C[A] | COURTESY C[A] | C[A] COURTESY
+T[A] -> C[A] | COURTESY C[A] | C[A] COURTESY | COURTESY C[A] COURTESY
 
 COURTESY -> please | robot please | could you | would you | hero | hero please
 C[{"actions": <A1>}] -> VP[A1]
