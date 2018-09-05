@@ -21,7 +21,8 @@ class FindPerson(smach.State):
         """
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
-    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
+    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
+                 discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
         :param robot: robot api object
         :param person_label: (str) person label
@@ -49,7 +50,7 @@ class FindPerson(smach.State):
         look_distance = 2.0  # magic number 4
         look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
-                                                    y=look_distance * math.sin(angle), z=1.7,
+                                                    y=look_distance * math.sin(angle), z=1.3,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
                       for angle in look_angles]
 
