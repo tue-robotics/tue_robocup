@@ -18,13 +18,11 @@ from robot_skills.util import kdl_conversions
 
 class FindPerson(smach.State):
     """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.
-
         """
     # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
 
     def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5):
         """ Initialization method
-
         :param robot: robot api object
         :param person_label: (str) person label
         :param lost_timeout: (float) maximum time the robot is allowed to search
@@ -106,7 +104,6 @@ class _DecideNavigateState(smach.State):
     """
     def __init__(self, robot, waypoint_designator, room_designator):
         """ Initialize method
-
         :param robot: Robot API object
         :param waypoint_designator: EdEntityDesignator that should resolve to a waypoint
         :param room_designator: EdEntityDesignator that should resolve to the room in which the waypoint is located
@@ -134,7 +131,6 @@ class _DecideNavigateState(smach.State):
 class FindPersoninRoom(smach.StateMachine):
     """ Uses NavigateToWaypoint or NavigateToRoom and subsequently tries to find a person
     in that room.
-
     """
 
     def __init__(self, robot, area, name):
