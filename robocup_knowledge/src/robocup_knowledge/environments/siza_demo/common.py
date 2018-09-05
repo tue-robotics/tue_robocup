@@ -1,5 +1,5 @@
 # COMMON KNOWLEDGE FILE SIZA DEMO
-names = ['peter','josja']
+names = ['peter', 'josja']
 # This dict holds all locations
 locations = [
     {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},

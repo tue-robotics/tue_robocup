@@ -59,6 +59,9 @@ for loc in common.get_locations(pick_location=True, place_location=True):
 for cat in common.object_categories:
     grammar += "\nOBJECT_CATEGORY[{'category': '%s'}] -> %s" % (cat, cat)
 
+for name in common.names:
+    grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
+
 ###############################################################################
 #
 # Demo
@@ -116,20 +119,20 @@ V_FIND -> find | locate | look for | pinpoint | spot
 V_FIND_PERSON -> meet | V_FIND
 
 OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
-PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | someone
+PERSON_TO_BE_FOUND -> DET person | DET woman | DET man
+UNNAMED_PERSON -> a person | someone | me
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
+VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_FIND UNNAMED_PERSON in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM[Y]
 
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] in the ROOM[Y]
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
-
+VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
-VP[{"action": "find", "object": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
+VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
+
 """
-
-
-
+# VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
+# VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
 ###############################################################################
 #
 # Navigate
