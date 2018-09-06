@@ -2,10 +2,13 @@
 names = ['peter', 'josja']
 # This dict holds all locations
 locations = [
-    {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
+    {'name': 'dinner_table',  'room': 'living_room', 'category': 'table',   'manipulation': 'yes'},
 
-    {'name': 'cabinet',       'room': 'kitchen',    'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'trashbin',      'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'}
+    {'name': 'cabinet',       'room': 'kitchen',     'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'trashbin',      'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
+
+    {'name': 'counter',       'room': 'kitchen',     'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'tray_table',    'room': 'living_room', 'category': 'shelf',   'manipulation': 'yes'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))

@@ -78,7 +78,7 @@ VP[{"action": "demo-presentation"}] -> introduce yourself | present yourself | p
 #
 ###############################################################################
 grammar += """
-V_SEND_PICTURE -> check what is on | show me what is on
+V_SEND_PICTURE -> check what is on | show me what is on | show me what is on top of | send me a picture of
 VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE the ROOM_OR_LOCATION[X]
 """
 
@@ -118,12 +118,14 @@ grammar += """
 V_FIND -> find | locate | look for | pinpoint | spot
 V_FIND_PERSON -> meet | V_FIND
 
+DEMO_HACK -> of apartment 11 | of appartment 11
 OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
 PERSON_TO_BE_FOUND -> DET person | DET woman | DET man
 UNNAMED_PERSON -> a person | someone | me
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
 VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_FIND UNNAMED_PERSON in the ROOM[Y]
+VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_FIND UNNAMED_PERSON in the ROOM[Y] DEMO_HACK
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM[Y]
 
 VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
@@ -133,6 +135,7 @@ VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 """
 # VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
 # VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
+
 ###############################################################################
 #
 # Navigate
