@@ -51,7 +51,7 @@ inspect_areas = {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 most_probable_location_in_room_map = {
-    'livingroom': 'dinner_table',
+    'living_room': 'dinner_table',
     'kitchen': 'cabinet',
 }
 

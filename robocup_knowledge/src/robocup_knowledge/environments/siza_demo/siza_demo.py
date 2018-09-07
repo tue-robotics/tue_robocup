@@ -78,8 +78,8 @@ VP[{"action": "demo-presentation"}] -> introduce yourself | present yourself | p
 #
 ###############################################################################
 grammar += """
-V_SEND_PICTURE -> check what is on | show me what is on | show me what is on top of | send me a picture of
-VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE the ROOM_OR_LOCATION[X]
+V_SEND_PICTURE -> check what is | show me what is | send me a picture of
+VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE MANIPULATION_AREA_DESCRIPTION the ROOM_OR_LOCATION[X]
 """
 
 
