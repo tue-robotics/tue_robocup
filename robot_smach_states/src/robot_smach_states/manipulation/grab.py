@@ -195,9 +195,9 @@ class PickUp(smach.State):
         goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)       
         # rospy.loginfo('Start lifting')
         if arm.side == "left":
-            roll = 0.3
+            roll = 0.0 #0.3
         else:
-            roll = -0.3
+            roll = 0.0 #-0.3
 
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
@@ -209,9 +209,9 @@ class PickUp(smach.State):
 	goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
        	# rospy.loginfo('Start retracting')
         if arm.side == "left":
-            roll = 0.6
+            roll = 0.0 #0.6
         else:
-            roll = -0.6
+            roll = 0.0 #-0.6
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() -0.1)  # Retract 10 cm
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
