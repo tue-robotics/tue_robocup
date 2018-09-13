@@ -5,7 +5,8 @@ locations = [
     {'name': 'dinner_table',  'room': 'living_room', 'category': 'table',   'manipulation': 'yes'},
 
     {'name': 'cabinet',       'room': 'kitchen',     'category': 'shelf',   'manipulation': 'yes'},
-    {'name': 'trashbin',      'room': 'kitchen',     'category': 'utility', 'manipulation': 'no'},
+    {'name': 'trashbin',      'room': 'kitchen',     'category': 'utility', 'manipulation': 'yes'},
+    {'name': 'couch',         'room': 'hallway',     'category': 'table',   'manipulation': 'yes'},
 
     {'name': 'counter',       'room': 'kitchen',     'category': 'shelf',   'manipulation': 'yes'},
     {'name': 'tray_table',    'room': 'living_room', 'category': 'shelf',   'manipulation': 'yes'}
@@ -21,16 +22,12 @@ rooms = location_rooms
 
 objects = [
     {'category': 'container',           'name': 'cup',                  'color': 'green'},
-    {'category': 'container',           'name': 'mug',                  'color': 'blue'},
-    {'category': 'drink',               'name': 'beer',                 'color': 'brown'},
     {'category': 'drink',               'name': 'coke',                 'color': 'red'},
-    {'category': 'drink',               'name': 'coke_bottle',          'color': 'red'},
+    {'category': 'drink',               'name': 'fanta_bottle',         'color': 'red'},
     {'category': 'drink',               'name': 'coke_zero',            'color': 'black'},
     {'category': 'drink',               'name': 'fanta',                'color': 'orange'},
-    {'category': 'drink',               'name': 'ice_tea',              'color': 'yellow'},
-    {'category': 'drink',               'name': 'water',                'color': 'transparent'},
     {'category': 'snack',               'name': 'pringles',             'color': 'orange'},
-    {'category': 'cleaning_stuff',      'name': 'hairspray',            'color': 'blue'}
+    {'category': 'snack',               'name': 'apple',                'color': 'green'},
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
