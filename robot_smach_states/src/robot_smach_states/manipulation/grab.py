@@ -40,10 +40,10 @@ class PrepareEdGrasp(smach.State):
 
         self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
         self.robot.head.wait_for_motion_done()
+        segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
-	segm_res = self.robot.ed.update_kinect("%s" % entity.id)
-        
-	arm = self.arm_designator.resolve()
+        arm = self.arm_designator.resolve()
+
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
@@ -63,12 +63,12 @@ class PrepareEdGrasp(smach.State):
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
         arm.wait_for_motion_done()
-        
-	# Open gripper
+
+        # Open gripper
         arm.send_gripper_goal('open', timeout=0.0)
-	arm.wait_for_motion_done()
-        
-	# Make sure the head looks at the entity
+        arm.wait_for_motion_done()
+
+        # Make sure the head looks at the entity
         self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
         self.robot.head.wait_for_motion_done()
         return 'succeeded'
@@ -203,7 +203,7 @@ class PickUp(smach.State):
         arm.occupied_by = grab_entity
 
         # Lift
-        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)       
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
         # rospy.loginfo('Start lifting')
         if arm.side == "left":
             roll = 0.0 #0.3
@@ -217,8 +217,8 @@ class PickUp(smach.State):
             rospy.logerr('Failed lift')
 
         # Retract
-	goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
-       	# rospy.loginfo('Start retracting')
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
+        # rospy.loginfo('Start retracting')
         if arm.side == "left":
             roll = 0.0 #0.6
         else:
