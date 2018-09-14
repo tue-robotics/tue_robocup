@@ -33,20 +33,29 @@ class PrepareEdGrasp(smach.State):
         check_type(grab_entity, Entity)
 
     def execute(self, userdata):
-
-        arm = self.arm_designator.resolve()
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
-        userdata.arm = arm.side
-
         entity = self.grab_entity_designator.resolve()
         if not entity:
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
+        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
+        self.robot.head.wait_for_motion_done()
+
+	segm_res = self.robot.ed.update_kinect("%s" % entity.id)
+        
+	arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+        userdata.arm = arm.side
+
+        # entity = self.grab_entity_designator.resolve()
+        # if not entity:
+        #     rospy.logerr("Could not resolve grab_entity")
+        #     return "failed"
+
         # Open gripper (non-blocking)
-        arm.send_gripper_goal('open', timeout=0)
+        #arm.send_gripper_goal('open', timeout=0)
 
         # Torso up (non-blocking)
         #self.robot.torso.high()
@@ -54,12 +63,14 @@ class PrepareEdGrasp(smach.State):
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
         arm.wait_for_motion_done()
-        # Open gripper
+        
+	# Open gripper
         arm.send_gripper_goal('open', timeout=0.0)
-
-        # Make sure the head looks at the entity
+	arm.wait_for_motion_done()
+        
+	# Make sure the head looks at the entity
         self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
-
+        self.robot.head.wait_for_motion_done()
         return 'succeeded'
 
 
@@ -115,7 +126,7 @@ class PickUp(smach.State):
         rospy.sleep(rospy.Duration(0.5))
 
         # Update the entity (position)
-        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
+        # segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
 
         # Resolve the entity again because we want the latest pose
         updated_grab_entity = self.grab_entity_designator.resolve()
@@ -320,14 +331,19 @@ class Grab(smach.StateMachine):
         check_type(arm, Arm)
 
         with self:
-            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
-                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
-                                                'failed': 'RESET_FAILURE'})
-
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
-                                                'arrived': 'GRAB'})
+                                                'arrived': 'PREPARE_GRASP'})
+
+            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={'succeeded': 'GRAB',
+                                                'failed': 'RESET_FAILURE'})
+
+#            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
+#                                   transitions={'unreachable': 'RESET_FAILURE',
+#                                                'goal_not_defined': 'RESET_FAILURE',
+#                                                'arrived': 'GRAB'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',

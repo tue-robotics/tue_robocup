@@ -47,7 +47,7 @@ class PreparePlace(smach.State):
 
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_place', timeout=0)
-
+	arm.wait_for_motion_done()
         # Torso up (non-blocking)
  #       self._robot.torso.high()
 
