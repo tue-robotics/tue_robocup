@@ -81,8 +81,8 @@ class Robot(object):
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         # Grasp offsets
-        #TODO: Don't hardcode, load from parameter server to make robot independent.
-        self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
+        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
+        self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
         # Create attributes from dict
         for partname, bodypart in self.parts.iteritems():
