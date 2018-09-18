@@ -95,7 +95,8 @@ and the robot will start talking. By entering `amigo.` + tab you will see all th
 amigo.speech.speak?
 ```
 
-### Creating your state machine
+## Creating the state machine
+### Create your state machine
 * Create a new folder for your 'library' in the source directory and add the `__init__.py` and `example.py` files:
 ```
 roscd challenge_example
@@ -169,3 +170,10 @@ if __name__ == "__main__":
 * `from challenge_example.example import Example` imports the `Example` class that we defined in `src/challenge_example/example.py` into this scope.
 * `state_machine = Example(robot)` instantiates an Example statemachine using the robot object and calls it 'state_machine'.
 * `state_machine.execute()` executes the example state machine.
+
+## Exercise
+Now it is time to add a state to the state machine. We want the robot to navigate to the position `x=0.8`, `y=0.27` in the "/map" frame, with rotation `rz=-1.57`. To do so, follow the steps described above and run the script:
+* locate the `NavigateToPose` in the `robot_smach_states` package and inspect the API (Application Programming Interface). Specifically look for the arguments that must be provided to the `__init__` method. As you can see, the `NavigateToPose` class inherits from the `NavigateTo` class: to identify the outcomes of this Smach state, inspect the latter class as well.
+* Add the `NavigateToPose` state to your state machine
+* Reconnect all the transitions (if necessary)
+* Run the example
