@@ -171,9 +171,66 @@ if __name__ == "__main__":
 * `state_machine = Example(robot)` instantiates an Example statemachine using the robot object and calls it 'state_machine'.
 * `state_machine.execute()` executes the example state machine.
 
-## Exercise
+### Exercise 1
 Now it is time to add a state to the state machine. We want the robot to navigate to the position `x=0.8`, `y=0.27` in the "/map" frame, with rotation `rz=-1.57`. To do so, follow the steps described above and run the script:
 * locate the `NavigateToPose` in the `robot_smach_states` package and inspect the API (Application Programming Interface). Specifically look for the arguments that must be provided to the `__init__` method. As you can see, the `NavigateToPose` class inherits from the `NavigateTo` class: to identify the outcomes of this Smach state, inspect the latter class as well.
 * Add the `NavigateToPose` state to your state machine
 * Reconnect all the transitions (if necessary)
+* Run the example
+
+
+### Designators
+In our applications, we don't want to hardcode the coordinates as we did in Exercise 1. The applications need to be as flexible as possible so that the same code, e.g., to navigate somewhere, can be reused in all applications and all environments. Even during operation, the goal of a navigation action might change. Consider, e.g., the situation that the robot asks the user where it should go. In this case, we don't know the destination of the robot while coding the challenge.
+
+To address this problem, the [designator](https://github.com/tue-robotics/tue_robocup/blob/master/robot_smach_states/src/robot_smach_states/util/designators/core.py) was developed. You can see a designator as a container. At a certain point, either at startup or at some other time during a challenge, something gets put into the container, either by the programmer or by some Smach state. Later on, some other Smach state needs the information that is in the container. Hereto, it calls the `resolve` method and uses the outcome to perform it's task.
+
+There are various types of designators defined in `robot_skills.util.designators` for various purposes. In practice, however, custom designators are often defined to meet challenge-specific needs.
+
+## Exercise 2
+* Add the following Smach to your `example.py` (fix the import whenever necessary) that will choose a random furniture object in your environment to navigate to:
+```python
+class GenerateRandomTarget(smach.State):
+    """ Smach state that puts a random target into the provided designator
+
+    """
+    def __init__(self, robot, goal_designator):
+        """ Initialization method
+
+        :param robot: (Robot) robot api object
+        :param goal_designator:
+        """
+        super(GenerateRandomTarget, self).__init__(outcomes=["done"])
+        self._robot = robot
+        self._writeable_designator = states.util.designators.core.VariableWriter(goal_designator)
+
+    def execute(self, ud):
+        """ Executes the state. Chooses a random target and puts this in the designator
+
+        :param ud: {}
+        :return: "done"
+        """
+        # Get all entities
+        entities = self._robot.ed.get_entities()
+
+        # Filter the entity id's (we're only interested in furniture objects) and choose one
+        target_entity = random.choice([e for e in entities if e.is_a("furniture")])
+        self._robot.speech.speak("Someone told me I should go to the {}".format(target_entity.id))
+
+        # Set the current id
+        self._writeable_designator.write(target_entity)
+
+        return "done"
+```
+As is described in the comments, the line `self._writeable_designator.write(target_entity)` makes sure that the entity that has been chosen is 'stored' in the designator.
+* To use this, state, instantiate a `VariableDesignator` in your example state machine:
+```python
+target_designator = states.util.designators.core.VariableDesignator(resolve_type=robot_skills.util.entity.Entity)
+```
+* Add the `GenerateRandomTarget` state to your state machine. Use the `target_designator` as an argument. Reconnect the transitions
+* Add a `NavigateToSymbolic` state to your state machine
+```Python
+states.NavigateToSymbolic(robot, entity_designator_area_name_map={target_designator: "in_front_of"},
+                            entity_lookat_designator=target_designator)
+```
+(this will make the robot move to the 'in_front_of' area of the designated furniture object while looking at the same furniture object). Reconnect the transitions once again.
 * Run the example
