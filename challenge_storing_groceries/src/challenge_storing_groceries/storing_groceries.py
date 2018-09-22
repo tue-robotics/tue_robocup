@@ -23,10 +23,10 @@ class StoringGroceries(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
         # start_waypoint = ds.EntityByIdDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
 
-        pdf_writer = WritePdf(robot=robot)
+
 
         with self:
-            single_item = ManipulateMachine(robot, pdf_writer=pdf_writer)
+            single_item = ManipulateMachine(robot)
 
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
@@ -91,11 +91,11 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES",
                                    InspectShelves(robot, cabinet),
-                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
-                                                'nothing_found': 'WRITE_PDF_SHELVES',
-                                                'failed': 'WRITE_PDF_SHELVES'})
+                                   transitions={'succeeded': 'RANGE_ITERATOR',
+                                                'nothing_found': 'RANGE_ITERATOR',
+                                                'failed': 'RANGE_ITERATOR'})
 
-            smach.StateMachine.add("WRITE_PDF_SHELVES", pdf_writer, transitions={"done": "RANGE_ITERATOR"})
+
 
             # Begin setup iterator
             # The exhausted argument should be set to the prefered state machine outcome
