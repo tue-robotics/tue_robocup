@@ -143,9 +143,6 @@ class GlobalPlanner(RobotPart):
                 distance += math.sqrt( dx*dx + dy*dy)
         return distance
 
-    def reset(self):
-        pass
-
 
 class Base(RobotPart):
     def __init__(self, robot_name, tf_listener):
@@ -238,10 +235,6 @@ class Base(RobotPart):
         rospy.sleep(0.5)
         self._initial_pose_publisher.publish(initial_pose)
 
-        return True
-
-    def reset(self):
-        self.local_planner._action_client.cancel_all_goals()
         return True
 
     ########################################################
