@@ -53,6 +53,10 @@ class LocalPlanner(RobotPart):
                 self._action_client.cancel_goal()
                 self.__setState("idle")
 
+    def reset(self):
+        self._action_client.cancel_all_goals()
+        return True
+
     def getGoalHandle(self):
         return self._goal_handle
 
@@ -138,9 +142,6 @@ class GlobalPlanner(RobotPart):
                 dy = path[index].pose.position.y - path[index-1].pose.position.y
                 distance += math.sqrt( dx*dx + dy*dy)
         return distance
-
-    def reset(self):
-        pass
 
 
 class Base(RobotPart):
@@ -234,10 +235,6 @@ class Base(RobotPart):
         rospy.sleep(0.5)
         self._initial_pose_publisher.publish(initial_pose)
 
-        return True
-
-    def reset(self):
-        self.local_planner._action_client.cancel_all_goals()
         return True
 
     ########################################################
