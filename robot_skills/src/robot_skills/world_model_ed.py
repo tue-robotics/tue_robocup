@@ -174,7 +174,7 @@ class ED(RobotPart):
 
     def reset(self, keep_all_shapes=True):
         try:
-            self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
+            return self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
         except rospy.ServiceException, e:
             rospy.logerr("Could not reset ED: {0}".format(e))
 

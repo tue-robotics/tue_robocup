@@ -192,4 +192,4 @@ class RobotPart(object):
                 self._operational = True
 
     def reset(self):
-        pass
+        return True
