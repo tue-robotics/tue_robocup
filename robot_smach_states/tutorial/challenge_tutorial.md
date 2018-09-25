@@ -208,7 +208,7 @@ Now it is time to add a state to the state machine. We want the robot to navigat
 * Add the `NavigateToPose` state to your state machine
 * Reconnect all the transitions (if necessary)
 * Run the example
-
+* Add another state so that the robot announces (using speech) that it has arrived at its goal
 
 ### Designators
 In our applications, we don't want to hardcode the coordinates as we did in Exercise 1. The applications need to be as flexible as possible so that the same code, e.g., to navigate somewhere, can be reused in all applications and all environments. Even during operation, the goal of a navigation action might change. Consider, e.g., the situation that the robot asks the user where it should go. In this case, we don't know the destination of the robot while coding the challenge.
