@@ -244,8 +244,11 @@ class GenerateRandomTarget(smach.State):
         entities = self._robot.ed.get_entities()
 
         # Filter the entity id's (we're only interested in furniture objects) and choose one
-        target_entity = random.choice([e for e in entities if e.is_a("furniture")])
-        self._robot.speech.speak("Someone told me I should go to the {}".format(target_entity.id))
+        # N.B.: we need to make sure it has an 'in front of' area
+        while True:
+            target_entity = random.choice([e for e in entities if e.is_a("furniture")])
+            if "in_front_of" in target_entity.volumes:
+                break
 
         # Set the current id
         self._writeable_designator.write(target_entity)
