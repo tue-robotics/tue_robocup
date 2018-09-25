@@ -1,14 +1,14 @@
 # Creating a TU/e RoboCup challenge
 
-This tutorial explains how to setup a new RoboCup challenge. It assumes that you have finished the [ROS tutorials](http://wiki.ros.org/ROS/Tutorials) as well as the [Smach tutorials](http://wiki.ros.org/smach/Tutorials). Furthermore, it assumes that the simulator as well as 'middleware' are running. (ToDo: add links.)
+This tutorial explains how to setup a new RoboCup challenge. It assumes that you have finished the [ROS tutorials](http://wiki.ros.org/ROS/Tutorials) as well as the [Smach tutorials](http://wiki.ros.org/smach/Tutorials). Furthermore, it assumes that [the simulator as well as 'middleware' are running](https://github.com/tue-robotics/tue-robotics.github.io/wiki/Getting-started).
 
 ## Setting up the boiler plate
 
 ### Setting up the package
 
-* Browse to the `tue_robocup` folder on your machine (ToDo: either create it directly in workspace, create link or whole target meuk):
+* Browse to your [catkin workspace](http://wiki.ros.org/catkin/workspaces):
 ```
-cd ~/ros/$ROS_DISTRO/repos/https_/github.com/tue-robotics/tue_robocup.git/
+cd ~/ros/$ROS_DISTRO/system/src
 ```
 * Create the package:
 ```
@@ -40,7 +40,7 @@ touch challenge_example
 chmod +x challenge_example
 ```
 Using `ls` in your terminal you can see that the file is green.
-* Open your file in Pycharm and add the following contents:
+* Open your file in [Pycharm](https://www.jetbrains.com/pycharm/) and add the following contents (N.B., you can easily install Pycharm on your system using `tue-get install pycharm`. N.N.B., open Pycharm from a terminal to make sure the [bashrc](https://superuser.com/questions/49289/what-is-the-bashrc-file) is sourced, open the `challenge_example` *folder*, and tick 'Add to currently opened projects' for convenience):
 
 ```python
 #!/usr/bin/python
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     rospy.loginfo("Hello world")
 ```
 
-* Now you can run the challenge:
+* Now you can run the challenge (N.B.: as was mentioned in the introduction, make sure a roscore, simulator and middleware are running):
 ```
 rosrun challenge_example challenge_example
 ```
@@ -135,7 +135,7 @@ class Example(smach.StateMachine):
 ```
 * `import smach` imports the [smach](http://wiki.ros.org/smach) Python module so that we can use it
 * `import robot_smach_states as states` imports [the smach states](https://github.com/tue-robotics/tue_robocup/tree/master/robot_smach_states) that have been developed in the TU/e Robotics lab
-* `class Example(smach.StateMachine):` defines the statemachine that we are implementing. The `smach.StateMachine` between brackets shows that the `Example` class [inherits](https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming) from the `smach.StateMachine` class. (If you don't know what inheritance means you might want to study that first)
+* `class Example(smach.StateMachine):` defines the statemachine that we are implementing. The `smach.StateMachine` between brackets shows that the `Example` class <a href="https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)">inherits</a>  from the `smach.StateMachine` class. (If you don't know what inheritance means you might want to study that first)
 * `def __init__(self, robot):` defines the signature of the initialization method. Basically, each class needs such a function. In this case, we need to supply the Robot object that was instantiated previously in our script.
 * `smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])` calls the initialization method of the parent class. Here, we also define the outcomes of our statemachine to `succeeded`, `failed` and `aborted`.
 * `states.Say(robot, "Hello world")` instantiates a `Say` state using our robot object and the sentence "Hello world"
@@ -170,6 +170,37 @@ if __name__ == "__main__":
 * `from challenge_example.example import Example` imports the `Example` class that we defined in `src/challenge_example/example.py` into this scope.
 * `state_machine = Example(robot)` instantiates an Example statemachine using the robot object and calls it 'state_machine'.
 * `state_machine.execute()` executes the example state machine.
+
+### Running our challenge
+* Before we run our challenge, we need to do some final bookkeeping:
+```
+roscd challenge_example
+touch setup.py
+chmod +x setup.py
+```
+* Add the following contents to `setup.py` (look [here](https://docs.python.org/2/distutils/setupscript.html) for more info on Python setup):
+
+```python
+#!/usr/bin/env python
+
+from distutils.core import setup
+from catkin_pkg.python_setup import generate_distutils_setup
+
+d = generate_distutils_setup(
+    # #  don't do this unless you want a globally visible script
+    # scripts=['bin/myscript'],
+    packages=['challenge_example'],
+    package_dir={'': 'src'}
+)
+
+setup(**d)
+```
+* run `tue-make challenge_example`
+* make sure your roscore, simulator and free mode are running
+* run the example:
+```
+rosrun challenge_example challenge_example
+```
 
 ### Exercise 1
 Now it is time to add a state to the state machine. We want the robot to navigate to the position `x=0.8`, `y=0.27` in the "/map" frame, with rotation `rz=-1.57`. To do so, follow the steps described above and run the script:
