@@ -34,55 +34,57 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 rooms = location_rooms + ["workshop"]
 
 objects = [
-    {'category': 'food',                'name': 'apple',                'color': 'green'},  # fruit
-    {'category': 'food',                'name': 'banana',               'color': 'yellow'},  # fruit
-    {'category': 'food',                'name': 'cereal',               'color': 'yellowish'},
-    {'category': 'food',                'name': 'corn',                 'color': 'yellow'},
-    {'category': 'food',                'name': 'crackers',             'color': 'yellow'},
-    {'category': 'food',                'name': 'mango',                'color': 'red'},  # fruit
-    {'category': 'food',                'name': 'orange',               'color': 'orange'},
-    {'category': 'food',                'name': 'peas',                 'color': 'green'},  # fruit
-    {'category': 'food',                'name': 'pepper',               'color': 'black'},
-    {'category': 'food',                'name': 'salt',                 'color': 'white'},
-    {'category': 'container',           'name': 'basket',               'color': 'green'},
-    {'category': 'container',           'name': 'bowl',                 'color': 'blue'},
-    {'category': 'container',           'name': 'cup',                  'color': 'orangish'},
-    {'category': 'container',           'name': 'plate',                'color': 'grey'},
-    {'category': 'drink',               'name': 'beer',                 'color': 'brown'},
-    {'category': 'drink',               'name': 'bifrutas',             'color': 'blue'},
-    {'category': 'drink',               'name': 'coke',                 'color': 'red'},
-    {'category': 'drink',               'name': 'fanta',                'color': 'orange'},
-    {'category': 'drink',               'name': 'ice_tea',              'color': 'yellow'},
-    {'category': 'drink',               'name': 'tea',                  'color': 'green'},
-    {'category': 'drink',               'name': 'water',                'color': 'transparent'},
-    {'category': 'snack',               'name': 'cookies',              'color': 'brownish'},
-    {'category': 'snack',               'name': 'mentos',               'color': 'blue'},
-    {'category': 'snack',               'name': 'pringles',             'color': 'orange'},
-    {'category': 'cleaning_stuff',      'name': 'brush',                'color': 'brown'},
-    {'category': 'cleaning_stuff',      'name': 'cloth',                'color': 'yellow'},
-    {'category': 'cleaning_stuff',      'name': 'deodorant',            'color': 'pink'},
-    {'category': 'cleaning_stuff',      'name': 'hair_gel',             'color': 'transparent'},
-    {'category': 'cleaning_stuff',      'name': 'hairspray',            'color': 'blue'},
-    {'category': 'cleaning_stuff',      'name': 'sponge',               'color': 'yellow'},
-    {'category': 'cleaning_stuff',      'name': 'toothpaste',           'color': 'blue'},
-    {'category': 'cleaning_stuff',      'name': 'towel',                'color': 'pink'},
-    {'category': 'cutlery',             'name': 'fork',                 'color': 'brownish'},
-    {'category': 'cutlery',             'name': 'spoon',                'color': 'brownish'},
-    {'category': 'cutlery',             'name': 'knife',                'color': 'brownish'},
-    {'category': 'cutlery',             'name': 'chopsticks',           'color': 'brownish'}
+    {'category': 'food',                'name': 'apple',            'color': 'green',           'volume': 301,      'weight': 100},  # fruit
+    {'category': 'food',                'name': 'banana',           'color': 'yellow',          'volume': 320,      'weight': 100},  # fruit
+    {'category': 'food',                'name': 'mango',            'color': 'red',             'volume': 254,      'weight': 100},  # fruit
+    {'category': 'food',                'name': 'orange',           'color': 'orange',          'volume': 352,      'weight': 100},  # fruit
+    {'category': 'food',                'name': 'cereal',           'color': 'green',           'volume': 1485,     'weight': 100},
+    {'category': 'food',                'name': 'corn',             'color': 'yellow',          'volume': 240,      'weight': 100},
+    {'category': 'food',                'name': 'crackers',         'color': 'blueish',         'volume': 300,      'weight': 100},
+    {'category': 'food',                'name': 'peas',             'color': 'green',           'volume': 239,      'weight': 100},
+    {'category': 'food',                'name': 'pepper',           'color': 'black',           'volume': 110,      'weight': 100},
+    {'category': 'food',                'name': 'salt',             'color': 'white',           'volume': 110,      'weight': 100},
+    {'category': 'food',                'name': 'pasta',            'color': 'yellow',          'volume': 1570,     'weight': 100},
+    {'category': 'container',           'name': 'basket',           'color': 'green',           'volume': 3487,     'weight': 100},
+    {'category': 'container',           'name': 'bowl',             'color': 'blue',            'volume': 617,      'weight': 100},
+    {'category': 'container',           'name': 'cup',              'color': 'orangish',        'volume': 427,      'weight': 100},
+    {'category': 'container',           'name': 'plate',            'color': 'grey',            'volume': 147,      'weight': 100},
+    {'category': 'drink',               'name': 'beer',             'color': 'brown',           'volume': 388,      'weight': 100},
+    {'category': 'drink',               'name': 'bifrutas',         'color': 'blue',            'volume': 378,      'weight': 100},
+    {'category': 'drink',               'name': 'coke',             'color': 'red',             'volume': 376,      'weight': 335},
+    {'category': 'drink',               'name': 'fanta',            'color': 'orange',          'volume': 376,      'weight': 335},
+    {'category': 'drink',               'name': 'ice_tea',          'color': 'yellow',          'volume': 376,      'weight': 335},
+    {'category': 'drink',               'name': 'tea',              'color': 'green',           'volume': 877,      'weight': 100},
+    {'category': 'drink',               'name': 'water',            'color': 'transparent',     'volume': 400,      'weight': 100},
+    {'category': 'snack',               'name': 'cookies',          'color': 'brownish',        'volume': 442,      'weight': 100},
+    {'category': 'snack',               'name': 'mentos',           'color': 'blue',            'volume': 235,      'weight': 100},
+    {'category': 'snack',               'name': 'pringles',         'color': 'orange',          'volume': 1125,     'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'brush',            'color': 'brown',           'volume': 315,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'cloth',            'color': 'yellow',          'volume': 161,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'deodorant',        'color': 'pink',            'volume': 314,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'hair_gel',         'color': 'transparent',     'volume': 238,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'hairspray',        'color': 'blue',            'volume': 490,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'yellow',          'volume': 234,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'toothpaste',       'color': 'blue',            'volume': 106,      'weight': 100},
+    {'category': 'cleaning_stuff',      'name': 'towel',            'color': 'pink',            'volume': 243,      'weight': 100},
+    {'category': 'cutlery',             'name': 'fork',             'color': 'brownish',        'volume': 4,        'weight': 100},
+    {'category': 'cutlery',             'name': 'spoon',            'color': 'brownish',        'volume': 4,        'weight': 100},
+    {'category': 'cutlery',             'name': 'knife',            'color': 'brownish',        'volume': 5,        'weight': 100},
+    {'category': 'cutlery',             'name': 'chopsticks',       'color': 'brownish',        'volume': 20,       'weight': 100}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
 object_categories = list(set([ o["category"] for o in objects ]))
 object_color = list(set([ o["color"] for o in objects ]))
+object_size = list(set([ o["volume"] for o in objects ]))
+object_weight = list(set([ o["weight"] for o in objects ]))
 # object_groups = list(set([ o["group"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-    "food": {"bookcase": "shelf3"},
+    "food": {"bookcase": "on_top_of"},
     "container": {"flight_case": "in"},
     "drink": {"dinner_table": "on_top_of"},
-    "snack": {"bookcase": "on_top_of"},
     "cleaning_stuff": {"cabinet": "on_top_of"},
     "cutlery": {"bar": "on_top_of"}
 }
@@ -100,7 +102,7 @@ most_probable_location_in_room_map = {
     'livingroom': 'dinner_table',
     'bedroom': 'nightstand',
     'workshop': 'workbench',
-    'kitchen': 'desk',
+    'kitchen': 'cabinet',
     'hallway': 'hallway_table'
 }
 
@@ -220,6 +222,18 @@ def get_object_color(obj):
             return o["color"]
     return None
 
+def get_object_size(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["volume"]
+    return None
+
+def get_object_weight(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return o["weight"]
+    return None
+
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
     location = category_locations[obj_cat].keys()[0]
@@ -256,6 +270,3 @@ if __name__ == "__main__":
     print "None-manipulation locations:"
     for loc in get_locations(pick_location=False, place_location=False):
         print "    {}".format(loc)
-
-
-

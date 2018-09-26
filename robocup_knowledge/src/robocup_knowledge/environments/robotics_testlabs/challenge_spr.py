@@ -108,13 +108,12 @@ Q["action" : "count", "entity" : P] -> how many PEOPLE[P] are in the crowd | tel
 
 grammar += '''
 
-NQ["action" : "c_count", "entity" : X] -> how many people in the crowd are POSITION[X]
-NQ["action" : "c_count", "entity" : W] -> how many people in the crowd are GESTURE[W]
-NQ["action" : "c_count", "entity" : L] -> tell me how many people were wearing COLOR[L]
-NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER
-NQ["action" : "random_gender", "entity" : X] -> the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
-NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER
-NQ["action" : "random_gender", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER or GENDER
+NQ["action" : "count_pos", "entity" : X] -> how many people in the crowd are POSITION[X]
+NQ["action" : "count_ges", "entity" : W] -> how many people in the crowd are GESTURE[W]
+NQ["action" : "count_col", "entity" : L] -> tell me how many people were wearing COLOR[L]
+
+NQ["action" : "gender_pos", "entity" : X] -> the POSITION[X] person was GENDER | tell me if the POSITION[X] person was a GENDER | the POSITION[X] person was GENDER or GENDER | tell me if the POSITION[X] person was a GENDER or GENDER
+NQ["action" : "gender_ges", "entity" : W] -> tell me if the GESTURE[W] person was a GENDER | tell me if the GESTURE[W] person was a GENDER or GENDER
 '''
 
 ##############################################################################
@@ -137,20 +136,24 @@ Q["action" : "count_placement", "entity" : Y, "location" : R] -> how many PLACEM
 ##############################################################################
 
 grammar += '''
-ADJR -> smaller | bigger
+SB -> smaller | bigger
+LH -> lighter | heavier
+
 
 Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
 Q["action" : "find_category", "entity" : C] -> where can i find DET OBJECT_CATEGORIES[C]
+
 Q["action" : "return_category", "entity" : O] -> to WHATWHICH category belong the OBJECT_NAMES[O]
 Q["action" : "return_color", "entity" : O] -> whats the color of the OBJECT_NAMES[O]
-Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do the OBJECT_NAMES[O] and OBJECT_NAMES[A] belong to the same category
-Q["action" : "count_object", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
 
-NQ["action" : "count_object", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "count_object", "entity" : O, "location" : Y] -> how many OBJECT_NAMES[O] are in the PLACEMENTS_AND_BEACONS[Y]
-NQ["action" : "category_at_loc", "location" : Y] -> what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
+Q["action" : "compare_category", "entity_a" : O, "entity_b" : A] -> do DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] belong to the same category
+Q["action" : "compare_sizes", "entity_a" : O, "entity_b" : A] -> between DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] which one is SB
+Q["action" : "compare_weight", "entity_a" : O, "entity_b" : A] -> between DET OBJECT_NAMES[O] and DET OBJECT_NAMES[A] which one is LH
 
-NQ["action" : "compare", "entity_a" : O, "entity_b" : A] -> between the OBJECT_NAMES[O] and OBJECT_NAMES[A] which one is ADJR
+Q["action" : "count_object_cat", "entity" : C] -> how many OBJECT_CATEGORIES[C] there are
+
+NQ["action" : "count_object_loc", "location" : Y] -> how many objects are in the PLACEMENTS_AND_BEACONS[Y] | what objects are stored in the PLACEMENTS_AND_BEACONS[Y]
+NQ["action" : "count_object_cat_loc", "entity" : C, "location" : Y] -> how many OBJECT_CATEGORIES[C] are in the PLACEMENTS_AND_BEACONS[Y]
 '''
 
 ##############################################################################
@@ -181,7 +184,7 @@ GENDER['girl'] -> girl
 
 POSITION['standing'] -> standing
 POSITION['sitting'] -> sitting
-POSITION['lying'] -> lying
+POSITION['lying'] -> laying
 
 GESTURE['waving'] -> waving
 GESTURE['rise_l_arm'] -> rising left arm
