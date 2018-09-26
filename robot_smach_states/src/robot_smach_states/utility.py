@@ -20,17 +20,6 @@ class Initialize(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        # self.robot.lights.set_color(0, 0, 1)  # be sure lights are blue
-        #
-        # self.robot.base.local_planner._action_client.cancel_all_goals()
-        # self.robot.head.reset()
-        # self.robot.leftArm.reset()
-        # self.robot.leftArm.send_gripper_goal('close', 0.0)
-        # self.robot.rightArm.reset()
-        # self.robot.rightArm.send_gripper_goal('close', 0.0)
-        # self.robot.ed.reset()
-        # self.robot.torso.reset()
-        # self.robot.hmi.restart_dragonfly()
         self.robot.reset()
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
