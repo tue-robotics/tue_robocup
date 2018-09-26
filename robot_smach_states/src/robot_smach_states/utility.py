@@ -31,7 +31,7 @@ class Initialize(smach.State):
         # self.robot.ed.reset()
         # self.robot.torso.reset()
         # self.robot.hmi.restart_dragonfly()
-        self.robot.initialize()
+        self.robot.reset()
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
         rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
