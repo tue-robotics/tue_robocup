@@ -101,6 +101,10 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
+    def reset(self):
+        for partname, bodypart in self.parts.iteritems():
+            bodypart.reset()
+
     def standby(self):
         if not self.robot_name == 'amigo':
             rospy.logerr('Standby only works for amigo')
@@ -152,45 +156,11 @@ class Robot(object):
         return preferred_side, backup_side
 
     def close(self):
-        try:
-            self.head.close()
-        except: pass
-
-        try:
-            self.base.close()
-        except: pass
-
-        try:
-            self.torso.close()
-        except: pass
-
-        try:
-            self.speech.close()
-        except: pass
-
-        try:
-            self.arms.close()
-        except: pass
-
-        try:
-            self.leftArm.close()
-        except: pass
-
-        try:
-            self.rightArm.close()
-        except: pass
-
-        try:
-            self.ears.close()
-        except: pass
-
-        try:
-            self.ebutton.close()
-        except: pass
-
-        try:
-            self.lights.close()
-        except: pass
+        for partname, bodypart in self.parts.iteritems():
+            try:
+                bodypart.close()
+            except:
+                pass
 
     @property
     def operational(self):

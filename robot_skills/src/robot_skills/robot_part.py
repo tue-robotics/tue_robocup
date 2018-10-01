@@ -13,6 +13,7 @@ SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"
 
 class RobotPart(object):
     """ Base class for robot parts """
+
     def __init__(self, robot_name, tf_listener):
         """
         Constructor
@@ -190,3 +191,5 @@ class RobotPart(object):
             else:
                 self._operational = True
 
+    def reset(self):
+        return True
