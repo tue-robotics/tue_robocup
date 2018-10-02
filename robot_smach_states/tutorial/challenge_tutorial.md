@@ -195,7 +195,8 @@ d = generate_distutils_setup(
 
 setup(**d)
 ```
-* run `tue-make challenge_example`
+* Uncomment (remove the `#`) the line `catkin_python_setup()` in your `CMakeLists.txt`. This makes sure that the `setup.py` is called when `catkin build` or `catkin make` is invoked (see next step).
+* run `tue-make challenge_example`. This 'builds' or makes the package (`challenge_example`)
 * make sure your roscore, simulator and free mode are running
 * run the example:
 ```
