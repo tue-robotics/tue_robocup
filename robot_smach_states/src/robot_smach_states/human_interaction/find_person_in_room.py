@@ -16,6 +16,29 @@ import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 
 
+class Person(object):
+    """
+    :param person.name: available learned persons. Supported are: Janno, Rein, Ramon, Rokus, Henk, Max,
+    Loy, Matthijs, Kevin, Josja, Lars, Ainse.
+    """
+class LearnOperator(smach.State):
+    def __init__(self, robot, operator_timeout=20, ask_follow=True, learn_face=True, learn_person_timeout=10.0):
+        smach.State.__init__(self, outcomes=['follow', 'Failed', 'Aborted'],
+                             input_keys=['operator_learn_in'],
+                             output_keys=['operator_learn_out'])
+        self._robot = robot
+        self._operator_timeout = operator_timeout
+        self._ask_follow = ask_follow
+        self._learn_face = learn_face
+        self._learn_person_timeout = learn_person_timeout
+        self._operator_name = "Loy"
+
+    def execute(self, userdata):
+        start_time = rospy.Time.now()
+        self._robot.head.look_at_standing_person()
+        operator = userdata.operator_learn_in
+
+
 class FindPerson(smach.State):
     """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.
 
