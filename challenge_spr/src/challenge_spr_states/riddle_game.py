@@ -214,7 +214,6 @@ def answer_find_objects(action):
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
         cat = objects[0]['category']
-        print cat
         loc, area_name = common_knowledge.get_object_category_location(cat)
         return 'You can find the %s %s %s' % (entity, area_name, loc)
     else:

@@ -103,11 +103,11 @@ class DetectCrowd(smach.State):
         lpointing_persons = []
         rpointing_persons = []
         num_males = 0
+        num_men = 0
+        num_boys = 0
         num_females = 0
         num_women = 0
         num_girls = 0
-        num_men = 0
-        num_boys = 0
         num_elders = 0
         num_waving = 0
         num_rarm = 0
@@ -151,20 +151,23 @@ class DetectCrowd(smach.State):
                 if d.gender == FaceProperties.MALE:
                     if d.age < 18:
                         num_boys += 1
+                        num_males += 1
                     elif d.age > 60:
                         num_elders += 1
+                        num_males += 1
                     else:
                         num_men += 1
+                        num_males += 1
                 else:
                     if d.age < 18:
                         num_girls += 1
+                        num_females += 1
                     elif d.age > 60:
                         num_elders += 1
+                        num_females += 1
                     else:
                         num_women += 1
-
-            num_males = num_boys + num_men
-            num_females = num_girls + num_women
+                        num_females += 1
 
         self.robot.speech.speak("There are %d males and %d females in the crowd" % (num_males, num_females))
 
@@ -178,7 +181,7 @@ class DetectCrowd(smach.State):
             "children": num_boys + num_girls,
             "adults": num_men + num_women,
             "elders": num_elders,
-            "crowd_size": num_females + num_males + num_elders,
+            "crowd_size": num_females + num_males,
             "waiving": num_waving,
             "raising_left": num_larm,
             "raising_right": num_rarm,
