@@ -52,7 +52,7 @@ class SetInitialPose(smach.State):
 
         print e_loc
 
-        rz, _, _ = e_loc.pose.frame.M.GetEulerZYX()
+        rz, _, _ = e_loc.pose.frame.M.GetRPY()
 
         return e_loc.pose.frame.p.x(), e_loc.pose.frame.p.y(), rz
 
