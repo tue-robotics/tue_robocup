@@ -58,7 +58,7 @@ class NavigateToGrasp(NavigateTo):
             return None
 
         try:
-            rz, _, _ = entity.pose.frame.M.GetEulerZYX()
+            rz, _, _ = entity.pose.frame.M.GetRPY()
         except KeyError, ke:
             rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0
