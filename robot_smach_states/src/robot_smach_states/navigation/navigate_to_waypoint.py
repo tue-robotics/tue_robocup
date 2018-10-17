@@ -39,7 +39,7 @@ class NavigateToWaypoint(NavigateTo):
         try:
             x = e.pose.frame.p.x()
             y = e.pose.frame.p.y()
-            rz, _, _ = e.pose.frame.M.GetEulerZYX()
+            rz, _, _ = e.pose.frame.M.GetRPY()
         except Exception as e:
             rospy.logerr(e)
             return None
