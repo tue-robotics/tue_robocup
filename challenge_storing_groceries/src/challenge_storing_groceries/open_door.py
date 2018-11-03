@@ -23,6 +23,12 @@ import robot_smach_states.util.designators as ds
 
 
 def _clamp(abs_value, value):
+    """
+    Clamps the value to be between -abs_value and +abs_value
+    :param abs_value: limit of the value in both positive and negative direction
+    :param value: value to be clamped...
+    :return: The -abs_value when value is smaller than -abs_value OR +abs_value when value is more than +abs_value
+    """
     return max(-abs_value, min(abs_value, value))
 
 

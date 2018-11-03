@@ -29,8 +29,5 @@ GRAB_SURFACE = "on_top_of"
 MIN_GRAB_OBJECT_HEIGHT = 0.075
 MAX_GRAB_OBJECT_WIDTH = 0.15
 
-# OBJECTS
-SUPERCLASSES = challenge_knowledge.superclasses
-
 # Debug
 DEBUG = False
