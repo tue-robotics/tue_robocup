@@ -46,13 +46,14 @@ def _get_yaw_from_quaternion_msg(msg):
 def _wrap_angle_pi(angle):
     """
     Wraps between -pi and +pi
+    -pi is excluded, (-pi, pi]
     :param angle: Input angle
     :return: Wrapped angle
     """
     angle = angle % (2 * math.pi)
     if angle > math.pi:
         return angle - 2 * math.pi
-    elif angle < -math.pi:
+    elif angle <= -math.pi:
         return angle + 2 * math.pi
     return angle
 
