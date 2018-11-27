@@ -16,8 +16,8 @@ class Hero(robot.Robot):
         # remap topics in base
         self.parts['base']._cmd_vel = rospy.Publisher('/hsrb/command_velocity', geometry_msgs.msg.Twist, queue_size=10)
 
-    	#rename joint names
-	    self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
+        #rename joint names
+        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
         self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
 
         # This is still very ugly, because there is a lof of double code, but atleast it is only in sergio.
@@ -27,5 +27,8 @@ class Hero(robot.Robot):
         #    setattr(self, partname, bodypart)
 
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
+        # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
+        self.leftArm.unsubscribe_hardware_status()
+        self.rightArm.unsubscribe_hardware_status()
 
-	self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
+        self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
