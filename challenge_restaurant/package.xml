@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>challenge_restaurant</name>
   <version>0.0.0</version>
   <description>Restaurant challenge</description>
@@ -10,15 +10,17 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>depth_image_proc</depend>
+
   <build_depend>robot_skills</build_depend>
   <build_depend>robot_smach_states</build_depend>
 
-  <run_depend>robot_skills</run_depend>
-  <run_depend>robot_smach_states</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>python-markdown</run_depend>
-  <run_depend>python-xhtml2pdf</run_depend>
-  <run_depend>python-numpy</run_depend>
-  <run_depend>tue_msgs</run_depend>
+  <exec_depend>robot_skills</exec_depend>
+  <exec_depend>robot_smach_states</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>python-markdown</exec_depend>
+  <exec_depend>python-xhtml2pdf</exec_depend>
+  <exec_depend>python-numpy</exec_depend>
+  <exec_depend>tue_msgs</exec_depend>
 
 </package>

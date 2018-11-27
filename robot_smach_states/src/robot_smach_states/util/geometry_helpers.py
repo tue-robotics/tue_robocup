@@ -92,7 +92,7 @@ def offsetConvexHull(input_ch, offset):
     out_ch = []
     for p in input_ch:
         pf = kdl.Frame(kdl.Rotation(), p)  # ToDo: is this necessary???
-        pf = pf * offset
+        pf = offset * pf
         p_out = kdl.Vector(pf.p)
         out_ch.append(p_out)
     return out_ch

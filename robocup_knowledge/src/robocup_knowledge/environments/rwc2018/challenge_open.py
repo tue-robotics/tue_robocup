@@ -1,17 +1,6 @@
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
-not_understood_sentences = [
-        "I'm so sorry! Can you please speak louder and slower? And wait for the ping!",
-        "I am deeply sorry. Please try again, but wait for the ping!",
-        "You and I have communication issues. Speak up!",
-        "All this noise is messing with my audio. Try again"
-    ]
-
-initial_pose = "initial_pose_2"
-starting_pose = "gpsr_meeting_point"
-exit_waypoint = "gpsr_exit_door_2"
-
 grammar_target = "T"
 
 ##############################################################################
@@ -27,6 +16,15 @@ C[{"actions": <A1>}] -> VP[A1]
 C[{"actions": <A1, A2>}] -> VP[A1] and VP[A2]
 C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 """
+
+##############################################################################
+#
+# Names for this specific challenge
+#
+##############################################################################
+female_names = ["josja"]
+male_names = ["max", "lars", "rein", "rokus", "ramon", "loy", "sam", "henk", "matthijs", "lieve"]
+names = female_names + male_names
 
 ##############################################################################
 #
@@ -63,12 +61,18 @@ for loc in common.get_locations(pick_location=True, place_location=True):
 for cat in common.object_categories:
     grammar += "\nOBJECT_CATEGORY[{'category': '%s'}] -> %s" % (cat, cat)
 
-for name in common.names:
+for name in names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
+    grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': 'gpsr_entrance', 'type': 'waypoint'}}] -> %s at the entrance" % (
+        name, name)
+    grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': 'gpsr_exit_door', 'type': 'waypoint'}}] -> %s at the exit" % (
+        name, name)
     for loc in common.get_locations():
-        grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
+        grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (
+        name, loc, name, loc)
 
-grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "gpsr_exit_door", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 
 ###############################################################################
 #
@@ -104,6 +108,43 @@ grammar += """
 V_GOTO -> go to | navigate to
 
 VP[{"action": "navigate-to", "target-location": X}] -> V_GOTO the ROOM_OR_LOCATION[X]
+"""
+
+###############################################################################
+#
+# Check who's at the door
+#
+###############################################################################
+
+grammar += """
+V_SEND_PICTURE -> check who is | show me who is
+
+VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE at the ROOM_OR_LOCATION[X]
+"""
+
+
+###############################################################################
+#
+# Guide
+#
+###############################################################################
+
+grammar += """
+V_GUIDE -> guide
+
+VP[{"action": "guide", "object": X, "target-location": Y, "source-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the ROOM_OR_LOCATION[Z] to the ROOM_OR_LOCATION[Y]
+"""
+
+###############################################################################
+#
+# Inspect
+#
+###############################################################################
+
+grammar += """
+V_INSPECT -> inspect
+
+VP[{"action": "inspect", "object": X}] -> V_INSPECT the LOCATION[X]
 """
 
 ###############################################################################
@@ -154,6 +195,7 @@ VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object":
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING to PERSON_AT_LOCATION[Y] DET NAMED_OBJECT[Z] from the LOCATION[X]
 
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to PERSON_AT_LOCATION[Y]
+VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to OPERATOR[Y]
 
 
 VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to PERSON_AT_LOCATION[X]
@@ -178,6 +220,7 @@ V_SAY -> tell | say
 
 VP[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 VP[{"action": "say", "sentence": X, "object": Y}] -> V_SAY SAY_SENTENCE[X] to PERSON_AT_LOCATION[Y]
+VP[{"action": "say", "sentence": "party"}] -> lets get the party started
 """
 
 grammar += '\nSAY_SENTENCE["time"] -> the time'
@@ -190,6 +233,7 @@ grammar += '\nSAY_SENTENCE["today"] -> what day is today'
 grammar += '\nSAY_SENTENCE["tomorrow"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["joke"] -> a joke'
 grammar += '\nSAY_SENTENCE["something_about_self"] -> something about yourself'
+grammar += '\nSAY_SENTENCE["you_shall_not_pass"] -> you shall not pass'
 
 ##############################################################################
 #

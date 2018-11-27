@@ -53,6 +53,10 @@ class LocalPlanner(RobotPart):
                 self._action_client.cancel_goal()
                 self.__setState("idle")
 
+    def reset(self):
+        self._action_client.cancel_all_goals()
+        return True
+
     def getGoalHandle(self):
         return self._goal_handle
 

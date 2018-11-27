@@ -55,6 +55,7 @@ class Lights(RobotPart):
         :return: no return
         """
         self.set_color_colorRGBA(RESET)
+        return True
 
     def on(self):
         """
