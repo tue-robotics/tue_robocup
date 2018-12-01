@@ -49,16 +49,8 @@ class PrepareEdGrasp(smach.State):
             return "failed"
         userdata.arm = arm.side
 
-        # entity = self.grab_entity_designator.resolve()
-        # if not entity:
-        #     rospy.logerr("Could not resolve grab_entity")
-        #     return "failed"
-
-        # Open gripper (non-blocking)
-        #arm.send_gripper_goal('open', timeout=0)
-
         # Torso up (non-blocking)
-        #self.robot.torso.high()
+        self.robot.torso.reset()
 
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
