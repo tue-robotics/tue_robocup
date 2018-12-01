@@ -102,8 +102,11 @@ class Robot(object):
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
     def reset(self):
+        results = {}
         for partname, bodypart in self.parts.iteritems():
+            rospy.logdebug("Resetting {}".format(partname))
             bodypart.reset()
+        return all(results.values())
 
     def standby(self):
         if not self.robot_name == 'amigo':
