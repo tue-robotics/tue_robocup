@@ -50,7 +50,6 @@ class Dutch(object):
     LRF = "Verder heb ik 1 lezer afstandsmeter, waarmee ik beter kan zien waar ik ben." # laser = lezer :-)
     LRF_LOCS = "Deze lezer zit op mijn onderstel"
     LRF_LOCS2 = "Kijk daar zit ie"
-    LRF_LOCS2 = "Kijk daar zit ie"
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
     END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je mijn presentatie leuk vond en ik wens je nog een fijne dag"
 
@@ -176,7 +175,6 @@ class Presentation(smach.State):
                 self.robot.leftArm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
-
                 self.robot.leftArm.wait_for_motion_done()
                 self.robot.torso.wait_for_motion_done()
                 self.robot.head.wait_for_motion_done()
