@@ -117,9 +117,6 @@ class PickUp(smach.State):
         # look_at_point function finishes
         rospy.sleep(rospy.Duration(0.5))
 
-        # Update the entity (position)
-        # segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
-
         # Resolve the entity again because we want the latest pose
         updated_grab_entity = self.grab_entity_designator.resolve()
 
