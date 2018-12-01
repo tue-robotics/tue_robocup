@@ -21,7 +21,7 @@ class Volume(object):
         return self._calc_center_point()
 
     def _calc_center_point(self):
-        raise NotImplementedError("_get_center_point must be implemented by subclasses")
+        raise NotImplementedError("_calc_center_point must be implemented by subclasses")
 
     def contains(self, point):
         """ Checks if the point is inside this volume
