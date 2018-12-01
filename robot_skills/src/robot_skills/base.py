@@ -55,6 +55,8 @@ class LocalPlanner(RobotPart):
 
     def reset(self):
         self._action_client.cancel_all_goals()
+        # cancel_all_goals doesn't return anything useful to check, so we just return True
+        # https://docs.ros.org/kinetic/api/actionlib/html/simple__action__client_8py_source.html#l00192
         return True
 
     def getGoalHandle(self):
@@ -237,8 +239,7 @@ class Base(RobotPart):
         return True
 
     def reset(self):
-        self.local_planner._action_client.cancel_all_goals()
-        return True
+        return self.local_planner.reset()
 
     ########################################################
     ###### Are the following functions deprecated ??? ######
