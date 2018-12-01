@@ -45,11 +45,12 @@ class PreparePlace(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
+        # Torso up (non-blocking)
+        self._robot.torso.reset()
+        
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_place', timeout=0)
-	arm.wait_for_motion_done()
-        # Torso up (non-blocking)
- #       self._robot.torso.high()
+        arm.wait_for_motion_done()
 
         # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
         # Hence, we want the torso to go to the place height - 0.6
@@ -113,7 +114,7 @@ class Put(smach.State):
                                                     tf_listener=self._robot.tf_listener)
 
         # Wait for torso and arm to finish their motions
-  #      self._robot.torso.wait_for_motion_done()
+        self._robot.torso.wait_for_motion_done()
         arm.wait_for_motion_done()
 
         try:
