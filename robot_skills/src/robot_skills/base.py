@@ -143,10 +143,6 @@ class GlobalPlanner(RobotPart):
                 distance += math.sqrt( dx*dx + dy*dy)
         return distance
 
-    def reset(self):
-        pass
-
-
 class Base(RobotPart):
     def __init__(self, robot_name, tf_listener):
         super(Base, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
