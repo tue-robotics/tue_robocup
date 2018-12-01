@@ -30,5 +30,7 @@ class Hero(robot.Robot):
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         self.leftArm.unsubscribe_hardware_status()
         self.rightArm.unsubscribe_hardware_status()
+        self.leftArm._operational = True
+        self.rightArm._operational = True
 
         self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
