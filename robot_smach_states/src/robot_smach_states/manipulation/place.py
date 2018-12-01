@@ -235,31 +235,10 @@ class Place(smach.StateMachine):
             raise AssertionError("Cannot place on {}".format(place_pose))
 
         with self:
-
-            if furniture_designator is not None:
-                # Hardcoded in front of: from another location, the update doesn't work
-                if update_supporting_entity:
-                    next_state = "UPDATE_ENTITY"
-                else:
-                    next_state = "PREPARE_PLACE"
-
-                smach.StateMachine.add('INSPECT',
-                                       Inspect(robot, furniture_designator, navigation_area="in_front_of"),
-                                       transitions={'done': 'PREPARE_PLACE',
-                                                    'failed': 'failed'}
-                                       )
-                # Add navigation
-                #smach.StateMachine.add('NAVIGATE_TO_UPDATE',
-                #                       NavigateToSymbolic(robot, {furniture_designator: 'in_front_of'},
-                #                                          furniture_designator),
-                #                       transitions={'arrived': next_state,
-                #                                    'unreachable': 'PREPARE_PLACE',
-                #                                    'goal_not_defined': 'PREPARE_PLACE'})
-
-                #if update_supporting_entity:
-                #    smach.StateMachine.add('UPDATE_ENTITY',
-                #                           UpdateEntityPose(robot=robot, entity_designator=furniture_designator),
-                #                           transitions={'done': 'PREPARE_PLACE'})
+            
+            smach.StateMachine.add('INSPECT', Inspect(robot, furniture_designator, navigation_area="in_front_of"),
+                                    transitions={'done': 'PREPARE_PLACE',
+                                                 'failed': 'failed'})
 
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
                                    transitions={'succeeded': 'NAVIGATE_TO_PLACE',
