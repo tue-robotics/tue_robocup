@@ -110,7 +110,7 @@ class PickUp(smach.State):
             return 'failed'
 
         # Make sure the torso and the arm are done
-        #self.robot.torso.wait_for_motion_done(cancel=True)
+        self.robot.torso.wait_for_motion_done(cancel=True)
         arm.wait_for_motion_done(cancel=True)
 
         # This is needed because the head is not entirely still when the
