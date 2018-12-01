@@ -1,5 +1,6 @@
 # ROS
 import PyKDL as kdl
+from kdl_conversions import point_msg_to_kdl_vector
 
 
 class Volume(object):
@@ -7,6 +8,7 @@ class Volume(object):
 
     Points are defined relative to the object they belong to
     """
+
     def __init__(self):
         """ Constructor
 
@@ -31,6 +33,7 @@ class Volume(object):
 
 class BoxVolume(Volume):
     """ Represents a box shaped volume """
+
     def __init__(self, min_corner, max_corner):
         """ Constructor.
 
@@ -87,70 +90,52 @@ class BoxVolume(Volume):
         return "BoxVolume(min_corner={}, max_corner={})".format(self.min_corner, self.max_corner)
 
 
-class OffsetVolume(Volume):
-    """ Represents a volume with a certain offset from the convex hull of the entity """
-    def __init__(self, offset):
-        """ Constructor
-
-        :param offset: float with offset [m]
-        """
-        super(OffsetVolume, self).__init__()
-        self._offset = offset
-
-    def __repr__(self):
-        return "OffsetVolume(offset={})".format(self._offset)
-
-
-def volumes_from_entity_info_data(data):
+def volume_from_entity_area_msg(msg):
     """ Creates a dict mapping strings to Volumes from the EntityInfo data dictionary
 
-    :param data: ed_msgs.msg.EntityInfo.data (string)
+    :param msg: ed_msgs.msg.Area
     :return: dict mapping strings to Volumes
     """
     # Check if we have data and if it contains areas
-    if data is None or 'areas' not in data:
+    if not msg:
+        return None, None
+
+    # Check if the volume has a name. Otherwise: skip
+    if not msg.name:
+        return None, None
+    name = msg.name
+
+    # Check if we have a shape
+    center_point = point_msg_to_kdl_vector(msg.center_point)
+    if not msg.geometry.type == msg.geometry.BOX:
+        return None, None
+
+    size = msg.geometry.dimensions
+    size = kdl.Vector(size[0], size[1], size[2])
+
+    min = center_point - size / 2
+    max = center_point + size / 2
+
+    return name, BoxVolume(min, max)
+
+
+def volumes_from_entity_areas_msg(msg):
+    if not msg:
         return {}
 
-    # Loop over all areas
     volumes = {}
-    for a in data['areas']:
-
-        # Check if the volume has a name. Otherwise: skip
-        if 'name' not in a:
-            continue
-        name = a['name']
-
-        # Check if this is an 'OffsetVolume'
-        if 'offset' in a:
-            volumes[name] = OffsetVolume(a['offset'])
+    for a in msg:
+        if not a.name:
             continue
 
-        # Check if we have a shape
-        if 'shape' in a:
-
-            shapes = a['shape']
-
-            # Check if this is a single shape
-            if len(shapes) > 1:
-                print "\nError [volumes_from_entity_info_data]: Cannot handle compound shapes yet...\n"
-                continue
-            shape = shapes[0]
-
-            # Check if this one shape is a box
-            if 'box' in shape:
-                box = shape['box']
-                mic = box['min']
-                min_corner = kdl.Vector(mic['x'], mic['y'], mic['z'])
-                mac = box['max']
-                max_corner = kdl.Vector(mac['x'], mac['y'], mac['z'])
-                volumes[name] = BoxVolume(min_corner=min_corner, max_corner=max_corner)
-                continue
-
-        # If we end up here, we don't know what to do with the area
-        print "\nError [volumes_from_entity_info_data]: don't know what to do with {}\n".format(a)
+        name, area = volume_from_entity_area_msg(a)
+        if name and area:
+            volumes[name] = area
 
     return volumes
 
+
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

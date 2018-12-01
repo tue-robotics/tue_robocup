@@ -1,5 +1,4 @@
 # System
-import yaml
 
 # ROS
 import rospy
@@ -7,7 +6,7 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
-from robot_skills.util.volume import volumes_from_entity_info_data
+from robot_skills.util.volume import volumes_from_entity_areas_msg
 from robot_skills.util.shape import shape_from_entity_info
 
 
@@ -141,7 +140,7 @@ def from_entity_info(e):
     last_update_time = e.last_update_time.to_sec()
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
-    volumes = volumes_from_entity_info_data(yaml.load(e.data))
+    volumes = volumes_from_entity_areas_msg(e.areas)
     rospy.logdebug("Entity(id={id}) has volumes {vols} ".format(id=identifier, vols=volumes.keys()))
 
     super_types = e.types
