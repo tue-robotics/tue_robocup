@@ -145,6 +145,7 @@ class GlobalPlanner(RobotPart):
                 distance += math.sqrt( dx*dx + dy*dy)
         return distance
 
+
 class Base(RobotPart):
     def __init__(self, robot_name, tf_listener):
         super(Base, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
@@ -239,7 +240,9 @@ class Base(RobotPart):
         return True
 
     def reset(self):
-        return self.local_planner.reset()
+        loc = self.local_planner.reset()
+        glob = self.global_planner.reset()
+        return loc and glob
 
     ########################################################
     ###### Are the following functions deprecated ??? ######
