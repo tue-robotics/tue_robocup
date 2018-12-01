@@ -192,4 +192,9 @@ class RobotPart(object):
                 self._operational = True
 
     def reset(self):
+        """
+        Reset body part. This should be implemented in the subclass. Should always return a bool.
+        :return: Succes
+        :rtype: bool
+        """
         return True
