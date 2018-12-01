@@ -22,6 +22,50 @@ GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0
 # Temporary: this should be approximately 0.02 once the sensor is correctly setup
 GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.0025, 0.18]))
 
+class PublicArm(object):
+    """
+    Public arm interface, also checks a challenge doesn't try to use more than it asked for.
+
+    :ivar _arm: Private link to the real arm.
+    :ivar gripper_type: Gripper type to be used.
+    :ivar joint_goals: Joint goals to be used.
+    :ivar joint_trajectories: Joint trajectories to be used.
+    """
+    def __init__(self, arm, gripper_type, joint_goals, joint_trajectories):
+        self._arm = arm
+        self.gripper_type = gripper_type
+        self.joint_goals = joint_goals
+        self.joint_trajectories = joint_trajectories
+
+    def send_joint_goal(self, configuration, timeout=5.0):
+        assert self.joint_goals is not None and configuration in self.joint_goals
+        return self._arm.send_joint_goal(configuration, timeout)
+
+    def send_joint_trajectory(self, configuration, timeout=5):
+        assert self.joint_trajectories is not None and configuration in self.joint_trajectories
+        return self._arm.send_joint_trajectory(configuration, timeout)
+
+    def send_gripper_goal(self, state, timeout=5.0):
+        assert self.gripper_type == 'yes'
+        return self._arm.send_gripper_goal(state, timeout)
+
+    def handover_to_human(self, timeout=10):
+        assert self.gripper_type == 'yes'
+        return self._arm.handover_to_human(timeout)
+
+    def handover_to_robot(self, timeout=10):
+        assert self.gripper_type == 'yes'
+        return self._arm.handover_to_robot(timeout)
+
+    def wait_for_motion_done(self, timeout=10.0, cancel=False):
+        return self._arm.wait_for_motion_done(timeout, cancel)
+
+    def close(self):
+        self._arm.close()
+
+    def reset(self, timeout=0.0):
+        return self._arm.reset(timeout)
+
 
 class GripperMeasurement(object):
     """
@@ -174,6 +218,34 @@ class Arm(RobotPart):
         self._marker_publisher = rospy.Publisher(
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
+
+    def has_gripper_type(self, gripper_type):
+        """
+        Query the arm for having the proper gripper type.
+
+        :param gripper_type: Should be constant 'yes' (we have one). At some point in the
+                             future it may be useful to have a proper type.
+        :return: Whether the arm has the requested type of gripper.
+        """
+        return gripper_type == 'yes'
+
+    def has_joint_goal(self, configuration):
+        """
+        Query the arm for having a given joint goal.
+
+        :param configuration: name of jint goal to check.
+        :return: Whether the joint goal is available.
+        """
+        return configuration in self.default_configurations
+
+    def has_joint_trajectory(self, configuration):
+        """
+        Query the arm for having a given joint trajectory.
+
+        :param configuration: name of jint trajectory to check.
+        :return: Whether the joint trajectory is available.
+        """
+        return configuration in self.default_trajectories
 
     def cancel_goals(self):
         """

@@ -131,6 +131,76 @@ class Robot(object):
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
 
+    def get_robot_arm(self, gripper_type=None, goals=None, trajectories=None, preferred=None):
+        """
+        Find an arm that has the needed properties.
+
+        :param gripper_type: Kind of gripper, currently only one type supported, use 'yes' to select it.
+        :type  gripper_type: string or None
+
+        :param goals: Collection of joint goals that the arm must be able to perform.
+        :type  goals: container wth strings or None.
+
+        :param trajectories: Collection of joint trajectories that the arm must be able to perform.
+        :type  trajectories: container wth strings or None.
+
+        :param preferred_name: Name of the preferred arm if set. By default, this is a soft
+                requirement (as in, you may get a different arm instead if the preferred arm
+                is not suitable). By appending an exclamation mark to the name, it becomes a
+                hard requirement (you will either get the preferred arm or no arm at all).
+        :type  preferred_name: Name (string) of the preferred arm, or None if any arm will do.
+
+        :return: An Arm of the robot with the requested properties, or None
+        """
+        discarded_reasons = [] # Reasons arms are discarded.
+
+        if preferred_name is None:
+            # Just try all arms.
+            arms_to_try = self.arms.iteritems()
+        else:
+            arms_to_try = []
+            if preferred_name.endswith('!'):
+                armname = preferred_name[:-1]
+            else:
+                armname = preferred_name
+
+            # Add preferred arm as first arm to try.
+            preferred_arm = self.arms.get(armname)
+            if preferred_arm is None:
+                discarded_reasons.append("Preferred '{}' arm is not available".format(armname))
+            else:
+                arms_to_try.append((armname, preferred_arm))
+
+            # For not exclusive arm selection, add the other arms too.
+            if not preferred_name.endswith('!'):
+                arms_to_try.extend(self.arms.iteritems())
+
+        # Test each arm
+        for armname, arm in arms_to_try:
+            if not arm.operational:
+                discarded_reasons.append("{} arm is not operational".format(armname))
+                continue
+            if gripper_type is not None:
+                if not arm.has_gripper_type(gripper_type):
+                    discarded_reasons.append("{} arm does not have gripper type '{}'".format(armname, gripper_type))
+                    continue
+            if goals is not None:
+                fail = get_first_fail(goals, arm.has_joint_goal)
+                if fail is not None:
+                    discarded_reasons.append("{} arm does not have join goal '{}'".format(armname, fail))
+                    continue
+            if trajectories is not None:
+                fail = get_first_fail(trajectories, arm.has_joint_trajectory)
+                if fail is not None:
+                    discarded_reasons.append("{} arm does not have join trajectory '{}'".format(armname, fail))
+                    continue
+            return arms.PublicArm(arm, gripper_type, hoals, trajectories)
+
+        rospy.logerr("Failed to find an arm")
+        for reason in discarded_reasons:
+            rospy.logdebug("  - " + reason)
+        return None
+
     def get_arm(self, side):
         """Get an arm object and a backup for that arm by giving a side as either a string or an Arm-object
         @param side Either string from robot.arms.keys() or Arm from robot.arms.values()
@@ -196,6 +266,19 @@ class Robot(object):
         if any((exception_type, exception_val, trace)):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
+
+def get_first_fail(names, func):
+    """
+    Apply the function with each name in 'names', return the first name where the function returns False, or None if all succeed.
+
+    :param names: Names to test.
+    :param func: Function to query, taking a name, and return a success boolean.
+    :return: First name that fails with the function, or None.
+    """
+    for name in names:
+        if not func(name):
+            return name
+    return None
 
 
 if __name__ == "__main__":
