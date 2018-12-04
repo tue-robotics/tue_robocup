@@ -85,7 +85,7 @@ class ConversationEngineWithHmi(ConversationEngine):
     def _on_request_missing_information(self, description, grammar, target):
         rospy.loginfo("_request_missing_information('{}', '{}...', '{}')".format(description, grammar[:10], target))
 
-        while True:
+        while not rospy.is_shutdown():
             try:
                 if self.give_examples:
                     example = self._parser.get_random_sentence(self._state.target)
@@ -151,7 +151,7 @@ class ConversationEngineWithHmi(ConversationEngine):
 
         self.robot.speech.speak("What can I do for you?", block=True)
 
-        while True:
+        while not rospy.is_shutdown():
             try:
                 sentence, semantics = self.robot.hmi.query(description="",
                                                       grammar=grammar,
