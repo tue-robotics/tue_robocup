@@ -1,18 +1,16 @@
 #!/usr/bin/python
 
-# System
 import math
-import numpy as np
+from operator import itemgetter
 
-# ROS
+import numpy as np
+import robot_smach_states as states
 import rospy
 import smach
-from visualization_msgs.msg import Marker
-
-# TU/e
-import robot_smach_states as states
-from robot_skills.util.shape import RightPrism
+from challenge_restaurant.srv import GetNormalScore
 from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdl_frame_to_pose_msg
+from robot_skills.util.shape import RightPrism
+from visualization_msgs.msg import Marker
 
 
 def _get_area(convex_hull):
@@ -20,6 +18,46 @@ def _get_area(convex_hull):
     lines = np.hstack([pts, np.roll(pts, -1, axis=0)])
     area = 0.5 * abs(sum(x1 * y2 - x2 * y1 for x1, y1, x2, y2 in lines))
     return area
+
+
+class AutomaticSideDetection2(smach.State):
+    """ State to automatically detect whether a table or similar is left or right of the robot """
+
+    def __init__(self, robot):
+        """ Constructor
+
+        :param robot: robot object
+        """
+        look_x = 0.2
+        look_y = 1.5
+        self._sides = {
+            'left': VectorStamped(look_x, look_y, z=0, frame_id="/" + robot.robot_name + "/base_link"),
+            'right': VectorStamped(look_x, -look_y, z=0, frame_id="/" + robot.robot_name + "/base_link"),
+        }
+        smach.State.__init__(self, outcomes=self._sides.keys())
+
+        self._robot = robot
+        self._get_normal_score = rospy.ServiceProxy('/' + self._robot.robot_name + '/top_kinect/get_normal_score',
+                                                    GetNormalScore)
+
+    def execute(self, userdata=None):
+        scores = {}
+        for side, vs in self._sides.items():
+            # Look at the side
+            rospy.loginfo("looking at side %s" % side)
+            self._robot.head.look_at_point(vs)
+            self._robot.head.wait_for_motion_done()
+            rospy.sleep(0.2)
+
+            base_loc = self._robot.base.get_location()
+            base_position = base_loc.frame.p
+
+            score = self._get_normal_score().score
+            rospy.loginfo('Normal score: %f', score)
+            scores[side] = score
+
+        min_side, min_score = max(scores.items(), key=itemgetter(1))
+        return min_side
 
 
 class AutomaticSideDetection(smach.State):
@@ -163,7 +201,7 @@ class StoreWaypoint(smach.State):
 
         # Create automatic side detection state and execute
         self._robot.speech.speak("I am now going to look for the table", block=False)
-        automatic_side_detection = AutomaticSideDetection(self._robot)
+        automatic_side_detection = AutomaticSideDetection2(self._robot)
         side = automatic_side_detection.execute({})
         self._robot.head.look_at_standing_person()
 

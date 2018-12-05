@@ -19,7 +19,7 @@ from riddle_game import hear, answer
 #
 ##############################################################################
 
-DEFAULT_HEAR_TIME = 15.0        # seconds
+DEFAULT_HEAR_TIME = 20.0        # seconds
 SOURCE_LOCALISATION_TIME = 6    # seconds
 INITIAL_TURNING_DELAY = 1.5     # seconds
 

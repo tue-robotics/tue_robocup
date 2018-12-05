@@ -156,7 +156,7 @@ class RecognizePersons(smach.State):
         self.robot.speech.speak("I will now point in your direction!")
 
         self.robot.head.look_at_ground_in_front_of_robot(distance=100)
-        self.robot.rightArm._send_joint_trajectory([[0,1.0,0.3,0.8,0,0,0]])
+        self.robot.rightArm.send_joint_trajectory("point_to_operator")
 
         self.robot.speech.speak("You are right there operator!")
 

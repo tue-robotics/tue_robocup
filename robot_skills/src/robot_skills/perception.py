@@ -34,9 +34,6 @@ class Perception(RobotPart):
     def close(self):
         pass
 
-    def reset(self, timeout=0):
-        pass
-
     def _image_cb(self, image):
         self._camera_cv.acquire()
         self._camera_last_image = image

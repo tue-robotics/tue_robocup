@@ -82,8 +82,8 @@ class Robot(object):
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         # Grasp offsets
-        #TODO: Don't hardcode, load from parameter server to make robot independent.
-        self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
+        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
+        self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
         # Create attributes from dict
         for partname, bodypart in self.parts.iteritems():
@@ -101,6 +101,13 @@ class Robot(object):
         if not self.operational:
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
+
+    def reset(self):
+        results = {}
+        for partname, bodypart in self.parts.iteritems():
+            rospy.logdebug("Resetting {}".format(partname))
+            bodypart.reset()
+        return all(results.values())
 
     def standby(self):
         if not self.robot_name == 'amigo':
@@ -153,45 +160,11 @@ class Robot(object):
         return preferred_side, backup_side
 
     def close(self):
-        try:
-            self.head.close()
-        except: pass
-
-        try:
-            self.base.close()
-        except: pass
-
-        try:
-            self.torso.close()
-        except: pass
-
-        try:
-            self.speech.close()
-        except: pass
-
-        try:
-            self.arms.close()
-        except: pass
-
-        try:
-            self.leftArm.close()
-        except: pass
-
-        try:
-            self.rightArm.close()
-        except: pass
-
-        try:
-            self.ears.close()
-        except: pass
-
-        try:
-            self.ebutton.close()
-        except: pass
-
-        try:
-            self.lights.close()
-        except: pass
+        for partname, bodypart in self.parts.iteritems():
+            try:
+                bodypart.close()
+            except:
+                pass
 
     @property
     def operational(self):

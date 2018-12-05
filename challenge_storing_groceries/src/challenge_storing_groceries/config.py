@@ -6,9 +6,6 @@ from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
 
-# Location
-WORKSPACES = challenge_knowledge.workspaces
-
 # Inspection
 CABINET = challenge_knowledge.cabinet_amcl
 OBJECT_SHELVES = challenge_knowledge.object_shelves
