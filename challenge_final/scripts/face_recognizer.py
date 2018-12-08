@@ -23,12 +23,12 @@ def filter_on_area(recognitions):
     return best_rec
 
 
-class TelegramFaceRecognizer:
+class FaceRecognizer:
     def __init__(self):
-        self._img_sub = rospy.Subscriber('photo_from_telegram', Image, self._image_cb)
+        self._img_sub = rospy.Subscriber('image_to_ros', Image, self._image_cb)
         self._recognize_srv = rospy.ServiceProxy('face_recognition/recognize', Recognize)
         self._annotate_srv = rospy.ServiceProxy('face_recognition/annotate', Annotate)
-        rospy.loginfo("Starting the TelegramFaceRecognizer")
+        rospy.loginfo("Starting the FaceRecognizer")
 
     def _image_cb(self, image):
         self.learn_person(image=image)
@@ -68,8 +68,8 @@ class TelegramFaceRecognizer:
 
 if __name__ == '__main__':
 
-    rospy.init_node("telegram_face_recognizer")
+    rospy.init_node("face_recognizer")
 
-    node = TelegramFaceRecognizer()
+    node = FaceRecognizer()
 
     rospy.spin()
