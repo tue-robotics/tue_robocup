@@ -192,12 +192,14 @@ def volume_from_entity_area_msg(msg):
     name = msg.name
 
     # Check if we have a shape
-    center_point = point_msg_to_kdl_vector(msg.center_point)
-    if len(msg.geometry == 1):
-        if not msg.geometry.type == msg.geometry.BOX:
+    if len(msg.subareas) == 1:
+        subarea = msg.subareas[0]
+        if not subarea.geometry.type == subarea.geometry.BOX:
             return None, None
 
-        size = msg.geometry.dimensions
+        center_point = point_msg_to_kdl_vector(subarea.center_point)
+
+        size = subarea.geometry.dimensions
         size = kdl.Vector(size[0], size[1], size[2])
 
         min_corner = center_point - size / 2
@@ -207,12 +209,14 @@ def volume_from_entity_area_msg(msg):
     else:
         min_corners = []
         max_corners = []
-        for subarea in msg.geometry:
-            if not subarea.type == subarea.BOX:
+        for subarea in msg.subareas:
+            if not subarea.geometry.type == subarea.geometry.BOX:
                 continue
 
-            size = subarea.dimensions
+            size = subarea.geometry.dimensions
             size = kdl.Vector(size[0], size[1], size[2])
+
+            center_point = point_msg_to_kdl_vector(subarea.center_point)
 
             sub_min = center_point - size / 2
             sub_max = center_point + size / 2
