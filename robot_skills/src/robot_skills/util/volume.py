@@ -82,9 +82,9 @@ class BoxVolume(Volume):
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        return self._min_corner.x() < point.x() < self._max_corner.x() and \
-               self._min_corner.y() < point.y() < self._max_corner.y() and \
-               self._min_corner.z() < point.z() < self._max_corner.z()
+        return self._min_corner.x() <= point.x() <= self._max_corner.x() and \
+               self._min_corner.y() <= point.y() <= self._max_corner.y() and \
+               self._min_corner.z() <= point.z() <= self._max_corner.z()
 
     def __repr__(self):
         return "BoxVolume(min_corner={}, max_corner={})".format(self.min_corner, self.max_corner)
@@ -106,6 +106,8 @@ class CompositeBoxVolume(Volume):
         assert isinstance(min_corners, list)
         assert isinstance(max_corners, list)
         assert len(min_corners) == len(max_corners)
+        assert len(min_corners) > 0
+        assert len(max_corners) > 0
 
         self._min_corners = min_corners
         self._max_corners = max_corners
@@ -142,11 +144,13 @@ class CompositeBoxVolume(Volume):
 
     @property
     def bottom_area(self):
-        convex_hull = []
-        convex_hull.append(kdl.Vector(self.min_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 1
-        convex_hull.append(kdl.Vector(self.max_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 2
-        convex_hull.append(kdl.Vector(self.max_corner.x(), self.max_corner.y(), self.min_corner.z()))  # 3
-        convex_hull.append(kdl.Vector(self.min_corner.x(), self.max_corner.y(), self.min_corner.z()))  # 4
+        min_x = min([v.x() for v in self._min_corners])
+        min_y = min([v.y() for v in self._min_corners])
+        min_z = min([v.z() for v in self._min_corners])
+        max_x = max([v.x() for v in self._max_corners])
+        max_y = max([v.y() for v in self._max_corners])
+        convex_hull = [kdl.Vector(min_x, min_y, min_z), kdl.Vector(max_x, min_y, min_z),
+                       kdl.Vector(max_x, max_y, min_z), kdl.Vector(min_x, max_y, min_z)]
         return convex_hull
 
     def contains(self, point):
@@ -154,12 +158,20 @@ class CompositeBoxVolume(Volume):
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        return self._min_corner.x() < point.x() < self._max_corner.x() and \
-               self._min_corner.y() < point.y() < self._max_corner.y() and \
-               self._min_corner.z() < point.z() < self._max_corner.z()
+        for min_corner, max_corner in zip(self._min_corners, self._max_corners):
+            if min_corner.x() <= point.x() <= max_corner.x() and \
+               min_corner.y() <= point.y() <= max_corner.y() and \
+               min_corner.z() <= point.z() <= max_corner.z():
+                return True
+
+        return False
 
     def __repr__(self):
-        return "BoxVolume(min_corner={}, max_corner={})".format(self.min_corner, self.max_corner)
+        description = "CompositeBoxVolume:\n"
+        for min_corner, max_corner in zip(self._min_corners, self._max_corners):
+            description += "min_corner={}, max_corner={}\n".format(min_corner, max_corner)
+
+        return description
 
 
 class OffsetVolume(Volume):
