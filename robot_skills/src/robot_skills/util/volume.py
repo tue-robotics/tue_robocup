@@ -4,7 +4,7 @@ from kdl_conversions import point_msg_to_kdl_vector
 
 
 class Volume(object):
-    """ Represents an area of an entity
+    """ Represents an volume of an entity
 
     Points are defined relative to the object they belong to
     """
@@ -69,7 +69,7 @@ class BoxVolume(Volume):
         return self._max_corner
 
     @property
-    def bottom_area(self):
+    def bottom_volume(self):
         convex_hull = []
         convex_hull.append(kdl.Vector(self.min_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 1
         convex_hull.append(kdl.Vector(self.max_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 2
@@ -143,7 +143,7 @@ class CompositeBoxVolume(Volume):
         return kdl.Vector(max_x, max_y, max_z)
 
     @property
-    def bottom_area(self):
+    def bottom_volume(self):
         min_x = min([v.x() for v in self._min_corners])
         min_y = min([v.y() for v in self._min_corners])
         min_z = min([v.z() for v in self._min_corners])
@@ -188,13 +188,13 @@ class OffsetVolume(Volume):
         return "OffsetVolume(offset={})".format(self._offset)
 
 
-def volume_from_entity_area_msg(msg):
+def volume_from_entity_volume_msg(msg):
     """ Creates a dict mapping strings to Volumes from the EntityInfo data dictionary
 
-    :param msg: ed_msgs.msg.Area
+    :param msg: ed_msgs.msg.Volume
     :return: dict mapping strings to Volumes
     """
-    # Check if we have data and if it contains areas
+    # Check if we have data and if it contains volumes
     if not msg:
         return None, None
 
@@ -204,14 +204,14 @@ def volume_from_entity_area_msg(msg):
     name = msg.name
 
     # Check if we have a shape
-    if len(msg.subareas) == 1:
-        subarea = msg.subareas[0]
-        if not subarea.geometry.type == subarea.geometry.BOX:
+    if len(msg.subvolumes) == 1:
+        subvolume = msg.subvolumes[0]
+        if not subvolume.geometry.type == subvolume.geometry.BOX:
             return None, None
 
-        center_point = point_msg_to_kdl_vector(subarea.center_point)
+        center_point = point_msg_to_kdl_vector(subvolume.center_point)
 
-        size = subarea.geometry.dimensions
+        size = subvolume.geometry.dimensions
         size = kdl.Vector(size[0], size[1], size[2])
 
         min_corner = center_point - size / 2
@@ -221,14 +221,14 @@ def volume_from_entity_area_msg(msg):
     else:
         min_corners = []
         max_corners = []
-        for subarea in msg.subareas:
-            if not subarea.geometry.type == subarea.geometry.BOX:
+        for subvolume in msg.subvolumes:
+            if not subvolume.geometry.type == subvolume.geometry.BOX:
                 continue
 
-            size = subarea.geometry.dimensions
+            size = subvolume.geometry.dimensions
             size = kdl.Vector(size[0], size[1], size[2])
 
-            center_point = point_msg_to_kdl_vector(subarea.center_point)
+            center_point = point_msg_to_kdl_vector(subvolume.center_point)
 
             sub_min = center_point - size / 2
             sub_max = center_point + size / 2
@@ -238,18 +238,18 @@ def volume_from_entity_area_msg(msg):
         return name, CompositeBoxVolume(min_corners, max_corners)
 
 
-def volumes_from_entity_areas_msg(msg):
+def volumes_from_entity_volumes_msg(msg):
     if not msg:
         return {}
 
     volumes = {}
-    for a in msg:
-        if not a.name:
+    for v in msg:
+        if not v.name:
             continue
 
-        name, area = volume_from_entity_area_msg(a)
-        if name and area:
-            volumes[name] = area
+        name, volume = volume_from_entity_volume_msg(v)
+        if name and volume:
+            volumes[name] = volume
 
     return volumes
 

@@ -6,7 +6,7 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
-from robot_skills.util.volume import volumes_from_entity_areas_msg
+from robot_skills.util.volume import volumes_from_entity_volume_msg
 from robot_skills.util.shape import shape_from_entity_info
 
 
@@ -22,7 +22,7 @@ class Entity(object):
         :param frame_id: str frame id w.r.t. which the pose is defined
         :param pose: kdl.Frame with the pose of this entity
         :param shape: Shape of this entity
-        :param volumes: dict mapping strings to Areas
+        :param volumes: dict mapping strings to Volume
         :param super_types: list with strings representing super types in an ontology of object types
         """
         self.id = identifier
@@ -140,7 +140,7 @@ def from_entity_info(e):
     last_update_time = e.last_update_time.to_sec()
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
-    volumes = volumes_from_entity_areas_msg(e.areas)
+    volumes = volumes_from_entity_volume_msg(e.volume)
     rospy.logdebug("Entity(id={id}) has volumes {vols} ".format(id=identifier, vols=volumes.keys()))
 
     super_types = e.types
@@ -154,6 +154,7 @@ def from_entity_info(e):
 
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
                   volumes=volumes, super_types=super_types, last_update_time=last_update_time)
+
 
 if __name__ == "__main__":
     import doctest
