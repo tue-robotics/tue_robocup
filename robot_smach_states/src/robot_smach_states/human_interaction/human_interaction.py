@@ -95,7 +95,8 @@ class HearOptions(smach.State):
 
         try:
             answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T', timeout=self._timeout.to_sec())
-        except TimeoutException:
+        except (Exception, TimeoutException) as e:
+            rospy.logwarn(e.message)
             self._robot.speech.speak("Something is wrong with my ears, please take a look!")
             return 'no_result'
 
