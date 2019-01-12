@@ -41,34 +41,58 @@ class Robot(object):
         self.robot_name = robot_name
         self.tf_listener = tf.TransformListener()
 
-        # Body parts
-        self.parts = dict()
-        self.parts['base'] = base.Base(self.robot_name, self.tf_listener)
-        self.parts['torso'] = torso.Torso(self.robot_name, self.tf_listener)
+        # Construct body parts
+        self.base = base.Base(self.robot_name, self.tf_listener)
+        self.torso = torso.Torso(self.robot_name, self.tf_listener)
 
-        self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
-        self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
+        # Don't expose specific arms in the robot, they are not generic enough.
+        leftArm = arms.Arm(self.robot_name, self.tf_listener, side="left")
+        rightArm = arms.Arm(self.robot_name, self.tf_listener, side="right")
+        self.arms = OrderedDict(left=leftArm, right=rightArm)
 
-        self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
-        self.parts['perception'] = perception.Perception(self.robot_name, self.tf_listener)
-        self.parts['ssl'] = ssl.SSL(self.robot_name, self.tf_listener)
+        self.head = head.Head(self.robot_name, self.tf_listener)
+        self.perception = perception.Perception(self.robot_name, self.tf_listener)
+        self.ssl = ssl.SSL(self.robot_name, self.tf_listener)
 
         # Human Robot Interaction
-        self.parts['lights'] = lights.Lights(self.robot_name, self.tf_listener)
-        self.parts['speech'] = speech.Speech(self.robot_name, self.tf_listener,
+        self.lights = lights.Lights(self.robot_name, self.tf_listener)
+        self.speech = speech.Speech(self.robot_name, self.tf_listener,
                                              lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
                                              lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener,
+        self.hmi = api.Api(self.robot_name, self.tf_listener,
                                     lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                     lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.parts['ears'] = ears.Ears(self.robot_name, self.tf_listener,
+        self.ears = ears.Ears(self.robot_name, self.tf_listener,
                                        lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                        lambda: self.lights.set_color_colorRGBA(lights.RESET))
+        self.ears._hmi = self.hmi
 
-        self.parts['ebutton'] = ebutton.EButton(self.robot_name, self.tf_listener)
+        self.ebutton = ebutton.EButton(self.robot_name, self.tf_listener)
 
         # Reasoning/world modeling
-        self.parts['ed'] = world_model_ed.ED(self.robot_name, self.tf_listener)
+        self.ed = world_model_ed.ED(self.robot_name, self.tf_listener)
+
+        # Construct a map with all robot parts.
+        # Arms are copied from the self.arms dict.
+        self.parts = {
+            'base': self.base,
+            'torso': self.torso,
+
+            'head': self.head,
+            'perception': self.perception,
+            'ssl': self.ssl,
+
+            'lights': self.lights,
+            'speech': self.speech,
+            'hmi': self.hmi,
+            'ears': self.ears,
+
+            'ebutton': self.ebutton,
+
+            'ed': self.ed,
+        }
+        for arm_name, arm_part in self.arms.iteritems():
+            self.parts[arm_name + 'Arm'] = arm_part
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -84,12 +108,6 @@ class Robot(object):
         go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
         self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
-        # Create attributes from dict
-        for partname, bodypart in self.parts.iteritems():
-            setattr(self, partname, bodypart)
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # (ToDo: kind of ugly, why do we need this???)
-        self.ears._hmi = self.hmi  # ToDo: when ears is gone, remove this line
-
         # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
@@ -103,6 +121,18 @@ class Robot(object):
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
     
+    # Deprecated warning for 'robot.leftArm' to avoid breaking the code.
+    @proprty
+    def leftArm(self):
+        rospy.logwarn("robot.leftArm' is deprecated, get an arm using robot.get_robot_arm.")
+        return self.arms['left']
+
+    # Deprecated warning for 'robot.rightArm' to avoid breaking the code.
+    @proprty
+    def rightArm(self):
+        rospy.logwarn("robot.rightArm' is deprecated, get an arm using robot.get_robot_arm.")
+        return self.arms['right']
+
     def reset(self):
         results = {}
         for partname, bodypart in self.parts.iteritems():
@@ -114,10 +144,12 @@ class Robot(object):
         if not self.robot_name == 'amigo':
             rospy.logerr('Standby only works for amigo')
             return
-        self.leftArm.reset()
-        self.rightArm.reset()
-        self.leftArm.send_gripper_goal('close')
-        self.rightArm.send_gripper_goal('close')
+
+        for arm in self.arms.itervalues():
+            arm.reset()
+        for arm in self.arms.itervalues():
+            arm.send_gripper_goal('close')
+
         self.head.look_down()
         self.torso.low()
         self.lights.set_color(0, 0, 0)
@@ -131,75 +163,136 @@ class Robot(object):
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
 
-    def get_robot_arm(self, gripper_type=None, goals=None, trajectories=None, preferred=None):
+
+    def get_robot_arm(self, required_gripper_types=None, desired_gripper_types=None,
+                            required_goals=None, desired_goals=None,
+                            required_trajectories=None, desired_trajectories=None,
+                            required_arm_name=None, desired_arm_name=None,
+                            required_objects=None, desired_objects=None):
         """
-        Find an arm that has the needed properties.
+        Find an arm that has the needed and hopefully the desired properties.
+        Does not give an arm if all needed properties cannot be satisfied. An
+        arm returned by the call will not be able to do anything you didn't ask
+        for, except for objects held by it.
 
-        :param gripper_type: Kind of gripper, currently only one type supported, use 'yes' to select it.
-        :type  gripper_type: string or None
+        :param required_gripper_types: Collection of gripper types that must all be
+                available. None means grippers are not needed.
+        :param desired_gripper_types: Collection of gripper types where one or more
+                may be selected. None means no grippers are desired.
 
-        :param goals: Collection of joint goals that the arm must be able to perform.
-        :type  goals: container wth strings or None.
+        :param required_goals: Collection of joint goals that must all be available.
+                None means no joint goals are needed.
+        :param desired_goals: Collection of joint goals where one or more may be
+                selected. None means no joint goals are desired.
 
-        :param trajectories: Collection of joint trajectories that the arm must be able to perform.
-        :type  trajectories: container wth strings or None.
+        :param required_trajectories: Collection of joint trajectories that must all
+                be available. None means no joint trajectories are needed.
+        :param desired_trajectories: Collection of joint trajectories where one or
+                more may be selected. None means no joint trajectories are desired.
 
-        :param preferred_name: Name of the preferred arm if set. By default, this is a soft
-                requirement (as in, you may get a different arm instead if the preferred arm
-                is not suitable). By appending an exclamation mark to the name, it becomes a
-                hard requirement (you will either get the preferred arm or no arm at all).
-        :type  preferred_name: Name (string) of the preferred arm, or None if any arm will do.
+        :param required_arm_name: Name of the arm that is needed. If set, no
+                other arm will be considered. None means any arm will do.
+        :param desired_arm_name: Name of the desired arm. This arm may or may
+                not be selected. None means there is no preference for an arm.
 
-        :return: An Arm of the robot with the requested properties, or None
+        :param required_objects: Collection of objects that the arm must have. Special
+                pseudo-objects arms.ANY_OBJECT and arms.NO_OBJECT may be used
+                too in the collection, although they do not make much sense when used
+                together with other objects. None means there are no required objects.
+        :param desired_objects: Collection of objects that the arm may have. None
+                means there are no desired objects.
+
+        :return: An Arm of the robot with the requested properties, or None.
+                Note that the arm will never do more than you requested.
         """
-        discarded_reasons = [] # Reasons arms are discarded.
+        discarded_reasons = [] # Reasons why arms are discarded.
 
-        if preferred_name is None:
-            # Just try all arms.
-            arms_to_try = self.arms.iteritems()
-        else:
-            arms_to_try = []
-            if preferred_name.endswith('!'):
-                armname = preferred_name[:-1]
-            else:
-                armname = preferred_name
+        for arm_name, arm in self.iteritems():
+            matching_arm = arm
+            matching_grippers = None
+            matching_goals = None
+            matching_trajectories = None
+            uses_objects = None
 
-            # Add preferred arm as first arm to try.
-            preferred_arm = self.arms.get(armname)
-            if preferred_arm is None:
-                discarded_reasons.append("Preferred '{}' arm is not available".format(armname))
-            else:
-                arms_to_try.append((armname, preferred_arm))
-
-            # For not exclusive arm selection, add the other arms too.
-            if not preferred_name.endswith('!'):
-                arms_to_try.extend(self.arms.iteritems())
-
-        # Test each arm
-        for armname, arm in arms_to_try:
             if not arm.operational:
-                discarded_reasons.append("{} arm is not operational".format(armname))
+                discarded_reasons.append((arm_name, "not operational"))
                 continue
-            if gripper_type is not None:
-                if not arm.has_gripper_type(gripper_type):
-                    discarded_reasons.append("{} arm does not have gripper type '{}'".format(armname, gripper_type))
-                    continue
-            if goals is not None:
-                fail = get_first_fail(goals, arm.has_joint_goal)
-                if fail is not None:
-                    discarded_reasons.append("{} arm does not have join goal '{}'".format(armname, fail))
-                    continue
-            if trajectories is not None:
-                fail = get_first_fail(trajectories, arm.has_joint_trajectory)
-                if fail is not None:
-                    discarded_reasons.append("{} arm does not have join trajectory '{}'".format(armname, fail))
-                    continue
-            return arms.PublicArm(arm, gripper_type, hoals, trajectories)
 
-        rospy.logerr("Failed to find an arm")
-        for reason in discarded_reasons:
-            rospy.logdebug("  - " + reason)
+            # Name
+            if required_arm_name is not None and arm_name != required_arm_name:
+                discarded_reasons.append((arm_name, "required arm name failed"))
+                continue
+
+            # Grippers
+            matching_grippers = set()
+            if required_gripper_types is not None:
+                matches = [self.collect_gripper_types(req_type) for req_type in required_gripper_types]
+                all_matched = all(match_list for match_list in matches)
+                if not all_matched:
+                    discarded_reasons.append((arm_name, "required gripper type failed"))
+                    continue
+                matching_grippers.update(matches)
+
+            if desired_gripper_types is not None:
+                matching_grippers.update(self.collect_gripper_types(des_type) for des_type in desired_gripper_types)
+
+            # Goals
+            matching_goals = _collect_needs_desires(required_goals, desired_goals, arm.has_joint_goal)
+            if matching_goals is None:
+                discarded_reasons.append((arm_name, "required goals failed"))
+                continue
+
+            # Trajectories
+            matching_trajectories = _collect_needs_desires(required_trajectories, desired_trajectories,
+                                                           arm.has_joint_trajectory)
+            if matching_trajectories is None:
+                discarded_reasons.append((arm_name, "required trajectories failed"))
+                continue
+
+            # Objects
+            if not self._check_required_obj(required_objects):
+                discarded_reasons.append((arm_name, "required objects failed"))
+                continue
+            # Desired objects not checked currently.
+
+            # Unlike the other properties, it is likely not exactly known what objects will be used.
+            # For this reason, it seems better not to limit objects to the set specified in required
+            # _objects and desired_objects.
+            uses_objects = (required_objects is not None or desired_objects is not None)
+
+
+            # Success!
+            return arms.PublicArm(matching_arm, matching_gripper, uses_objects,
+                                  matching_goals, matching_trajectories)
+
+        # No arm matched. Dump why.
+        msg = ("Failed to find a matching arm, reasons: " +
+               " ".join("{}:{}".format(name, reason) for name, reason in discarded_reasons))
+        rospy.logwarn(msg)
         return None
+
+    def _check_required_obj(self, obj_collection):
+        """
+        Check the object requirement.
+
+        :param obj_collection: Objects to find. None means the empty requirement
+                (arm may have anything, including nothng).
+        :return: Whether the requirement holds.
+        """
+        if obj_collection is None:
+            return True
+
+        cur_obj = self._arm.occupied_by()
+        for obj in obj_collection:
+            if obj == arms.OBJECT_ANY: # Any object, but not empty.
+                if cur_obj is None:
+                    return False
+            elif obj == arms.OBJECT_EMPTY: # Arm must be empty.
+                if cur_obj is not None:
+                    return False
+            elif obj != cur_obj:
+                return False
+        return True
 
     def close(self):
         for partname, bodypart in self.parts.iteritems():
@@ -238,18 +331,35 @@ class Robot(object):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
 
-def get_first_fail(names, func):
+def _collect_needs_desires(needs, desires, test_func):
     """
-    Apply the function with each name in 'names', return the first name where the function returns False, or None if all succeed.
+    :param needs: Collection of needed values. None means nothing is needed.
+    :param desireds: Collection of desired values, None means nothing is desired.
+    :param test_func: Function that takes a value and returns whether the value is available.
+    :return: Needed and subset of the desired values, or None if the needs cannor be met.
+    """
+    founds = set()
+    if needs is not None:
+        founds.update(_collect_available(needs, test_func))
+        if len(founds) != len(needs): # All needs must be met.
+            return False
 
-    :param names: Names to test.
-    :param func: Function to query, taking a name, and return a success boolean.
-    :return: First name that fails with the function, or None.
+    if desires is not None:
+        founds.update(_collect_available(desires, test_func))
+
+    return founds
+
+def _collect_available(values, test_func):
     """
-    for name in names:
-        if not func(name):
-            return name
-    return None
+    :param values: Collection of values that must be tested.
+    :param test_func: Function that takes a value and returns whether the value is available.
+    :return: Subset of values that is found to be available.
+    """
+    founds = set()
+    for value in values:
+        if test_func(value):
+            founds.add(value)
+    return founds
 
 
 if __name__ == "__main__":
