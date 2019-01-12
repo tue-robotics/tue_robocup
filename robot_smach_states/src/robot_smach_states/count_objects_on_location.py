@@ -6,6 +6,7 @@ import robot_smach_states.util.designators as ds
 from robot_smach_states.util.startup import startup
 from robot_skills.classification_result import ClassificationResult
 
+
 class CountObjectsOnLocation(smach.State):
     def __init__(self, robot, location, segmented_objects_designator, num_objects_designator, segmentation_area='on_top_of', object_type='', threshold=0.0):
         """ Constructor
