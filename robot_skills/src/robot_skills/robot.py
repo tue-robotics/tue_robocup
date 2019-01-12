@@ -105,8 +105,6 @@ class Robot(object):
     
     def reset(self):
         results = {}
-
-    def initialize(self):
         for partname, bodypart in self.parts.iteritems():
             rospy.logdebug("Resetting {}".format(partname))
             bodypart.reset()
