@@ -238,7 +238,7 @@ def volume_from_entity_volume_msg(msg):
         return name, CompositeBoxVolume(min_corners, max_corners)
 
 
-def volumes_from_entity_volume_msg(msg):
+def volumes_from_entity_volumes_msg(msg):
     if not msg:
         return {}
 
