@@ -20,14 +20,5 @@ class Hero(robot.Robot):
         self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')	
         self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
 
-        # This is still very ugly, because there is a lof of double code, but atleast it is only in sergio.
-        #self.parts['rightArm'] = robot.arms.FakeArm(self.robot_name, self.tf_listener, side="right")
-
-        #for partname, bodypart in self.parts.iteritems():
-        #    setattr(self, partname, bodypart)
-
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
-
-	# self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
-    
         self.laser_topic = "/hsrb/base_scan"
