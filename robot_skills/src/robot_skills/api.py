@@ -47,7 +47,6 @@ class Api(RobotPart):
 
         if callable(self._post_hook):
             self._post_hook()
-        self.restart_dragonfly()
 
         return answer
 
