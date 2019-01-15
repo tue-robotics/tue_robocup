@@ -209,7 +209,7 @@ def volume_from_entity_volume_msg(msg):
         if not subvolume.geometry.type == subvolume.geometry.BOX:
             return None, None
 
-        center_point = point_msg_to_kdl_vector(subvolume.center_point)
+        center_point = point_msg_to_kdl_vector(subvolume.center_point.point)
 
         size = subvolume.geometry.dimensions
         size = kdl.Vector(size[0], size[1], size[2])
