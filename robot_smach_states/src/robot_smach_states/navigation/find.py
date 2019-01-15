@@ -1,7 +1,8 @@
 __author__ = 'rokus'
 
 # ROS
-import smach, rospy
+import smach
+import rospy
 
 # TU/e Robotics
 from robocup_knowledge import load_knowledge
@@ -10,7 +11,7 @@ import robot_smach_states as states
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator
 
 
-def entities_from_description(robot, entity_description, list_of_entity_ids=None ):
+def entities_from_description(robot, entity_description, list_of_entity_ids=None):
     '''
     Query entities and return those that satisfy the given description
 
@@ -24,13 +25,9 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
     '''
     knowledge = load_knowledge('common')
 
-    if not isinstance(list_of_entity_ids, list):
-        return []
-
-    if not isinstance(entity_description, dict):
-        return []
-    if 'type' not in entity_description and 'category' not in entity_description:
-        return []
+    assert isinstance(list_of_entity_ids, list), "Input should be a list"
+    assert isinstance(entity_description, dict), "Entity description should be a dict"
+    assert 'type' in entity_description or 'category' in entity_description
 
     # Get all entities from the world model
     entities = robot.ed.get_entities()
