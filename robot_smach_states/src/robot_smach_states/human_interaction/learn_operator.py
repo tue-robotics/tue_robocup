@@ -10,7 +10,7 @@ from robot_skills.util import kdl_conversions
 
 
 class LearnOperator(smach.State):
-    def __init__(self, robot, operator_timeout=20, learn_person_timeout=10.0):
+    def __init__(self, robot, operator_timeout=20, learn_person_timeout=10.0, detection_threshold=6):
         """ Constructor
 
         :param robot: robot object (amigo, sergio)
@@ -24,6 +24,7 @@ class LearnOperator(smach.State):
         self._operator_timeout = operator_timeout
         self._learn_person_timeout = learn_person_timeout
         self._operator_name = "operator"
+        self._detection_threshold = detection_threshold
         random.seed()
 
     def execute(self, userdata):
@@ -62,11 +63,11 @@ class LearnOperator(smach.State):
                                          block=False)
                 self._robot.head.look_at_standing_person()
                 learn_person_start_time = rospy.Time.now()
-                num_detections = 0
-                while num_detections < 6: # 5:
+                detection_counter = 0
+                while detection_counter < self._detection_threshold:
                     if self._robot.perception.learn_person(self._operator_name):
-                        rospy.loginfo("Successfully detected you %i times" % (num_detections + 1))
-                        num_detections += 1
+                        rospy.loginfo("Successfully detected you %i times" % (detection_counter + 1))
+                        detection_counter += 1
                     elif (rospy.Time.now() - learn_person_start_time).to_sec() > self._learn_person_timeout:
                         self._robot.speech.speak("Please stand in front of me and look at me")
                         operator = None

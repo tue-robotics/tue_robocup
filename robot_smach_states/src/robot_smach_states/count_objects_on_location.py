@@ -41,14 +41,14 @@ class CountObjectsOnLocation(smach.State):
         if object_classifications:
 
             for idx, obj in enumerate(object_classifications):
-                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx,t=obj.type,
+                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.type,
                                                                                         id=obj.id, p=obj.probability))
 
             over_threshold = [obj for obj in object_classifications if obj.probability >= self.threshold]
 
             dropped = {obj.id: obj.probability for obj in object_classifications if obj.probability < self.threshold}
             rospy.debug("Dropping {l} entities due to low class. score (< {th}): {dropped}"
-                          .format(th=self.threshold, dropped=dropped, l=len(dropped)))
+                        .format(th=self.threshold, dropped=dropped, l=len(dropped)))
             object_classifications = over_threshold
 
             list_objects = [obj for obj in object_classifications if obj.type == self.object_type.resolve()]
@@ -59,8 +59,6 @@ class CountObjectsOnLocation(smach.State):
         else:
             return 'failed'
 
-
-# Standalone testing -----------------------------------------------------------------
 
 class InspectAndCount(smach.StateMachine):
     def __init__(self, robot, where_to_count_designator, type_to_count_designator, count_designator):
@@ -92,9 +90,3 @@ class InspectAndCount(smach.StateMachine):
                                                           num_objects_designator=count_designator.writeable),
                                    transitions={'done': 'Done',
                                                 'failed': 'Aborted'})
-
-
-if __name__ == "__main__":
-    rospy.init_node('gpsr_function_exec')
-
-    startup(InspectAndCount, challenge_name="gpsr_function")
