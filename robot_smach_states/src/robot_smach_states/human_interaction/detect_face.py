@@ -19,8 +19,6 @@ class DetectFace(smach.State):
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
-        self._pub_image = rospy.Publisher(robot.robot_name + '/image_from_ros', Image, queue_size=1)
-        self._pub_label = rospy.Publisher(robot.robot_name + '/message_from_ros', String, queue_size=1)
 
     def execute(self, userdata):
         # Acquire the image and detect the faces in it
@@ -32,7 +30,7 @@ class DetectFace(smach.State):
 
         # Check result
         if not faces:
-            self._pub_image.publish(image)
+            self._robot.image_pub.publish(image)
             rospy.logerr("DetectFaces: did not detect any faces")
             self._robot.speech.speak("I don't see anyone here")
             return 'failed'
@@ -45,10 +43,10 @@ class DetectFace(smach.State):
                     best_match = {'index': index, 'face': face, 'label': probability.label,
                                   'probability': probability.probability}
 
-        self._pub_image.publish(image)
+        self._robot.image_pub.publish(image)
 
         if "label" in best_match:
-            self._pub_label.publish(best_match['label'])
+            self._robot.message_pub.publish(best_match['label'])
 
             # Return
             rospy.loginfo("DetectFace, best match: {}".format(best_match['label']))

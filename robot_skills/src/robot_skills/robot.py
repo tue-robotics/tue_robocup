@@ -27,6 +27,8 @@ import world_model_ed
 # Misc: do we need this???
 import geometry_msgs
 from collections import OrderedDict
+from std_msgs.msg import String
+from sensor_msgs.msg import Image
 
 # Check hardware status
 from diagnostic_msgs.msg import DiagnosticArray
@@ -77,6 +79,9 @@ class Robot(object):
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
+
+        self.image_pub = rospy.Publisher(robot_name + '/image_from_ros', Image, queue_size=1)
+        self.message_pub = rospy.Publisher(robot_name + '/message_from_ros', String, queue_size=1)
 
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
