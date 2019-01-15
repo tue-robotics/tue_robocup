@@ -16,6 +16,7 @@ class LearnOperator(smach.State):
         :param robot: robot object (amigo, sergio)
         :param operator_timeout: maximum time to locate a possible operator
         :param learn_person_timeout: maximum time it is allowed to take to learn an operator
+        :param detection_threshold: amount of detections needed before an operator is confirmed
         """
         smach.State.__init__(self, outcomes=['done', 'failed', 'aborted'],
                              input_keys=['operator_learn_in'],
