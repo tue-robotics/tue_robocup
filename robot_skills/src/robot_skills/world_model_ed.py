@@ -129,15 +129,35 @@ class ED(RobotPart):
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
-    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0):
+    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0, ignore_z=False):
         """
         Get the closest entity detected by the laser. The ID's of such entities are postfixed with '-laser'
         For the rest, this works exactly like get_closest_entity
         :param type: What type of entities to filter on
         :param center_point: combined with radius. Around which point to search for entities
         :param radius: how far from the center_point to look (in meters)
+        :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point criterium.
         :return: list of Entity
         """
+        if ignore_z:
+            # ED does not allow to ignore Z through its interface, so it has to be solved here.
+            #
+            # If we want to ignore the z of entities when checking their distance from center_point,
+            # the simplest thing to do is to set the Z of the center_point to the same value,
+            # so that delta Z is always 0.
+            # But then we first need to know Z (preferably without an additonal parameter or something robot specific)
+            # So, we query ED for other laser entities. These are *assumed* to all have the same Z,
+            # so we can just take one and use its Z and substitute that into the center_point.
+            # To 'just take one', we take entities from a larger range.
+            entities_for_height = self.get_entities(type="", center_point=center_point, radius=5*radius)
+            if entities_for_height:
+                override_z = entities_for_height[0].frame.extractVectorStamped().vector.z()
+                rospy.logwarn("ignoring Z, so overriding z to be equal to laser height: {}".format(override_z))
+                center_point = VectorStamped(center_point.vector.x(),
+                                             center_point.vector.y(),
+                                             override_z)
+            else:
+                return None
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
