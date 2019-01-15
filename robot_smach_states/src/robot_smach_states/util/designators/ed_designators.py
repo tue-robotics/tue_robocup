@@ -364,7 +364,6 @@ class EmptySpotDesignator(Designator):
         return not any(entities_at_poi)
 
     def distance_to_poi_area(self, frame_stamped):
-        # Derived from navigate_to_place
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
         x = frame_stamped.frame.p.x()
         y = frame_stamped.frame.p.y()
