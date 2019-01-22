@@ -288,8 +288,8 @@ class ResetOnFailure(smach.StateMachine):
     def execute(self, userdata):
         """ Execute hook """
         if hasattr(userdata, 'arm'):
-            arm = self._robot.get_robot_arm(required_gripper_types=arms.GripperTypes.GRASPING,
-                                            required_arm_name=userdata.arm.side)
+            arm = self._robot.get_arm(required_gripper_types=arms.GripperTypes.GRASPING,
+                                      required_arm_name=userdata.arm.side)
         else:
             arm = None
         self._robot.torso.high()  # Move up to make resetting of the arm safer

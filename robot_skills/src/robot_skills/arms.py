@@ -51,7 +51,7 @@ class PublicArm(object):
     :vartype _arm: Arm
 
     :ivar default_gripper_type: Gripper type to use if the user didn't provide one.
-    :vartpe default_gripper_type: str
+    :vartpe default_gripper_type: str or None
 
     :ivar _available_gripper_types: Gripper types that may be used.
     :vartype _available_gripper_types: set of str (the GripperTypes.* constants)
@@ -130,7 +130,7 @@ class PublicArm(object):
         if gripper_type is None:
             gripper_type = self.default_gripper_type
 
-        return gripper_type in self._available_gripper_types
+        return gripper_type is not None and gripper_type in self._available_gripper_types
 
     def send_gripper_goal(self, state, timeout=5.0, gripper_type=None):
         """
@@ -176,7 +176,7 @@ class PublicArm(object):
         Test the condition, if it fails, die with an assertion error explaining what is wrong.
         """
         if not cond:
-            msg = "get_robot_arm for '{}' arm did not request '{}' access."
+            msg = "get_arm for '{}' arm did not request '{}' access."
             raise AssertionError(msg.format(self._arm.side, message))
 
 

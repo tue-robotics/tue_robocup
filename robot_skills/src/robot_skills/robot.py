@@ -31,6 +31,7 @@ from collections import OrderedDict
 # Check hardware status
 from diagnostic_msgs.msg import DiagnosticArray
 
+from robot_skills.util import decorators
 
 class Robot(object):
     """
@@ -120,17 +121,15 @@ class Robot(object):
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
-    
-    # Deprecated warning for 'robot.leftArm' to avoid breaking the code.
-    @proprty
+
+    @property
+    @decorators.deprecated_replace_with('robot.get_arm')
     def leftArm(self):
-        rospy.logwarn("robot.leftArm' is deprecated, get an arm using robot.get_robot_arm.")
         return self.arms['left']
 
-    # Deprecated warning for 'robot.rightArm' to avoid breaking the code.
-    @proprty
+    @property
+    @decorators.deprecated_replace_with('robot.get_arm')
     def rightArm(self):
-        rospy.logwarn("robot.rightArm' is deprecated, get an arm using robot.get_robot_arm.")
         return self.arms['right']
 
     def reset(self):
@@ -163,12 +162,11 @@ class Robot(object):
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
 
-
-    def get_robot_arm(self, required_gripper_types=None, desired_gripper_types=None,
-                            required_goals=None, desired_goals=None,
-                            required_trajectories=None, desired_trajectories=None,
-                            required_arm_name=None, desired_arm_name=None,
-                            required_objects=None, desired_objects=None):
+    def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
+                      required_goals=None, desired_goals=None,
+                      required_trajectories=None, desired_trajectories=None,
+                      required_arm_name=None,
+                      required_objects=None, desired_objects=None):
         """
         Find an arm that has the needed and hopefully the desired properties.
         Does not give an arm if all needed properties cannot be satisfied. An
@@ -192,8 +190,6 @@ class Robot(object):
 
         :param required_arm_name: Name of the arm that is needed. If set, no
                 other arm will be considered. None means any arm will do.
-        :param desired_arm_name: Name of the desired arm. This arm may or may
-                not be selected. None means there is no preference for an arm.
 
         :param required_objects: Collection of objects that the arm must have. Special
                 pseudo-objects arms.ANY_OBJECT and arms.NO_OBJECT may be used
@@ -207,13 +203,7 @@ class Robot(object):
         """
         discarded_reasons = [] # Reasons why arms are discarded.
 
-        for arm_name, arm in self.iteritems():
-            matching_arm = arm
-            matching_grippers = None
-            matching_goals = None
-            matching_trajectories = None
-            uses_objects = None
-
+        for arm_name, arm in self.arms.iteritems():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue
@@ -250,7 +240,7 @@ class Robot(object):
                 continue
 
             # Objects
-            if not self._check_required_obj(required_objects):
+            if not self._check_required_obj(arm, required_objects):
                 discarded_reasons.append((arm_name, "required objects failed"))
                 continue
             # Desired objects not checked currently.
@@ -260,9 +250,12 @@ class Robot(object):
             # _objects and desired_objects.
             uses_objects = (required_objects is not None or desired_objects is not None)
 
-
             # Success!
-            return arms.PublicArm(matching_arm, matching_gripper, uses_objects,
+            if not matching_grippers:
+                default_gripper = None
+            else:
+                default_gripper = next(iter(matching_grippers))
+            return arms.PublicArm(arm, matching_grippers, default_gripper, uses_objects,
                                   matching_goals, matching_trajectories)
 
         # No arm matched. Dump why.
@@ -271,10 +264,11 @@ class Robot(object):
         rospy.logwarn(msg)
         return None
 
-    def _check_required_obj(self, obj_collection):
+    def _check_required_obj(self, arm, obj_collection):
         """
         Check the object requirement.
 
+        :param arm: Arm to check.
         :param obj_collection: Objects to find. None means the empty requirement
                 (arm may have anything, including nothng).
         :return: Whether the requirement holds.
@@ -282,7 +276,7 @@ class Robot(object):
         if obj_collection is None:
             return True
 
-        cur_obj = self._arm.occupied_by()
+        cur_obj = self.arm.occupied_by()
         for obj in obj_collection:
             if obj == arms.PseudoObjects.ANY: # Any object, but not empty.
                 if cur_obj is None:
@@ -360,7 +354,6 @@ def _collect_available(values, test_func):
         if test_func(value):
             founds.add(value)
     return founds
-
 
 if __name__ == "__main__":
     rospy.init_node("robot")
