@@ -101,6 +101,8 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
+        self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
+    
     def reset(self):
         results = {}
         for partname, bodypart in self.parts.iteritems():
