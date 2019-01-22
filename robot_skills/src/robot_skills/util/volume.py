@@ -96,7 +96,8 @@ class CompositeBoxVolume(Volume):
         """
         Constructor
 
-        Points are defined relative to the object they belong to
+        Points are defined relative to the object they belong to. Both arguments
+        should be a list of corners. Each row of the two arguments together describe one box.
 
         :param min_corners: list of PyKDL.Vector with the minimum bounding box corners
         :param max_corners: list of PyKDL.Vector with the maximum bounding box corners
