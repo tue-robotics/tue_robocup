@@ -3,26 +3,8 @@
 # ROS
 import rospy
 
-# Body parts
-import base
-import torso
-import arms
-import head
-import perception
-import ssl
-
-# Human Robot Interaction
-import speech
-import api
-import ears
-import ebutton
-import lights
-
 # tf
 import tf
-
-# Reasoning/world modeling
-import world_model_ed
 
 # Misc: do we need this???
 import geometry_msgs
@@ -41,34 +23,10 @@ class Robot(object):
         self.robot_name = robot_name
         self.tf_listener = tf.TransformListener()
 
+        self.configured = False
+
         # Body parts
         self.parts = dict()
-        self.parts['base'] = base.Base(self.robot_name, self.tf_listener)
-        self.parts['torso'] = torso.Torso(self.robot_name, self.tf_listener)
-
-        self.parts['leftArm'] = arms.Arm(self.robot_name, self.tf_listener, side="left")
-        self.parts['rightArm'] = arms.Arm(self.robot_name, self.tf_listener, side="right")
-
-        self.parts['head'] = head.Head(self.robot_name, self.tf_listener)
-        self.parts['perception'] = perception.Perception(self.robot_name, self.tf_listener)
-        self.parts['ssl'] = ssl.SSL(self.robot_name, self.tf_listener)
-
-        # Human Robot Interaction
-        self.parts['lights'] = lights.Lights(self.robot_name, self.tf_listener)
-        self.parts['speech'] = speech.Speech(self.robot_name, self.tf_listener,
-                                             lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
-                                             lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.parts['hmi'] = api.Api(self.robot_name, self.tf_listener,
-                                    lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                    lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.parts['ears'] = ears.Ears(self.robot_name, self.tf_listener,
-                                       lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                       lambda: self.lights.set_color_colorRGBA(lights.RESET))
-
-        self.parts['ebutton'] = ebutton.EButton(self.robot_name, self.tf_listener)
-
-        # Reasoning/world modeling
-        self.parts['ed'] = world_model_ed.ED(self.robot_name, self.tf_listener)
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -84,13 +42,15 @@ class Robot(object):
         go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
         self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
-        # Create attributes from dict
-        for partname, bodypart in self.parts.iteritems():
-            setattr(self, partname, bodypart)
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # (ToDo: kind of ugly, why do we need this???)
-        self.ears._hmi = self.hmi  # ToDo: when ears is gone, remove this line
+        self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
-        # Wait for connections
+    def add_body_part(self, partname, bodypart):
+        self.parts[partname] = bodypart
+        setattr(self, partname, bodypart)
+
+    def configure(self):
+        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
+
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
             bodypart.wait_for_connections(1.0)
@@ -101,8 +61,8 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
-        self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
-    
+        self.configured = True
+
     def reset(self):
         results = {}
         for partname, bodypart in self.parts.iteritems():
@@ -126,7 +86,7 @@ class Robot(object):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
     def tf_transform_pose(self, ps, frame):
-        output_pose = geometry_msgs.msg.PointStamped
+        # output_pose = geometry_msgs.msg.PointStamped()
         self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
