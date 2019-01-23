@@ -92,26 +92,23 @@ class BoxVolume(Volume):
 
 class CompositeBoxVolume(Volume):
     """ Represents a composite box shaped volume """
-    def __init__(self, min_corners, max_corners):
+    def __init__(self, boxes):
         """
         Constructor
 
-        Points are defined relative to the object they belong to. Both arguments
-        should be a list of corners. Each row of the two arguments together describe one box.
+        Points are defined relative to the object they belong to.
 
-        :param min_corners: list of PyKDL.Vector with the minimum bounding box corners
-        :param max_corners: list of PyKDL.Vector with the maximum bounding box corners
+        :param boxes: list of tuples of two PyKDL.Vector. First one with the minimum bounding box corners,
+                            second one with the maximum bounding box corners
         """
         super(CompositeBoxVolume, self).__init__()
 
-        assert isinstance(min_corners, list)
-        assert isinstance(max_corners, list)
-        assert len(min_corners) == len(max_corners)
-        assert len(min_corners) > 0
-        assert len(max_corners) > 0
+        assert isinstance(boxes, list)
+        assert len(boxes) > 0
+        assert isinstance(boxes[0], tuple)
 
-        self._min_corners = min_corners
-        self._max_corners = max_corners
+        self._min_corners = zip(*boxes)[0]
+        self._max_corners = zip(*boxes)[1]
 
     def _calc_center_point(self):
         """Calculate where the center of the box is located
@@ -193,7 +190,7 @@ def volume_from_entity_volume_msg(msg):
     """ Creates a dict mapping strings to Volumes from the EntityInfo data dictionary
 
     :param msg: ed_msgs.msg.Volume
-    :return: dict mapping strings to Volumes
+    :return: tuple of name and volume object
     """
     # Check if we have data and if it contains volumes
     if not msg:
@@ -236,7 +233,7 @@ def volume_from_entity_volume_msg(msg):
             min_corners.append(sub_min)
             max_corners.append(sub_max)
 
-        return name, CompositeBoxVolume(min_corners, max_corners)
+        return name, CompositeBoxVolume(zip(min_corners, max_corners))
 
 
 def volumes_from_entity_volumes_msg(msg):
