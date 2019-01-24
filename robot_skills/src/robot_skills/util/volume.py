@@ -82,9 +82,9 @@ class BoxVolume(Volume):
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        return self._min_corner.x() <= point.x() <= self._max_corner.x() and \
-               self._min_corner.y() <= point.y() <= self._max_corner.y() and \
-               self._min_corner.z() <= point.z() <= self._max_corner.z()
+        return (self._min_corner.x() <= point.x() <= self._max_corner.x() and
+                self._min_corner.y() <= point.y() <= self._max_corner.y() and
+                self._min_corner.z() <= point.z() <= self._max_corner.z())
 
     def __repr__(self):
         return "BoxVolume(min_corner={}, max_corner={})".format(self.min_corner, self.max_corner)
