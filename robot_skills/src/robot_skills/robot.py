@@ -45,10 +45,18 @@ class Robot(object):
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
     def add_body_part(self, partname, bodypart):
+        """
+        Add a bodypart to the robot. This is added to the parts dict and set as an attribute
+        :param partname: name of the bodypart
+        :param bodypart: bodypart object
+        """
         self.parts[partname] = bodypart
         setattr(self, partname, bodypart)
 
     def configure(self):
+        """
+        This should be run at the end of the constructor of a child class.
+        """
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
 
         s = rospy.Time.now()
