@@ -157,9 +157,9 @@ class CompositeBoxVolume(Volume):
         :return: True if inside, False otherwise
         """
         for min_corner, max_corner in zip(self._min_corners, self._max_corners):
-            if min_corner.x() <= point.x() <= max_corner.x() and \
-               min_corner.y() <= point.y() <= max_corner.y() and \
-               min_corner.z() <= point.z() <= max_corner.z():
+            if (min_corner.x() <= point.x() <= max_corner.x() and
+                min_corner.y() <= point.y() <= max_corner.y() and
+                min_corner.z() <= point.z() <= max_corner.z()):
                 return True
 
         return False
