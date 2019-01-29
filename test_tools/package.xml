@@ -9,5 +9,7 @@
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  
+  <run_depend>python-docopt</run_depend>
 
 </package>
