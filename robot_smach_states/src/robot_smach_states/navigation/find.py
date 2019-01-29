@@ -25,6 +25,7 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
     '''
     knowledge = load_knowledge('common')
 
+    list_of_entity_ids = list_of_entity_ids if list_of_entity_ids is not None else []
     assert isinstance(list_of_entity_ids, list), "Input should be a list"
     assert isinstance(entity_description, dict), "Entity description should be a dict"
     assert 'type' in entity_description or 'category' in entity_description
@@ -33,7 +34,7 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
     entities = robot.ed.get_entities()
 
     # TODO: hack because ed maintains all labels that were ever assigned to an entity in the .types field
-    if entity_description['type'] == 'person':
+    if entity_description.get('type', "") == 'person':
         entities = [e for e in entities if e.is_a('possible_human')]
 
         # Remove the segmented entities from the inspection
@@ -43,9 +44,9 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
         # Select entities based on the description
         # First case is the old behavior, not nice, but keeping it to be sure nothing breaks TODO: clean this up.
         if 'type' in entity_description and entity_description['type']:
-            if entity_description['type'] in knowledge.object_categories:
+            if entity_description['type'] in knowledge.object_categories:  # E.g.: give me all fruits
                 entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['type']]
-            else:
+            else:  # E.g., give me all apples
                 entities = [e for e in entities if e.type == entity_description['type']]
         elif 'category' in entity_description and entity_description['category']:
             if entity_description['category'] in knowledge.object_categories:
