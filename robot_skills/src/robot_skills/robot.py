@@ -216,7 +216,7 @@ class Robot(object):
             # Grippers
             matching_grippers = set()
             if required_gripper_types is not None:
-                matches = [self.collect_gripper_types(req_type) for req_type in required_gripper_types]
+                matches = [arm.collect_gripper_types(req_type) for req_type in required_gripper_types]
                 all_matched = all(match_list for match_list in matches)
                 if not all_matched:
                     discarded_reasons.append((arm_name, "required gripper type failed"))
@@ -224,7 +224,7 @@ class Robot(object):
                 matching_grippers.update(matches)
 
             if desired_gripper_types is not None:
-                matching_grippers.update(self.collect_gripper_types(des_type) for des_type in desired_gripper_types)
+                matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
 
             # Goals
             matching_goals = _collect_needs_desires(required_goals, desired_goals, arm.has_joint_goal)
