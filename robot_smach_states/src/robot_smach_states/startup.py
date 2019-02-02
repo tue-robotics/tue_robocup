@@ -16,12 +16,25 @@ import utility
 
 
 class StartChallengeRobust(smach.StateMachine):
-    """Initialize, wait for the door to be opened and drive inside"""
+    """
+    Initialize, wait for the door to be opened and drive inside
+    """
 
     def __init__(self, robot, initial_pose, use_entry_points=False, door=True):
+        """
+        Initialization method
+
+        :param robot: (Robot)
+        :param initial_pose: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
+        a tuple(float, float, float) representing x, y and yaw in map frame can be used.
+        :param use_entry_points: (bool) (not yet implemented)
+        :param door: (bool) indicates whether to wait for a door to open and whether to 'force-drive' inside
+        """
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
         assert hasattr(robot, "speech")
+        if use_entry_points:
+            raise NotImplementedError("Use entry points is not yet implemented in StartChallengeRobust/EnterArena")
 
         with self:
             smach.StateMachine.add("NOTIFY_EBUTTON",
@@ -54,14 +67,16 @@ class StartChallengeRobust(smach.StateMachine):
                                    human_interaction.Say(robot, "Door is open!", block=False),
                                    transitions={"spoken": "INIT_POSE"})
 
-            # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
-            # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
+            # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial
+            # pose is set, since it is thinks the robot is standing in front of a wall if door is closed and 
+            # localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
                                    utility.SetInitialPose(robot, initial_pose),
                                    transitions={'done': 'ENTER_ROOM' if door else "Done",
                                                 'preempted': 'Aborted',
                                                 # This transition will never happen at the moment.
-                                                'error': 'ENTER_ROOM' if door else "Done"})  # It should never go to aborted.
+                                                # It should never go to aborted.
+                                                'error': 'ENTER_ROOM' if door else "Done"})
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
@@ -85,7 +100,7 @@ class EnterArena(smach.StateMachine):
             self.use_entry_points = use_entry_points
 
         def execute(self, userdata=None):
-            print "TODO: IMPLEMENT THIS STATE"
+            print("TODO: IMPLEMENT THIS STATE")
             return "no_goal"
 
     class ForceDrive(smach.State):
@@ -98,7 +113,7 @@ class EnterArena(smach.StateMachine):
             self.robot = robot
 
         def execute(self, userdata=None):
-            rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
+            rospy.loginfo("{} uses force drive as a back-up scenario!".format(self.robot.robot_name))
             self.robot.base.force_drive(0.25, 0, 0, 5.0)  # x, y, z, time in seconds
             self.robot.ed.reset()
             return "done"
@@ -143,8 +158,13 @@ class WaitForDoorOpen(smach.State):
         smach.State.__init__(self, outcomes=["open", "closed"])
         self._robot = robot
         self.timeout = timeout
-        self.distances = []  # TODO Loy: Keeping all of these is quite ugly. Would a ring buffer or collections.deque suffice?
+        # ToDo Loy: Keeping all of these is quite ugly. Would a ring buffer or collections.deque suffice?
+        self.distances = []
         self.door_open = Event()
+
+        self.laser_upside_down = None
+        self.laser_yaw = None
+        self.laser_sub = None
 
     @staticmethod
     def avg(lst):
@@ -165,7 +185,8 @@ class WaitForDoorOpen(smach.State):
         try:
             number_beams = len(scan_msg.ranges)
             front_index = int(
-                math.floor((self.laser_upside_down*self.laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
+                math.floor((self.laser_upside_down*self.laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment,
+                                                                                              1e-10)))
 
             if front_index < 2 or front_index > number_beams - 2:
                 rospy.logerr("Base laser can't see in front of the robot")
@@ -179,11 +200,10 @@ class WaitForDoorOpen(smach.State):
 
             avg_distance_now = self.avg(self.distances[-5:])  # And the latest 5
 
-            # print "d_start = {0}, d_now = {1}, curr = {2}".format(avg_distance_at_start, avg_distance_now, distance_to_door)
             if avg_distance_now > 1.0:
                 rospy.loginfo("Distance to door is more than a meter")
                 self.door_open.set()  # Then set a threading Event that execute is waiting for.
-        except Exception, e:
+        except Exception as e:
             rospy.logerr("Receiving laser failed so unsubscribing: {0}".format(e))
             self.laser_sub.unregister()
 

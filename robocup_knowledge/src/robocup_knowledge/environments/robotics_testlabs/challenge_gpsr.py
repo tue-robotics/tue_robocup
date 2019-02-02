@@ -8,7 +8,7 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again"
     ]
 
-initial_pose = "initial_pose_2"
+initial_pose = "initial_pose"
 starting_pose = "gpsr_meeting_point"
 exit_waypoint = "gpsr_exit_door_2"
 
@@ -87,11 +87,10 @@ VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM[Y]
 
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MEETING_PP the ROOM_OR_LOCATION[Y]
 
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 """
-
 
 
 ###############################################################################

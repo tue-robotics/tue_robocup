@@ -4,6 +4,7 @@ from functools import partial
 
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
+import robot_skills.arms as arms
 
 class English(object):
     HI_MY_NAME_IS = "Hello, my name is {}"
@@ -52,6 +53,17 @@ class Presentation(smach.State):
         smach.State.__init__(self, outcomes=["done", "preempted"])
 
         self.robot = robot
+
+        left_trajectories = ["wave_front", "show_gripper", "point_to_laser"]
+        self.left_arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
+                                           required_trajectories=left_trajectories,
+                                           required_arm_name='left')
+
+        right_trajectories = ["show_gripper", "point_to_kinect"]
+        self.right_arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
+                                             required_trajectories=right_trajectories,
+                                             required_arm_name='right')
+
         self.language = language
         self.trans = {"en":English, "nl":Dutch}[language]
         if self.language=="nl":
@@ -86,21 +98,28 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.base.force_drive, 0, 0, 1.0, 6.28))     # Turn around
 
         # Arms
-	if self.robot.robot_name == "amigo":
+        if self.robot.robot_name == "amigo":
             function_list.append(partial(self.robot.speech.speak, self.trans.TWO_ARMS, language=self.language, voice=self.voice, block=False))
             function_list.append(partial(self.robot.speech.speak, self.trans.HUMAN_ARMS, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
+            if self.left_arm is not None:
+                function_list.append(partial(self.left_arm.send_joint_trajectory, "wave_front"))
             function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARMS, language=self.language, voice=self.voice, block=False))
             function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPERS, language=self.language, voice=self.voice, block=False))
-            function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "show_gripper"))
-            function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "show_gripper"))
-            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
-            function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
-            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "open"))
-            function_list.append(partial(self.robot.rightArm.send_gripper_goal, "close"))
-            function_list.append(partial(self.robot.leftArm.reset))
-            function_list.append(partial(self.robot.rightArm.reset))
-            function_list.append(partial(self.robot.rightArm.wait_for_motion_done))
+            if self.left_arm is not None:
+                function_list.append(partial(self.left_arm.send_joint_trajectory, "show_gripper"))
+            if self.right_arm is not None:
+                function_list.append(partial(self.right_arm.send_joint_trajectory, "show_gripper"))
+            if self.left_arm is not None:
+                function_list.append(partial(self.left_arm.send_gripper_goal, "open"))
+                function_list.append(partial(self.left_arm.send_gripper_goal, "close"))
+            if self.right_arm is not None:
+                function_list.append(partial(self.right_arm.send_gripper_goal, "open"))
+                function_list.append(partial(self.right_arm.send_gripper_goal, "close"))
+            if self.left_arm is not None:
+                function_list.append(partial(self.left_arm.reset))
+            if self.right_arm is not None:
+                function_list.append(partial(self.right_arm.reset))
+                function_list.append(partial(self.right_arm.wait_for_motion_done))
 
         # Torso
         if self.robot.robot_name == "amigo":
@@ -113,7 +132,7 @@ class Presentation(smach.State):
         # Kinect
         function_list.append(partial(self.robot.speech.speak, self.trans.HEAD, language=self.language, voice=self.voice, block=False))
         #Removed this part to increase the tempo of the presentation
-        # function_list.append(partial(self.robot.rightArm.send_joint_trajectory, "point_to_kinect"))
+        # function_list.append(partial(self.right_arm.send_joint_trajectory, "point_to_kinect"))
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language, voice=self.voice, block=False))
         function_list.append(partial(self.robot.head.look_at_hand, "right"))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
@@ -126,7 +145,8 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.speech.speak, self.trans.TWO_LRFs, language=self.language, voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language, voice=self.voice, block=False))
         #Removed this part to increase the tempo of the presentation
-        #function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser"))
+        #if self.left_arm is not None:
+        #    function_list.append(partial(self.left_arm.send_joint_trajectory, "point_to_laser"))
 
         # Microphone
         function_list.append(partial(self.robot.speech.speak, self.trans.MICROPHONE, language=self.language, voice=self.voice, block=True))
@@ -140,15 +160,21 @@ class Presentation(smach.State):
             function()
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
-                self.robot.leftArm.reset()
-                self.robot.rightArm.reset()
-                self.robot.leftArm.send_gripper_goal("close")
-                self.robot.rightArm.send_gripper_goal("close")
+                if self.left_arm is not None:
+                    self.left_arm.reset()
+                if self.right_arm is not None:
+                    self.right_arm.reset()
+                if self.left_arm is not None:
+                    self.left_arm.send_gripper_goal("close")
+                if self.right_arm is not None:
+                    self.right_arm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
 
-                self.robot.leftArm.wait_for_motion_done()
-                self.robot.rightArm.wait_for_motion_done()
+                if self.left_arm is not None:
+                    self.left_arm.wait_for_motion_done()
+                if self.right_arm is not None:
+                    self.right_arm.wait_for_motion_done()
                 self.robot.torso.wait_for_motion_done()
                 self.robot.head.wait_for_motion_done()
                 return 'preempted'

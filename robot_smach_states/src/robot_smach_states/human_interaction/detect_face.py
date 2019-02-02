@@ -19,18 +19,20 @@ class DetectFace(smach.State):
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
-        self._pub_image = rospy.Publisher(robot.robot_name + '/photo_to_telegram', Image, queue_size=1)
-        self._pub_label = rospy.Publisher(robot.robot_name + '/message_to_telegram', String, queue_size=1)
 
     def execute(self, userdata):
-
         # Acquire the image and detect the faces in it
+        self._robot.head.look_at_standing_person()
+        rospy.sleep(1.0)
+
         image = self._robot.perception.get_image()
         faces = self._robot.perception.detect_faces(image=image)
 
         # Check result
         if not faces:
+            self._robot.image_pub.publish(image)
             rospy.logerr("DetectFaces: did not detect any faces")
+            self._robot.speech.speak("I don't see anyone here")
             return 'failed'
 
         # Find the best match
@@ -41,9 +43,16 @@ class DetectFace(smach.State):
                     best_match = {'index': index, 'face': face, 'label': probability.label,
                                   'probability': probability.probability}
 
-        self._pub_image.publish(image)
-        self._pub_label.publish(best_match['label'])
+        self._robot.image_pub.publish(image)
 
-        # Return
-        rospy.loginfo("DetectFace, best match: {}".format(best_match['label']))
+        if "label" in best_match:
+            self._robot.message_pub.publish(best_match['label'])
+
+            # Return
+            rospy.loginfo("DetectFace, best match: {}".format(best_match['label']))
+            self._robot.speech.speak("Hi there {}".format(best_match['label']))
+            self._robot.speech.speak("I will take a picture and send it to my operator now.")
+        else:
+            self._robot.speech.speak("I don't see anyone here")
+
         return 'succeeded'

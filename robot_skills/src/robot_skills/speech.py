@@ -2,7 +2,7 @@
 import rospy
 
 # TU/e Robotics
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 from text_to_speech.srv import Speak, SpeakRequest
 
 
@@ -65,8 +65,9 @@ class Speech(RobotPart):
         try:
             # ToDo: test this. This just seems utterly wrong
             if language == 'nl' and not (personality in ['david', 'marjolijn']):
-                personality = 'marjolijn' #kyle doesn't work for NL
-            rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
+                personality = 'marjolijn'  # kyle doesn't work for NL
+            rospy.loginfo("\x1b[1;32m'" + sentence + "'\x1b[0m")
+            # The funny stuff around sentence is for coloring the output text in the console
 
             req = SpeakRequest()
             req.language      = language
@@ -78,7 +79,7 @@ class Speech(RobotPart):
             resp1 = self._speech_service(req)
             result = resp1.error_msg == ""
 
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             rospy.logerr("Service call failed: {0}".format(e))
             result = False
         except Exception as e:
