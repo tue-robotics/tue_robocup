@@ -33,33 +33,36 @@ class PrepareEdGrasp(smach.State):
         check_type(grab_entity, Entity)
 
     def execute(self, userdata):
-
-        arm = self.arm_designator.resolve()
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
-        userdata.arm = arm.side
-
         entity = self.grab_entity_designator.resolve()
         if not entity:
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
-        # Open gripper (non-blocking)
-        arm.send_gripper_goal('open', timeout=0)
+        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
+        self.robot.head.wait_for_motion_done()
+        segm_res = self.robot.ed.update_kinect("%s" % entity.id)
+
+        arm = self.arm_designator.resolve()
+
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+        userdata.arm = arm.side
 
         # Torso up (non-blocking)
-        self.robot.torso.high()
+        self.robot.torso.reset()
 
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
+        arm.wait_for_motion_done()
 
         # Open gripper
         arm.send_gripper_goal('open', timeout=0.0)
+        arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
         self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
-
+        self.robot.head.wait_for_motion_done()
         return 'succeeded'
 
 
@@ -113,9 +116,6 @@ class PickUp(smach.State):
         # This is needed because the head is not entirely still when the
         # look_at_point function finishes
         rospy.sleep(rospy.Duration(0.5))
-
-        # Update the entity (position)
-        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
 
         # Resolve the entity again because we want the latest pose
         updated_grab_entity = self.grab_entity_designator.resolve()
@@ -192,11 +192,12 @@ class PickUp(smach.State):
         arm.occupied_by = grab_entity
 
         # Lift
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
         # rospy.loginfo('Start lifting')
         if arm.side == "left":
-            roll = 0.3
+            roll = 0.0 #0.3
         else:
-            roll = -0.3
+            roll = 0.0 #-0.3
 
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0, 0)  # Update the roll
@@ -205,11 +206,12 @@ class PickUp(smach.State):
             rospy.logerr('Failed lift')
 
         # Retract
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
         # rospy.loginfo('Start retracting')
         if arm.side == "left":
-            roll = 0.6
+            roll = 0.0 #0.6
         else:
-            roll = -0.6
+            roll = 0.0 #-0.6
 
         goal_bl.frame.p.x(goal_bl.frame.p.x() -0.1)  # Retract 10 cm
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
@@ -217,7 +219,7 @@ class PickUp(smach.State):
         rospy.loginfo("Start retract")
         if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed retract')
-
+        arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
         # Update Kinect once again to make sure the object disappears from ED
@@ -292,7 +294,7 @@ class ResetOnFailure(smach.StateMachine):
                                       required_arm_name=userdata.arm.side)
         else:
             arm = None
-        self._robot.torso.high()  # Move up to make resetting of the arm safer
+        self._robot.torso.reset()  # Move up to make resetting of the arm safer
         if arm is not None:
             arm.send_gripper_goal('close')
         self._robot.head.reset()  # Sends a goal
@@ -319,14 +321,14 @@ class Grab(smach.StateMachine):
         check_type(arm, Arm)
 
         with self:
-            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
-                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
-                                                'failed': 'RESET_FAILURE'})
-
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
-                                                'arrived': 'GRAB'})
+                                                'arrived': 'PREPARE_GRASP'})
+
+            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={'succeeded': 'GRAB',
+                                                'failed': 'RESET_FAILURE'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',

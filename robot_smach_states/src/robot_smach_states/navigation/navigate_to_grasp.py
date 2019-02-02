@@ -35,10 +35,19 @@ class NavigateToGrasp(NavigateTo):
             rospy.logerr("Could not resolve arm")
             return None
 
-        if arm == self.robot.arms['left']:
-            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-        elif arm == self.robot.arms['right']:
-            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+        # TODO https://github.com/tue-robotics/tue_robocup/issues/672
+        # Make independent of left/right arms. These offsets should be part of robot description, specific for each arm
+        if self.robot.robot_name == "amigo":
+            if arm == self.robot.arms['left']:
+                angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+            elif arm == self.robot.arms['right']:
+                angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+        elif self.robot.robot_name == "hero":
+            if arm == self.robot.arms['left']:
+                angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+            elif arm == self.robot.arms['right']:
+                angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
         entity = self.entity_designator.resolve()
