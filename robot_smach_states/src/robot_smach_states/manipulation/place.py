@@ -4,12 +4,12 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.arms import Arm
+from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
-from robot_smach_states.navigation import NavigateToPlace, NavigateToSymbolic
-from robot_smach_states.world_model import UpdateEntityPose
-from robot_smach_states.util.designators.ed_designators import EdEntityDesignator, EmptySpotDesignator
+from robot_smach_states.navigation import NavigateToPlace
+from robot_smach_states.world_model import Inspect
+from robot_smach_states.util.designators.ed_designators import EmptySpotDesignator
 from robot_smach_states.util.designators import check_type
 
 
@@ -26,7 +26,7 @@ class PreparePlace(smach.State):
 
         # Check types or designator resolve types
         check_type(placement_pose, FrameStamped)
-        check_type(arm, Arm)
+        check_type(arm, PublicArm)
 
         # Assign member variables
         self._robot = robot
@@ -45,11 +45,12 @@ class PreparePlace(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
+        # Torso up (non-blocking)
+        self._robot.torso.reset()
+        
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_place', timeout=0)
-
-        # Torso up (non-blocking)
-        self._robot.torso.high()
+        arm.wait_for_motion_done()
 
         # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
         # Hence, we want the torso to go to the place height - 0.6
@@ -81,7 +82,7 @@ class Put(smach.State):
         # Check types or designator resolve types
         check_type(item_to_place, Entity)
         check_type(placement_pose, FrameStamped)
-        check_type(arm, Arm)
+        check_type(arm, PublicArm)
 
         # Assign member variables
         self._robot = robot
@@ -135,13 +136,15 @@ class Put(smach.State):
             if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                                place_pose_bl.frame.p.y(),
                                                                height+0.15, 0.0, 0.0, 0.0,
-                                                               frame_id="/{0}/base_link".format(self._robot.robot_name)),
-                                 timeout=10, pre_grasp=True):
+                                                               frame_id="/{0}/base_link".format(self._robot.robot_name)
+                                                               ), timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
                 arm.cancel_goals()
                 return 'failed'
 
         # Place
+        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+                                                    tf_listener=self._robot.tf_listener)
         if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.1, 0.0, 0.0, 0.0,
@@ -163,12 +166,15 @@ class Put(smach.State):
         arm.occupied_by = None
 
         # Retract
+        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+                                                    tf_listener=self._robot.tf_listener)
         arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x() - 0.1,
                                                     place_pose_bl.frame.p.y(),
                                                     place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
                                                     frame_id='/'+self._robot.robot_name+'/base_link'),
                       timeout=0.0)
 
+        arm.wait_for_motion_done()
         self._robot.base.force_drive(-0.125, 0, 0, 1.5)
 
         if not arm.wait_for_motion_done(timeout=5.0):
@@ -178,9 +184,10 @@ class Put(smach.State):
         # Close gripper
         arm.send_gripper_goal('close', timeout=0.0)
 
-        self._robot.torso.reset()
         arm.reset()
         arm.wait_for_motion_done()
+        self._robot.torso.reset()
+        self._robot.torso.wait_for_motion_done()
 
         return 'succeeded'
 
@@ -208,7 +215,7 @@ class Place(smach.StateMachine):
 
         # Check types or designator resolve types
         assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
-        assert(arm.resolve_type == Arm or type(arm) == Arm)
+        assert(arm.resolve_type == PublicArm or type(arm) == PublicArm)
 
         # Case 3
         if isinstance(place_pose, str):
@@ -230,24 +237,11 @@ class Place(smach.StateMachine):
         with self:
 
             if furniture_designator is not None:
-                # Hardcoded in front of: from another location, the update doesn't work
-                if update_supporting_entity:
-                    next_state = "UPDATE_ENTITY"
-                else:
-                    next_state = "PREPARE_PLACE"
-
-                # Add navigation
-                smach.StateMachine.add('NAVIGATE_TO_UPDATE',
-                                       NavigateToSymbolic(robot, {furniture_designator: 'in_front_of'},
-                                                          furniture_designator),
-                                       transitions={'arrived': next_state,
-                                                    'unreachable': 'PREPARE_PLACE',
-                                                    'goal_not_defined': 'PREPARE_PLACE'})
-
-                if update_supporting_entity:
-                    smach.StateMachine.add('UPDATE_ENTITY',
-                                           UpdateEntityPose(robot=robot, entity_designator=furniture_designator),
-                                           transitions={'done': 'PREPARE_PLACE'})
+                smach.StateMachine.add('INSPECT',
+                                       Inspect(robot, furniture_designator, navigation_area="in_front_of"),
+                                       transitions={'done': 'PREPARE_PLACE',
+                                                    'failed': 'failed'}
+                                       )
 
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
                                    transitions={'succeeded': 'NAVIGATE_TO_PLACE',
@@ -272,7 +266,7 @@ if __name__ == "__main__":
     robot = Amigo()
     robot.ed.update_entity(id="bla")
     place_entity = EdEntityDesignator(robot, id="bla")
-    arm = ArmDesignator(robot.arms)
+    arm = ArmDesignator(robot, {})
 
     sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm, place_volume='on_top_of')
-    print sm.execute()
+    print(sm.execute())

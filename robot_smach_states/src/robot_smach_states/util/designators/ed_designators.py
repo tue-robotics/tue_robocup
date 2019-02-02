@@ -241,6 +241,9 @@ class EntityByIdDesignator(Designator):
         else:
             return None
 
+    def __repr__(self):
+        return "EntityByIdDesignator(id={}, name={})".format(self.id_, self.name)
+
 class ReasonedEntityDesignator(Designator):
     def __init__(self, robot, query, name=None):
         """
@@ -307,6 +310,10 @@ class EmptySpotDesignator(Designator):
         self.marker_array = MarkerArray()
 
     def _resolve(self):
+        """
+        :return: Where can an object be placed
+        :returns: FrameStamped
+        """
         place_location = self.place_location_designator.resolve()
         place_frame = FrameStamped(frame=place_location._pose, frame_id="/map")
 
@@ -319,47 +326,26 @@ class EmptySpotDesignator(Designator):
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
-        def is_poi_occupied(frame_stamped):
-            entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
-                                                         radius=self._spacing)
-            return not any(entities_at_poi)
+        open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
 
-        open_POIs = filter(is_poi_occupied, vectors_of_interest)
+        return self.select_best_feasible_poi(open_POIs)
 
-        def distance_to_poi_area(frame_stamped):
-            # Derived from navigate_to_place
-            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-            x = frame_stamped.frame.p.x()
-            y = frame_stamped.frame.p.y()
-            ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
-            ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
-            pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.frame_id)
-
-            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
-
-            if plan_to_poi:
-                distance = len(plan_to_poi)
-                # print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
-            else:
-                distance = None
-            return distance
-
+    def select_best_feasible_poi(self, open_POIs):
         # List with tuples containing both the POI and the distance the
         # robot needs to travel in order to place there
-        open_POIs_dist = [(poi, distance_to_poi_area(poi)) for poi in open_POIs]
+        open_POIs_dist = [(poi, self.distance_to_poi_area(poi)) for poi in open_POIs]
 
         # Feasible POIS: discard
         feasible_POIs = []
         for tup in open_POIs_dist:
             if tup[1]:
                 feasible_POIs.append(tup)
-
         if any(feasible_POIs):
             feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
 
             # We don't care about small differences
             nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
-            feasible_POIs = [f for f in feasible_POIs if (f[1]-feasible_POIs[0][1]) < nav_threshold]
+            feasible_POIs = [f for f in feasible_POIs if (f[1] - feasible_POIs[0][1]) < nav_threshold]
 
             feasible_POIs.sort(key=lambda tup: tup[0].edge_score, reverse=True)
             best_poi = feasible_POIs[0][0]  # Get the POI of the best match
@@ -371,6 +357,34 @@ class EmptySpotDesignator(Designator):
         else:
             rospy.logerr("Could not find an empty spot")
             return None
+
+    def is_poi_occupied(self, frame_stamped):
+        entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
+                                                     radius=self._spacing)
+        return not any(entities_at_poi)
+
+    def distance_to_poi_area(self, frame_stamped):
+
+        # ToDo: cook up something better: we need the arm that we're currently using but this would require a
+        # rather large API break (issue #739)
+        base_offset = self.robot.arms.values()[0].base_offset
+        radius = math.hypot(base_offset.x(), base_offset.y())
+
+        x = frame_stamped.frame.p.x()
+        y = frame_stamped.frame.p.y()
+        radius -= 0.1
+        ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
+        ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
+        pos_constraint = PositionConstraint(constraint=ri + " and " + ro, frame=frame_stamped.frame_id)
+
+        plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+
+        if plan_to_poi:
+            distance = len(plan_to_poi)
+            # print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
+        else:
+            distance = None
+        return distance
 
     def create_marker(self, x, y, z):
         marker = Marker()
@@ -489,6 +503,9 @@ class EmptySpotDesignator(Designator):
 
         return points
 
+    def __repr__(self):
+        return "EmptySpotDesignator(place_location_designator={}, name='{}', area='{}')".format(self.place_location_designator, self._name, self._area)
+
 
 class LockToId(Designator):
     """An Entity...Designator's resolve() method may return a different Entity everytime.
@@ -529,7 +546,7 @@ class LockToId(Designator):
                 return self.robot.ed.get_entity(id=self._locked_to_id)
         else:
             entity = self.to_be_locked.resolve()
-            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity.id))
+            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity))
             return entity
 
     def __repr__(self):

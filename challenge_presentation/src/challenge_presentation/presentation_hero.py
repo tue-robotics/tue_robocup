@@ -9,6 +9,7 @@ from functools import partial
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 from robot_smach_states.util.startup import startup
+from robot_skills import arms
 from robot_skills.util.kdl_conversions import VectorStamped
 
 class English(object):
@@ -49,7 +50,7 @@ class Dutch(object):
     HEAD = "Ik kan mijn hoofd naar boven en beneden bewegen, en ook opzij!"
     LRF = "Verder heb ik 1 lezer afstandsmeter, waarmee ik beter kan zien waar ik ben." # laser = lezer :-)
     LRF_LOCS = "Deze lezer zit op mijn onderstel"
-    LRF_LOCS2 = "Kijk daar zit ie"   
+    LRF_LOCS2 = "Kijk daar zit ie"
     MICROPHONE = "Als laatste heb ik een microfoon waarmee ik kan horen wat mensen zeggen"
     END_OF_INTRO = "Bedankt voor uw aandacht, ik hoop dat je mijn presentatie leuk vond en ik wens je nog een fijne dag"
 
@@ -64,6 +65,11 @@ class Presentation(smach.State):
         smach.State.__init__(self, outcomes=["done", "preempted"])
 
         self.robot = robot
+
+        trajectories = ["wave_front", "show_gripper", "point_to_laser"]
+        self.arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
+                                      required_trajectories=trajectories)
+
         self.language = language
         self.trans = {"en": English, "nl": Dutch}[language]
         if self.language == "nl":
@@ -107,18 +113,18 @@ class Presentation(smach.State):
         # Arms
         function_list.append(partial(self.robot.speech.speak, self.trans.ONE_ARM, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "wave_front"))
+        function_list.append(partial(self.arm.send_joint_trajectory, "wave_front"))
         function_list.append(partial(self.robot.speech.speak, self.trans.END_OF_ARM, language=self.language,
                                      voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm._send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
-        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "open"))
-        function_list.append(partial(self.robot.leftArm.send_gripper_goal, "close"))
+        function_list.append(partial(self.arm._send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
+        function_list.append(partial(self.arm.send_gripper_goal, "open"))
+        function_list.append(partial(self.arm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
                                      voice=self.voice, block=True))
-        function_list.append(partial(self.robot.leftArm.reset))
-        function_list.append(partial(self.robot.leftArm.wait_for_motion_done))
+        function_list.append(partial(self.arm.reset))
+        function_list.append(partial(self.arm.wait_for_motion_done))
 
         # Torso
         function_list.append(partial(self.robot.speech.speak, self.trans.TORSO, language=self.language,
@@ -150,11 +156,11 @@ class Presentation(smach.State):
                                      voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.robot.leftArm.send_joint_trajectory, "point_to_laser", 20.0)) # Maybe takes too long
-        function_list.append(partial(self.robot.leftArm.wait_for_motion_done))
+        function_list.append(partial(self.arm.send_joint_trajectory, "point_to_laser", 20.0)) # Maybe takes too long
+        function_list.append(partial(self.arm.wait_for_motion_done))
         function_list.append(partial(self.robot.speech.speak, self.trans.LRF_LOCS2, language=self.language,
                                      voice=self.voice, block=True))
-        function_list.append(partial(self.robot.leftArm.reset))
+        function_list.append(partial(self.arm.reset))
 
 
         # Microphone
@@ -171,12 +177,11 @@ class Presentation(smach.State):
             function()
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
-                self.robot.leftArm.reset()
-                self.robot.leftArm.send_gripper_goal("close")
+                self.arm.reset()
+                self.arm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
-                
-                self.robot.leftArm.wait_for_motion_done()
+                self.arm.wait_for_motion_done()
                 self.robot.torso.wait_for_motion_done()
                 self.robot.head.wait_for_motion_done()
                 return 'preempted'
