@@ -5,7 +5,7 @@ from std_srvs.srv import Empty
 # TU/e Robotics
 from hmi_msgs.msg import QueryAction
 from hmi import Client, TimeoutException
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 
 
 class Api(RobotPart):
@@ -42,6 +42,7 @@ class Api(RobotPart):
         except TimeoutException as e:
             if callable(self._post_hook):
                 self._post_hook()
+            self.restart_dragonfly()
             raise e
 
         if callable(self._post_hook):

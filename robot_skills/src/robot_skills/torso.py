@@ -1,5 +1,6 @@
 # System
 import threading
+import time
 
 # ROS
 from actionlib_msgs.msg import GoalStatus
@@ -9,8 +10,8 @@ from sensor_msgs.msg import JointState
 import trajectory_msgs.msg
 
 # TU/e Robotics
-from robot_part import RobotPart
-from .util import concurrent_util
+from robot_skills.robot_part import RobotPart
+from robot_skills.util import concurrent_util
 
 
 class Torso(RobotPart):
@@ -46,7 +47,7 @@ class Torso(RobotPart):
         try:
             rospy.loginfo("Torso cancelling all goals on close")
         except AttributeError:
-            print "Torso cancelling all goals on close. Rospy is already deleted."
+            print("Torso cancelling all goals on close. Rospy is already deleted.")
 
         self.ac_move_torso.cancel_all_goals()
 
@@ -108,7 +109,6 @@ class Torso(RobotPart):
 
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
 
-        import time
         time.sleep(0.01)  # This is dangerous now we are changing the Ts of the TrajectoryActionLib
 
         # This is necessary: the rtt_actionlib in the hardware seems

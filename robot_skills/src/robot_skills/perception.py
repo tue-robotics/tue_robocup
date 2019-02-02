@@ -3,21 +3,31 @@ from threading import Condition
 
 # ROS
 import rospy
-from sensor_msgs.msg import Image, RegionOfInterest
+from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
 # TU/e Robotics
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
-from image_recognition_msgs.msg import Annotation, Recognition
-from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
-from robot_part import RobotPart
-from .util.kdl_conversions import VectorStamped
-from .util.image_operations import img_recognitions_to_rois, img_cutout
+from image_recognition_msgs.msg import Annotation
+from rgbd.srv import Project2DTo3D
+from robot_skills.robot_part import RobotPart
+from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.image_operations import img_recognitions_to_rois, img_cutout
 
 
 class Perception(RobotPart):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None):
         super(Perception, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        if image_topic is None:
+            self.image_topic = "/" + self.robot_name + "/top_kinect/rgb/image"
+        else:
+            self.image_topic = image_topic
+
+        if projection_srv is None:
+            projection_srv_name = '/' + robot_name + '/top_kinect/project_2d_to_3d'
+        else:
+            projection_srv_name = projection_srv
+
         self._camera_lazy_sub = None
         self._camera_cv = Condition()
         self._camera_last_image = None
@@ -28,8 +38,7 @@ class Perception(RobotPart):
 
         self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
 
-        self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
-                                                          Project2DTo3D)
+        self._projection_srv = self.create_service_client(projection_srv_name, Project2DTo3D)
 
     def close(self):
         pass
@@ -47,7 +56,7 @@ class Perception(RobotPart):
             # self._camera_lazy_sub = rospy.Subscriber("/camera/rgb/image_rect_color", Image, self._image_cb)
             # for the robot
             rospy.loginfo("Creating subscriber")
-            self._camera_lazy_sub = rospy.Subscriber("/" + self.robot_name + "/top_kinect/rgb/image", Image, self._image_cb)
+            self._camera_lazy_sub = rospy.Subscriber(self.image_topic, Image, self._image_cb)
             rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
 
         rospy.loginfo("getting one image...")

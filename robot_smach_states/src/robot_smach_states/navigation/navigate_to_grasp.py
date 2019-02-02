@@ -6,28 +6,29 @@ from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
-from robot_skills.arms import Arm
+from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_smach_states.navigation import NavigateTo
-from robot_smach_states.util.designators import Designator, check_resolve_type
+from robot_smach_states.util.designators import check_resolve_type
+from robot_smach_states.util.designators.arm import UnoccupiedArmDesignator
 
 
-# ----------------------------------------------------------------------------------------------------
 class NavigateToGrasp(NavigateTo):
     def __init__(self, robot, entity_designator, arm_designator=None):
         super(NavigateToGrasp, self).__init__(robot, reset_head=False)
 
-        self.robot    = robot
+        self.robot = robot
         check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
 
-        check_resolve_type(arm_designator, Arm) #Check that the arm_designator resolves to an Arm
+        check_resolve_type(arm_designator, PublicArm)  # Check that the arm_designator resolves to an Arm
+
         self.arm_designator = arm_designator
         if not arm_designator:
-            rospy.logerr('NavigateToGrasp: side should be determined by entity_designator. Please specify left or right, will default to left')
-            self.arm_designator = Designator(robot.leftArm)
+            rospy.logerr('NavigateToGrasp: side should be determined by entity_designator.\
+            Please specify left or right, will default to left. This is Deprecated')
+            self.arm_designator = UnoccupiedArmDesignator(self.robot, {})
 
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
@@ -35,11 +36,8 @@ class NavigateToGrasp(NavigateTo):
             rospy.logerr("Could not resolve arm")
             return None
 
-        if arm == self.robot.arms['left']:
-            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-        elif arm == self.robot.arms['right']:
-            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-        radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+        angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
+        radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
         entity = self.entity_designator.resolve()
 
@@ -50,16 +48,16 @@ class NavigateToGrasp(NavigateTo):
         rospy.loginfo("Navigating to grasp entity id:{0}".format(entity.id))
 
         try:
-            pose = entity.pose #TODO Janno: Not all entities have pose information
+            pose = entity.pose  # TODO Janno: Not all entities have pose information
             x = pose.frame.p.x()
             y = pose.frame.p.y()
-        except KeyError, ke:
+        except KeyError as ke:
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
 
         try:
             rz, _, _ = entity.pose.frame.M.GetEulerZYX()
-        except KeyError, ke:
+        except KeyError as ke:
             rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0
 

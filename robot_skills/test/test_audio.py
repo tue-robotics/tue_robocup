@@ -9,7 +9,7 @@ import sys
 import rospy
 
 if len(sys.argv) < 2:
-    print "Please specify a robot name"
+    print("Please specify a robot name")
     sys.exit()
 
 robot_name = sys.argv[1]
@@ -21,8 +21,12 @@ if robot_name == "amigo":
 elif robot_name == "sergio":
     from robot_skills.sergio import Sergio
     robot = Sergio()
+elif robot_name == "hero":
+    from robot_skills.hero import Hero
+    robot = Hero()
+
 else:
-    print "Unknown robot '%s'"%robot_name
+    print("Unknown robot '%s'" % robot_name)
     sys.exit()
 
 hmi = robot.hmi
@@ -53,11 +57,11 @@ BEV['steak'] -> steak[B]"""
 
 def ask(question, grammar, target):
     s.speak(question)
-    print "Grammar: " + str(grammar)
+    print("Grammar: " + str(grammar))
     r = hmi.query(question, grammar, target)
 
     if r:
-        s.speak("You said: %s"%r.sentence)
+        s.speak("You said: %s" % r.sentence)
     else:
         s.speak("I don't understand, sorry")
 
@@ -73,8 +77,7 @@ while not rospy.is_shutdown():
     #      "location":location_category+places,
     #      "location2":location_category+places})
 
-    ask(random.choice(["What is your name?", "Hey, how should I call you?"]),
-            "Name -> " +"|".join(names), "Name")
+    ask(random.choice(["What is your name?", "Hey, how should I call you?"]), "Name -> " +"|".join(names), "Name")
 
     for i in range(0,4):
         ask("What can I get for you?", restaurant_grammar, "O")
