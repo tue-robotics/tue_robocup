@@ -179,6 +179,8 @@ class PublicArm(object):
             msg = "get_arm for '{}' arm did not request '{}' access."
             raise AssertionError(msg.format(self._arm.side, message))
 
+    def __repr__(self):
+        return "PublicArm(arm={arm})".format(arm=self._arm)
 
 class GripperMeasurement(object):
     """
