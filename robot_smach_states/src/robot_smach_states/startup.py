@@ -196,7 +196,7 @@ class WaitForDoorOpen(smach.State):
         laser_rotation = quaternion_msg_to_kdl_rotation(r)
         self.laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
         self.laser_yaw = laser_rotation.GetRPY()[2]
-        self.laser_sub = rospy.Subscriber("/" + self._robot.robot_name + "/base_laser/scan", LaserScan,
+        self.laser_sub = rospy.Subscriber(self._robot.laser_topic, LaserScan,
                                           self.process_scan)
 
         opened_before_timout = self.door_open.wait(self.timeout)
