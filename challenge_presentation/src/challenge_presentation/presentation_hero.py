@@ -67,7 +67,7 @@ class Presentation(smach.State):
         self.robot = robot
 
         trajectories = ["wave_front", "show_gripper", "point_to_laser"]
-        self.arm = self.robot.get_arm(required_gripper_types=arms.GripperTypes.GRASPING,
+        self.arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
                                       required_trajectories=trajectories)
 
         self.language = language
