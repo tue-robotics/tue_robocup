@@ -174,8 +174,8 @@ def grab(p, robot):
         say("I am sorry, but I cannot grab that object")
         return
 
-    arm = robot.leftArm
-    machine = Grab(robot, arm=ds.UnoccupiedArmDesignator(robot.arms, arm), item=ds.EntityByIdDesignator(robot, id=entities[0].id))
+    item = ds.EntityByIdDesignator(robot, id=entities[0].id)
+    machine = Grab(robot, arm=ds.UnoccupiedArmDesignator(robot, {}), item=item)
 
     stop()
 

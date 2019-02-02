@@ -1,5 +1,4 @@
 # System
-import yaml
 
 # ROS
 import rospy
@@ -7,8 +6,8 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
-from robot_skills.util.volume import volumes_from_entity_info_data
 from robot_skills.util.shape import shape_from_entity_info
+from robot_skills.util.volume import volumes_from_entity_volumes_msg
 
 
 class Entity(object):
@@ -23,7 +22,7 @@ class Entity(object):
         :param frame_id: str frame id w.r.t. which the pose is defined
         :param pose: kdl.Frame with the pose of this entity
         :param shape: Shape of this entity
-        :param volumes: dict mapping strings to Areas
+        :param volumes: dict mapping strings to Volume
         :param super_types: list with strings representing super types in an ontology of object types
         """
         self.id = identifier
@@ -63,6 +62,21 @@ class Entity(object):
 
         # Check if the point is inside of the volume
         return self._volumes[volume_id].contains(vector)
+
+    def entities_in_volume(self, entities, volume_id):
+        """
+        Filter the collection of entities down to only those in the given volume
+        :param entities: collection/sequence of entities
+        :type entities: List[Entity]
+        :param volume_id: volume these entities need to be in
+        :type volume_id: str
+        :return: entities that are both in the given volume and in the list 'entities'
+        :rtype: List[Entities]
+        """
+
+        entities = [e  for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
+
+        return entities
 
     @property
     def last_update_time(self):
@@ -141,13 +155,14 @@ def from_entity_info(e):
     last_update_time = e.last_update_time.to_sec()
 
     # The data is a string but can be parsed as yaml, which then represent is a much more usable data structure
-    volumes = volumes_from_entity_info_data(yaml.load(e.data))
+    volumes = volumes_from_entity_volumes_msg(e.volumes)
     rospy.logdebug("Entity(id={id}) has volumes {vols} ".format(id=identifier, vols=volumes.keys()))
 
     super_types = e.types
 
     # TODO: this must be part of the definition of the entity in ED.
-    if e.has_shape and "amigo" not in e.id and "sergio" not in e.id and e.id != "floor" and 'wall' not in e.id:
+    if e.has_shape and not any(
+        [name in e.id for name in ["amigo", "sergio", "hero"]]) and e.id != "floor" and "wall" not in e.id:
         super_types += ["furniture"]
 
     if 'possible_human' in e.flags:
@@ -155,6 +170,7 @@ def from_entity_info(e):
 
     return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
                   volumes=volumes, super_types=super_types, last_update_time=last_update_time)
+
 
 if __name__ == "__main__":
     import doctest

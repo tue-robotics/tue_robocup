@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>GPSR challenge</description>
 
-  
+
   <maintainer email="amigo@tue.nl">Rokus Ottervanger</maintainer>
 
 
@@ -13,10 +13,14 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>conversation_engine</build_depend>
+  <build_depend>hmi</build_depend>
   <build_depend>robot_skills</build_depend>
   <build_depend>robot_smach_states</build_depend>
   <build_depend>rospy</build_depend>
 
+  <run_depend>conversation_engine</run_depend>
+  <run_depend>hmi</run_depend>
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
