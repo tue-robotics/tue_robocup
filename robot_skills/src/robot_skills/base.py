@@ -147,10 +147,14 @@ class GlobalPlanner(RobotPart):
 
 
 class Base(RobotPart):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_listener, cmd_vel_topic=None, initial_pose_topic=None):
         super(Base, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._cmd_vel = rospy.Publisher('/' + robot_name + '/base/references', geometry_msgs.msg.Twist, queue_size=10)
-        self._initial_pose_publisher = rospy.Publisher('/' + robot_name + '/initialpose',
+        if cmd_vel_topic is None:
+            cmd_vel_topic = '/' + robot_name + '/base/references'
+        if initial_pose_topic is None:
+            initial_pose_topic = '/' + robot_name + '/initialpose'
+        self._cmd_vel = rospy.Publisher(cmd_vel_topic, geometry_msgs.msg.Twist, queue_size=10)
+        self._initial_pose_publisher = rospy.Publisher(initial_pose_topic,
                                                        geometry_msgs.msg.PoseWithCovarianceStamped, queue_size=10)
 
         self.analyzer = nav_analyzer.NavAnalyzer(robot_name)

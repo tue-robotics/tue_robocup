@@ -31,7 +31,7 @@ class Hero(robot.Robot):
 
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 
-        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
+        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener, "/hsrb/command_velocity"))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
         self.add_body_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
@@ -69,10 +69,6 @@ class Hero(robot.Robot):
         self.rightArm._operational = True
 
         self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
-
-
-        # remap topics in base
-        self.parts['base']._cmd_vel = rospy.Publisher('/hsrb/command_velocity', geometry_msgs.msg.Twist, queue_size=10)
 
         self.laser_topic = "/hsrb/base_scan"
 
