@@ -165,6 +165,13 @@ class RobotPart(object):
 
         self.__diagnostics_name = name
 
+    def unsubscribe_hardware_status(self):
+        """
+        When process_hardware_status sees that self.__diagnostics_name evaluates to False,
+            it will not process the diagnostics and ignore them
+        """
+        self.__diagnostics_name = None
+
     def process_hardware_status(self, diagnostic_dict):
         """
         hardware_status callback to determine if the bodypart is operational
