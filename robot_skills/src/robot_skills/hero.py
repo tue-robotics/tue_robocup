@@ -21,6 +21,9 @@ import world_model_ed
 import rospy
 import geometry_msgs.msg
 
+from sensor_msgs.msg import Image
+
+
 class Hero(robot.Robot):
     """docstring for Hero"""
     def __init__(self, wait_services=False):
@@ -46,7 +49,7 @@ class Hero(robot.Robot):
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
                                           lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                           lambda: self.lights.set_color_colorRGBA(lights.RESET)))
-        self..add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
+        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
                                               lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                               lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
@@ -55,13 +58,29 @@ class Hero(robot.Robot):
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
        
-        # remap topics in base   
-        self.parts['base']._cmd_vel = rospy.Publisher('/hsrb/command_velocity', geometry_msgs.msg.Twist, queue_size=10)
-	
         #rename joint names
-        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')	
+        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
         self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
+
+        # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
+        self.leftArm.unsubscribe_hardware_status()
+        self.rightArm.unsubscribe_hardware_status()
+        self.leftArm._operational = True
+        self.rightArm._operational = True
+
+        self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
+
+
+        # remap topics in base
+        self.parts['base']._cmd_vel = rospy.Publisher('/hsrb/command_velocity', geometry_msgs.msg.Twist, queue_size=10)
 
         self.laser_topic = "/hsrb/base_scan"
 
         self.configure()
+
+
+if __name__ == "__main__":
+    rospy.init_node("hero")
+
+    import doctest
+    doctest.testmod()

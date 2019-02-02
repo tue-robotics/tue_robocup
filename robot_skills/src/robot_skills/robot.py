@@ -8,10 +8,12 @@ import tf
 
 # Misc: do we need this???
 import geometry_msgs
-from collections import OrderedDict
+from collections import OrderedDict, Sequence
 
 # Check hardware status
 from diagnostic_msgs.msg import DiagnosticArray
+
+from robot_skills.util import decorators
 
 
 class Robot(object):
@@ -59,6 +61,7 @@ class Robot(object):
         """
         self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
 
+        # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
             bodypart.wait_for_connections(1.0)
@@ -71,6 +74,14 @@ class Robot(object):
 
         self.configured = True
 
+    @decorators.deprecated_replace_with('robot.get_arm')
+    def leftArm(self):
+        return self.arms['left']
+
+    @decorators.deprecated_replace_with('robot.get_arm')
+    def rightArm(self):
+        return self.arms['right']
+
     def reset(self):
         results = {}
         for partname, bodypart in self.parts.iteritems():
@@ -82,10 +93,12 @@ class Robot(object):
         if not self.robot_name == 'amigo':
             rospy.logerr('Standby only works for amigo')
             return
-        self.leftArm.reset()
-        self.rightArm.reset()
-        self.leftArm.send_gripper_goal('close')
-        self.rightArm.send_gripper_goal('close')
+
+        for arm in self.arms.itervalues():
+            arm.reset()
+        for arm in self.arms.itervalues():
+            arm.send_gripper_goal('close')
+
         self.head.look_down()
         self.torso.low()
         self.lights.set_color(0, 0, 0)
@@ -99,34 +112,146 @@ class Robot(object):
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
 
-    def get_arm(self, side):
-        """Get an arm object and a backup for that arm by giving a side as either a string or an Arm-object
-        @param side Either string from robot.arms.keys() or Arm from robot.arms.values()
-        >>> robot = Robot("dummy")
-        >>> arm, backup_arm = robot.get_arm("left")
-        >>> assert(arm == robot.leftArm)
-        >>> assert(backup_arm == robot.rightArm)"""
-        preferred_side = self.arms[self.arms.keys()[0]]
+    def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
+                      required_goals=None, desired_goals=None,
+                      required_trajectories=None, desired_trajectories=None,
+                      required_arm_name=None,
+                      required_objects=None, desired_objects=None):
+        """
+        Find an arm that has the needed and hopefully the desired properties.
+        Does not give an arm if all needed properties cannot be satisfied. An
+        arm returned by the call will not be able to do anything you didn't ask
+        for, except for objects held by it.
 
-        #Define which arm is which's backup arm (left backs up for right etc)
-        backup_arms = self.arms.values() #Get a *list* of arms i.e. the values of the arm-dict, not the keys
-        backup_arms.insert(0, backup_arms.pop()) #Make the last arm the first in the list, so we shift by 1
-        backup_str_dict = dict(zip(self.arms.keys(), backup_arms)) #Create a dict again that maps strings to backup-arms
-        backup_obj_dict = {self.arms[side]:backup_str_dict[side] for side in self.arms.keys()} #Create a dict that maps e.g. self.LeftArm to self.rightArm
+        :param required_gripper_types: Collection of gripper types that must all be
+                available. None means grippers are not needed.
+        :param desired_gripper_types: Collection of gripper types where one or more
+                may be selected. None means no grippers are desired.
 
-        if isinstance(side, basestring):
-            try:
-                preferred_side = self.arms[side]
-            except KeyError:
-                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
-                preferred_side = self.arms[self.arms.keys()[0]]
-        elif isinstance(side, arms.Arm):
-            preferred_side = side
-        else:
-            print "Unknown arm side:" + str(side) + ". Defaulting to '{0}'".format(preferred_side.side)
+        :param required_goals: Collection of joint goals that must all be available.
+                None means no joint goals are needed.
+        :param desired_goals: Collection of joint goals where one or more may be
+                selected. None means no joint goals are desired.
 
-        backup_side = backup_obj_dict[preferred_side]
-        return preferred_side, backup_side
+        :param required_trajectories: Collection of joint trajectories that must all
+                be available. None means no joint trajectories are needed.
+        :param desired_trajectories: Collection of joint trajectories where one or
+                more may be selected. None means no joint trajectories are desired.
+
+        :param required_arm_name: Name of the arm that is needed. If set, no
+                other arm will be considered. None means any arm will do.
+
+        :param required_objects: Collection of objects that the arm must have. Special
+                pseudo-objects arms.ANY_OBJECT and arms.NO_OBJECT may be used
+                too in the collection, although they do not make much sense when used
+                together with other objects. None means there are no required objects.
+        :param desired_objects: Collection of objects that the arm may have. None
+                means there are no desired objects.
+
+        :return: An Arm of the robot with the requested properties, or None.
+                Note that the arm will never do more than you requested.
+        """
+        discarded_reasons = [] # Reasons why arms are discarded.
+
+        # Check that collection arguments are really a collection of objects, but not strings.
+        # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
+        def seq_or_none(obj): 
+            return not isinstance(obj, str) and (isinstance(obj, Sequence) or obj is None)
+        assert seq_or_none(required_gripper_types)
+        assert seq_or_none(desired_gripper_types)
+        assert seq_or_none(required_goals)
+        assert seq_or_none(desired_goals)
+        assert seq_or_none(required_trajectories)
+        assert seq_or_none(desired_trajectories)
+        assert seq_or_none(required_objects)
+        assert seq_or_none(desired_objects)
+
+        for arm_name, arm in self.arms.iteritems():
+            if not arm.operational:
+                discarded_reasons.append((arm_name, "not operational"))
+                continue
+
+            # Name
+            if required_arm_name is not None and arm_name != required_arm_name:
+                discarded_reasons.append((arm_name, "required arm name failed"))
+                continue
+
+            # Grippers
+            matching_grippers = set()
+            if required_gripper_types is not None:
+                matches = [arm.collect_gripper_types(req_type) for req_type in required_gripper_types]
+                all_matched = all(match_list for match_list in matches)
+                if not all_matched:
+                    discarded_reasons.append((arm_name, "required gripper type failed"))
+                    continue
+               
+                for match in matches:
+                    matching_grippers.update(match)
+
+            if desired_gripper_types is not None:
+                matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
+
+            # Goals
+            matching_goals = _collect_needs_desires(required_goals, desired_goals, arm.has_joint_goal)
+            if matching_goals is None:
+                discarded_reasons.append((arm_name, "required goals failed"))
+                continue
+
+            # Trajectories
+            matching_trajectories = _collect_needs_desires(required_trajectories, desired_trajectories,
+                                                           arm.has_joint_trajectory)
+            if matching_trajectories is None:
+                discarded_reasons.append((arm_name, "required trajectories failed"))
+                continue
+
+            # Objects
+            if not self._check_required_obj(arm, required_objects):
+                discarded_reasons.append((arm_name, "required objects failed"))
+                continue
+            # Desired objects not checked currently.
+
+            # Unlike the other properties, it is likely not exactly known what objects will be used.
+            # For this reason, it seems better not to limit objects to the set specified in required
+            # _objects and desired_objects.
+            uses_objects = (required_objects is not None or desired_objects is not None)
+
+            # Success!
+            if not matching_grippers:
+                default_gripper = None
+            else:
+                default_gripper = next(iter(matching_grippers))
+            return arms.PublicArm(arm, matching_grippers, default_gripper, uses_objects,
+                                  matching_goals, matching_trajectories)
+
+        # No arm matched. Dump why.
+        msg = ("Failed to find a matching arm, reasons: " +
+               " ".join("{}:{}".format(name, reason) for name, reason in discarded_reasons))
+        rospy.logwarn(msg)
+        return None
+
+    def _check_required_obj(self, arm, obj_collection):
+        """
+        Check the object requirement.
+
+        :param arm: Arm to check.
+        :param obj_collection: Objects to find. None means the empty requirement
+                (arm may have anything, including nothng).
+        :return: Whether the requirement holds.
+        """
+        if obj_collection is None:
+            return True
+
+        cur_obj = arm.occupied_by
+        for obj in obj_collection:
+            if obj == arms.PseudoObjects.ANY: # Any object, but not empty.
+                if cur_obj is None:
+                    return False
+            elif obj == arms.PseudoObjects.EMPTY: # Arm must be empty.
+                if cur_obj is not None:
+                    return False
+            elif obj != cur_obj:
+                return False
+        return True
 
     def close(self):
         for partname, bodypart in self.parts.iteritems():
@@ -165,6 +290,35 @@ class Robot(object):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
 
+def _collect_needs_desires(needs, desires, test_func):
+    """
+    :param needs: Collection of needed values. None means nothing is needed.
+    :param desireds: Collection of desired values, None means nothing is desired.
+    :param test_func: Function that takes a value and returns whether the value is available.
+    :return: Needed and subset of the desired values, or None if the needs cannor be met.
+    """
+    founds = set()
+    if needs is not None:
+        founds.update(_collect_available(needs, test_func))
+        if len(founds) != len(needs): # All needs must be met.
+            return False
+
+    if desires is not None:
+        founds.update(_collect_available(desires, test_func))
+
+    return founds
+
+def _collect_available(values, test_func):
+    """
+    :param values: Collection of values that must be tested.
+    :param test_func: Function that takes a value and returns whether the value is available.
+    :return: Subset of values that is found to be available.
+    """
+    founds = set()
+    for value in values:
+        if test_func(value):
+            founds.add(value)
+    return founds
 
 if __name__ == "__main__":
     rospy.init_node("robot")
