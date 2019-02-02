@@ -86,7 +86,8 @@ class PublicArm(object):
         """
         Query the object currently held by the arm.
         """
-        self._test_die(self._has_occupied_by, "occupied_by")
+        self._test_die(self._has_occupied_by, "occupied_by", 
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         return self._arm.occupied_by
 
     @occupied_by.setter
@@ -94,7 +95,8 @@ class PublicArm(object):
         """
         Set the object currently held by the arm,
         """
-        self._test_die(self._has_occupied_by, "occupied_by")
+        self._test_die(self._has_occupied_by, "occupied_by", 
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         self._arm.occupied_by = value
 
     # Joint goals
@@ -105,7 +107,8 @@ class PublicArm(object):
         return configuration in self._available_joint_goals
 
     def send_joint_goal(self, configuration, timeout=5.0):
-        self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration)
+        self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration, 
+                       "Specify get_arm(..., required_goals=['{}'])".format(configuration))
         return self._arm.send_joint_goal(configuration, timeout)
 
     # Joint trajectories
@@ -116,7 +119,8 @@ class PublicArm(object):
         return configuration in self._available_joint_trajectories
 
     def send_joint_trajectory(self, configuration, timeout=5):
-        self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration)
+        self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
+                       "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout)
 
     # Gripper
@@ -143,7 +147,8 @@ class PublicArm(object):
         if gripper_type is None:
             gripper_type = self.default_gripper_type
 
-        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type))
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         # Specified type of gripper currently not used.
         return self._arm.send_gripper_goal(state, timeout)
 
@@ -151,14 +156,16 @@ class PublicArm(object):
         if gripper_type is None:
             gripper_type = self.default_gripper_type
 
-        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type))
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         return self._arm.handover_to_human(timeout)
 
     def handover_to_robot(self, timeout=10, gripper_type=None):
         if gripper_type is None:
             gripper_type = self.default_gripper_type
 
-        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type))
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         return self._arm.handover_to_robot(timeout)
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
@@ -171,13 +178,13 @@ class PublicArm(object):
     def reset(self, timeout=0.0):
         return self._arm.reset(timeout)
 
-    def _test_die(self, cond, message):
+    def _test_die(self, cond, feature, hint=''):
         """
         Test the condition, if it fails, die with an assertion error explaining what is wrong.
         """
         if not cond:
-            msg = "get_arm for '{}' arm did not request '{}' access."
-            raise AssertionError(msg.format(self._arm.side, message))
+            msg = "get_arm for '{}' arm did not request '{}' access. Hint: {}"
+            raise AssertionError(msg.format(self._arm.side, feature, hint))
 
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
