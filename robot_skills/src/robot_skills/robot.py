@@ -235,8 +235,9 @@ class Robot(object):
                 if not all_matched:
                     discarded_reasons.append((arm_name, "required gripper type failed"))
                     continue
+               
                 for match in matches:
-                     matching_grippers.update(match)
+                    matching_grippers.update(match)
 
             if desired_gripper_types is not None:
                 matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
@@ -291,7 +292,7 @@ class Robot(object):
         if obj_collection is None:
             return True
 
-        cur_obj = self.arm.occupied_by()
+        cur_obj = arm.occupied_by
         for obj in obj_collection:
             if obj == arms.PseudoObjects.ANY: # Any object, but not empty.
                 if cur_obj is None:
