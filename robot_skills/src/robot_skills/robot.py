@@ -26,7 +26,7 @@ import world_model_ed
 
 # Misc: do we need this???
 import geometry_msgs
-from collections import OrderedDict
+from collections import OrderedDict, Sequence
 
 # Check hardware status
 from diagnostic_msgs.msg import DiagnosticArray
@@ -203,6 +203,20 @@ class Robot(object):
         """
         discarded_reasons = [] # Reasons why arms are discarded.
 
+        # Check that collection arguments are really a collection of objects, but not strings.
+        # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
+        def seq_or_none(obj): 
+            return not isinstance(obj, str) and (isinstance(obj, Sequence) or obj is None)
+        assert seq_or_none(required_gripper_types)
+        assert seq_or_none(desired_gripper_types)
+        assert seq_or_none(required_goals)
+        assert seq_or_none(desired_goals)
+        assert seq_or_none(required_trajectories)
+        assert seq_or_none(desired_trajectories)
+        assert seq_or_none(required_arm_name)
+        assert seq_or_none(required_objects)
+        assert seq_or_none(desired_objects)
+
         for arm_name, arm in self.arms.iteritems():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
@@ -221,7 +235,8 @@ class Robot(object):
                 if not all_matched:
                     discarded_reasons.append((arm_name, "required gripper type failed"))
                     continue
-                matching_grippers.update(matches)
+                for match in matches:
+                     matching_grippers.update(match)
 
             if desired_gripper_types is not None:
                 matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
