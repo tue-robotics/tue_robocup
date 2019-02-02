@@ -10,7 +10,7 @@ import trajectory_msgs.msg
 
 # TU/e Robotics
 from robot_part import RobotPart
-from .util import concurrent_util
+from util import concurrent_util
 
 
 class Torso(RobotPart):

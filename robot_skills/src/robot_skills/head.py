@@ -5,7 +5,7 @@ from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
 # TU/e Robotics
 from robot_part import RobotPart
-from .util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
+from util.kdl_conversions import kdl_vector_stamped_to_point_stamped, VectorStamped
 
 
 class Head(RobotPart):
