@@ -1,12 +1,14 @@
 # ROS
 import PyKDL as kdl
+from kdl_conversions import point_msg_to_kdl_vector
 
 
 class Volume(object):
-    """ Represents an area of an entity
+    """ Represents an volume of an entity
 
     Points are defined relative to the object they belong to
     """
+
     def __init__(self):
         """ Constructor
 
@@ -19,7 +21,7 @@ class Volume(object):
         return self._calc_center_point()
 
     def _calc_center_point(self):
-        raise NotImplementedError("_get_center_point must be implemented by subclasses")
+        raise NotImplementedError("_calc_center_point must be implemented by subclasses")
 
     def contains(self, point):
         """ Checks if the point is inside this volume
@@ -31,6 +33,7 @@ class Volume(object):
 
 class BoxVolume(Volume):
     """ Represents a box shaped volume """
+
     def __init__(self, min_corner, max_corner):
         """ Constructor.
 
@@ -79,12 +82,94 @@ class BoxVolume(Volume):
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        return self._min_corner.x() < point.x() < self._max_corner.x() and \
-               self._min_corner.y() < point.y() < self._max_corner.y() and \
-               self._min_corner.z() < point.z() < self._max_corner.z()
+        return (self._min_corner.x() <= point.x() <= self._max_corner.x() and
+                self._min_corner.y() <= point.y() <= self._max_corner.y() and
+                self._min_corner.z() <= point.z() <= self._max_corner.z())
 
     def __repr__(self):
         return "BoxVolume(min_corner={}, max_corner={})".format(self.min_corner, self.max_corner)
+
+
+class CompositeBoxVolume(Volume):
+    """ Represents a composite box shaped volume """
+    def __init__(self, boxes):
+        """
+        Constructor
+
+        Points are defined relative to the object they belong to.
+
+        :param boxes: list of tuples of two PyKDL.Vector. First one with the minimum bounding box corners,
+                            second one with the maximum bounding box corners
+        """
+        super(CompositeBoxVolume, self).__init__()
+
+        assert isinstance(boxes, list)
+        assert len(boxes) > 0
+        assert isinstance(boxes[0], tuple)
+
+        self._min_corners = zip(*boxes)[0]
+        self._max_corners = zip(*boxes)[1]
+
+    def _calc_center_point(self):
+        """Calculate where the center of the box is located
+        >>> b = CompositeBoxVolume([kdl.Vector(0,0,0)], [kdl.Vector(1,1,1)])
+        >>> b.center_point
+        [         0.5,         0.5,         0.5]
+        """
+        min_x = min([v.x() for v in self._min_corners])
+        min_y = min([v.y() for v in self._min_corners])
+        min_z = min([v.z() for v in self._min_corners])
+        max_x = max([v.x() for v in self._max_corners])
+        max_y = max([v.y() for v in self._max_corners])
+        max_z = max([v.z() for v in self._max_corners])
+        return kdl.Vector(0.5 * (min_x + max_x),
+                          0.5 * (min_y + max_y),
+                          0.5 * (min_z + max_z))
+
+    @property
+    def min_corner(self):
+        min_x = min([v.x() for v in self._min_corners])
+        min_y = min([v.y() for v in self._min_corners])
+        min_z = min([v.z() for v in self._min_corners])
+        return kdl.Vector(min_x, min_y, min_z)
+
+    @property
+    def max_corner(self):
+        max_x = max([v.x() for v in self._max_corners])
+        max_y = max([v.y() for v in self._max_corners])
+        max_z = max([v.z() for v in self._max_corners])
+        return kdl.Vector(max_x, max_y, max_z)
+
+    @property
+    def bottom_area(self):
+        min_x = min([v.x() for v in self._min_corners])
+        min_y = min([v.y() for v in self._min_corners])
+        min_z = min([v.z() for v in self._min_corners])
+        max_x = max([v.x() for v in self._max_corners])
+        max_y = max([v.y() for v in self._max_corners])
+        convex_hull = [kdl.Vector(min_x, min_y, min_z), kdl.Vector(max_x, min_y, min_z),
+                       kdl.Vector(max_x, max_y, min_z), kdl.Vector(min_x, max_y, min_z)]
+        return convex_hull
+
+    def contains(self, point):
+        """ Checks if the point is inside this volume
+        :param point: kdl Vector w.r.t. the same frame as this volume
+        :return: True if inside, False otherwise
+        """
+        for min_corner, max_corner in zip(self._min_corners, self._max_corners):
+            if (min_corner.x() <= point.x() <= max_corner.x() and
+                min_corner.y() <= point.y() <= max_corner.y() and
+                min_corner.z() <= point.z() <= max_corner.z()):
+                return True
+
+        return False
+
+    def __repr__(self):
+        description = "CompositeBoxVolume:\n"
+        for min_corner, max_corner in zip(self._min_corners, self._max_corners):
+            description += "min_corner={}, max_corner={}\n".format(min_corner, max_corner)
+
+        return description
 
 
 class OffsetVolume(Volume):
@@ -101,56 +186,73 @@ class OffsetVolume(Volume):
         return "OffsetVolume(offset={})".format(self._offset)
 
 
-def volumes_from_entity_info_data(data):
+def volume_from_entity_volume_msg(msg):
     """ Creates a dict mapping strings to Volumes from the EntityInfo data dictionary
 
-    :param data: ed_msgs.msg.EntityInfo.data (string)
-    :return: dict mapping strings to Volumes
+    :param msg: ed_msgs.msg.Volume
+    :return: tuple of name and volume object
     """
-    # Check if we have data and if it contains areas
-    if data is None or 'areas' not in data:
+    # Check if we have data and if it contains volumes
+    if not msg:
+        return None, None
+
+    # Check if the volume has a name. Otherwise: skip
+    if not msg.name:
+        return None, None
+    name = msg.name
+
+    # Check if we have a shape
+    if len(msg.subvolumes) == 1:
+        subvolume = msg.subvolumes[0]
+        if not subvolume.geometry.type == subvolume.geometry.BOX:
+            return None, None
+
+        center_point = point_msg_to_kdl_vector(subvolume.center_point.point)
+
+        size = subvolume.geometry.dimensions
+        size = kdl.Vector(size[0], size[1], size[2])
+
+        min_corner = center_point - size / 2
+        max_corner = center_point + size / 2
+
+        return name, BoxVolume(min_corner, max_corner)
+    else:
+        min_corners = []
+        max_corners = []
+        for subvolume in msg.subvolumes:
+            if not subvolume.geometry.type == subvolume.geometry.BOX:
+                continue
+
+            size = subvolume.geometry.dimensions
+            size = kdl.Vector(size[0], size[1], size[2])
+
+            center_point = point_msg_to_kdl_vector(subvolume.center_point)
+
+            sub_min = center_point - size / 2
+            sub_max = center_point + size / 2
+            min_corners.append(sub_min)
+            max_corners.append(sub_max)
+
+        return name, CompositeBoxVolume(zip(min_corners, max_corners))
+
+
+def volumes_from_entity_volumes_msg(msg):
+    if not msg:
         return {}
 
-    # Loop over all areas
     volumes = {}
-    for a in data['areas']:
-
-        # Check if the volume has a name. Otherwise: skip
-        if 'name' not in a:
-            continue
-        name = a['name']
-
-        # Check if this is an 'OffsetVolume'
-        if 'offset' in a:
-            volumes[name] = OffsetVolume(a['offset'])
+    for v in msg:
+        if not v.name:
             continue
 
-        # Check if we have a shape
-        if 'shape' in a:
-
-            shapes = a['shape']
-
-            # Check if this is a single shape
-            if len(shapes) > 1:
-                print "\nError [volumes_from_entity_info_data]: Cannot handle compound shapes yet...\n"
-                continue
-            shape = shapes[0]
-
-            # Check if this one shape is a box
-            if 'box' in shape:
-                box = shape['box']
-                mic = box['min']
-                min_corner = kdl.Vector(mic['x'], mic['y'], mic['z'])
-                mac = box['max']
-                max_corner = kdl.Vector(mac['x'], mac['y'], mac['z'])
-                volumes[name] = BoxVolume(min_corner=min_corner, max_corner=max_corner)
-                continue
-
-        # If we end up here, we don't know what to do with the area
-        print "\nError [volumes_from_entity_info_data]: don't know what to do with {}\n".format(a)
+        name, volume = volume_from_entity_volume_msg(v)
+        if name and volume:
+            volumes[name] = volume
 
     return volumes
 
+
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

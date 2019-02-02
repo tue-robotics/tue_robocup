@@ -8,6 +8,8 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again"
     ]
 
+initial_pose = "hero_home"
+
 grammar_target = "T"
 
 ##############################################################################
@@ -17,9 +19,12 @@ grammar_target = "T"
 ##############################################################################
 
 grammar = """
-T[{actions : <A1>}] -> C[A1]
+T[A] -> C[A] | COURTESY C[A]
 
-C[{A}] -> VP[A]
+COURTESY -> please | robot please | could you | would you | hero | hero please
+C[{"actions": <A1>}] -> VP[A1]
+C[{"actions": <A1, A2>}] -> VP[A1] and VP[A2]
+C[{"actions": <A1, A2, A3>}] -> VP[A1] VP[A2] and VP[A3]
 """
 
 ##############################################################################
@@ -29,15 +34,19 @@ C[{A}] -> VP[A]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
 
 DET -> the | a | an | some
 NUMBER -> one | two | three
 MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 
+for room in common.location_rooms:
+    grammar += "\nROOM[{'type': 'room', 'id': '%s'}] -> %s" % (room, room)
+
 for loc in common.get_locations():
-    grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
+    grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
+
+grammar += '\n ROOM_OR_LOCATION[X] -> ROOM[X] | LOCATION[X]'
 
 for obj in common.object_names:
     grammar += '\nNAMED_OBJECT[%s] -> %s' % (obj, obj)
@@ -68,15 +77,59 @@ VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 
 ###############################################################################
 #
+# Send picture attempt
+#
+###############################################################################
+grammar += """
+V_SEND_PICTURE -> check what is on | show me what is on
+VP[{"action": "send-picture", "target-location": X}] -> V_SEND_PICTURE the ROOM_OR_LOCATION[X]
+"""
+
+###############################################################################
+#
+# Clear
+#
+###############################################################################
+
+grammar += """
+V_CLEAR -> clear | clean up | clean-up | empty
+
+VP[{"action": "clear", "source-location": X, "target-location": {"id":"trashbin"}}] -> V_CLEAR the ROOM_OR_LOCATION[X]
+VP[{"action": "clear", "source-location": X, "target-location": Y}] -> V_CLEAR the ROOM_OR_LOCATION[X] to the ROOM_OR_LOCATION[Y]
+"""
+
+###############################################################################
+#
+# Return
+#
+###############################################################################
+
+grammar += """
+V_RETURN -> bye | no thank you | no bye | go away
+
+VP[{"action": "navigate-to", "target-location": {"type":"waypoint", "id":"hero_home"}}] -> V_RETURN
+"""
+
+###############################################################################
+#
 # Find objects
 #
 ###############################################################################
 
 grammar += """
-V_FIND -> find | locate | look for
+V_FIND -> find | locate | look for | pinpoint | spot
+V_FIND_PERSON -> meet | V_FIND
 
-VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-VP["action": "find", "object": {"type": X}] -> V_FIND DET NAMED_OBJECT[X]
+OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
+PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | someone | me
+
+VP["action": "find", "object": {"type": X}, "location": {"id": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+VP["action": "find", "object": {"type": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
+
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND PERSON_TO_BE_FOUND[X] near the LOCATION[Y]
+VP[{"action": "find", "object": X}] -> V_FIND DET PERSON_TO_BE_FOUND[X]
 """
 
 ###############################################################################
@@ -136,16 +189,6 @@ grammar += '\nSAY_SENTENCE["DAY_OF_MONTH"] -> the day of the month'
 grammar += '\nSAY_SENTENCE["DAY_OF_WEEK"] -> the day of the week'
 grammar += '\nSAY_SENTENCE["TODAY"] -> what day is today | me what day it is | the date'
 grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
-
-###############################################################################
-#
-# Sound Source Localization (SSL)
-#
-###############################################################################
-
-grammar += """
-VP["action": "turn-toward-sound", "duration": "30"] -> show your sound source localization | look at me when i am talking to you
-"""
 
 ###############################################################################
 #

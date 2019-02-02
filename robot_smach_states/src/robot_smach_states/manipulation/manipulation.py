@@ -4,7 +4,7 @@ import smach
 
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
-from robot_skills.arms import Arm
+from robot_skills.arms import PublicArm
 from robot_skills.arms import GripperState
 from robot_skills.util import transformations
 from robot_smach_states.human_interaction import Say
@@ -41,7 +41,7 @@ class ArmToJointConfig(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
-        check_type(arm_designator, Arm)
+        check_type(arm_designator, PublicArm)
         self.arm_designator = arm_designator
         self.configuration = configuration
 
@@ -75,7 +75,7 @@ class HandoverFromHuman(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed','timeout'])
 
-        check_type(arm_designator, Arm)
+        check_type(arm_designator, PublicArm)
         if not grabbed_entity_designator and grabbed_entity_label == "":
             rospy.logerr("No grabbed entity label or grabbed entity designator given")
 
@@ -105,7 +105,7 @@ class HandoverToHuman(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         #A designator can resolve to a different item every time its resolved. We don't want that here, so lock
-        check_type(arm_designator, Arm)
+        check_type(arm_designator, PublicArm)
         locked_arm = LockingDesignator(arm_designator)
 
         with self:
@@ -216,7 +216,7 @@ class SetGripper(smach.State):
     def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, drop_from_frame=None, grab_entity_designator=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
-        check_type(arm_designator, Arm)
+        check_type(arm_designator, PublicArm)
         self.arm_designator = arm_designator
         self.robot = robot
         self.gripperstate = gripperstate

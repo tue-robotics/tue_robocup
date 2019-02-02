@@ -76,17 +76,6 @@ class Designator(object):
     resolve_type = property(_get_resolve_type)
     name = property(_get_name)
 
-    def __str__(self):
-        excludes = ["current", "instances", "parse", "resolve"]
-        attrs = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("_") and attr not in excludes]
-
-        s = "\n\nDesignator("
-        for attr in attrs:
-            s += "\n  %s = %s" % (attr, str(getattr(self, attr)))
-        s += ")\n\n"
-
-        return s
-
     def __repr__(self):
         return "Designator(resolve_type={}, name={})".format(self.resolve_type, self.name)
 

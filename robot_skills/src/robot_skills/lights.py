@@ -4,7 +4,7 @@ from std_msgs.msg import ColorRGBA
 
 # TU/e Robotics
 from amigo_msgs.msg import RGBLightCommand
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 
 LISTENING = ColorRGBA(0, 1, 0, 1)
 SPEAKING = ColorRGBA(1, 0, 0, 1)
@@ -74,8 +74,8 @@ class Lights(RobotPart):
         self._topic.publish(rgb_msg)
 
     def taste_the_rainbow(self, duration=5.0):
-        """ Show awesome rainbow on the real amigo robot
-
+        """
+        Show awesome rainbow on the real amigo robot
         :param duration: (float) Indicates the total duration of the rainbow
         """
 
