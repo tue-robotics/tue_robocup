@@ -2,18 +2,15 @@
 
 # ROS
 import rospy
-
-# tf
 import tf
-
-# Misc: do we need this???
 import geometry_msgs
-from collections import OrderedDict, Sequence
-
-# Check hardware status
 from diagnostic_msgs.msg import DiagnosticArray
 
+# TU/e
+import arms
 from robot_skills.util import decorators
+
+from collections import OrderedDict, Sequence
 
 
 class Robot(object):
@@ -151,7 +148,7 @@ class Robot(object):
         :return: An Arm of the robot with the requested properties, or None.
                 Note that the arm will never do more than you requested.
         """
-        discarded_reasons = [] # Reasons why arms are discarded.
+        discarded_reasons = []  # Reasons why arms are discarded.
 
         # Check that collection arguments are really a collection of objects, but not strings.
         # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
@@ -229,7 +226,8 @@ class Robot(object):
         rospy.logwarn(msg)
         return None
 
-    def _check_required_obj(self, arm, obj_collection):
+    @staticmethod
+    def _check_required_obj(arm, obj_collection):
         """
         Check the object requirement.
 
@@ -290,10 +288,11 @@ class Robot(object):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
 
+
 def _collect_needs_desires(needs, desires, test_func):
     """
     :param needs: Collection of needed values. None means nothing is needed.
-    :param desireds: Collection of desired values, None means nothing is desired.
+    :param desires: Collection of desired values, None means nothing is desired.
     :param test_func: Function that takes a value and returns whether the value is available.
     :return: Needed and subset of the desired values, or None if the needs cannor be met.
     """
@@ -308,6 +307,7 @@ def _collect_needs_desires(needs, desires, test_func):
 
     return founds
 
+
 def _collect_available(values, test_func):
     """
     :param values: Collection of values that must be tested.
@@ -319,6 +319,7 @@ def _collect_available(values, test_func):
         if test_func(value):
             founds.add(value)
     return founds
+
 
 if __name__ == "__main__":
     rospy.init_node("robot")
