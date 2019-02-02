@@ -213,7 +213,6 @@ class Robot(object):
         assert seq_or_none(desired_goals)
         assert seq_or_none(required_trajectories)
         assert seq_or_none(desired_trajectories)
-        assert seq_or_none(required_arm_name)
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
