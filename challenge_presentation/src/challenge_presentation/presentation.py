@@ -59,7 +59,7 @@ class Presentation(smach.State):
                                            required_arm_name='left')
 
         right_trajectories = ["show_gripper", "point_to_kinect"]
-        self.right_arm = self.robot.get_arm((required_gripper_types=arms.GripperTypes.GRASPING,
+        self.right_arm = self.robot.get_arm(required_gripper_types=arms.GripperTypes.GRASPING,
                                              required_trajectories=right_trajectories,
                                              required_arm_name='right')
 
