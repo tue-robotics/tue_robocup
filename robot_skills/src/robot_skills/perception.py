@@ -3,13 +3,13 @@ from threading import Condition
 
 # ROS
 import rospy
-from sensor_msgs.msg import Image, RegionOfInterest
+from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
 # TU/e Robotics
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
-from image_recognition_msgs.msg import Annotation, Recognition
-from rgbd.srv import Project2DTo3D, Project2DTo3DRequest
+from image_recognition_msgs.msg import Annotation
+from rgbd.srv import Project2DTo3D
 from robot_part import RobotPart
 from util.kdl_conversions import VectorStamped
 from util.image_operations import img_recognitions_to_rois, img_cutout
