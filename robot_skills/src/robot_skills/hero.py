@@ -38,7 +38,8 @@ class Hero(robot.Robot):
         self.add_body_part('rightArm', arms.Arm(self.robot_name, self.tf_listener, side="right"))
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
-        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))
+        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
+                                                               "/hsrb/head_rgbd_sensor/rgb/image_raw"))
         # self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
@@ -67,8 +68,6 @@ class Hero(robot.Robot):
         self.rightArm.unsubscribe_hardware_status()
         self.leftArm._operational = True
         self.rightArm._operational = True
-
-        self.parts['perception']._camera_lazy_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self.parts['perception']._image_cb)
 
         self.laser_topic = "/hsrb/base_scan"
 
