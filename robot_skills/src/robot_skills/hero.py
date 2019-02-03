@@ -31,7 +31,7 @@ class Hero(robot.Robot):
 
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 
-        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener, "/hsrb/command_velocity"))
+        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener, "/hero/command_velocity"))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
         self.add_body_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
@@ -39,7 +39,7 @@ class Hero(robot.Robot):
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
-                                                               "/hsrb/head_rgbd_sensor/rgb/image_raw"))
+                                                               "/hero/head_rgbd_sensor/rgb/image_raw"))
         # self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
@@ -68,8 +68,6 @@ class Hero(robot.Robot):
         self.rightArm.unsubscribe_hardware_status()
         self.leftArm._operational = True
         self.rightArm._operational = True
-
-        self.laser_topic = "/hsrb/base_scan"
 
         self.configure()
 
