@@ -1,0 +1,19 @@
+#!/usr/bin/python
+
+# ROS
+import rospy
+
+# TU/e Robotics
+from robot_skills.util.robot_constructor import robot_constructor
+
+# Challenge example
+from challenge_take_out_the_garbage.take_out_the_garbage import TakeOutGarbage
+
+if __name__ == "__main__":
+
+    rospy.init_node("state_machine_garbage")
+    robot = robot_constructor("amigo")   # ToDo: Make configurable
+    state_machine = TakeOutGarbage(robot)
+    state_machine.execute()
+    raw_input("Press any key to exit")
+
