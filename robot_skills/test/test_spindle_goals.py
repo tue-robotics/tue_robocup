@@ -1,13 +1,8 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
-import robot_skills
 import robot_skills.amigo
 
-import geometry_msgs
-import sensor_msgs
-import amigo_msgs
 import random
 import time
 

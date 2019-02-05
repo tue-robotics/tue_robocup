@@ -7,7 +7,7 @@ import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
 
 # TU/e
-import arms
+from robot_skills import arms
 from robot_skills.util import decorators
 
 from collections import OrderedDict, Sequence
