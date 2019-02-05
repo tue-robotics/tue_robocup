@@ -13,7 +13,7 @@ from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 
 # If the grasp sensor distance is smaller than this value, the gripper is holding an object
 GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)

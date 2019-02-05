@@ -17,11 +17,11 @@ from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
 # Robot skills
-from .util import transformations
+from robot_skills.util import transformations
 from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
-from .classification_result import ClassificationResult
+from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 
 
 class Navigation(RobotPart):
