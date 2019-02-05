@@ -26,7 +26,7 @@ class Sergio(robot.Robot):
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
                                           lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                           lambda: self.lights.set_color_colorRGBA(lights.RESET)))
-        self..add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
+        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
                                               lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                               lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
