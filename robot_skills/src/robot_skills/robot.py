@@ -5,6 +5,8 @@ import rospy
 import tf
 import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
+from sensor_msgs.smg import Image
+from std_msgs.msg import String
 
 # TU/e
 from robot_skills import arms
