@@ -3,7 +3,7 @@ import rospy
 from std_msgs.msg import Bool
 
 # TU/e Robotics
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 
 
 class EButton(RobotPart):

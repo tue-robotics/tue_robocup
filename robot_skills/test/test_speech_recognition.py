@@ -1,9 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
-
-import random
-import time
-
 import sys
 
 import rospy
@@ -21,8 +16,11 @@ if robot_name == "amigo":
 elif robot_name == "sergio":
     from robot_skills.sergio import Sergio
     robot = Sergio()
+elif robot_name == "hero":
+    from robot_skills.hero import Hero
+    robot = Hero()
 else:
-    print "Unknown robot '%s'"%robot_name
+    print("Unknown robot '%s'" % robot_name)
     sys.exit()
 
 e = robot.ears

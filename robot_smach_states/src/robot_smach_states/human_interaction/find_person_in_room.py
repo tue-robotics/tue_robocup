@@ -14,17 +14,27 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
-
+# class CheckIfPersonInRoom(smach.State):
+#     def __init__(self, robot, room):
+#         """
+#
+#         :param robot: robot api object
+#         :param room: room where person should be found
+#         """
+#         smach.State.__init__(self, outcomes=['true', 'false'])
+#         self._robot = robot
+#         self._room = room
+#
+#     def execute(self, userdata=None):
 
 class FindPerson(smach.State):
-    """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.
-
-        """
+    """
+    Smach state to find a person. The robot looks around and tries to recognize all faces in view.
+    """
 
     def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
-
         :param robot: robot api object
         :param person_label: (str) person label
         :param search_timeout: (float) maximum time the robot is allowed to search
@@ -56,11 +66,12 @@ class FindPerson(smach.State):
         look_distance = 2.0  # magic number 4
         look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
-                                                    y=look_distance * math.sin(angle), z=1.7,
+                                                    y=look_distance * math.sin(angle), z=1.3,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
                       for angle in look_angles]
 
         i = 0
+
         while (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
             if self.preempt_requested():
                 return 'failed'
@@ -128,7 +139,6 @@ class _DecideNavigateState(smach.State):
     """
     def __init__(self, robot, waypoint_designator, room_designator):
         """ Initialize method
-
         :param robot: Robot API object
         :param waypoint_designator: EdEntityDesignator that should resolve to a waypoint
         :param room_designator: EdEntityDesignator that should resolve to the room in which the waypoint is located
@@ -156,7 +166,6 @@ class _DecideNavigateState(smach.State):
 class FindPersonInRoom(smach.StateMachine):
     """ Uses NavigateToWaypoint or NavigateToRoom and subsequently tries to find a person
     in that room.
-
     """
 
     def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None):

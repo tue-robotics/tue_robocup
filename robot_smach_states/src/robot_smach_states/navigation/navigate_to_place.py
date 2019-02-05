@@ -40,7 +40,7 @@ class NavigateToPlace(NavigateTo):
         if arm == self.robot.arms['left']:
             angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         elif arm == self.robot.arms['right']:
-            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
         place_fs = self.place_pose_designator.resolve()
