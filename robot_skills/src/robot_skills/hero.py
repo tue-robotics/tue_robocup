@@ -30,8 +30,8 @@ class Hero(robot.Robot):
                                           lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                           lambda: self.lights.set_color_colorRGBA(lights.RESET)))
         self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
-                                              lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                              lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+                                             lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                             lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
         self.add_body_part('ebutton', ebutton.EButton(self.robot_name, self.tf_listener))
 
