@@ -28,16 +28,16 @@ from robot_skills.util import kdl_conversions
 #     def execute(self, userdata=None):
 
 class FindPerson(smach.State):
-    """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.
-        """
-    # ToDo: robot only mentions that it has found the person. Doesn't do anything else...
+    """
+    Smach state to find a person. The robot looks around and tries to recognize all faces in view.
+    """
 
-    def __init__(self, robot, person_label='operator', lost_timeout=60, look_distance=2.0, probability_threshold=1.5,
+    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
         :param robot: robot api object
         :param person_label: (str) person label
-        :param lost_timeout: (float) maximum time the robot is allowed to search
+        :param search_timeout: (float) maximum time the robot is allowed to search
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
         :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
@@ -46,7 +46,7 @@ class FindPerson(smach.State):
 
         self._robot = robot
         self._person_label = person_label
-        self._lost_timeout = lost_timeout
+        self._search_timeout = search_timeout
         self._look_distance = look_distance
         self._face_pos_pub = rospy.Publisher(
             '/%s/find_person/person_detected_face' % robot.robot_name,
@@ -71,7 +71,8 @@ class FindPerson(smach.State):
                       for angle in look_angles]
 
         i = 0
-        while (rospy.Time.now() - start_time).to_sec() < self._lost_timeout:
+
+        while (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
             if self.preempt_requested():
                 return 'failed'
 

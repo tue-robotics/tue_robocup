@@ -1,7 +1,8 @@
 __author__ = 'rokus'
 
 # ROS
-import smach, rospy
+import smach
+import rospy
 
 # TU/e Robotics
 from robocup_knowledge import load_knowledge
@@ -10,12 +11,12 @@ import robot_smach_states as states
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator
 
 
-def entities_from_description(robot, entity_description, list_of_entity_ids=None ):
+def entities_from_description(robot, entity_description, list_of_entity_ids=None):
     '''
     Query entities and return those that satisfy the given description
 
     @param robot: The robot object
-    @param entity_descr: A dict that contains a 'type' field
+    @param entity_description: A dict that contains a 'type' field
     @param list_of_entity_ids: A list of entity ids to choose from (for example a result of a segment)
 
     @return: entities
@@ -24,38 +25,25 @@ def entities_from_description(robot, entity_description, list_of_entity_ids=None
     '''
     knowledge = load_knowledge('common')
 
-    if not isinstance(list_of_entity_ids, list):
-        return []
-
-    if not isinstance(entity_description, dict):
-        return []
-    if 'type' not in entity_description:
-        return []
+    list_of_entity_ids = list_of_entity_ids if list_of_entity_ids is not None else []
+    assert isinstance(list_of_entity_ids, list), "Input should be a list"
+    assert isinstance(entity_description, dict), "Entity description should be a dict"
+    assert 'type' in entity_description or 'category' in entity_description
 
     # Get all entities from the world model
     entities = robot.ed.get_entities()
 
-    # TODO: hack because ed maintains all labels that were ever assigned to an entity in the .types field
-    if entity_description['type'] == 'person':
-        entities = [e for e in entities if e.is_a('possible_human')]
-
-        # Remove the segmented entities from the inspection
-        for id in list_of_entity_ids:
-            robot.ed.update_entity(id=id, action='remove')
+    # Select entities based on the description
+    if entity_description.get('type'):
+        entities = [e for e in entities if e.type == entity_description['type']]
+    elif entity_description.get('category'):
+        entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['category']]
     else:
-        # Select entities based on the description (only type for now)
-        try:
-            if entity_description['type'] in knowledge.object_categories:
-                entities = [e for e in entities if knowledge.get_object_category(e.type) == entity_description['type']]
-            else:
-                entities = [e for e in entities if e.type == entity_description['type']]
-        except:
-            entities = [e for e in entities if e.type == entity_description['type']]
-
+        return []
 
         # If we have a list of entities to choose from, select based on that list
-        if list_of_entity_ids:
-            entities = [e for e in entities if e.id in list_of_entity_ids]
+    if list_of_entity_ids:
+        entities = [e for e in entities if e.id in list_of_entity_ids]
 
     # Sort entities by distance
     robot_location = robot.base.get_location()
