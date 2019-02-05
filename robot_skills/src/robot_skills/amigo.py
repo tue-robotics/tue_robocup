@@ -1,22 +1,4 @@
-import robot
-
-# Body parts
-import base
-import torso
-import arms
-import head
-import perception
-import ssl
-
-# Human Robot Interaction
-import speech
-import api
-import ears
-import ebutton
-import lights
-
-# world model
-import world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,world_model_ed
 
 
 class Amigo(robot.Robot):

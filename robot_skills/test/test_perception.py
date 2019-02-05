@@ -4,7 +4,6 @@ import sys
 import rospy
 
 from sensor_msgs.msg import RegionOfInterest
-import robot_skills.util.kdl_conversions as kdl_conversions
 
 from robot_skills.util.robot_constructor import robot_constructor
 
