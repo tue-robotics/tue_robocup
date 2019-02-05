@@ -64,6 +64,21 @@ class Entity(object):
         # Check if the point is inside of the volume
         return self._volumes[volume_id].contains(vector)
 
+    def entities_in_volume(self, entities, volume_id):
+        """
+        Filter the collection of entities down to only those in the given volume
+        :param entities: collection/sequence of entities
+        :type entities: List[Entity]
+        :param volume_id: volume these entities need to be in
+        :type volume_id: str
+        :return: entities that are both in the given volume and in the list 'entities'
+        :rtype: List[Entities]
+        """
+
+        entities = [e  for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
+
+        return entities
+
     @property
     def last_update_time(self):
         return self._last_update_time

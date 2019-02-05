@@ -15,7 +15,9 @@ from tue_msgs.msg import GripperCommand
 
 from robot_skills.robot_part import RobotPart
 
+
 # If the grasp sensor distance is smaller than this value, the gripper is holding an object
+
 GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
 GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
 GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.02, 0.18]))
@@ -36,6 +38,7 @@ class GripperTypes(object):
     # Pseudo gripper types.
     GRASPING = "pseudo-gripper-type-any-grasping-will-do" # Either pinch or parallel
     NONE = "pseudo-gripper-type-no-gripper"
+
 
 # Pseudo objects for 'any object' or 'no object'.
 class PseudoObjects(object):
@@ -189,6 +192,7 @@ class PublicArm(object):
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
 
+
 class GripperMeasurement(object):
     """
     Class holding measurements from the distance sensor on the grippers
@@ -300,6 +304,7 @@ class Arm(RobotPart):
             raise Exception("Side should be either: left or right")
 
         self._occupied_by = None
+
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
@@ -557,6 +562,7 @@ class Arm(RobotPart):
         The 'occupied_by' property will return the current entity that is in the gripper of this arm.
         :return: robot_skills.util.entity, ED entity
         """
+
         return self._occupied_by
 
     @occupied_by.setter
@@ -843,6 +849,10 @@ class FakeArm(RobotPart):
     @property
     def occupied_by(self):
         return None
+
+    @occupied_by.setter
+    def occupied_by(self, value):
+        pass
 
     def send_gripper_goal(self, state, timeout=5.0):
         return False
