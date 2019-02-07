@@ -123,8 +123,6 @@ class WaitForTriggerTimeout(smach.State):
         self.trigger_received = None
 
         # Get the ~private namespace parameters from command line or launch file.
-        topic = topic
-
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
         rospy.loginfo('topic: %s', topic)
