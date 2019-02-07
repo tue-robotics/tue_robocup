@@ -11,8 +11,8 @@ from util.robocup_recorder import start_robocup_recorder
 
 
 class Initialize(smach.State):
-    """ Resets the robot (arms, torso, head, etc.) and checks if the tf listener works correctly
-
+    """
+    Resets the robot (arms, torso, head, etc.) and checks if the tf listener works correctly
     """
     def __init__(self, robot):
         """ Initialization
@@ -36,11 +36,12 @@ class Initialize(smach.State):
 
 
 class SetInitialPose(smach.State):
-    """ Sets the initial pose for correct localization
-
+    """
+    Sets the initial pose for correct localization
     """
     def __init__(self, robot, init_position):
-        """ Initialization
+        """
+        Initialization
 
         :param robot: (Robot)
         :param init_position: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
@@ -54,7 +55,8 @@ class SetInitialPose(smach.State):
         self.initial_position = init_position
 
     def location_2d(self, location):
-        """ Gets the 2D location from a string identifying an wm entity
+        """
+        Gets the 2D location from a string identifying an wm entity
 
         :param location: (str) identifies the entity
         :return: tuple(float, float, float) x, y, yaw in map frame

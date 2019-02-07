@@ -16,10 +16,13 @@ import utility
 
 
 class StartChallengeRobust(smach.StateMachine):
-    """Initialize, wait for the door to be opened and drive inside"""
+    """
+    Initialize, wait for the door to be opened and drive inside
+    """
 
     def __init__(self, robot, initial_pose, use_entry_points=False, door=True):
-        """ Initialization method
+        """
+        Initialization method
 
         :param robot: (Robot)
         :param initial_pose: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
@@ -65,8 +68,8 @@ class StartChallengeRobust(smach.StateMachine):
                                    transitions={"spoken": "INIT_POSE"})
 
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial
-            # pose is set, since it is thinks amigo is standing in front of a wall if door is closed and localization
-            # can(/will) be messed up.
+            # pose is set, since it is thinks the robot is standing in front of a wall if door is closed and 
+            # localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
                                    utility.SetInitialPose(robot, initial_pose),
                                    transitions={'done': 'ENTER_ROOM' if door else "Done",
