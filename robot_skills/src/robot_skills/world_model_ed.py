@@ -381,6 +381,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    @deprecated
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
         # return self._ed_mesh_entity_in_view_srv(id=id, type=type)
