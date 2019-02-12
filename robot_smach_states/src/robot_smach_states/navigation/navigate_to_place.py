@@ -22,13 +22,15 @@ class NavigateToPlace(NavigateTo):
         """
         super(NavigateToPlace, self).__init__(robot)
 
-        self.robot    = robot
-        check_resolve_type(place_pose_designator, FrameStamped) #Check that place_pose_designator actually returns a PoseStamped
+        self.robot = robot
+        # Check that place_pose_designator actually returns a PoseStamped
+        check_resolve_type(place_pose_designator, FrameStamped)
         self.place_pose_designator = place_pose_designator
 
         self.arm_designator = arm_designator
         if not arm_designator:
-            rospy.logerr('NavigateToPlace: side should be determined by arm_designator. Please specify left or right, will default to left')
+            rospy.logerr('NavigateToPlace: side should be determined by arm_designator.'
+                         'Please specify left or right, will default to left')
             self.arm_designator = Designator(robot.leftArm)
 
     def generateConstraint(self):
@@ -37,11 +39,8 @@ class NavigateToPlace(NavigateTo):
             rospy.logerr("Could not resolve arm")
             return None
 
-        if arm == self.robot.arms['left']:
-            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-        elif arm == self.robot.arms['right']:
-            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-        radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+        angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
+        radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
         place_fs = self.place_pose_designator.resolve()
 
@@ -54,7 +53,7 @@ class NavigateToPlace(NavigateTo):
         try:
             x = place_fs.frame.p.x()
             y = place_fs.frame.p.y()
-        except KeyError, ke:
+        except KeyError as ke:
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
 
