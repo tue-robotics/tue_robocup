@@ -26,5 +26,29 @@ import smach
 # Robot smach states
 import robot_smach_states as states
 
-# make statemachine here
+# Knowledge has not been made yet.
+challenge_knowledge = load_knowledge('challenge_cleanup')
 
+# Make statemachine here
+
+# Request the operator which room has to be cleaned
+#       Need some conversation engine here ( see gpsr.py?)
+#       Say "Which room do you want me to clean"
+#       Wait for a correct answer, but not too long....
+
+# Go to the entrance of the requested room
+#       NavigateTo(StartPoint)
+
+# Iterate until all points are visited
+#       Make snapshot with camera and distinguish none/recognized/unrecognized objects
+#       Update the respective lists for the objects
+#       Move to the next point
+
+# Go to the exit of the room
+#       NavigateTo(ExitPoint)
+
+# Recite the list of found known objects
+#       Say "I have seen ... and ... and ..."
+
+
+#
