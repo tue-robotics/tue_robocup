@@ -100,7 +100,7 @@ class EnterArena(smach.StateMachine):
             self.use_entry_points = use_entry_points
 
         def execute(self, userdata=None):
-            print "TODO: IMPLEMENT THIS STATE"
+            print("TODO: IMPLEMENT THIS STATE")
             return "no_goal"
 
     class ForceDrive(smach.State):
@@ -113,7 +113,7 @@ class EnterArena(smach.StateMachine):
             self.robot = robot
 
         def execute(self, userdata=None):
-            rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
+            rospy.loginfo("{} uses force drive as a back-up scenario!".format(self.robot.robot_name))
             self.robot.base.force_drive(0.25, 0, 0, 5.0)  # x, y, z, time in seconds
             self.robot.ed.reset()
             return "done"
@@ -203,7 +203,7 @@ class WaitForDoorOpen(smach.State):
             if avg_distance_now > 1.0:
                 rospy.loginfo("Distance to door is more than a meter")
                 self.door_open.set()  # Then set a threading Event that execute is waiting for.
-        except Exception, e:
+        except Exception as e:
             rospy.logerr("Receiving laser failed so unsubscribing: {0}".format(e))
             self.laser_sub.unregister()
 

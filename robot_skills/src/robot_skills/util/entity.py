@@ -6,8 +6,8 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
-from robot_skills.util.volume import volumes_from_entity_volumes_msg
 from robot_skills.util.shape import shape_from_entity_info
+from robot_skills.util.volume import volumes_from_entity_volumes_msg
 
 
 class Entity(object):
@@ -161,7 +161,8 @@ def from_entity_info(e):
     super_types = e.types
 
     # TODO: this must be part of the definition of the entity in ED.
-    if e.has_shape and "amigo" not in e.id and "sergio" not in e.id and e.id != "floor" and 'wall' not in e.id:
+    if e.has_shape and not any(
+        [name in e.id for name in ["amigo", "sergio", "hero"]]) and e.id != "floor" and "wall" not in e.id:
         super_types += ["furniture"]
 
     if 'possible_human' in e.flags:

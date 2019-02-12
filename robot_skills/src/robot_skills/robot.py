@@ -28,6 +28,8 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
+        self.arms = OrderedDict()  # type: OrderedDict[arms.Arm]
+        # Ensuring arms have a fixed order of iteration.
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -36,15 +38,11 @@ class Robot(object):
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
 
-        self.image_pub = rospy.Publisher(robot_name + '/image_from_ros', Image, queue_size=1)
-        self.message_pub = rospy.Publisher(robot_name + '/message_from_ros', String, queue_size=1)
+        self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
+        self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
 
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
-
-        # Grasp offsets
-        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
-        self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
@@ -57,16 +55,23 @@ class Robot(object):
         self.parts[partname] = bodypart
         setattr(self, partname, bodypart)
 
+    def add_arm_part(self, arm_name, arm_part):
+        """
+        Add an arm part to the robot. This is added to the parts dictionary and in the self.arms dictionary.
+        :param arm_name: Name of the arm part.
+        :param arm_part: Arm part object
+        """
+        self.parts[arm_name] = arm_part
+        self.arms[arm_name] = arm_part
+
     def configure(self):
         """
         This should be run at the end of the constructor of a child class.
         """
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
-
         # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
-            bodypart.wait_for_connections(1.0)
+            bodypart.wait_for_connections(0.5)
         e = rospy.Time.now()
         rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
 
@@ -78,11 +83,11 @@ class Robot(object):
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def leftArm(self):
-        return self.arms['left']
+        return self.arms['leftArm']
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def rightArm(self):
-        return self.arms['right']
+        return self.arms['rightArm']
 
     def reset(self):
         results = {}
@@ -127,8 +132,8 @@ class Robot(object):
 
         :param required_gripper_types: Collection of gripper types that must all be
                 available. None means grippers are not needed.
-        :param desired_gripper_types: Collection of gripper types where one or more
-                may be selected. None means no grippers are desired.
+        :param desired_gripper_types: Collection of gripper types from GripperTypes,
+                where one or more may be selected. None means no grippers are desired.
 
         :param required_goals: Collection of joint goals that must all be available.
                 None means no joint goals are needed.
@@ -144,7 +149,7 @@ class Robot(object):
                 other arm will be considered. None means any arm will do.
 
         :param required_objects: Collection of objects that the arm must have. Special
-                pseudo-objects arms.ANY_OBJECT and arms.NO_OBJECT may be used
+                pseudo-objects PseudoObjects.ANY and PseudoObjects.EMPTY may be used
                 too in the collection, although they do not make much sense when used
                 together with other objects. None means there are no required objects.
         :param desired_objects: Collection of objects that the arm may have. None
@@ -180,26 +185,46 @@ class Robot(object):
 
             # Grippers
             matching_grippers = set()
+            # ToDO: HACK for not specifying any requirements
+            if required_gripper_types is None:
+                required_gripper_types = [arms.GripperTypes.GRASPING]
+
             if required_gripper_types is not None:
                 matches = [arm.collect_gripper_types(req_type) for req_type in required_gripper_types]
                 all_matched = all(match_list for match_list in matches)
                 if not all_matched:
                     discarded_reasons.append((arm_name, "required gripper type failed"))
                     continue
-               
+
                 for match in matches:
                     matching_grippers.update(match)
 
+            # ToDO: HACK for not specifying any requirements
+            if desired_gripper_types is None:
+                desired_gripper_types = [arms.GripperTypes.GRASPING]
+
             if desired_gripper_types is not None:
-                matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
+                matches = [arm.collect_gripper_types(des_type) for des_type in desired_gripper_types]
+                for match in matches:
+                    matching_grippers.update(match)
 
             # Goals
+            # ToDO: HACK for not specifying any requirements
+            if required_goals is None:
+                required_goals = arm.default_configurations.keys()
+            if desired_goals is None:
+                desired_goals = arm.default_configurations.keys()
             matching_goals = _collect_needs_desires(required_goals, desired_goals, arm.has_joint_goal)
             if matching_goals is None:
                 discarded_reasons.append((arm_name, "required goals failed"))
                 continue
 
             # Trajectories
+            # ToDO: HACK for not specifying any requirements
+            if required_trajectories is None:
+                required_trajectories = arm.default_trajectories.keys()
+            if desired_trajectories is None:
+                desired_trajectories = arm.default_trajectories.keys()
             matching_trajectories = _collect_needs_desires(required_trajectories, desired_trajectories,
                                                            arm.has_joint_trajectory)
             if matching_trajectories is None:
@@ -246,10 +271,10 @@ class Robot(object):
 
         cur_obj = arm.occupied_by
         for obj in obj_collection:
-            if obj == arms.PseudoObjects.ANY: # Any object, but not empty.
+            if obj == arms.PseudoObjects.ANY:  # Any object, but not empty.
                 if cur_obj is None:
                     return False
-            elif obj == arms.PseudoObjects.EMPTY: # Arm must be empty.
+            elif obj == arms.PseudoObjects.EMPTY:  # Arm must be empty.
                 if cur_obj is not None:
                     return False
             elif obj != cur_obj:
@@ -260,7 +285,7 @@ class Robot(object):
         for partname, bodypart in self.parts.iteritems():
             try:
                 bodypart.close()
-            except:
+            except Exception:
                 pass
 
     @property
@@ -299,12 +324,12 @@ def _collect_needs_desires(needs, desires, test_func):
     :param needs: Collection of needed values. None means nothing is needed.
     :param desires: Collection of desired values, None means nothing is desired.
     :param test_func: Function that takes a value and returns whether the value is available.
-    :return: Needed and subset of the desired values, or None if the needs cannor be met.
+    :return: Needed and subset of the desired values, or None if the needs can't be met.
     """
     founds = set()
     if needs is not None:
         founds.update(_collect_available(needs, test_func))
-        if len(founds) != len(needs): # All needs must be met.
+        if len(founds) != len(needs):  # All needs must be met.
             return False
 
     if desires is not None:
