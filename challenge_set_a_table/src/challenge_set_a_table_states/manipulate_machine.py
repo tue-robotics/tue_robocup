@@ -74,7 +74,7 @@ class GrabSingleItem(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
 
         with self:
@@ -128,21 +128,14 @@ class PlaceSingleItem(smach.State):
         self._place_designator = place_designator
 
     def execute(self, userdata=None):
-
-        # ToDo: turn this into a proper statemachine
-        arm = None
-        # See if there's an arm holding something
-        for k, v in self._robot.arms.iteritems():
-            if v.occupied_by is not None:
-                arm = v
-                break
-
-        if arm is None:
-            return "failed"
-
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
-        arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
+        arm_designator = ds.OccupiedArmDesignator(self._robot)
+        resolved_arm = arm_designator.resolve()
+        if resolved_arm is None:
+            rospy.logwarn("No arm holding an entity")
+            return "failed"
+
         sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self._place_designator, arm=arm_designator)
         result = sm.execute()
 

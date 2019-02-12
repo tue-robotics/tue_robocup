@@ -1,0 +1,9 @@
+#!/usr/bin/python
+
+# ROS
+import rospy
+
+# TU/e Robotics
+from robot_skills.util.robot_constructor import robot_constructor
+
+# We need more stuff here???

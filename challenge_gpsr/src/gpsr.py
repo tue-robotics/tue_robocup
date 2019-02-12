@@ -7,7 +7,6 @@
 import sys
 import rospy
 import random
-import json
 
 import hmi
 
@@ -21,9 +20,11 @@ from robocup_knowledge import load_knowledge
 
 from conversation_engine import ConversationEngine
 
+
 class ConversationEngineWithHmi(ConversationEngine):
     def __init__(self, robot, grammar, command_target, knowledge):
-        super(ConversationEngineWithHmi, self).__init__(robot.robot_name, grammar, command_target, give_examples=False)
+        client = ActionClient(robot.robot_name)
+        super(ConversationEngineWithHmi, self).__init__(client, grammar, command_target, give_examples=False)
 
         self.robot = robot
         self.knowledge = knowledge
@@ -37,7 +38,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.finished = False
         self.start_time = rospy.get_time()
 
-        self._tc_fuckup_time = 6.0 # The TC usually needs some time to get in position and out the way of the robot
+        self._tc_fuckup_time = 6.0  # The TC usually needs some time to get in position and out the way of the robot
 
     def _say_to_user(self, message):
         rospy.loginfo("_say_to_user('{}')".format(message))
@@ -96,14 +97,13 @@ class ConversationEngineWithHmi(ConversationEngine):
                                                            grammar=grammar,
                                                            target=target)
 
-
                 if not self.is_text_valid_input(sentence):
                     self._say_to_user("I don't understand what you're saying, please rephrase")
                     continue
 
                 self.timeout_count = 0
                 correct = True
-                if self.test:
+                if not self.test:
                     correct = self.heard_correct(sentence)
 
                 if correct:
@@ -136,14 +136,8 @@ class ConversationEngineWithHmi(ConversationEngine):
     def _start_wait_for_command(self, grammar, target):
         rospy.loginfo("_start_wait_for_command()")
 
-        self.robot.lights.set_color(0,0,1)  #be sure lights are blue
-
+        self.robot.reset()
         self.robot.head.look_at_standing_person()
-        self.robot.leftArm.reset()
-        self.robot.leftArm.send_gripper_goal('close',0.0)
-        self.robot.rightArm.reset()
-        self.robot.rightArm.send_gripper_goal('close',0.0)
-        self.robot.torso.reset()
 
         self.robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
 
@@ -154,15 +148,15 @@ class ConversationEngineWithHmi(ConversationEngine):
         while not rospy.is_shutdown():
             try:
                 sentence, semantics = self.robot.hmi.query(description="",
-                                                      grammar=grammar,
-                                                      target=target)
+                                                           grammar=grammar,
+                                                           target=target)
                 if not self.is_text_valid_input(sentence):
                     self._say_to_user("I don't understand what you're saying, please rephrase")
                     continue
 
                 self.timeout_count = 0
                 correct = True
-                if self.test:
+                if not self.test:
                     correct = self.heard_correct(sentence)
 
                 if correct:
@@ -258,6 +252,8 @@ def main():
         from robot_skills.amigo import Amigo as Robot
     elif robot_name == 'sergio':
         from robot_skills.sergio import Sergio as Robot
+    elif robot_name == 'hero':
+        from robot_skills.hero import Hero as Robot
     else:
         raise ValueError('unknown robot')
 
@@ -291,14 +287,12 @@ def main():
         # Move to the start location
         robot.speech.speak("Let's see if my operator has a task for me!", block=False)
 
-
     if restart:
         robot.speech.speak("Performing a restart. So sorry about that last time!", block=False)
 
     conversation_engine._start_wait_for_command(knowledge.grammar, knowledge.grammar_target)
     rospy.spin()
 
-# ------------------------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
     sys.exit(main())
