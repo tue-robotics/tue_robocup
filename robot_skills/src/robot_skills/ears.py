@@ -24,7 +24,7 @@ class Ears(RobotPart):
         if hasattr(self._pre_hook, '__call__'):
             self._pre_hook()
 
-        answer = self._hmi.old_query(spec, choices, timeout=time_out.to_sec())
+        answer = self._hmi.old_query(spec, choices, timeout=time_out.to_sec())  # self._hmi needs to be set in robot
 
         if hasattr(self._post_hook, '__call__'):
             self._post_hook()

@@ -1,6 +1,7 @@
 # System
 import os
 import yaml
+from math import sqrt
 
 # ROS
 import rospkg
@@ -18,6 +19,7 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 # Robot skills
 from robot_skills.util import transformations
+from robot_skills.util.decorators import deprecated
 from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
@@ -34,7 +36,7 @@ class Navigation(RobotPart):
         try:
             res = self._get_constraint_srv(entity_ids=[k for k in entity_id_area_name_map],
                                            area_names=[v for k, v in entity_id_area_name_map.iteritems()])
-        except Exception, e:
+        except Exception as e:
             rospy.logerr(e)
             return None
 
@@ -93,9 +95,9 @@ class ED(RobotPart):
         try:
             entity_infos = self._ed_simple_query_srv(query).entities
             entities = map(from_entity_info, entity_infos)
-        except Exception, e:
+        except Exception as e:
             rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (
-            id, type, str(center_point), str(radius)))
+                id, type, str(center_point), str(radius)))
             rospy.logerr("L____> [%s]" % e)
             return []
 
@@ -129,15 +131,35 @@ class ED(RobotPart):
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
-    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0):
+    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0, ignore_z=False):
         """
         Get the closest entity detected by the laser. The ID's of such entities are postfixed with '-laser'
         For the rest, this works exactly like get_closest_entity
         :param type: What type of entities to filter on
         :param center_point: combined with radius. Around which point to search for entities
         :param radius: how far from the center_point to look (in meters)
+        :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point criterium.
         :return: list of Entity
         """
+        if ignore_z:
+            # ED does not allow to ignore Z through its interface, so it has to be solved here.
+            #
+            # If we want to ignore the z of entities when checking their distance from center_point,
+            # the simplest thing to do is to set the Z of the center_point to the same value,
+            # so that delta Z is always 0.
+            # But then we first need to know Z (preferably without an additonal parameter or something robot specific)
+            # So, we query ED for other laser entities. These are *assumed* to all have the same Z,
+            # so we can just take one and use its Z and substitute that into the center_point.
+            # To 'just take one', we take entities from a larger range.
+            entities_for_height = self.get_entities(type="", center_point=center_point, radius=sqrt(2**2 + radius**2))
+            if entities_for_height:
+                override_z = entities_for_height[0].frame.extractVectorStamped().vector.z()
+                rospy.logwarn("ignoring Z, so overriding z to be equal to laser height: {}".format(override_z))
+                center_point = VectorStamped(center_point.vector.x(),
+                                             center_point.vector.y(),
+                                             override_z)
+            else:
+                return None
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
 
@@ -153,7 +175,7 @@ class ED(RobotPart):
                 center_point.projectToFrame("/%s/base_link" % self.robot_name,
                                             self._tf_listener).vector))  # TODO: adjust for robot
         except:
-            print "Failed to sort entities"
+            print("Failed to sort entities")
             return None
 
         return entities[0]
@@ -176,7 +198,7 @@ class ED(RobotPart):
     def reset(self, keep_all_shapes=True):
         try:
             return self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             rospy.logerr("Could not reset ED: {0}".format(e))
             return False
 
@@ -222,7 +244,7 @@ class ED(RobotPart):
             if isinstance(flags, list):
                 for flag in flags:
                     if not isinstance(flag, dict):
-                        print "update_entity - Error: flags need to be a list of dicts or a dict"
+                        print("update_entity - Error: flags need to be a list of dicts or a dict")
                         return False
                     for k, v in flag.iteritems():
                         if not first:
@@ -378,13 +400,16 @@ class ED(RobotPart):
             f.write(res.json_meta_data)
 
         # rgbd to png
-        os.system('rosrun rgbd rgbd_to_rgb_png %s' % (fname + ".rgbd"))
+        os.system('rosrun rgbd rgbd_to_rgb_png %s' % (fname + ".rgbd"))  # ToDo: very very very ugly
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    @deprecated
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
-        return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+        # return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+        rospy.logwarn("[world_model_ed.py] Function 'mesh_entity_in_view' is obsolete.")
+        return None
 
     # ----------------------------------------------------------------------------------------------------
     #                                                MISC

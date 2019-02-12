@@ -6,7 +6,7 @@ import rospy
 from robot_skills.util.robot_constructor import robot_constructor
 
 if len(sys.argv) < 2:
-    print "Please specify a robot name"
+    print("Please specify a robot name")
     sys.exit()
 
 robot_name = sys.argv[1]

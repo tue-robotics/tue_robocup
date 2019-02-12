@@ -4,7 +4,7 @@ import sys
 import rospy
 
 if len(sys.argv) < 2:
-    print "Please specify a robot name"
+    print("Please specify a robot name")
     sys.exit()
 
 robot_name = sys.argv[1]
@@ -28,9 +28,9 @@ s = robot.speech
 robot.head.look_at_standing_person()
 
 # data
-print e.recognize("one", {})
-print e.recognize("two", {})
-print e.recognize("three", {})
-print e.recognize("four", {})
-print e.recognize("five", {})
-print e.recognize("six", {})
+print(e.recognize("one", {}))
+print(e.recognize("two", {}))
+print(e.recognize("three", {}))
+print(e.recognize("four", {}))
+print(e.recognize("five", {}))
+print(e.recognize("six", {}))
