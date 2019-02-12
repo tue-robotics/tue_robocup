@@ -1,16 +1,19 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,\
+    world_model_ed
 
 
 class Amigo(robot.Robot):
     """docstring for Amigo"""
-    def __init__(self, dontInclude=[], wait_services=False):
+    def __init__(self, dontInclude=None, wait_services=False):
+        if dontInclude is None:
+            dontInclude = []
         super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
-        self.add_body_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
-        self.add_body_part('rightArm', arms.Arm(self.robot_name, self.tf_listener, side="right"))
+        self.add_arm_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
+        self.add_arm_part('rightArm', arms.Arm(self.robot_name, self.tf_listener, side="right"))
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))

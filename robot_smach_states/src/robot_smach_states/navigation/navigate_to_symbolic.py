@@ -38,9 +38,26 @@ class NavigateToSymbolic(NavigateTo):
         self.entity_lookat_designator = entity_lookat_designator
 
     def generateConstraint(self):
-        """ PositionConstraint """
+        """
+        Generates the position constraint
+        """
+        return self.generate_constraint(self.robot, self.entity_designator_area_name_map, self.entity_lookat_designator)
+
+    @staticmethod
+    def generate_constraint(robot, entity_designator_area_name_map, entity_lookat_designator):
+        """ Staticmethod generating the position and orientation constraint.
+
+        By implementing this as a staticmethod, it can also be used for other purposes.
+        :param robot: robot object
+        :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
+        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+        :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
+        to compute the orientation constraint.
+        :return: (tuple(PositionConstraint, OrientationConstraint)). If one of the entities does not resolve,
+        None is returned.
+        """
         entity_id_area_name_map = {}
-        for desig, area_name in self.entity_designator_area_name_map.iteritems():
+        for desig, area_name in entity_designator_area_name_map.iteritems():
             entity = desig.resolve()
             try:
                 area_name = area_name.resolve()
@@ -59,12 +76,12 @@ class NavigateToSymbolic(NavigateTo):
 
         rospy.logdebug("Navigating to symbolic {}".format(entity_id_area_name_map))
 
-        pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
+        pc = robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
 
         # Orientation constraint is the entity itself...
-        entity_lookat = self.entity_lookat_designator.resolve()
+        entity_lookat = entity_lookat_designator.resolve()
         if not entity_lookat:
-            rospy.logerr("Could not resolve entity_lookat_designator".format(self.entity_lookat_designator))
+            rospy.logerr("Could not resolve entity_lookat_designator".format(entity_lookat_designator))
             return None
 
         look_at = kdl_vector_to_point_msg(entity_lookat.pose.extractVectorStamped().vector)

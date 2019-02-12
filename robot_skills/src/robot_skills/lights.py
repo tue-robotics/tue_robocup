@@ -74,8 +74,8 @@ class Lights(RobotPart):
         self._topic.publish(rgb_msg)
 
     def taste_the_rainbow(self, duration=5.0):
-        """ Show awesome rainbow on the real amigo robot
-
+        """
+        Show awesome rainbow on the real amigo robot
         :param duration: (float) Indicates the total duration of the rainbow
         """
 
