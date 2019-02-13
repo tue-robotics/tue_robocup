@@ -3,7 +3,9 @@ from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, pe
 
 class Amigo(robot.Robot):
     """docstring for Amigo"""
-    def __init__(self, dontInclude=[], wait_services=False):
+    def __init__(self, dontInclude=None, wait_services=False):
+        if dontInclude is None:
+            dontInclude = []
         super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
