@@ -34,7 +34,7 @@ class Navigation(RobotPart):
         try:
             res = self._get_constraint_srv(entity_ids=[k for k in entity_id_area_name_map],
                                            area_names=[v for k, v in entity_id_area_name_map.iteritems()])
-        except Exception, e:
+        except Exception as e:
             rospy.logerr(e)
             return None
 
@@ -93,9 +93,9 @@ class ED(RobotPart):
         try:
             entity_infos = self._ed_simple_query_srv(query).entities
             entities = map(from_entity_info, entity_infos)
-        except Exception, e:
+        except Exception as e:
             rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (
-            id, type, str(center_point), str(radius)))
+                id, type, str(center_point), str(radius)))
             rospy.logerr("L____> [%s]" % e)
             return []
 
@@ -153,7 +153,7 @@ class ED(RobotPart):
                 center_point.projectToFrame("/%s/base_link" % self.robot_name,
                                             self._tf_listener).vector))  # TODO: adjust for robot
         except:
-            print "Failed to sort entities"
+            print("Failed to sort entities")
             return None
 
         return entities[0]
@@ -176,7 +176,7 @@ class ED(RobotPart):
     def reset(self, keep_all_shapes=True):
         try:
             return self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             rospy.logerr("Could not reset ED: {0}".format(e))
             return False
 
@@ -222,7 +222,7 @@ class ED(RobotPart):
             if isinstance(flags, list):
                 for flag in flags:
                     if not isinstance(flag, dict):
-                        print "update_entity - Error: flags need to be a list of dicts or a dict"
+                        print("update_entity - Error: flags need to be a list of dicts or a dict")
                         return False
                     for k, v in flag.iteritems():
                         if not first:
@@ -378,13 +378,16 @@ class ED(RobotPart):
             f.write(res.json_meta_data)
 
         # rgbd to png
-        os.system('rosrun rgbd rgbd_to_rgb_png %s' % (fname + ".rgbd"))
+        os.system('rosrun rgbd rgbd_to_rgb_png %s' % (fname + ".rgbd"))  # ToDo: very very very ugly
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    @deprecated
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
-        return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+        # return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+        rospy.logwarn("[world_model_ed.py] Function 'mesh_entity_in_view' is obsolete.")
+        return None
 
     # ----------------------------------------------------------------------------------------------------
     #                                                MISC

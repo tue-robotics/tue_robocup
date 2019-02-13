@@ -47,7 +47,7 @@ class Torso(RobotPart):
         try:
             rospy.loginfo("Torso cancelling all goals on close")
         except AttributeError:
-            print "Torso cancelling all goals on close. Rospy is already deleted."
+            print("Torso cancelling all goals on close. Rospy is already deleted.")
 
         self.ac_move_torso.cancel_all_goals()
 
