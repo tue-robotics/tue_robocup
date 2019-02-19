@@ -10,6 +10,7 @@ challenge_knowledge = load_knowledge('challenge_take_out_the_garbage')
 STARTING_POINT = challenge_knowledge.starting_point
 
 
+
 class TakeOutGarbage(smach.StateMachine):
     """ This is my example state machine
 
@@ -21,15 +22,47 @@ class TakeOutGarbage(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
+        trashbin_id = "trashbin"
+        trashbin_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
+                                                                                        id=trashbin_id)
+
+
         with self:
 
             # Start challenge via StartChallengeRobust
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
                                    states.StartChallengeRobust(robot, STARTING_POINT, use_entry_points=True),
-                                   transitions={"Done": "succeeded",
+                                   transitions={"Done": "TAKE_OUT",
                                                 "Aborted": "aborted",
                                                 "Failed": "failed"})
-            #
+            take_out = smach.StateMachine(outcomes=["succeeded", "failed", "aborted"])
+
+
+
+            with take_out:
+                # Take Out 1
+                smach.StateMachine.add("GO_TO_BIN",
+                                       states.NavigateToObserve(robot, trashbin_designator),
+                                       transitions={"arrived": "INSPECT",
+                                                    "goal_not_defined": "aborted",
+                                                    "unreachable": "failed"})
+
+                smach.StateMachine.add("INSPECT",
+                                       states.Inspect(robot, trashbin_designator),
+                                       transitions={"done": "succeeded",
+                                                    "failed": "failed"})
+
+                # smach.StateMachine.add("GRAB_TRASH",
+                #                        States.Grab(robot, trash),
+                #                        transitions={"Done": "GO_TO_COLLECTION_ZONE"})
+
+            smach.StateMachine.add("TAKE_OUT",
+                                   take_out,
+                                   transitions={"succeeded": "succeeded",
+                                                "aborted": "aborted",
+                                                "failed": "failed"})
+
+
             # # Take Out 1
             # smach.StateMachine.add("GO_TO_BIN",
             #                        states.NavigateToObserve(robot, entity_designator),
