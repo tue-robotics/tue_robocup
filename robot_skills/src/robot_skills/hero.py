@@ -10,7 +10,7 @@ class Hero(robot.Robot):
 
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 
-        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener, "/hero/command_velocity"))
+        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
         self.add_body_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
