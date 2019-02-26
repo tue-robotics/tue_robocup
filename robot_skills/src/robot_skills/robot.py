@@ -30,8 +30,9 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
-        self.arms = OrderedDict()  # type: OrderedDict[arms.Arm]
+
         # Ensuring arms have a fixed order of iteration.
+        self.arms = OrderedDict()  # type: OrderedDict[arms.Arm]
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
