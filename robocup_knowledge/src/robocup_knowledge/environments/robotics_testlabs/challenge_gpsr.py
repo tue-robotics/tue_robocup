@@ -87,11 +87,10 @@ VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM[Y]
 
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MEETING_PP the ROOM_OR_LOCATION[Y]
 
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 """
-
 
 
 ###############################################################################
