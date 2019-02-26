@@ -42,9 +42,9 @@ class Hero(robot.Robot):
         self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
-        for arm in self.arms.itervalues():
+        for arm in self._arms.itervalues():
             arm.unsubscribe_hardware_status()
-        for arm in self.arms.itervalues():
+        for arm in self._arms.itervalues():
             arm._operational = True
 
         self.laser_topic = "/hsrb/base_scan"

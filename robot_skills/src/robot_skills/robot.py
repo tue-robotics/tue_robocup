@@ -28,7 +28,7 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
-        self.arms = OrderedDict() # Ensuring arms have a fixed order of iteration.
+        self._arms = OrderedDict() # Ensuring arms have a fixed order of iteration.
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -60,12 +60,13 @@ class Robot(object):
 
     def add_arm_part(self, arm_name, arm_part):
         """
-        Add an arm part to the robot. This is added to the parts dictionary and in the self.arms dictionary.
+        Add an arm part to the robot. This is added to the parts dictionary as well.
         :param arm_name: Name of the arm part.
         :param arm_part: Arm part object
         """
+        # Don't add the arm to the robot object to avoid direct access from challenge code.
         self.parts[arm_name] = arm_part
-        self.arms[arm_name] = arm_part
+        self._arms[arm_name] = arm_part
 
     def configure(self):
         """
@@ -86,11 +87,11 @@ class Robot(object):
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def leftArm(self):
-        return self.arms['left']
+        return self._arms.get('left')
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def rightArm(self):
-        return self.arms['right']
+        return self._arms.get('right')
 
     def reset(self):
         results = {}
@@ -104,9 +105,9 @@ class Robot(object):
             rospy.logerr('Standby only works for amigo')
             return
 
-        for arm in self.arms.itervalues():
+        for arm in self._arms.itervalues():
             arm.reset()
-        for arm in self.arms.itervalues():
+        for arm in self._arms.itervalues():
             arm.send_gripper_goal('close')
 
         self.head.look_down()
@@ -176,7 +177,7 @@ class Robot(object):
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
-        for arm_name, arm in self.arms.iteritems():
+        for arm_name, arm in self._arms.iteritems():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue
