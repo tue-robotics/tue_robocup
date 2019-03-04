@@ -40,7 +40,7 @@ class NavigateToPlace(NavigateTo):
         if arm == self.robot.arms['left']:
             angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         elif arm == self.robot.arms['right']:
-            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
         place_fs = self.place_pose_designator.resolve()
@@ -59,6 +59,7 @@ class NavigateToPlace(NavigateTo):
             return None
 
         # Outer radius
+        radius -= 0.1
         ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
         # pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
