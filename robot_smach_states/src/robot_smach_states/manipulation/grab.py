@@ -67,7 +67,7 @@ class PrepareEdGrasp(smach.State):
 
 
 class PickUp(smach.State):
-    def __init__(self, robot, arm, grab_entity):
+    def __init__(self, robot, arm, grab_entity, check_occupancy=False):
         """
         Pick up an item given an arm and an entity to be picked up
         :param robot: robot to execute this state with
@@ -83,6 +83,7 @@ class PickUp(smach.State):
         check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
+        self._check_occupancy = check_occupancy
 
     def execute(self, userdata):
 
@@ -231,19 +232,21 @@ class PickUp(smach.State):
         # rospy.loginfo('start moving to carrying pose')
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
-        # Check if the object is present in the gripper
-        if arm.object_in_gripper_measurement.is_empty:
-            # If state is empty, grasp has failed
-            result = "failed"
-            rospy.logerr("Gripper is not holding an object")
-            self.robot.speech.speak("Whoops, something went terribly wrong")
-            arm.occupied_by = None  # Set the object the arm is holding to None
-        else:
-            # State is holding, grasp succeeded.
-            # If unknown: sensor not there, assume gripper is holding and hope for the best
-            result = "succeeded"
-            if arm.object_in_gripper_measurement.is_unknown:
-                rospy.logwarn("GripperMeasurement unknown")
+        result = 'succeeded'
+        if self._check_occupancy:
+            # Check if the object is present in the gripper
+            if arm.object_in_gripper_measurement.is_empty:
+                # If state is empty, grasp has failed
+                result = "failed"
+                rospy.logerr("Gripper is not holding an object")
+                self.robot.speech.speak("Whoops, something went terribly wrong")
+                arm.occupied_by = None  # Set the object the arm is holding to None
+            else:
+                # State is holding, grasp succeeded.
+                # If unknown: sensor not there, assume gripper is holding and hope for the best
+                result = "succeeded"
+                if arm.object_in_gripper_measurement.is_unknown:
+                    rospy.logwarn("GripperMeasurement unknown")
 
         # Reset head
         self.robot.head.cancel_goal()
@@ -290,7 +293,8 @@ class ResetOnFailure(smach.StateMachine):
     def execute(self, userdata):
         """ Execute hook """
         if hasattr(userdata, 'arm'):
-            arm = self._robot.get_arm(userdata.arm)[0]  # Using userdata makes sure we don't need more arm designator magic
+            arm = self._robot.get_arm(required_gripper_types=arms.GripperTypes.GRASPING,
+                                      required_arm_name=userdata.arm.side)
         else:
             arm = None
         self._robot.torso.reset()  # Move up to make resetting of the arm safer

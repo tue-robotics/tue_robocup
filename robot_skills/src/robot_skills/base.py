@@ -15,21 +15,23 @@ import tf
 # TU/e Robotics
 from cb_planner_msgs_srvs.msg import LocalPlannerAction, OrientationConstraint, PositionConstraint, LocalPlannerGoal
 from cb_planner_msgs_srvs.srv import GetPlan, CheckPlan
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg
-from .util import nav_analyzer
-from .util import transformations
+from robot_skills.util import nav_analyzer, transformations
 
 
 class LocalPlanner(RobotPart):
     def __init__(self, robot_name, tf_listener, analyzer):
         super(LocalPlanner, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.analyzer = analyzer
-        self._action_client = self.create_simple_action_client('/' + robot_name +'/local_planner/action_server',
+        self._action_client = self.create_simple_action_client('/' + robot_name + '/local_planner/action_server',
                                                                LocalPlannerAction)
 
+        self._position_constraint = None
+        self._orientation_constraint = None
+
         # Public members!
-        self._status = "idle" # idle, controlling, blocked, arrived
+        self._status = "idle"  # idle, controlling, blocked, arrived
         self._obstacle_point = None
         self._dtg = None
         self._plan = None
@@ -94,12 +96,13 @@ class GlobalPlanner(RobotPart):
     def __init__(self, robot_name, tf_listener, analyzer):
         super(GlobalPlanner, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.analyzer = analyzer
+        self._position_constraint = None
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
         self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
 
     def getPlan(self, position_constraint):
 
-        self.position_constraint = position_constraint
+        self._position_constraint = position_constraint
 
         pcs = [position_constraint]
 
@@ -133,7 +136,7 @@ class GlobalPlanner(RobotPart):
         return resp.valid
 
     def getCurrentPositionConstraint(self):
-        return self.position_constraint
+        return self._position_constraint
 
     def computePathLength(self, path):
         #rospy.logwarn("Please use the other computepathlength")
@@ -147,15 +150,19 @@ class GlobalPlanner(RobotPart):
 
 
 class Base(RobotPart):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_listener, cmd_vel_topic=None, initial_pose_topic=None):
         super(Base, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._cmd_vel = rospy.Publisher('/' + robot_name + '/base/references', geometry_msgs.msg.Twist, queue_size=10)
-        self._initial_pose_publisher = rospy.Publisher('/' + robot_name + '/initialpose',
+        if cmd_vel_topic is None:
+            cmd_vel_topic = '/' + robot_name + '/base/references'
+        if initial_pose_topic is None:
+            initial_pose_topic = '/' + robot_name + '/initialpose'
+        self._cmd_vel = rospy.Publisher(cmd_vel_topic, geometry_msgs.msg.Twist, queue_size=10)
+        self._initial_pose_publisher = rospy.Publisher(initial_pose_topic,
                                                        geometry_msgs.msg.PoseWithCovarianceStamped, queue_size=10)
 
         self.analyzer = nav_analyzer.NavAnalyzer(robot_name)
 
-        # The plannners
+        # The planners
         self.global_planner = GlobalPlanner(robot_name, tf_listener, self.analyzer)
         self.local_planner = LocalPlanner(robot_name, tf_listener, self.analyzer)
 
@@ -207,7 +214,7 @@ class Base(RobotPart):
         # Stop driving
         v.linear.x = 0.0
         v.linear.y = 0.0
-        v.angular.z= 0.0
+        v.angular.z = 0.0
         self._cmd_vel.publish(v)
 
         return True
@@ -228,7 +235,12 @@ class Base(RobotPart):
         initial_pose.pose.pose.position.y = y
         initial_pose.pose.pose.position.z = 0.0
         initial_pose.pose.pose.orientation = transformations.euler_z_to_quaternion(phi)
-        initial_pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853891945200942, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        initial_pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                        0.0, 0.25, 0.0, 0.0, 0.0, 0.0,
+                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                        0.0, 0.0, 0.0, 0.06853891945200942, 0.0, 0.0,
+                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         #rospy.loginfo("initalpose = {0}".format(initial_pose))
 
@@ -248,15 +260,15 @@ class Base(RobotPart):
     ###### Are the following functions deprecated ??? ######
     ########################################################
     def go(self, x, y, phi, frame="/map", timeout=0):
-        rospy.logwarn("[constraint_based_base.py] Function 'go' is obsolete.")
+        rospy.logwarn("[base.py] Function 'go' of 'Base' is obsolete.")
         return True
 
     def reset_costmap(self):
-        rospy.logwarn("[constraint_based_base.py] Function 'reset_costmap' is obsolete.")
+        rospy.logwarn("[base.py] Function 'reset_costmap' of 'Base' is obsolete.")
         return True
 
     def cancel_goal(self):
-        rospy.logwarn("[constraint_based_base.py] Function 'cancel_goal' is obsolete.")
+        rospy.logwarn("[base.py] Function 'cancel_goal' of 'Base' is obsolete.")
         return True
 
     ########################################################
@@ -281,14 +293,14 @@ def get_location(robot_name, tf_listener):
         orientation.z = ro_rot[2]
         orientation.w = ro_rot[3]
 
-        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         target_pose.header.stamp = time
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
     except (tf.LookupException, tf.ConnectivityException):
         rospy.logerr("tf request failed!!!")
-        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
@@ -299,5 +311,5 @@ def computePathLength(path):
         if not index == 0:
             dx = path[index].pose.position.x - path[index-1].pose.position.x
             dy = path[index].pose.position.y - path[index-1].pose.position.y
-            distance += math.sqrt( dx*dx + dy*dy)
+            distance += math.sqrt(dx*dx + dy*dy)
     return distance

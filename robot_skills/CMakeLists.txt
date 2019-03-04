@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
     std_srvs
     actionlib
     tf
-    tf_server
     amigo_msgs
     tue_msgs
     visualization_msgs
@@ -72,7 +71,6 @@ catkin_package(
 # ------------------------------------------------------------------------------------------------
 
 include_directories(
-    include
     ${catkin_INCLUDE_DIRS}
 )
 

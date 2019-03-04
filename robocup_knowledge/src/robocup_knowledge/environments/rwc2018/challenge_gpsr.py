@@ -10,7 +10,7 @@ not_understood_sentences = [
 
 initial_pose = "initial_pose"
 starting_pose = "gpsr_meeting_point"
-exit_waypoint = "gpsr_exit_door_2"
+exit_waypoint = "gpsr_exit_door"
 
 grammar_target = "T"
 
@@ -65,10 +65,15 @@ for cat in common.object_categories:
 
 for name in common.names:
     grammar += "\nNAMED_PERSON[{'type': 'person', 'id': '%s'}] -> %s" % (name, name)
+    grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': 'gpsr_entrance', 'type': 'waypoint'}}] -> %s at the entrance" % (
+    name, name)
+    grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': 'gpsr_exit_door', 'type': 'waypoint'}}] -> %s at the exit" % (
+        name, name)
     for loc in common.get_locations():
         grammar += "\nPERSON_AT_LOCATION[{'type': 'person', 'id': '%s', 'location': {'id': %s}}] -> %s at the %s" % (name, loc, name, loc)
 
-grammar += '\nLOCATION[{"id": "gpsr_exit_door_1", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "gpsr_exit_door", "type": "waypoint"}] -> exit'
+grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 
 ###############################################################################
 #
@@ -87,10 +92,11 @@ VP[{"action": "find", "object": {'type': 'person'}, "source-location": Y}] -> V_
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] in the ROOM[Y]
 
-VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MEETING_PP the ROOM_OR_LOCATION[Y]
+VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
 
 VP[{"action": "find", "object": X}] -> V_FIND DET OBJECT_TO_BE_FOUND[X]
 """
+
 
 
 ###############################################################################
@@ -103,6 +109,18 @@ grammar += """
 V_GOTO -> go to | navigate to
 
 VP[{"action": "navigate-to", "target-location": X}] -> V_GOTO the ROOM_OR_LOCATION[X]
+"""
+
+###############################################################################
+#
+# Inspect
+#
+###############################################################################
+
+grammar += """
+V_INSPECT -> inspect
+
+VP[{"action": "inspect", "object": X}] -> V_INSPECT the LOCATION[X]
 """
 
 ###############################################################################
@@ -153,6 +171,7 @@ VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object":
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING to PERSON_AT_LOCATION[Y] DET NAMED_OBJECT[Z] from the LOCATION[X]
 
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to PERSON_AT_LOCATION[Y]
+VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to OPERATOR[Y]
 
 
 VP[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to PERSON_AT_LOCATION[X]

@@ -13,14 +13,184 @@ from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
-from robot_part import RobotPart
+from robot_skills.robot_part import RobotPart
+
 
 # If the grasp sensor distance is smaller than this value, the gripper is holding an object
+
 GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
 GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
 GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.02, 0.18]))
 # Temporary: this should be approximately 0.02 once the sensor is correctly setup
 GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.0025, 0.18]))
+
+
+# Constants for arm requirements. Note that "don't care at all" is not here, as
+# it can be expressed by not imposing a requirement (set it to None).
+
+# Specific types of gripper.
+class GripperTypes(object):
+    #Concrete types of gripper.
+    PINCH = "gripper-type-pinch"
+    PARALLEL = "gripper-type-parallel"
+    SUCTION = "gripper-type-suction"
+
+    # Pseudo gripper types.
+    GRASPING = "pseudo-gripper-type-any-grasping-will-do" # Either pinch or parallel
+    NONE = "pseudo-gripper-type-no-gripper"
+
+
+# Pseudo objects for 'any object' or 'no object'.
+class PseudoObjects(object):
+    ANY  = "pseudo-object-saying-any-object-will-do"
+    EMPTY = "pseudo-object-saying-lack-of-object-will-do"
+
+
+class PublicArm(object):
+    """
+    Public arm interface, also checks a challenge doesn't try to use more than it asked for.
+
+    :ivar _arm: Private link to the real arm.
+    :vartype _arm: Arm
+
+    :ivar default_gripper_type: Gripper type to use if the user didn't provide one.
+    :vartpe default_gripper_type: str or None
+
+    :ivar _available_gripper_types: Gripper types that may be used.
+    :vartype _available_gripper_types: set of str (the GripperTypes.* constants)
+
+    :ivar _has_occupied_by: Whether the arm supports 'occupied_by' calls.
+    :vartype _has_occupied_by: bool
+
+    :ivar _available_joint_goals: Joint goals that may be used.
+    :vartype _available_joint_goals: set of str
+
+    :ivar _available_joint_trajectories: Joint trajectories that may be used.
+    :vartype _available_joint_trajectories: set of str
+    """
+    def __init__(self, arm, available_gripper_types, default_gripper_type,
+                 has_occupied_by, available_joint_goals, available_joint_trajectories):
+        self._arm = arm
+        self.default_gripper_type = default_gripper_type
+        self._available_gripper_types = available_gripper_types
+        self._has_occupied_by = has_occupied_by
+        self._available_joint_goals = available_joint_goals
+        self._available_joint_trajectories = available_joint_trajectories
+
+    # Occupied by
+    def has_occupied_by(self):
+        """
+        Test whether the arm supports 'occupied_by' calls.
+        """
+        return self._has_occupied_by
+
+    @property
+    def occupied_by(self):
+        """
+        Query the object currently held by the arm.
+        """
+        self._test_die(self._has_occupied_by, "occupied_by", 
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+        return self._arm.occupied_by
+
+    @occupied_by.setter
+    def occupied_by(self, value):
+        """
+        Set the object currently held by the arm,
+        """
+        self._test_die(self._has_occupied_by, "occupied_by", 
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+        self._arm.occupied_by = value
+
+    # Joint goals
+    def has_joint_goal(self, configuration):
+        """
+        Query whether the provided joint goal exists for the arm.
+        """
+        return configuration in self._available_joint_goals
+
+    def send_joint_goal(self, configuration, timeout=5.0):
+        self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration, 
+                       "Specify get_arm(..., required_goals=['{}'])".format(configuration))
+        return self._arm.send_joint_goal(configuration, timeout)
+
+    # Joint trajectories
+    def has_joint_trajectory(self, configuration):
+        """
+        Query whether the provided joint trajectory exists for the arm.
+        """
+        return configuration in self._available_joint_trajectories
+
+    def send_joint_trajectory(self, configuration, timeout=5):
+        self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
+                       "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
+        return self._arm.send_joint_trajectory(configuration, timeout)
+
+    # Gripper
+    def has_gripper_type(self, gripper_type=None):
+        """
+        Query whether the arm has the provided specific type of gripper.
+
+        :param gripper_type: Optional type of gripper to test.
+        :type  gripper_type: str or None
+        """
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        return gripper_type is not None and gripper_type in self._available_gripper_types
+
+    def send_gripper_goal(self, state, timeout=5.0, gripper_type=None):
+        """
+        Tell the gripper to perform a motion.
+
+        :param state: New state of the gripper.
+        :param timeout: Amount of time availble to reach the goal, default is 5
+        :param gripper_type: Optional type of gripper to perform the action.
+        """
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
+        # Specified type of gripper currently not used.
+        return self._arm.send_gripper_goal(state, timeout)
+
+    def handover_to_human(self, timeout=10, gripper_type=None):
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
+        return self._arm.handover_to_human(timeout)
+
+    def handover_to_robot(self, timeout=10, gripper_type=None):
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
+        return self._arm.handover_to_robot(timeout)
+
+    def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
+        # Provided gripper type currently ignored.
+        return self._arm.wait_for_motion_done(timeout, cancel)
+
+    def close(self):
+        self._arm.close()
+
+    def reset(self, timeout=0.0):
+        return self._arm.reset(timeout)
+
+    def _test_die(self, cond, feature, hint=''):
+        """
+        Test the condition, if it fails, die with an assertion error explaining what is wrong.
+        """
+        if not cond:
+            msg = "get_arm for '{}' arm did not request '{}' access. Hint: {}"
+            raise AssertionError(msg.format(self._arm.side, feature, hint))
+
+    def __repr__(self):
+        return "PublicArm(arm={arm})".format(arm=self._arm)
 
 
 class GripperMeasurement(object):
@@ -134,6 +304,7 @@ class Arm(RobotPart):
             raise Exception("Side should be either: left or right")
 
         self._occupied_by = None
+
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
@@ -174,6 +345,57 @@ class Arm(RobotPart):
         self._marker_publisher = rospy.Publisher(
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
+
+    def collect_gripper_types(self, gripper_type):
+        """
+        Query the arm for having the proper gripper type and collect the types that fulfill the
+        requirement.
+
+        :param gripper_type: Wanted type of the gripper. May be a pseudo gripper type.
+        :return: Collection gripper types at the arm that meet the requirements.
+        """
+        if gripper_type == GripperTypes.NONE:
+            # There are no arms without a gripper.
+            return []
+        if gripper_type == GripperTypes.GRASPING:
+            return (self._has_specific_gripper_types(GripperTypes.PINCH) +
+                    self._has_specific_gripper_types(GripperTypes.PARALLEL))
+        return self._has_specific_gripper_types(gripper_type)
+
+    def _has_specific_gripper_types(self, gripper_type):
+        """
+        Verify whether the arm as the given type of specific gripper.
+
+        :param gripper_type: Type of gripper to check for. Must not be a pseudo gripper type.
+        :return: Gripper types that match the requirement.
+        """
+        # TODO: Extend arm to have knowledge about the gripper type that it has.
+        if gripper_type == GripperTypes.PINCH:
+            return [GripperTypes.PINCH]
+        elif gripper_type == GripperTypes.PARALLEL:
+            return [GripperTypes.PARALLEL]
+        elif gripper_type == GripperTypes.SUCTION:
+            return []
+        else:
+            return [] # Arm has no unknown types of grippers,
+
+    def has_joint_goal(self, configuration):
+        """
+        Query the arm for having a given joint goal.
+
+        :param configuration: name of jint goal to check.
+        :return: Whether the joint goal is available.
+        """
+        return configuration in self.default_configurations
+
+    def has_joint_trajectory(self, configuration):
+        """
+        Query the arm for having a given joint trajectory.
+
+        :param configuration: name of jint trajectory to check.
+        :return: Whether the joint trajectory is available.
+        """
+        return configuration in self.default_trajectories
 
     def cancel_goals(self):
         """
@@ -340,6 +562,7 @@ class Arm(RobotPart):
         The 'occupied_by' property will return the current entity that is in the gripper of this arm.
         :return: robot_skills.util.entity, ED entity
         """
+
         return self._occupied_by
 
     @occupied_by.setter
@@ -626,6 +849,10 @@ class FakeArm(RobotPart):
     @property
     def occupied_by(self):
         return None
+
+    @occupied_by.setter
+    def occupied_by(self, value):
+        pass
 
     def send_gripper_goal(self, state, timeout=5.0):
         return False
