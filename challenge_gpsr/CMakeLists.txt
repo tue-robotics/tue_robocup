@@ -5,6 +5,8 @@ project(challenge_gpsr)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  conversation_engine
+  hmi
   robot_skills
   robot_smach_states
   rospy
