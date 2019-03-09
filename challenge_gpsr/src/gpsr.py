@@ -23,7 +23,8 @@ from conversation_engine import ConversationEngine
 
 class ConversationEngineWithHmi(ConversationEngine):
     def __init__(self, robot, grammar, command_target, knowledge):
-        super(ConversationEngineWithHmi, self).__init__(robot.robot_name, grammar, command_target, give_examples=False)
+        client = ActionClient(robot.robot_name)
+        super(ConversationEngineWithHmi, self).__init__(client, grammar, command_target, give_examples=False)
 
         self.robot = robot
         self.knowledge = knowledge
