@@ -5,7 +5,7 @@ import smach
 import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
-from challenge_take_out_the_garbage.take_out import DefaultGrabDesignator, GrabSingleItem
+from challenge_take_out_the_garbage.take_out import DefaultGrabDesignator, GrabSingleItem, TakeOut
 challenge_knowledge = load_knowledge('challenge_take_out_the_garbage')
 
 STARTING_POINT = challenge_knowledge.starting_point
@@ -33,11 +33,19 @@ class TakeOutGarbage(smach.StateMachine):
                                                  area_description="on_top_of",
                                                  debug=True)
 
+        trashbin_id2 = "trashbin2"
+        trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
+                                                    id=trashbin_id2)
+        trash_designator2 = DefaultGrabDesignator(robot=robot,
+                                                 surface_designator=trashbin_designator2,
+                                                 area_description="on_top_of",
+                                                 debug=True)
+
+
         # Designator dropping area
         # ToDo Make a designated drop area for the trash
-        bed_id = "cabinet"
-        bed_designator = ds.EdEntityDesignator(robot=robot,
-                                                    id=bed_id)
+        drop_zone_id = "cabinet"
+        drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=drop_zone_id)
 
         with self:
 
@@ -47,57 +55,24 @@ class TakeOutGarbage(smach.StateMachine):
                                    transitions={"Done": "TAKE_OUT",
                                                 "Aborted": "aborted",
                                                 "Failed": "failed"})
-            take_out = smach.StateMachine(outcomes=["succeeded", "failed", "aborted"])
-
-
-            with take_out:
-                # Take Out 1
-                smach.StateMachine.add("GO_TO_BIN",
-                                       states.NavigateToObserve(robot, trashbin_designator),
-                                       transitions={"arrived": "INSPECT",
-                                                    "goal_not_defined": "aborted",
-                                                    "unreachable": "failed"})
-
-                smach.StateMachine.add("INSPECT",
-                                       states.Inspect(robot, trashbin_designator),
-                                       transitions={"done": "GRAB_TRASH",
-                                                    "failed": "failed"})
-
-                smach.StateMachine.add("GRAB_TRASH", GrabSingleItem(robot=robot, grab_designator=trash_designator),
-                                       transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
-                                                    "failed": "failed"})
-
-                smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
-                                       states.NavigateToObserve(robot, bed_designator),
-                                       transitions={"arrived": "succeeded",
-                                                    "goal_not_defined": "aborted",
-                                                    "unreachable": "failed"})
-                # #wip
-                # smach.StateMachine.add("DROP_TRASH",
-                #                        states.Place(robot=robot, item_to_place=trash_designator,
-                #                                     place_pose=bed_designator, arm=self.empty_arm_designator,
-                #                                     place_volume="on_top_of"),
-                #                        transitions={"done": "succeeded",
-                #                                     "failed": "failed"})
 
             smach.StateMachine.add("TAKE_OUT",
-                                   take_out,
-                                   transitions={"succeeded": "succeeded",
+                                   TakeOut(robot=robot, trashbin_designator=trashbin_designator,
+                                           trash_designator=trash_designator, drop_designator= drop_zone_designator,
+                                           empty_arm_designator =self.empty_arm_designator),
+                                   transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "aborted": "aborted",
                                                 "failed": "failed"})
 
-
-            # # Take Out 1
-            # smach.StateMachine.add("GO_TO_BIN",
-            #                        states.NavigateToObserve(robot, entity_designator),
-            #                        transitions={"Done": "GRAB_TRASH"})
-            # smach.StateMachine.add("GRAB_TRASH",
-            #                        States.Grab(robot, trash),
-            #                        transitions={"Done": "GO_TO_COLLECTION_ZONE"})
-            # smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
-            #                        States.NavigateToObserve(robot, entity_designator),
-            #                        transitions={"Done": "DROP_TRASH"})
-            # smach.StateMachine.add("DROP_TRASH",
-            #                        State)
-            #
-            # Take Out 2
+            smach.StateMachine.add("ANNOUNCE_TASK",
+                                   states.Say(robot, "First trash bag has been dropped",
+                                              block=False),
+                                   transitions={'spoken': 'succeeded'})
+            # wip
+            # smach.StateMachine.add("TAKE_OUT2",
+            #                        TakeOut(robot=robot, trashbin_designator=trashbin_designator2,
+            #                                trash_designator=trash_designator2, drop_designator=drop_zone_designator,
+            #                                empty_arm_designator=self.empty_arm_designator),
+            #                        transitions={"succeeded": "succeeded",
+            #                                     "aborted": "aborted",
+            #                                     "failed": "failed"})

@@ -108,3 +108,47 @@ class GrabSingleItem(smach.StateMachine):
             smach.StateMachine.add("UNLOCK_ITEM_FAIL",
                                    smach.CBState(unlock),
                                    transitions={'unlocked': 'failed'})
+
+class TakeOut(smach.StateMachine):
+
+    def __init__(self, robot, trashbin_designator, trash_designator, drop_designator, empty_arm_designator):
+        """
+
+        :param robot:
+        :param trashbin_designator:
+        :param trash_designator:
+        :param drop_designator:
+        :param empty_arm_designator:
+        """
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
+
+        with self:
+            # Take Out 1
+            smach.StateMachine.add("GO_TO_BIN",
+                                   states.NavigateToObserve(robot, trashbin_designator),
+                                   transitions={"arrived": "INSPECT",
+                                                "goal_not_defined": "aborted",
+                                                "unreachable": "failed"})
+
+            smach.StateMachine.add("INSPECT",
+                                   states.Inspect(robot, trashbin_designator),
+                                   transitions={"done": "GRAB_TRASH",
+                                                "failed": "failed"})
+
+            smach.StateMachine.add("GRAB_TRASH", GrabSingleItem(robot=robot, grab_designator=trash_designator),
+                                   transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
+                                                "failed": "failed"})
+
+            smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
+                                   states.NavigateToObserve(robot, drop_designator),
+                                   transitions={"arrived": "DROP_TRASH",
+                                                "goal_not_defined": "aborted",
+                                                "unreachable": "failed"})
+
+            smach.StateMachine.add("DROP_TRASH",
+                                   states.Place(robot=robot, item_to_place=trash_designator,
+                                                place_pose=drop_designator, arm=empty_arm_designator,
+                                                place_volume="on_top_of"),
+                                   transitions={"done": "succeeded",
+                                                "failed": "failed"})
+
