@@ -42,10 +42,6 @@ class Robot(object):
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
-        # Grasp offsets
-        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
-        self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
-
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
     def add_body_part(self, partname, bodypart):

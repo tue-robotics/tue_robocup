@@ -298,21 +298,21 @@ class Arm(RobotPart):
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
-        if (self.side is "left") or (self.side is "right"):
-            pass
-        else:
-            raise Exception("Side should be either: left or right")
 
         self._occupied_by = None
 
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
-        offset = self.load_param('skills/arm/offset/' + self.side)
+        offset = self.load_param('skills/arm/' + self.side + '/grasp_offset/')
         self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
                                 kdl.Vector(offset["x"], offset["y"], offset["z"]))
 
-        self.marker_to_grippoint_offset = self.load_param('skills/arm/offset/marker_to_grippoint')
+        self.marker_to_grippoint_offset = self.load_param('skills/arm/' + self.side + '/marker_to_grippoint')
+
+        # Grasp offsets
+        go = self.load_param('skills/arm/' + self.side + '/base_offset')
+        self._base_offset = kdl.Vector(go.get("x"), go.get("y"), go.get("z"))
 
         self.joint_names = self.load_param('skills/arm/joint_names')
         self.joint_names = [name + "_" + self.side for name in self.joint_names]
@@ -328,7 +328,7 @@ class Arm(RobotPart):
         self._ac_gripper = self.create_simple_action_client(
             "/" + robot_name + "/" + self.side + "_arm/gripper/action", GripperCommandAction)
 
-        # Init graps precompute actionlib
+        # Init grasp precompute actionlib
         self._ac_grasp_precompute = self.create_simple_action_client(
             "/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
 
@@ -761,6 +761,15 @@ class Arm(RobotPart):
         :param msg: std_msgs.msg.Float32MultiArray
         """
         self._grasp_sensor_state = GripperMeasurement(msg.data[0])
+
+    @property
+    def base_offset(self):
+        """
+        Returns the 'optimal' position of an object w.r.t. the base link of a robot for this arm to grasp it
+
+        :return: kdl Vector
+        """
+        return self._base_offset
 
     def _publish_marker(self, goal, color, ns = ""):
         """
