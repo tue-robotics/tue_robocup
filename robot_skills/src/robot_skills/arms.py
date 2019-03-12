@@ -312,7 +312,7 @@ class Arm(RobotPart):
 
         # Grasp offsets
         go = self.load_param('skills/arm/' + self.side + '/base_offset')
-        self._base_offset = kdl.Vector(go.get("x"), go.get("y"), go.get("z"))
+        self._base_offset = kdl.Vector(go["x"], go["y"], go["z"])
 
         self.joint_names = self.load_param('skills/arm/joint_names')
         self.joint_names = [name + "_" + self.side for name in self.joint_names]
