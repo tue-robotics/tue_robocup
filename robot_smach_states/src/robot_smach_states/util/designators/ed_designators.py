@@ -370,7 +370,6 @@ class EmptySpotDesignator(Designator):
         base_offset = self.robot.arms.values()[0].base_offset
         radius = math.hypot(base_offset.x(), base_offset.y())
 
-        # radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
         x = frame_stamped.frame.p.x()
         y = frame_stamped.frame.p.y()
         radius -= 0.1
