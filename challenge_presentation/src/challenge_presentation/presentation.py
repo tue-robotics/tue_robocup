@@ -4,6 +4,7 @@ from functools import partial
 
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
+import robot_skills.arms as arms
 
 class English(object):
     HI_MY_NAME_IS = "Hello, my name is {}"
