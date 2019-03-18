@@ -55,12 +55,12 @@ class Presentation(smach.State):
         self.robot = robot
 
         left_trajectories = ["wave_front", "show_gripper", "point_to_laser"]
-        self.left_arm = self.robot.get_arm(required_gripper_types=arms.GripperTypes.GRASPING,
+        self.left_arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
                                            required_trajectories=left_trajectories,
                                            required_arm_name='left')
 
         right_trajectories = ["show_gripper", "point_to_kinect"]
-        self.right_arm = self.robot.get_arm(required_gripper_types=arms.GripperTypes.GRASPING,
+        self.right_arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
                                              required_trajectories=right_trajectories,
                                              required_arm_name='right')
 
