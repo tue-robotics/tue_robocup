@@ -37,7 +37,8 @@ class TakeOutGarbage(smach.StateMachine):
                                                   surface_designator=trashbin_designator2,
                                                   area_description="on_top_of",
                                                   debug=True)
-        drop_zone_id = "cabinet"
+        # A designated collection zone should be made instead of the operator table
+        drop_zone_id = "operator_table"
         drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=drop_zone_id)
 
         with self:
@@ -60,7 +61,7 @@ class TakeOutGarbage(smach.StateMachine):
                                    states.Say(robot, "First bag has been dropped at the collection zone",
                                               block=False),
                                    transitions={'spoken': 'TAKE_OUT2'})
-            # # wip
+
             smach.StateMachine.add("TAKE_OUT2",
                                    TakeOut(robot=robot, trashbin_designator=trashbin_designator2,
                                            trash_designator=trash_designator2, drop_designator=drop_zone_designator),

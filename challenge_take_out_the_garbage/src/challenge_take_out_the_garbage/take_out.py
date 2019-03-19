@@ -163,7 +163,6 @@ class TakeOut(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-
         with self:
             # Take Out 1
             smach.StateMachine.add("GO_TO_BIN",
