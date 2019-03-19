@@ -23,8 +23,6 @@ class TakeOutGarbage(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         # Create designators
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
-
         trashbin_id = "trashbin"
         trashbin_designator = ds.EdEntityDesignator(robot=robot,
                                                     id=trashbin_id)
@@ -32,18 +30,13 @@ class TakeOutGarbage(smach.StateMachine):
                                                  surface_designator=trashbin_designator,
                                                  area_description="on_top_of",
                                                  debug=True)
-
         trashbin_id2 = "trashbin2"
         trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
-                                                    id=trashbin_id2)
+                                                     id=trashbin_id2)
         trash_designator2 = DefaultGrabDesignator(robot=robot,
-                                                 surface_designator=trashbin_designator2,
-                                                 area_description="on_top_of",
-                                                 debug=True)
-
-
-        # Designator dropping area
-        # ToDo Make a designated drop area for the trash
+                                                  surface_designator=trashbin_designator2,
+                                                  area_description="on_top_of",
+                                                  debug=True)
         drop_zone_id = "cabinet"
         drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=drop_zone_id)
 
@@ -58,21 +51,25 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("TAKE_OUT",
                                    TakeOut(robot=robot, trashbin_designator=trashbin_designator,
-                                           trash_designator=trash_designator, drop_designator= drop_zone_designator,
-                                           empty_arm_designator =self.empty_arm_designator),
+                                           trash_designator=trash_designator, drop_designator=drop_zone_designator),
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "aborted": "aborted",
                                                 "failed": "failed"})
 
             smach.StateMachine.add("ANNOUNCE_TASK",
-                                   states.Say(robot, "First trash bag has been dropped",
+                                   states.Say(robot, "First bag has been dropped at the collection zone",
+                                              block=False),
+                                   transitions={'spoken': 'TAKE_OUT2'})
+            # # wip
+            smach.StateMachine.add("TAKE_OUT2",
+                                   TakeOut(robot=robot, trashbin_designator=trashbin_designator2,
+                                           trash_designator=trash_designator2, drop_designator=drop_zone_designator),
+                                   transitions={"succeeded": "ANNOUNCE_TASK2",
+                                                "aborted": "aborted",
+                                                "failed": "failed"})
+
+            smach.StateMachine.add("ANNOUNCE_TASK2",
+                                   states.Say(robot, "Second bag has been dropped at the collection zone."
+                                                     "All the thrash has been taken care of",
                                               block=False),
                                    transitions={'spoken': 'succeeded'})
-            # wip
-            # smach.StateMachine.add("TAKE_OUT2",
-            #                        TakeOut(robot=robot, trashbin_designator=trashbin_designator2,
-            #                                trash_designator=trash_designator2, drop_designator=drop_zone_designator,
-            #                                empty_arm_designator=self.empty_arm_designator),
-            #                        transitions={"succeeded": "succeeded",
-            #                                     "aborted": "aborted",
-            #                                     "failed": "failed"})

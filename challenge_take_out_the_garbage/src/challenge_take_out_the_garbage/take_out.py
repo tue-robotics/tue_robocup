@@ -109,18 +109,60 @@ class GrabSingleItem(smach.StateMachine):
                                    smach.CBState(unlock),
                                    transitions={'unlocked': 'failed'})
 
+
+class PlaceSingleItem(smach.State):
+    """ Tries to place an object. A 'place' statemachine is constructed dynamically since this makes it easier to
+     build a statemachine (have we succeeded in grasping the objects?)"""
+    def __init__(self, robot, place_designator):
+        """ Constructor
+
+        :param robot: robot object
+        :param place_designator: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
+        """
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+
+        self._robot = robot
+        self._place_designator = place_designator
+
+    def execute(self, userdata=None):
+
+        # ToDo: turn this into a proper statemachine
+        arm = None
+        # See if there's an arm holding something
+        for k, v in self._robot.arms.iteritems():
+            if v.occupied_by is not None:
+                arm = v
+                break
+
+        if arm is None:
+            return "failed"
+
+        # Try to place the object
+        item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
+        arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
+        sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self._place_designator, arm=arm_designator)
+        result = sm.execute()
+
+        # If failed, do handover to human in order to continue
+        if result != "done":
+            sm = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
+            sm.execute()
+
+        return "succeeded" if result == "done" else "failed"
+
+
 class TakeOut(smach.StateMachine):
 
-    def __init__(self, robot, trashbin_designator, trash_designator, drop_designator, empty_arm_designator):
+    def __init__(self, robot, trashbin_designator, trash_designator, drop_designator):
         """
 
-        :param robot:
-        :param trashbin_designator:
-        :param trash_designator:
-        :param drop_designator:
-        :param empty_arm_designator:
+        :param robot: robot object
+        :param trashbin_designator: EdEntityDesignator designating the trashbin
+        :param trash_designator: EdEntityDesignator designating the trash
+        :param drop_designator: EdEntityDesignator designating the collection zone
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
+
 
         with self:
             # Take Out 1
@@ -141,14 +183,10 @@ class TakeOut(smach.StateMachine):
 
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
                                    states.NavigateToObserve(robot, drop_designator),
-                                   transitions={"arrived": "DROP_TRASH",
+                                   transitions={"arrived": "PLACE_ITEM",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
 
-            smach.StateMachine.add("DROP_TRASH",
-                                   states.Place(robot=robot, item_to_place=trash_designator,
-                                                place_pose=drop_designator, arm=empty_arm_designator,
-                                                place_volume="on_top_of"),
-                                   transitions={"done": "succeeded",
+            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator),
+                                   transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
-
