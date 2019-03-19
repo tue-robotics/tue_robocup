@@ -101,6 +101,11 @@ class GlobalPlanner(RobotPart):
         self._check_plan_client = self.create_service_client("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
 
     def getPlan(self, position_constraint):
+        """
+
+        :param position_constraint: (PositionConstraint)
+        :return: list(PoseStamped)
+        """
 
         self._position_constraint = position_constraint
 
