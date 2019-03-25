@@ -6,9 +6,7 @@ import tf2_geometry_msgs
 import tf2_ros
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
-from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from robot_smach_states import NavigateToSymbolic, NavigateToWaypoint
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states import NavigateToWaypoint
 from smach import StateMachine, State, cb_interface, CBState
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
