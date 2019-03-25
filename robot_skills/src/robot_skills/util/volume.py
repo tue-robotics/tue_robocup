@@ -70,7 +70,7 @@ class BoxVolume(Volume):
 
     @property
     def bottom_area(self):
-        convex_hull = list()
+        convex_hull = []
         convex_hull.append(kdl.Vector(self.min_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 1
         convex_hull.append(kdl.Vector(self.max_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 2
         convex_hull.append(kdl.Vector(self.max_corner.x(), self.max_corner.y(), self.min_corner.z()))  # 3
