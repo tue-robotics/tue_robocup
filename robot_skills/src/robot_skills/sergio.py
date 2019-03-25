@@ -1,6 +1,4 @@
-import robot
-
-from collections import OrderedDict
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso, world_model_ed
 
 
 class Sergio(robot.Robot):
@@ -10,11 +8,31 @@ class Sergio(robot.Robot):
 
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 
-        # This is still very ugly, because there is a lof of double code, but atleast it is only in sergio.
-        self.parts['leftArm'] = robot.arms.FakeArm(self.robot_name, self.tf_listener, side="left")
-        self.parts['rightArm'] = robot.arms.FakeArm(self.robot_name, self.tf_listener, side="right")
+        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
-        for partname, bodypart in self.parts.iteritems():
-            setattr(self, partname, bodypart)
+        self.add_body_part('leftArm', arms.FakeArm(self.robot_name, self.tf_listener, side="left"))
+        self.add_body_part('rightArm', arms.FakeArm(self.robot_name, self.tf_listener, side="right"))
 
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
+        self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
+        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))
+        self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
+
+        # Human Robot Interaction
+        self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
+        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_listener,
+                                                   lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
+                                                   lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+        self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
+                                          lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                          lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
+                                             lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                             lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+
+        self.add_body_part('ebutton', ebutton.EButton(self.robot_name, self.tf_listener))
+
+        # Reasoning/world modeling
+        self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
+
+        self.configure()

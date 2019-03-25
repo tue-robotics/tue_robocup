@@ -2,36 +2,18 @@
 
 # ROS
 import rospy
-
-# Body parts
-import base
-import torso
-import arms
-import head
-import perception
-import ssl
-
-# Human Robot Interaction
-import speech
-import api
-import ears
-import ebutton
-import lights
-
-# tf
 import tf
-
-# Reasoning/world modeling
-import world_model_ed
-
-# Misc: do we need this???
 import geometry_msgs
+from diagnostic_msgs.msg import DiagnosticArray
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+
+# TU/e
+from robot_skills import arms
+from robot_skills.util import decorators
+
 from collections import OrderedDict, Sequence
 
-# Check hardware status
-from diagnostic_msgs.msg import DiagnosticArray
-
-from robot_skills.util import decorators
 
 class Robot(object):
     """
@@ -42,58 +24,10 @@ class Robot(object):
         self.robot_name = robot_name
         self.tf_listener = tf.TransformListener()
 
-        # Construct body parts
-        self.base = base.Base(self.robot_name, self.tf_listener)
-        self.torso = torso.Torso(self.robot_name, self.tf_listener)
+        self.configured = False
 
-        # Don't expose specific arms in the robot, they are not generic enough.
-        leftArm = arms.Arm(self.robot_name, self.tf_listener, side="left")
-        rightArm = arms.Arm(self.robot_name, self.tf_listener, side="right")
-        self.arms = OrderedDict(left=leftArm, right=rightArm)
-
-        self.head = head.Head(self.robot_name, self.tf_listener)
-        self.perception = perception.Perception(self.robot_name, self.tf_listener)
-        self.ssl = ssl.SSL(self.robot_name, self.tf_listener)
-
-        # Human Robot Interaction
-        self.lights = lights.Lights(self.robot_name, self.tf_listener)
-        self.speech = speech.Speech(self.robot_name, self.tf_listener,
-                                             lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
-                                             lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.hmi = api.Api(self.robot_name, self.tf_listener,
-                                    lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                    lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.ears = ears.Ears(self.robot_name, self.tf_listener,
-                                       lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                       lambda: self.lights.set_color_colorRGBA(lights.RESET))
-        self.ears._hmi = self.hmi
-
-        self.ebutton = ebutton.EButton(self.robot_name, self.tf_listener)
-
-        # Reasoning/world modeling
-        self.ed = world_model_ed.ED(self.robot_name, self.tf_listener)
-
-        # Construct a map with all robot parts.
-        # Arms are copied from the self.arms dict.
-        self.parts = {
-            'base': self.base,
-            'torso': self.torso,
-
-            'head': self.head,
-            'perception': self.perception,
-            'ssl': self.ssl,
-
-            'lights': self.lights,
-            'speech': self.speech,
-            'hmi': self.hmi,
-            'ears': self.ears,
-
-            'ebutton': self.ebutton,
-
-            'ed': self.ed,
-        }
-        for arm_name, arm_part in self.arms.iteritems():
-            self.parts[arm_name + 'Arm'] = arm_part
+        # Body parts
+        self.parts = dict()
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -102,12 +36,32 @@ class Robot(object):
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
 
+        self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
+        self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
+
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         # Grasp offsets
         go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
         self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
+
+        self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
+
+    def add_body_part(self, partname, bodypart):
+        """
+        Add a bodypart to the robot. This is added to the parts dict and set as an attribute
+        :param partname: name of the bodypart
+        :param bodypart: bodypart object
+        """
+        self.parts[partname] = bodypart
+        setattr(self, partname, bodypart)
+
+    def configure(self):
+        """
+        This should be run at the end of the constructor of a child class.
+        """
+        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
 
         # Wait for connections
         s = rospy.Time.now()
@@ -120,14 +74,12 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
-        self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
+        self.configured = True
 
-    @property
     @decorators.deprecated_replace_with('robot.get_arm')
     def leftArm(self):
         return self.arms['left']
 
-    @property
     @decorators.deprecated_replace_with('robot.get_arm')
     def rightArm(self):
         return self.arms['right']
@@ -201,7 +153,7 @@ class Robot(object):
         :return: An Arm of the robot with the requested properties, or None.
                 Note that the arm will never do more than you requested.
         """
-        discarded_reasons = [] # Reasons why arms are discarded.
+        discarded_reasons = []  # Reasons why arms are discarded.
 
         # Check that collection arguments are really a collection of objects, but not strings.
         # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
@@ -279,7 +231,8 @@ class Robot(object):
         rospy.logwarn(msg)
         return None
 
-    def _check_required_obj(self, arm, obj_collection):
+    @staticmethod
+    def _check_required_obj(arm, obj_collection):
         """
         Check the object requirement.
 
@@ -340,10 +293,11 @@ class Robot(object):
             rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
         self.close()
 
+
 def _collect_needs_desires(needs, desires, test_func):
     """
     :param needs: Collection of needed values. None means nothing is needed.
-    :param desireds: Collection of desired values, None means nothing is desired.
+    :param desires: Collection of desired values, None means nothing is desired.
     :param test_func: Function that takes a value and returns whether the value is available.
     :return: Needed and subset of the desired values, or None if the needs cannor be met.
     """
@@ -358,6 +312,7 @@ def _collect_needs_desires(needs, desires, test_func):
 
     return founds
 
+
 def _collect_available(values, test_func):
     """
     :param values: Collection of values that must be tested.
@@ -369,6 +324,7 @@ def _collect_available(values, test_func):
         if test_func(value):
             founds.add(value)
     return founds
+
 
 if __name__ == "__main__":
     rospy.init_node("robot")

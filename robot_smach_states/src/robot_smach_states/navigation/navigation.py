@@ -212,8 +212,8 @@ class planBlocked(smach.State):
 # # ----------------------------------------------------------------------------------------------------
 
 class NavigateTo(smach.StateMachine):
-    def __init__(self, robot, reset_head=True, speak=True):
-        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','goal_not_defined'])
+    def __init__(self, robot, reset_head=True, speak=True, input_keys=[], output_keys=[]):
+        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','goal_not_defined'], input_keys=input_keys, output_keys=output_keys)
         self.robot = robot
         self.speak = speak
 
