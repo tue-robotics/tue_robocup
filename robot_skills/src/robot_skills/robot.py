@@ -57,7 +57,7 @@ class Robot(object):
         """
         This should be run at the end of the constructor of a child class.
         """
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
+        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this??? Issue 740
 
         # Wait for connections
         s = rospy.Time.now()

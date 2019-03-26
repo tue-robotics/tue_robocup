@@ -366,7 +366,7 @@ class EmptySpotDesignator(Designator):
     def distance_to_poi_area(self, frame_stamped):
 
         # ToDo: cook up something better: we need the arm that we're currently using but this would require a
-        # rather large API break
+        # rather large API break (issue #739)
         base_offset = self.robot.arms.values()[0].base_offset
         radius = math.hypot(base_offset.x(), base_offset.y())
 
