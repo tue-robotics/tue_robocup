@@ -1,6 +1,7 @@
 # System
 import os
 import yaml
+from math import sqrt
 
 # ROS
 import rospkg
@@ -150,7 +151,7 @@ class ED(RobotPart):
             # So, we query ED for other laser entities. These are *assumed* to all have the same Z,
             # so we can just take one and use its Z and substitute that into the center_point.
             # To 'just take one', we take entities from a larger range.
-            entities_for_height = self.get_entities(type="", center_point=center_point, radius=5*radius)
+            entities_for_height = self.get_entities(type="", center_point=center_point, radius=sqrt(2**2 + radius**2))
             if entities_for_height:
                 override_z = entities_for_height[0].frame.extractVectorStamped().vector.z()
                 rospy.logwarn("ignoring Z, so overriding z to be equal to laser height: {}".format(override_z))
