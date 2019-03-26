@@ -10,8 +10,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depends>rospy</depends>
-  <depends>robot_skills</depends>
-  <depends>robot_smach_states</depends>
+  <depend>rospy</depend>
+  <depend>robot_skills</depend>
+  <depend>robot_smach_states</depend>
 
 </package>
