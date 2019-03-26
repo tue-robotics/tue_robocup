@@ -13,7 +13,7 @@ from tf.transformations import euler_from_quaternion
 
 from nav_msgs.msg import Odometry
 
-DEFAULT_PATH = "~/MEGA/odometer"
+DEFAULT_PATH = "~/odometer"
 DEFAULT_FILENAME = 'odometer'
 EXT = '.csv'
 ROUND_LEVEL = 5
