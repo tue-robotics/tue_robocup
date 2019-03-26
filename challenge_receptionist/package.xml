@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>challenge_receptionist</name>
   <version>0.0.0</version>
   <description>RoboCup@Home receptionist challenge</description>
