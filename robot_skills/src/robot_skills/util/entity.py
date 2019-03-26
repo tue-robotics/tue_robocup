@@ -6,8 +6,8 @@ import PyKDL as kdl
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
-from robot_skills.util.volume import volumes_from_entity_volumes_msg
 from robot_skills.util.shape import shape_from_entity_info
+from robot_skills.util.volume import volumes_from_entity_volumes_msg
 
 
 class Entity(object):

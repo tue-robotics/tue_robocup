@@ -62,43 +62,75 @@ class GiveDirections(smach.State):
 
         # Get all entities
         entities = self._robot.ed.get_entities()
-        room_entities = [e for e in entities if e.type == "room"]
+        furniture_entities = [room for room in entities if room.is_a("furniture")]
+        room_entities = [room for room in entities if room.type == "room"]
 
         # Figure out which entities are passed along the way
         # N.B.: this is a first naive implementation: optimization might be desired
         t_start = rospy.Time.now()
+
+        # Match the furniture entities to rooms
+        # ToDo: move to separate method: may be useful in other cases
+        furniture_entities_room = {room: [] for room in room_entities}  # maps room entities to furniture entities
+        for item in furniture_entities:  # type: Entity
+
+            # Set the pose to a minimum of 10 cm to avoid numerial issues
+            item._pose.p.z(max(0.1, item._pose.p.z()))
+
+            found = False
+            for room in room_entities:  # type: Entity
+
+                # Hack to handle 'flat' rooms (solution lays elsewhere)
+                for volume in room.volumes.values():
+                    volume.max_corner.z(2.0)
+
+                # ToDo: check rooms in robotics testlabs, then see if this multiplication is required
+                if room.in_volume(VectorStamped(vector=room._pose.Inverse() * item.pose.frame.p), "in"):
+                    rospy.loginfo("The {} ({}) is in the {} ({})".format(
+                        item.id, item.pose.frame.p, room.id, room.volumes.values()))
+                    furniture_entities_room[room].append(item)
+                    found = True
+                    break
+
+            if not found:
+                rospy.logwarn("{} ({}) not in any room".format(item.id, item.pose.frame.p))
+
+        # Match the path to rooms
         passed_room_ids = []
-
+        kdl_path_rooms = []
         for position in kdl_path:
-            for e in room_entities:  # type: Entity
+            for room in room_entities:  # type: Entity
 
-                # If the ID is already present: continue
-                if e.id in passed_room_ids:
-                    continue
+                # Hack to avoid numerical issues
+                position.z(0.1)
 
                 # Check if it meets the requirement
-                if e.in_volume(VectorStamped(vector=position), "in"):
-                    passed_room_ids.append(e.id)
+                # ToDo: check rooms in robotics testlabs, then see if this multiplication is required
+                if room.in_volume(VectorStamped(vector=room._pose.Inverse() * position), "in"):
+                    kdl_path_rooms.append((position, room))
+
+                    # If the ID is already present: continue
+                    if room.id not in passed_room_ids:
+                        passed_room_ids.append(room.id)
 
         passed_ids = []
-        furniture_entities = [e for e in entities if e.is_a("furniture")]
         for position in kdl_path:
             to_add = []
             reached_target = False
-            for e in furniture_entities:  # type: Entity
-                rospy.logdebug("\tEntity: {}".format(e.id))
+            for room in furniture_entities:  # type: Entity
+                rospy.logdebug("\tEntity: {}".format(room.id))
 
                 # If the id is already present: continue
-                if e.id in passed_ids:
-                    rospy.logdebug("Skipping {}, already in passed ids".format(e.id))
+                if room.id in passed_ids:
+                    rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
                     continue
 
                 # Check the distance
-                distance = e.distance_to_2d(position)
+                distance = room.distance_to_2d(position)
 
                 if distance < self._radius:
-                    rospy.logdebug("Appending {}: {}".format(e.id, distance))
-                    to_add.append((e.id, distance))
+                    rospy.logdebug("Appending {}: {}".format(room.id, distance))
+                    to_add.append((room.id, distance))
 
             # Sort the list
             to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
@@ -116,7 +148,7 @@ class GiveDirections(smach.State):
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 
-        self._robot.speech.speak("You have to through the {} to get to the {}".format(
+        self._robot.speech.speak("You have to walk through the {} to get to the {}".format(
             ", the ".join(passed_room_ids), target_entity.id
         ))
         self._robot.speech.speak("There you have to walk by the {} to get to the {}".format(
