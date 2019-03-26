@@ -6,7 +6,7 @@ import smach
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
+from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped
 
 # Robot Smach States
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
@@ -30,6 +30,7 @@ class GiveDirections(smach.State):
 
         self._robot = robot
         self._entity_designator = entity_designator
+        self._radius = radius
 
     def execute(self, ud):
 
@@ -56,34 +57,51 @@ class GiveDirections(smach.State):
             return "failed"
 
         # Convert the path to a list of kdl Vectors
-        assert(all([p.header.frame_id.endswith("map") for p in path]), "Not all path poses are defined w.r.t. 'map'")
+        assert(all([p.header.frame_id.endswith("map") for p in path])), "Not all path poses are defined w.r.t. 'map'"
         kdl_path = [point_msg_to_kdl_vector(p.pose.position) for p in path]
 
         # Get all entities
         entities = self._robot.ed.get_entities()
-        furniture_entities = [e for e in entities if e.is_a("furniture")]
+        room_entities = [e for e in entities if e.type == "room"]
 
         # Figure out which entities are passed along the way
         # N.B.: this is a first naive implementation: optimization might be desired
         t_start = rospy.Time.now()
+        passed_room_ids = []
+
+        for position in kdl_path:
+            for e in room_entities:  # type: Entity
+
+                # If the ID is already present: continue
+                if e.id in passed_room_ids:
+                    continue
+
+                # Check if it meets the requirement
+                if e.in_volume(VectorStamped(vector=position), "in"):
+                    passed_room_ids.append(e.id)
+
         passed_ids = []
+        furniture_entities = [e for e in entities if e.is_a("furniture")]
         for position in kdl_path:
             to_add = []
             reached_target = False
             for e in furniture_entities:  # type: Entity
+                rospy.logdebug("\tEntity: {}".format(e.id))
 
                 # If the id is already present: continue
                 if e.id in passed_ids:
+                    rospy.logdebug("Skipping {}, already in passed ids".format(e.id))
                     continue
 
                 # Check the distance
                 distance = e.distance_to_2d(position)
 
                 if distance < self._radius:
+                    rospy.logdebug("Appending {}: {}".format(e.id, distance))
                     to_add.append((e.id, distance))
 
             # Sort the list
-            to_add.sort(key=lambda item: item[1])
+            to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
 
             # Add all items to the list
             for item in to_add:
@@ -98,8 +116,11 @@ class GiveDirections(smach.State):
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 
-        self.robot.speech.speak("You have to walk by the {} to get to the {}".format(
-            ", the".join(passed_ids), target_entity.id
+        self._robot.speech.speak("You have to through the {} to get to the {}".format(
+            ", the ".join(passed_room_ids), target_entity.id
+        ))
+        self._robot.speech.speak("There you have to walk by the {} to get to the {}".format(
+            ", the ".join(passed_ids), target_entity.id
         ))
 
         # ToDo's:
@@ -140,6 +161,6 @@ if __name__ == "__main__":
     rospy.loginfo("Starting giving directions to {}".format(furniture_id))
 
     state = GiveDirections(robot=robot,
-                           entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id, radius=0.025)
+                           entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id),
                            )
-    state.execute()
+    state.execute(None)
