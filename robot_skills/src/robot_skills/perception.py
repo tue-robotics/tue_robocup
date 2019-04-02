@@ -24,9 +24,9 @@ class Perception(RobotPart):
             self.image_topic = image_topic
 
         if projection_srv is None:
-            self.projection_srv_name = '/' + robot_name + '/top_kinect/project_2d_to_3d'
+            projection_srv_name = '/' + robot_name + '/top_kinect/project_2d_to_3d'
         else:
-            self.projection_srv_name = projection_srv
+            projection_srv_name = projection_srv
 
         self._camera_lazy_sub = None
         self._camera_cv = Condition()
@@ -38,7 +38,7 @@ class Perception(RobotPart):
 
         self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
 
-        self._projection_srv = self.create_service_client(self.projection_srv_name, Project2DTo3D)
+        self._projection_srv = self.create_service_client(projection_srv_name, Project2DTo3D)
 
     def close(self):
         pass
