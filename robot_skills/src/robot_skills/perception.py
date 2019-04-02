@@ -16,7 +16,7 @@ from robot_skills.util.image_operations import img_recognitions_to_rois, img_cut
 
 
 class Perception(RobotPart):
-    def __init__(self, robot_name, tf_listener, image_topic=None):
+    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None):
         super(Perception, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         if image_topic is None:
             self.image_topic = "/" + self.robot_name + "/top_kinect/rgb/image"
@@ -33,8 +33,10 @@ class Perception(RobotPart):
 
         self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
 
-        self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
-                                                          Project2DTo3D)
+        if projection_srv is None:
+            self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d', Project2DTo3D)
+        else:
+            self._projection_srv = self.create_service_client(projection_srv, Project2DTo3D)
 
     def close(self):
         pass
