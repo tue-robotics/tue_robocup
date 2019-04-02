@@ -42,10 +42,6 @@ class Robot(object):
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
-        # Grasp offsets
-        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
-        self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
-
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
     def add_body_part(self, partname, bodypart):
@@ -61,7 +57,7 @@ class Robot(object):
         """
         This should be run at the end of the constructor of a child class.
         """
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
+        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this??? Issue 740
 
         # Wait for connections
         s = rospy.Time.now()
