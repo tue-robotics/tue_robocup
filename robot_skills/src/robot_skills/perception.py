@@ -23,6 +23,12 @@ class Perception(RobotPart):
         else:
             self.image_topic = image_topic
 
+        if projection_srv is None:
+            self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d',
+                                                              Project2DTo3D)
+        else:
+            self._projection_srv = self.create_service_client(projection_srv, Project2DTo3D)
+
         self._camera_lazy_sub = None
         self._camera_cv = Condition()
         self._camera_last_image = None
@@ -32,11 +38,6 @@ class Perception(RobotPart):
         self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
 
         self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
-
-        if projection_srv is None:
-            self._projection_srv = self.create_service_client('/' + robot_name + '/top_kinect/project_2d_to_3d', Project2DTo3D)
-        else:
-            self._projection_srv = self.create_service_client(projection_srv, Project2DTo3D)
 
     def close(self):
         pass
