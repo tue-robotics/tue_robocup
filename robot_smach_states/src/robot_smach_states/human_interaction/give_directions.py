@@ -99,19 +99,28 @@ class GiveDirections(smach.State):
         passed_room_ids = []
         kdl_path_rooms = []
         for position in kdl_path:
-            for room in room_entities:  # type: Entity
 
-                # Hack to avoid numerical issues
-                position.z(0.1)
+            try:
+                room = get_room(room_entities, position)
+            except RuntimeError:
+                continue
+            kdl_path_rooms.append((position, room))
+            if room.id not in passed_room_ids:
+                passed_room_ids.append(room.id)
 
-                # Check if it meets the requirement
-                # ToDo: check rooms in robotics testlabs, then see if this multiplication is required
-                if room.in_volume(VectorStamped(vector=room._pose.Inverse() * position), "in"):
-                    kdl_path_rooms.append((position, room))
-
-                    # If the ID is already present: continue
-                    if room.id not in passed_room_ids:
-                        passed_room_ids.append(room.id)
+            # for room in room_entities:  # type: Entity
+            #
+            #     # Hack to avoid numerical issues
+            #     position.z(0.1)
+            #
+            #     # Check if it meets the requirement
+            #     # ToDo: check rooms in robotics testlabs, then see if this multiplication is required
+            #     if room.in_volume(VectorStamped(vector=room._pose.Inverse() * position), "in"):
+            #         kdl_path_rooms.append((position, room))
+            #
+            #         # If the ID is already present: continue
+            #         if room.id not in passed_room_ids:
+            #             passed_room_ids.append(room.id)
 
         passed_ids = []
         for position in kdl_path:
@@ -162,12 +171,66 @@ class GiveDirections(smach.State):
         return "succeeded"
 
 
+def in_room(room, position):
+    # type: (Entity, kdl.Vector) -> bool
+    """
+    Checks if the given position is in the given room
+
+    :param room: (Entity) Room entity
+    :param position: (kdl.Vector) position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
+    entities
+    :return: (bool) whether or not the position is in the room
+    """
+    # if room.in_volume(VectorStamped(vector=room._pose.Inverse() * position), "in"):
+    if room.in_volume(VectorStamped(vector=position), "in"):
+        return True
+    return False
+
+
+def get_room(rooms, position):
+    # type: (list[Entity], kdl.Vector) -> Entity
+    """
+    Checks if the given position is in one of the provided rooms
+
+    :param rooms: list(Entity) containing all room entities
+    :param position: (kdl.Vector) position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
+    entities
+    :return: (Entity) room entity
+    :raises: (RuntimeError)
+    """
+    for room in rooms:
+        if in_room(room, position):
+            return room
+    raise RuntimeError("Position {} is not in any room".format(position))
+
+
+def _test_rooms(robot):
+    """
+    Tests the 'get room' method
+    """
+    import numpy as np
+
+    entities = robot.ed.get_entities()
+    room_entities = [e for e in entities if e.type == "room"]
+
+    for x in np.arange(-4.0, 4.0, 0.1):
+        for y in np.arange(-2.0, 6.0, 0.1):
+    # for x in [-2.0, 2.0]:
+    #     for y in [0.0, 5.0]:
+            position = kdl.Vector(x, y, 0)
+            try:
+                room = get_room(room_entities, position)
+                print("Position {} is in the {}".format(position, room.id))
+            except RuntimeError as e:
+                print e.message
+
+
 if __name__ == "__main__":
 
     import sys
     import robot_smach_states.util.designators as ds
 
-    rospy.init_node('simple_navigate')
+    rospy.init_node('give_directions')
 
     robot_name = sys.argv[1]
     if robot_name == 'amigo':
@@ -192,6 +255,7 @@ if __name__ == "__main__":
 
     rospy.loginfo("Starting giving directions to {}".format(furniture_id))
 
+    # _test_rooms(robot)
     state = GiveDirections(robot=robot,
                            entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id),
                            )
