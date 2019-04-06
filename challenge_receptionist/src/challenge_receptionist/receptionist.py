@@ -74,18 +74,18 @@ class ChallengeReceptionist(smach.StateMachine):
 
             smach.StateMachine.add('SAY_GUEST_LEARNED',
                                    states.Say(robot, ["Okidoki, now I know what you look like"], block=True),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_DRINK_QUESTION',
                                    states.Say(robot, ["What's your favorite drink?"], block=True),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'HEAR_DRINK_ANSWER'})
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                    states.HearOptions(self.robot,
                                                       challenge_knowledge.common.drink_names,
                                                       self.guest1_drink_des.writeable),
-                                   transitions={'heard': 'GOTO_LIVINGROOM',
-                                                'no_result': 'GOTO_LIVINGROOM'})
+                                   transitions={'heard': 'Done',
+                                                'no_result': 'Done'})
             # Then:
             # - [x] Ask for favourite drink <drink1>
             # - [ ] GOTO living room
