@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>challenge_find_my_mates</name>
+  <version>0.0.0</version>
+  <description>The challenge_find_my_mates package</description>
+
+  <maintainer email="j.geijsberts@student.tue.nl">Josja Geijsberts</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>rospy</depend>
+  <depend>smach</depend>
+  <depend>tf</depend>
+
+  <!-- TU/e Robotics -->
+  <depend>cb_planner_msgs_srvs</depend>
+  <depend>robot_skills</depend>
+  <depend>robot_smach_states</depend>
+
+</package>
