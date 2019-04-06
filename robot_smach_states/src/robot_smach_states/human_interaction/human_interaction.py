@@ -13,6 +13,7 @@ import smach
 from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -413,6 +414,51 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
 
 
 ##########################################################################################################################################
+
+class AskPersonName(smach.State):
+    """
+    Ask the person's name, and try to hear one of the given names
+    """
+    def __init__(self, robot, personNameDes, name_options, defaultName='Operator'):
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed'])
+
+        self.robot = robot
+        self.personNameDes = personNameDes
+        self.defaultName = defaultName
+        self.name_options = name_options
+
+    def execute(self, userdata=None):
+        rospy.loginfo("AskPersonName")
+
+        self.robot.speech.speak("What is your name?", block=True)
+
+        spec = ds.Designator("((<prefix> <name>)|<name>)")
+
+        choices = ds.Designator({"name"  : self.name_options,
+                              "prefix": ["My name is", "I'm called", "I am"]})
+
+        answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
+
+        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
+        outcome = state.execute()
+
+        if not outcome == "heard":
+            self.personNameDes.write(self.defaultName)
+
+            rospy.logwarn("Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(str(outcome), self.personNameDes.resolve()))
+            return 'failed'
+        else:
+            try:
+                print answer.resolve()
+                name = answer.resolve().choices["name"]
+                self.personNameDes.write(name)
+
+                rospy.loginfo("Result received from speech recognition is '" + name + "'")
+            except KeyError, ke:
+                rospy.loginfo("KeyError resolving the name heard: " + str(ke))
+                pass
+
+        return 'succeeded'
 
 if __name__ == "__main__":
     import doctest
