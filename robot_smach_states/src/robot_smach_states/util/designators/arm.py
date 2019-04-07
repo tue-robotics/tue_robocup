@@ -54,11 +54,11 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>>
-    >>> robot._arms['left'].occupied_by = None
-    >>> robot._arms['right'].occupied_by = None
+    >>> robot.arms['left'].occupied_by = None
+    >>> robot.arms['right'].occupied_by = None
     >>> empty_arm_designator = UnoccupiedArmDesignator(robot, {})
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
-    >>> assert arm_to_use_for_first_grab._arm in robot._arms
+    >>> assert arm_to_use_for_first_grab._arm in robot.arms
     >>>
     >>> # Grab the 1st item.
     >>> arm_to_use_for_first_grab.occupied_by = "entity1"
@@ -96,12 +96,12 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> a = ArmDesignator(robot, {required_arm_name: 'left'})
-    >>> assert a.resolve()._arm == robot._arms['left']
+    >>> assert a.resolve()._arm == robot.arms['left']
 
-    >>> leftArm = robot._arms['left']
+    >>> leftArm = robot.arms['left']
     >>> leftArm.occupied_by = None
 
-    >>> rightArm = robot._arms['right']
+    >>> rightArm = robot.arms['right']
     >>> rightArm.occupied_by = "entity3"
 
     >>> entity_designator = Designator("entity3")
