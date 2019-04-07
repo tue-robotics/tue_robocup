@@ -7,6 +7,7 @@ import robot_smach_states.util.designators as ds
 from robocup_knowledge import load_knowledge
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
+from hmi_msgs.msg import QueryResult
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
@@ -17,8 +18,9 @@ class ChallengeReceptionist(smach.StateMachine):
 
         self.door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
 
-        self.guest1_name_des = ds.VariableDesignator('guest 1')
-        self.guest1_drink_des = ds.VariableDesignator('coke')
+        self.drink_spec_des = ds.Designator(challenge_knowledge.drink_spec, name='drink_spec')
+        self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
+        self.guest1_drink_des = ds.VariableDesignator(resolve_type=QueryResult, name='guest1_drink')
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -30,7 +32,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                    states.SetInitialPose(robot, challenge_knowledge.starting_point),
                                    transitions={'done': 'GOTO_DOOR',
                                                 "preempted": 'Aborted',
-                                                'error': 'GOTO:DOOR'})
+                                                'error': 'GOTO_DOOR'})
 
             smach.StateMachine.add('GOTO_DOOR',
                                    states.NavigateToWaypoint(robot, self.door_waypoint,
@@ -57,15 +59,14 @@ class ChallengeReceptionist(smach.StateMachine):
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
 
             smach.StateMachine.add('ASK_GUEST_NAME',
-                                   states.AskPersonName(robot, self.guest1_name_des.writeable),
-                                   transitions={'succeeded': 'SAY_IS_YOUR_NAME',
-                                                'failed': 'SAY_HEAR_FAILED'})
+                                   states.AskPersonName(robot, challenge_knowledge.common.names, self.guest1_name_des.writeable),
+                                   transitions={'succeeded': 'LEARN_PERSON',
+                                                'failed': 'SAY_HELLO'})
 
             smach.StateMachine.add('LEARN_PERSON',
                                    states.LearnPerson(robot, name_designator=self.guest1_name_des),
-                                   transitions={'succeeded_learning': 'SAY_OPERATOR_LEARNED',
-                                                'failed_learning': 'SAY_FAILED_LEARNING',
-                                                'timeout_learning': 'SAY_FAILED_LEARNING'})
+                                   transitions={'succeeded': 'SAY_GUEST_LEARNED',
+                                                'failed': 'SAY_FAILED_LEARNING'})
 
             smach.StateMachine.add('SAY_FAILED_LEARNING',
                                    states.Say(robot, ["Oops, I'm confused, let's try again"],
@@ -81,8 +82,8 @@ class ChallengeReceptionist(smach.StateMachine):
                                    transitions={'spoken': 'HEAR_DRINK_ANSWER'})
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
-                                   states.HearOptions(self.robot,
-                                                      challenge_knowledge.common.drink_names,
+                                   states.HearOptionsExtra(robot,
+                                                      self.drink_spec_des,
                                                       self.guest1_drink_des.writeable),
                                    transitions={'heard': 'Done',
                                                 'no_result': 'Done'})
