@@ -69,7 +69,7 @@ class BoxVolume(Volume):
         return self._max_corner
 
     @property
-    def bottom_volume(self):
+    def bottom_area(self):
         convex_hull = []
         convex_hull.append(kdl.Vector(self.min_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 1
         convex_hull.append(kdl.Vector(self.max_corner.x(), self.min_corner.y(), self.min_corner.z()))  # 2
@@ -141,7 +141,7 @@ class CompositeBoxVolume(Volume):
         return kdl.Vector(max_x, max_y, max_z)
 
     @property
-    def bottom_volume(self):
+    def bottom_area(self):
         min_x = min([v.x() for v in self._min_corners])
         min_y = min([v.y() for v in self._min_corners])
         min_z = min([v.z() for v in self._min_corners])
