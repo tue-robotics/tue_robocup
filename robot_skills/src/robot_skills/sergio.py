@@ -1,4 +1,4 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso, world_model_ed
 
 
 class Sergio(robot.Robot):
@@ -27,8 +27,8 @@ class Sergio(robot.Robot):
                                           lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                           lambda: self.lights.set_color_colorRGBA(lights.RESET)))
         self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
-                                              lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                              lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+                                             lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                             lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
         self.add_body_part('ebutton', ebutton.EButton(self.robot_name, self.tf_listener))
 
