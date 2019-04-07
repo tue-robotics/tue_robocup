@@ -13,7 +13,7 @@ import smach
 from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
-from dragonfly_speech_recognition.srv import GetSpeechResponse
+from hmi_msgs.msg import QueryResult
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -102,11 +102,12 @@ class HearOptions(smach.State):
         except Exception as e:
             rospy.logfatal(e.message) # This should be a temp addition. If this exception is thrown that means that there is a bug to be fixed
             return 'no_result' # for now this exception is thrown for Hero since speech recognition (meaning his Ears) is not even launched, we don't want it to crash on this
-            
+
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
 
         return answer.sentence
+
 
 class HearOptionsExtra(smach.State):
     """Listen to what the user said, based on a pre-constructed sentence
@@ -118,11 +119,11 @@ class HearOptionsExtra(smach.State):
     time_out -- timeout in case nothing is heard
 
     Example of usage:
-        from dragonfly_speech_recognition.srv import GetSpeechResponse
-        spec = ds.Designator("((<prefix> <name>)|<name>)")
+        from hmi_msgs.msg import QueryResult
+        spec = ds.Designator("T --> <name>)|<name>)")
         choices = ds.Designator({"name"  : names_list,
                               "prefix": ["My name is", "I'm called"]})
-        answer = ds.VariableDesignator(resolve_type = GetSpeechResponse)
+        answer = ds.VariableDesignator(resolve_type=QueryResult)
         state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
@@ -130,16 +131,19 @@ class HearOptionsExtra(smach.State):
             name = answer.resolve().choices["name"]
 
     >>> from robot_skills.mockbot import Mockbot
+    >>> from hmi_msgs.msg import QueryResult
     >>> mockbot = Mockbot()
     >>> import robot_smach_states.util.designators as ds
-    >>> spec = ds.Designator("I will go to the <table> in the <room>")
-    >>> choices = ds.Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
-    >>> answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
-    >>> state = HearOptionsExtra(mockbot, spec, choices, answer.writeable)
+    >>> spec = "T[O] -> OPTIONS[O]"
+    >>> spec += "OPTIONS['foo'] -> foo"
+    >>> spec += "OPTIONS['bar'] -> bar"
+    >>> spec = ds.Designator(spec)
+    >>> answer = ds.VariableDesignator(resolve_type=QueryResult)
+    >>> state = HearOptionsExtra(mockbot, spec, answer.writeable)
     >>> outcome = state.execute()
     """
-    def __init__(self, robot, spec_designator,
-                        choices_designator,
+    def __init__(self, robot,
+                        spec_designator,
                         speech_result_designator,
                         time_out=rospy.Duration(10),
                         look_at_standing_person=True):
@@ -148,37 +152,31 @@ class HearOptionsExtra(smach.State):
         self.robot = robot
 
         ds.check_resolve_type(spec_designator, str)
-        ds.check_resolve_type(choices_designator, dict)
-        ds.check_resolve_type(speech_result_designator, GetSpeechResponse)
+        ds.check_resolve_type(speech_result_designator, QueryResult)
         ds.is_writeable(speech_result_designator)
 
         self.spec_designator = spec_designator
-        self.choices_designator = choices_designator
         self.speech_result_designator = speech_result_designator
         self.time_out = time_out
         self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
         spec = self.spec_designator.resolve()
-        choices = self.choices_designator.resolve()
 
         if not spec:
             rospy.logerr("Could not resolve spec")
-            return "no_result"
-        if not choices:
-            rospy.logerr("Could not resolve choices")
             return "no_result"
 
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
 
-        answer = self.robot.ears.recognize(spec, choices, self.time_out)
-
+        answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configable
+                                       timeout=self.time_out.to_sec())
         if self.look_at_standing_person:
             self.robot.head.cancel_goal()
 
         if answer:
-            if answer.result:
+            if answer.semantics:
                 self.speech_result_designator.write(answer)
                 return "heard"
         else:
@@ -461,5 +459,6 @@ class AskPersonName(smach.State):
         return 'succeeded'
 
 if __name__ == "__main__":
+    rospy.init_node('human_interaction_doctest')
     import doctest
     doctest.testmod()
