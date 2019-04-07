@@ -11,6 +11,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <run_depend>challenge_cleanup</run_depend>
   <run_depend>challenge_eegpsr</run_depend>
   <run_depend>challenge_final</run_depend>
   <run_depend>challenge_gpsr</run_depend>
