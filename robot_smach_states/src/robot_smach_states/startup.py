@@ -113,7 +113,7 @@ class EnterArena(smach.StateMachine):
             self.robot = robot
 
         def execute(self, userdata=None):
-            rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
+            rospy.loginfo("{} uses force drive as a back-up scenario!".format(self.robot.robot_name))
             self.robot.base.force_drive(0.25, 0, 0, 5.0)  # x, y, z, time in seconds
             self.robot.ed.reset()
             return "done"
