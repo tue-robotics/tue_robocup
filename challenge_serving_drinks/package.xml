@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>challenge_serving_drinks</name>
+  <version>0.0.0</version>
+  <description>The challenge_serving_drinks package</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <maintainer email="jannolunenburg@gmail.com">amigoJanno Lunenburg</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>robot_skills</build_depend>
+  <build_depend>robot_smach_states</build_depend>
+  <build_export_depend>robot_skills</build_export_depend>
+  <build_export_depend>robot_smach_states</build_export_depend>
+  <exec_depend>robot_skills</exec_depend>
+  <exec_depend>robot_smach_states</exec_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
