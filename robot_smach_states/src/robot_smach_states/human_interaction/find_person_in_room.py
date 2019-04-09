@@ -224,6 +224,8 @@ if __name__ == "__main__":
         from robot_skills.amigo import Amigo as Robot
     elif robot_name == "sergio":
         from robot_skills.sergio import Sergio as Robot
+    elif robot_name == "hero":
+        from robot_skills.hero import Hero as Robot
 
     rospy.init_node('test_follow_operator')
     _robot = Robot()
