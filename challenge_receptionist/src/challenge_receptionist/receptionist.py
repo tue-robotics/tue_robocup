@@ -17,6 +17,9 @@ class ChallengeReceptionist(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         self.door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
+        self.livingroom_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_lingroom['id'])
+
+        self.operator_designator = ds.VariableDesignator(resolve_type=Entity)
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.drink_spec, name='drink_spec')
         self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
@@ -35,8 +38,9 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'error': 'GOTO_DOOR'})
 
             smach.StateMachine.add('GOTO_DOOR',
-                                   states.NavigateToWaypoint(robot, self.door_waypoint,
-                                                             challenge_knowledge.default_target_radius),
+                                   states.NavigateToWaypoint(robot,
+                                                             self.door_waypoint,
+                                                             challenge_knowledge.waypoint_door['radius']),
                                    transitions={'arrived': 'SAY_PLEASE_COME_IN',
                                                 'unreachable': 'SAY_PLEASE_COME_IN',
                                                 'goal_not_defined': 'Aborted'})
@@ -85,16 +89,52 @@ class ChallengeReceptionist(smach.StateMachine):
                                    states.HearOptionsExtra(robot,
                                                       self.drink_spec_des,
                                                       self.guest1_drink_des.writeable),
-                                   transitions={'heard': 'Done',
-                                                'no_result': 'Done'})
-            # Then:
+                                   transitions={'heard': 'GOTO_LIVINGROOM',
+                                                'no_result': 'SAY_DRINK_QUESTION'})
+
+            smach.StateMachine.add('GOTO_LIVINGROOM',
+                                   states.NavigateToWaypoint(robot,
+                                                             self.livingroom_waypoint,
+                                                             challenge_knowledge.waypoint_livingroom['radius']),
+                                   transitions={'arrived': 'FIND_OPERATOR',
+                                                'unreachable': 'FIND_OPERATOR',
+                                                'goal_not_defined': 'Aborted'})
+
+            smach.StateMachine.add('FIND_OPERATOR',
+                                   states.FindPersonInRoom(robot,
+                                                           challenge_knowledge.waypoint_livingroom['id'],
+                                                           challenge_knowledge.operator_name,
+                                                           self.operator_designator.writeable),
+                                   transitions={'found': 'GOTO_OPERATOR',
+                                                'not_found': 'GOTO_OPERATOR'})
+
+            smach.StateMachine.add('GOTO_OPERATOR',
+                                   states.NavigateToObserve(robot,
+                                                            self.operator_designator),
+                                   transitions={'arrived': 'SAY_LOOKING_FOR_GUEST',
+                                                'unreachable': 'SAY_LOOKING_FOR_GUEST',
+                                                'goal_not_defined': 'Aborted'})
+
+            smach.StateMachine.add('SAY_LOOKING_FOR_GUEST',
+                                   states.Say(robot, ["Now I should be looking at the guest and pointing at him or her"], block=True),
+                                   transitions={'spoken': 'INTRODUCE_GUEST'})
+
+            smach.StateMachine.add('INTRODUCE_GUEST',
+                                   states.Say(robot, ["This is person X and he likes drink Y"], block=True),
+                                   transitions={'spoken': 'Done'})  # TODO: Iterate to guest 2
+
+
+            # - [x] Wait at the door, say you're waiting
+            # - [x] Wait until person can come in
+            # - [x] Ask their name
+            # - [x] Ask their favourite drink
             # - [x] Ask for favourite drink <drink1>
-            # - [ ] GOTO living room
-            # - [ ] Locate John (not sure how that should work, maybe just FindPersonInRoom)
-            # - [ ] GOTO John
-            # - [ ] Locate guest1:
+            # - [x] GOTO living room
+            # - [x] Locate John (not sure how that should work, maybe just FindPersonInRoom)
+            # - [x] GOTO John
+            # - [.] Locate guest1:
             # - [ ]   rotate head until <guest1> is detected
-            # - [ ] Point at guest1
-            # - [ ] Say: This is <guest1> and (s)he likes to drink <drink1>
+            # - [.] Point at guest1
+            # - [.] Say: This is <guest1> and (s)he likes to drink <drink1>
 
 
