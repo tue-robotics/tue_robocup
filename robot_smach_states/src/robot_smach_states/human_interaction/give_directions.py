@@ -65,12 +65,10 @@ class GiveDirections(smach.State):
         furniture_entities = [room for room in entities if room.is_a("furniture")]
         room_entities = [room for room in entities if room.type == "room"]
 
-        # Figure out which entities are passed along the way
-        # N.B.: this is a first naive implementation: optimization might be desired
+        # Log the time we start iterating
         t_start = rospy.Time.now()
 
         # Match the furniture entities to rooms
-        # ToDo: move to separate method: may be useful in other cases
         furniture_entities_room = {room: [] for room in room_entities}  # maps room entities to furniture entities
         for item in furniture_entities:  # type: Entity
 
@@ -82,30 +80,9 @@ class GiveDirections(smach.State):
                 rospy.logwarn("{} ({}) not in any room".format(item.id, item._pose.p))
                 # continue
 
-            # Set the pose to a minimum of 10 cm to avoid numerial issues
-            # item._pose.p.z(max(0.1, item._pose.p.z()))
-            #
-            # found = False
-            # for room in room_entities:  # type: Entity
-            #
-            #     # Hack to handle 'flat' rooms (solution lays elsewhere)
-            #     for volume in room.volumes.values():
-            #         volume.max_corner.z(2.0)
-            #
-            #     # ToDo: check rooms in robotics testlabs, then see if this multiplication is required
-            #     if room.in_volume(VectorStamped(vector=room._pose.Inverse() * item.pose.frame.p), "in"):
-            #         rospy.loginfo("The {} ({}) is in the {} ({})".format(
-            #             item.id, item.pose.frame.p, room.id, room.volumes.values()))
-            #         furniture_entities_room[room].append(item)
-            #         found = True
-            #         break
-            #
-            # if not found:
-            #     rospy.logwarn("{} ({}) not in any room".format(item.id, item.pose.frame.p))
-
         # Match the path to rooms
-        passed_room_ids = []
-        kdl_path_rooms = []
+        passed_room_ids = []  # Will contain the ids of the rooms that are passed
+        kdl_path_rooms = []  # Will contain tuples (kdl.Vector, Entity) with a waypoint and the room this waypoint is in
         for position in kdl_path:
 
             try:
@@ -116,32 +93,26 @@ class GiveDirections(smach.State):
             if room.id not in passed_room_ids:
                 passed_room_ids.append(room.id)
 
-            # for room in room_entities:  # type: Entity
-            #
-            #     # Hack to avoid numerical issues
-            #     position.z(0.1)
-            #
-            #     # Check if it meets the requirement
-            #     # ToDo: check rooms in robotics testlabs, then see if this multiplication is required
-            #     if room.in_volume(VectorStamped(vector=room._pose.Inverse() * position), "in"):
-            #         kdl_path_rooms.append((position, room))
-            #
-            #         # If the ID is already present: continue
-            #         if room.id not in passed_room_ids:
-            #             passed_room_ids.append(room.id)
-
+        # With this information: start creating the text for the robot
         start_room_id = kdl_path_rooms[0][1].id
         sentence = "We are now in the {}.\n".format(start_room_id)
+
+        # We need to remember the 'previous' room id so the robot can mention when the next room is entered
         prev_room_id = start_room_id
+
+        # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
         passed_ids = []
         for position, room in kdl_path_rooms:
 
+            # Check if the room has changed
             if prev_room_id != room.id:
                 sentence += "You enter the {}.\n".format(room.id)
                 prev_room_id = room.id
 
-            furniture_objects = furniture_entities_room[room]
-            to_add = []
+            furniture_objects = furniture_entities_room[room]  # Furniture objects of the room in which this waypoint
+            # is situated
+            to_add = []  # will contain tuples (str, distance) with the entity id and the distance between this waypoint
+            # and the center of this entity
             reached_target = False
             for entity in furniture_objects:  # type: Entity
                 rospy.logdebug("\tEntity: {}".format(room.id))
@@ -157,7 +128,7 @@ class GiveDirections(smach.State):
                     rospy.logdebug("Appending {}: {}".format(entity.id, distance))
                     to_add.append((entity.id, distance))
 
-            # Sort the list
+            # Sort the list based on the distance
             to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
 
             # Add all items to the list
@@ -173,54 +144,16 @@ class GiveDirections(smach.State):
             if reached_target:
                 break
 
-        # passed_ids = []
-        # for position in kdl_path:
-        #     to_add = []
-        #     reached_target = False
-        #     for room in furniture_entities:  # type: Entity
-        #         rospy.logdebug("\tEntity: {}".format(room.id))
-        #
-        #         # If the id is already present: continue
-        #         if room.id in passed_ids:
-        #             rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
-        #             continue
-        #
-        #         # Check the distance
-        #         distance = room.distance_to_2d(position)
-        #
-        #         if distance < self._radius:
-        #             rospy.logdebug("Appending {}: {}".format(room.id, distance))
-        #             to_add.append((room.id, distance))
-        #
-        #     # Sort the list
-        #     to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
-        #
-        #     # Add all items to the list
-        #     for item in to_add:
-        #         if item[0] == target_entity.id:
-        #             reached_target = True
-        #             break
-        #
-        #         passed_ids.append(item[0])
-        #
-        #     if reached_target:
-        #         break
         sentence += "You have now reached the {}.\n".format(target_entity.id)
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 
         self._robot.speech.speak(sentence)
 
-        # self._robot.speech.speak("You have to walk through the {} to get to the {}".format(
-        #     ", the ".join(passed_room_ids), target_entity.id
-        # ))
-        # self._robot.speech.speak("There you have to walk by the {} to get to the {}".format(
-        #     ", the ".join(passed_ids), target_entity.id
-        # ))
-
         # ToDo's:
-        # * Make acknowledged of rooms
         # * Identify left or right
+        # * Improve texts
+        # * Break up this execute method into more (standalone/static) methods to improve readability and reusability
 
         return "succeeded"
 
@@ -235,7 +168,6 @@ def in_room(room, position):
     entities
     :return: (bool) whether or not the position is in the room
     """
-    # if room.in_volume(VectorStamped(vector=room._pose.Inverse() * position), "in"):
     if room.in_volume(VectorStamped(vector=position), "in"):
         return True
     return False
@@ -258,28 +190,28 @@ def get_room(rooms, position):
     raise RuntimeError("Position {} is not in any room".format(position))
 
 
-def _test_rooms(robot):
-    """
-    Tests the 'get room' method
-    """
-    import numpy as np
-
-    entities = robot.ed.get_entities()
-    room_entities = [e for e in entities if e.type == "room"]
-
-    for x in np.arange(-4.0, 4.0, 0.1):
-        for y in np.arange(-2.0, 6.0, 0.1):
-    # for x in [-2.0, 2.0]:
-    #     for y in [0.0, 5.0]:
-            position = kdl.Vector(x, y, 0)
-            try:
-                room = get_room(room_entities, position)
-                print("Position {} is in the {}".format(position, room.id))
-            except RuntimeError as e:
-                print e.message
-
-
 if __name__ == "__main__":
+
+    # The code in this __main__ are for testing purposes. Once the ToDos of the smach state are processed, this
+    # can/should be moved to a different file (or CI test)
+
+    def _test_rooms(robot):
+        """
+        Tests the 'get room' method
+        """
+        import numpy as np
+
+        entities = robot.ed.get_entities()
+        room_entities = [e for e in entities if e.type == "room"]
+
+        for x in np.arange(-4.0, 4.0, 0.1):
+            for y in np.arange(-2.0, 6.0, 0.1):
+                position = kdl.Vector(x, y, 0)
+                try:
+                    room = get_room(room_entities, position)
+                    print("Position {} is in the {}".format(position, room.id))
+                except RuntimeError as e:
+                    print e.message
 
     import sys
     import robot_smach_states.util.designators as ds
@@ -309,7 +241,8 @@ if __name__ == "__main__":
 
     rospy.loginfo("Starting giving directions to {}".format(furniture_id))
 
-    # _test_rooms(robot)
+    _test_rooms(robot)
+
     state = GiveDirections(robot=robot,
                            entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id),
                            )
