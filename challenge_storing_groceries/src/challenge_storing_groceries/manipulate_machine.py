@@ -154,7 +154,8 @@ class PlaceSingleItem(smach.State):
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
         arm_designator = ds.OccupiedArmDesignator(self._robot)
-        if arm_designator is None:
+        resolved_arm = arm_designator.resolve()
+        if resolved_arm is None:
             rospy.logwarn("No arm holding an entity")
             return "failed"
 
