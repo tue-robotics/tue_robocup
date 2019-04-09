@@ -5,7 +5,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from robocup_knowledge import load_knowledge
-from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 from hmi_msgs.msg import QueryResult
 
@@ -22,6 +21,8 @@ class ChallengeReceptionist(smach.StateMachine):
         self.operator_designator = ds.VariableDesignator(resolve_type=Entity)
 
         self.drink_spec_des = ds.Designator(challenge_knowledge.drink_spec, name='drink_spec')
+
+        self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
         self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
         self.guest1_drink_des = ds.VariableDesignator(resolve_type=QueryResult, name='guest1_drink')
 
@@ -118,6 +119,13 @@ class ChallengeReceptionist(smach.StateMachine):
             smach.StateMachine.add('SAY_LOOKING_FOR_GUEST',
                                    states.Say(robot, ["Now I should be looking at the guest and pointing at him or her"], block=True),
                                    transitions={'spoken': 'INTRODUCE_GUEST'})
+
+            smach.StateMachine.add('FIND_GUEST',
+                                   states.FindPerson(robot=robot,
+                                                     person_label='guest1',  # TODO: Should be able to be a designator
+                                                     found_entity_designator=self.guest1_entity_des),
+                                   transitions={"found": "INTRODUCE_GUEST",
+                                                "failed": "Aborted"})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
                                    states.Say(robot, ["This is person X and he likes drink Y"], block=True),
