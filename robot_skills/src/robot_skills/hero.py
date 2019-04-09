@@ -18,7 +18,8 @@ class Hero(robot.Robot):
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
-                                                               "/hero/head_rgbd_sensor/rgb/image_raw"))
+                                                               "/hero/head_rgbd_sensor/rgb/image_raw",
+                                                               "/hero/head_rgbd_sensor/project_2d_to_3d"))
         # self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
