@@ -35,7 +35,7 @@ class NavigateToGrasp(NavigateTo):
             rospy.logerr("Could not resolve arm")
             return None
 
-        angle_offset = math.atan2(arm.base_offset.y(), arm.base_offset.x()) 
+        angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
         radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
         entity = self.entity_designator.resolve()
