@@ -64,7 +64,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                    transitions={'spoken': 'ASK_GUEST_NAME'})
 
             smach.StateMachine.add('ASK_GUEST_NAME',
-                                   states.AskPersonName(robot, challenge_knowledge.common.names, self.guest1_name_des.writeable),
+                                   states.AskPersonName(robot, self.guest1_name_des.writeable, challenge_knowledge.common.names),
                                    transitions={'succeeded': 'LEARN_PERSON',
                                                 'failed': 'SAY_HELLO'})
 

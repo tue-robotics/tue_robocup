@@ -270,7 +270,7 @@ class Mockbot(robot.Robot):
 
         self.tf_listener = mock.MagicMock()
         self.add_body_part('hmi', mock.MagicMock())
-        self.hmi.query = lambda *args, **kwargs: QueryResult()
+        self.hmi.query = lambda *args, **kwargs: QueryResult(sentence='anna', semantics={'name': 'anna'})
 
         # Body parts
         self.add_body_part('base', Base())

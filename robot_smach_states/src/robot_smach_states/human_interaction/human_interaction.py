@@ -430,14 +430,10 @@ class AskPersonName(smach.State):
 
         self.robot.speech.speak("What is your name?", block=True)
 
-        spec = ds.Designator("((<prefix> <name>)|<name>)")
+        spec = ds.Designator("T -> "+'|'.join(self.name_options))
 
-        choices = ds.Designator({"name"  : self.name_options,
-                              "prefix": ["My name is", "I'm called", "I am"]})
-
-        answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
-
-        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
+        answer = ds.VariableDesignator(resolve_type=QueryResult)
+        state = HearOptionsExtra(self.robot, spec, answer.writeable)
         outcome = state.execute()
 
         if not outcome == "heard":
@@ -448,7 +444,7 @@ class AskPersonName(smach.State):
         else:
             try:
                 print answer.resolve()
-                name = answer.resolve().choices["name"]
+                name = answer.resolve().semantics["name"]
                 self.personNameDes.write(name)
 
                 rospy.loginfo("Result received from speech recognition is '" + name + "'")
