@@ -150,6 +150,9 @@ class Perception(MockedRobotPart):
         super(Perception, self).__init__(self)
         self.reset = mock.MagicMock()
         self.close = mock.MagicMock()
+        self.learn_person= mock.MagicMock()
+        self.detect_faces= mock.MagicMock()
+        self.get_best_face_recognition= mock.MagicMock()
 
 
 class Lights(MockedRobotPart):
@@ -288,12 +291,12 @@ class Mockbot(robot.Robot):
 
         # Human Robot Interaction
         self.add_body_part('speech', Speech())
-        # self.add_body_part('ears', Ears())
         self.add_body_part('ebutton', EButton())
         self.add_body_part('lights', Lights())
 
         # Reasoning/world modeling
         self.add_body_part('ed', ED())
+        self.add_body_part('perception', Perception())
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
