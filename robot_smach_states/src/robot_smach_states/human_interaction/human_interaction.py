@@ -134,9 +134,10 @@ class HearOptionsExtra(smach.State):
     >>> from hmi_msgs.msg import QueryResult
     >>> mockbot = Mockbot()
     >>> import robot_smach_states.util.designators as ds
-    >>> spec = "T[O] -> OPTIONS[O]"
-    >>> spec += "OPTIONS['foo'] -> foo"
-    >>> spec += "OPTIONS['bar'] -> bar"
+    >>> import os
+    >>> spec = "T[O] -> OPTIONS[O]"+os.linesep  # Newlines are needed, doctests doesn't accept 'slash-n"
+    >>> spec += "OPTIONS['foo'] -> foo"+os.linesep
+    >>> spec += "OPTIONS['bar'] -> bar"+os.linesep
     >>> spec = ds.Designator(spec)
     >>> answer = ds.VariableDesignator(resolve_type=QueryResult)
     >>> state = HearOptionsExtra(mockbot, spec, answer.writeable)
@@ -458,6 +459,6 @@ class AskPersonName(smach.State):
         return 'succeeded'
 
 if __name__ == "__main__":
-    rospy.init_node('human_interaction_doctest')
+    rospy.init_node('human_interaction_doctest')  # Needed to instantiate a Robot subclass
     import doctest
     doctest.testmod()
