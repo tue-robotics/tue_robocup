@@ -62,14 +62,6 @@ def setup_statemachine(robot):
                                 robot_smach_states.Initialize(robot),
                                 transitions={ "initialized"   :"SAY_WAITING_FOR_TRIGGER", "abort"         :"Aborted"})
 
-        # Start challenge via StartChallengeRobust, skipped atm
-        smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.starting_point, door=False),
-                                transitions={"Done": "SAY_WAITING_FOR_TRIGGER",
-                                             "Failed": "Aborted",
-                                             "Aborted": "Aborted"})
-
-
         smach.StateMachine.add('SAY_WAITING_FOR_TRIGGER',
                                robot_smach_states.Say(robot, ["Trigger me if you need me!",
                                                               "Waiting for trigger",
