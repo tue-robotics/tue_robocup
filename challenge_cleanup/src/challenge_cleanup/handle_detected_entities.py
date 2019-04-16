@@ -6,8 +6,6 @@ import robot_skills.util.msg_constructors as msgs
 
 from operator_cleanup import OperatorCleanup
 from self_cleanup import SelfCleanup
-from other_robot_cleanup import OtherRobotCleanup
-
 
 def _loginfo_color(text):
     rospy.loginfo('\033[94m' + text + '\033[0m')
