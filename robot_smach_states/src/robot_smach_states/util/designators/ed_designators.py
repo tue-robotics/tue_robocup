@@ -13,7 +13,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 # TU/e Robotics
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped, FrameStamped,\
+from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped,\
     kdl_frame_stamped_from_XYZRPY
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
@@ -98,10 +98,6 @@ class EdEntityCollectionDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-        # def __repr__(self):
-        #     return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-        #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
-
 
 class EdEntityDesignator(Designator):
     """
@@ -120,23 +116,24 @@ class EdEntityDesignator(Designator):
         @param id the ID of the object to get info about
         @param parse whether to parse the data string associated with the object model or entity
         @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)
-        @param weight_function returns a weight for each entity, the one with the lowest weight will be selected (could be a distance calculation)
+        @param weight_function returns a weight for each entity, the one with the lowest weight will be selected
+        (could be a distance calculation)
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
-        @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
+        @param center_point_designator same as center_point but dynamically resolved trhough a designator.
+        Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
         super(EdEntityDesignator, self).__init__(resolve_type=Entity, name=name)
+
+        assert not type or type_designator is None, "Specify either type or type_designator, not both"
+        assert center_point is None or type_designator is None, \
+            "Specify either center_point or center_point_designator, not both"
+        assert not id or id_designator is None, "Specify either id or id_designator, not both"
+
         self.robot = robot
         self.ed = robot.ed
-        if type != "" and type_designator != None:
-            raise TypeError("Specify either type or type_designator, not both")
-        if center_point != None and center_point_designator != None:
-            raise TypeError("Specify either center_point or center_point_designator, not both")
-        elif center_point == None and center_point_designator == None:
-            center_point = VectorStamped()
-        if id != "" and id_designator != None:
-            raise TypeError("Specify either id or id_designator, not both")
-
         self.type = type
+        if center_point is None and center_point_designator is None:
+            center_point = VectorStamped()
         self.center_point = center_point
         self.radius = radius
         self.id = id
@@ -144,15 +141,16 @@ class EdEntityDesignator(Designator):
         self.criteriafuncs = criteriafuncs or []
         self.weight_function = weight_function or (lambda entity: 0)
 
-        if type_designator: check_resolve_type(type_designator, str,
-                                               list)  # the resolve type of type_designator can be either st or list
+        if type_designator:  # the resolve type of type_designator can be either st or list
+            check_resolve_type(type_designator, str, list)
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator,
-                                                       VectorStamped)  # the resolve type of type_designator can be either st or list
+        if center_point_designator:  # the resolve type of type_designator can be either st or list
+            check_resolve_type(center_point_designator, VectorStamped)
         self.center_point_designator = center_point_designator
 
-        if id_designator: check_resolve_type(id_designator, str)
+        if id_designator:
+            check_resolve_type(id_designator, str)
         self.id_designator = id_designator
 
         self.debug = debug
@@ -212,12 +210,6 @@ class EdEntityDesignator(Designator):
 
         rospy.logerr("No entities found in {0}".format(self))
         return None
-
-        # def __repr__(self):
-        #     criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
-
-        #     return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-        #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
 
 
 class EntityByIdDesignator(Designator):
