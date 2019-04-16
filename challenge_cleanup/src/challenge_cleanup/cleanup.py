@@ -44,7 +44,13 @@ from robot_skills.util import transformations
 from robocup_knowledge import knowledge_loader
 
 challenge_knowledge = knowledge_loader.load_knowledge('challenge_cleanup')
-
+STARTPOINT = challenge_knowledge.startpoint
+EXPLORE1 = challenge_knowledge.explore1
+EXPLORE2 = challenge_knowledge.explore2
+EXPLORE3 = challenge_knowledge.explore3
+EXPLORE4 = challenge_knowledge.explore4
+EXPLORE5 = challenge_knowledge.explore5
+EXPLORE_ROUTE = [EXPLORE1, EXPLORE2, EXPLORE3, EXPLORE4, EXPLORE5]
 
 # challenge knowledge needs to contain:
 # arena layout (rooms with entry point)
@@ -87,16 +93,15 @@ class DummyState(smach.State):
 
 class CleanUp(smach.StateMachine):
     """ Cleanup challenge statemachine
-
+    : ivar explore_point: current waypoint, index in EXPLORE_ROUTE
     """
 
     def __init__(self):
         """ Initialization method
 
-        :param robot: robot api object
         """
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
-
+        self.explore_point = 0
         # Request the operator which room has to be cleaned
         #       Need some conversation engine here ( see gpsr.py?)
         #       Say "Which room do you want me to clean"
@@ -127,10 +132,11 @@ class CleanUp(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("MOVE_TO_POINT",
-                                   DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "TAKE_SNAPSHOT",
-                                                "Done": "Done",
-                                                "Aborted": "Aborted"})
+                                   states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=STARTPOINT),
+                                                             radius=0.5),
+                                   transitions={'arrived': 'TAKE_SNAPSHOT',
+                                                'unreachable': 'Aborted',
+                                                'goal_not_defined': 'Aborted'})
             smach.StateMachine.add("TAKE_SNAPSHOT",
                                    DummyState(["1", "Done", "Aborted"]),
                                    transitions={"1": "SEGMENT",
@@ -138,47 +144,27 @@ class CleanUp(smach.StateMachine):
                                                 "Aborted": "Aborted"})
             smach.StateMachine.add("SEGMENT",
                                    DummyState(["1", "2", "3", "Done", "Aborted"]),
-                                   transitions={"1": "KNOWN_OBJECT",
-                                                "2": "UNKNOWN_OBJECT",
+                                   transitions={"1": "OBJECT FOUND",
+                                                "2": "OBJECT FOUND", #UNKNOWN object!
                                                 "3": "NO_OBJECT",
                                                 "Done": "Done",
                                                 "Aborted": "Aborted"})
-            smach.StateMachine.add("KNOWN_OBJECT",
+            smach.StateMachine.add("OBJECT FOUND",
                                    DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "GRAB_KNOWN",
+                                   transitions={"1": "GRAB_OBJECT",
                                                 "Done": "Done",
                                                 "Aborted": "Aborted"})
-            smach.StateMachine.add("GRAB_KNOWN",
+            smach.StateMachine.add("GRAB_OBJECT",
                                    DummyState(["1", "Done", "Aborted"]),
                                    transitions={"1": "MOVE_TO_DEST",
                                                 "Done": "Done",
                                                 "Aborted": "Aborted"})
             smach.StateMachine.add("MOVE_TO_DEST",
                                    DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "PLACE_KNOWN",
+                                   transitions={"1": "PLACE_OBJECT",
                                                 "Done": "Done",
                                                 "Aborted": "Aborted"})
-            smach.StateMachine.add("PLACE_KNOWN",
-                                   DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "GET_NEXT_POS",
-                                                "Done": "Done",
-                                                "Aborted": "Aborted"})
-            smach.StateMachine.add("UNKNOWN_OBJECT",
-                                   DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "GRAB_UNKNOWN",
-                                                "Done": "Done",
-                                                "Aborted": "Aborted"})
-            smach.StateMachine.add("GRAB_UNKNOWN",
-                                   DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "MOVE_TO_TRASH",
-                                                "Done": "Done",
-                                                "Aborted": "Aborted"})
-            smach.StateMachine.add("MOVE_TO_TRASH",
-                                   DummyState(["1", "Done", "Aborted"]),
-                                   transitions={"1": "PLACE_UNKNOWN",
-                                                "Done": "Done",
-                                                "Aborted": "Aborted"})
-            smach.StateMachine.add("PLACE_UNKNOWN",
+            smach.StateMachine.add("PLACE_OBJECT",
                                    DummyState(["1", "Done", "Aborted"]),
                                    transitions={"1": "GET_NEXT_POS",
                                                 "Done": "Done",
@@ -217,9 +203,11 @@ def setup_statemachine(robot):
                                             "Done": "Done",
                                             "Aborted": "Aborted"})
         smach.StateMachine.add("NAV_TO_ROOM",
-                               DummyState(["Done", "Aborted"]),
-                               transitions={"Done": "SEARCH_AND_DETECT",
-                                            "Aborted": "Aborted"})
+                               states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=STARTPOINT),
+                                                         radius=0.5),
+                               transitions={'arrived': 'SEARCH_AND_DETECT',
+                                            'unreachable': 'Aborted',
+                                            'goal_not_defined': 'Aborted'})
         smach.StateMachine.add("SEARCH_AND_DETECT", CleanUp(),
                                transitions={"Done": "Done",
                                             "Aborted": "Aborted"})
