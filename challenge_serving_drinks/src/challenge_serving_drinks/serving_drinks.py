@@ -25,6 +25,8 @@ class ServingDrinks(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         with self:
+            # ToDo: check in rulebook how challenge starts
+
             smach.StateMachine.add(
                 "SAY_HI",
                 states.Say(robot, "Hi, I am {}. I will be your waiter today".format(robot.robot_name)),

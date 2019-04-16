@@ -13,7 +13,7 @@ from robot_skills.robot import Robot
 from robot_smach_states.util.designators import EdEntityDesignator
 
 # Knowledge
-knowledge = knowledge_loader.load_knowledge("common")
+COMMON_KNOWLEDGE = knowledge_loader.load_knowledge("common")
 
 
 class AskDrink(smach.State):
@@ -54,7 +54,7 @@ class AskDrink(smach.State):
         grammar += '\nDET -> a | an'
 
         # Add drinks
-        for d in knowledge.objects:
+        for d in COMMON_KNOWLEDGE.objects:
             if d["category"] == "drink":
                 grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
         return grammar, "O"
