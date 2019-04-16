@@ -1,4 +1,5 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso, world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,\
+    world_model_ed
 
 
 class Sergio(robot.Robot):
@@ -11,8 +12,8 @@ class Sergio(robot.Robot):
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
-        self.add_body_part('leftArm', arms.FakeArm(self.robot_name, self.tf_listener, side="left"))
-        self.add_body_part('rightArm', arms.FakeArm(self.robot_name, self.tf_listener, side="right"))
+        # Add arms (replace the '[[arm_name]]' and '[[side_name]]' strings with actual arm names.)
+        #self.add_arm_part('[[arm name]]', arms.Arm(self.robot_name, self.tf_listener, side='[[side name]]'))
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))
