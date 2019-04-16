@@ -430,7 +430,10 @@ class AskPersonName(smach.State):
 
         self.robot.speech.speak("What is your name?", block=True)
 
-        spec = ds.Designator("T -> "+'|'.join(self.name_options))
+        names_spec = "T['name': N] -> NAME[N]\n\n"
+        for dn in self.name_options:
+            names_spec += "NAME['{name}'] -> {name}\n".format(name=dn)
+        spec = ds.Designator(names_spec)
 
         answer = ds.VariableDesignator(resolve_type=QueryResult)
         state = HearOptionsExtra(self.robot, spec, answer.writeable)
