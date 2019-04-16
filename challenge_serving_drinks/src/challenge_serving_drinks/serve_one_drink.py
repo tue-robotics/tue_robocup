@@ -31,13 +31,13 @@ class ServeOneDrink(smach.StateMachine):
         drink_designator = ds.EdEntityDesignator(robot=robot)
         bar_designator = ds.EdEntityDesignator(robot=robot, id=BAR_ID)
         arm_designator = ds.UnoccupiedArmDesignator(all_arms=robot.arms, preferred_arm=None)
-        room_designator = ds.EdEntityDesignator(robot=robot, id=ROOM_ID)
+        operator_name = "operator_{}".format(idx)
 
         with self:
 
             smach.StateMachine.add(
                 "GET_ORDER",
-                GetOrder(robot=robot, operator_name="operator_{}".format(idx), drink_designator=drink_designator),
+                GetOrder(robot=robot, operator_name=operator_name, drink_designator=drink_designator),
                 transitions={"succeeded": "INSPECT_BAR",
                              "failed": "failed"}
             )
@@ -55,26 +55,34 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add(
                 "GRASP_DRINK",
                 states.Grab(robot=robot, item=drink_designator, arm=arm_designator),
-                transitions={"done": "MOVE_TO_ROOM",
+                transitions={"done": "FIND_OPERATOR",
                              "failed": "failed"}  # ToDo: fallback?
             )
 
             # Find operator
-            # ToDo: replace by FindPersonInRoom
-            # Move to room
             smach.StateMachine.add(
-                "MOVE_TO_ROOM",
-                states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
-                transitions={"arrived": "HAND_OVER",
-                             "unreachable": "failed",  # ToDo: fallback
-                             "goal_not_defined": "failed"}
+                "FIND_OPERATOR",
+                states.FindPersonInRoom(robot=robot,
+                                        area=ROOM_ID,
+                                        name=operator_name,
+                                        discard_other_labels=True,
+                                        found_entity_designator=None),  # ToDo: add in order to move there
+                transitions={"found": "HAND_OVER",  # ToDo: move to person first
+                             "not_found": "SAY_NOT_FOUND"}
             )
-
-            # Look around and identify the person who ordered the drink
-            # ToDo: fill in
 
             # Move to this person
             # ToDo: fill in
+
+            # Say not found
+            smach.StateMachine.add(
+                "SAY_NOT_FOUND",
+                states.Say(robot=robot,
+                           sentence="I am terribly sorry but I did not find you. "
+                                    "Please come to me so I can hand over the drink",
+                           look_at_standing_person=True),
+                transitions={"spoken": "HAND_OVER"}
+            )
 
             # Hand over the drink
             smach.StateMachine.add(
