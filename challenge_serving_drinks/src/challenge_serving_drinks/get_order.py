@@ -93,8 +93,8 @@ class AskDrink(smach.State):
             if not self._confirm():
                 continue
 
-            rospy.logwarn("AskDrink does not yet fill the designator!!!")
-            # ToDo: fill designator
+            # Store the type in the designator
+            self._drink_designator.type = speech_result.semantics
 
             return "succeeded"
 
