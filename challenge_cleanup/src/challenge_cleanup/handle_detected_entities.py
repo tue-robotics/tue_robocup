@@ -36,7 +36,7 @@ class SelectEntity(smach.State):
 
 class DetermineAction(smach.State):
     def __init__(self, robot, selected_entity_designator, known_types):
-        smach.State.__init__(self, outcomes=["self", "operator", "other_robot", "failed"])
+        smach.State.__init__(self, outcomes=["self", "operator", "failed"])
         self._robot = robot
         self._known_types = known_types
         self._selected_entity_designator = selected_entity_designator
@@ -50,7 +50,7 @@ class DetermineAction(smach.State):
         # Check if the object is on the ground
         if e.pose.frame.p.z() < 0.4:
             _loginfo_color("Object is on the ground, we cannot grasp it, call for help")
-            action = "other_robot"
+            action = "operator"
         else:
             # Check if we know the object
             if e.type in self._known_types:
@@ -113,14 +113,10 @@ class HandleDetectedEntities(smach.StateMachine):
                                    DetermineAction(robot, selected_entity_designator, known_types),
                                    transitions={"self": "SELF_CLEANUP",
                                                 "operator": "OPERATOR_CLEANUP",
-                                                "failed": "SELECT_ENTITY",
-                                                "other_robot": "OTHER_ROBOT_CLEANUP"})
+                                                "failed": "SELECT_ENTITY"})
 
             smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id, segment_area),
                                    transitions={"done": "SELECT_ENTITY", "failed": "SELECT_ENTITY"})
 
             smach.StateMachine.add("OPERATOR_CLEANUP", OperatorCleanup(robot, selected_entity_designator, location_id, segment_area),
                                    transitions={"cleanup": "SELF_CLEANUP", "no_cleanup": "SELECT_ENTITY"})
-
-            smach.StateMachine.add("OTHER_ROBOT_CLEANUP", OtherRobotCleanup(robot, selected_entity_designator, location_id, segment_area),
-                                   transitions={"done": "SELECT_ENTITY"})
