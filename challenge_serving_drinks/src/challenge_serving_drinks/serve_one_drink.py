@@ -5,14 +5,14 @@ import smach
 # Robot smach states
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
 
 # Serving drinks
 from .get_order import GetOrder
 
-# Knowledge  ToDo: move to robocup_knowledge package
-BAR_ID = "bar"
-ROOM_ID = "living_room"
+# Knowledge
+CHALLENGE_KNOWLEDGE = knowledge_loader.load_knowledge("challenge_serving_drinks")
 
 
 class ServeOneDrink(smach.StateMachine):
@@ -29,7 +29,7 @@ class ServeOneDrink(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         drink_designator = ds.EdEntityDesignator(robot=robot)
-        bar_designator = ds.EdEntityDesignator(robot=robot, id=BAR_ID)
+        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
         arm_designator = ds.UnoccupiedArmDesignator(all_arms=robot.arms, preferred_arm=None)
         operator_name = "operator_{}".format(idx)
 
@@ -63,7 +63,7 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add(
                 "FIND_OPERATOR",
                 states.FindPersonInRoom(robot=robot,
-                                        area=ROOM_ID,
+                                        area=CHALLENGE_KNOWLEDGE.room_id,
                                         name=operator_name,
                                         discard_other_labels=True,
                                         found_entity_designator=None),  # ToDo: add in order to move there
