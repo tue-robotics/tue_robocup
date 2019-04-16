@@ -29,7 +29,7 @@ import robot_smach_states
 from clean_inspect import CleanInspect
 
 from robocup_knowledge import load_knowledge
-challenge_knowledge = load_knowledge('r5cop_demo')
+challenge_knowledge = load_knowledge('cleanup_challenge')
 
 class VerifyWorldModelInfo(smach.State):
     def __init__(self, robot):
@@ -90,7 +90,7 @@ def setup_statemachine(robot):
                                transitions={"spoken": "SAY_WAITING_FOR_TRIGGER"})
 
         smach.StateMachine.add('SAY_START_CHALLENGE',
-                               robot_smach_states.Say(robot, ["Starting R5COP Cooperative cleaning demonstrator",
+                               robot_smach_states.Say(robot, ["Starting the cleanup challenge",
                                                               "What a mess here, let's clean this room!",
                                                               "Let's see if I can find some garbage here",
                                                               "All I want to do is clean this mess up!"], block=False),
@@ -106,11 +106,11 @@ def setup_statemachine(robot):
     return sm
 
 if __name__ == '__main__':
-    rospy.init_node('r5cop_demo_amigo')
+    rospy.init_node('cleanup_challenge')
 
     # Check if we have something specified to inspect
     if len(challenge_knowledge.inspection_places) < 1:
         rospy.logerr("The challenge knowledge inspection_places list should contain at least one entry!")
         sys.exit(1)
 
-    robot_smach_states.util.startup(setup_statemachine, challenge_name="r5cop_demo_amigo")
+    robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup challenge")
