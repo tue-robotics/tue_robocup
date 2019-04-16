@@ -1,12 +1,15 @@
 #! /usr/bin/env python
 
+import sys
 import rospy
 import robot_smach_states.util.designators as ds
+from robot_skills import get_robot
 
 if __name__ == "__main__":
     rospy.init_node("testdesignator")
-    from robot_skills.amigo import Amigo
-    robot = Amigo()
+
+    robot_name = sys.argv[1] if len(sys.argv) > 1 else "amigo"
+    robot = get_robot(robot_name)
 
     furniture_designator = ds.EdEntityDesignator(robot, id="dinner_table")
 

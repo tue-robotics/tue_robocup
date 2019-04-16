@@ -17,6 +17,7 @@ from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint,
 from robot_smach_states import StartChallengeRobust, WaitForTrigger
 from robot_smach_states.util.designators import EntityByIdDesignator
 
+from robot_skills import get_robot
 from robot_skills.util.kdl_conversions import FrameStamped
 from robocup_knowledge import load_knowledge
 
@@ -57,16 +58,7 @@ def main():
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        raise ValueError('unknown robot')
-
-    robot = Robot()
+    robot = get_robot(robot_name)
 
     action_client = ActionClient(robot.robot_name)
 

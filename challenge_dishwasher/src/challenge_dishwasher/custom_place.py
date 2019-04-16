@@ -118,9 +118,15 @@ class TestCustomPlace(StateMachine):
 
 
 if __name__ == '__main__':
+
+    import sys
+    from robot_skills import get_robot
+
     rospy.init_node('test_open_dishwasher')
 
-    robot = Amigo()
+    name = sys.argv[1] if len(sys.argv) > 1 else "amigo"
+    robot = get_robot(name=name)
+
     robot.ed.reset()
     robot.leftArm.reset()
     robot.torso.reset()
