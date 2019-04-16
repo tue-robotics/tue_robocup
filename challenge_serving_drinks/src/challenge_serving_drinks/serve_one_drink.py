@@ -19,15 +19,15 @@ class ServeOneDrink(smach.StateMachine):
     """ Serves on drink to an operator
 
     """
-    def __init__(self, robot):
-        # type: (Robot) -> str
+    def __init__(self, robot, idx):
+        # type: (Robot, int) -> str
         """ Initialization method
 
         :param robot: robot api object
+        :param idx: index of the drink that is served (used for the operator name)
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        person_designator = None  # ToDo: fill!
         drink_designator = ds.EdEntityDesignator(robot=robot)
         bar_designator = ds.EdEntityDesignator(robot=robot, id=BAR_ID)
         arm_designator = ds.UnoccupiedArmDesignator(all_arms=robot.arms, preferred_arm=None)
@@ -37,7 +37,7 @@ class ServeOneDrink(smach.StateMachine):
 
             smach.StateMachine.add(
                 "GET_ORDER",
-                GetOrder(robot=robot, person_designator=person_designator, drink_designator=drink_designator),
+                GetOrder(robot=robot, operator_name="operator_{}".format(idx), drink_designator=drink_designator),
                 transitions={"succeeded": "INSPECT_BAR",
                              "failed": "failed"}
             )
@@ -59,6 +59,8 @@ class ServeOneDrink(smach.StateMachine):
                              "failed": "failed"}  # ToDo: fallback?
             )
 
+            # Find operator
+            # ToDo: replace by FindPersonInRoom
             # Move to room
             smach.StateMachine.add(
                 "MOVE_TO_ROOM",
