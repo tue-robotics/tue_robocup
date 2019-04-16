@@ -235,10 +235,13 @@ class Place(smach.StateMachine):
             raise AssertionError("Cannot place on {}".format(place_pose))
 
         with self:
-            
-            smach.StateMachine.add('INSPECT', Inspect(robot, furniture_designator, navigation_area="in_front_of"),
-                                    transitions={'done': 'PREPARE_PLACE',
-                                                 'failed': 'failed'})
+
+            if furniture_designator is not None:
+                smach.StateMachine.add('INSPECT',
+                                       Inspect(robot, furniture_designator, navigation_area="in_front_of"),
+                                       transitions={'done': 'PREPARE_PLACE',
+                                                    'failed': 'failed'}
+                                       )
 
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
                                    transitions={'succeeded': 'NAVIGATE_TO_PLACE',
