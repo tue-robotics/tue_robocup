@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 """
+16apr2019: Obsolete, replaced with adapted r5cop_demo code
+
 Clean UP [Housekeeper] challenge
 This challenge is described in the 2019 RoboCup@Home Rulebook / Draft version
 
