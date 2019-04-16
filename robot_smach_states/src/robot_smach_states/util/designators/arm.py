@@ -73,7 +73,7 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>>
     >>> # You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
-    >>> assert arm_to_use_for_third_grab == None
+    >>> assert arm_to_use_for_third_grab is None
     """
     def __init__(self, robot, arm_properties, name=None):
         arm_properties['required_objects'] = [PseudoObjects.EMPTY]
@@ -109,12 +109,12 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> arm_to_use_for_placing_entity3 = holding_arm_designator.resolve()
     >>> assert(arm_to_use_for_placing_entity3._arm == rightArm)
     >>>
-    >>> #place the object
+    >>> # Place the object
     >>> rightArm.occupied_by = None
     >>>
-    >>> #After placing the item, there is no arm holding the item anymore
+    >>> # After placing the item, there is no arm holding the item anymore
     >>> arm_to_use_for_second_place = holding_arm_designator.resolve()
-    >>> assert arm_to_use_for_second_place == None
+    >>> assert arm_to_use_for_second_place is None
     """
     def __init__(self, robot, entity_designator, arm_properties, name=None):
         super(ArmHoldingEntityDesignator, self).__init__(robot, arm_properties, name=name)
@@ -127,6 +127,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
             return None
         self.arm_properties['required_objects'] = entity
         return super(ArmHoldingEntityDesignator, self).resolve()
+
 
 
 if __name__ == "__main__":
