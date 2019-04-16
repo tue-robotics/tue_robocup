@@ -10,14 +10,12 @@ import rospy
 import argparse
 import time
 
-import robot_smach_states
+from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robocup_knowledge import load_knowledge
 from robot_smach_states import StartChallengeRobust
 
-
-import action_server
 from action_server.command_center import CommandCenter
 
 
@@ -61,14 +59,7 @@ def main():
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    if args.robot == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif args.robot == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    else:
-        raise ValueError('unknown robot')
-
-    robot = Robot()
+    robot = get_robot(args.robot)
 
     # Sleep for 1 second to make sure everything is connected
     time.sleep(1)

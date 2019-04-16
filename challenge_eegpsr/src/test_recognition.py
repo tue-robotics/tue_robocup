@@ -5,6 +5,7 @@ import sys
 import rospy
 
 from robocup_knowledge import load_knowledge
+from robot_skills import get_robot
 
 import action_server
 from action_server.command_center import CommandCenter
@@ -117,17 +118,10 @@ def main():
     else:
 
         robot_name = sys.argv[1]
-        if robot_name == 'amigo':
-            from robot_skills.amigo import Amigo as Robot
-        elif robot_name == 'sergio':
-            from robot_skills.sergio import Sergio as Robot
-        else:
-            print "unknown robot"
-            return 1
 
         rospy.init_node("gpsr_test_recognition")
 
-        robot = Robot()
+        robot = get_robot(robot_name)
 
         speech_mode(robot)
 
