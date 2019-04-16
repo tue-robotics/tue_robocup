@@ -28,7 +28,7 @@ class ServeOneDrink(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         person_designator = None  # ToDo: fill!
-        drink_designator = None  # ToDo: fill!
+        drink_designator = ds.EdEntityDesignator(robot=robot)
         bar_designator = ds.EdEntityDesignator(robot=robot, id=BAR_ID)
         arm_designator = ds.UnoccupiedArmDesignator(all_arms=robot.arms, preferred_arm=None)
         room_designator = ds.EdEntityDesignator(robot=robot, id=ROOM_ID)
