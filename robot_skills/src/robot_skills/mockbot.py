@@ -14,9 +14,6 @@ import tf
 
 # TU/e Robotics
 import arms
-from robot_skills.robot_part import RobotPart
-# from dragonfly_speech_recognition.msg import Choice
-# from dragonfly_speech_recognition.srv import GetSpeechResponse
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
 from robot_skills import robot
