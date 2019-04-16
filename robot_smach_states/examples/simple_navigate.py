@@ -4,7 +4,6 @@ import rospy
 import sys
 
 import robot_skills
-from robot_smach_states import navigation
 
 import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation import NavigateToPose, NavigateToObserve, NavigateToSymbolic, NavigateToWaypoint
@@ -13,15 +12,8 @@ if __name__ == "__main__":
     rospy.init_node('simple_navigate')
 
     robot_name = sys.argv[1]
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    else:
-        print "unknown robot"
-        sys.exit()
 
-    robot = Robot()
+    robot = robot_skills.get_robot(robot_name)
 
     if len(sys.argv) > 2:
         room = sys.argv[2]
