@@ -13,6 +13,7 @@
 
   <run_depend>challenge_eegpsr</run_depend>
   <run_depend>challenge_final</run_depend>
+  <run_depend>challenge_find_my_mates</run_depend>
   <run_depend>challenge_gpsr</run_depend>
   <run_depend>challenge_manipulation</run_depend>
   <run_depend>challenge_navigation</run_depend>
