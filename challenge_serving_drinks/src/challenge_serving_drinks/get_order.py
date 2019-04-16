@@ -148,12 +148,12 @@ class GetOrder(smach.StateMachine):
     states.
 
     """
-    def __init__(self, robot, person_designator, drink_designator):
-        # type: (Robot, EdEntityDesignator, EdEntityDesignator) -> None
+    def __init__(self, robot, operator_name, drink_designator):
+        # type: (Robot, str, EdEntityDesignator) -> None
         """ Initialization method
 
         :param robot: robot api object
-        :param person_designator: (???) data structure to remember to which person to bring the drink
+        :param operator_name: name with which the operator will be stored in image recognition module
         :param drink_designator: (EdEntityDesignator) in which the drink to fetch is stored.
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
@@ -169,16 +169,18 @@ class GetOrder(smach.StateMachine):
 
             smach.StateMachine.add(
                 "ASK_STEP_IN_FRONT",
-                states.Say("Please step in front of me to give your order"),
+                states.Say(
+                    robot=robot,
+                    sentence="Please step in front of me to give your order",
+                    look_at_standing_person=True),
                 transitions={"spoken": "LEARN_OPERATOR"}
             )
 
             smach.StateMachine.add(
                 "LEARN_OPERATOR",
-                states.LearnOperator(robot, operator_timeout=20, learn_person_timeout=10.0, detection_threshold=6),
-                transitions={"done": "succeeded",
-                             "failed": "failed",
-                             "aborted": "aborted"}
+                states.LearnPerson(robot, person_name=operator_name, nr_tries=5),
+                transitions={"succeeded": "ASK_DRINK",
+                             "failed": "failed"}
             )
 
             smach.StateMachine.add(

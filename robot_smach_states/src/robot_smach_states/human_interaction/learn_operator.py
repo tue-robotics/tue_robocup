@@ -13,6 +13,8 @@ class LearnOperator(smach.State):
     def __init__(self, robot, operator_timeout=20, learn_person_timeout=10.0, detection_threshold=6):
         """ Constructor
 
+        N.B.: human_interaction.LearnPerson might also fit your needs
+
         :param robot: robot object (amigo, sergio)
         :param operator_timeout: maximum time to locate a possible operator
         :param learn_person_timeout: maximum time it is allowed to take to learn an operator
