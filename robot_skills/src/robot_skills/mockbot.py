@@ -266,7 +266,6 @@ class Mockbot(robot.Robot):
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"
 
-        rospy.set_param("/" + robot_name + "/skills/arm/offset/grasp_offset", {'x': 0, 'y': 0, 'z': 0})
         super(Mockbot, self).__init__(robot_name="mockbot", wait_services=False)
 
         self.tf_listener = mock.MagicMock()
