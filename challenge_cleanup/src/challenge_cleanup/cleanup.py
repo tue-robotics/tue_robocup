@@ -29,7 +29,7 @@ import robot_smach_states
 from clean_inspect import CleanInspect
 
 from robocup_knowledge import load_knowledge
-challenge_knowledge = load_knowledge('cleanup_challenge')
+challenge_knowledge = load_knowledge('challenge_cleanup')
 
 class VerifyWorldModelInfo(smach.State):
     def __init__(self, robot):
@@ -113,4 +113,4 @@ if __name__ == '__main__':
         rospy.logerr("The challenge knowledge inspection_places list should contain at least one entry!")
         sys.exit(1)
 
-    robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup challenge")
+    robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup")
