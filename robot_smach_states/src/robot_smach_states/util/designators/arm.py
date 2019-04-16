@@ -21,22 +21,26 @@ class ArmDesignator(Designator):
     """
 
     def __init__(self, all_arms, preferred_arm=None, name=None):
-        """Initialize a new ArmDesignator with a collection of arms available on the robot and an arm that is preferred for the given operations.
+        """Initialize a new ArmDesignator with a collection of arms available on the robot and an arm that is preferred
+         for the given operations.
         @param all_arms a dictionary of arms available on the robot
-        @param preferred_arm the arm that is preferred for the operations that use this designator"""
+        @param preferred_arm the arm that is preferred for the operations that use this designator
+        @param name: (str) name used for debugging purposes
+        """
 
-        super(ArmDesignator, self).__init__(resolve_type=Arm , name=name)
+        super(ArmDesignator, self).__init__(resolve_type=Arm, name=name)
         if not all_arms:
             raise AssertionError("all_arms cannot be None or empty list")
 
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
 
-        if not self.preferred_arm:
+        if self.preferred_arm is None:
             self.preferred_arm = self.all_arms.values()[0]
 
-        if not self.preferred_arm in self.all_arms.values():
-            raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
+        if self.preferred_arm not in self.all_arms.values():
+            raise ValueError("The preferred arm is not in the list of arms."
+                             "Preferred_arm should be one of the arms in the system")
 
         self._locker = None
 
@@ -44,16 +48,17 @@ class ArmDesignator(Designator):
         if self.available(self.preferred_arm) and self.preferred_arm.operational:
             return self.preferred_arm
         else:
-            # import ipdb; ipdb.set_trace()
-            arm2name = {arm:name for name,arm in self.all_arms.items()}
+            arm2name = {arm: name for name, arm in self.all_arms.items()}
             all_arms = self.all_arms.values()
             rospy.loginfo("Robot has %d arms" % len(all_arms))
 
             available_arms = filter(self.available, all_arms)
-            rospy.loginfo("Found {} available arms: {}".format(len(available_arms), [arm2name[arm] for arm in available_arms]))
+            rospy.loginfo("Found {} available arms: {}".format(
+                len(available_arms), [arm2name[arm] for arm in available_arms]))
 
             operational_arms = filter(lambda arm: arm.operational, available_arms)
-            rospy.loginfo("Found {} operational arms: {}".format(len(operational_arms), [arm2name[arm] for arm in operational_arms]))
+            rospy.loginfo("Found {} operational arms: {}".format(
+                len(operational_arms), [arm2name[arm] for arm in operational_arms]))
 
             if any(operational_arms):
                 selected_arm = operational_arms[0]
@@ -87,23 +92,31 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_first_grab == robot.arms['right'])
     >>>
-    >>> #Grab the 1st item with the robot.arms['right']
+    >>> # Grab the 1st item with the robot.arms['right']
     >>> robot.arms['right'].occupied_by = "entity1"
     >>> arm_to_use_for_second_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_second_grab == robot.arms['left'])
     >>>
-    >>> #Grab the 2nd item with the robot.arms['right']
+    >>> # Grab the 2nd item with the robot.arms['right']
     >>> robot.arms['left'].occupied_by = "entity2"
-    >>> #You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
+    >>> # You can't do 3 grabs with a 2 arms robot without placing an entity first,
+    >>> # so this will fail to resolve for a 3rd time
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
-    >>> assert arm_to_use_for_third_grab == None
+    >>> assert arm_to_use_for_third_grab is None
     """
     def __init__(self, all_arms, preferred_arm, name=None):
+        """
+        Initialization method
+
+        :param all_arms: dict(str, Arm) with all possible arms
+        :param preferred_arm: (Arm) preferred arm (none if no preference)
+        :param name: (str) name used for debugging purposes
+        """
         super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm, name=name)
 
     def available(self, arm):
         """Check that there is no entity occupying the arm"""
-        return arm.occupied_by == None
+        return arm.occupied_by is None
 
 
 class OccupiedArmDesignator(ArmDesignator):
@@ -138,12 +151,12 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> arm_to_use_for_placing_entity3 = holding_arm_designator.resolve()
     >>> assert(arm_to_use_for_placing_entity3 == rightArm)
     >>>
-    >>> #place the object
+    >>> # Place the object
     >>> rightArm.occupied_by = None
     >>>
-    >>> #After placing the item, there is no arm holding the item anymore
+    >>> # After placing the item, there is no arm holding the item anymore
     >>> arm_to_use_for_second_place = holding_arm_designator.resolve()
-    >>> assert arm_to_use_for_second_place == None
+    >>> assert arm_to_use_for_second_place is None
     """
     def __init__(self, all_arms, entity_designator, name=None):
         super(ArmHoldingEntityDesignator, self).__init__(all_arms, name=name)
@@ -159,8 +172,10 @@ class ArmHoldingEntityDesignator(ArmDesignator):
             rospy.logdebug("{arm} is occupied by entity we're looking for: {ent}".format(arm=arm, ent=entity))
             return arm.occupied_by == entity
         else:
-            rospy.logwarn("Entity is None and {arm} is {un}occupied".format(arm=arm, un="un" if arm.occupied_by == None else ""))
+            rospy.logwarn("Entity is None and {arm} is {un}occupied".format(
+                arm=arm, un="un" if arm.occupied_by == None else ""))
             return False
+
 
 if __name__ == "__main__":
     import doctest
