@@ -441,22 +441,16 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                                        weight_function=weight_function, debug=False,
                                                                        name="item"), name="current_item")
 
-        #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
+        #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constraint-area
         # self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.cabinet, name="placement", area=PLACE_SHELF), name="place_position")
         self.place_position = ds.LockingDesignator(EmptyShelfDesignator(robot, self.cabinet,
                                                                         name="placement", area=PLACE_SHELF),
                                                    name="place_position")
 
-        if PREFERRED_ARM == "left":
-            prefered_arm = robot.leftArm
-        elif PREFERRED_ARM == "right":
-            prefered_arm = robot.rightArm
-        else:
-            rospy.logwarn("Impossible preferred arm: {0}, defaulting to left".format(PREFERRED_ARM))
-            prefered_arm = robot.leftArm
-
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, prefered_arm, name="empty_arm_designator")
-        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {'required_arm_name': PREFERRED_ARM},
+                                                               name="empty_arm_designator")
+        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot, {'required_objects':[self.current_item]},
+                                                                      name="arm_with_item_designator")
 
         # print "{0} = pick_shelf".format(self.pick_shelf)
         # print "{0} = current_item".format(self.current_item)
