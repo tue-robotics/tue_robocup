@@ -24,6 +24,7 @@ from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
 from hmi_msgs.msg import QueryResult
+from hmi.common import random_sentence, parse_sentence
 
 
 def random_kdl_frame():
@@ -270,7 +271,12 @@ class Mockbot(robot.Robot):
 
         self.tf_listener = mock.MagicMock()
         self.add_body_part('hmi', mock.MagicMock())
-        self.hmi.query = lambda *args, **kwargs: QueryResult(sentence='anna', semantics={'name': 'anna'})
+
+        def mock_query(description, grammar, target, timeout):
+            sentence = random_sentence(grammar, target)
+            semantics = parse_sentence(sentence, grammar, target)
+            return QueryResult(sentence=sentence, semantics=semantics)
+        self.hmi.query = mock_query
 
         # Body parts
         self.add_body_part('base', Base())
