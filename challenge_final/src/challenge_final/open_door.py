@@ -204,13 +204,11 @@ class TestOpenDoor(StateMachine):
 
 if __name__ == '__main__':
 
-    import sys
-    from robot_skills import get_robot
+    from robot_skills import get_robot_from_argv
 
     rospy.init_node('test_open_door')
 
-    robot_name = sys.argv[1] if len(sys.argv) > 1 else "amigo"
-    robot = get_robot(robot_name)
+    robot = get_robot_from_argv(index=1)
 
     robot.ed.reset()
     robot.rightArm.reset()

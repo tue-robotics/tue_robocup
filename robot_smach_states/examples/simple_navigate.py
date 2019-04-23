@@ -11,9 +11,7 @@ from robot_smach_states.navigation import NavigateToPose, NavigateToObserve, Nav
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')
 
-    robot_name = sys.argv[1]
-
-    robot = robot_skills.get_robot(robot_name)
+    robot = robot_skills.get_robot_from_argv(index=1)
 
     if len(sys.argv) > 2:
         room = sys.argv[2]
