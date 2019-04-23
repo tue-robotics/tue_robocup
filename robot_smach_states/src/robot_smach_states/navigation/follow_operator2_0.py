@@ -364,7 +364,8 @@ class Recovery(smach.State):
                 self._face_pos_pub.publish(operator_pos_ros)
 
                 recovered_operator = self._robot.ed.get_closest_laser_entity(radius=self._lost_distance,
-                                                                             center_point=operator_pos_kdl)
+                                                                             center_point=operator_pos_kdl,
+                                                                             ignore_z=True)
                 if recovered_operator:
                     print
                     "Found one!"

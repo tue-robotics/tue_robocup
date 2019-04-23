@@ -242,9 +242,9 @@ class Mockbot(robot.Robot):
         # Body parts
         self.base = Base()
         self.torso = Torso()
-        self.leftArm = Arm(self.robot_name, self.tf_listener, "left")
-        self.rightArm = Arm(self.robot_name, self.tf_listener, "right")
-        self.arms = {"left":self.leftArm, "right":self.rightArm}
+        leftArm = Arm(self.robot_name, self.tf_listener, "left")
+        rightArm = Arm(self.robot_name, self.tf_listener, "right")
+        self.arms = {"left":leftArm, "right":rightArm}
         self.head = Head()
 
         # Human Robot Interaction
@@ -304,10 +304,10 @@ if __name__ == "__main__":
 
     head_reset = lambda: mockbot.head.reset()
     head_down  = lambda: mockbot.head.reset()
-    right_close = lambda: mockbot.rightArm.send_gripper_goal_close()
-    left_close = lambda: mockbot.leftArm.send_gripper_goal_close()
-    right_open = lambda: mockbot.rightArm.send_gripper_goal_open()
-    left_open = lambda: mockbot.leftArm.send_gripper_goal_open()
+    right_close = lambda: mockbot.arms['rightArm'].send_gripper_goal_close()
+    left_close = lambda: mockbot.arms['leftArm'].send_gripper_goal_close()
+    right_open = lambda: mockbot.arms['rightArm'].send_gripper_goal_open()
+    left_open = lambda: mockbot.arms['leftArm'].send_gripper_goal_open()
     speak = lambda sentence: mockbot.speech.speak(sentence, block=False)
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
     look_at_point = lambda x, y, z: mockbot.head.look_at_point(VectorStamped(x, y, z, frame_id="/mockbot/base_link"))
