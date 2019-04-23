@@ -18,9 +18,9 @@ room_id = "living_room"
 
 class FindPeople(State):
     """
-    Locate three (or all four) people
+    Locate three people in the provided room
     """
-    def __init__(self, robot, search_timeout=60, look_distance=2.0):
+    def __init__(self, robot, search_timeout=30, look_distance=2.0, min_dist=1.0):
         """ Initialization method
         :param robot: robot api object
         :param search_timeout: (float) maximum time the robot is allowed to search
@@ -31,13 +31,14 @@ class FindPeople(State):
         self._robot = robot
         self._search_timeout = search_timeout
         self._look_distance = look_distance
+        self._min_dist = min_dist
 
     def execute(self, userdata=None):
         rospy.loginfo("Trying to find my mates")
         self._robot.head.look_at_standing_person()
         self._robot.speech.speak("Please look at me while I am looking for you",
                                  block=False)
-        self._people[3]
+        self._people[3] = None
         start_time = rospy.Time.now()
 
         look_distance = 2.0  # magic number 4
@@ -85,7 +86,7 @@ class FindPeople(State):
                 detected_person = None
 
             for person in self._people:
-                if person.pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > min_dist:
+                if person.pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist:
                     self._people[n] = detected_person
 
             if self._people[n]:
@@ -113,7 +114,7 @@ class FindPeople(State):
 
 class IdentifyPeople(State):
     """
-    Locate three (or all four) people
+    Navigate to all three people and determine their attributes
     """
 
     def __init__(self, robot):
@@ -121,7 +122,13 @@ class IdentifyPeople(State):
         self._robot = robot
 
     def execute(self, userdata=None):
-
+        entities = self._robot.ed.get_entities()
+        person_entities = [entity for entity in entities if (entity.is_a("waypoint") and
+                                                             entity.id.startswith("person"))]
+        for person in person_entities:
+            NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=person.id), radius=0.7)
+            self._robot.head.look_at_standing_person()
+            # detect person -> update person entity with certain attributes
         if True:
             return 'Done'
         else:
@@ -130,7 +137,7 @@ class IdentifyPeople(State):
 
 class ReportPeople(State):
     """
-    Locate three (or all four) people
+    Form the sentences for all three people and say that sentence
     """
 
     def __init__(self, robot):
@@ -138,7 +145,14 @@ class ReportPeople(State):
         self._robot = robot
 
     def execute(self, userdata=None):
-
+        entities = self._robot.ed.get_entities()
+        person_entities = [entity for entity in entities if (entity.is_a("waypoint") and
+                                                             entity.id.startswith("person"))]
+        sentence = ""
+        # for person in person_entities:
+            # sentence += "I found someone near the {}.\n".format(person.id)
+            # sentence += "The peron was wearing a {} shirt.\n".format(person.shirt_color)
+        self._robot.speech.speak(sentence)
         if True:
             return 'Done'
         else:
