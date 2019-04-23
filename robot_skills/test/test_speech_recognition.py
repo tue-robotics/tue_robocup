@@ -1,16 +1,9 @@
 #! /usr/bin/env python
-import sys
 import rospy
-from robot_skills import get_robot
-
-if len(sys.argv) < 2:
-    print("Please specify a robot name")
-    sys.exit()
-
-robot_name = sys.argv[1]
+from robot_skills import get_robot_from_argv
 
 rospy.init_node("audio_test")
-robot = get_robot(robot_name)
+robot = get_robot_from_argv(index=1)
 
 e = robot.ears
 s = robot.speech

@@ -5,4 +5,4 @@ from .hero import Hero
 from .sergio import Sergio
 
 # Helper methods
-from get_robot import get_robot
+from get_robot import get_robot, get_robot_from_argv

@@ -434,16 +434,9 @@ class FollowOperator2(smach.StateMachine):
 
 if __name__ == "__main__":
 
-    from robot_skills import get_robot
-
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print
-        "Please provide robot name as argument."
-        exit(1)
+    from robot_skills import get_robot_from_argv
 
     rospy.init_node('test_follow_operator')
-    robot = get_robot(robot_name)
+    robot = get_robot_from_argv(index=1)
     sm = FollowOperator2(robot)
     sm.execute()

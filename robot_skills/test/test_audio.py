@@ -2,23 +2,17 @@
 
 # System
 import random
-import sys
 import time
 
 # ROS
 import rospy
 
 # TU/e Robotics
-from robot_skills import get_robot
+from robot_skills import get_robot_from_argv
 
-if len(sys.argv) < 2:
-    print("Please specify a robot name")
-    sys.exit()
-
-robot_name = sys.argv[1]
 
 rospy.init_node("audio_test")
-robot = get_robot(robot_name)
+robot = get_robot_from_argv(index=1)
 
 hmi = robot.hmi
 s = robot.speech
