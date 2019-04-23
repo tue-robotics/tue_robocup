@@ -49,7 +49,7 @@ class DetermineAction(smach.State):
             _loginfo_color("Object is on the ground, we cannot grasp it, call for help")
             action = "operator"
         else:
-            loginfo_color("Object is not on the ground, we can grasp it")
+            _loginfo_color("Object is not on the ground, we can grasp it")
             action = "self"
 
         return action
