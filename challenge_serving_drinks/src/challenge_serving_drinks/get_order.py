@@ -10,7 +10,7 @@ import robot_smach_states as states
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator
 
 # Knowledge
 COMMON_KNOWLEDGE = knowledge_loader.load_knowledge("common")
@@ -23,7 +23,7 @@ class AskDrink(smach.State):
     be nice to merge these two.
     """
     def __init__(self, robot, drink_designator, max_tries=3, max_queries_per_try=3):
-        # type (Robot, EdEntityDesignator) -> None
+        # type (Robot, VariableDesignator) -> None
         """ Initialization method
 
         :param robot: robot api object
@@ -94,7 +94,7 @@ class AskDrink(smach.State):
                 continue
 
             # Store the type in the designator
-            self._drink_designator.type = speech_result.semantics
+            self._drink_designator.write(speech_result.semantics)
 
             return "succeeded"
 
@@ -149,12 +149,12 @@ class GetOrder(smach.StateMachine):
 
     """
     def __init__(self, robot, operator_name, drink_designator):
-        # type: (Robot, str, EdEntityDesignator) -> None
+        # type: (Robot, str, VariableDesignator) -> None
         """ Initialization method
 
         :param robot: robot api object
         :param operator_name: name with which the operator will be stored in image recognition module
-        :param drink_designator: (EdEntityDesignator) in which the drink to fetch is stored.
+        :param drink_designator: (VariableDesignator) in which the drink to fetch is stored.
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
@@ -185,7 +185,7 @@ class GetOrder(smach.StateMachine):
 
             smach.StateMachine.add(
                 "ASK_DRINK",
-                AskDrink(robot, drink_designator),
+                AskDrink(robot, drink_designator.writeable),
                 transitions={"succeeded": "succeeded",
                              "failed": "failed"},
             )
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     rospy.sleep(0.5)  # wait for tf cache to be filled
 
     state = AskDrink(robot=_robot,
-                     drink_designator=None,
+                     drink_designator=VariableDesignator(type=str).writeable,
                      max_tries=1,
                      max_queries_per_try=1,
                      )
