@@ -20,7 +20,7 @@ class LearnGuest(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
-        self.drink_spec_des = ds.Designator(challenge_knowledge.drink_spec, name='drink_spec')
+        self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
 
         with self:
             smach.StateMachine.add('GOTO_DOOR',
