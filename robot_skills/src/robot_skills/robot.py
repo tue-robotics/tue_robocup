@@ -28,6 +28,7 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
+        self.arms = OrderedDict() # Ensuring arms have a fixed order of iteration.
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -36,15 +37,11 @@ class Robot(object):
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
 
-        self.image_pub = rospy.Publisher(robot_name + '/image_from_ros', Image, queue_size=1)
-        self.message_pub = rospy.Publisher(robot_name + '/message_from_ros', String, queue_size=1)
+        self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
+        self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
 
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
-
-        # Grasp offsets
-        go = rospy.get_param("/"+self.robot_name+"/skills/arm/offset/grasp_offset")
-        self.grasp_offset = geometry_msgs.msg.Point(go.get("x"), go.get("y"), go.get("z"))
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
@@ -57,12 +54,19 @@ class Robot(object):
         self.parts[partname] = bodypart
         setattr(self, partname, bodypart)
 
+    def add_arm_part(self, arm_name, arm_part):
+        """
+        Add an arm part to the robot. This is added to the parts dictionary and in the self.arms dictionary.
+        :param arm_name: Name of the arm part.
+        :param arm_part: Arm part object
+        """
+        self.parts[arm_name] = arm_part
+        self.arms[arm_name] = arm_part
+
     def configure(self):
         """
         This should be run at the end of the constructor of a child class.
         """
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this???
-
         # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():

@@ -35,20 +35,8 @@ class NavigateToGrasp(NavigateTo):
             rospy.logerr("Could not resolve arm")
             return None
 
-        # TODO https://github.com/tue-robotics/tue_robocup/issues/672
-        # Make independent of left/right arms. These offsets should be part of robot description, specific for each arm
-        if self.robot.robot_name == "amigo":
-            if arm == self.robot.arms['left']:
-                angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-            elif arm == self.robot.arms['right']:
-                angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-        elif self.robot.robot_name == "hero":
-            if arm == self.robot.arms['left']:
-                angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-            elif arm == self.robot.arms['right']:
-                angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
-
-        radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+        angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
+        radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
         entity = self.entity_designator.resolve()
 
@@ -62,18 +50,17 @@ class NavigateToGrasp(NavigateTo):
             pose = entity.pose #TODO Janno: Not all entities have pose information
             x = pose.frame.p.x()
             y = pose.frame.p.y()
-        except KeyError, ke:
+        except KeyError as ke:
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
 
         try:
             rz, _, _ = entity.pose.frame.M.GetEulerZYX()
-        except KeyError, ke:
+        except KeyError as ke:
             rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0
 
         # Outer radius
-        radius -= 0.1
         ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
         pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
