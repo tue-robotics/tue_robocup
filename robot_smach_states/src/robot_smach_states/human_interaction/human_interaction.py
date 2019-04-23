@@ -463,16 +463,17 @@ class AskPersonName(smach.State):
                 "Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(
                     str(outcome), self.person_name_des.resolve()))
             return 'failed'
-        else:
-            try:
-                print answer.resolve()
-                name = answer.resolve().semantics["name"]
-                self.person_name_des.write(name)
 
-                rospy.loginfo("Result received from speech recognition is '" + name + "'")
-            except KeyError, ke:
-                rospy.loginfo("KeyError resolving the name heard: " + str(ke))
-                pass
+        try:
+            rospy.logdebug("Answer: '{}'".format(answer.resolve()))
+            name = answer.resolve().semantics["name"]
+            rospy.loginfo("This person's name is: '{}'".format(name))
+            self.person_name_des.write(name)
+
+            rospy.loginfo("Result received from speech recognition is '" + name + "'")
+        except KeyError, ke:
+            rospy.loginfo("KeyError resolving the name heard: " + str(ke))
+            return 'failed'
 
         return 'succeeded'
 

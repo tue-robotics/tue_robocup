@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # ROS
 import rospy
 import smach
@@ -7,6 +6,7 @@ import smach
 from robot_skills.arms import Arm
 from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators import check_type
+
 
 class PointAt(smach.State):
     def __init__(self, robot, arm_designator, point_at_designator, look_at_designator=None):
