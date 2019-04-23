@@ -79,12 +79,12 @@ def setup_statemachine(robot):
                                transitions={"spoken": "INSPECT_0"})
 
         for i, place in enumerate(challenge_knowledge.inspection_places):
-            next_i = i + 1 if i + 1 < len(challenge_knowledge.inspection_places) else 0
+            next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(challenge_knowledge.inspection_places) else "Done"
 
             smach.StateMachine.add("INSPECT_%d" % i,
                                    CleanInspect(robot, place["entity_id"], place["room_id"], place["navigate_area"],
                                                 place["segment_areas"], challenge_knowledge.known_types),
-                                   transitions={"done": "INSPECT_%d" % next_i})
+                                   transitions={"done": next_state})
     return sm
 
 if __name__ == '__main__':
