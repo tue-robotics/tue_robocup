@@ -28,7 +28,8 @@ class ServeOneDrink(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        drink_designator = ds.EdEntityDesignator(robot=robot)
+        drink_str_designator = ds.VariableDesignator(resolve_type=str)
+        drink_designator = ds.EdEntityDesignator(type=drink_str_designator)
         bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
         arm_designator = ds.UnoccupiedArmDesignator(all_arms=robot.arms, preferred_arm=None)
         operator_name = "operator_{}".format(idx)
@@ -37,7 +38,7 @@ class ServeOneDrink(smach.StateMachine):
 
             smach.StateMachine.add(
                 "GET_ORDER",
-                GetOrder(robot=robot, operator_name=operator_name, drink_designator=drink_designator),
+                GetOrder(robot=robot, operator_name=operator_name, drink_designator=drink_str_designator),
                 transitions={"succeeded": "INSPECT_BAR",
                              "failed": "failed"}
             )
