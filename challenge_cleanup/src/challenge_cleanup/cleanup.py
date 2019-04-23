@@ -60,17 +60,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "INITIALIZE",
                                 robot_smach_states.Initialize(robot),
-                                transitions={ "initialized"   :"SAY_WAITING_FOR_TRIGGER", "abort"         :"Aborted"})
-
-        smach.StateMachine.add('SAY_WAITING_FOR_TRIGGER',
-                               robot_smach_states.Say(robot, ["Trigger me if you need me!",
-                                                              "Waiting for trigger",
-                                                              "Waiting for you to call me!"], block=False),
-                               transitions={"spoken": "WAIT_FOR_TRIGGER"})
-
-        smach.StateMachine.add('WAIT_FOR_TRIGGER',
-                                robot_smach_states.WaitForTrigger(robot, ["gpsr"], "/amigo/trigger"),
-                                transitions={"gpsr": "VERIFY", "preempted" : "VERIFY"})
+                                transitions={ "initialized"   :"VERIFY", "abort"         :"Aborted"})
 
         smach.StateMachine.add('VERIFY',
                                 VerifyWorldModelInfo(robot),
@@ -79,7 +69,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE',
                                robot_smach_states.Say(robot, ["My knowledge of the world is not complete!",
                                                               "Please give me some more information!"], block=False),
-                               transitions={"spoken": "SAY_WAITING_FOR_TRIGGER"})
+                               transitions={"spoken": "Aborted"})
 
         smach.StateMachine.add('SAY_START_CHALLENGE',
                                robot_smach_states.Say(robot, ["Starting the cleanup challenge",

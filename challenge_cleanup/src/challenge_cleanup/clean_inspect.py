@@ -22,9 +22,6 @@ class CleanInspect(smach.StateMachine):
             # Loop over the areas that we have to segment and handle segmented objects for the specified navigation area
             for i, segment_area in enumerate(segment_areas):
 
-                smach.StateMachine.add("RESET_ED_%d" % i, robot_smach_states.ResetED(robot),
-                                       transitions={'done': 'NAVIGATE_%d' % i})
-
                 smach.StateMachine.add("NAVIGATE_%d" % i,
                                        robot_smach_states.NavigateToSymbolic(robot, {e_des: navigate_area, room_des: "in"},
                                                                              e_des),
@@ -44,7 +41,7 @@ class CleanInspect(smach.StateMachine):
                                        transitions={'done': "HANDLE_DETECTED_ENTITIES_%d" % i})
 
                 # Determine the next state, either it is the next iter or done
-                next_state = "RESET_ED_%d" % (i + 1) if i + 1 < len(segment_areas) else "done"
+                next_state = "NAVIGATE_%d" % (i + 1) if i + 1 < len(segment_areas) else "done"
 
                 smach.StateMachine.add("SAY_UNREACHABLE_%d" % i,
                                        robot_smach_states.Say(robot, ["I failed to inspect the %s" % location_id], block=True),
