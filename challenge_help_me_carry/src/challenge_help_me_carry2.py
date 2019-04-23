@@ -6,7 +6,7 @@ import datetime
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
-from robot_skills.arms import Arm, GripperState
+from robot_skills.arms import GripperState
 from robocup_knowledge import load_knowledge
 from challenge_hmc_functions import hmc_states
 from robot_skills.util import kdl_conversions

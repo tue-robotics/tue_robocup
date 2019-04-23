@@ -28,6 +28,7 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
+        self.arms = OrderedDict() # Ensuring arms have a fixed order of iteration.
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -53,12 +54,19 @@ class Robot(object):
         self.parts[partname] = bodypart
         setattr(self, partname, bodypart)
 
+    def add_arm_part(self, arm_name, arm_part):
+        """
+        Add an arm part to the robot. This is added to the parts dictionary and in the self.arms dictionary.
+        :param arm_name: Name of the arm part.
+        :param arm_part: Arm part object
+        """
+        self.parts[arm_name] = arm_part
+        self.arms[arm_name] = arm_part
+
     def configure(self):
         """
         This should be run at the end of the constructor of a child class.
         """
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this??? Issue 740
-
         # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
