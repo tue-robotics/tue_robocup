@@ -4,6 +4,7 @@ import smach
 
 # TU/e
 import robot_skills
+from robot_skills.arms import PseudoObjects
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
@@ -125,17 +126,13 @@ class PlaceSingleItem(smach.State):
 
         # ToDo: turn this into a proper statemachine
         arm = None
-        See if there's an arm holding something
-        for k, v in self._robot.arms.iteritems():
-            if v.occupied_by is not None:
-                arm = v
-                break
+        # See if there's an arm holding something
+        # for k, v in self._robot.arms.iteritems():
+        #     if v.occupied_by is not None:
+        #         arm = v
+        #         break
 
-        # arm = Robot.get_arm(robot=robot, required_gripper_types=None, desired_gripper_types=None,
-        #                            required_goals=None, desired_goals=None,
-        #                            required_trajectories=None, desired_trajectories=None,
-        #                            required_arm_name=None,
-        #                            required_objects=ANY, desired_objects=None)
+        arm = self._robot.get_arm(robot=self.robot, required_objects=PseudoObjects.EMPTY)
 
         if arm is None:
             return "failed"
