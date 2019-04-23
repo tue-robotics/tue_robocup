@@ -8,13 +8,12 @@ class Hero(robot.Robot):
     def __init__(self, wait_services=False):
         super(Hero, self).__init__(robot_name="hero", wait_services=wait_services)
 
-        self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
+        self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
-        self.add_body_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
-        self.add_body_part('rightArm', arms.Arm(self.robot_name, self.tf_listener, side="right"))
+        self.add_arm_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
@@ -44,10 +43,10 @@ class Hero(robot.Robot):
         self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
-        self.leftArm.unsubscribe_hardware_status()
-        self.rightArm.unsubscribe_hardware_status()
-        self.leftArm._operational = True
-        self.rightArm._operational = True
+        for arm in self.arms.itervalues():
+            arm.unsubscribe_hardware_status()
+        for arm in self.arms.itervalues():
+            arm._operational = True
 
         self.configure()
 
