@@ -113,7 +113,7 @@ class HandleDetectedEntities(smach.StateMachine):
                                                 "operator": "OPERATOR_CLEANUP",
                                                 "failed": "SELECT_ENTITY"})
 
-            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id, segment_area),
+            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id, segment_area, known_types),
                                    transitions={"done": "SELECT_ENTITY", "failed": "SELECT_ENTITY"})
 
             smach.StateMachine.add("OPERATOR_CLEANUP", OperatorCleanup(robot, selected_entity_designator, location_id, segment_area),
