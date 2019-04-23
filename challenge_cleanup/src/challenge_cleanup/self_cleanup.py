@@ -4,7 +4,11 @@ import robot_smach_states
 import random
 
 from robot_skills.util.kdl_conversions import FrameStamped
+from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators import UnoccupiedArmDesignator, OccupiedArmDesignator, Designator
+
+from robocup_knowledge import load_knowledge
+challenge_knowledge = load_knowledge('challenge_cleanup')
 
 from PyKDL import Frame
 
@@ -29,11 +33,59 @@ class dropPoseDesignator(Designator):
 
         return FrameStamped(frame, "/map")
 
+class storePlaceDesignator(Designator):
+    def __init__(self, robot, name, selected_entity_designator, known_types, object_locations):
+        super(storePlaceDesignator, self).__init__(resolve_type=Entity, name=name)
+
+        self._robot = robot
+        self._known_types = known_types
+        #self._known_type_names = [known_type.get("name") for known_type in self._known_types]
+        self._object_locations = object_locations
+        self._selected_entity_designator = selected_entity_designator
+
+    def _resolve(self):
+        e = self._selected_entity_designator.resolve()
+
+        item_category = get_object_category(e.type)
+        if item_category is not None:
+            location, area_name = get_object_category_location(item_category)
+            entities = self.ed.get_entities(id=location)
+            if entities:
+                return entities[0]
+            else:
+                return None
+        else:
+            rospy.logerr("Could not resolve the selected entity!")
+            return None
+
+class storeAreaDesignator(Designator):
+    def __init__(self, robot, name, selected_entity_designator, known_types, object_locations):
+        super(storeAreaDesignator, self).__init__(resolve_type=str, name=name)
+
+        self._robot = robot
+        self._known_types = known_types
+       # self._known_type_names = [known_type.name for known_type in self._known_types]
+        self._object_locations = object_locations
+        self._selected_entity_designator = selected_entity_designator
+
+    def _resolve(self):
+        e = self._selected_entity_designator.resolve()
+
+        #return "on_top_of"
+        item_category = get_object_category(e.type)
+        if item_category is not None:
+            location, area_name = get_object_category_location(item_category)
+            return area_name
+        else:
+            rospy.logerr("Could not resolve the selected entity!")
+            return None
+
 class DetermineCleanupLocation(smach.State):
     def __init__(self, robot, selected_entity_designator, known_types):
         smach.State.__init__(self, outcomes=["trashbin", "other", "failed"])
         self._robot = robot
         self._known_types = known_types
+        #self._known_type_names = [known_type.name for known_type in self._known_types]
         self._selected_entity_designator = selected_entity_designator
 
     def execute(self, userdata):
@@ -45,9 +97,7 @@ class DetermineCleanupLocation(smach.State):
 
         rospy.loginfo("The type of the entity is '%s'" % selected_entity.type)
 
-        #if we don't know the entity we thow it in the trash
-        if selected_entity.type in self._known_types:
-            # TODO determine the location where the object should be placed
+        if is_known_object(selected_entity.type):
             return "other"
         else:
             return "trashbin"
@@ -105,6 +155,16 @@ class SelfCleanup(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done','failed'])
 
         trash_place_pose = dropPoseDesignator(robot, 0.6, "drop_pose")
+        item_store_entity = storePlaceDesignator(robot,
+                                                 "store_entity",
+                                                 selected_entity_designator,
+                                                 challenge_knowledge.common.objects,
+                                                 challenge_knowledge.common.category_locations)
+        item_store_area = storePlaceDesignator(robot,
+                                               "store_area",
+                                               selected_entity_designator,
+                                               challenge_knowledge.common.objects,
+                                               challenge_knowledge.common.category_locations)
 
         with self:
 
@@ -159,7 +219,7 @@ class SelfCleanup(smach.StateMachine):
             smach.StateMachine.add('PLACE_TO_STORE',
                                     robot_smach_states.Place(robot,
                                                              selected_entity_designator,
-                                                             "dinner_table",
+                                                             item_store_entity,
                                                              OccupiedArmDesignator(robot.arms,
                                                                                    robot.rightArm,
                                                                                    name="occupied_arm_designator"),

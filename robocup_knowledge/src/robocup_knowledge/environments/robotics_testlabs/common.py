@@ -204,6 +204,11 @@ def get_locations(room=None, pick_location=None, place_location=None):
                    (pick_location == None or pick_location == is_pick_location(loc["name"])) and \
                    (place_location == None or place_location == is_place_location(loc["name"]))]
 
+def is_known_object(obj):
+    for o in objects:
+        if o["name"] == obj:
+            return True
+    return False
 
 def get_objects(category=None):
     return [obj["name"] for obj in objects

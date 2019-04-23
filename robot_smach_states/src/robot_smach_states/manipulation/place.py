@@ -216,12 +216,22 @@ class Place(smach.StateMachine):
         # Check types or designator resolve types
         assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
         assert(arm.resolve_type == Arm or type(arm) == Arm)
+        #assert(place_volume.resolve_type == str or (type(place_volume) == str))
+
+        # parse place volume
+        if place_volume is not None:
+            if isinstance(place_volume, str):
+                place_area = place_volume
+            elif place_volume.resolve_type == str:
+                place_area = place_volume.resolve()
+            else:
+                raise AssertionError("Cannot place in {}".format(place_volume))
 
         # Case 3
         if isinstance(place_pose, str):
             furniture_designator = EdEntityDesignator(robot=robot, id=place_pose)
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_volume)
+                                                   area=place_area)
         # Case 1
         elif place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped:
             furniture_designator = None
@@ -230,7 +240,7 @@ class Place(smach.StateMachine):
         elif place_pose.resolve_type == Entity:
             furniture_designator = place_pose
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_volume)
+                                                   area=place_area)
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
 
