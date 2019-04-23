@@ -6,9 +6,8 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
 from challenge_take_out_the_garbage.take_out import DefaultGrabDesignator, GrabSingleItem, TakeOut
-challenge_knowledge = load_knowledge('challenge_take_out_the_garbage')
+CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
-STARTING_POINT = challenge_knowledge.starting_point
 
 
 class TakeOutGarbage(smach.StateMachine):
@@ -23,29 +22,23 @@ class TakeOutGarbage(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         # Create designators
-        trashbin_id = "trashbin"
         trashbin_designator = ds.EdEntityDesignator(robot=robot,
-                                                    id=trashbin_id)
+                                                    id=CHALLENGE_KNOWLEDGE.trashbin_id)
         trash_designator = DefaultGrabDesignator(robot=robot,
                                                  surface_designator=trashbin_designator,
-                                                 area_description="on_top_of",
-                                                 debug=True)
-        trashbin_id2 = "trashbin2"
+                                                 area_description="on_top_of")
         trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
-                                                     id=trashbin_id2)
+                                                     id=CHALLENGE_KNOWLEDGE.trashbin_id2)
         trash_designator2 = DefaultGrabDesignator(robot=robot,
                                                   surface_designator=trashbin_designator2,
-                                                  area_description="on_top_of",
-                                                  debug=True)
-        # A designated collection zone should be made instead of the operator table
-        drop_zone_id = "operator_table"
-        drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=drop_zone_id)
+                                                  area_description="on_top_of")
+        drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
 
         with self:
 
             # Start challenge via StartChallengeRobust
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                                   states.StartChallengeRobust(robot, STARTING_POINT),
+                                   states.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
                                    transitions={"Done": "TAKE_OUT",
                                                 "Aborted": "aborted",
                                                 "Failed": "failed"})
