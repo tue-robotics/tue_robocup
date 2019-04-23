@@ -33,30 +33,24 @@ class SelectEntity(smach.State):
 
 
 class DetermineAction(smach.State):
-    def __init__(self, robot, selected_entity_designator, known_types):
+    def __init__(self, robot, selected_entity_designator):
         smach.State.__init__(self, outcomes=["self", "operator", "failed"])
         self._robot = robot
-        self._known_types = known_types
         self._selected_entity_designator = selected_entity_designator
 
     def _get_action_outcome(self, e):
         _loginfo_color("== GET ACTION OUTCOME ==")
-        _loginfo_color("Known types: '%s'" % self._known_types)
         _loginfo_color("Entity type: '%s'" % e.type)
-        _loginfo_color("Entity pose position z: '%.3f'" % e.pose.frame.p.z())
+
+        #TODO: determine when to let a human solve our problems
 
         # Check if the object is on the ground
         if e.pose.frame.p.z() < 0.4:
             _loginfo_color("Object is on the ground, we cannot grasp it, call for help")
             action = "operator"
         else:
-            # Check if we know the object
-            if e.type in self._known_types:
-                _loginfo_color("Object is not on the ground, we can grasp it")
-                action = "self"
-            else:
-                _loginfo_color("Unknown object")
-                action = "self"
+            loginfo_color("Object is not on the ground, we can grasp it")
+            action = "self"
 
         return action
 
@@ -108,7 +102,7 @@ class HandleDetectedEntities(smach.StateMachine):
                                                 "no_entities_left": "done"})
 
             smach.StateMachine.add("DETERMINE_ACTION",
-                                   DetermineAction(robot, selected_entity_designator, known_types),
+                                   DetermineAction(robot, selected_entity_designator),
                                    transitions={"self": "SELF_CLEANUP",
                                                 "operator": "OPERATOR_CLEANUP",
                                                 "failed": "SELECT_ENTITY"})
