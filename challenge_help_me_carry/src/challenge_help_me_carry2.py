@@ -32,7 +32,7 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                                           area=challenge_knowledge.default_area),
                                                    name="place_position")
 
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.rightArm, name="empty_arm_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
 
         # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm, unless it is unlocked.
         # For this challenge, unlocking is not needed.

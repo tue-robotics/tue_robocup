@@ -1,3 +1,6 @@
+# System
+import math
+
 # ROS
 import PyKDL as kdl
 import rospy
@@ -105,7 +108,8 @@ class GiveDirections(smach.State):
 
         # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
         passed_ids = []
-        for position, room in kdl_path_rooms:
+        for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
+                                                        kdl_path_rooms[1:]):
 
             # Check if the room has changed
             if prev_room_id != room.id:
@@ -114,8 +118,8 @@ class GiveDirections(smach.State):
 
             furniture_objects = furniture_entities_room[room]  # Furniture objects of the room in which this waypoint
             # is situated
-            to_add = []  # will contain tuples (str, distance) with the entity id and the distance between this waypoint
-            # and the center of this entity
+            to_add = []  # will contain tuples (str, distance, str) with the entity id, the distance between this
+            # waypoint and the center of this entity and the side where the entity is (w.r.t. the path)
             reached_target = False
             for entity in furniture_objects:  # type: Entity
                 rospy.logdebug("\tEntity: {}".format(room.id))
@@ -129,18 +133,21 @@ class GiveDirections(smach.State):
                 distance = entity.distance_to_2d(position)
                 if distance < self._radius:
                     rospy.logdebug("Appending {}: {}".format(entity.id, distance))
-                    to_add.append((entity.id, distance))
+
+                    side = self.determine_side(position, next_position, entity.pose.frame)
+
+                    to_add.append((entity.id, distance, side))
 
             # Sort the list based on the distance
             to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
 
             # Add all items to the list
-            for entity_id, _ in to_add:
+            for entity_id, _, side in to_add:
                 if entity_id == target_entity.id:
                     reached_target = True
                     break
                 else:
-                    sentence += "You walk by the {}.\n".format(entity_id)
+                    sentence += "You walk by the {} on your {}.\n".format(entity_id, side)
 
                 passed_ids.append(entity_id)
 
@@ -159,6 +166,43 @@ class GiveDirections(smach.State):
         # * Break up this execute method into more (standalone/static) methods to improve readability and reusability
 
         return "succeeded"
+
+    @staticmethod
+    def determine_side(point, next_point, entity_pose):
+        """
+        Determines whether the entity is left or right of the two points designating a path segment
+
+        :param point: (kdl.Vector) First point
+        :param next_point: (kdl.Vector) Next point
+        :param entity_pose: (kdl.Frame) Entity pose
+        :return: (str) "left" or "right'
+        """
+        # Determine a 6D path pose
+        path_pose = create_frame_from_points(point, next_point)
+
+        # Transform entity pose into path frame
+        entity_pose_path = path_pose.Inverse() * entity_pose
+
+        side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+        return side
+
+
+def create_frame_from_points(p0, p1):
+    # type: (kdl.Vector, kdl.Vector) -> kdl.Frame
+    """
+    Creates a frame from two points. The origin of the frame is the first point. The x-direction points into the
+    direction of the next point
+
+    :param p0: (kdl.Vector)
+    :param p1: (kdl.Vector)
+    :return: (kdl.Frame)
+    """
+    unit_x = p1 - p0  # difference
+    unit_x.Normalize()  # normalize it so that Norm is 1.0
+    unit_y = kdl.Rotation.RPY(0.0, 0.0, 0.5 * math.pi) * unit_x
+    unit_z = unit_x * unit_y  # cross-product
+    rotation = kdl.Rotation(unit_x, unit_y, unit_z)
+    return kdl.Frame(rotation, p1)
 
 
 def in_room(room, position):
