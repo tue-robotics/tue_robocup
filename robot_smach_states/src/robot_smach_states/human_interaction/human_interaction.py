@@ -434,12 +434,12 @@ class AskPersonName(smach.State):
     Ask the person's name, and try to hear one of the given names
     """
 
-    def __init__(self, robot, personNameDes, name_options, defaultName='Operator'):
+    def __init__(self, robot, person_name_des, name_options, default_name='Operator'):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self.robot = robot
-        self.personNameDes = personNameDes
-        self.defaultName = defaultName
+        self.person_name_des = person_name_des
+        self.default_name = default_name
         self.name_options = name_options
 
     def execute(self, userdata=None):
@@ -457,17 +457,17 @@ class AskPersonName(smach.State):
         outcome = state.execute()
 
         if not outcome == "heard":
-            self.personNameDes.write(self.defaultName)
+            self.person_name_des.write(self.default_name)
 
             rospy.logwarn(
                 "Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(
-                    str(outcome), self.personNameDes.resolve()))
+                    str(outcome), self.person_name_des.resolve()))
             return 'failed'
         else:
             try:
                 print answer.resolve()
                 name = answer.resolve().semantics["name"]
-                self.personNameDes.write(name)
+                self.person_name_des.write(name)
 
                 rospy.loginfo("Result received from speech recognition is '" + name + "'")
             except KeyError, ke:
