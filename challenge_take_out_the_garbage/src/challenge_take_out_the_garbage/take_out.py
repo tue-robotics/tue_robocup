@@ -12,7 +12,7 @@ class DefaultGrabDesignator(ds.Designator):
     """ Designator to pick the closest item on top of the table to grab. This is used for testing
 
     """
-    def __init__(self, robot, surface_designator, area_description, debug=False):
+    def __init__(self, robot, surface_designator, area_description):
         """ Constructor
 
         :param robot: robot object
@@ -24,15 +24,12 @@ class DefaultGrabDesignator(ds.Designator):
         self._robot = robot
         self._surface_designator = surface_designator
         self.area_description = area_description
-        self._debug = debug
 
-    def resolve(self):
+    def _resolve(self):
         """ Resolves
 
         :return: entity in the <area_description> of the <surface_designator> that is closest to the robot
         """
-        # if self._debug:
-        #     import pdb; pdb.set_trace()
 
         # Get the surface as an entity
         surface = self._surface_designator.resolve()
@@ -128,11 +125,17 @@ class PlaceSingleItem(smach.State):
 
         # ToDo: turn this into a proper statemachine
         arm = None
-        # See if there's an arm holding something
+        See if there's an arm holding something
         for k, v in self._robot.arms.iteritems():
             if v.occupied_by is not None:
                 arm = v
                 break
+
+        # arm = Robot.get_arm(robot=robot, required_gripper_types=None, desired_gripper_types=None,
+        #                            required_goals=None, desired_goals=None,
+        #                            required_trajectories=None, desired_trajectories=None,
+        #                            required_arm_name=None,
+        #                            required_objects=ANY, desired_objects=None)
 
         if arm is None:
             return "failed"
