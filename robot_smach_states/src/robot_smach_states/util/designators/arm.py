@@ -33,7 +33,7 @@ class ArmDesignator(Designator):
 
         :param name: Optional name of the arm designator.
         """
-        super(ArmDesignator, self).__init__(resolve_type=PublicArm , name=name)
+        super(ArmDesignator, self).__init__(resolve_type=PublicArm, name=name)
         self.robot = robot
         self.arm_properties = arm_properties
 

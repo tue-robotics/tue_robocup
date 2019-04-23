@@ -8,7 +8,7 @@ import rospy
 # TU/e Robotics
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
-from robot_skills.arms import Arm
+from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.util.designators import Designator, check_resolve_type
@@ -23,7 +23,7 @@ class NavigateToGrasp(NavigateTo):
         check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
 
-        check_resolve_type(arm_designator, Arm) #Check that the arm_designator resolves to an Arm
+        check_resolve_type(arm_designator, PublicArm) #Check that the arm_designator resolves to an Arm
         self.arm_designator = arm_designator
         if not arm_designator:
             rospy.logerr('NavigateToGrasp: side should be determined by entity_designator. Please specify left or right, will default to left')

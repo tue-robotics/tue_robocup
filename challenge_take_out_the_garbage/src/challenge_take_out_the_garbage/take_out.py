@@ -69,7 +69,7 @@ class GrabSingleItem(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
 
         with self:
@@ -132,7 +132,7 @@ class PlaceSingleItem(smach.State):
         #         arm = v
         #         break
 
-        arm = self._robot.get_arm(robot=self.robot, required_objects=PseudoObjects.EMPTY)
+        arm = self._robot.get_arm(robot=self._robot, required_objects=PseudoObjects.EMPTY)
 
         if arm is None:
             return "failed"

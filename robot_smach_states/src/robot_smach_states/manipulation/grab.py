@@ -9,7 +9,7 @@ import tf2_ros
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
-from robot_skills.arms import Arm, GripperMeasurement
+from robot_skills.arms import PublicArm, GripperMeasurement
 from robot_smach_states.util.designators import check_type
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
@@ -321,7 +321,7 @@ class Grab(smach.StateMachine):
 
         # Check types or designator resolve types
         check_type(item, Entity)
-        check_type(arm, Arm)
+        check_type(arm, PublicArm)
 
         with self:
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
