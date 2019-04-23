@@ -19,21 +19,25 @@ class GiveDirections(smach.State):
     """
     Robot tells the operator how to get to a certain entity
     """
-    def __init__(self, robot, entity_designator, radius=1.5):
+    def __init__(self, robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
         # type: (Robot, any) -> any
         """
         Init
 
         :param robot: (Robot) API object
         :param entity_designator: (EdEntityDesignator) resolving to the entity the operator wants to go to
-        :param radius: passing closer to an entity than this radius, the entity will be mentioned
+        :param x_threshold: (float) if the entity is closer than this distance in x-direction w.r.t. the path frame
+        it is considered 'passed'
+        :param y_threshold: (float) if the entity is closer than this distance in y-direction w.r.t. the path frame
+        it is considered 'passed'
         """
 
         super(GiveDirections, self).__init__(outcomes=["succeeded", "failed"])
 
         self._robot = robot
         self._entity_designator = entity_designator
-        self._radius = radius
+        self._x_threshold = x_threshold
+        self._y_threshold = y_threshold
 
     def execute(self, ud):
 
@@ -119,7 +123,7 @@ class GiveDirections(smach.State):
             furniture_objects = furniture_entities_room[room]  # Furniture objects of the room in which this waypoint
             # is situated
             to_add = []  # will contain tuples (str, distance, str) with the entity id, the distance between this
-            # waypoint and the center of this entity and the side where the entity is (w.r.t. the path)
+            # waypoint and the center of this entity (in x-direction) and the side where the entity is (w.r.t. the path)
             reached_target = False
             for entity in furniture_objects:  # type: Entity
                 rospy.logdebug("\tEntity: {}".format(room.id))
@@ -129,14 +133,17 @@ class GiveDirections(smach.State):
                     rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
                     continue
 
+                # Compute the pose of the entity w.r.t. the 'path'
+                entity_pose_path = self.get_entity_pose_in_path(position, next_position, entity.pose.frame)
+
                 # Check the distance
-                distance = entity.distance_to_2d(position)
-                if distance < self._radius:
-                    rospy.logdebug("Appending {}: {}".format(entity.id, distance))
+                if abs(entity_pose_path.p.x()) < self._x_threshold and abs(entity_pose_path.p.y()) < self._y_threshold:
+                    rospy.logdebug("Appending {}: ({}, {})".format(
+                        entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
 
-                    side = self.determine_side(position, next_position, entity.pose.frame)
+                    side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
 
-                    to_add.append((entity.id, distance, side))
+                    to_add.append((entity.id, entity_pose_path.p.y(), side))
 
             # Sort the list based on the distance
             to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
@@ -161,21 +168,20 @@ class GiveDirections(smach.State):
         self._robot.speech.speak(sentence)
 
         # ToDo's:
-        # * Identify left or right
         # * Improve texts
         # * Break up this execute method into more (standalone/static) methods to improve readability and reusability
 
         return "succeeded"
 
     @staticmethod
-    def determine_side(point, next_point, entity_pose):
+    def get_entity_pose_in_path(point, next_point, entity_pose):
         """
-        Determines whether the entity is left or right of the two points designating a path segment
+        Computes the entity pose w.r.t. the virtual frame that is spanned by the two points
 
-        :param point: (kdl.Vector) First point
-        :param next_point: (kdl.Vector) Next point
-        :param entity_pose: (kdl.Frame) Entity pose
-        :return: (str) "left" or "right'
+        :param point: (kdl.Vector) First point in fixed frame
+        :param next_point: (kdl.Vector) Next point in fixed frame
+        :param entity_pose: (kdl.Frame) Entity pose in fixed frame
+        :return: (kdl.Frame) Entity pose in virtual 'path' frame
         """
         # Determine a 6D path pose
         path_pose = create_frame_from_points(point, next_point)
@@ -183,8 +189,7 @@ class GiveDirections(smach.State):
         # Transform entity pose into path frame
         entity_pose_path = path_pose.Inverse() * entity_pose
 
-        side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
-        return side
+        return entity_pose_path
 
 
 def create_frame_from_points(p0, p1):
@@ -202,7 +207,7 @@ def create_frame_from_points(p0, p1):
     unit_y = kdl.Rotation.RPY(0.0, 0.0, 0.5 * math.pi) * unit_x
     unit_z = unit_x * unit_y  # cross-product
     rotation = kdl.Rotation(unit_x, unit_y, unit_z)
-    return kdl.Frame(rotation, p1)
+    return kdl.Frame(rotation, p0)
 
 
 def in_room(room, position):
