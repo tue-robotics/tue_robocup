@@ -56,7 +56,7 @@ class DetermineAction(smach.State):
                 action = "self"
             else:
                 _loginfo_color("Unknown object")
-                action = "operator"
+                action = "self"
 
         return action
 
