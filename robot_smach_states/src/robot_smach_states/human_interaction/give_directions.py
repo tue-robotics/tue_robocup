@@ -62,7 +62,7 @@ class GiveDirections(smach.State):
 
         # Get all entities
         entities = self._robot.ed.get_entities()
-        furniture_entities = [room for room in entities if room.is_a("furniture")]
+        furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
         room_entities = [room for room in entities if room.type == "room"]
 
         # Log the time we start iterating
