@@ -28,6 +28,7 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
+        self.arms = OrderedDict() # Ensuring arms have a fixed order of iteration.
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -53,12 +54,19 @@ class Robot(object):
         self.parts[partname] = bodypart
         setattr(self, partname, bodypart)
 
+    def add_arm_part(self, arm_name, arm_part):
+        """
+        Add an arm part to the robot. This is added to the parts dictionary and in the self.arms dictionary.
+        :param arm_name: Name of the arm part.
+        :param arm_part: Arm part object
+        """
+        self.parts[arm_name] = arm_part
+        self.arms[arm_name] = arm_part
+
     def configure(self):
         """
         This should be run at the end of the constructor of a child class.
         """
-        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)  # ToDo: kind of ugly, why do we need this??? Issue 740
-
         # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
@@ -74,11 +82,11 @@ class Robot(object):
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def leftArm(self):
-        return self.arms['left']
+        return self.arms['leftArm']
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def rightArm(self):
-        return self.arms['right']
+        return self.arms['rightArm']
 
     def reset(self):
         results = {}
@@ -123,8 +131,8 @@ class Robot(object):
 
         :param required_gripper_types: Collection of gripper types that must all be
                 available. None means grippers are not needed.
-        :param desired_gripper_types: Collection of gripper types where one or more
-                may be selected. None means no grippers are desired.
+        :param desired_gripper_types: Collection of gripper types from GripperTypes,
+                where one or more may be selected. None means no grippers are desired.
 
         :param required_goals: Collection of joint goals that must all be available.
                 None means no joint goals are needed.
@@ -140,7 +148,7 @@ class Robot(object):
                 other arm will be considered. None means any arm will do.
 
         :param required_objects: Collection of objects that the arm must have. Special
-                pseudo-objects arms.ANY_OBJECT and arms.NO_OBJECT may be used
+                pseudo-objects PseudoObjects.ANY and PseudoObjects.EMPTY may be used
                 too in the collection, although they do not make much sense when used
                 together with other objects. None means there are no required objects.
         :param desired_objects: Collection of objects that the arm may have. None
@@ -182,7 +190,7 @@ class Robot(object):
                 if not all_matched:
                     discarded_reasons.append((arm_name, "required gripper type failed"))
                     continue
-               
+
                 for match in matches:
                     matching_grippers.update(match)
 
