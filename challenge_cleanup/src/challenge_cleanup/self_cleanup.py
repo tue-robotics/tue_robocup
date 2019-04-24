@@ -34,13 +34,10 @@ class dropPoseDesignator(Designator):
         return FrameStamped(frame, "/map")
 
 class storePlaceDesignator(Designator):
-    def __init__(self, robot, name, selected_entity_designator, known_types, object_locations):
+    def __init__(self, robot, name, selected_entity_designator):
         super(storePlaceDesignator, self).__init__(resolve_type=Entity, name=name)
 
         self._robot = robot
-        self._known_types = known_types
-        #self._known_type_names = [known_type.get("name") for known_type in self._known_types]
-        self._object_locations = object_locations
         self._selected_entity_designator = selected_entity_designator
 
     def _resolve(self):
@@ -59,13 +56,10 @@ class storePlaceDesignator(Designator):
             return None
 
 class storeAreaDesignator(Designator):
-    def __init__(self, robot, name, selected_entity_designator, known_types, object_locations):
+    def __init__(self, robot, name, selected_entity_designator):
         super(storeAreaDesignator, self).__init__(resolve_type=str, name=name)
 
         self._robot = robot
-        self._known_types = known_types
-       # self._known_type_names = [known_type.name for known_type in self._known_types]
-        self._object_locations = object_locations
         self._selected_entity_designator = selected_entity_designator
 
     def _resolve(self):
@@ -81,11 +75,9 @@ class storeAreaDesignator(Designator):
             return None
 
 class DetermineCleanupLocation(smach.State):
-    def __init__(self, robot, selected_entity_designator, known_types):
+    def __init__(self, robot, selected_entity_designator):
         smach.State.__init__(self, outcomes=["trashbin", "other", "failed"])
         self._robot = robot
-        self._known_types = known_types
-        #self._known_type_names = [known_type.name for known_type in self._known_types]
         self._selected_entity_designator = selected_entity_designator
 
     def execute(self, userdata):
@@ -150,21 +142,17 @@ class Speak(smach.State):
 
 
 class SelfCleanup(smach.StateMachine):
-    def __init__(self, robot, selected_entity_designator, location_id, segment_area, known_types):
+    def __init__(self, robot, selected_entity_designator, location_id, segment_area):
 
         smach.StateMachine.__init__(self, outcomes=['done','failed'])
 
         trash_place_pose = dropPoseDesignator(robot, 0.6, "drop_pose")
         item_store_entity = storePlaceDesignator(robot,
                                                  "store_entity",
-                                                 selected_entity_designator,
-                                                 challenge_knowledge.common.objects,
-                                                 challenge_knowledge.common.category_locations)
+                                                 selected_entity_designator)
         item_store_area = storePlaceDesignator(robot,
                                                "store_area",
-                                               selected_entity_designator,
-                                               challenge_knowledge.common.objects,
-                                               challenge_knowledge.common.category_locations)
+                                               selected_entity_designator)
 
         with self:
 
@@ -196,7 +184,7 @@ class SelfCleanup(smach.StateMachine):
 
             smach.StateMachine.add('CHECK_ARM_OCCUPIED', ArmOccupied(robot), transitions={"yes": "DETERMINE_PLACE_LOCATION", "no": "done"})
 
-            smach.StateMachine.add('DETERMINE_PLACE_LOCATION', DetermineCleanupLocation(robot, selected_entity_designator, known_types),
+            smach.StateMachine.add('DETERMINE_PLACE_LOCATION', DetermineCleanupLocation(robot, selected_entity_designator),
                                    transitions={"trashbin" : "NAVIGATE_TO_TRASH", "other" : "PLACE_TO_STORE", "failed" : "NAVIGATE_TO_TRASH"})
 
             smach.StateMachine.add('NAVIGATE_TO_TRASH',

@@ -83,7 +83,7 @@ def setup_statemachine(robot):
 
             smach.StateMachine.add("INSPECT_%d" % i,
                                    CleanInspect(robot, place["entity_id"], place["room_id"], place["navigate_area"],
-                                                place["segment_areas"], challenge_knowledge.known_types),
+                                                place["segment_areas"]),
                                    transitions={"done": next_state})
     return sm
 

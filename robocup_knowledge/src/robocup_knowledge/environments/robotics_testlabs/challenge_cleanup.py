@@ -37,18 +37,3 @@ for room, wp_count in rooms:
         place['room_id'] = room
         inspection_places.append(place)
 
-known_types = [
-    "coke",
-    "fanta",
-    "mentos",
-    "bifrutas",
-    "beer",
-    "coffee_pads",
-    "deodorant",
-    "ice_tea",
-    "sprite",
-    "tea",
-    "water",
-    "xylit24_spearmint",
-    "xylit24_white"]
-
