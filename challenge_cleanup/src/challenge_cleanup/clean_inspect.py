@@ -8,7 +8,7 @@ from robot_skills.classification_result import ClassificationResult
 
 
 class CleanInspect(smach.StateMachine):
-    def __init__(self, robot, location_id, room_id, navigate_area, segment_areas, known_types):
+    def __init__(self, robot, location_id, room_id, navigate_area, segment_areas):
 
         smach.StateMachine.__init__(self, outcomes=['done'])
 
@@ -48,5 +48,5 @@ class CleanInspect(smach.StateMachine):
                                        transitions={"spoken":next_state})
 
                 smach.StateMachine.add("HANDLE_DETECTED_ENTITIES_%d" % i,
-                                       HandleDetectedEntities(robot, e_classifications_des, known_types, location_id, segment_area),
+                                       HandleDetectedEntities(robot, e_classifications_des, location_id, segment_area),
                                        transitions={"done": next_state})

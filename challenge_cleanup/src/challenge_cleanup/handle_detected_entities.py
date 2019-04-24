@@ -87,7 +87,7 @@ class DetermineAction(smach.State):
 
 
 class HandleDetectedEntities(smach.StateMachine):
-    def __init__(self, robot, found_entity_classifications_designator, known_types, location_id, segment_area):
+    def __init__(self, robot, found_entity_classifications_designator, location_id, segment_area):
 
         smach.StateMachine.__init__(self, outcomes=['done'])
 
@@ -107,7 +107,7 @@ class HandleDetectedEntities(smach.StateMachine):
                                                 "operator": "OPERATOR_CLEANUP",
                                                 "failed": "SELECT_ENTITY"})
 
-            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id, segment_area, known_types),
+            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id, segment_area),
                                    transitions={"done": "SELECT_ENTITY", "failed": "SELECT_ENTITY"})
 
             smach.StateMachine.add("OPERATOR_CLEANUP", OperatorCleanup(robot, selected_entity_designator, location_id, segment_area),
