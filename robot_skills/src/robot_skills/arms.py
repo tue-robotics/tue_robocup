@@ -181,6 +181,17 @@ class PublicArm(object):
     def reset(self, timeout=0.0):
         return self._arm.reset(timeout)
 
+    @property
+    def base_offset(self):
+        """
+        Retrieves the 'optimal' position of an object w.r.t. the base link of a
+        robot for this arm to grasp it.
+
+        :return: Position of an object w.r.t. the base link of a robot.
+        :rtype: kdl Vector
+        """
+        return self._arm.base_offset
+
     def _test_die(self, cond, feature, hint=''):
         """
         Test the condition, if it fails, die with an assertion error explaining what is wrong.
@@ -765,9 +776,11 @@ class Arm(RobotPart):
     @property
     def base_offset(self):
         """
-        Returns the 'optimal' position of an object w.r.t. the base link of a robot for this arm to grasp it
+        Retrieves the 'optimal' position of an object w.r.t. the base link of a
+        robot for this arm to grasp it.
 
-        :return: kdl Vector
+        :return: Position of an object w.r.t. the base link of a robot.
+        :rtype: kdl Vector
         """
         return self._base_offset
 
