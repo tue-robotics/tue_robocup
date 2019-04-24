@@ -190,7 +190,7 @@ class PublicArm(object):
         :return: Position of an object w.r.t. the base link of a robot.
         :rtype: kdl Vector
         """
-        return self._arm.base_offset()
+        return self._arm.base_offset
 
     def _test_die(self, cond, feature, hint=''):
         """
