@@ -18,33 +18,24 @@ from tue_msgs.msg import GripperCommand
 from robot_skills.robot_part import RobotPart
 
 
-# If the grasp sensor distance is smaller than this value, the gripper is holding an object
-
-GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
-GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
-GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.02, 0.18]))
-# Temporary: this should be approximately 0.02 once the sensor is correctly setup
-GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.0025, 0.18]))
-
-
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
 
 # Specific types of gripper.
 class GripperTypes(object):
-    #Concrete types of gripper.
+    # Concrete types of gripper.
     PINCH = "gripper-type-pinch"
     PARALLEL = "gripper-type-parallel"
     SUCTION = "gripper-type-suction"
 
     # Pseudo gripper types.
-    GRASPING = "pseudo-gripper-type-any-grasping-will-do" # Either pinch or parallel
+    GRASPING = "pseudo-gripper-type-any-grasping-will-do"  # Either pinch or parallel
     NONE = "pseudo-gripper-type-no-gripper"
 
 
 # Pseudo objects for 'any object' or 'no object'.
 class PseudoObjects(object):
-    ANY  = "pseudo-object-saying-any-object-will-do"
+    ANY = "pseudo-object-saying-any-object-will-do"
     EMPTY = "pseudo-object-saying-lack-of-object-will-do"
 
 
@@ -375,7 +366,8 @@ class Arm(RobotPart):
                     self._has_specific_gripper_types(GripperTypes.PARALLEL))
         return self._has_specific_gripper_types(gripper_type)
 
-    def _has_specific_gripper_types(self, gripper_type):
+    @staticmethod
+    def _has_specific_gripper_types(gripper_type):
         """
         Verify whether the arm as the given type of specific gripper.
 

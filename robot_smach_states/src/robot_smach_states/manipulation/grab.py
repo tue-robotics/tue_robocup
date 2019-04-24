@@ -213,7 +213,7 @@ class PickUp(smach.State):
         else:
             roll = 0.0 #-0.6
 
-        goal_bl.frame.p.x(goal_bl.frame.p.x() -0.1)  # Retract 10 cm
+        goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
         goal_bl.frame.M = kdl.Rotation.RPY(roll, 0.0, 0.0)  # Update the roll
         rospy.loginfo("Start retract")
