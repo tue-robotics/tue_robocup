@@ -14,6 +14,7 @@ class Hero(robot.Robot):
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
 
         self.add_arm_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
+        self.add_arm_part('rightArm', arms.Arm(self.robot_name, self.tf_listener, side="right"))
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
