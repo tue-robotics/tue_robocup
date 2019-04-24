@@ -97,14 +97,13 @@ class ConversationEngineWithHmi(ConversationEngine):
                                                            grammar=grammar,
                                                            target=target)
 
-
                 if not self.is_text_valid_input(sentence):
                     self._say_to_user("I don't understand what you're saying, please rephrase")
                     continue
 
                 self.timeout_count = 0
                 correct = True
-                if self.test:
+                if not self.test:
                     correct = self.heard_correct(sentence)
 
                 if correct:
@@ -137,14 +136,8 @@ class ConversationEngineWithHmi(ConversationEngine):
     def _start_wait_for_command(self, grammar, target):
         rospy.loginfo("_start_wait_for_command()")
 
-        self.robot.lights.set_color(0,0,1)  #be sure lights are blue
-
+        self.robot.reset()
         self.robot.head.look_at_standing_person()
-        self.robot.leftArm.reset()
-        self.robot.leftArm.send_gripper_goal('close',0.0)
-        self.robot.rightArm.reset()
-        self.robot.rightArm.send_gripper_goal('close',0.0)
-        self.robot.torso.reset()
 
         self.robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
 
@@ -163,7 +156,7 @@ class ConversationEngineWithHmi(ConversationEngine):
 
                 self.timeout_count = 0
                 correct = True
-                if self.test:
+                if not self.test:
                     correct = self.heard_correct(sentence)
 
                 if correct:
@@ -259,6 +252,8 @@ def main():
         from robot_skills.amigo import Amigo as Robot
     elif robot_name == 'sergio':
         from robot_skills.sergio import Sergio as Robot
+    elif robot_name == 'hero':
+        from robot_skills.hero import Hero as Robot
     else:
         raise ValueError('unknown robot')
 
