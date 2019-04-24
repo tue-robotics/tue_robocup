@@ -46,10 +46,10 @@ class storePlaceDesignator(Designator):
     def _resolve(self):
         e = self._selected_entity_designator.resolve()
 
-        item_category = get_object_category(e.type)
+        item_category = challenge_knowledge.common.get_object_category(e.type)
         if item_category is not None:
-            location, area_name = get_object_category_location(item_category)
-            entities = self.ed.get_entities(id=location)
+            location, area_name = challenge_knowledge.common.get_object_category_location(item_category)
+            entities = self._robot.ed.get_entities(id=location)
             if entities:
                 return entities[0]
             else:
@@ -72,9 +72,9 @@ class storeAreaDesignator(Designator):
         e = self._selected_entity_designator.resolve()
 
         #return "on_top_of"
-        item_category = get_object_category(e.type)
+        item_category = challenge_knowledge.common.get_object_category(e.type)
         if item_category is not None:
-            location, area_name = get_object_category_location(item_category)
+            location, area_name = challenge_knowledge.common.get_object_category_location(item_category)
             return area_name
         else:
             rospy.logerr("Could not resolve the selected entity!")
@@ -97,7 +97,7 @@ class DetermineCleanupLocation(smach.State):
 
         rospy.loginfo("The type of the entity is '%s'" % selected_entity.type)
 
-        if is_known_object(selected_entity.type):
+        if challenge_knowledge.common.is_known_object(selected_entity.type):
             return "other"
         else:
             return "trashbin"
