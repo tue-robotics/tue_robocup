@@ -28,7 +28,8 @@ class Robot(object):
 
         # Body parts
         self.parts = dict()
-        self.arms = OrderedDict() # Ensuring arms have a fixed order of iteration.
+        self.arms = OrderedDict()  # type: OrderedDict[arms.Arm]
+        # Ensuring arms have a fixed order of iteration.
 
         # Ignore diagnostics: parts that are not present in the real robot
         self._ignored_parts = []
@@ -303,12 +304,12 @@ def _collect_needs_desires(needs, desires, test_func):
     :param needs: Collection of needed values. None means nothing is needed.
     :param desires: Collection of desired values, None means nothing is desired.
     :param test_func: Function that takes a value and returns whether the value is available.
-    :return: Needed and subset of the desired values, or None if the needs cannor be met.
+    :return: Needed and subset of the desired values, or None if the needs can't be met.
     """
     founds = set()
     if needs is not None:
         founds.update(_collect_available(needs, test_func))
-        if len(founds) != len(needs): # All needs must be met.
+        if len(founds) != len(needs):  # All needs must be met.
             return False
 
     if desires is not None:

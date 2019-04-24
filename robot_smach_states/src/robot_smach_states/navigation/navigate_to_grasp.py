@@ -47,7 +47,7 @@ class NavigateToGrasp(NavigateTo):
         rospy.loginfo("Navigating to grasp entity id:{0}".format(entity.id))
 
         try:
-            pose = entity.pose #TODO Janno: Not all entities have pose information
+            pose = entity.pose  # TODO Janno: Not all entities have pose information
             x = pose.frame.p.x()
             y = pose.frame.p.y()
         except KeyError as ke:

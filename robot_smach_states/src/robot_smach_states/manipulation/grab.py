@@ -141,7 +141,6 @@ class PickUp(smach.State):
 
         goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
-        #try:
         # In case grasp point determination didn't work
         if not grasp_framestamped:
             goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
@@ -153,7 +152,7 @@ class PickUp(smach.State):
             # We do have a grasp pose, given as a kdl frame in map
             try:
                 self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link", rospy.Time(0),
-                                                       rospy.Duration(10))
+                                                        rospy.Duration(10))
                 # Transform to base link frame
                 goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link", tf_listener=self.robot.tf_listener)
                 if goal_bl is None:

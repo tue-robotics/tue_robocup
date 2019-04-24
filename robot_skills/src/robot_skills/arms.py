@@ -1,3 +1,5 @@
+import time
+
 # ROS
 import rospy
 import std_msgs.msg
@@ -388,7 +390,7 @@ class Arm(RobotPart):
         elif gripper_type == GripperTypes.SUCTION:
             return []
         else:
-            return [] # Arm has no unknown types of grippers,
+            return []  # Arm has no unknown types of grippers,
 
     def has_joint_goal(self, configuration):
         """
@@ -424,14 +426,14 @@ class Arm(RobotPart):
         try:
             rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
         except AttributeError:
-            print "{0} arm cancelling all goals on all arm-related ACs on close. Rospy is already deleted.".format(self.side)
+            print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".format(self.side))
 
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
 
     def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
-                  allowed_touch_objects=[]):
+                  allowed_touch_objects=None):
         """
         Send a arm to a goal:
 
@@ -447,6 +449,9 @@ class Arm(RobotPart):
         :param allowed_touch_objects: List of object names in the worldmodel, which are allowed to be touched
         :return: True of False
         """
+        if allowed_touch_objects is None:
+            allowed_touch_objects = list()
+
         # save the arguments for debugging later
         myargs = locals()
 
@@ -496,13 +501,13 @@ class Arm(RobotPart):
 
         self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
 
-        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
-                                        # to only have a queue size of 1 and runs at 1000 hz. This
-                                        # means that if two goals are send approximately at the same
-                                        # time (e.g. an arm goal and a torso goal), one of the two
-                                        # goals probably won't make it. This sleep makes sure the
-                                        # goals will always arrive in different update hooks in the
-                                        # hardware TrajectoryActionLib server.
+        time.sleep(0.001)   # This is necessary: the rtt_actionlib in the hardware seems
+                            # to only have a queue size of 1 and runs at 1000 hz. This
+                            # means that if two goals are send approximately at the same
+                            # time (e.g. an arm goal and a torso goal), one of the two
+                            # goals probably won't make it. This sleep makes sure the
+                            # goals will always arrive in different update hooks in the
+                            # hardware TrajectoryActionLib server.
 
         # Send goal:
 
@@ -512,11 +517,12 @@ class Arm(RobotPart):
         else:
             result = self._ac_grasp_precompute.send_goal_and_wait(
                 grasp_precompute_goal,
-                execute_timeout=rospy.Duration(timeout)
-            )
+                execute_timeout=rospy.Duration(timeout))
             if result == GoalStatus.SUCCEEDED:
 
-                result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link", self.robot_name + "/grippoint_{}".format(self.side), rospy.Time(0))
+                result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
+                                                               self.robot_name + "/grippoint_{}".format(self.side),
+                                                               rospy.Time(0))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
                 dy = grasp_precompute_goal.goal.y - result_pose[0][1]
                 dz = grasp_precompute_goal.goal.z - result_pose[0][2]
@@ -538,9 +544,8 @@ class Arm(RobotPart):
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_configurations:
-            return self._send_joint_trajectory(
-                [self.default_configurations[configuration]],
-                timeout=rospy.Duration(timeout))
+            return self._send_joint_trajectory([self.default_configurations[configuration]],
+                                               timeout=rospy.Duration(timeout))
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
@@ -554,7 +559,8 @@ class Arm(RobotPart):
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_trajectories:
-            return self._send_joint_trajectory(self.default_trajectories[configuration], timeout=rospy.Duration(timeout))
+            return self._send_joint_trajectory(self.default_trajectories[configuration],
+                                               timeout=rospy.Duration(timeout))
         else:
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
@@ -606,7 +612,8 @@ class Arm(RobotPart):
 
         if state == GripperState.OPEN:
             if self.occupied_by is not None:
-                rospy.logerr("send_gripper_goal open is called but there is still an entity with id '%s' occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
+                rospy.logerr("send_gripper_goal open is called but there is still an entity with id '%s' \
+                occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
             self.occupied_by = None
 
         goal_status = GoalStatus.SUCCEEDED
@@ -624,14 +631,16 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1, latch=True)
+        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human',
+                              std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(std_msgs.msg.Bool(True))
 
         try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
-            print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
+            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
+                                   timeout)
+            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
             return True
-        except rospy.ROSException, e:
+        except rospy.ROSException as e:
             rospy.logerr(e)
             return False
 
@@ -643,14 +652,16 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1, latch=True)
+        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot',
+                              std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(std_msgs.msg.Bool(True))
 
         try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
-            print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
+            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
+                                   timeout)
+            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
             return True
-        except rospy.ROSException, e:
+        except rospy.ROSException as e:
             rospy.logerr(e)
             return False
 
@@ -784,7 +795,7 @@ class Arm(RobotPart):
         """
         return self._base_offset
 
-    def _publish_marker(self, goal, color, ns = ""):
+    def _publish_marker(self, goal, color, ns=""):
         """
         Publish markers for visualisation
         :param goal: tue_manipulation_msgs.msg.GraspPrecomputeGoal
