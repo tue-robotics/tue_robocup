@@ -82,11 +82,11 @@ class Robot(object):
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def leftArm(self):
-        return self.arms['left']
+        return self.arms['leftArm']
 
     @decorators.deprecated_replace_with('robot.get_arm')
     def rightArm(self):
-        return self.arms['right']
+        return self.arms['rightArm']
 
     def reset(self):
         results = {}
