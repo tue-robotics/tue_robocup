@@ -290,8 +290,8 @@ class ResetOnFailure(smach.StateMachine):
         arm = self.arm_designator.resolve()
         arm.reset()
 
-        # ToDo: move up... This is AMIGO specific
-        self._robot.torso.reset()  # Move up to make resetting of the arm safer.
+        if self._robot.robot_name == "amigo":
+            self._robot.torso.reset()  # Move up to make resetting of the arm safer.
         if arm is not None:
             arm.send_gripper_goal('close')
         self._robot.head.reset()  # Sends a goal
