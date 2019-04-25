@@ -45,15 +45,14 @@ class GiveDirections(smach.State):
 
     def execute(self, userdata=None):
         # Get the constraints for the global planner
+        nav_constraints = dict()
         for area in ["in_front_of", "near"]:
-            nav_contraints = NavigateToSymbolic.generate_constraint(
+            nav_constraints[area] = NavigateToSymbolic.generate_constraint(
                 robot=self._robot,
                 entity_designator_area_name_map={self._entity_designator: area},
-                entity_lookat_designator=self._entity_designator
-            )
-            if nav_contraints:
-                break
-        if nav_contraints is None:
+                entity_lookat_designator=self._entity_designator)
+
+        if not nav_constraints:
             rospy.logerr("Cannot give directions if I don't know where to go")
             self._robot.speech.speak("I'm sorry but I don't know where you want to go", mood="sad")
             return "failed"
@@ -62,9 +61,13 @@ class GiveDirections(smach.State):
         target_entity = self._entity_designator.resolve()  # type: Entity
 
         # Call the global planner for the shortest path to this entity
-        path = self._robot.base.global_planner.getPlan(position_constraint=nav_contraints[0])
-        if path is None:
+        path = None
+        for name, nav_con in nav_constraints.iteritems():
+            path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
+            if path is not None:
+                break
 
+        if path is None:
             rospy.logerr("No path to {}".format(target_entity.id))
             self._robot.speech.speak("I'm sorry but I don't know how to get to the {}".format(target_entity.id))
             return "failed"
