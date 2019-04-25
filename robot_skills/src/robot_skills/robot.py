@@ -204,7 +204,9 @@ class Robot(object):
                 desired_gripper_types = [arms.GripperTypes.GRASPING]
 
             if desired_gripper_types is not None:
-                matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
+                matches = [arm.collect_gripper_types(des_type) for des_type in desired_gripper_types]
+                for match in matches:
+                    matching_grippers.update(match)
 
             # Goals
             # ToDO: HACK for not specifying any requirements
