@@ -185,6 +185,10 @@ class Robot(object):
 
             # Grippers
             matching_grippers = set()
+            # ToDO: HACK for not specifying any requirements
+            if required_gripper_types is None:
+                required_gripper_types = [arms.GripperTypes.GRASPING]
+
             if required_gripper_types is not None:
                 matches = [arm.collect_gripper_types(req_type) for req_type in required_gripper_types]
                 all_matched = all(match_list for match_list in matches)
@@ -195,16 +199,30 @@ class Robot(object):
                 for match in matches:
                     matching_grippers.update(match)
 
+            # ToDO: HACK for not specifying any requirements
+            if desired_gripper_types is None:
+                desired_gripper_types = [arms.GripperTypes.GRASPING]
+
             if desired_gripper_types is not None:
                 matching_grippers.update(arm.collect_gripper_types(des_type) for des_type in desired_gripper_types)
 
             # Goals
+            # ToDO: HACK for not specifying any requirements
+            if required_goals is None:
+                required_goals = arm.default_configurations.keys()
+            if desired_goals is None:
+                desired_goals = arm.default_configurations.keys()
             matching_goals = _collect_needs_desires(required_goals, desired_goals, arm.has_joint_goal)
             if matching_goals is None:
                 discarded_reasons.append((arm_name, "required goals failed"))
                 continue
 
             # Trajectories
+            # ToDO: HACK for not specifying any requirements
+            if required_trajectories is None:
+                required_trajectories = arm.default_trajectories.keys()
+            if desired_trajectories is None:
+                desired_trajectories = arm.default_trajectories.keys()
             matching_trajectories = _collect_needs_desires(required_trajectories, desired_trajectories,
                                                            arm.has_joint_trajectory)
             if matching_trajectories is None:
