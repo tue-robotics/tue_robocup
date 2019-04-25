@@ -5,7 +5,7 @@
 # Date: October 2015
 ################################################
 
-import roslib;
+import roslib
 import rospy
 import smach
 import subprocess
@@ -151,7 +151,7 @@ class PickUpRandomObj(smach.State):
             self.robot.speech.speak("I am going to pick up the {}".format(
                 selectedObj.type if selectedObj.type else "unknown object"), block=False)
 
-            armDes = UnoccupiedArmDesignator(self.robot.arms, self.robot.arms['right'])
+            armDes = UnoccupiedArmDesignator(self.robot, {'required_arm_name':'right'})
             entityDes = EdEntityDesignator(self.robot, id=selectedObj.id)
 
             # Grab(robot, self.current_item, self.empty_arm_designator),
