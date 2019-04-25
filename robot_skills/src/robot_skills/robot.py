@@ -71,7 +71,7 @@ class Robot(object):
         # Wait for connections
         s = rospy.Time.now()
         for partname, bodypart in self.parts.iteritems():
-            bodypart.wait_for_connections(1.0)
+            bodypart.wait_for_connections(0.5)
         e = rospy.Time.now()
         rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
 
