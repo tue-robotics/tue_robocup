@@ -119,6 +119,12 @@ class PublicArm(object):
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout)
 
+    def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
+                  allowed_touch_objects=None):
+        if allowed_touch_objects is None:
+            allowed_touch_objects = list()
+        return self._arm.send_goal(frameStamped, timeout, pre_grasp, first_joint_pos_only, allowed_touch_objects)
+
     # Gripper
     def has_gripper_type(self, gripper_type=None):
         """
