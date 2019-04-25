@@ -285,7 +285,7 @@ class Robot(object):
         for partname, bodypart in self.parts.iteritems():
             try:
                 bodypart.close()
-            except:
+            except Exception:
                 pass
 
     @property
