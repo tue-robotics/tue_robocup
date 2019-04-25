@@ -271,10 +271,10 @@ class Robot(object):
 
         cur_obj = arm.occupied_by
         for obj in obj_collection:
-            if obj == arms.PseudoObjects.ANY: # Any object, but not empty.
+            if obj == arms.PseudoObjects.ANY:  # Any object, but not empty.
                 if cur_obj is None:
                     return False
-            elif obj == arms.PseudoObjects.EMPTY: # Arm must be empty.
+            elif obj == arms.PseudoObjects.EMPTY:  # Arm must be empty.
                 if cur_obj is not None:
                     return False
             elif obj != cur_obj:
