@@ -100,7 +100,7 @@ class ArmFree(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-        d = UnoccupiedArmDesignator(self._robot.arms, self._robot.rightArm, name="empty_arm_designator2")
+        d = UnoccupiedArmDesignator(self._robot, {}, name="empty_arm_designator2")
         if d.resolve():
             return "yes"
         return "no"
@@ -111,7 +111,7 @@ class ArmOccupied(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-        d = OccupiedArmDesignator(self._robot.arms, self._robot.rightArm, name="empty_arm_designator2")
+        d = OccupiedArmDesignator(self._robot, {}, name="empty_arm_designator2")
         if d.resolve():
             return "yes"
         return "no"
@@ -161,8 +161,8 @@ class SelfCleanup(smach.StateMachine):
 
             smach.StateMachine.add("GRAB",
                                    robot_smach_states.Grab(robot, selected_entity_designator,
-                                                           UnoccupiedArmDesignator(robot.arms,
-                                                                                   robot.rightArm,
+                                                           UnoccupiedArmDesignator(robot,
+                                                                                   {},
                                                                                    name="empty_arm_designator")),
                                    transitions={"done": "SAY_GRAB_SUCCESS", "failed": "SAY_GRAB_FAILED"})
 
@@ -190,8 +190,8 @@ class SelfCleanup(smach.StateMachine):
             smach.StateMachine.add('NAVIGATE_TO_TRASH',
                                    robot_smach_states.NavigateToPlace(robot,
                                                             trash_place_pose,
-                                                            OccupiedArmDesignator(robot.arms,
-                                                                                  robot.rightArm,
+                                                            OccupiedArmDesignator(robot,
+                                                                                  {},
                                                                                   name="occupied_arm_designator")),
                                    transitions={"arrived": "PLACE_IN_TRASH", "unreachable": "SAY_PLACE_FAILED", "goal_not_defined" : "SAY_PLACE_FAILED"})
 
@@ -199,8 +199,8 @@ class SelfCleanup(smach.StateMachine):
                                    robot_smach_states.Place(robot, 
                                                             selected_entity_designator, 
                                                             trash_place_pose,
-                                                            OccupiedArmDesignator(robot.arms,
-                                                                                  robot.rightArm,
+                                                            OccupiedArmDesignator(robot,
+                                                                                  {},
                                                                                   name="occupied_arm_designator")),
                                    transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
 
@@ -208,8 +208,8 @@ class SelfCleanup(smach.StateMachine):
                                     robot_smach_states.Place(robot,
                                                              selected_entity_designator,
                                                              item_store_entity,
-                                                             OccupiedArmDesignator(robot.arms,
-                                                                                   robot.rightArm,
+                                                             OccupiedArmDesignator(robot,
+                                                                                   {},
                                                                                    name="occupied_arm_designator"),
                                                              "on_top_of"),
                                     transitions = {"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
