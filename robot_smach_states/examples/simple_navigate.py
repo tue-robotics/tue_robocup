@@ -7,7 +7,8 @@ import robot_skills
 from robot_smach_states import navigation
 
 import robot_smach_states.util.designators as ds
-from robot_smach_states.navigation import NavigateToPose, NavigateToObserve, NavigateToSymbolic, NavigateToWaypoint
+from robot_smach_states.navigation import NavigateToPose, NavigateToObserve, NavigateToSymbolic, NavigateToWaypoint, \
+    NavigateToRoom
 
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')
@@ -46,7 +47,11 @@ if __name__ == "__main__":
     #                                        ds.EntityByIdDesignator(robot, id="couch"))
     #nav_state.execute()
 
-    nav_state = NavigateToWaypoint(robot=robot, waypoint_designator=ds.EntityByIdDesignator(robot=robot,
-                                                                                         id="hsr_demo_waypoint"),
-                                   radius=0.025)
+    # nav_state = NavigateToWaypoint(robot=robot, waypoint_designator=ds.EntityByIdDesignator(robot=robot,
+    #                                                                                      id="hsr_demo_waypoint"),
+    #                                radius=0.025)
+    # nav_state.execute()
+
+    nav_state = NavigateToRoom(robot=robot, entity_designator_room=ds.EntityByIdDesignator(robot=robot,
+                                                                                           id="livingroom"))
     nav_state.execute()
