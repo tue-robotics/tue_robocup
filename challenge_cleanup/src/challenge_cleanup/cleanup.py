@@ -26,6 +26,7 @@ import smach
 import sys
 
 import robot_smach_states
+from robot_smach_states.util.designators import VariableDesignator, VariableWriter
 from clean_inspect import CleanInspect
 
 from robocup_knowledge import load_knowledge
@@ -50,11 +51,29 @@ class VerifyWorldModelInfo(smach.State):
 
         return "done"
 
+def collect_cleanup_entities(room_des):
+    room = room_des.resolve()
+    cleaning_locations = []
+    for loc in challenge_knowledge.cleaning_locations:
+        if loc["room"] == room:
+            cleaning_locations.append(loc)
+    return cleaning_locations
+
+
 
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     robot.ed.reset()
+
+    # temporary room hardcoded: replace with speech input
+    room = VariableDesignator("livingroom")
+    room_writer = VariableWriter(room)
+    room_writer.write("kitchen")
+    rospy.loginfo("cleaning room %s" %room.resolve())
+
+    cleaning_locations = collect_cleanup_entities(room)
+    rospy.loginfo("Cleaning locations: {}".format(cleaning_locations))
 
     with sm:
 
@@ -78,11 +97,11 @@ def setup_statemachine(robot):
                                                               "All I want to do is clean this mess up!"], block=False),
                                transitions={"spoken": "INSPECT_0"})
 
-        for i, place in enumerate(challenge_knowledge.inspection_places):
-            next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(challenge_knowledge.inspection_places) else "Done"
+        for i, place in enumerate(cleaning_locations):
+            next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleaning_locations) else "Done"
 
             smach.StateMachine.add("INSPECT_%d" % i,
-                                   CleanInspect(robot, place["entity_id"], place["room_id"], place["navigate_area"],
+                                   CleanInspect(robot, place["name"], place["room"], place["navigate_area"],
                                                 place["segment_areas"]),
                                    transitions={"done": next_state})
     return sm
