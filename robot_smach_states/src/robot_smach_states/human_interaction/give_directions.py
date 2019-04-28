@@ -1,5 +1,6 @@
 # System
 import math
+from collections import OrderedDict
 
 # ROS
 import PyKDL as kdl
@@ -45,7 +46,7 @@ class GiveDirections(smach.State):
 
     def execute(self, userdata=None):
         # Get the constraints for the global planner
-        nav_constraints = dict()
+        nav_constraints = OrderedDict()
         for area in ["in_front_of", "near"]:
             nav_constraints[area] = NavigateToSymbolic.generate_constraint(
                 robot=self._robot,
