@@ -9,6 +9,7 @@ Exact coordinates of the locations are in ed_object_models.
 """
 
 starting_point = "initial_pose"
+starting_pose = "gpsr_meeting_point"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
 cleaning_locations = [
@@ -19,3 +20,8 @@ cleaning_locations = [
 
     {'name': 'hallway_table', 'room': 'hallway',    'navigate_area': 'near',   'segment_areas': ['on_top_of']}
 ]
+
+grammar_target = "T"
+
+grammar = "T -> kitchen"
+grammar += "\nT -> livingroom"
