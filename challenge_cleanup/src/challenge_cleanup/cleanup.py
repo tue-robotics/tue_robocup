@@ -25,8 +25,10 @@ import smach
 
 import sys
 
+import hmi
+
 import robot_smach_states
-from robot_smach_states.util.designators import VariableDesignator, VariableWriter
+from robot_smach_states.util.designators import VariableDesignator, VariableWriter, EntityByIdDesignator
 from clean_inspect import CleanInspect
 
 from robocup_knowledge import load_knowledge
@@ -43,16 +45,15 @@ class VerifyWorldModelInfo(smach.State):
         if "trashbin" not in ids:
             return "failed"
 
-        for place in challenge_knowledge.inspection_places:
-            if place["entity_id"] not in ids:
+        for place in challenge_knowledge.cleaning_locations:
+            if place["name"] not in ids:
                 return "failed"
-            if place["room_id"] not in ids:
+            if place["room"] not in ids:
                 return "failed"
 
         return "done"
 
-def collect_cleanup_entities(room_des):
-    room = room_des.resolve()
+def collect_cleanup_entities(room):
     cleaning_locations = []
     for loc in challenge_knowledge.cleaning_locations:
         if loc["room"] == room:
@@ -61,16 +62,10 @@ def collect_cleanup_entities(room_des):
 
 
 
-def setup_statemachine(robot):
+def setup_statemachine(robot, room):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     robot.ed.reset()
-
-    # temporary room hardcoded: replace with speech input
-    room = VariableDesignator("livingroom")
-    room_writer = VariableWriter(room)
-    room_writer.write("kitchen")
-    rospy.loginfo("cleaning room %s" %room.resolve())
 
     cleaning_locations = collect_cleanup_entities(room)
     rospy.loginfo("Cleaning locations: {}".format(cleaning_locations))
@@ -106,12 +101,56 @@ def setup_statemachine(robot):
                                    transitions={"done": next_state})
     return sm
 
-if __name__ == '__main__':
+def ask_which_room_to_clean(robot):
+
+    robot.speech.speak("Which room should I clean for you?", block=True)
+    try:
+        sentence, semantics = robot.hmi.query(description="",
+                                                   grammar=challenge_knowledge.grammar,
+                                                   target="T")
+        rospy.loginfo("sentence: {}".format(sentence))
+        rospy.loginfo("semantics: {}".format(semantics))
+        return sentence
+    except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
+        rospy.logwarn("HMI failed when asking for room: {}".format(e))
+
+
+
+def main():
     rospy.init_node('cleanup_challenge')
 
-    # Check if we have something specified to inspect
-    if len(challenge_knowledge.inspection_places) < 1:
-        rospy.logerr("The challenge knowledge inspection_places list should contain at least one entry!")
-        sys.exit(1)
+    skip = rospy.get_param('~skip', False)
+    robot_name = rospy.get_param('~robot_name')
 
-    robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup")
+    if robot_name == 'amigo':
+        from robot_skills.amigo import Amigo as Robot
+    elif robot_name == 'sergio':
+        from robot_skills.sergio import Sergio as Robot
+    elif robot_name == 'hero':
+        from robot_skills.hero import Hero as Robot
+    else:
+        raise ValueError('unknown robot')
+
+    robot = Robot()
+
+    # Wait for door, enter arena
+    if not skip:
+        #s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
+        #s.execute()
+
+        robot.speech.speak("Moving to the meeting point.", block=False)
+        nwc = robot_smach_states.NavigateToWaypoint(robot=robot,
+                                 waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                          id=challenge_knowledge.starting_pose),
+                                 radius=0.3)
+        nwc.execute()
+
+    room = ask_which_room_to_clean(robot)
+
+    # start execution of challenge
+    sm_args = [room]
+    robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup", statemachine_args=sm_args)
+
+
+if __name__ == '__main__':
+    main()

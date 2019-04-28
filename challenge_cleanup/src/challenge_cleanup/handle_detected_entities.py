@@ -55,7 +55,7 @@ class DetermineAction(smach.State):
         return action
 
     def execute(self, userdata):
-
+        rospy.sleep(0.1) #sleep because ed needs time to update
         selected_entity = self._selected_entity_designator.resolve()
 
         if not selected_entity:
