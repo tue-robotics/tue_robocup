@@ -358,7 +358,7 @@ class ED(RobotPart):
 
         """
 
-        res = self._ed_classify_srv(ids=ids)
+        res = self._ed_classify_srv(ids=ids, unknown_probability=0.3)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
