@@ -151,15 +151,15 @@ class SegmentObjects(smach.State):
                     _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id))
 
                 if self.threshold:
-                    over_threshold = [obj for obj in object_classifications if
-                                              obj.probability >= self.threshold]
+                    object_classifications2 = []
+                    for obj in object_classifications:
+                        if obj.probability <= self.threshold:
+                            obj.type = ""  # object is of an unknown type
+                            rospy.loginfo("Entity {e} is unknown due to low class. score (< {th})"
+                                          .format(e = obj.id,th=self.threshold))
+                        object_classifications2.append(obj)
 
-                    dropped = {obj.id: obj.probability for obj in object_classifications if
-                               obj.probability < self.threshold}
-                    rospy.loginfo("Dropping {l} entities due to low class. score (< {th}): {dropped}"
-                                  .format(th=self.threshold, dropped=dropped, l=len(dropped)))
-
-                    object_classifications = over_threshold
+                    object_classifications = object_classifications2
 
                 self.segmented_entity_ids_designator.write(object_classifications)
             else:
