@@ -3,6 +3,7 @@ import rospy
 import robot_smach_states
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
 import robot_skills.util.msg_constructors as msgs
+import robot_skills.util.kdl_conversions as kdl
 
 from operator_cleanup import OperatorCleanup
 from self_cleanup import SelfCleanup
@@ -67,8 +68,9 @@ class DetermineAction(smach.State):
         # If we don't know the entity type, try to classify again
         if selected_entity.type == "" or selected_entity.type == "unknown":
             # Make sure the head looks at the entity
+            rospy.loginfo("entity: {}".format(selected_entity))
             pos = selected_entity.pose.frame.p
-            self._robot.head.look_at_point(msgs.PointStamped(pos.x(), pos.y(), 0.8, "/map"), timeout=10)
+            self._robot.head.look_at_point(kdl.VectorStamped(pos.x(), pos.y(), 0.8, "/map"), timeout=10)
 
             # This is needed because the head is not entirely still when the look_at_point function finishes
             rospy.sleep(1)
