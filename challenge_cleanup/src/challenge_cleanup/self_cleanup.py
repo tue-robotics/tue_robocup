@@ -218,7 +218,7 @@ class SelfCleanup(smach.StateMachine):
                                    robot_smach_states.Say(robot, ["Bye bye!",
                                                                   "Yeah!",
                                                                   "Successfully disposed the item",
-                                                                  "Another score for AMIGO"], block=False),
+                                                                  "Another score for HERO"], block=False),
                                    transitions={"spoken": "CHECK_ARM_OCCUPIED"})
 
             smach.StateMachine.add('SAY_PLACE_FAILED',
