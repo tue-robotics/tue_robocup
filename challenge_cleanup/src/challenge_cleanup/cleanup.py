@@ -22,6 +22,7 @@ Adapted from the r5cop_demo challenge (see the repo)
 
 import rospy
 import smach
+import random
 
 import sys
 
@@ -101,18 +102,62 @@ def setup_statemachine(robot, room):
                                    transitions={"done": next_state})
     return sm
 
-def ask_which_room_to_clean(robot):
-
-    robot.speech.speak("Which room should I clean for you?", block=True)
+def confirm(robot):
+    cgrammar = """
+    C[P] -> A[P]
+    A['yes'] -> yes
+    A['no'] -> no
+    """
     try:
-        sentence, semantics = robot.hmi.query(description="",
-                                                   grammar=challenge_knowledge.grammar,
-                                                   target="T")
-        rospy.loginfo("sentence: {}".format(sentence))
-        rospy.loginfo("semantics: {}".format(semantics))
-        return sentence
-    except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
-        rospy.logwarn("HMI failed when asking for room: {}".format(e))
+        speech_result = robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+                                                                                        "T[False] -> no", target="T")
+    except TimeoutException:
+        return False
+
+    return speech_result.semantics
+
+def ask_which_room_to_clean(robot):
+    max_tries = 5
+    nr_of_tries = 0
+    count = 0
+
+    robot.head.look_at_standing_person(3)
+
+    while nr_of_tries < max_tries and not rospy.is_shutdown():
+        while not rospy.is_shutdown():
+            count += 1
+            robot.speech.speak("Which room should I clean for you?", block=True)
+            try:
+                speech_result = robot.hmi.query(description="",
+                                                           grammar=challenge_knowledge.grammar,
+                                                           target="T")
+                rospy.loginfo("sentence: {}".format(speech_result.sentence))
+                rospy.loginfo("semantics: {}".format(speech_result.semantics))
+                break
+            except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
+                if count < 5:
+                    robot.speech.speak(random.choice(["I'm sorry, can you repeat",
+                                                     "Please repeat, I didn't hear you",
+                                                     "I didn't get that can you repeat it",
+                                                     "Please speak up, as I didn't hear you"]))
+                else:
+                    robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+                    robot.head.cancel_goal()
+                    return "failed"
+
+        try:
+            # Now: confirm
+            robot.speech.speak("I understood that the {} should be cleaned "
+                                         "is this correct?".format(speech_result.sentence))
+        except:
+            continue
+
+        if confirm(robot):
+            robot.head.cancel_goal()
+            robot.speech.speak("Ok, I will clean the {}".format(speech_result.sentence), block=False)
+            return speech_result.sentence
+
+        nr_of_tries += 1
 
 
 
