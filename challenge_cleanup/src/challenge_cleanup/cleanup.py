@@ -94,12 +94,28 @@ def setup_statemachine(robot, room):
                                transitions={"spoken": "INSPECT_0"})
 
         for i, place in enumerate(cleaning_locations):
-            next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleaning_locations) else "Done"
+            next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleaning_locations) else "RETURN_TO_OPERATOR"
 
             smach.StateMachine.add("INSPECT_%d" % i,
                                    CleanInspect(robot, place["name"], place["room"], place["navigate_area"],
                                                 place["segment_areas"]),
                                    transitions={"done": next_state})
+
+        smach.StateMachine.add("RETURN_TO_OPERATOR",
+                               robot_smach_states.NavigateToWaypoint(robot=robot,
+                                                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                                 id=challenge_knowledge.starting_pose),
+                                                                     radius=0.3),
+                               transitions={"arrived": "SAY_CLEANED_ROOM",
+                                            "unreachable": "SAY_CLEANED_ROOM",
+                                            "goal_not_defined": "SAY_CLEANED_ROOM"})
+
+        smach.StateMachine.add('SAY_CLEANED_ROOM',
+                               robot_smach_states.Say(robot, ["I successfully cleaned the {}!".format(room),
+                                                              "Am I a good robot now?",
+                                                              "There, I cleaned up your mess, are you happy now!"], block=False),
+                               transitions={"spoken": "Done"})
+
     return sm
 
 def confirm(robot):
