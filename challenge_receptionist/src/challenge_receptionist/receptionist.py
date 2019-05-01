@@ -1,3 +1,4 @@
+import rospy
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
@@ -13,15 +14,44 @@ class GuestDescriptionStrDesignator(ds.Designator):
         super(GuestDescriptionStrDesignator, self).__init__(resolve_type=str, name=name)
 
         ds.check_type(guest_name_des, str)
-        ds.check_type(guest_drink_des, QueryResult)
+        ds.check_type(drinkname, str)
 
         self.guest_name_des = guest_name_des
-        self.guest_drink_des = guest_drink_des
+        self.drinkname = drinkname
 
     def _resolve(self):
         name = self.guest_name_des.resolve()
-        drink_res = self.guest_drink_des.resolve()
-        return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drink_res.semantics['drink'])
+        drinkname = self.drinkname.resolve()
+        return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drinkname)
+
+
+class FieldOfQueryResult(ds.Designator):
+    """
+    Extract a field of a QueryResult
+    """
+    def __init__(self, query_result_des, semantics_field, name=None):
+        """
+        Construct a designator that picks a field out of the semantics dict of a QueryResult
+        (such as resulting from a HearOptionsExtra-state)
+        :param query_result_des: A designator resolving to a QueryResult
+        :param semantics_field: str (or string designator) used in query_result.semantics[semantics_field]
+        :param name: Name for this designator for debugging purposes
+        """
+        super(FieldOfQueryResult, self).__init__(resolve_type=str, name=name)
+
+        ds.check_type(query_result_des, QueryResult)
+        ds.check_type(semantics_field, str)
+
+        self.query_result_des = query_result_des
+        self.semantics_field = semantics_field
+
+    def _resolve(self):
+        try:
+            field = self.semantics_field.resolve() if hasattr(self.semantics_field, 'resolve') else self.semantics_field
+            return self.query_result_des.resolve().semantics[field]
+        except Exception as e:
+            rospy.logerr(e)
+            return None
 
 
 class LearnGuest(smach.StateMachine):
@@ -96,11 +126,11 @@ class LearnGuest(smach.StateMachine):
 
 
 class IntroduceGuestToOperator(smach.StateMachine):
-    def __init__(self, robot, operator_des, guest_ent_des, guest_name_des, guest_drink_des):
+    def __init__(self, robot, operator_des, guest_ent_des, guest_name_des, guest_drinkname_des):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
         ds.check_type(guest_name_des, str)
-        ds.check_type(guest_drink_des, QueryResult)
+        ds.check_type(guest_drinkname_des, str)
         ds.check_type(guest_ent_des, Entity)
 
         with self:
@@ -132,14 +162,14 @@ class IntroduceGuestToOperator(smach.StateMachine):
 
             smach.StateMachine.add('POINT_AT_GUEST',
                                    states.PointAt(robot=robot,  # TODO: correctly implement PointAt
-                                                  arm_designator=ds.UnoccupiedArmDesignator(),  # TODO parametrize
+                                                  arm_designator=ds.UnoccupiedArmDesignator(robot.arms, robot.arms['left']),  # TODO parametrize
                                                   point_at_designator=guest_ent_des,
                                                   look_at_designator=guest_ent_des),
                                    transitions={"succeeded": "INTRODUCE_GUEST",
                                                 "failed": "abort"})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drink_des), block=True),
+                                   states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des), block=True),
                                    transitions={'spoken': 'succeeded'})
 
 
@@ -155,6 +185,7 @@ class ChallengeReceptionist(smach.StateMachine):
         self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
         self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
         self.guest1_drink_des = ds.VariableDesignator(resolve_type=QueryResult, name='guest1_drink')
+        self.guest1_drinkname_des = FieldOfQueryResult(self.guest1_drink_des, semantics_field='drink', name='guest1_drinkname')
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -183,7 +214,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'goal_not_defined': 'abort'})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des, self.guest1_name_des, self.guest1_drink_des),
+                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des, self.guest1_name_des, self.guest1_drinkname_des),
                                    transitions={'succeeded': 'succeeded',
                                                 'abort': 'abort'})
 
