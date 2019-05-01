@@ -150,6 +150,7 @@ class Perception(MockedRobotPart):
         self.learn_person= mock.MagicMock()
         self.detect_faces= mock.MagicMock()
         self.get_best_face_recognition= mock.MagicMock()
+        self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "/map")
 
 
 class Lights(MockedRobotPart):
