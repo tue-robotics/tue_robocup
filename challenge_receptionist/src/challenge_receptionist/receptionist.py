@@ -110,7 +110,15 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    states.FindPerson(robot=robot,
                                                      person_label=guest_name_des,
                                                      found_entity_designator=guest_ent_des),
-                                   transitions={"found": "INTRODUCE_GUEST",
+                                   transitions={"found": "POINT_AT_GUEST",
+                                                "failed": "abort"})
+
+            smach.StateMachine.add('POINT_AT_GUEST',
+                                   states.PointAt(robot=robot,  # TODO: correctly implement PointAt
+                                                  arm_designator=ds.UnoccupiedArmDesignator(),  # TODO parametrize
+                                                  point_at_designator=guest_ent_des,
+                                                  look_at_designator=guest_ent_des),
+                                   transitions={"succeeded": "INTRODUCE_GUEST",
                                                 "failed": "abort"})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
