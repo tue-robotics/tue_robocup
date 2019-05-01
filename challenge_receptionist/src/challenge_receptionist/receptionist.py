@@ -231,7 +231,7 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [x] GOTO John
             # - [.] Locate guest1:
             # - [ ]   rotate head until <guest1> is detected
-            # - [.] Point at guest1
+            # - [x] Point at guest1
             # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
             # - [ ] Iterate to guest 2
 
