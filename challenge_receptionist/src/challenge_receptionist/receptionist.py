@@ -80,8 +80,11 @@ class LearnGuest(smach.StateMachine):
 
 
 class IntroduceGuestToOperator(smach.StateMachine):
-    def __init__(self, robot, operator_des, guest_ent_des):
+    def __init__(self, robot, operator_des, guest_ent_des, guest_name_des):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
+
+        ds.check_type(guest_name_des, str)
+        ds.check_type(guest_ent_des, Entity)
 
         with self:
             smach.StateMachine.add('FIND_OPERATOR',
@@ -105,14 +108,14 @@ class IntroduceGuestToOperator(smach.StateMachine):
 
             smach.StateMachine.add('FIND_GUEST',
                                    states.FindPerson(robot=robot,
-                                                     person_label='guest1',  # TODO: Should be able to be a designator
+                                                     person_label=guest_name_des,
                                                      found_entity_designator=guest_ent_des),
                                    transitions={"found": "INTRODUCE_GUEST",
                                                 "failed": "abort"})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
                                    states.Say(robot, ["This is person X and he likes drink Y"], block=True),
-                                   transitions={'spoken': 'succeeded'})  # TODO: Iterate to guest 2
+                                   transitions={'spoken': 'succeeded'})
 
 
 class ChallengeReceptionist(smach.StateMachine):
@@ -155,7 +158,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'goal_not_defined': 'abort'})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des),
+                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des, self.guest1_name_des),
                                    transitions={'succeeded': 'succeeded',
                                                 'abort': 'abort'})
 
@@ -172,5 +175,6 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [ ]   rotate head until <guest1> is detected
             # - [.] Point at guest1
             # - [.] Say: This is <guest1> and (s)he likes to drink <drink1>
+            # - [ ] Iterate to guest 2
 
 
