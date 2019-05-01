@@ -5,9 +5,11 @@ import smach
 # TU/e Robotics
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
-from robot_smach_states.util.designators import check_type
+import robot_smach_states.util.designators as ds
 
+# System
 from numpy import tan
+import sys
 
 
 class PointAt(smach.State):
@@ -25,9 +27,9 @@ class PointAt(smach.State):
             look_at_designator = point_at_designator
 
         # Check types or designator resolve types
-        check_type(arm_designator, PublicArm)
-        check_type(point_at_designator, Entity)
-        check_type(look_at_designator, Entity)
+        ds.check_type(arm_designator, PublicArm)
+        ds.check_type(point_at_designator, Entity)
+        ds.check_type(look_at_designator, Entity)
 
         # Assign member variables
         self._robot = robot
@@ -71,3 +73,23 @@ class PointAt(smach.State):
         self._robot.head.look_at_point(look_at_ent.pose.extractVectorStamped())
 
         return 'succeeded'
+
+
+if __name__ == "__main__":
+    from robot_skills import get_robot
+
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+        point_at = sys.argv[2]
+        look_at = sys.argv[3]
+
+        rospy.init_node('test_follow_operator')
+        robot = get_robot(robot_name)
+        sm = PointAt(robot,
+                     arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                     point_at_designator=ds.EdEntityDesignator(robot, id=point_at),
+                     look_at_designator=ds.EdEntityDesignator(robot, id=look_at))
+        sm.execute()
+    else:
+        print "Please provide robot name, point_at ID and look_at ID as argument."
+        exit(1)
