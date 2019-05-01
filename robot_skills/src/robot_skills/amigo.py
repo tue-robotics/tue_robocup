@@ -1,4 +1,5 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,\
+    world_model_ed
 
 
 class Amigo(robot.Robot):
