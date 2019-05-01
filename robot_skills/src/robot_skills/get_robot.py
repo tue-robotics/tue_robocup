@@ -7,14 +7,14 @@ import rospy
 # Robot skills
 from .amigo import Amigo
 from .hero import Hero
-# from .mockbot import Mockbot  # ToDo: enable after merging Loys MockBot update
+from .mockbot import Mockbot
 from .sergio import Sergio
 
 
 ROBOTS = {
     "amigo": Amigo,
     "hero": Hero,
-    # "mockbot": Mockbot,
+    "mockbot": Mockbot,
     "sergio": Sergio
 }
 
