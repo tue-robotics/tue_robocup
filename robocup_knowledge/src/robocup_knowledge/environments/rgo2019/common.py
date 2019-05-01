@@ -101,6 +101,7 @@ category_locations = {
     "care": {"side_table": "on_top_of"},
     "container": {"end_table": "on_top_of"},
     "fruit": {"bar_table": "on_top_of"},
+    "kitchen_stuff": {"kitchen_cabinet": "on_top_of"},
 }
 
 inspect_areas = {
@@ -114,7 +115,7 @@ inspect_positions = {
 
 most_probable_location_in_room_map = {
     'bedroom': 'side_table',        # educated guess
-    'kitchen': 'kitchen_table',     # educated guess
+    'kitchen': 'kitchen_cabinet',     # educated guess
     'bar': 'bar_table',             # educated guess
     'living_room': 'bookcase'       # educated guess
 }
