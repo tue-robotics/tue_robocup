@@ -111,7 +111,7 @@ class GrabSingleItem(smach.StateMachine):
 class PlaceSingleItem(smach.State):
     """ Tries to place an object. A 'place' statemachine is constructed dynamically since this makes it easier to
      build a statemachine (have we succeeded in grasping the objects?)"""
-    def __init__(self, robot, place_designator):
+    def __init__(self, robot, place_designator, item_designator):
         """ Constructor
 
         :param robot: robot object
@@ -121,26 +121,14 @@ class PlaceSingleItem(smach.State):
 
         self._robot = robot
         self._place_designator = place_designator
+        self._item_designator = item_designator
 
     def execute(self, userdata=None):
 
-        # ToDo: turn this into a proper statemachine
-        arm = None
-        # See if there's an arm holding something
-        # for k, v in self._robot.arms.iteritems():
-        #     if v.occupied_by is not None:
-        #         arm = v
-        #         break
-
-        arm = self._robot.get_arm(robot=self._robot, required_objects=PseudoObjects.EMPTY)
-
-        if arm is None:
-            return "failed"
-
         # Try to place the object
-        item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
-        arm_designator = ds.ArmDesignator(all_arms={arm.side: arm}, preferred_arm=arm)
-        sm = states.Place(robot=self._robot, item_to_place=item, place_pose=self._place_designator, arm=arm_designator)
+        arm_designator = ds.OccupiedArmDesignator(robot=self._robot, arm_properties={})
+        sm = states.Place(robot=self._robot, item_to_place=self._item_designator, place_pose=self._place_designator,
+                          place_volume="on_top_of", arm=arm_designator)
         result = sm.execute()
 
         # If failed, do handover to human in order to continue
@@ -186,6 +174,6 @@ class TakeOut(smach.StateMachine):
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
 
-            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator),
+            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator, item_designator=trash_designator),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
