@@ -1,4 +1,4 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, torso,world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
 
 import rospy
 
@@ -40,7 +40,6 @@ class Hero(robot.Robot):
        
         #rename joint names
         self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
-        self.parts['rightArm'].joint_names = self.parts['rightArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for arm in self.arms.itervalues():
