@@ -31,7 +31,7 @@ class ServeOneDrink(smach.StateMachine):
         drink_str_designator = ds.VariableDesignator(resolve_type=str)
         drink_designator = ds.EdEntityDesignator(robot=robot, type=drink_str_designator)
         bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
-        arm_designator = ds.UnoccupiedArmDesignator(all_arms=robot.arms, preferred_arm=None)
+        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={})
         operator_name = "operator_{}".format(idx)
 
         with self:
