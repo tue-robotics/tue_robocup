@@ -96,6 +96,8 @@ inspect_areas = {
 inspect_positions = {
 }
 
+default_target_radius = 0.2
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 most_probable_location_in_room_map = {
@@ -113,6 +115,11 @@ def get_location_from_room(room_id):
     return None
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+drink_names = [obj['name'] for obj in objects if obj['category'] == 'drink']
+drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
+for dn in drink_names:
+    drink_spec += "OPTIONS['{drink}'] -> {drink}\n".format(drink=dn)
 
 ''' colors from printing on screen '''
 class bcolors:
