@@ -15,7 +15,7 @@ locations = [
 
     {'name': 'kitchen_table',   'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
     {'name': 'kitchen_cabinet', 'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
-    {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
+    {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
 
     {'name': 'tv_table',        'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'},
@@ -28,7 +28,7 @@ locations = [
 
 
     {'name': 'bar_table',       'room': 'bar',              'category': 'table',        'manipulation': 'yes'},
-    {'name': 'storage_shelf',   'room': 'bar',              'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'cupboard',        'room': 'bar',              'category': 'shelf',        'manipulation': 'yes'},
     {'name': 'sofa',            'room': 'bar',              'category': 'utility',      'manipulation': 'no'}
 ]
 
