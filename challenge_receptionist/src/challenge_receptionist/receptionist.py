@@ -161,15 +161,17 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                                 "failed": "abort"})
 
             smach.StateMachine.add('POINT_AT_GUEST',
-                                   states.PointAt(robot=robot,  # TODO: correctly implement PointAt
+                                   states.PointAt(robot=robot,
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot, {'available_joint_goals':'point_at'}),
                                                   point_at_designator=guest_ent_des,
-                                                  look_at_designator=guest_ent_des),
+                                                  look_at_designator=operator_des),
                                    transitions={"succeeded": "INTRODUCE_GUEST",
                                                 "failed": "abort"})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des), block=True),
+                                   states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
+                                              block=True,
+                                              look_at_standing_person=False),
                                    transitions={'spoken': 'succeeded'})
 
 
