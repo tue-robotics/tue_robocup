@@ -141,7 +141,7 @@ class PlaceSingleItem(smach.State):
 
 class TakeOut(smach.StateMachine):
 
-    def __init__(self, robot, trashbin_designator, trash_designator, drop_designator):
+    def __init__(self, robot, trashbin_designator, trash_designator, drop_designator, arm_designator):
         """
 
         :param robot: robot object
@@ -162,11 +162,11 @@ class TakeOut(smach.StateMachine):
             smach.StateMachine.add("INSPECT",
                                    states.Inspect(robot, trashbin_designator),
                                    transitions={"done": "GRAB_TRASH",
-                                                "failed": "failed"})
+                                                "failed": "FAILED_TO_SEE"})
 
             smach.StateMachine.add("GRAB_TRASH", GrabSingleItem(robot=robot, grab_designator=trash_designator),
                                    transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
-                                                "failed": "failed"})
+                                                "failed": "FAILED_TO_GRAB"})
 
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
                                    states.NavigateToObserve(robot, drop_designator),
@@ -174,6 +174,28 @@ class TakeOut(smach.StateMachine):
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
 
-            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator, item_designator=trash_designator),
+            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator,
+                                                                 item_designator=trash_designator),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
+
+            # if it fails with inspect or grabbing
+            smach.StateMachine.add("FAILED_TO_SEE", states.Say(robot, "I can not see the bag, so please hand over the "
+                                                                      "bag to me when I say it.",
+                                              block=False),
+                                   transitions={'spoken': 'ASK_HANDOVER'})
+
+            smach.StateMachine.add("FAILED_TO_GRAB", states.Say(robot, "I can not grab the bag, so please hand over the "
+                                                                      "bag to me when I say it.",
+                                              block=False),
+                                   transitions={'spoken': 'ASK_HANDOVER'})
+
+            smach.StateMachine.add("ASK_HANDOVER", states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
+                                                                            grabbed_entity_label='thrash'),
+                                   transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
+                                                "failed": "failed",
+                                                "timeout": "failed"})
+
+            # if it fails with placing it just goes to handover pose and drops it, depending on the drop location?
+            smach.StateMachine.add("FAILED_TO_PLACE", states.Say(robot, "I will try to place it again."),
+                                   transitions={'spoken': 'succeeded'})

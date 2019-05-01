@@ -34,6 +34,8 @@ class TakeOutGarbage(smach.StateMachine):
                                                   area_description="on_top_of")
         drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
 
+        arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
+
         with self:
 
             # Start challenge via StartChallengeRobust
@@ -45,7 +47,8 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("TAKE_OUT",
                                    TakeOut(robot=robot, trashbin_designator=trashbin_designator,
-                                           trash_designator=trash_designator, drop_designator=drop_zone_designator),
+                                           trash_designator=trash_designator, drop_designator=drop_zone_designator,
+                                           arm_designator=arm_designator),
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "aborted": "aborted",
                                                 "failed": "failed"})
@@ -62,7 +65,8 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("TAKE_OUT2",
                                    TakeOut(robot=robot, trashbin_designator=trashbin_designator2,
-                                           trash_designator=trash_designator2, drop_designator=drop_zone_designator),
+                                           trash_designator=trash_designator2, drop_designator=drop_zone_designator,
+                                           arm_designator=arm_designator),
                                    transitions={"succeeded": "ANNOUNCE_TASK2",
                                                 "aborted": "aborted",
                                                 "failed": "failed"})
