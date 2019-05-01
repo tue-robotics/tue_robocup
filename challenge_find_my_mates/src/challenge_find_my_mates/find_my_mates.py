@@ -64,6 +64,7 @@ class FindPeople(State):
             if raw_detections:
                 # Take the biggest ROI, for a start this is fine,
                 # but this might be a problem since we want to detect multiple people
+                # Loop through detections?
                 best_detection = max(raw_detections, key=lambda r: r.roi.height)
             else:
                 best_detection = None
@@ -129,6 +130,25 @@ class IdentifyPeople(State):
             NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=person.id), radius=0.7)
             self._robot.head.look_at_standing_person()
             # detect person -> update person entity with certain attributes
+
+            raw_detections = self._robot.perception.detect_faces()
+
+            if raw_detections:
+                best_detection = max(raw_detections, key=lambda r: r.roi.height)
+            else:
+                best_detection = None
+
+            rospy.loginfo("best_detection = {}".format(best_detection))
+            # if not best_detection:
+            #     ? skip ?
+            try:
+                person_pos_kdl = self._robot.perception.project_roi(roi=best_detection.roi, frame_id="map")
+            except Exception as e:
+                rospy.logerr("head.project_roi failed: %s", e)
+                return 'Failed'
+            person_face_height = person_pos_kdl.zp
+            shirt_area = best_detection.roi
+            shirt_area.y_offset -= (1.75*shirt_area.height) # 1.75 represents how far away from the face the shirt is
         if True:
             return 'Done'
         else:
@@ -151,7 +171,10 @@ class ReportPeople(State):
         sentence = ""
         # for person in person_entities:
             # sentence += "I found someone near the {}.\n".format(person.id)
+            # sentence += "length?"
+            # sentence += "age?"
             # sentence += "The peron was wearing a {} shirt.\n".format(person.shirt_color)
+            # sentence += " wearing glasses?"
         self._robot.speech.speak(sentence)
         if True:
             return 'Done'
