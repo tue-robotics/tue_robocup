@@ -192,9 +192,13 @@ class TakeOut(smach.StateMachine):
 
             smach.StateMachine.add("ASK_HANDOVER", states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                                             grabbed_entity_label='thrash'),
-                                   transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
+                                   transitions={"succeeded": "RECEIVED_TRASH_BAG",
                                                 "failed": "failed",
                                                 "timeout": "failed"})
+
+            smach.StateMachine.add("RECEIVED_TRASH_BAG", states.Say(robot, "I received the thrash bag. I will throw"
+                                                                           " it away, please move away.", block=True),
+                                   transitions={'spoken': 'GO_TO_COLLECTION_ZONE'})
 
             # if it fails with placing it just goes to handover pose and drops it, depending on the drop location?
             smach.StateMachine.add("FAILED_TO_PLACE", states.Say(robot, "I will try to place it again."),
