@@ -51,7 +51,7 @@ class TakeOutGarbage(smach.StateMachine):
                                            arm_designator=arm_designator),
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "aborted": "aborted",
-                                                "failed": "failed"})
+                                                "failed": "ANNOUNCE_END"})
 
             if trashbin_designator2 is not None:
                 next_state = "TAKE_OUT2"
@@ -69,7 +69,7 @@ class TakeOutGarbage(smach.StateMachine):
                                            arm_designator=arm_designator),
                                    transitions={"succeeded": "ANNOUNCE_TASK2",
                                                 "aborted": "aborted",
-                                                "failed": "failed"})
+                                                "failed": "ANNOUNCE_END"})
 
             smach.StateMachine.add("ANNOUNCE_TASK2",
                                    states.Say(robot, "Second bag has been dropped at the collection zone."
