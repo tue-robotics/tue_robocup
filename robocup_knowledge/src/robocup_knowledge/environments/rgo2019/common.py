@@ -41,48 +41,48 @@ rooms = location_rooms + ['corridor']
 
 objects = [
     {'category': 'kitchen_stuff',       'name': 'bowl',                             'color': 'green',       'volume': 458,      'weight': 65},
-    {'category': 'kitchen_stuff',       'name': 'cup',                              'color': 'green',       'volume': 300,      'weight': 50},
-    {'category': 'kitchen_stuff',       'name': 'fork',                             'color': 'green',       'volume': 22,       'weight': 10},
+    {'category': 'kitchen_stuff',       'name': 'cup',                              'color': 'yellow',      'volume': 300,      'weight': 50},
+    {'category': 'kitchen_stuff',       'name': 'fork',                             'color': 'orange',      'volume': 22,       'weight': 10},
     {'category': 'kitchen_stuff',       'name': 'knife',                            'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'kitchen_stuff',       'name': 'plate',                            'color': 'green',       'volume': 672,      'weight': 70}
-    {'category': 'kitchen_stuff',       'name': 'spoon',                            'color': 'green',       'volume': 23,       'weight': 10},
+    {'category': 'kitchen_stuff',       'name': 'plate',                            'color': 'blue',        'volume': 672,      'weight': 70}
+    {'category': 'kitchen_stuff',       'name': 'spoon',                            'color': 'blue',        'volume': 23,       'weight': 10},
 
-    {'category': 'drink',               'name': 'apple_juice',                      'color': 'purplish',    'volume': 216,      'weight': 200},
-    {'category': 'drink',               'name': 'iso_drink',                        'color': 'brownish',    'volume': 404,      'weight': 325},
+    {'category': 'drink',               'name': 'apple_juice',                      'color': 'brown',       'volume': 216,      'weight': 200},
+    {'category': 'drink',               'name': 'iso_drink',                        'color': 'blue',        'volume': 404,      'weight': 325},
     {'category': 'drink',               'name': 'orange_juice',                     'color': 'orange',      'volume': 216,      'weight': 200},
     {'category': 'drink',               'name': 'red_spritzer',                     'color': 'red',         'volume': 270,      'weight': 222},
-    {'category': 'drink',               'name': 'sparkling_water',                  'color': 'bluegreen',   'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'sparkling_water',                  'color': 'transparent', 'volume': 270,      'weight': 222},
 
-    {'category': 'fruit',               'name': 'lemon',                            'color': 'greenred',    'volume': 360,      'weight': 85},
+    {'category': 'fruit',               'name': 'lemon',                            'color': 'yellow',      'volume': 360,      'weight': 85},
     {'category': 'fruit',               'name': 'orange',                           'color': 'orange',      'volume': 380,      'weight': 140},
 
     {'category': 'care',                'name': 'shower_gel',                       'color': 'blue',        'volume': 336,      'weight': 21},
-    {'category': 'care',                'name': 'soap',                             'color': 'yellowish',   'volume': 297,      'weight': 85},
-    {'category': 'care',                'name': 'toothpaste',                       'color': 'blue',        'volume': 223,      'weight': 113},
+    {'category': 'care',                'name': 'soap',                             'color': 'ivory',       'volume': 297,      'weight': 85},
+    {'category': 'care',                'name': 'toothpaste',                       'color': 'whitegreen',  'volume': 223,      'weight': 113},
 
-    {'category': 'food',                'name': 'bouillon',                         'color': 'blue',        'volume': 336,      'weight': 21},
-    {'category': 'food',                'name': 'corn',                             'color': 'blue',        'volume': 223,      'weight': 113},
+    {'category': 'food',                'name': 'bouillon',                         'color': 'orange',      'volume': 336,      'weight': 21},
+    {'category': 'food',                'name': 'corn',                             'color': 'yellow',      'volume': 223,      'weight': 113},
     {'category': 'food',                'name': 'noodles',                          'color': 'yellowish',   'volume': 297,      'weight': 85},
     {'category': 'food',                'name': 'pepper',                           'color': 'blue',        'volume': 336,      'weight': 21},
-    {'category': 'food',                'name': 'salt',                             'color': 'yellowish',   'volume': 297,      'weight': 85},
-    {'category': 'food',                'name': 'sauerkraut',                       'color': 'blue',        'volume': 223,      'weight': 113},
-    {'category': 'food',                'name': 'seasoning_mix',                    'color': 'yellowish',   'volume': 297,      'weight': 85},
+    {'category': 'food',                'name': 'salt',                             'color': 'whiteorange', 'volume': 297,      'weight': 85},
+    {'category': 'food',                'name': 'sauerkraut',                       'color': 'whitegreen',  'volume': 223,      'weight': 113},
+    {'category': 'food',                'name': 'seasoning_mix',                    'color': 'orange',      'volume': 297,      'weight': 85},
     {'category': 'food',                'name': 'tomatoes',                         'color': 'blue',        'volume': 223,      'weight': 113},
     
     {'category': 'container',           'name': '-',                                'color': 'beige',       'volume': 3487,     'weight': 43},
     {'category': 'container',           'name': '-',                                'color': 'white',       'volume': 4508,     'weight': 120},
     
-    {'category': 'cleaning_stuff',      'name': 'cloth',                            'color': 'purple',      'volume': 315,      'weight': 37},
+    {'category': 'cleaning_stuff',      'name': 'cloth',                            'color': 'yellow',      'volume': 315,      'weight': 37},
     {'category': 'cleaning_stuff',      'name': 'dishwasher_tab',                   'color': 'yellowish',   'volume': 100,      'weight': 22},
 
-    {'category': 'snack',               'name': 'cereal_bar_chocolate',             'color': 'orange',      'volume': 243,      'weight': 28},
-    {'category': 'snack',               'name': 'cereal_bar_chocolate_banana',      'color': 'black',       'volume': 4080,     'weight': 200},
-    {'category': 'snack',               'name': 'cracker',                          'color': 'green',       'volume': 1125,     'weight': 156},
+    {'category': 'snack',               'name': 'cereal_bar_chocolate',             'color': 'blue',        'volume': 243,      'weight': 28},
+    {'category': 'snack',               'name': 'cereal_bar_chocolate_banana',      'color': 'yellow',      'volume': 4080,     'weight': 200},
+    {'category': 'snack',               'name': 'cracker',                          'color': 'redwhite',    'volume': 1125,     'weight': 156},
     {'category': 'kitchen_stuff',       'name': 'fruit_bar_apple',                  'color': 'green',       'volume': 458,      'weight': 65},
-    {'category': 'kitchen_stuff',       'name': 'fruit_bar_forest_fruit',           'color': 'green',       'volume': 300,      'weight': 50},
-    {'category': 'kitchen_stuff',       'name': 'get_it',                           'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'kitchen_stuff',       'name': 'nut_fruit_mix',                    'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'kitchen_stuff',       'name': 'peanut_bits',                      'color': 'green',       'volume': 672,      'weight': 70}
+    {'category': 'kitchen_stuff',       'name': 'fruit_bar_forest_fruit',           'color': 'blue',        'volume': 300,      'weight': 50},
+    {'category': 'kitchen_stuff',       'name': 'get_it',                           'color': 'orange',      'volume': 22,       'weight': 10},
+    {'category': 'kitchen_stuff',       'name': 'nut_fruit_mix',                    'color': 'redwhite',    'volume': 22,       'weight': 10},
+    {'category': 'kitchen_stuff',       'name': 'peanut_bits',                      'color': 'red',         'volume': 672,      'weight': 70}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
