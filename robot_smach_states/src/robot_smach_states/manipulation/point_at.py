@@ -7,6 +7,8 @@ from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators import check_type
 
+from numpy import tan
+
 
 class PointAt(smach.State):
     def __init__(self, robot, arm_designator, point_at_designator, look_at_designator=None):
@@ -53,11 +55,19 @@ class PointAt(smach.State):
             return "failed"
 
         # TODO: make arm point at some pose
-        arm.point_at(point_at_ent.pose.extractVectorStamped())
+        vs = point_at_ent.pose.extractVectorStamped()  # VectorStamped
+        vector_in_bs = vs.projectFrame('base_link')
+        # tan(angle) = dy / dx
+        # angle = tan(dy / dx)
         # Arm to position in a safe way
-        # arm.send_joint_trajectory('handover_to_human', timeout=0)  # TODO define pointing pose
+        rotate_base = tan(vector_in_bs.y / vector_in_bs.x)  # Radians
+        # For 1 second, rotate the base with vth == rotate_base.
+        # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
+        self._robot.base.force_drive(0, 0, rotate_base, 1)
+
+        arm.send_joint_trajectory('point_at', timeout=0)  # TODO define pointing pose
         arm.wait_for_motion_done()
 
-        self.robot.head.look_at_point(look_at_ent.pose.extractVectorStamped())
+        self._robot.head.look_at_point(look_at_ent.pose.extractVectorStamped())
 
         return 'succeeded'
