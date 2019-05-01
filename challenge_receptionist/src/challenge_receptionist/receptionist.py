@@ -162,7 +162,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
 
             smach.StateMachine.add('POINT_AT_GUEST',
                                    states.PointAt(robot=robot,  # TODO: correctly implement PointAt
-                                                  arm_designator=ds.UnoccupiedArmDesignator(robot, {}),  # TODO parametrize
+                                                  arm_designator=ds.UnoccupiedArmDesignator(robot, {'available_joint_goals':'point_at'}),
                                                   point_at_designator=guest_ent_des,
                                                   look_at_designator=guest_ent_des),
                                    transitions={"succeeded": "INTRODUCE_GUEST",
