@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>challenge_receptionist</name>
+  <version>0.0.0</version>
+  <description>RoboCup@Home receptionist challenge</description>
+
+  <maintainer email="loy.vanbeek@gmail.com">Loy van Beek</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rospy</depend>
+  <depend>robot_skills</depend>
+  <depend>robot_smach_states</depend>
+
+</package>

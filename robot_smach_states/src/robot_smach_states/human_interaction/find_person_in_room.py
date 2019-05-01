@@ -13,7 +13,9 @@ import smach
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.util.designators import check_type
 from robot_skills.util import kdl_conversions
+
 # class CheckIfPersonInRoom(smach.State):
 #     def __init__(self, robot, room):
 #         """
@@ -36,7 +38,7 @@ class FindPerson(smach.State):
                  discard_other_labels=True, found_entity_designator=None, room=None):
         """ Initialization method
         :param robot: robot api object
-        :param person_label: (str) person label
+        :param person_label: (str) person label or a designator resolving to a str
         :param search_timeout: (float) maximum time the robot is allowed to search
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
@@ -45,7 +47,10 @@ class FindPerson(smach.State):
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
         self._robot = robot
+
+        check_type(person_label, str)
         self._person_label = person_label
+
         self._search_timeout = search_timeout
         self._look_distance = look_distance
         self._face_pos_pub = rospy.Publisher(
@@ -57,9 +62,11 @@ class FindPerson(smach.State):
         self._room = room
 
     def execute(self, userdata=None):
-        rospy.loginfo("Trying to find {}".format(self._person_label))
+        person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
+
+        rospy.loginfo("Trying to find {}".format(person_label))
         self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("{}, please look at me while I am looking for you".format(self._person_label),
+        self._robot.speech.speak("{}, please look at me while I am looking for you".format(person_label),
                                  block=False)
         start_time = rospy.Time.now()
 
@@ -84,7 +91,7 @@ class FindPerson(smach.State):
             raw_detections = self._robot.perception.detect_faces()
             if self._discard_other_labels:
                 best_detection = self._robot.perception.get_best_face_recognition(
-                    raw_detections, self._person_label, probability_threshold=self._probability_threshold)
+                    raw_detections, person_label, probability_threshold=self._probability_threshold)
             else:
                 if raw_detections:
                     # Take the biggest ROI
@@ -113,12 +120,12 @@ class FindPerson(smach.State):
                     found_person = None
 
             if found_person:
-                rospy.loginfo("I found {} at {}".format(self._person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I found {}.".format(self._person_label, block=False))
+                rospy.loginfo("I found {} at {}".format(person_label, found_person.pose.extractVectorStamped(), block=False))
+                self._robot.speech.speak("I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
                 self._robot.ed.update_entity(
-                    id=self._person_label,
+                    id=person_label,
                     frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "/map"),
                     type="waypoint")
 
@@ -127,7 +134,7 @@ class FindPerson(smach.State):
 
                 return 'found'
             else:
-                rospy.logwarn("Could not find {}".format(self._person_label))
+                rospy.logwarn("Could not find {}".format(person_label))
 
         self._robot.head.close()
         rospy.sleep(2.0)
@@ -224,6 +231,8 @@ if __name__ == "__main__":
         from robot_skills.amigo import Amigo as Robot
     elif robot_name == "sergio":
         from robot_skills.sergio import Sergio as Robot
+    elif robot_name == "hero":
+        from robot_skills.hero import Hero as Robot
 
     rospy.init_node('test_follow_operator')
     _robot = Robot()
