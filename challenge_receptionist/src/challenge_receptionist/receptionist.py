@@ -175,6 +175,18 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    transitions={'spoken': 'succeeded'})
 
 
+class FindEmptySeat(smach.StateMachine):
+    def __init__(self, robot, seats_to_inspect):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
+
+        # We have to find an *empty* seat in the given room
+        # I'd say: iterate over all seat-type objects and check that their 'on-top-of' volume is empty
+        # That can be done with an Inspect and then query for any Entities inside that volume.
+        # If there are none, then the seat is empty
+        with self:
+            pass
+
+
 class ChallengeReceptionist(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
@@ -205,7 +217,6 @@ class ChallengeReceptionist(smach.StateMachine):
                                    LearnGuest(robot, self.door_waypoint, self.guest1_entity_des, self.guest1_name_des, self.guest1_drink_des),
                                    transitions={'succeeded': 'GOTO_LIVINGROOM_1',
                                                 'abort': 'abort'})
-
 
             smach.StateMachine.add('GOTO_LIVINGROOM_1',
                                    states.NavigateToWaypoint(robot,
