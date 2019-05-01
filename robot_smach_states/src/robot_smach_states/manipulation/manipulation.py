@@ -63,7 +63,7 @@ class HandoverFromHuman(smach.StateMachine):
     CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
     as id.
     '''
-    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10, arm_configuration="handover_to_human"):
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=15, arm_configuration="handover_to_human"):
         """
         Hold up hand to accept an object and close hand once something is inserted
         :param robot: Robot with which to execute this behavior
@@ -207,6 +207,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
                 return "failed"
 
         if arm.handover_to_robot(self.timeout):
+            arm.send_gripper_goal('close')
             return "succeeded"
         else:
             return "timeout"
