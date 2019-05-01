@@ -120,7 +120,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         super(ArmHoldingEntityDesignator, self).__init__(robot, arm_properties, name=name)
         self.entity_designator = entity_designator
 
-    def resolve(self):
+    def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
             rospy.logdebug('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
