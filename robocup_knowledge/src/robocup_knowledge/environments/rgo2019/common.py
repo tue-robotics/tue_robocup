@@ -44,7 +44,7 @@ objects = [
     {'category': 'kitchen_stuff',       'name': 'cup',                              'color': 'yellow',      'volume': 300,      'weight': 50},
     {'category': 'kitchen_stuff',       'name': 'fork',                             'color': 'orange',      'volume': 22,       'weight': 10},
     {'category': 'kitchen_stuff',       'name': 'knife',                            'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'kitchen_stuff',       'name': 'plate',                            'color': 'blue',        'volume': 672,      'weight': 70}
+    {'category': 'kitchen_stuff',       'name': 'plate',                            'color': 'blue',        'volume': 672,      'weight': 70},
     {'category': 'kitchen_stuff',       'name': 'spoon',                            'color': 'blue',        'volume': 23,       'weight': 10},
 
     {'category': 'drink',               'name': 'apple_juice',                      'color': 'brown',       'volume': 216,      'weight': 200},
