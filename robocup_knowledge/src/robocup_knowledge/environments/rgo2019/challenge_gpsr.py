@@ -40,6 +40,8 @@ grammar += """
 PPN_OBJECT -> it
 PPN_PERSON -> him | her
 
+GEN_VERB -> may | can | will
+
 DET -> the | a
 NUMBER -> one | two | three
 MEETING_PP -> at | in
@@ -118,11 +120,11 @@ VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
+VP[{"action": "guide", "object": X, "source-location": Y, "target-location": Z}] -> V_GUIDE NAMED_PERSON[X] to the LOCATION[Z] you GEN_VERB find PPN_PERSON MEETING_PP the LOCATION[Y]
 VP[{"action": "guide", "object": X, "source-location": Y, "target-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the LOCATION[Y] to the LOCATION[Z]
 VPS[{"action": "guide", "object": {"type": "reference"}}] -> V_GUIDE PPN_PERSON
 VP[{"action": "guide", "target-location": Y, "object": {"type": "reference"}}] -> V_GUIDE PPN_PERSON to the ROOM_OR_LOCATION[Y]
 """
-
 
 
 ###############################################################################
