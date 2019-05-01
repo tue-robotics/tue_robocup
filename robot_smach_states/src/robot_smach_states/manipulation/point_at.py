@@ -56,7 +56,7 @@ class PointAt(smach.State):
 
         # TODO: make arm point at some pose
         vs = point_at_ent.pose.extractVectorStamped()  # VectorStamped
-        vector_in_bs = vs.projectFrame('base_link')
+        vector_in_bs = vs.projectToFrame('base_link', self._robot.tf_listener)
         # tan(angle) = dy / dx
         # angle = tan(dy / dx)
         # Arm to position in a safe way
