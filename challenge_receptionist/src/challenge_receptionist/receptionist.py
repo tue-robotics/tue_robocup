@@ -8,6 +8,22 @@ from robot_skills.util.entity import Entity
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
+class GuestDescriptionStrDesignator(ds.Designator):
+    def __init__(self, guest_name_des, drinkname, name=None):
+        super(GuestDescriptionStrDesignator, self).__init__(resolve_type=str, name=name)
+
+        ds.check_type(guest_name_des, str)
+        ds.check_type(guest_drink_des, QueryResult)
+
+        self.guest_name_des = guest_name_des
+        self.guest_drink_des = guest_drink_des
+
+    def _resolve(self):
+        name = self.guest_name_des.resolve()
+        drink_res = self.guest_drink_des.resolve()
+        return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drink_res.semantics['drink'])
+
+
 class LearnGuest(smach.StateMachine):
     def __init__(self, robot, door_waypoint, guest_ent_des, guest_name_des, guest_drink_des):
         """
@@ -80,10 +96,11 @@ class LearnGuest(smach.StateMachine):
 
 
 class IntroduceGuestToOperator(smach.StateMachine):
-    def __init__(self, robot, operator_des, guest_ent_des, guest_name_des):
+    def __init__(self, robot, operator_des, guest_ent_des, guest_name_des, guest_drink_des):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
         ds.check_type(guest_name_des, str)
+        ds.check_type(guest_drink_des, QueryResult)
         ds.check_type(guest_ent_des, Entity)
 
         with self:
@@ -122,7 +139,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                                 "failed": "abort"})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   states.Say(robot, ["This is person X and he likes drink Y"], block=True),
+                                   states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drink_des), block=True),
                                    transitions={'spoken': 'succeeded'})
 
 
@@ -166,7 +183,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'goal_not_defined': 'abort'})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des, self.guest1_name_des),
+                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des, self.guest1_name_des, self.guest1_drink_des),
                                    transitions={'succeeded': 'succeeded',
                                                 'abort': 'abort'})
 
@@ -182,7 +199,7 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [.] Locate guest1:
             # - [ ]   rotate head until <guest1> is detected
             # - [.] Point at guest1
-            # - [.] Say: This is <guest1> and (s)he likes to drink <drink1>
+            # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
             # - [ ] Iterate to guest 2
 
 
