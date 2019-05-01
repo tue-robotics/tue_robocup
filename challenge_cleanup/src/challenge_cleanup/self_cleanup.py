@@ -5,7 +5,7 @@ import random
 
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.util.entity import Entity
-from robot_smach_states.util.designators import UnoccupiedArmDesignator, OccupiedArmDesignator, Designator
+from robot_smach_states.util.designators import UnoccupiedArmDesignator, OccupiedArmDesignator, Designator, EntityByIdDesignator
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
@@ -147,6 +147,7 @@ class SelfCleanup(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done','failed'])
 
         trash_place_pose = dropPoseDesignator(robot, 0.6, "drop_pose")
+        trash_designator = EntityByIdDesignator(robot, "trashbin")
         item_store_entity = storePlaceDesignator(robot,
                                                  "store_entity",
                                                  selected_entity_designator)
@@ -185,7 +186,7 @@ class SelfCleanup(smach.StateMachine):
             smach.StateMachine.add('CHECK_ARM_OCCUPIED', ArmOccupied(robot), transitions={"yes": "DETERMINE_PLACE_LOCATION", "no": "done"})
 
             smach.StateMachine.add('DETERMINE_PLACE_LOCATION', DetermineCleanupLocation(robot, selected_entity_designator),
-                                   transitions={"trashbin" : "NAVIGATE_TO_TRASH", "other" : "PLACE_TO_STORE", "failed" : "NAVIGATE_TO_TRASH"})
+                                   transitions={"trashbin" : "INSPECT_TRASH", "other" : "PLACE_TO_STORE", "failed" : "NAVIGATE_TO_TRASH"})
 
             smach.StateMachine.add('NAVIGATE_TO_TRASH',
                                    robot_smach_states.NavigateToPlace(robot,
@@ -194,6 +195,12 @@ class SelfCleanup(smach.StateMachine):
                                                                                   {},
                                                                                   name="occupied_arm_designator")),
                                    transitions={"arrived": "PLACE_IN_TRASH", "unreachable": "SAY_PLACE_FAILED", "goal_not_defined" : "SAY_PLACE_FAILED"})
+
+            smach.StateMachine.add('INSPECT_TRASH',
+                                   robot_smach_states.Inspect(robot,
+                                                              trash_designator),
+                                   transitions={"done": "PLACE_IN_TRASH",
+                                                "failed": "SAY_PLACE_FAILED"})
 
             smach.StateMachine.add('PLACE_IN_TRASH',
                                    robot_smach_states.Place(robot, 
