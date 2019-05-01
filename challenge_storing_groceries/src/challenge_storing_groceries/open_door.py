@@ -1,25 +1,14 @@
-# System
-import os
-
 # ROS
 import math
 import rospy
 import smach
 import tf2_ros
-import tf2_geometry_msgs  # required for transforms
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
-from robot_skills.amigo import Amigo
-# TU/e
-from robot_skills.util.kdl_conversions import VectorStamped
+import robot_smach_states as states
+import robot_smach_states.util.designators as ds
 
 # Challenge storing groceries
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-
-import config
-
-import robot_smach_states as states
-
-import robot_smach_states.util.designators as ds
 
 
 def _clamp(abs_value, value):
@@ -194,9 +183,12 @@ class OpenDoorMachine(smach.StateMachine):
 
 
 if __name__ == '__main__':
+
+    from robot_skills import get_robot_from_argv
     rospy.init_node('test_open_door')
 
-    robot = Amigo()
+    robot = get_robot_from_argv(index=1)
+
     robot.ed.reset()
     robot.leftArm.reset()
     robot.torso.reset()

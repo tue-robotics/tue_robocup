@@ -268,12 +268,14 @@ class Place(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    from robot_skills.amigo import Amigo
+
+    from robot_skills import get_robot_from_argv
     from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 
     rospy.init_node('state_machine')
 
-    robot = Amigo()
+    robot = get_robot_from_argv(index=1)
+
     robot.ed.update_entity(id="bla")
     place_entity = EdEntityDesignator(robot, id="bla")
     arm = ArmDesignator(robot, {})

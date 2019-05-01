@@ -12,6 +12,7 @@ import hmi
 
 from action_server import Client as ActionClient
 
+from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
@@ -248,16 +249,7 @@ def main():
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        raise ValueError('unknown robot')
-
-    robot = Robot()
+    robot = get_robot(robot_name)
 
     if eegpsr:
         knowledge = load_knowledge('challenge_eegpsr')
