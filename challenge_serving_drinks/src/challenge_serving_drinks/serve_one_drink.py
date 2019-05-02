@@ -4,6 +4,7 @@ import smach
 # Robot smach states
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_skills.util.entity import Entity
 from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
 
@@ -32,6 +33,7 @@ class ServeOneDrink(smach.StateMachine):
         bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
         arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={})
         operator_name = "operator_{}".format(idx)
+        operator_designator = ds.VariableDesignator(resolve_type=Entity)
 
         with self:
 
@@ -76,7 +78,7 @@ class ServeOneDrink(smach.StateMachine):
                     area=CHALLENGE_KNOWLEDGE.room_id,
                     name=operator_name,
                     discard_other_labels=True,
-                    found_entity_designator=operator_des.writeable),
+                    found_entity_designator=operator_designator.writeable),
                 transitions={"found": "GOTO_OPERATOR",
                              "not_found": "SAY_NOT_FOUND"}
             )
@@ -86,10 +88,10 @@ class ServeOneDrink(smach.StateMachine):
                 'GOTO_OPERATOR',
                 states.NavigateToObserve(
                     robot=robot,
-                    entity_designator=operator_des),
+                    entity_designator=operator_designator),
                 transitions={'arrived': 'HAND_OVER',
                              'unreachable': 'SAY_NOT_FOUND',
-                             'goal_not_defined': 'abort'})
+                             'goal_not_defined': 'SAY_NOT_FOUND'})
 
             # Say not found
             smach.StateMachine.add(
