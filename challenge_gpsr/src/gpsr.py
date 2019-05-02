@@ -33,8 +33,8 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.test = False
         self.skip = False
 
-        self.time_limit = 0     #5 minutes
-        self.tasks_to_be_done = 3
+        self.time_limit = 0
+        self.tasks_to_be_done = 0
         self.tasks_done = 0
         self.finished = False
         self.start_time = rospy.get_time()
@@ -75,7 +75,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         else:
             rospy.logwarn("Not going to meeting point, challenge has param skip:=true set")
 
-        if self.tasks_done >= self.tasks_to_be_done and not self.skip: #or self.finished == true and not self.skip
+        if (self.tasks_done >= self.tasks_to_be_done and not self.skip) or (self.finished and not self.skip and self.tasks_done >= 1):
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
                                                                               id=self.knowledge.exit_waypoint),
