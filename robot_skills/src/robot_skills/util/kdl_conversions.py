@@ -246,7 +246,7 @@ def kdl_vector_stamped_from_point_stamped_msg(point_stamped):
     """Convert a PointStamped to VectorStamped
     :param point_stamped the PointStamped to be converted
     :returns VectorStamped"""
-    assert isinstance(point_stamped, gm.PointStamped)
+    assert isinstance(point_stamped, gm.PointStamped), "point_stamped is not a geometry_msgs/PointStamped but a {}".format(type(point_stamped))
     return VectorStamped(vector=point_msg_to_kdl_vector(point_stamped.point),
                          frame_id=point_stamped.header.frame_id)
 
