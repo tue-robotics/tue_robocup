@@ -16,6 +16,9 @@ locations = [
     {'name': 'kitchen_table',   'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
     {'name': 'kitchen_cabinet', 'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
     {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'cabinet',         'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'white_drawer',    'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'trash_can',       'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
 
     {'name': 'tv_table',        'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'},
@@ -25,6 +28,8 @@ locations = [
     {'name': 'coffee_table',    'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'sideboard',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'high_table',      'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'trash_bin',       'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'coathanger',      'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
 
 
     {'name': 'bar_table',       'room': 'bar',              'category': 'table',        'manipulation': 'yes'},
