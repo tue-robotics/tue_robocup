@@ -4,13 +4,9 @@ import smach
 # TU/e Robotics
 import robot_smach_states as states
 from robot_skills.robot import Robot
-from robocup_knowledge import knowledge_loader
 
 # Challenge serving drinks
 from .serve_one_drink import ServeOneDrink
-
-# Knowledge
-CHALLENGE_KNOWLEDGE = knowledge_loader.load_knowledge("challenge_serving_drinks")
 
 NR_DRINKS = 3
 
