@@ -168,18 +168,18 @@ class ReportPeople(State):
         sentence = "I found many people but none were as pretty as you."
         for i, person in enumerate(person_entities):
             sentence += "I found someone near the {}.\n".format(closest_entity[i].id)
-            from collections import Counter
-            attributes = dict()
-            glasses = [person.glasses for person in person_entities]
-            c = Counter(glasses)
-            attributes['glasses'] = c[person.glasses]
-            # unique_description = False
-            # while not unique_description:
-            #     for properties in person_entities:
-            #         from collections import Counter
-            #     car_list = ["ford", "toyota", "toyota", "honda"]
-                cars = [model for model in c if c[person] == 1]
-
+            # from collections import Counter
+            # attributes = dict()
+            # glasses = [person.glasses for person in person_entities]
+            # c = Counter(glasses)
+            # attributes['glasses'] = c[person.glasses]
+            # # unique_description = False
+            # # while not unique_description:
+            # #     for properties in person_entities:
+            # #         from collections import Counter
+            # #     car_list = ["ford", "toyota", "toyota", "honda"]
+            #     cars = [model for model in c if c[person] == 1]
+    
 
             if person.wearing_glasses:
                 sentence += "the person was wearing glasses, "
