@@ -1,5 +1,6 @@
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
+spr = knowledge_loader.load_knowledge("challenge_spr")
 
 not_understood_sentences = [
         "I'm so sorry! Can you please speak clearly and fluently? And wait for the ping!",
@@ -42,6 +43,7 @@ grammar += """
 PPN_OBJECT -> it
 PPN_PERSON -> him | her
 
+OPERATOR_PROPERTY -> my
 GEN_VERB -> may | can | will
 
 DET -> the | a
@@ -113,6 +115,7 @@ V_FOLLOW -> come behind | come after | follow | go after | go behind
 
 VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 """
+# VP[{"action": "follow", "object": X, "location-from":Y, "location-to":Z}] -> V_FOLLOW NAMED_PERSON[X] from DET LOCATION[Y] to DET LOCATION[Z]
 
 ###############################################################################
 #
@@ -176,7 +179,7 @@ V_BRING -> bring | deliver | give | hand over | hand
 """
 
 grammar += """
-
+VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR_PROPERTY  NAMED_OBJECT[Z] to the LOCATION[Y]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
 VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] from the ROOM[X] to the LOCATION[Y]
 
