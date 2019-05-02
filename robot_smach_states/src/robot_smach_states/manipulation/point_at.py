@@ -62,7 +62,7 @@ class PointAt(smach.State):
         # tan(angle) = dy / dx
         # angle = tan(dy / dx)
         # Arm to position in a safe way
-        rotate_base = tan(vector_in_bs.y / vector_in_bs.x)  # Radians
+        rotate_base = tan(vector_in_bs.vector.y()/ vector_in_bs.vector.x())  # Radians
         # For 1 second, rotate the base with vth == rotate_base.
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
         self._robot.base.force_drive(0, 0, rotate_base, 1)
@@ -87,8 +87,8 @@ if __name__ == "__main__":
         robot = get_robot(robot_name)
         sm = PointAt(robot,
                      arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
-                     point_at_designator=ds.EdEntityDesignator(robot, id=point_at),
-                     look_at_designator=ds.EdEntityDesignator(robot, id=look_at))
+                     point_at_designator=ds.EdEntityDesignator(robot, id=point_at, name='point_at_des'),
+                     look_at_designator=ds.EdEntityDesignator(robot, id=look_at, name='look_at_des'))
         sm.execute()
     else:
         print "Please provide robot name, point_at ID and look_at ID as argument."
