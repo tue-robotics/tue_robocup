@@ -67,6 +67,8 @@ class Arm(arms.Arm):
         self.occupied_by = None
         self._operational = True
         self.wait_for_motion_done = mock.MagicMock()
+        self.has_joint_goal = lambda goal: True
+        self.has_joint_trajectory = lambda goal: True
 
 
 class Base(MockedRobotPart):
