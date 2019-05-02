@@ -191,7 +191,7 @@ class DetectWaving(smach.State):
         self.clear_queue()
 
         waving_persons = []
-        print(waving_persons)
+        rospy.loginfo("Waving persons %s", waving_persons)
         i = 0
         while not rospy.is_shutdown() and not waving_persons:
             header, waving_persons = self.wait_for_waving_person(head_samples=head_samples)
@@ -230,7 +230,7 @@ class DetectWaving(smach.State):
 
     def wait_for_waving_person(self, head_samples):
         waving_persons = []
-        print(head_samples)
+        rospy.loginfo("Head samples %d", head_samples)
         for i in range(0, head_samples):
             if rospy.is_shutdown():
                 return
