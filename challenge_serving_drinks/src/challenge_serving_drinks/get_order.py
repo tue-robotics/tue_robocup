@@ -338,7 +338,7 @@ class GetOrder(smach.StateMachine):
                     person_name=operator_name,
                     nr_tries=5),
                 transitions={"succeeded": "ASK_DRINK",
-                             "failed": "failed"}
+                             "failed": "failed"}  # ToDo: fallback
             )
 
             smach.StateMachine.add(
