@@ -51,7 +51,7 @@ class PointAt(smach.State):
         else:
             look_at_ent = point_at_ent  # type: Entity
 
-        arm = self._arm_designator.resolve()  # type: PublicArm
+        arm = self._robot.leftArm() # self._arm_designator.resolve()  # type: PublicArm
         if not arm:
             rospy.logerr("Could not resolve _arm_designator")
             return "failed"
