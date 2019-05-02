@@ -5,6 +5,7 @@ import smach
 from hmi_msgs.msg import QueryResult
 from robocup_knowledge import load_knowledge
 from robot_skills.util.entity import Entity
+from robot_skills.classification_result import ClassificationResult
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
@@ -175,6 +176,29 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    transitions={'spoken': 'succeeded'})
 
 
+class CheckVolumeEmpty(smach.StateMachine):
+    def __init__(self, robot, entity_des, volume):
+        smach.StateMachine.__init__(self, outcomes=['empty', 'occupied', 'failed'])
+
+        seen_entities_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
+
+        with self:
+            smach.StateMachine.add('INSPECT',
+                                   states.Inspect(robot, entity_des, searchArea=volume, objectIDsDes=seen_entities_des),
+                                   transitions = {"done": "CHECK",
+                                                  "failed": "failed"})
+
+            @smach.cb_interface(outcomes=['empty', 'occupied'])
+            def check_occupied(userdata):
+                seen_entities = seen_entities_des.resolve()
+                if seen_entities:
+                    return 'occupied'
+                else:
+                    return 'empty'
+            smach.StateMachine.add('CHECK', smach.CBState(check_occupied),
+                                   transitions={'empty': 'empty',
+                                                'occupied': 'occupied'})
+
 class FindEmptySeat(smach.StateMachine):
     def __init__(self, robot, seats_to_inspect):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
@@ -184,8 +208,18 @@ class FindEmptySeat(smach.StateMachine):
         # That can be done with an Inspect and then query for any Entities inside that volume.
         # If there are none, then the seat is empty
         with self:
-            pass
+            for seat_id in seats_to_inspect:
+                seat_ent_des = ds.EntityByIdDesignator(robot, seat_id)
 
+                smach.StateMachine.add('CHECK_SEAT_EMPTY',
+                                       CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of'),
+                                       transitions={'occupied': 'INTRODUCE_GUEST',  # TODO: next state...
+                                                    'empty': 'SAY_SEAT_EMPTY',
+                                                    'failed': 'abort'})
+
+            smach.StateMachine.add('SAY_SEAT_EMPTY',
+                                   states.Say(robot, ["Please sit here"], block=True),
+                                   transitions={'spoken': 'succeeded'})
 
 class ChallengeReceptionist(smach.StateMachine):
     def __init__(self, robot):
