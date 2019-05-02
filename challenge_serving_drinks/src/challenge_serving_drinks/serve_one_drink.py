@@ -76,7 +76,7 @@ class ServeOneDrink(smach.StateMachine):
                     area=CHALLENGE_KNOWLEDGE.room_id,
                     name=operator_name,
                     discard_other_labels=True,
-                    found_entity_designator=operator_des.writable),
+                    found_entity_designator=operator_des.writeable),
                 transitions={"found": "GOTO_OPERATOR",
                              "not_found": "SAY_NOT_FOUND"}
             )
