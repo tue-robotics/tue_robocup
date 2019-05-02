@@ -58,9 +58,10 @@ if __name__ == '__main__':
             res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
             segmented = res.new_ids + res.updated_ids
             object_classifications = robot.ed.classify(ids=segmented)
-            rospy.sleep(1)
+            rospy.sleep(2)
+            robot.speech.speak("Say Cheese")
             count += 1
         robot.speech.speak("Pause")
-        rospy.sleep(3)
+        rospy.sleep(5)
 
 
