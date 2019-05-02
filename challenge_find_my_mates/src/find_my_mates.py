@@ -4,7 +4,7 @@ import math
 import PyKDL as kdl
 from robot_smach_states.util import startup
 from smach import StateMachine, State
-from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize
+from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize, WaitTime
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_skills.util import kdl_conversions
 from collections import Counter
@@ -81,7 +81,9 @@ class FindPeople(State):
                         detected_person = None
 
                     for person in self._people:
-                        if person.pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist:
+                        if person.pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist\
+                            and EntityByIdDesignator(self._robot, id=STARTING_POINT).pose.extractVectorStamped()\
+                                - detected_person.pose.extractVectorStamped() > self._min_dist:
                             self._people[n] = detected_person
 
                     if len(self._people) == (n+1):
@@ -103,7 +105,7 @@ class FindPeople(State):
 
             self._robot.head.close()
             # rospy.sleep(2.0)
-            return 'Failed'
+            return 'Done'
 
 
 class IdentifyPeople(State):
@@ -177,7 +179,7 @@ class ReportPeople(State):
                 c = Counter(temp_prop)
                 attributes[prop] = c[getattr(person, prop)]
                 if prop == 'gender_confidence':
-                    if any(i <= 68 for i in temp_prop):
+                    if any(j <= 68 for j in temp_prop):
                         del attributes['gender']
                     del attributes['gender_confidence']
                 del attributes['id']
@@ -185,11 +187,7 @@ class ReportPeople(State):
                     if attributes[attr] == 1:
                         unique_property = attr
 
-            if unique_property == 'glasses' and getattr(person, unique_property):
-                sentence += "and the person was wearing glasses."
-            elif unique_property == 'glasses':
-                sentence += "and the person was not wearing glasses."
-            elif unique_property == 'gender':
+            if unique_property == 'gender':
                 sentence += "and the person was a {}.".format(getattr(person, unique_property))
             elif unique_property == 'tall':
                 sentence += "and the person was tall. "
@@ -215,11 +213,16 @@ def setup_statemachine(robot):
 
         StateMachine.add('INIT_POSE',
                          SetInitialPose(robot, STARTING_POINT),
-                         transitions={'done': 'GO_TO_SEARCH_POSE',
+                         transitions={'done': 'WAIT_TIME',
                                       'preempted': 'aborted',
                                       # This transition will never happen at the moment.
                                       #  It should never go to aborted.
-                                      'error': 'GO_TO_SEARCH_POSE'})
+                                      'error': 'WAIT_TIME'})
+
+        StateMachine.add('WAIT_TIME',
+                         WaitTime(robot, waittime=2.0),
+                         transitions={'waited': 'GO_TO_SEARCH_POSE',
+                                      'preempted': 'aborted'})
 
         StateMachine.add('GO_TO_SEARCH_POSE',
                          NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.7),
