@@ -68,7 +68,6 @@ class FindPeople(State):
 
             if raw_detections:
                 for detection in raw_detections:
-
                     roi = detection.roi
                     try:
                         person_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
@@ -101,6 +100,8 @@ class FindPeople(State):
                     if len(self._people) > 3:
                         self._robot.head.close()
                         return 'Done'
+            else:
+                continue
 
             self._robot.head.close()
             # rospy.sleep(2.0)
