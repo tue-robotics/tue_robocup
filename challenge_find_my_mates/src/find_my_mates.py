@@ -4,7 +4,7 @@ import math
 import PyKDL as kdl
 from robot_smach_states.util import startup
 from smach import StateMachine, State
-from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize, WaitTime
+from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize, WaitTime, StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_skills.util import kdl_conversions
 from collections import Counter
@@ -22,7 +22,7 @@ class FindPeople(State):
     Locate three people in the provided room
     """
 
-    def __init__(self, robot, search_timeout=30, look_distance=2.0, min_dist=0.5):
+    def __init__(self, robot, search_timeout=60, look_distance=2.0, min_dist=0.5):
         """ Initialization method
         :param robot: robot api object
         :param search_timeout: (float) maximum time the robot is allowed to search
@@ -64,6 +64,8 @@ class FindPeople(State):
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
 
+            # if not raw_detections:
+            #     continue
             if raw_detections:
                 for detection in raw_detections:
                     roi = detection.roi
@@ -100,12 +102,10 @@ class FindPeople(State):
                     if len(self._people) > 3:
                         self._robot.head.close()
                         return 'Done'
-            else:
-                continue
 
-            self._robot.head.close()
-            # rospy.sleep(2.0)
-            return 'Done'
+        self._robot.head.close()
+        # rospy.sleep(2.0)
+        return 'Done'
 
 
 class IdentifyPeople(State):
@@ -206,18 +206,23 @@ def setup_statemachine(robot):
 
     with sm:
 
-        StateMachine.add('INITIALIZE',
-                         Initialize(robot),
-                         transitions={'initialized': 'INIT_POSE',
-                                      'abort': 'aborted'})
-
-        StateMachine.add('INIT_POSE',
-                         SetInitialPose(robot, STARTING_POINT),
-                         transitions={'done': 'WAIT_TIME',
-                                      'preempted': 'aborted',
-                                      # This transition will never happen at the moment.
-                                      #  It should never go to aborted.
-                                      'error': 'WAIT_TIME'})
+        # StateMachine.add('INITIALIZE',
+        #                  Initialize(robot),
+        #                  transitions={'initialized': 'INIT_POSE',
+        #                               'abort': 'aborted'})
+        #
+        # StateMachine.add('INIT_POSE',
+        #                  SetInitialPose(robot, STARTING_POINT),
+        #                  transitions={'done': 'WAIT_TIME',
+        #                               'preempted': 'aborted',
+        #                               # This transition will never happen at the moment.
+        #                               #  It should never go to aborted.
+        #                               'error': 'WAIT_TIME'})
+        StateMachine.add('START_CHALLENGE',
+                         StartChallengeRobust(robot, initial_pose=STARTING_POINT, door=False),
+                         transitions={'Done': 'GO_TO_SEARCH_POSE',
+                                      'Aborted': 'aborted',
+                                      'Failed': 'WAIT_TIME'})
 
         StateMachine.add('WAIT_TIME',
                          WaitTime(robot, waittime=2.0),
@@ -225,10 +230,10 @@ def setup_statemachine(robot):
                                       'preempted': 'aborted'})
 
         StateMachine.add('GO_TO_SEARCH_POSE',
-                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.7),
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.4),
                          transitions={'arrived': 'LOCATE_PEOPLE',
                                       'goal_not_defined': 'LOCATE_PEOPLE',
-                                      'unreachable': 'GO_BACK_TO_OPERATOR'})
+                                      'unreachable': 'LOCATE_PEOPLE'})
 
         # locate three (or all four) people
         StateMachine.add('LOCATE_PEOPLE',
