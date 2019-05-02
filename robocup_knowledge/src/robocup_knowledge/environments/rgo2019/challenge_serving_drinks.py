@@ -1,7 +1,7 @@
 # SERVING DRINKS KNOWLEDGE FILE RGO2019
 
 # Bar where the drinks are located
-bar_id = "bar"
+bar_id = "bar_table"
 
 # Room where the party takes place, i.e., where the robot should look for people
 room_id = "living_room"
