@@ -58,7 +58,11 @@ class FindPerson(smach.State):
             geometry_msgs.msg.PointStamped, queue_size=10)
         self._probability_threshold = probability_threshold
         self._discard_other_labels = discard_other_labels
+
+        if found_entity_designator:
+            ds.is_writeable(found_entity_designator)
         self._found_entity_designator = found_entity_designator
+
         self._room = room
 
     def execute(self, userdata=None):
