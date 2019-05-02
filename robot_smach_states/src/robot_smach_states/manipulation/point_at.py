@@ -8,7 +8,7 @@ from robot_skills.util.entity import Entity
 import robot_smach_states.util.designators as ds
 
 # System
-from numpy import tan
+from numpy import arctan2
 import sys
 
 
@@ -62,7 +62,7 @@ class PointAt(smach.State):
         # tan(angle) = dy / dx
         # angle = tan(dy / dx)
         # Arm to position in a safe way
-        rotate_base = tan(vector_in_bs.vector.y()/ vector_in_bs.vector.x())  # Radians
+        rotate_base = arctan2(vector_in_bs.vector.y(), vector_in_bs.vector.x())  # Radians
         # For 1 second, rotate the base with vth == rotate_base.
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
         self._robot.base.force_drive(0, 0, rotate_base, 1)
