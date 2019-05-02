@@ -9,6 +9,7 @@ import smach
 # TU/e Robotics
 import robot_smach_states as states
 import PyKDL as kdl
+
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
@@ -64,7 +65,7 @@ class AskDrink(smach.State):
                 grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
         return grammar, "O"
 
-    def execute(self, ud):
+    def execute(self, userdata=None):
 
         self._robot.head.look_at_standing_person()
 
@@ -154,7 +155,7 @@ class DetectWaving(smach.State):
     This is based on the 'WaitForCustomer' class of the the restaurant challenge. Might
     be nice to merge these two.
     """
-    def __init__(self, robot, caller_id, kitchen_designator):
+    def __init__(self, robot, caller_id):
         """ Constructor
 
         :param robot: robot object
@@ -162,7 +163,6 @@ class DetectWaving(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
         self._robot = robot
         self._caller_id = caller_id
-        self._kitchen_designator = kitchen_designator
         self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
         self.people_queue = Queue(maxsize=1)
 
@@ -171,7 +171,7 @@ class DetectWaving(smach.State):
             rospy.logdebug('Received %d persons in the people cb', len(persons.people))
         self.people_queue.put(persons)
 
-    def execute(self):
+    def execute(self, userdata=None):
 
         self._robot.head.reset()
         self._robot.head.wait_for_motion_done()
@@ -215,18 +215,6 @@ class DetectWaving(smach.State):
         pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
         rospy.loginfo('update customer position to %s', pose)
         self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
-
-        # look at the barman
-        kitchen_entity = self._kitchen_designator.resolve()
-        target_pose = kitchen_entity._pose
-        head_target_kdl = target_pose * kdl.Vector(20.0, 0.0, 0.0)
-        head_target = VectorStamped(x=head_target_kdl.x(), y=head_target_kdl.y(), z=head_target_kdl.z(),
-                                    frame_id="/map")
-        # pose = kitchen_entity.pose.extractVectorStamped()
-        # pose.vector[2] = 1.5
-
-        self._robot.head.look_at_point(head_target)
-        self._robot.head.wait_for_motion_done()
 
         return 'succeeded'
 
@@ -288,8 +276,13 @@ class GetOrder(smach.StateMachine):
             # * Ask person to wave
             # * Drive to waiving person (a la restaurant)
             # * If not waving person (for fixed period/until operator is detected):
-                # * Ask person to step in front
-                # * Wait (for fixed period/until operator is detected) for operator to step in front of the robot
+            # * Ask person to step in front
+            # * Wait (for fixed period/until operator is detected) for operator to step in front of the robot
+
+            # Customer
+            caller_id = "customer"
+            caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
+                                                                                          id=caller_id)
 
             smach.StateMachine.add(
                 "ASK_FOR_WAVING",
@@ -302,7 +295,7 @@ class GetOrder(smach.StateMachine):
 
             smach.StateMachine.add(
                 "WAIT_FOR_WAVING",
-                DetectWaving(robot, caller_id, kitchen_designator),
+                DetectWaving(robot, caller_id),
                 transitions={'succeeded': 'SAY_I_HAVE_SEEN',
                              'aborted': 'ASK_STEP_IN_FRONT'}
             )
@@ -320,8 +313,8 @@ class GetOrder(smach.StateMachine):
                     entity_designator=caller_designator,
                     radius=1.1),
                 transitions={'arrived': 'LEARN_OPERATOR',
-                            'unreachable': 'ASK_STEP_IN_FRONT',
-                            'goal_not_defined': 'WAIT_FOR_WAVING'})
+                             'unreachable': 'ASK_STEP_IN_FRONT',
+                             'goal_not_defined': 'WAIT_FOR_WAVING'})
 
             smach.StateMachine.add(
                 "ASK_STEP_IN_FRONT",
