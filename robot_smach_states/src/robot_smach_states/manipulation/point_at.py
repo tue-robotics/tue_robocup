@@ -8,7 +8,7 @@ from robot_skills.util.entity import Entity
 import robot_smach_states.util.designators as ds
 
 # System
-from numpy import arctan2
+from numpy import arctan2, degrees
 import sys
 
 
@@ -51,7 +51,7 @@ class PointAt(smach.State):
         else:
             look_at_ent = point_at_ent  # type: Entity
 
-        arm = self._robot.leftArm() # self._arm_designator.resolve()  # type: PublicArm
+        arm = self._arm_designator.resolve()  # type: PublicArm
         if not arm:
             rospy.logerr("Could not resolve _arm_designator")
             return "failed"
@@ -65,12 +65,14 @@ class PointAt(smach.State):
         rotate_base = arctan2(vector_in_bs.vector.y(), vector_in_bs.vector.x())  # Radians
         # For 1 second, rotate the base with vth == rotate_base.
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
+        rospy.loginfo("Rotate base by {:.3f}deg".format(degrees(rotate_base)))
         self._robot.base.force_drive(0, 0, rotate_base, 1)
 
         arm.send_joint_goal('point_at', timeout=0)
         arm.wait_for_motion_done()
 
         self._robot.head.look_at_point(look_at_ent.pose.extractVectorStamped())
+        self._robot.head.wait_for_motion_done()
 
         return 'succeeded'
 
