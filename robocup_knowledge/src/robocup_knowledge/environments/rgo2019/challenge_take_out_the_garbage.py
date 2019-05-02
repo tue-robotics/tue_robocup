@@ -8,4 +8,4 @@ common = knowledge_loader.load_knowledge("common")
 starting_point = "initial_pose"
 trashbin_id = "trash_bin"
 trashbin_id2 = "trash_can"
-drop_zone_id = "kitchen_table"
+drop_zone_id = "drop_area"
