@@ -42,7 +42,7 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-rooms = location_rooms + ['corridor']
+rooms = location_rooms + ['hallway']
 
 objects = [
     {'category': 'other',               'name': 'trashbag',                         'color': 'black',       'volume': 100,      'weight': 22},
