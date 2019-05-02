@@ -8,7 +8,6 @@ import smach
 
 # TU/e Robotics
 import robot_smach_states as states
-import PyKDL as kdl
 
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
@@ -187,11 +186,9 @@ class DetectWaving(smach.State):
                        -10,
                        20,
                        -20]
-        rospy.loginfo("head_samples %d", head_samples)
         self.clear_queue()
 
         waving_persons = []
-        rospy.loginfo("Waving persons %s", waving_persons)
         i = 0
         while not rospy.is_shutdown() and not waving_persons:
             header, waving_persons = self.wait_for_waving_person(head_samples=head_samples)
@@ -233,7 +230,6 @@ class DetectWaving(smach.State):
 
     def wait_for_waving_person(self, head_samples):
         waving_persons = []
-        rospy.loginfo("Head samples %d", head_samples)
         for i in range(0, head_samples):
             if rospy.is_shutdown():
                 return
@@ -280,7 +276,7 @@ class GetOrder(smach.StateMachine):
             # * Say that everyone looks like having a drink
             # * Ask person to wave
             # * Drive to waiving person (a la restaurant)
-            # * If not waving person (for fixed period/until operator is detected):
+            # * If not waving person (for fixed period):
             # * Ask person to step in front
             # * Wait (for fixed period/until operator is detected) for operator to step in front of the robot
 
@@ -299,28 +295,32 @@ class GetOrder(smach.StateMachine):
 
             smach.StateMachine.add(
                 "WAIT_FOR_WAVING",
-                DetectWaving(robot, caller_id),
+                DetectWaving(
+                    robot=robot,
+                    caller_id=caller_id),
                 transitions={'succeeded': 'SAY_I_HAVE_SEEN',
                              'aborted': 'ASK_STEP_IN_FRONT'}
             )
 
             smach.StateMachine.add(
                 'SAY_I_HAVE_SEEN',
-                states.Say(robot, 'I have seen a waving person, I will be there shortly!'),
-                # transitions={"spoken": 'NAVIGATE_TO_WAVING'}
-                transitions={"spoken": 'ASK_STEP_IN_FRONT'}
+                states.Say(
+                    robot=robot,
+                    sentence='I have seen a waving person, I will be there shortly!',
+                    look_at_standing_person=True),
+                transitions={"spoken": 'NAVIGATE_TO_WAVING'}
             )
 
-            # smach.StateMachine.add(
-            #     'NAVIGATE_TO_WAVING',
-            #     states.NavigateToObserve(
-            #         robot=robot,
-            #         entity_designator=caller_designator,
-            #         radius=1.1),
-            #     transitions={'arrived': 'LEARN_OPERATOR',
-            #                  'unreachable': 'ASK_STEP_IN_FRONT',
-            #                  'goal_not_defined': 'WAIT_FOR_WAVING'}
-            # )
+            smach.StateMachine.add(
+                'NAVIGATE_TO_WAVING',
+                states.NavigateToObserve(
+                    robot=robot,
+                    entity_designator=caller_designator,
+                    radius=1.1),
+                transitions={'arrived': 'LEARN_OPERATOR',
+                             'unreachable': 'ASK_STEP_IN_FRONT',
+                             'goal_not_defined': 'WAIT_FOR_WAVING'}
+            )
 
             smach.StateMachine.add(
                 "ASK_STEP_IN_FRONT",
@@ -333,17 +333,22 @@ class GetOrder(smach.StateMachine):
 
             smach.StateMachine.add(
                 "LEARN_OPERATOR",
-                states.LearnPerson(robot, person_name=operator_name, nr_tries=5),
-                transitions={"succeeded": "succeeded",
+                states.LearnPerson(
+                    robot=robot,
+                    person_name=operator_name,
+                    nr_tries=5),
+                transitions={"succeeded": "ASK_DRINK",
                              "failed": "failed"}
             )
 
-            # smach.StateMachine.add(
-            #     "ASK_DRINK",
-            #     AskDrink(robot, drink_designator.writeable),
-            #     transitions={"succeeded": "succeeded",
-            #                  "failed": "failed"},
-            # )
+            smach.StateMachine.add(
+                "ASK_DRINK",
+                AskDrink(
+                    robot=robot,
+                    drink_designator=drink_designator.writeable),
+                transitions={"succeeded": "succeeded",
+                             "failed": "failed"},
+            )
 
 
 if __name__ == "__main__":
