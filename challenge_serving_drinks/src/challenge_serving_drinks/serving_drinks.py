@@ -30,15 +30,6 @@ class ServingDrinks(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         with self:
-            # ToDo: check in rulebook how challenge starts
-            # Start challenge via StartChallengeRobust
-            # smach.StateMachine.add(
-            #     'START_CHALLENGE_ROBUST',
-            #     states.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point, use_entry_points=False),
-            #     transitions={'Done': 'SAY_HI',
-            #                  'Aborted': 'aborted',
-            #                  'Failed': 'SAY_HI'}
-            # )
 
             smach.StateMachine.add(
                 "SAY_HI",
