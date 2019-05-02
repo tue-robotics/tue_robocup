@@ -67,7 +67,7 @@ class PointAt(smach.State):
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
         self._robot.base.force_drive(0, 0, rotate_base, 1)
 
-        arm.send_joint_trajectory('point_at', timeout=0)  # TODO define pointing pose
+        arm.send_joint_goal('point_at', timeout=0)
         arm.wait_for_motion_done()
 
         self._robot.head.look_at_point(look_at_ent.pose.extractVectorStamped())
