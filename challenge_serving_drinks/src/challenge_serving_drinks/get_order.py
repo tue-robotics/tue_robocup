@@ -100,7 +100,7 @@ class AskDrink(smach.State):
                 continue
 
             # Store the type in the designator
-            self._drink_designator.write(speech_result.semantics)
+            self._drink_designator.write(str(speech_result.semantics))
 
             return "succeeded"
 
