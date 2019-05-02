@@ -35,6 +35,8 @@ from clean_inspect import CleanInspect
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
 
+from robot_skills import robot
+
 class VerifyWorldModelInfo(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["failed", "done"])

@@ -14,15 +14,32 @@ starting_point = "initial_pose"
 starting_pose = "gpsr_meeting_point"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
+
 cleaning_locations = [
-    {'name': 'couch_table',   'room': 'livingroom', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
-    {'name': 'dinner_table',  'room': 'livingroom', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'sideboard',       'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'tv_table',        'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'left_arm_chair',  'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'coffee_table',    'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'couch',           'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'right_arm_chair', 'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'high_table',      'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'bookcase',        'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'trash_bin',       'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
 
-    {'name': 'cabinet',       'room': 'kitchen',    'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'desk',            'room': 'bedroom',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'bed',             'room': 'bedroom',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'side_table',      'room': 'bedroom',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
 
-    {'name': 'hallway_table', 'room': 'hallway',    'navigate_area': 'near',   'segment_areas': ['on_top_of']}
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'dishwasher',      'room': 'kitchen',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'kitchen_table',   'room': 'kitchen',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'cabinet',         'room': 'kitchen',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'trash_can',       'room': 'kitchen',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+
+    {'name': 'bar_table',       'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'sofa',            'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'cupboard',        'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['on_top_of']}
 ]
-
 grammar_target = "T"
 
 grammar = "T -> kitchen"
