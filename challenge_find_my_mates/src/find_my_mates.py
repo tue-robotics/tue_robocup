@@ -4,19 +4,17 @@ import math
 import PyKDL as kdl
 from robot_smach_states.util import startup
 from smach import StateMachine, State
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, SetInitialPose, Initialize
+from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_skills.util import kdl_conversions
 from collections import Counter
+from robocup_knowledge import load_knowledge
 
-STARTING_POINT = "registration_table1"
+challenge_knowledge = load_knowledge('challenge_find_my_mates')
 
-room_id = "living_room"
-
-
-# source_entity = 'dining_table'
-# dishwasher_id = 'dishwasher'
-# dishwasher_navigate_area = 'to_the_side_of'
+STARTING_POINT = challenge_knowledge.starting_point
+ROOM_ID = challenge_knowledge.room
+SEARCH_POINT = challenge_knowledge.search_point
 
 
 class FindPeople(State):
@@ -78,7 +76,7 @@ class FindPeople(State):
                     detected_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
                                                                               center_point=person_pos_kdl)
 
-                    room_entity = self._robot.ed.get_entity(id=room_id)
+                    room_entity = self._robot.ed.get_entity(id=ROOM_ID)
                     if not room_entity.in_volume(detected_person.pose.extractVectorStamped(), 'in'):
                         detected_person = None
 
@@ -142,7 +140,7 @@ class ReportPeople(State):
     def __init__(self, robot):
         State.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
         self._robot = robot
-        self._room_entity = self._robot.ed.get_entity(id=room_id)
+        self._room_entity = self._robot.ed.get_entity(id=ROOM_ID)
 
     def execute(self, userdata=None):
         entities = self._robot.ed.get_entities()
@@ -178,6 +176,10 @@ class ReportPeople(State):
                 temp_prop = [getattr(person, prop) for person in person_entities]
                 c = Counter(temp_prop)
                 attributes[prop] = c[getattr(person, prop)]
+                if prop == 'gender_confidence':
+                    if any(i <= 68 for i in temp_prop):
+                        del attributes['gender']
+                    del attributes['gender_confidence']
                 del attributes['id']
                 for attr in attributes:
                     if attributes[attr] == 1:
@@ -220,7 +222,7 @@ def setup_statemachine(robot):
                                       'error': 'GO_TO_SEARCH_POSE'})
 
         StateMachine.add('GO_TO_SEARCH_POSE',
-                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="find_my_mates_1"), radius=0.7),
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.7),
                          transitions={'arrived': 'LOCATE_PEOPLE',
                                       'goal_not_defined': 'LOCATE_PEOPLE',
                                       'unreachable': 'GO_BACK_TO_OPERATOR'})
