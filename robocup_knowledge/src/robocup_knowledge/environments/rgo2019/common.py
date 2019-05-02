@@ -68,10 +68,10 @@ objects = [
     {'category': 'food',                'name': 'sauerkraut',                       'color': 'whitegreen',  'volume': 223,      'weight': 113},
     {'category': 'food',                'name': 'seasoning_mix',                    'color': 'orange',      'volume': 297,      'weight': 85},
     {'category': 'food',                'name': 'tomatoes',                         'color': 'blue',        'volume': 223,      'weight': 113},
-    
+
     {'category': 'container',           'name': '-',                                'color': 'beige',       'volume': 3487,     'weight': 43},
     {'category': 'container',           'name': '-',                                'color': 'white',       'volume': 4508,     'weight': 120},
-    
+
     {'category': 'cleaning_stuff',      'name': 'cloth',                            'color': 'yellow',      'volume': 315,      'weight': 37},
     {'category': 'cleaning_stuff',      'name': 'dishwasher_tab',                   'color': 'yellowish',   'volume': 100,      'weight': 22},
 
@@ -125,6 +125,11 @@ def get_location_from_room(room_id):
         return most_probable_location_in_room_map[room_id]
     return None
 
+
+drink_names = [obj['name'] for obj in objects if obj['category'] == 'drink']
+drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
+for dn in drink_names:
+    drink_spec += "OPTIONS['{drink}'] -> {drink}\n".format(drink=dn)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ''' colors from printing on screen '''
