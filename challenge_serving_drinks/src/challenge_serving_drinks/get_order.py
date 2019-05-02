@@ -291,7 +291,7 @@ class GetOrder(smach.StateMachine):
                     robot=robot,
                     sentence="Looks like everyone has a drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "WAIT_FOR_WAVING"}
+                transitions={"spoken": "ASK_STEP_IN_FRONT"}
             )
 
             smach.StateMachine.add(
