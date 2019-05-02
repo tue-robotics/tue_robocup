@@ -1,5 +1,6 @@
 # ROS
 import smach
+import rospy
 
 # Robot smach states
 import robot_smach_states as states
@@ -56,7 +57,17 @@ class ServeOneDrink(smach.StateMachine):
                     entityDes=bar_designator,
                     navigation_area="in_front_of"),
                 transitions={"done": "GRASP_DRINK",
-                             "failed": "failed"}  # ToDo: fallback?
+                             "failed": "INSPECT_FALLBACK"}  # ToDo: fallback?
+            )
+
+            smach.StateMachine.add(
+                "INSPECT_FALLBACK",
+                states.Say(
+                    robot=robot,
+                    sentence="I am terribly sorry but I did not find you. "
+                             "Please come to me so I can hand over the drink",
+                    look_at_standing_person=True),
+                transitions={"spoken": "HAND_OVER"}
             )
 
             # Grasp drink
@@ -67,7 +78,17 @@ class ServeOneDrink(smach.StateMachine):
                     item=drink_designator,
                     arm=arm_designator),
                 transitions={"done": "FIND_OPERATOR",
-                             "failed": "failed"}  # ToDo: fallback?
+                             "failed": "GRASP_FALLBACK"}  # ToDo: fallback?
+            )
+
+            smach.StateMachine.add(
+                "GRASP_FALLBACK",
+                states.Say(
+                    robot=robot,
+                    sentence="I am terribly sorry but I did not find you. "
+                             "Please come to me so I can hand over the drink",
+                    look_at_standing_person=True),
+                transitions={"spoken": "HAND_OVER"}
             )
 
             # Find operator
@@ -111,5 +132,15 @@ class ServeOneDrink(smach.StateMachine):
                     robot=robot,
                     arm_designator=arm_designator),
                 transitions={"succeeded": "succeeded",
-                             "failed": "failed"}  # ToDo: fallback
+                             "failed": "HAND_OVER_FALLBACK"}  # ToDo: fallback
+            )
+
+            smach.StateMachine.add(
+                "HAND_OVER_FALLBACK",
+                states.Say(
+                    robot=robot,
+                    sentence="I am terribly sorry but I did not find you. "
+                             "Please come to me so I can hand over the drink",
+                    look_at_standing_person=True),
+                transitions={"spoken": "HAND_OVER"}
             )
