@@ -4,6 +4,7 @@ import smach
 # TU/e Robotics
 import robot_smach_states as states
 from robot_skills.robot import Robot
+from robocup_knowledge import knowledge_loader
 
 # Challenge serving drinks
 from .serve_one_drink import ServeOneDrink
@@ -35,7 +36,7 @@ class ServingDrinks(smach.StateMachine):
                 'START_CHALLENGE_ROBUST',
                 states.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point, use_entry_points=False),
                 transitions={'Done': 'SAY_HI',
-                             'Aborted': 'done',
+                             'Aborted': 'aborted',
                              'Failed': 'SAY_HI'}
             )
 
