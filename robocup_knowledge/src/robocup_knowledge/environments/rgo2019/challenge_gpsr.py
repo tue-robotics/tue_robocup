@@ -86,7 +86,7 @@ grammar += '\nLOCATION[{"id": "gpsr_entrance", "type": "waypoint"}] -> entrance'
 ###############################################################################
 
 grammar += """
-V_FIND -> find | locate | look for | pinpoint | spot
+V_FIND -> find | locate | look for | pinpoint | spot | meet
 
 TYPE_OR_CATEGORY -> NAMED_OBJECT | OBJECT_CATEGORY
 UNNAMED_PERSON -> a person | someone
@@ -113,6 +113,10 @@ VP[{"action": "find", "object": X}] -> V_FIND DET TYPE_OR_CATEGORY[X]
 grammar += """
 V_FOLLOW -> come behind | come after | follow | go after | go behind
 
+VP[{"action": "follow", "target": X}] -> V_FOLLOW NAMED_PERSON[X]
+VP[{"action": "follow", "target": X, "source-location": Y, "target-location": Z}] -> V_FOLLOW NAMED_PERSON[X] from DET ROOM_OR_LOCATION[Y] to DET ROOM_OR_LOCATION[Z]
+
+VP[{"action": "follow", "target-location": Y, "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON to DET ROOM_OR_LOCATION[Y]
 VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 """
 # VP[{"action": "follow", "object": X, "location-from":Y, "location-to":Z}] -> V_FOLLOW NAMED_PERSON[X] from DET LOCATION[Y] to DET LOCATION[Z]
@@ -125,6 +129,9 @@ VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany | conduct
+
+VP[{"action": "guide", "object": X, "target-location": Y}] -> V_GUIDE NAMED_PERSON[X] to the LOCATION[Y]
+
 
 VP[{"action": "guide", "object": X, "source-location": Y, "target-location": Z}] -> V_GUIDE NAMED_PERSON[X] to the LOCATION[Z] you GEN_VERB find PPN_PERSON MEETING_PP the LOCATION[Y]
 VP[{"action": "guide", "object": X, "source-location": Y, "target-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the LOCATION[Y] to the LOCATION[Z]
