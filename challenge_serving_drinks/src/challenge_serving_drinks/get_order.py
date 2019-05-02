@@ -281,8 +281,7 @@ class GetOrder(smach.StateMachine):
 
             # Customer
             caller_id = "customer"
-            caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
-                                                                                          id=caller_id)
+            caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot, id=caller_id)
 
             smach.StateMachine.add(
                 "ASK_FOR_WAVING",
@@ -314,7 +313,8 @@ class GetOrder(smach.StateMachine):
                     radius=1.1),
                 transitions={'arrived': 'LEARN_OPERATOR',
                              'unreachable': 'ASK_STEP_IN_FRONT',
-                             'goal_not_defined': 'WAIT_FOR_WAVING'})
+                             'goal_not_defined': 'WAIT_FOR_WAVING'}
+            )
 
             smach.StateMachine.add(
                 "ASK_STEP_IN_FRONT",
