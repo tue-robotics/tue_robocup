@@ -154,7 +154,7 @@ class TakeOut(smach.StateMachine):
         with self:
             # Take Out 1
             smach.StateMachine.add("GO_TO_BIN",
-                                   states.NavigateToObserve(robot, trashbin_designator),
+                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.5),
                                    transitions={"arrived": "INSPECT",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
