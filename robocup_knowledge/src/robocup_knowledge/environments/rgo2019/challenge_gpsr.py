@@ -11,7 +11,7 @@ not_understood_sentences = [
 
 initial_pose = "initial_pose"
 starting_pose = "gpsr_meeting_point"
-exit_waypoint = "gpsr_exit_door"
+exit_waypoint = "exit_1_rips"
 
 grammar_target = "T"
 
@@ -156,6 +156,8 @@ VP[{"action": "navigate-to", "target-location": X}] -> V_GOTO the ROOM_OR_LOCATI
 grammar += """
 V_PICKUP -> get | grasp | take | pick up | grab | retrieve
 
+VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET TYPE_OR_CATEGORY[X] from the LOCATION[Y]
+
 VP[{"action": "pick-up", "object": X}] -> V_PICKUP DET NAMED_OBJECT[X]
 VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAMED_OBJECT[X] from the LOCATION[Y]
 
@@ -223,8 +225,8 @@ grammar += """
 V_SAY -> tell | say
 V_SAY_UNDEFINED -> speak | say something
 
-VPS[{"action": "say"}] -> V_SAY_UNDEFINED
-VPS[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
+VP[{"action": "say"}] -> V_SAY_UNDEFINED
+VP[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 """
 
 grammar += '\nSAY_SENTENCE["time"] -> the time'
