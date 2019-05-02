@@ -187,7 +187,7 @@ class DetectWaving(smach.State):
                        -10,
                        20,
                        -20]
-
+        rospy.loginfo("head_samples %d", head_samples)
         self.clear_queue()
 
         waving_persons = []
@@ -223,9 +223,12 @@ class DetectWaving(smach.State):
         while True:
             try:
                 self.people_queue.get_nowait()
+                rospy.loginfo("trying")
             except Empty:
                 # There is probably an old measurement blocking in the callback thread, also remove that one
-                self.people_queue.get()
+                if not self.people_queue.empty():
+                    self.people_queue.get()
+                rospy.loginfo("returning")
                 return
 
     def wait_for_waving_person(self, head_samples):
@@ -291,7 +294,7 @@ class GetOrder(smach.StateMachine):
                     robot=robot,
                     sentence="Looks like everyone has a drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "ASK_STEP_IN_FRONT"}
+                transitions={"spoken": "WAIT_FOR_WAVING"}
             )
 
             smach.StateMachine.add(
