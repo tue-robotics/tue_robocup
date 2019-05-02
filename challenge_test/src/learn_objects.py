@@ -55,7 +55,9 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         count = 0
         while not rospy.is_shutdown() and count < 10:
-            robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
+            res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
+            segmented = res.new_ids + res.updated_ids
+            object_classifications = robot.ed.classify(ids=segmented)
             rospy.sleep(1)
             count += 1
         robot.speech.speak("Pause")
