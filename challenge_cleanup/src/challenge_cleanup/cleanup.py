@@ -45,8 +45,13 @@ class VerifyWorldModelInfo(smach.State):
     def execute(self, userdata):
 
         ids = [e.id for e in self._robot.ed.get_entities()]
-        if "trashbin" not in ids:
-            return "failed"
+        for loc in challenge_knowledge.cleaning_locations:
+            if loc["room"] == "living_room":
+                if "trash_bin" not in ids:
+                    return "failed"
+            if loc["room"] == "kitchen":
+                if "trash_can" not in ids:
+                    return "failed"
 
         for place in challenge_knowledge.cleaning_locations:
             if place["name"] not in ids:
