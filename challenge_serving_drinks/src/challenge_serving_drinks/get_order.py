@@ -290,7 +290,7 @@ class GetOrder(smach.StateMachine):
                     robot=robot,
                     sentence="Looks like everyone has a drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "WAIT_FOR_WAVING"}
+                transitions={"spoken": "ASK_STEP_IN_FRONT"}
             )
 
             smach.StateMachine.add(
@@ -326,7 +326,7 @@ class GetOrder(smach.StateMachine):
                 "ASK_STEP_IN_FRONT",
                 states.Say(
                     robot=robot,
-                    sentence="Oh, I cannot reach you! Please step in front of me to give your order",
+                    sentence="Please step in front of me to give your order",
                     look_at_standing_person=True),
                 transitions={"spoken": "LEARN_OPERATOR"}
             )
