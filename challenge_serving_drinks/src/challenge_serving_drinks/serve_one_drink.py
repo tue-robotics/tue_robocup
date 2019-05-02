@@ -76,7 +76,7 @@ class ServeOneDrink(smach.StateMachine):
                     area=CHALLENGE_KNOWLEDGE.room_id,
                     name=operator_name,
                     discard_other_labels=True,
-                    found_entity_designator=None),  # ToDo: add in order to move there
+                    found_entity_designator=operator_des.writable),
                 transitions={"found": "GOTO_OPERATOR",
                              "not_found": "SAY_NOT_FOUND"}
             )
@@ -86,7 +86,7 @@ class ServeOneDrink(smach.StateMachine):
                 'GOTO_OPERATOR',
                 states.NavigateToObserve(
                     robot=robot,
-                    entity_designator=None),
+                    entity_designator=operator_des),
                 transitions={'arrived': 'HAND_OVER',
                              'unreachable': 'SAY_NOT_FOUND',
                              'goal_not_defined': 'abort'})
