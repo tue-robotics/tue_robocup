@@ -16,6 +16,9 @@ locations = [
     {'name': 'kitchen_table',   'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
     {'name': 'kitchen_cabinet', 'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
     {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'cabinet',         'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'white_drawer',    'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'trash_can',       'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
 
     {'name': 'tv_table',        'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'},
@@ -25,6 +28,8 @@ locations = [
     {'name': 'coffee_table',    'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'sideboard',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'high_table',      'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'trash_bin',       'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'coathanger',      'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
 
 
     {'name': 'bar_table',       'room': 'bar',              'category': 'table',        'manipulation': 'yes'},
@@ -40,6 +45,8 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 rooms = location_rooms + ['corridor']
 
 objects = [
+    {'category': 'other',               'name': 'trashbag',                         'color': 'black',       'volume': 100,      'weight': 22},
+
     {'category': 'kitchen_stuff',       'name': 'bowl',                             'color': 'green',       'volume': 458,      'weight': 65},
     {'category': 'kitchen_stuff',       'name': 'cup',                              'color': 'yellow',      'volume': 300,      'weight': 50},
     {'category': 'kitchen_stuff',       'name': 'fork',                             'color': 'orange',      'volume': 22,       'weight': 10},
@@ -48,7 +55,11 @@ objects = [
     {'category': 'kitchen_stuff',       'name': 'spoon',                            'color': 'blue',        'volume': 23,       'weight': 10},
 
     {'category': 'drink',               'name': 'apple_juice',                      'color': 'brown',       'volume': 216,      'weight': 200},
+    {'category': 'drink',               'name': 'big_coke',                         'color': 'brownish',    'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'big_lemon_juice',                  'color': 'transparent', 'volume': 270,      'weight': 222},    
+    {'category': 'drink',               'name': 'big_water',                        'color': 'transparent', 'volume': 270,      'weight': 222},
     {'category': 'drink',               'name': 'iso_drink',                        'color': 'blue',        'volume': 404,      'weight': 325},
+    {'category': 'drink',               'name': 'milk',                             'color': 'blue',        'volume': 216,      'weight': 200},
     {'category': 'drink',               'name': 'orange_juice',                     'color': 'orange',      'volume': 216,      'weight': 200},
     {'category': 'drink',               'name': 'red_spritzer',                     'color': 'red',         'volume': 270,      'weight': 222},
     {'category': 'drink',               'name': 'sparkling_water',                  'color': 'transparent', 'volume': 270,      'weight': 222},
@@ -69,8 +80,8 @@ objects = [
     {'category': 'food',                'name': 'seasoning_mix',                    'color': 'orange',      'volume': 297,      'weight': 85},
     {'category': 'food',                'name': 'tomatoes',                         'color': 'blue',        'volume': 223,      'weight': 113},
 
-    {'category': 'container',           'name': '-',                                'color': 'beige',       'volume': 3487,     'weight': 43},
-    {'category': 'container',           'name': '-',                                'color': 'white',       'volume': 4508,     'weight': 120},
+    {'category': 'container',           'name': 'basket',                           'color': 'white',       'volume': 3487,     'weight': 43},
+    {'category': 'container',           'name': 'tray',                             'color': 'gray',        'volume': 4508,     'weight': 120},
 
     {'category': 'cleaning_stuff',      'name': 'cloth',                            'color': 'yellow',      'volume': 315,      'weight': 37},
     {'category': 'cleaning_stuff',      'name': 'dishwasher_tab',                   'color': 'yellowish',   'volume': 100,      'weight': 22},
