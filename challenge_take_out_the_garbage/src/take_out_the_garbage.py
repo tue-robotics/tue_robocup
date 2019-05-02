@@ -1,12 +1,13 @@
-# ROS
+#!/usr/bin/python
 import smach
 
 # Robot smach states
 import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
-from challenge_take_out_the_garbage.take_out import DefaultGrabDesignator, GrabSingleItem, TakeOut
+from take_out import DefaultGrabDesignator, TakeOut
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
+
 
 
 class TakeOutGarbage(smach.StateMachine):
@@ -80,4 +81,3 @@ class TakeOutGarbage(smach.StateMachine):
                                    states.Say(robot, "I have finished taking out the trash.",
                                               block=False),
                                    transitions={'spoken': 'succeeded'})
-
