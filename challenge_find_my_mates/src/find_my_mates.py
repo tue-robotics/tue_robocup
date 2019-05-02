@@ -4,18 +4,17 @@ import math
 import PyKDL as kdl
 from robot_smach_states.util import startup
 from smach import StateMachine, State
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say
+from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_skills.util import kdl_conversions
+from collections import Counter
+from robocup_knowledge import load_knowledge
 
-STARTING_POINT = "initial_pose"
+challenge_knowledge = load_knowledge('challenge_find_my_mates')
 
-room_id = "living_room"
-
-
-# source_entity = 'dining_table'
-# dishwasher_id = 'dishwasher'
-# dishwasher_navigate_area = 'to_the_side_of'
+STARTING_POINT = challenge_knowledge.starting_point
+ROOM_ID = challenge_knowledge.room
+SEARCH_POINT = challenge_knowledge.search_point
 
 
 class FindPeople(State):
@@ -67,7 +66,6 @@ class FindPeople(State):
 
             if raw_detections:
                 for detection in raw_detections:
-
                     roi = detection.roi
                     try:
                         person_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
@@ -78,7 +76,7 @@ class FindPeople(State):
                     detected_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
                                                                               center_point=person_pos_kdl)
 
-                    room_entity = self._robot.ed.get_entity(id=room_id)
+                    room_entity = self._robot.ed.get_entity(id=ROOM_ID)
                     if not room_entity.in_volume(detected_person.pose.extractVectorStamped(), 'in'):
                         detected_person = None
 
@@ -86,7 +84,7 @@ class FindPeople(State):
                         if person.pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist:
                             self._people[n] = detected_person
 
-                    if self._people[n]:
+                    if len(self._people) == (n+1):
                         rospy.loginfo(
                             "I found someone at {}".format(self._people[n].pose.extractVectorStamped(),
                                                            block=False))
@@ -100,6 +98,8 @@ class FindPeople(State):
                     if len(self._people) > 3:
                         self._robot.head.close()
                         return 'Done'
+            else:
+                continue
 
             self._robot.head.close()
             # rospy.sleep(2.0)
@@ -140,7 +140,7 @@ class ReportPeople(State):
     def __init__(self, robot):
         State.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
         self._robot = robot
-        self._room_entity = self._robot.ed.get_entity(id=room_id)
+        self._room_entity = self._robot.ed.get_entity(id=ROOM_ID)
 
     def execute(self, userdata=None):
         entities = self._robot.ed.get_entities()
@@ -168,46 +168,64 @@ class ReportPeople(State):
         sentence = "I found many people but none were as pretty as you."
         for i, person in enumerate(person_entities):
             sentence += "I found someone near the {}.\n".format(closest_entity[i].id)
-            # from collections import Counter
-            # attributes = dict()
-            # glasses = [person.glasses for person in person_entities]
-            # c = Counter(glasses)
-            # attributes['glasses'] = c[person.glasses]
-            # # unique_description = False
-            # # while not unique_description:
-            # #     for properties in person_entities:
-            # #         from collections import Counter
-            # #     car_list = ["ford", "toyota", "toyota", "honda"]
-            #     cars = [model for model in c if c[person] == 1]
-    
 
-            if person.wearing_glasses:
-                sentence += "the person was wearing glasses, "
-            if person.gender.confidence > 0.65:
-                sentence += "the person was a {}, ".format(person.gender)
-            if person.length > 1.75:
-                sentence += "the person was tall, "
-            if person.shirt_colour:
-                sentence += "and the person was wearing a mostly {} shirt.".format(person.shirt_colour)
-                # sentence += "age?"
+            unique_property = None
+            properties = [prop for prop in dir(person) if not prop.startswith('__')]
+            attributes = dict()
+            for prop in properties:
+                temp_prop = [getattr(person, prop) for person in person_entities]
+                c = Counter(temp_prop)
+                attributes[prop] = c[getattr(person, prop)]
+                if prop == 'gender_confidence':
+                    if any(i <= 68 for i in temp_prop):
+                        del attributes['gender']
+                    del attributes['gender_confidence']
+                del attributes['id']
+                for attr in attributes:
+                    if attributes[attr] == 1:
+                        unique_property = attr
+
+            if unique_property == 'glasses' and getattr(person, unique_property):
+                sentence += "and the person was wearing glasses."
+            elif unique_property == 'glasses':
+                sentence += "and the person was not wearing glasses."
+            elif unique_property == 'gender':
+                sentence += "and the person was a {}.".format(getattr(person, unique_property))
+            elif unique_property == 'tall':
+                sentence += "and the person was tall. "
+            elif unique_property == 'shirt_colour':
+                sentence += "and the person was wearing a mostly {} shirt.".format(getattr(person, unique_property))
+
             if i > 2:
                 break
 
-        self._robot.speech.speak(sentence)
+        self._robot.speech.speak(sentence, block=True)
         return 'Done'
 
 
 def setup_statemachine(robot):
-    sm = StateMachine(outcomes=['done', 'failed'])
+    sm = StateMachine(outcomes=['done', 'failed', 'aborted'])
 
     with sm:
-        # Start challenge via StartChallengeRobust
-        StateMachine.add('START_CHALLENGE_ROBUST',
-                         StartChallengeRobust(robot, STARTING_POINT, use_entry_points=False),
-                         # True is not implemented yet
-                         transitions={'Done': 'LOCATE_PEOPLE',
-                                      'Aborted': 'done',
-                                      'Failed': 'LOCATE_PEOPLE'})
+
+        StateMachine.add('INITIALIZE',
+                         Initialize(robot),
+                         transitions={'initialized': 'INIT_POSE',
+                                      'abort': 'aborted'})
+
+        StateMachine.add('INIT_POSE',
+                         SetInitialPose(robot, STARTING_POINT),
+                         transitions={'done': 'GO_TO_SEARCH_POSE',
+                                      'preempted': 'aborted',
+                                      # This transition will never happen at the moment.
+                                      #  It should never go to aborted.
+                                      'error': 'GO_TO_SEARCH_POSE'})
+
+        StateMachine.add('GO_TO_SEARCH_POSE',
+                         NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.7),
+                         transitions={'arrived': 'LOCATE_PEOPLE',
+                                      'goal_not_defined': 'LOCATE_PEOPLE',
+                                      'unreachable': 'GO_BACK_TO_OPERATOR'})
 
         # locate three (or all four) people
         StateMachine.add('LOCATE_PEOPLE',
