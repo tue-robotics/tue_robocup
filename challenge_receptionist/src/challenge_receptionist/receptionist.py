@@ -173,7 +173,11 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
                                               block=True,
                                               look_at_standing_person=False),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'RESET_ARM'})
+
+            smach.StateMachine.add('RESET_ARM',
+                                   states.ResetArmsTorsoHead(robot),
+                                   transitions={'done': 'succeeded'})
 
 
 class CheckVolumeEmpty(smach.StateMachine):
