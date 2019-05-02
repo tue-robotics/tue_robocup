@@ -180,12 +180,12 @@ class TakeOut(smach.StateMachine):
                                                 "failed": "failed"})
 
             # if it fails with inspect or grabbing
-            smach.StateMachine.add("FAILED_TO_SEE", states.Say(robot, "I can not see the bag, so please hand over the "
+            smach.StateMachine.add("FAILED_TO_SEE", states.Say(robot, "I cannot see the bag, so please hand over the "
                                                                       "bag to me when I say it.",
                                               block=False),
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
-            smach.StateMachine.add("FAILED_TO_GRAB", states.Say(robot, "I can not grab the bag, so please hand over the "
+            smach.StateMachine.add("FAILED_TO_GRAB", states.Say(robot, "I cannot grab the bag, so please hand over the "
                                                                       "bag to me when I say it.",
                                               block=False),
                                    transitions={'spoken': 'ASK_HANDOVER'})
@@ -194,11 +194,15 @@ class TakeOut(smach.StateMachine):
                                                                             grabbed_entity_label='thrash'),
                                    transitions={"succeeded": "RECEIVED_TRASH_BAG",
                                                 "failed": "failed",
-                                                "timeout": "failed"})
+                                                "timeout": "TIMEOUT"})
 
             smach.StateMachine.add("RECEIVED_TRASH_BAG", states.Say(robot, "I received the thrash bag. I will throw"
                                                                            " it away, please move away.", block=True),
                                    transitions={'spoken': 'GO_TO_COLLECTION_ZONE'})
+
+            smach.StateMachine.add("TIMEOUT", states.Say(robot, "I have not received anything, so I will stop",
+                                                         block=False),
+                                   transitions={'spoken': "failed"})
 
             # if it fails with placing it just goes to handover pose and drops it, depending on the drop location?
             smach.StateMachine.add("FAILED_TO_PLACE", states.Say(robot, "I will try to place it again."),
