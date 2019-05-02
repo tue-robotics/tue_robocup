@@ -137,9 +137,9 @@ class IntroduceGuestToOperator(smach.StateMachine):
         with self:
             smach.StateMachine.add('FIND_OPERATOR',
                                    states.FindPersonInRoom(robot,
-                                                           challenge_knowledge.waypoint_livingroom['id'],
-                                                           challenge_knowledge.operator_name,
-                                                           operator_des),
+                                                           area=challenge_knowledge.waypoint_livingroom['id'],
+                                                           name=challenge_knowledge.operator_name,
+                                                           found_entity_designator=operator_des.writeable),
                                    transitions={'found': 'GOTO_OPERATOR',
                                                 'not_found': 'GOTO_OPERATOR'})
 
@@ -157,7 +157,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
             smach.StateMachine.add('FIND_GUEST',
                                    states.FindPerson(robot=robot,
                                                      person_label=guest_name_des,
-                                                     found_entity_designator=guest_ent_des),
+                                                     found_entity_designator=guest_ent_des.writeable),
                                    transitions={"found": "POINT_AT_GUEST",
                                                 "failed": "abort"})
 
