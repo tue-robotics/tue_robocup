@@ -265,7 +265,7 @@ def setup_statemachine(robot):
         # check how to uniquely define them
         StateMachine.add('REPORT_PEOPLE',
                          ReportPeople(robot),
-                         transitions={'Done': 'IDENTIFY_PEOPLE',
+                         transitions={'Done': 'done',
                                       'Aborted': 'done',
                                       'Failed': 'failed'})
 
@@ -275,3 +275,8 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('find_my_mates_exec')
     startup(setup_statemachine, challenge_name="find_my_mates")
+
+
+# Ask operator for names
+# Ask people for names
+# Provide descriptions of desired people
