@@ -307,19 +307,20 @@ class GetOrder(smach.StateMachine):
             smach.StateMachine.add(
                 'SAY_I_HAVE_SEEN',
                 states.Say(robot, 'I have seen a waving person, I will be there shortly!'),
-                transitions={"spoken": 'NAVIGATE_TO_WAVING'}
+                # transitions={"spoken": 'NAVIGATE_TO_WAVING'}
+                transitions={"spoken": 'ASK_STEP_IN_FRONT'}
             )
 
-            smach.StateMachine.add(
-                'NAVIGATE_TO_WAVING',
-                states.NavigateToObserve(
-                    robot=robot,
-                    entity_designator=caller_designator,
-                    radius=1.1),
-                transitions={'arrived': 'LEARN_OPERATOR',
-                             'unreachable': 'ASK_STEP_IN_FRONT',
-                             'goal_not_defined': 'WAIT_FOR_WAVING'}
-            )
+            # smach.StateMachine.add(
+            #     'NAVIGATE_TO_WAVING',
+            #     states.NavigateToObserve(
+            #         robot=robot,
+            #         entity_designator=caller_designator,
+            #         radius=1.1),
+            #     transitions={'arrived': 'LEARN_OPERATOR',
+            #                  'unreachable': 'ASK_STEP_IN_FRONT',
+            #                  'goal_not_defined': 'WAIT_FOR_WAVING'}
+            # )
 
             smach.StateMachine.add(
                 "ASK_STEP_IN_FRONT",
@@ -333,16 +334,16 @@ class GetOrder(smach.StateMachine):
             smach.StateMachine.add(
                 "LEARN_OPERATOR",
                 states.LearnPerson(robot, person_name=operator_name, nr_tries=5),
-                transitions={"succeeded": "ASK_DRINK",
+                transitions={"succeeded": "succeeded",
                              "failed": "failed"}
             )
 
-            smach.StateMachine.add(
-                "ASK_DRINK",
-                AskDrink(robot, drink_designator.writeable),
-                transitions={"succeeded": "succeeded",
-                             "failed": "failed"},
-            )
+            # smach.StateMachine.add(
+            #     "ASK_DRINK",
+            #     AskDrink(robot, drink_designator.writeable),
+            #     transitions={"succeeded": "succeeded",
+            #                  "failed": "failed"},
+            # )
 
 
 if __name__ == "__main__":
