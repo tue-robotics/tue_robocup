@@ -255,6 +255,11 @@ class ED(MockedRobotPart):
         return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
 
 
+class MockedTfListener(mock.MagicMock):
+    def __init__(self, *args, **kw):
+        super(MockedTfListener, self).__init__(*args, **kw)
+
+
 class Mockbot(robot.Robot):
     """
     Interface to all parts of Mockbot. When initializing Mockbot, you can choose a list of components
