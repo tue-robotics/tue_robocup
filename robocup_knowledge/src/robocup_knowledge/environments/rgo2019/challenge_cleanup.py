@@ -14,6 +14,7 @@ initial_pose = "initial_pose"
 starting_point = "cleanup_initial"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
+# Trashbin and trashcan are not looking points, so must not be in the cleaning_locations list
 
 cleaning_locations = [
     {'name': 'sideboard',       'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
