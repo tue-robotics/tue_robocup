@@ -50,7 +50,7 @@ class ServingDrinks(smach.StateMachine):
 
                 smach.StateMachine.add(
                     "SERVE_DRINK_{}".format(idx),
-                    ServeOneDrink(robot, idx),
+                    ServeOneDrink(robot),
                     transitions={"succeeded": next_state,
                                  "failed": next_state,
                                  "aborted": "aborted"}
