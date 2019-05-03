@@ -9,6 +9,8 @@ import PyKDL as kdl
 import geometry_msgs
 import rospy
 import smach
+from sensor_msgs.msg import Image, CameraInfo
+import message_filters
 
 # TU/e Robotics
 import robot_smach_states as states
@@ -65,6 +67,20 @@ class FindPerson(smach.State):
 
         self._room = room
 
+        self._image_data = None
+
+        # camera topics
+        camera_base = '{robot_name}/{camera}'.format(robot_name=self._robot.robot_name, camera='head_rgbd_sensor')  # TODO: parametrize camera
+        depth_info_sub = message_filters.Subscriber('{}/depth/camera_info'.format(camera_base), CameraInfo)
+        depth_sub = message_filters.Subscriber('{}/depth/image'.format(camera_base), Image)
+        rgb_sub = message_filters.Subscriber('{}/rgb/image'.format(camera_base), Image)
+        self._ts = message_filters.TimeSynchronizer([rgb_sub, depth_sub, depth_info_sub], 1)
+        self._ts.registerCallback(self.callback)
+
+    def callback(self, rgb, depth, depth_info):
+        rospy.loginfo('got image cb')
+        self._image_data = (rgb, depth, depth_info)
+
     def execute(self, userdata=None):
         person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
 
@@ -92,35 +108,25 @@ class FindPerson(smach.State):
             if i == len(head_goals):
                 i = 0
             self._robot.head.wait_for_motion_done()
-            raw_detections = self._robot.perception.detect_faces()
-            if self._discard_other_labels:
-                best_detection = self._robot.perception.get_best_face_recognition(
-                    raw_detections, person_label, probability_threshold=self._probability_threshold)
+
+            success, found_people = self._robot.ed.detect_people(*self._image_data)
+            found_names = {person.name: person for person in found_people}
+
+            found_person = None
+
+            if self.discard_other_labels:
+                found_person = found_names.get(person_label, None)
             else:
-                if raw_detections:
-                    # Take the biggest ROI
-                    best_detection = max(raw_detections, key=lambda r: r.roi.height)
-                else:
-                    best_detection = None
-
-            rospy.loginfo("best_detection = {}".format(best_detection))
-            if not best_detection:
-                continue
-            roi = best_detection.roi
-            try:
-                person_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
-            except Exception as e:
-                rospy.logerr("head.project_roi failed: %s", e)
-                return 'failed'
-            person_pos_ros = kdl_conversions.kdl_vector_stamped_to_point_stamped(person_pos_kdl)
-            self._face_pos_pub.publish(person_pos_ros)
-
-            found_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
-                                                                   center_point=person_pos_kdl)
+                # find which of those is closest
+                robot_pose = self._robot.base.get_location()
+                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
 
             if self._room:
                 room_entity = self._robot.ed.get_entity(id=self._room)
                 if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
+                    # If the person is not in the room we are looking for, ignore the person
+                    rospy.loginfo("We found a person '{}:{}' but was not in desired room '{}' so ignoring that person"
+                                  .format(found_person.id, found_person.name, room_entity.id))
                     found_person = None
 
             if found_person:
@@ -128,10 +134,10 @@ class FindPerson(smach.State):
                 self._robot.speech.speak("I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
-                self._robot.ed.update_entity(
-                    id=person_label,
-                    frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "/map"),
-                    type="waypoint")
+                # self._robot.ed.update_entity(
+                #     id=person_label,
+                #     frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "/map"),
+                #     type="waypoint")
 
                 if self._found_entity_designator:
                     self._found_entity_designator.write(found_person)
