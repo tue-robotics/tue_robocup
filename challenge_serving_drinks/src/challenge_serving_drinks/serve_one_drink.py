@@ -1,6 +1,5 @@
 # ROS
 import smach
-import rospy
 
 # Robot smach states
 import robot_smach_states as states

@@ -8,7 +8,7 @@ from robot_skills.robot import Robot
 # Challenge serving drinks
 from .serve_one_drink import ServeOneDrink
 
-NR_DRINKS = 6
+NR_DRINKS = 3
 
 
 class ServingDrinks(smach.StateMachine):
