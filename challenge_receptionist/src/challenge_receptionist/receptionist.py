@@ -2,7 +2,7 @@ import rospy
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
-from hmi_msgs.msg import QueryResult
+from hmi import HMIResult
 from robocup_knowledge import load_knowledge
 from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
@@ -26,7 +26,7 @@ class GuestDescriptionStrDesignator(ds.Designator):
         return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drinkname)
 
 
-class FieldOfQueryResult(ds.Designator):
+class FieldOfHMIResult(ds.Designator):
     """
     Extract a field of a QueryResult
     """
@@ -38,9 +38,9 @@ class FieldOfQueryResult(ds.Designator):
         :param semantics_field: str (or string designator) used in query_result.semantics[semantics_field]
         :param name: Name for this designator for debugging purposes
         """
-        super(FieldOfQueryResult, self).__init__(resolve_type=str, name=name)
+        super(FieldOfHMIResult, self).__init__(resolve_type=str, name=name)
 
-        ds.check_type(query_result_des, QueryResult)
+        ds.check_type(query_result_des, HMIResult)
         ds.check_type(semantics_field, str)
 
         self.query_result_des = query_result_des
@@ -236,8 +236,8 @@ class ChallengeReceptionist(smach.StateMachine):
 
         self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
         self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
-        self.guest1_drink_des = ds.VariableDesignator(resolve_type=QueryResult, name='guest1_drink')
-        self.guest1_drinkname_des = FieldOfQueryResult(self.guest1_drink_des, semantics_field='drink', name='guest1_drinkname')
+        self.guest1_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest1_drink')
+        self.guest1_drinkname_des = FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink', name='guest1_drinkname')
 
         with self:
             smach.StateMachine.add('INITIALIZE',

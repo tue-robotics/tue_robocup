@@ -20,7 +20,7 @@ from robot_skills import robot
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from hmi_msgs.msg import QueryResult
+from hmi import HMIResult
 from hmi.common import random_sentence, parse_sentence
 
 
@@ -291,7 +291,7 @@ class Mockbot(robot.Robot):
         def mock_query(description, grammar, target, timeout):
             sentence = random_sentence(grammar, target)
             semantics = parse_sentence(sentence, grammar, target)
-            return QueryResult(sentence=sentence, semantics=semantics)
+            return HMIResult(sentence=sentence, semantics=semantics)
         self.hmi.query = mock_query
 
         # Body parts
