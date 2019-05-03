@@ -8,7 +8,9 @@ from robot_skills.arms import PseudoObjects
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
-class dropPoseDesignator(Designator):
+from robot_skills.util.kdl_conversions import FrameStamped
+
+class dropPoseDesignator(ds.Designator):
     def __init__(self, robot, drop_height, name):
         super(dropPoseDesignator, self).__init__(resolve_type=FrameStamped, name=name)
 
@@ -161,13 +163,13 @@ class PlaceSingleItem(smach.State):
 """
 class ForceGrabTrash:
     grabs the bag with in a hacky way
-    
+
     def __init__(self):
 
         smach.State.__init__(self, outcomes=["done", "failed"])
 
         smach.StateMachine.add("SAY_TRY_AGAIN", states.Say("The thrash bag looks difficult to grab, let me try to grab")
-    
+
 """
 
 class TakeOut(smach.StateMachine):
