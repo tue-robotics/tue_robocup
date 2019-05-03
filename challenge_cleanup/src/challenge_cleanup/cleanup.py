@@ -105,7 +105,7 @@ def setup_statemachine(robot, room):
         #                         transitions={ "initialized"   :"SET_INIT", "abort"         :"Aborted"})
 
         smach.StateMachine.add("SET_INIT",
-                               SetInitialPose(robot, challenge_knowledge.initial_pose),
+                               SetInitialPose(robot, challenge_knowledge.starting_point),
                                    transitions={'done': 'VERIFY',
                                                 'preempted': 'Aborted',
                                                 'error': 'VERIFY'})
@@ -228,6 +228,7 @@ def main():
     robot = Robot()
 
     # Wait for door, enter arena
+    #  skip is defined and set in the launchfile. (TRUE)
     if not skip:
         #s = StartChallengeRobust(robot, challenge_knowledge.initial_pose)
         #s.execute()
