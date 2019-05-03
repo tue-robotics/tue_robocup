@@ -33,7 +33,7 @@ class ServeOneDrink(smach.StateMachine):
         drink_designator = ds.EdEntityDesignator(robot=robot, type=drink_str_designator)
         bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
         arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={})
-        operator_name = "operator_{}".format(idx)
+        operator_name = ds.VariableDesignator(resolve_type=str)
         operator_designator = ds.VariableDesignator(resolve_type=Entity)
 
         with self:
@@ -57,17 +57,17 @@ class ServeOneDrink(smach.StateMachine):
                     entityDes=bar_designator,
                     navigation_area="in_front_of"),
                 transitions={"done": "GRASP_DRINK",
-                             "failed": "INSPECT_FALLBACK"}  # ToDo: fallback?
+                             "failed": "INSPECT_FALLBACK"}
             )
 
             smach.StateMachine.add(
                 "INSPECT_FALLBACK",
                 states.Say(
                     robot=robot,
-                    sentence="I am terribly sorry but I did not find you. "
-                             "Please come to me so I can hand over the drink",
+                    sentence="Oh, I cannot inspect the bar. "
+                             "Please hand me over the drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "HAND_OVER"}
+                transitions={"spoken": "GRASP_DRINK"}  # ToDo: graspFromHuman ?
             )
 
             # Grasp drink
@@ -85,10 +85,10 @@ class ServeOneDrink(smach.StateMachine):
                 "GRASP_FALLBACK",
                 states.Say(
                     robot=robot,
-                    sentence="I am terribly sorry but I did not find you. "
-                             "Please come to me so I can hand over the drink",
+                    sentence="Oh, I cannot reach that. "
+                             "Please hand me over the drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "HAND_OVER"}
+                transitions={"spoken": "FIND_OPERATOR"}  # ToDo: graspFromHuman ?
             )
 
             # Find operator
@@ -110,7 +110,7 @@ class ServeOneDrink(smach.StateMachine):
                 states.NavigateToObserve(
                     robot=robot,
                     entity_designator=operator_designator),
-                transitions={'arrived': 'HAND_OVER',
+                transitions={'arrived': 'SAY_THE_NAME',
                              'unreachable': 'SAY_NOT_FOUND',
                              'goal_not_defined': 'SAY_NOT_FOUND'})
 
@@ -125,7 +125,17 @@ class ServeOneDrink(smach.StateMachine):
                 transitions={"spoken": "HAND_OVER"}
             )
 
-            # Hand over the drink
+            # Say the name and hand over the drink
+
+            smach.StateMachine.add(
+                "SAY_THE_NAME",
+                states.Say(
+                    robot=robot,
+                    sentence="Hey {}, I am bringing your drink".format(operator_name.resolve()),
+                    look_at_standing_person=True),
+                transitions={"spoken": "HAND_OVER"}
+            )
+
             smach.StateMachine.add(
                 "HAND_OVER",
                 states.HandoverToHuman(
@@ -142,5 +152,5 @@ class ServeOneDrink(smach.StateMachine):
                     sentence="I am terribly sorry but I did not find you. "
                              "Please come to me so I can hand over the drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "HAND_OVER"}
+                transitions={"spoken": "succeeded"}  # ToDo: handOver
             )

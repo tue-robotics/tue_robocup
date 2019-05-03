@@ -328,8 +328,43 @@ class GetOrder(smach.StateMachine):
                     robot=robot,
                     sentence="Please step in front of me to give your order",
                     look_at_standing_person=True),
+                transitions={"spoken": "LEARN_NAME"}
+            )
+
+            smach.StateMachine.add(
+                "LEARN_NAME",
+                states.AskPersonName(
+                    robot=robot,
+                    person_name_des=operator_name.writeable,
+                    name_options=COMMON_KNOWLEDGE.names,
+                    default_name='john',
+                    nr_tries=2),
+                transitions={"succeeded": "LEARN_OPERATOR",
+                             "failed": "LEARN_NAME_FALLBACK"}
+            )
+
+            smach.StateMachine.add(
+                "LEARN_NAME_FALLBACK",
+                states.Say(
+                    robot=robot,
+                    sentence="Sorry, I did not get your name, I'll just call you john",
+                    look_at_standing_person=True),
                 transitions={"spoken": "LEARN_OPERATOR"}
             )
+
+            # @smach.cb_interface(outcomes=['succeeded'])
+            # def assign_name(userdata=None):
+            #     operator_name.writeable.write("john")
+            #     if operator_name:
+            #         rospy.loginfo("Name automatically assigned to person {}".format(operator_name))
+            #
+            #     return 'succeeded'
+            #
+            # smach.StateMachine.add(
+            #     'ASSIGN_NAME_FALLBACK',
+            #     smach.CBState(assign_name),
+            #     transitions={'succeeded': 'LEARN_OPERATOR'}
+            # )
 
             smach.StateMachine.add(
                 "LEARN_OPERATOR",
@@ -338,7 +373,16 @@ class GetOrder(smach.StateMachine):
                     person_name=operator_name,
                     nr_tries=5),
                 transitions={"succeeded": "ASK_DRINK",
-                             "failed": "failed"}  # ToDo: fallback
+                             "failed": "LEARN_OPERATOR_FALLBACK"}
+            )
+
+            smach.StateMachine.add(
+                "LEARN_OPERATOR_FALLBACK",
+                states.Say(
+                    robot=robot,
+                    sentence="Something went wrong. I will call you when I'm back",
+                    look_at_standing_person=True),
+                transitions={"spoken": "ASK_DRINK"}
             )
 
             smach.StateMachine.add(
