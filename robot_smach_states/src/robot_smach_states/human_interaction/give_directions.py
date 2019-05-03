@@ -47,7 +47,16 @@ class GiveDirections(smach.State):
     def execute(self, userdata=None):
         # Get the constraints for the global planner
         nav_constraints = OrderedDict()
-        for area in ["in_front_of", "near"]:
+        goal_entity = self._entity_designator.resolve()  # type: Entity
+        if not goal_entity:
+            rospy.logerr("Cannot give directions if I don't know where to go")
+            self._robot.speech.speak("I'm sorry but I don't know where you want to go", mood="sad")
+            return "failed"
+        if goal_entity.is_a("room"):
+            possible_areas = ["in"]
+        else:
+            possible_areas = ["in_front_of", "near"]
+        for area in possible_areas:
             nav_constraints[area] = NavigateToSymbolic.generate_constraint(
                 robot=self._robot,
                 entity_designator_area_name_map={self._entity_designator: area},
