@@ -4,9 +4,10 @@ import math
 import PyKDL as kdl
 from robot_smach_states.util import startup
 from smach import StateMachine, State
-from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize, WaitTime, StartChallengeRobust
+from robot_smach_states import NavigateToWaypoint, SetInitialPose, Initialize, WaitTime, StartChallengeRobust, Say
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_skills.util import kdl_conversions
+from hmi import TimeoutException
 from collections import Counter
 from robocup_knowledge import load_knowledge
 
@@ -200,6 +201,39 @@ class ReportPeople(State):
         self._robot.speech.speak(sentence, block=True)
         return 'Done'
 
+class AskNames(State):
+    """
+    Ask for which three people to describe
+    """
+
+    def __init__(self, robot):
+        State.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
+        self._robot = robot
+        self._tries = 5
+        self._time_out = 30
+
+    def execute(self, userdata=None):
+        self._robot.head.look_at_standing_person()
+        self._robot.speech.speak("Which mates would you like me to find?", block=True)
+
+        try:
+            result = self._robot.hmi.query('What names?', 'T -> ' + ' | '.join(challenge_knowledge.names), 'T',
+                                           timeout=self._time_out)
+            command_recognized = result.sentence
+        except TimeoutException:
+            command_recognized = None
+        if command_recognized == "":
+            self._robot.speech.speak("I am still waiting for a command and did not hear anything")
+        elif command_recognized in challenge_knowledge.names:
+            if command_recognized == "no":
+                self._robot.speech.speak("OK")
+            else:
+                self._robot.speech.speak("OK, I find {}".format(command_recognized))
+            return 'Done'
+        else:
+            self._robot.speech.speak(
+                "I don't understand, I expected a command like " + ", ".join(challenge_knowledge.names))
+            return 'Failed'
 
 def setup_statemachine(robot):
     sm = StateMachine(outcomes=['done', 'failed', 'aborted'])
@@ -211,23 +245,29 @@ def setup_statemachine(robot):
         #                  transitions={'initialized': 'INIT_POSE',
         #                               'abort': 'aborted'})
         #
-        # StateMachine.add('INIT_POSE',
-        #                  SetInitialPose(robot, STARTING_POINT),
-        #                  transitions={'done': 'WAIT_TIME',
-        #                               'preempted': 'aborted',
-        #                               # This transition will never happen at the moment.
-        #                               #  It should never go to aborted.
-        #                               'error': 'WAIT_TIME'})
-        StateMachine.add('START_CHALLENGE',
-                         StartChallengeRobust(robot, initial_pose=STARTING_POINT, door=False),
-                         transitions={'Done': 'GO_TO_SEARCH_POSE',
-                                      'Aborted': 'aborted',
-                                      'Failed': 'WAIT_TIME'})
-
+        StateMachine.add('INIT_POSE',
+                         SetInitialPose(robot, STARTING_POINT),
+                         transitions={'done': 'WAIT_TIME',
+                                      'preempted': 'aborted',
+                                      # This transition will never happen at the moment.
+                                      #  It should never go to aborted.
+                                      'error': 'WAIT_TIME'})
+        # StateMachine.add('START_CHALLENGE',
+        #                  StartChallengeRobust(robot, initial_pose=STARTING_POINT, door=False),
+        #                  transitions={'Done': 'GO_TO_SEARCH_POSE',
+        #                               'Aborted': 'aborted',
+        #                               'Failed': 'WAIT_TIME'})
+        #
         StateMachine.add('WAIT_TIME',
                          WaitTime(robot, waittime=2.0),
                          transitions={'waited': 'GO_TO_SEARCH_POSE',
                                       'preempted': 'aborted'})
+
+        # StateMachine.add('ASK_FOR_NAMES',
+        #                  AskNames(robot),
+        #                  transitions={'Done': 'GO_TO_SEARCH_POSE',
+        #                               'Failed': 'GO_TO_SEARCH_POSE',
+        #                               'Aborted': 'aborted'})
 
         StateMachine.add('GO_TO_SEARCH_POSE',
                          NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.4),
