@@ -18,6 +18,12 @@ Reward: 1000 pts (100 pts per object)
 Bonus: max 500 pts
 
 Adapted from the r5cop_demo challenge (see the repo)
+
+Difference from goal:
+- Robot does not inspect the floor
+- Limited inspection of cabinets
+
+
 """
 
 import rospy
@@ -31,6 +37,7 @@ import hmi
 import robot_smach_states
 from robot_smach_states.util.designators import VariableDesignator, VariableWriter, EntityByIdDesignator
 from clean_inspect import CleanInspect
+from robot_smach_states.utility import SetInitialPose
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
@@ -80,9 +87,15 @@ def setup_statemachine(robot, room):
 
     with sm:
 
-        smach.StateMachine.add( "INITIALIZE",
-                                robot_smach_states.Initialize(robot),
-                                transitions={ "initialized"   :"VERIFY", "abort"         :"Aborted"})
+        # smach.StateMachine.add( "INITIALIZE",
+        #                         robot_smach_states.Initialize(robot),
+        #                         transitions={ "initialized"   :"SET_INIT", "abort"         :"Aborted"})
+
+        smach.StateMachine.add("SET_INIT",
+                               SetInitialPose(robot, challenge_knowledge.initial_pose),
+                                   transitions={'done': 'VERIFY',
+                                                'preempted': 'Aborted',
+                                                'error': 'VERIFY'})
 
         smach.StateMachine.add('VERIFY',
                                 VerifyWorldModelInfo(robot),
@@ -111,7 +124,7 @@ def setup_statemachine(robot, room):
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
                                                                      waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                                 id=challenge_knowledge.starting_pose),
+                                                                                 id=challenge_knowledge.starting_point),
                                                                      radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
                                             "unreachable": "SAY_CLEANED_ROOM",
@@ -209,7 +222,7 @@ def main():
         robot.speech.speak("Moving to the meeting point.", block=False)
         nwc = robot_smach_states.NavigateToWaypoint(robot=robot,
                                  waypoint_designator=EntityByIdDesignator(robot=robot,
-                                                                          id=challenge_knowledge.starting_pose),
+                                                                          id=challenge_knowledge.starting_point),
                                  radius=0.3)
         nwc.execute()
 

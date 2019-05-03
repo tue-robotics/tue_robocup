@@ -10,7 +10,7 @@ This means waypoints on the floor, and known (furniture) object points.
 Exact coordinates of the locations are in ed_object_models.
 """
 
-starting_pose = "initial_pose"
+initial_pose = "initial_pose"
 starting_point = "cleanup_initial"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
@@ -23,7 +23,7 @@ cleaning_locations = [
     {'name': 'couch',           'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
     {'name': 'right_armchair', 'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
     {'name': 'high_table',      'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
-    {'name': 'bookcase',        'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'bookcase',        'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ["shelf1", "shelf2"]},
 #    {'name': 'trash_bin',       'room': 'living_room', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
 
     {'name': 'desk',            'room': 'bedroom',     'navigate_area': 'near',   'segment_areas': ['on_top_of']},

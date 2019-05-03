@@ -12,6 +12,7 @@ challenge_knowledge = load_knowledge('challenge_cleanup')
 
 from PyKDL import Frame
 
+#ToDo: Location for trash depends on the room chosen: trash_bin or trash_can. Not handled yet.
 
 class dropPoseDesignator(Designator):
     def __init__(self, robot, drop_height, name):
@@ -25,7 +26,7 @@ class dropPoseDesignator(Designator):
 
         # Query ed
         try:
-            frame = self._robot.ed.get_entity(id="trashbin")._pose
+            frame = self._robot.ed.get_entity(id="trash_bin")._pose
         except:
             return None
 
@@ -147,7 +148,7 @@ class SelfCleanup(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done','failed'])
 
         trash_place_pose = dropPoseDesignator(robot, 0.6, "drop_pose")
-        trash_designator = EntityByIdDesignator(robot, "trashbin")
+        trash_designator = EntityByIdDesignator(robot, "trash_bin")
         item_store_entity = storePlaceDesignator(robot,
                                                  "store_entity",
                                                  selected_entity_designator)
