@@ -110,7 +110,8 @@ class FindPerson(smach.State):
                 i = 0
             self._robot.head.wait_for_motion_done()
 
-            success, found_people = self._robot.ed.detect_people(*self._image_data)
+            success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
+            found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
             found_names = {person.id: person for person in found_people}
 
             found_person = None
