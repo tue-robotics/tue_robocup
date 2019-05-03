@@ -12,7 +12,7 @@ challenge_knowledge = load_knowledge('challenge_cleanup')
 
 from PyKDL import Frame
 
-#ToDo: Location for trash depends on the room chosen: trash_bin or trash_can. Not handled yet.
+#ToDo: Location for trash depends on the room chosen: trash_bin (living) or trash_can (kitchen). Not handled yet.
 
 class dropPoseDesignator(Designator):
     def __init__(self, robot, drop_height, name):
@@ -25,6 +25,8 @@ class dropPoseDesignator(Designator):
         frame = None
 
         # Query ed
+        #ToDo: Make this happen for the bin in the chosen room...
+
         try:
             frame = self._robot.ed.get_entity(id="trash_bin")._pose
         except:
@@ -143,6 +145,11 @@ class Speak(smach.State):
 
 
 class SelfCleanup(smach.StateMachine):
+    """
+    Grab the current object and:
+    - Bring it to the predefined destination, or
+    - Drop it in the designated waste bin
+    """
     def __init__(self, robot, selected_entity_designator, location_id, segment_area):
 
         smach.StateMachine.__init__(self, outcomes=['done','failed'])
