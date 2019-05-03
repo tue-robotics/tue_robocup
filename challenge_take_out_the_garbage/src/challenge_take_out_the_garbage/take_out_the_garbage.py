@@ -42,8 +42,8 @@ class TakeOutGarbage(smach.StateMachine):
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
                                    states.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
                                    transitions={"Done": "SAY_START_CHALLENGE",
-                                                "Aborted": "aborted",
-                                                "Failed": "failed"})
+                                                "Aborted": "SAY_START_CHALLENGE",
+                                                "Failed": "SAY_START_CHALLENGE"})
 
             smach.StateMachine.add("SAY_START_CHALLENGE",
                                    states.Say(robot, "I will start cleaning up the trash", block= True),
