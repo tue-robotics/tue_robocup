@@ -203,6 +203,8 @@ class ED(MockedRobotPart):
 
             if not id:
                 entity_info.id = str(hash(entity_info))
+            else:
+                entity_info.id = id
             entity_info.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             # entity.data = mock.MagicMock()
             entity_info.data = ""
@@ -217,6 +219,8 @@ class ED(MockedRobotPart):
         super(ED, self).__init__(self)
         self._dynamic_entities = defaultdict(ED.generate_random_entity,
                                      {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
+        # import ipdb; ipdb.set_trace()
+        self._dynamic_entities['operator'] = ED.generate_random_entity(id='operator', type='person')
         self._static_entities = defaultdict(ED.generate_random_entity,
                                      {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
 
@@ -257,7 +261,7 @@ class ED(MockedRobotPart):
         return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
 
     def detect_people(self, rgb, depth, cam_info):
-        return True, [ED.generate_random_entity(type='person') for _ in range(5)]
+        return True, [self._dynamic_entities['operator'].id]
 
 
 class MockedTfListener(mock.MagicMock):
