@@ -1,3 +1,7 @@
+# System
+import math
+from collections import OrderedDict
+
 # ROS
 import PyKDL as kdl
 import rospy
@@ -10,40 +14,46 @@ from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorSta
 
 # Robot Smach States
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
+from robot_smach_states.util.designators.ed_designators import EntityByIdDesignator
 
 
 class GiveDirections(smach.State):
     """
     Robot tells the operator how to get to a certain entity
     """
-    def __init__(self, robot, entity_designator, radius=1.5):
-        # type: (Robot, any) -> any
+    def __init__(self, robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
+        # type: (Robot, EntityByIdDesignator, float, float) -> None
         """
         Init
-
-        :param robot: (Robot) API object
-        :param entity_designator: (EdEntityDesignator) resolving to the entity the operator wants to go to
-        :param radius: passing closer to an entity than this radius, the entity will be mentioned
+        :param robot: API object
+        :type robot: Robot
+        :param entity_designator: resolving to the entity the operator wants to go to
+        :type entity_designator: EdEntityDesignator
+        :param x_threshold: if the entity is closer than this distance in x-direction w.r.t. the path frame
+        it is considered 'passed'
+        :type x_threshold: float
+        :param y_threshold: if the entity is closer than this distance in y-direction w.r.t. the path frame
+        it is considered 'passed'
+        :type y_threshold: float
         """
 
         super(GiveDirections, self).__init__(outcomes=["succeeded", "failed"])
 
         self._robot = robot
         self._entity_designator = entity_designator
-        self._radius = radius
+        self._x_threshold = x_threshold
+        self._y_threshold = y_threshold
 
-    def execute(self, ud):
-
+    def execute(self, userdata=None):
         # Get the constraints for the global planner
+        nav_constraints = OrderedDict()
         for area in ["in_front_of", "near"]:
-            nav_contraints = NavigateToSymbolic.generate_constraint(
+            nav_constraints[area] = NavigateToSymbolic.generate_constraint(
                 robot=self._robot,
                 entity_designator_area_name_map={self._entity_designator: area},
-                entity_lookat_designator=self._entity_designator
-            )
-            if nav_contraints:
-                break
-        if nav_contraints is None:
+                entity_lookat_designator=self._entity_designator)
+
+        if not nav_constraints:
             rospy.logerr("Cannot give directions if I don't know where to go")
             self._robot.speech.speak("I'm sorry but I don't know where you want to go", mood="sad")
             return "failed"
@@ -52,9 +62,13 @@ class GiveDirections(smach.State):
         target_entity = self._entity_designator.resolve()  # type: Entity
 
         # Call the global planner for the shortest path to this entity
-        path = self._robot.base.global_planner.getPlan(position_constraint=nav_contraints[0])
-        if path is None:
+        path = None
+        for name, nav_con in nav_constraints.iteritems():
+            path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
+            if path is not None:
+                break
 
+        if path is None:
             rospy.logerr("No path to {}".format(target_entity.id))
             self._robot.speech.speak("I'm sorry but I don't know how to get to the {}".format(target_entity.id))
             return "failed"
@@ -105,7 +119,8 @@ class GiveDirections(smach.State):
 
         # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
         passed_ids = []
-        for position, room in kdl_path_rooms:
+        for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
+                                                        kdl_path_rooms[1:]):
 
             # Check if the room has changed
             if prev_room_id != room.id:
@@ -114,8 +129,8 @@ class GiveDirections(smach.State):
 
             furniture_objects = furniture_entities_room[room]  # Furniture objects of the room in which this waypoint
             # is situated
-            to_add = []  # will contain tuples (str, distance) with the entity id and the distance between this waypoint
-            # and the center of this entity
+            to_add = []  # will contain tuples (str, distance, str) with the entity id, the distance between this
+            # waypoint and the center of this entity (in x-direction) and the side where the entity is (w.r.t. the path)
             reached_target = False
             for entity in furniture_objects:  # type: Entity
                 rospy.logdebug("\tEntity: {}".format(room.id))
@@ -125,22 +140,28 @@ class GiveDirections(smach.State):
                     rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
                     continue
 
+                # Compute the pose of the entity w.r.t. the 'path'
+                entity_pose_path = self.get_entity_pose_in_path(position, next_position, entity.pose.frame)
+
                 # Check the distance
-                distance = entity.distance_to_2d(position)
-                if distance < self._radius:
-                    rospy.logdebug("Appending {}: {}".format(entity.id, distance))
-                    to_add.append((entity.id, distance))
+                if abs(entity_pose_path.p.x()) < self._x_threshold and abs(entity_pose_path.p.y()) < self._y_threshold:
+                    rospy.logdebug("Appending {}: ({}, {})".format(
+                        entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
+
+                    side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+
+                    to_add.append((entity.id, entity_pose_path.p.y(), side))
 
             # Sort the list based on the distance
             to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
 
             # Add all items to the list
-            for entity_id, _ in to_add:
+            for entity_id, _, side in to_add:
                 if entity_id == target_entity.id:
                     reached_target = True
                     break
                 else:
-                    sentence += "You walk by the {}.\n".format(entity_id)
+                    sentence += "You walk by the {} on your {}.\n".format(entity_id, side)
 
                 passed_ids.append(entity_id)
 
@@ -154,22 +175,65 @@ class GiveDirections(smach.State):
         self._robot.speech.speak(sentence)
 
         # ToDo's:
-        # * Identify left or right
         # * Improve texts
-        # * Break up this execute method into more (standalone/static) methods to improve readability and reusability
+        # * Break up this execute method into more (standalone/static) methods to improve readability and re-usability
 
         return "succeeded"
+
+    @staticmethod
+    def get_entity_pose_in_path(point, next_point, entity_pose):
+        # type: (kdl.Vector, kdl.Vector, kdl.Frame) -> kdl.Frame
+        """
+        Computes the entity pose w.r.t. the virtual frame that is spanned by the two points
+        :param point: First point in fixed frame
+        :type point: kdl.Vector
+        :param next_point: Next point in fixed frame
+        :type next_point: kdl.Vector
+        :param entity_pose: (kdl.Frame) Entity pose in fixed frame
+        :type entity_pose: kdl.Frame
+        :return: Entity pose in virtual 'path' frame
+        :rtype: kdl.Frame
+        """
+        # Determine a 6D path pose
+        path_pose = create_frame_from_points(point, next_point)
+
+        # Transform entity pose into path frame
+        entity_pose_path = path_pose.Inverse() * entity_pose
+
+        return entity_pose_path
+
+
+def create_frame_from_points(p0, p1):
+    # type: (kdl.Vector, kdl.Vector) -> kdl.Frame
+    """
+    Creates a frame from two points. The origin of the frame is the first point. The x-direction points into the
+    direction of the next point
+    :param p0: Origin of the frame
+    :type p0: kdl.Vector
+    :param p1: x-direction of the frame will point to this vector
+    :type p1: kdl.Vector
+    :return: Created frame
+    :rtype: kdl.Frame
+    """
+    unit_x = p1 - p0  # difference
+    unit_x.Normalize()  # normalize it so that Norm is 1.0
+    unit_y = kdl.Rotation.RPY(0.0, 0.0, 0.5 * math.pi) * unit_x
+    unit_z = unit_x * unit_y  # cross-product
+    rotation = kdl.Rotation(unit_x, unit_y, unit_z)
+    return kdl.Frame(rotation, p0)
 
 
 def in_room(room, position):
     # type: (Entity, kdl.Vector) -> bool
     """
     Checks if the given position is in the given room
-
-    :param room: (Entity) Room entity
-    :param position: (kdl.Vector) position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
+    :param room: Room entity
+    :type room: Entity
+    :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
     entities
-    :return: (bool) whether or not the position is in the room
+    :type position: kdl.Vector
+    :return: whether or not the position is in the room
+    :rtype: bool
     """
     if room.in_volume(VectorStamped(vector=position), "in"):
         return True
@@ -180,11 +244,12 @@ def get_room(rooms, position):
     # type: (list[Entity], kdl.Vector) -> Entity
     """
     Checks if the given position is in one of the provided rooms
-
     :param rooms: list(Entity) containing all room entities
-    :param position: (kdl.Vector) position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
-    entities
-    :return: (Entity) room entity
+    :type rooms: list[Entity]
+    :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room entities
+    :type position: kdl.Vector
+    :return: room entity
+    :rtype: Entity
     :raises: (RuntimeError)
     """
     for room in rooms:
@@ -194,16 +259,18 @@ def get_room(rooms, position):
 
 
 if __name__ == "__main__":
-
     # The code in this __main__ are for testing purposes. Once the ToDos of the smach state are processed, this
     # can/should be moved to a different file (or CI test)
 
+    import sys
+    import robot_smach_states.util.designators as ds
+    import numpy as np
+
     def _test_rooms(robot):
+        # type: (Robot) -> None
         """
         Tests the 'get room' method
         """
-        import numpy as np
-
         entities = robot.ed.get_entities()
         room_entities = [e for e in entities if e.type == "room"]
 
@@ -214,10 +281,7 @@ if __name__ == "__main__":
                     room = get_room(room_entities, position)
                     print("Position {} is in the {}".format(position, room.id))
                 except RuntimeError as e:
-                    print e.message
-
-    import sys
-    import robot_smach_states.util.designators as ds
+                    print(e.message)
 
     rospy.init_node('give_directions')
 
@@ -229,7 +293,7 @@ if __name__ == "__main__":
     elif robot_name == 'hero':
         from robot_skills.hero import Hero as Robot
     else:
-        print "unknown robot"
+        print("unknown robot")
         sys.exit()
 
     robot = Robot()
@@ -242,11 +306,10 @@ if __name__ == "__main__":
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(2)  # wait for tf cache to be filled
 
-    rospy.loginfo("Starting giving directions to {}".format(furniture_id))
-
+    rospy.loginfo("Testing the 'get_room' method")
     _test_rooms(robot)
 
+    rospy.loginfo("Starting giving directions to {}".format(furniture_id))
     state = GiveDirections(robot=robot,
-                           entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id),
-                           )
-    state.execute(None)
+                           entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id))
+    state.execute()
