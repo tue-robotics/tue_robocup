@@ -67,7 +67,7 @@ class FindPerson(smach.State):
 
         self._room = room
 
-        self._image_data = None
+        self._image_data = (None, None, None)
 
         # camera topics
         camera_base = '{robot_name}/{camera}'.format(robot_name=self._robot.robot_name, camera='head_rgbd_sensor')  # TODO: parametrize camera
@@ -99,7 +99,8 @@ class FindPerson(smach.State):
 
         i = 0
 
-        while (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
+        rate = rospy.Rate(2)
+        while (rospy.Time.now() - start_time).to_sec() < self._search_timeout and not rospy.is_shutdown():
             if self.preempt_requested():
                 return 'failed'
 
@@ -110,11 +111,11 @@ class FindPerson(smach.State):
             self._robot.head.wait_for_motion_done()
 
             success, found_people = self._robot.ed.detect_people(*self._image_data)
-            found_names = {person.name: person for person in found_people}
+            found_names = {person.id: person for person in found_people}
 
             found_person = None
 
-            if self.discard_other_labels:
+            if self._discard_other_labels:
                 found_person = found_names.get(person_label, None)
             else:
                 # find which of those is closest
@@ -125,8 +126,8 @@ class FindPerson(smach.State):
                 room_entity = self._robot.ed.get_entity(id=self._room)
                 if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
                     # If the person is not in the room we are looking for, ignore the person
-                    rospy.loginfo("We found a person '{}:{}' but was not in desired room '{}' so ignoring that person"
-                                  .format(found_person.id, found_person.name, room_entity.id))
+                    rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
+                                  .format(found_person.id, room_entity.id))
                     found_person = None
 
             if found_person:
@@ -145,6 +146,7 @@ class FindPerson(smach.State):
                 return 'found'
             else:
                 rospy.logwarn("Could not find {}".format(person_label))
+                rate.sleep()
 
         self._robot.head.close()
         rospy.sleep(2.0)

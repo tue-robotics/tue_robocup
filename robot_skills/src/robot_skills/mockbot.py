@@ -198,7 +198,7 @@ class Torso(MockedRobotPart):
 
 class ED(MockedRobotPart):
     @staticmethod
-    def generate_random_entity(id=None):
+    def generate_random_entity(id=None, type=None):
             entity_info = EntityInfo()
 
             if not id:
@@ -209,6 +209,8 @@ class ED(MockedRobotPart):
 
             entity = from_entity_info(entity_info)
             entity._pose = random_kdl_frame()
+            if type:
+                entity.type = type
             return entity
 
     def __init__(self, *args, **kwargs):
@@ -253,6 +255,9 @@ class ED(MockedRobotPart):
     def classify(self, ids, types=None):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
+
+    def detect_people(self, rgb, depth, cam_info):
+        return True, [ED.generate_random_entity(type='person') for _ in range(5)]
 
 
 class MockedTfListener(mock.MagicMock):
