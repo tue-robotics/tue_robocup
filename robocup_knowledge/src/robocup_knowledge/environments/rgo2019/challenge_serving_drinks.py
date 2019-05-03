@@ -11,3 +11,6 @@ operator_name = "default_guest"
 
 # Starting location
 starting_point = "serving_drinks_initial_pose"
+
+# Number of drinks to be served
+NR_DRINKS = 3
