@@ -104,11 +104,22 @@ def setup_statemachine(robot, room):
         #                         robot_smach_states.Initialize(robot),
         #                         transitions={ "initialized"   :"SET_INIT", "abort"         :"Aborted"})
 
-        smach.StateMachine.add("SET_INIT",
-                               SetInitialPose(robot, challenge_knowledge.starting_point),
-                                   transitions={'done': 'VERIFY',
-                                                'preempted': 'Aborted',
-                                                'error': 'VERIFY'})
+        # Start challenge via StartChallengeRobust
+        smach.StateMachine.add("START_CHALLENGE_ROBUST",
+                               robot_smach_states.StartChallengeRobust(robot,challenge_knowledge.starting_point),
+                               transitions={"Done": "VERIFY",
+                                            "Aborted": "VERIFY",
+                                            "Failed": "VERIFY"})
+
+        # smach.StateMachine.add("SAY_START_CHALLENGE",
+        #                        robot_smach_states.Say(robot, "Lets get ready to clean some rooms", block=True),
+        #                        transitions={'spoken': 'VERIFY'})
+
+        # smach.StateMachine.add("SET_INIT",
+        #                        SetInitialPose(robot, challenge_knowledge.starting_point),
+        #                            transitions={'done': 'VERIFY',
+        #                                         'preempted': 'Aborted',
+        #                                         'error': 'VERIFY'})
 
         smach.StateMachine.add('VERIFY',
                                 VerifyWorldModelInfo(robot),
@@ -145,7 +156,7 @@ def setup_statemachine(robot, room):
 
         smach.StateMachine.add('SAY_CLEANED_ROOM',
                                robot_smach_states.Say(robot, ["I successfully cleaned the {}!".format(room),
-                                                              "Am I a good robot now?",
+                                                              "All done. Am I a good robot now?",
                                                               "There, I cleaned up your mess, are you happy now!"], block=False),
                                transitions={"spoken": "Done"})
 
