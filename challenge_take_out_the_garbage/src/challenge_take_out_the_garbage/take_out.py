@@ -215,7 +215,7 @@ class TakeOut(smach.StateMachine):
                                                                         arm_designator=arm_occupied_designator,
                                                                         configuration="reset"),
                                    transitions={"succeeded": "RECEIVED_TRASH_BAG",
-                                                "failed": "failed"})
+                                                "failed": "RECEIVED_TRASH_BAG"})
 
             smach.StateMachine.add("RECEIVED_TRASH_BAG", states.Say(robot, "I received the thrash bag. I will throw"
                                                                            " it away, please move away.", block=True),
