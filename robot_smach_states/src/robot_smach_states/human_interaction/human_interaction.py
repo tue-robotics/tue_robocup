@@ -268,6 +268,7 @@ class LearnPerson(smach.State):
         self._name_designator = name_designator
         self._nr_tries = nr_tries
 
+
     def execute(self, userdata=None):
 
         # Look up
@@ -278,6 +279,7 @@ class LearnPerson(smach.State):
         # if person_name is empty then try to get it from designator
         if not self._person_name:
             person_name = self._name_designator.resolve()
+            rospy.loginfo("[LearnPerson] Resolved name {}".format(person_name))
 
             # if there is still no name, quit the learning
             if not person_name:
