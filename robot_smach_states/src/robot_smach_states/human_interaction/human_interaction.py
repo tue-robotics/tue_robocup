@@ -435,7 +435,7 @@ class AskPersonName(smach.State):
     """
 
     def __init__(self, robot, person_name_des, name_options, default_name='Operator', nr_tries=2):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'timeout'])
 
         self.robot = robot
         self.person_name_des = person_name_des
@@ -458,29 +458,33 @@ class AskPersonName(smach.State):
 
             answer = ds.VariableDesignator(resolve_type=HMIResult)
             state = HearOptionsExtra(self.robot, spec, answer.writeable)
-            outcome = state.execute()
+            try:
+                outcome = state.execute()
 
-            if not outcome == "heard":
-                limit_reached += 1
-                if limit_reached == self._nr_tries:
-                    self.person_name_des.write(self.default_name)
+                if not outcome == "heard":
+                    limit_reached += 1
+                    if limit_reached == self._nr_tries:
+                        self.person_name_des.write(self.default_name)
 
-                    rospy.logwarn(
-                        "Speech recognition outcome was not successful. Using default name '{}'".format(
-                            self.person_name_des.resolve()))
-                    return 'failed'
+                        rospy.logwarn(
+                            "Speech recognition outcome was not successful. Using default name '{}'".format(
+                                self.person_name_des.resolve()))
+                        return 'failed'
 
-            if outcome == "heard":
-                try:
-                    rospy.logdebug("Answer: '{}'".format(answer.resolve()))
-                    name = answer.resolve().semantics["name"]
-                    rospy.loginfo("This person's name is: '{}'".format(name))
-                    self.person_name_des.write(str(name))
+                if outcome == "heard":
+                    try:
+                        rospy.logdebug("Answer: '{}'".format(answer.resolve()))
+                        name = answer.resolve().semantics["name"]
+                        rospy.loginfo("This person's name is: '{}'".format(name))
+                        self.person_name_des.write(str(name))
 
-                    rospy.loginfo("Result received from speech recognition is '" + name + "'")
-                except KeyError, ke:
-                    rospy.loginfo("KeyError resolving the name heard: " + str(ke))
-                    return 'failed'
+                        rospy.loginfo("Result received from speech recognition is '" + name + "'")
+                    except KeyError as ke:
+                        rospy.loginfo("KeyError resolving the name heard: " + str(ke))
+                        return 'failed'
+                    return 'succeeded'
+            except TimeoutException:
+                return "timeout"
 
         return 'succeeded'
 
