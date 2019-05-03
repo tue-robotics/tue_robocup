@@ -340,7 +340,8 @@ class GetOrder(smach.StateMachine):
                     default_name='john',
                     nr_tries=2),
                 transitions={"succeeded": "LEARN_OPERATOR",
-                             "failed": "LEARN_NAME_FALLBACK"}
+                             "failed": "LEARN_NAME_FALLBACK",
+                             "timeout": "LEARN_NAME_FALLBACK"}
             )
 
             smach.StateMachine.add(

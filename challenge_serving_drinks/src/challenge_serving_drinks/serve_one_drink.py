@@ -67,7 +67,7 @@ class ServeOneDrink(smach.StateMachine):
                     sentence="Oh, I cannot inspect the bar. "
                              "Please hand me over the drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "GRASP_DRINK"}  # ToDo: graspFromHuman ?
+                transitions={"spoken": "HANDOVER_FROM_HUMAN"}
             )
 
             # Grasp drink
@@ -78,7 +78,7 @@ class ServeOneDrink(smach.StateMachine):
                     item=drink_designator,
                     arm=arm_designator),
                 transitions={"done": "FIND_OPERATOR",
-                             "failed": "GRASP_FALLBACK"}  # ToDo: fallback?
+                             "failed": "GRASP_FALLBACK"}
             )
 
             smach.StateMachine.add(
@@ -88,7 +88,18 @@ class ServeOneDrink(smach.StateMachine):
                     sentence="Oh, I cannot reach that. "
                              "Please hand me over the drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "FIND_OPERATOR"}  # ToDo: graspFromHuman ?
+                transitions={"spoken": "HANDOVER_FROM_HUMAN"}
+            )
+
+            smach.StateMachine.add(
+                "HANDOVER_FROM_HUMAN",
+                states.HandoverFromHuman(
+                    robot=robot,
+                    arm_designator=arm_designator,
+                    grabbed_entity_designator=drink_designator),
+                transitions={"succeeded": "FIND_OPERATOR",
+                             "failed": "FIND_OPERATOR",  # ToDo: fallback?
+                             "timeout": "FIND_OPERATOR"}  # ToDo: fallback?
             )
 
             # Find operator
