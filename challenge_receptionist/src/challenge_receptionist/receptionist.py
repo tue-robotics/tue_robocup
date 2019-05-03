@@ -137,6 +137,8 @@ class IntroduceGuestToOperator(smach.StateMachine):
         with self:
             smach.StateMachine.add('FIND_OPERATOR',
                                    states.FindPersonInRoom(robot,
+                                                           # We're looking for any person and assume that thats the operator
+                                                           discard_other_labels=False,
                                                            area=challenge_knowledge.waypoint_livingroom['id'],
                                                            name=challenge_knowledge.operator_name,
                                                            found_entity_designator=operator_des.writeable),
