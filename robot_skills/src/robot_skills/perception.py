@@ -32,11 +32,15 @@ class Perception(RobotPart):
         self._camera_cv = Condition()
         self._camera_last_image = None
 
-        self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
-        self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
-        self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
+        self._annotate_srv = self.create_service_client(
+            '/' + robot_name + '/people_detection/face_recognition/annotate', Annotate)
+        self._recognize_srv = self.create_service_client(
+            '/' + robot_name + '/people_detection/face_recognition/recognize', Recognize)
+        self._clear_srv = self.create_service_client(
+            '/' + robot_name + '/people_detection/face_recognition/clear', Empty)
 
-        self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
+        self._face_properties_srv = self.create_service_client(
+            '/' + robot_name + '/people_detection/face_recognition/get_face_properties', GetFaceProperties)
 
         self._projection_srv = self.create_service_client(projection_srv_name, Project2DTo3D)
 
@@ -50,11 +54,8 @@ class Perception(RobotPart):
         self._camera_cv.release()
 
     def get_image(self, timeout=5):
-        # lazy subscribe to the kinect
+        # lazy subscribe to the rgb(d) camera
         if not self._camera_lazy_sub:
-            # for test with tripod kinect
-            # self._camera_lazy_sub = rospy.Subscriber("/camera/rgb/image_rect_color", Image, self._image_cb)
-            # for the robot
             rospy.loginfo("Creating subscriber")
             self._camera_lazy_sub = rospy.Subscriber(self.image_topic, Image, self._image_cb)
             rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
