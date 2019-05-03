@@ -223,12 +223,14 @@ class TakeOut(smach.StateMachine):
             # if it fails with inspect or grabbing
 
             smach.StateMachine.add("FAILED_TO_SEE", states.Say(robot, "I cannot see the bag, so please hand over the "
-                                                                      "bag to me when I say it.",
+                                                                      "bag to me when I say it and listen to the my "
+                                                                      "instructions.",
                                               block=False),
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
             smach.StateMachine.add("FAILED_TO_GRAB", states.Say(robot, "I cannot grab the bag, so please hand over the "
-                                                                      "bag to me when I say it.",
+                                                                       "bag to me when I say it and listen to the my "
+                                                                       "instructions.",
                                               block=False),
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
