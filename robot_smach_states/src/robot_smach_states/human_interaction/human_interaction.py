@@ -13,7 +13,7 @@ import smach
 from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
-from hmi_msgs.msg import QueryResult
+from hmi import HMIResult
 
 
 # Say: Immediate say
@@ -125,11 +125,11 @@ class HearOptionsExtra(smach.State):
     time_out -- timeout in case nothing is heard
 
     Example of usage:
-        from hmi_msgs.msg import QueryResult
+        from hmi import HMIResult
         spec = ds.Designator("T --> <name>)|<name>)")
         choices = ds.Designator({"name"  : names_list,
                               "prefix": ["My name is", "I'm called"]})
-        answer = ds.VariableDesignator(resolve_type=QueryResult)
+        answer = ds.VariableDesignator(resolve_type=HMIResult)
         state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
@@ -137,7 +137,7 @@ class HearOptionsExtra(smach.State):
             name = answer.resolve().choices["name"]
 
     >>> from robot_skills.mockbot import Mockbot
-    >>> from hmi_msgs.msg import QueryResult
+    >>> from hmi import HMIResult
     >>> mockbot = Mockbot()
     >>> import robot_smach_states.util.designators as ds
     >>> import os
@@ -145,7 +145,7 @@ class HearOptionsExtra(smach.State):
     >>> spec += "OPTIONS['foo'] -> foo"+os.linesep
     >>> spec += "OPTIONS['bar'] -> bar"+os.linesep
     >>> spec = ds.Designator(spec)
-    >>> answer = ds.VariableDesignator(resolve_type=QueryResult)
+    >>> answer = ds.VariableDesignator(resolve_type=HMIResult)
     >>> state = HearOptionsExtra(mockbot, spec, answer.writeable)
     >>> outcome = state.execute()
     """
@@ -160,7 +160,7 @@ class HearOptionsExtra(smach.State):
         self.robot = robot
 
         ds.check_resolve_type(spec_designator, str)
-        ds.check_resolve_type(speech_result_designator, QueryResult)
+        ds.check_resolve_type(speech_result_designator, HMIResult)
         ds.is_writeable(speech_result_designator)
 
         self.spec_designator = spec_designator
@@ -434,46 +434,53 @@ class AskPersonName(smach.State):
     Ask the person's name, and try to hear one of the given names
     """
 
-    def __init__(self, robot, person_name_des, name_options, default_name='Operator'):
+    def __init__(self, robot, person_name_des, name_options, default_name='Operator', nr_tries=2):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self.robot = robot
         self.person_name_des = person_name_des
         self.default_name = default_name
         self.name_options = name_options
+        self._nr_tries = nr_tries
 
     def execute(self, userdata=None):
-        rospy.loginfo("AskPersonName")
+        limit_reached = 0
 
-        self.robot.speech.speak("What is your name?", block=True)
+        for i in range(self._nr_tries):
+            rospy.loginfo("AskPersonName")
 
-        names_spec = "T['name': N] -> NAME[N]\n\n"
-        for dn in self.name_options:
-            names_spec += "NAME['{name}'] -> {name}\n".format(name=dn)
-        spec = ds.Designator(names_spec)
+            self.robot.speech.speak("What is your name?", block=True)
 
-        answer = ds.VariableDesignator(resolve_type=QueryResult)
-        state = HearOptionsExtra(self.robot, spec, answer.writeable)
-        outcome = state.execute()
+            names_spec = "T['name': N] -> NAME[N]\n\n"
+            for dn in self.name_options:
+                names_spec += "NAME['{name}'] -> {name}\n".format(name=dn)
+            spec = ds.Designator(names_spec)
 
-        if not outcome == "heard":
-            self.person_name_des.write(self.default_name)
+            answer = ds.VariableDesignator(resolve_type=HMIResult)
+            state = HearOptionsExtra(self.robot, spec, answer.writeable)
+            outcome = state.execute()
 
-            rospy.logwarn(
-                "Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(
-                    str(outcome), self.person_name_des.resolve()))
-            return 'failed'
+            if not outcome == "heard":
+                limit_reached += 1
+                if limit_reached == self._nr_tries:
+                    self.person_name_des.write(self.default_name)
 
-        try:
-            rospy.logdebug("Answer: '{}'".format(answer.resolve()))
-            name = answer.resolve().semantics["name"]
-            rospy.loginfo("This person's name is: '{}'".format(name))
-            self.person_name_des.write(name)
+                    rospy.logwarn(
+                        "Speech recognition outcome was not successful. Using default name '{}'".format(
+                            self.person_name_des.resolve()))
+                    return 'failed'
 
-            rospy.loginfo("Result received from speech recognition is '" + name + "'")
-        except KeyError, ke:
-            rospy.loginfo("KeyError resolving the name heard: " + str(ke))
-            return 'failed'
+            if outcome == "heard":
+                try:
+                    rospy.logdebug("Answer: '{}'".format(answer.resolve()))
+                    name = answer.resolve().semantics["name"]
+                    rospy.loginfo("This person's name is: '{}'".format(name))
+                    self.person_name_des.write(str(name))
+
+                    rospy.loginfo("Result received from speech recognition is '" + name + "'")
+                except KeyError, ke:
+                    rospy.loginfo("KeyError resolving the name heard: " + str(ke))
+                    return 'failed'
 
         return 'succeeded'
 
