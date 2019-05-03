@@ -132,8 +132,8 @@ class FindPerson(smach.State):
                     found_person = None
 
             if found_person:
-                rospy.loginfo("I found {} at {}".format(person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I found {}.".format(person_label, block=False))
+                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
+                self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
                 # self._robot.ed.update_entity(
