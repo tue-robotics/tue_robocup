@@ -10,7 +10,7 @@ CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
 class TakeOutGarbage(smach.StateMachine):
-    """ This is my example state machine
+    """
 
     """
     def __init__(self, robot):
@@ -35,14 +35,19 @@ class TakeOutGarbage(smach.StateMachine):
 
         arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
 
+
         with self:
 
             # Start challenge via StartChallengeRobust
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
                                    states.StartChallengeRobust(robot, CHALLENGE_KNOWLEDGE.starting_point),
-                                   transitions={"Done": "TAKE_OUT",
+                                   transitions={"Done": "SAY_START_CHALLENGE",
                                                 "Aborted": "aborted",
                                                 "Failed": "failed"})
+
+            smach.StateMachine.add("SAY_START_CHALLENGE",
+                                   states.Say(robot, "I will start cleaning up the trash", block= True),
+                                   transitions={'spoken': 'TAKE_OUT'})
 
             smach.StateMachine.add("TAKE_OUT",
                                    TakeOut(robot=robot, trashbin_designator=trashbin_designator,
