@@ -371,7 +371,7 @@ class GetOrder(smach.StateMachine):
                 "LEARN_OPERATOR",
                 states.LearnPerson(
                     robot=robot,
-                    person_name=operator_name,
+                    name_designator=operator_name,
                     nr_tries=5),
                 transitions={"succeeded": "ASK_DRINK",
                              "failed": "LEARN_OPERATOR_FALLBACK"}
