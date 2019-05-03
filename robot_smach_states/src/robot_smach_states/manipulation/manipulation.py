@@ -208,6 +208,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
         if arm.handover_to_robot(self.timeout):
             arm.send_gripper_goal('close')
+            rospy.sleep(2.0)
             return "succeeded"
         else:
             return "timeout"
