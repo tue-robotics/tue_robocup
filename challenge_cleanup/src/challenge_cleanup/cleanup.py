@@ -8,6 +8,8 @@ Main goal
 Upon entrance, the robot requests the operator which room shall be cleaned. All misplaced known objects
 found in this room must be taken to their predefined locations and unknown objects thrown in the trash bin.
 
+Timelimit: 5 minutes
+
 Number of objects: 5 to 10
 Objects can be anywhere, including the floor, seats, and on furniture. All objects are visible from
 at least 1.0 m distance (no occlusions) and have the following distributions:

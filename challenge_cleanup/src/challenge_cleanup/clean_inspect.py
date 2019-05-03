@@ -8,10 +8,10 @@ from robot_skills.classification_result import ClassificationResult
 
 
 class CleanInspect(smach.StateMachine):
-    """
-    Visit all selected locations from the list, and handle the found objects
-    """
     def __init__(self, robot, location_id, room_id, navigate_area, segment_areas):
+        """
+        Visit all selected locations from the list, and handle the found objects
+        """
 
         smach.StateMachine.__init__(self, outcomes=['done'])
 
