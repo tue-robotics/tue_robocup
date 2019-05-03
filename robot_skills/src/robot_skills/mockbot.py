@@ -220,7 +220,7 @@ class ED(MockedRobotPart):
         self._dynamic_entities = defaultdict(ED.generate_random_entity,
                                      {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
         # import ipdb; ipdb.set_trace()
-        self._dynamic_entities['operator'] = ED.generate_random_entity(id='operator', type='person')
+        self._dynamic_entities['john'] = ED.generate_random_entity(id='john', type='person')
         self._static_entities = defaultdict(ED.generate_random_entity,
                                      {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
 

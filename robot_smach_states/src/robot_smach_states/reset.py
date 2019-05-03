@@ -75,7 +75,7 @@ class ResetArmsTorso(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        for arm in self.robot.arms:
+        for arm in self.robot.arms.itervalues():
             arm.reset()
             arm.send_gripper_goal('close', timeout=self.timeout)
         self.robot.torso.reset()
@@ -91,7 +91,7 @@ class ResetArmsTorsoHead(smach.State):
         self.timeout = timeout
 
     def execute(self, userdata=None):
-        for arm in self.robot.arms:
+        for arm in self.robot.arms.itervalues():
             arm.reset()
             arm.send_gripper_goal('close', timeout=self.timeout)
         self.robot.head.reset(timeout=self.timeout)
