@@ -229,13 +229,13 @@ VP[{"action": "place", "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT t
 ##############################################################################
 
 grammar += """
-V_SAY -> tell | say
+V_SAY -> tell | say | ask
 V_SAY_UNDEFINED -> speak | say something
 
 VP[{"action": "say"}] -> V_SAY_UNDEFINED
 VP[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 """
-
+grammar += '\nSAY_SENTENCE["can you please leave"] -> PPN_PERSON to leave'
 grammar += '\nSAY_SENTENCE["time"] -> the time'
 grammar += '\nSAY_SENTENCE["team_name"] -> your teams name'
 grammar += '\nSAY_SENTENCE["country"] -> your teams country'
