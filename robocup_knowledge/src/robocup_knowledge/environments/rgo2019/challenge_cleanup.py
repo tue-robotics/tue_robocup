@@ -40,7 +40,7 @@ cleaning_locations = [
 
     {'name': 'bar_table',       'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['on_top_of']},
     {'name': 'sofa',            'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['on_top_of']},
-    {'name': 'cupboard',        'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['on_top_of']}
+    {'name': 'cupboard',        'room': 'bar',         'navigate_area': 'near',   'segment_areas': ['shelf1', 'shelf2']}
 ]
 grammar_target = "T"
 
