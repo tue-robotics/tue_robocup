@@ -8,6 +8,26 @@ from robot_skills.arms import PseudoObjects
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
+class dropPoseDesignator(Designator):
+    def __init__(self, robot, drop_height, name):
+        super(dropPoseDesignator, self).__init__(resolve_type=FrameStamped, name=name)
+
+        self._robot = robot
+        self._drop_height = drop_height
+
+    def _resolve(self):
+        frame = None
+
+        # Query ed
+        try:
+            frame = self._robot.ed.get_entity(id="drop_area")._pose
+        except:
+            return None
+
+        frame.p.z(self._drop_height)
+
+        return FrameStamped(frame, "/map")
+
 
 class DefaultGrabDesignator(ds.Designator):
     """ Designator to pick the closest item on top of the table to grab. This is used for testing
@@ -162,6 +182,8 @@ class TakeOut(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
+        drop_area_pose = dropPoseDesignator(robot, 0.6, "drop_pose")
+
         with self:
             # Take Out 1
             smach.StateMachine.add("GO_TO_BIN",
@@ -185,10 +207,15 @@ class TakeOut(smach.StateMachine):
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
 
-            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator,
+            # smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_designator,
+            #                                                      item_designator=trash_designator),
+            #                        transitions={"succeeded": "succeeded",
+            #                                     "failed": "failed"})
+            smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_area_pose,
                                                                  item_designator=trash_designator),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
+
 
             # if it fails with inspect or grabbing
 
