@@ -278,10 +278,12 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [x] GOTO living room
             # - [x] Locate John (not sure how that should work, maybe just FindPersonInRoom)
             # - [x] GOTO John
-            # - [.] Locate guest1:
-            # - [ ]   rotate head until <guest1> is detected
+            # - [x] Locate guest1:
+            # - [x]   rotate head until <guest1> is detected
             # - [x] Point at guest1
             # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
+            # - [ ] Say to guest what John's favourite drink is
             # - [ ] Iterate to guest 2
+            # - Change ED API to accept list of entity IDs
 
 
