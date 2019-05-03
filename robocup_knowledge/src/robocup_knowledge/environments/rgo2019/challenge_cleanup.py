@@ -46,3 +46,5 @@ grammar_target = "T"
 
 grammar = "T -> kitchen"
 grammar += "\nT -> living_room"
+grammar += "\nT -> bedroom"
+grammar += "\nT -> bar"
