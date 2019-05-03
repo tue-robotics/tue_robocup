@@ -219,15 +219,27 @@ class AskContinue(smach.StateMachine):
 ##########################################################################################################################################
 
 
-class WaitForPersonInFront(WaitForDesignator):
+class WaitForPersonInFront(smach.State):
     """
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
     """
 
     def __init__(self, robot, attempts=1, sleep_interval=1):
-        # TODO: add center_point in front of the robot and radius of the search on ds.EdEntityDesignator
-        human_entity = ds.EdEntityDesignator(robot, type="human")
-        WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
+        smach.State.__init__(self, outcomes=["success", "failed"])
+        self.robot = robot
+        self.attempts = attempts
+        self.sleep_interval = sleep_interval
+
+    def execute(self, userdata=None):
+        self.robot.head.look_at_standing_person()
+
+        for i in range(self.attempts):
+            success, found_ids = self.robot.ed.detect_people()
+            if any(found_ids):
+                return 'success'
+            rospy.sleep(rospy.Duration(self.sleep_interval))
+        return 'failed'
+
 
 
 ##########################################################################################################################################
