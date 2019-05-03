@@ -196,9 +196,10 @@ class TakeOut(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT",
                                    states.Inspect(robot, trashbin_designator),
-                                   transitions={"done": "GRAB_TRASH",
+                                   transitions={"done": "FAILED_TO_SEE",
                                                 "failed": "FAILED_TO_SEE"})
 
+            # State is not used, because not stable
             smach.StateMachine.add("GRAB_TRASH", GrabSingleItem(robot=robot, grab_designator=trash_designator),
                                    transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
                                                 "failed": "FAILED_TO_GRAB"})
