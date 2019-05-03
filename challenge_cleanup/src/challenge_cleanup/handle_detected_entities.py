@@ -89,6 +89,11 @@ class DetermineAction(smach.State):
 
 
 class HandleDetectedEntities(smach.StateMachine):
+    """
+    Handle all the found entities in the current location, and decide what to do
+    - handle the entity yourself, or
+    - have the operator handle the object
+    """
     def __init__(self, robot, found_entity_classifications_designator, location_id, segment_area):
 
         smach.StateMachine.__init__(self, outcomes=['done'])

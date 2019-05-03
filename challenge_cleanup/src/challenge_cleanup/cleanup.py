@@ -20,8 +20,9 @@ Bonus: max 500 pts
 Adapted from the r5cop_demo challenge (see the repo)
 
 Difference from goal:
-- Robot does not inspect the floor
+- Robot does not inspect the floor, Can we dynamically inspect the floor, or must we stop to inspect?
 - Limited inspection of cabinets
+- trash_bin and trash_can not handled correctly as disposers. Only one of the two.
 
 
 """
@@ -45,12 +46,15 @@ challenge_knowledge = load_knowledge('challenge_cleanup')
 from robot_skills import robot
 
 class VerifyWorldModelInfo(smach.State):
+    """
+    Check consistency between world model and local knowledge
+    """
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["failed", "done"])
         self._robot = robot
 
     def execute(self, userdata):
-
+    # Look for trash units
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:
             if loc["room"] == "living_room":
@@ -60,6 +64,7 @@ class VerifyWorldModelInfo(smach.State):
                 if "trash_can" not in ids:
                     return "failed"
 
+    # Make sure the world model and local knowledge match
         for place in challenge_knowledge.cleaning_locations:
             if place["name"] not in ids:
                 return "failed"
@@ -69,6 +74,11 @@ class VerifyWorldModelInfo(smach.State):
         return "done"
 
 def collect_cleanup_entities(room):
+    """
+    Create list of points to visit in the selected room
+    :param room:
+    :return:
+    """
     cleaning_locations = []
     for loc in challenge_knowledge.cleaning_locations:
         if loc["room"] == room:
@@ -82,6 +92,7 @@ def setup_statemachine(robot, room):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     robot.ed.reset()
 
+    # Show object locations in designated room
     cleaning_locations = collect_cleanup_entities(room)
     rospy.loginfo("Cleaning locations: {}".format(cleaning_locations))
 

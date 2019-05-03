@@ -114,6 +114,11 @@ class OperatorFeedback(smach.State):
 
 
 class OperatorCleanup(smach.StateMachine):
+    """
+    Contact the operator to find out what has to be done with the current object:
+    - clean it up yourself (to predefined destination), or
+    - let the operator handle it
+    """
     def __init__(self, robot, selected_entity_designator, location_id, segment_area):
 
         smach.StateMachine.__init__(self, outcomes=['cleanup', 'no_cleanup'])
