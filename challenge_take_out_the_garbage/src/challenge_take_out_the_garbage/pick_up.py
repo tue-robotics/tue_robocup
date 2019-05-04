@@ -65,35 +65,35 @@ class GrabTrash(smach.State):
         self._robot.torso.reset()
 
         # Arm to position in a safe way
-        arm.send_joint_goal('handover', timeout=0)
+        arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
         self._robot.base.force_drive(0.15, -0.1, 0, 0.5)
 
         # Open gripper
-        arm.send_gripper_goal('open', timeout=0.0)
+        arm.send_gripper_goal('open')
         arm.wait_for_motion_done()
 
         # Send to grab trash pose
-        arm.send_joint_goal('grab_bag_trash_bin', timeout=0)
+        arm.send_joint_goal('grab_bag_trash_bin')
         arm.wait_for_motion_done()
 
         # Go down and grab
         self._robot.torso.send_goal("grab_trash_down")
         self._robot.torso.wait_for_motion_done()
-        arm.send_gripper_goal('close', timeout=0)
+        arm.send_gripper_goal('close')
         arm.wait_for_motion_done()
 
         # Go up and back to pre grasp position
         self._robot.torso.send_goal("grab_trash_up")
         self._robot.torso.wait_for_motion_done()
-        arm.send_joint_goal('prepare_grasp', timeout=0)
+        arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
 
         # Go back and pull back arm
         self._robot.base.force_drive(-0.125, 0, 0, 2.0)
-        arm.send_joint_goal('reset', timeout=0)
+        arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
 
