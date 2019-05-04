@@ -149,14 +149,19 @@ class Entity(object):
             rospy.logwarn("{} is not a person".format(self))
             return None
 
+    @person_properties.setter
+    def person_properties(self, value):
+        self._person_properties = value
+
     def __repr__(self):
         return "Entity(id='{id}', type='{type}', frame={frame}, person_properties={pp})"\
             .format(id=self.id, type=self.type, frame=self.pose, pp=self._person_properties)
 
 
 class PersonProperties(object):
-    def __init__(self, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
-                 tags_dict, velocity):
+    def __init__(self, name, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
+                 tags_dict, velocity, parent_entity):
+        self._name = name
         self.age = age
         self.emotion = emotion
         self.gender = gender
@@ -167,6 +172,17 @@ class PersonProperties(object):
         self.shirt_colors = shirt_colors
         self.tags_dict = tags_dict
         self.velocity = velocity
+
+        self._parent_entity = parent_entity
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        rospy.loginfo("Changing {}'s name to {}".format(self._parent_entity.id, value))
+        self._name = value
 
     def __repr__(self):
         return "PersonProperties(age='{age}', gender='{g}', gender_confidence={gc}, shirt_colors={sc})"\
@@ -202,6 +218,9 @@ def from_entity_info(e):
     if 'possible_human' in e.flags:
         super_types += ["possible_human"]
 
+    entity = Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
+                  volumes=volumes, super_types=super_types, last_update_time=last_update_time)
+
     if e.type == 'person':
         try:
             pp_dict = yaml.load(e.data)
@@ -209,16 +228,11 @@ def from_entity_info(e):
             del pp_dict['position']
             del pp_dict['tagnames']
             del pp_dict['tags']
-            pp = PersonProperties(tags_dict=tags_dict, **pp_dict)
-        except TypeError as te:
-            rospy.logerr("Cannot instantiate PersonProperties from {} \nTypeError: {}".format(e.data, te))
-            pp = None
-    else:
-        pp = None
+            entity.person_properties = PersonProperties(tags_dict=tags_dict, parent_entity=entity, **pp_dict)
+        except TypeError, te:
+            rospy.logerr("Cannot instantiate PersonProperties from {}".format(e.data))
 
-    return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
-                  volumes=volumes, super_types=super_types, last_update_time=last_update_time,
-                  person_properties=pp)
+    return entity
 
 
 if __name__ == "__main__":
