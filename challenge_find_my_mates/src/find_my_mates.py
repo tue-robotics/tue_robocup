@@ -88,9 +88,9 @@ class FindPeople(State):
                         detected_person = None
 
                     for person in self._people:
-                        if person.pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist\
-                            and EntityByIdDesignator(self._robot, id=STARTING_POINT).pose.extractVectorStamped()\
-                                - detected_person.pose.extractVectorStamped() > self._min_dist:
+                        if person.pose.extractVectorStamped() - detected_person._pose.extractVectorStamped() > \
+                            self._min_dist and self._robot.ed.get_entities(id=STARTING_POINT).\
+                            _pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist:
                             self._people[n] = detected_person
 
                     if len(self._people) == (n+1):
