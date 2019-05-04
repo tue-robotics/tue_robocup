@@ -16,7 +16,8 @@ class Entity(object):
     """ Holds all data concerning entities
 
     """
-    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time, person_properties=None):
+    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time,
+                 person_properties=None):
         """ Constructor
 
         :param identifier: str with the id of this entity
@@ -78,7 +79,7 @@ class Entity(object):
         :rtype: List[Entities]
         """
 
-        entities = [e  for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
+        entities = [e for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
 
         return entities
 
@@ -154,7 +155,8 @@ class Entity(object):
 
 
 class PersonProperties(object):
-    def __init__(self, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors, tags_dict, velocity):
+    def __init__(self, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
+                 tags_dict, velocity):
         self.age = age
         self.emotion = emotion
         self.gender = gender
@@ -193,8 +195,8 @@ def from_entity_info(e):
     super_types = e.types
 
     # TODO: this must be part of the definition of the entity in ED.
-    if e.has_shape and not any(
-        [name in e.id for name in ["amigo", "sergio", "hero"]]) and e.id != "floor" and "wall" not in e.id:
+    if e.has_shape and not any([name in e.id for name in ["amigo", "sergio", "hero"]])\
+        and e.id != "floor" and "wall" not in e.id:
         super_types += ["furniture"]
 
     if 'possible_human' in e.flags:
@@ -208,8 +210,8 @@ def from_entity_info(e):
             del pp_dict['tagnames']
             del pp_dict['tags']
             pp = PersonProperties(tags_dict=tags_dict, **pp_dict)
-        except TypeError, te:
-            rospy.logerr("Cannot instantiate PersonProperties from {}".format(e.data))
+        except TypeError as te:
+            rospy.logerr("Cannot instantiate PersonProperties from {} \nTypeError: {}".format(e.data, te))
             pp = None
     else:
         pp = None
