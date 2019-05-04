@@ -281,7 +281,7 @@ class Perception(RobotPart):
 
         # camera topics
         camera_base = '{robot_name}/{camera}'.format(robot_name=self.robot_name, camera='head_rgbd_sensor')  # TODO: parametrize camera
-        depth_info_sub = message_filters.Subscriber('{}/rgb/camera_info'.format(camera_base), CameraInfo) # TODO Should be of the depth image
+        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(camera_base), CameraInfo)
         depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(camera_base), Image)
         rgb_sub = message_filters.Subscriber('{}/rgb/image_color'.format(camera_base), Image)
 
