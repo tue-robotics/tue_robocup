@@ -104,10 +104,10 @@ class HearOptions(smach.State):
         except TimeoutException:
             self._robot.speech.speak("Something is wrong with my ears, please take a look!")
             return 'no_result'
-        except Exception as e:
-            rospy.logfatal(
-                e.message)  # This should be a temp addition. If this exception is thrown that means that there is a bug to be fixed
-            return 'no_result'  # for now this exception is thrown for Hero since speech recognition (meaning his Ears) is not even launched, we don't want it to crash on this
+        # except Exception as e:
+        #     rospy.logfatal(
+        #         e.message)  # This should be a temp addition. If this exception is thrown that means that there is a bug to be fixed
+        #     return 'no_result'  # for now this exception is thrown for Hero since speech recognition (meaning his Ears) is not even launched, we don't want it to crash on this
 
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
@@ -239,7 +239,6 @@ class WaitForPersonInFront(smach.State):
                 return 'success'
             rospy.sleep(rospy.Duration(self.sleep_interval))
         return 'failed'
-
 
 
 ##########################################################################################################################################
