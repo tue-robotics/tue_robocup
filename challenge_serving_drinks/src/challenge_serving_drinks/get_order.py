@@ -34,7 +34,7 @@ class GetOrder(smach.StateMachine):
 
             # Operator id
             caller_id = "operator"
-            caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id)
+            caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id, name='caller_des')
 
             # Detect - people without drinks  #ToDo: implement!
 

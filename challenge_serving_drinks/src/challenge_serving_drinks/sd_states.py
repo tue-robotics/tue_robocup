@@ -7,10 +7,11 @@ import rospy
 import smach
 
 # TU/e Robotics
+import robot_smach_states.util.designators as ds
+
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
 from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator
 from tue_msgs.msg import People
 from Queue import Queue, Empty
 
@@ -97,6 +98,7 @@ class AskDrink(smach.State):
 
             # Store the type in the designator
             self._drink_designator.write(str(speech_result.semantics))
+            rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
 
             return "succeeded"
 
@@ -221,11 +223,11 @@ class AskAvailability(smach.State):
 
             # Store the type in the designator
             self._unavailable_drink_designator.write(str(speech_result.semantics))
+            rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
 
             return "succeeded"
 
         self._robot.speech.speak("I am sorry but I cannot understand you. I will continue with my tasks", block=False)
-        # ToDo: fill default?
         self._robot.head.cancel_goal()
         rospy.loginfo("Available drink still unknown")
         return "failed"
@@ -377,6 +379,31 @@ class DetectWaving(smach.State):
                 rospy.logwarn('No people message received within %d seconds', timeout)
 
 
+class DescriptionStrDesignator(ds.Designator):
+    def __init__(self, operator_name_des, drink_request_des, message_type ,name=None):
+        super(DescriptionStrDesignator, self).__init__(resolve_type=str, name=name)
+
+        ds.check_type(operator_name_des, str)
+        ds.check_type(drink_request_des, str)
+
+        self.message_type = message_type
+        self.operator_name_des = operator_name_des
+        self.drink_request_des = drink_request_des
+
+    def _resolve(self):
+        operator_name = self.operator_name_des.resolve()
+        drink_request = self.drink_request_des.resolve()
+        if self.message_type == "found_operator":
+            return "Hey {name}, I'm bringing your {drink}".format(name=operator_name, drink=drink_request)
+        elif self.message_type == "not_found_operator":
+            return "Hey {name} I cannot find you!"\
+                   "Please come to me to receive your {drink}".format(name=operator_name, drink=drink_request)
+        elif self.message_type == "fallback_bar":
+            return "Oh, I cannot inspect the bar. Please hand me over the {drink}".format(drink=drink_request)
+        else:
+            rospy.logerr("No message type defined for DescriptionStrDesignator")
+
+
 if __name__ == "__main__":
 
     # Test code
@@ -402,7 +429,7 @@ if __name__ == "__main__":
     rospy.sleep(0.5)  # wait for tf cache to be filled
 
     state = AskDrink(robot=_robot,
-                     drink_designator=VariableDesignator(type=str).writeable,
+                     drink_designator=ds.VariableDesignator(type=str).writeable,
                      max_tries=1,
                      max_queries_per_try=1,
                      )
