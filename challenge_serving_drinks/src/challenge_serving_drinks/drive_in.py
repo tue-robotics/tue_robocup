@@ -30,6 +30,21 @@ class DriveIn(smach.StateMachine):
         unavailable_drink_designator = ds.EdEntityDesignator(robot=robot, type=drink_str_designator)
 
         with self:
+            # Initialize
+            smach.StateMachine.add(
+                'INITIALIZE',
+                states.Initialize(robot),
+                transitions={"initialized": "SET_INITIAL_POSE",
+                             "abort": "aborted"}
+            )
+
+            smach.StateMachine.add(
+                'SET_INITIAL_POSE',
+                states.SetInitialPose(robot, CHALLENGE_KNOWLEDGE.starting_point),
+                transitions={"done": "INSPECT_BAR",
+                             "preempted": "aborted",
+                             "error": "INSPECT_BAR"}
+            )
 
             # Inspect bar
             smach.StateMachine.add(
@@ -38,7 +53,7 @@ class DriveIn(smach.StateMachine):
                     robot=robot,
                     entityDes=bar_designator,
                     navigation_area="in_front_of"),
-                transitions={"done": "AVAILABLE_DRINKS",
+                transitions={"done": "NAVIGATE_TO_ROOM",  # ToDo: transition to "AVAILABLE_DRINKS"
                              "failed": "INSPECT_FALLBACK"}
             )
 
@@ -47,7 +62,7 @@ class DriveIn(smach.StateMachine):
                 "INSPECT_FALLBACK",
                 AskAvailability(
                     robot=robot,
-                    unavailable_drink_designator=unavailable_drink_designator.writeable),
+                    unavailable_drink_designator=unavailable_drink_designator),
                 transitions={"succeeded": "NAVIGATE_TO_ROOM",
                              "failed": "NAVIGATE_TO_ROOM"},
             )
