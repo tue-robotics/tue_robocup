@@ -35,7 +35,8 @@ class Entity(object):
         self._volumes = volumes if volumes else {}
         self.super_types = super_types
         self._last_update_time = last_update_time
-        self.person_properties = person_properties
+
+        self._person_properties = person_properties
 
     @property
     def volumes(self):
@@ -141,14 +142,15 @@ class Entity(object):
 
     @property
     def person_properties(self):
-        if self.person_properties:
-            return self.person_properties
+        if self._person_properties:
+            return self._person_properties
         else:
             rospy.logwarn("{} is not a person".format(self))
+            return None
 
     def __repr__(self):
         return "Entity(id='{id}', type='{type}', frame={frame}, person_properties={pp})"\
-            .format(id=self.id, type=self.type, frame=self.pose, pp=self.person_properties)
+            .format(id=self.id, type=self.type, frame=self.pose, pp=self._person_properties)
 
 
 class PersonProperties(object):
