@@ -8,7 +8,7 @@ from robot_skills.util.entity import Entity
 import robot_smach_states.util.designators as ds
 
 # System
-from numpy import arctan2, degrees
+import numpy as np
 import sys
 
 
@@ -62,11 +62,16 @@ class PointAt(smach.State):
         # tan(angle) = dy / dx
         # angle = tan(dy / dx)
         # Arm to position in a safe way
-        rotate_base = arctan2(vector_in_bs.vector.y(), vector_in_bs.vector.x())  # Radians
+        rotate_base = np.arctan2(vector_in_bs.vector.y(), vector_in_bs.vector.x())  # Radians
         # For 1 second, rotate the base with vth == rotate_base.
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
-        rospy.loginfo("Rotate base by {:.3f}deg".format(degrees(rotate_base)))
-        self._robot.base.force_drive(0, 0, rotate_base, 1)
+
+        maxvel = np.pi / 10.0  # Max rotation speed in rad/s
+        duration = rotate_base/maxvel  # duration of rotation, in s
+        rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
+                                                                                       np.degrees(maxvel),
+                                                                                       duration))
+        self._robot.base.force_drive(0, 0, maxvel, duration)
 
         arm.send_joint_goal('point_at', timeout=0)
         arm.wait_for_motion_done()
