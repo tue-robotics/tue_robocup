@@ -123,6 +123,7 @@ class GiveDirections(smach.State):
         # With this information: start creating the text for the robot
         # ToDo: kdl_path_rooms should not be empty
         sentence = ""
+        start_room_id = ""
         if kdl_path_rooms:
             start_room_id = kdl_path_rooms[0][1].id
             sentence += "We are now in the {}.\n".format(start_room_id)
