@@ -51,6 +51,10 @@ class FindPeople(State):
                                                     y=look_distance * math.sin(angle), z=1.7,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
                       for angle in look_angles]
+        head_goals.extend([kdl_conversions.VectorStamped(x=2.0*look_distance * math.cos(angle),
+                                                         y=2.0*look_distance * math.sin(angle), z=1.7,
+                                                         frame_id="/%s/base_link" % self._robot.robot_name)
+                           for angle in look_angles])
         n = 0
         i = 0
 
