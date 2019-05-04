@@ -123,5 +123,11 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add('GIVE_DIRECTIONS',
                                    GiveDirections(robot, self.entity_des),
-                                   transitions={'succeeded': "succeeded",
+                                   transitions={'succeeded': "SUCCESS",
                                                 'failed': 'failed'})
+
+            smach.StateMachine.add("SUCCESS",
+                                   states.Say(robot,
+                                              ["Good luck with finding your way"]
+                                              , block=True),
+                                   transitions={'spoken': 'succeeded'})
