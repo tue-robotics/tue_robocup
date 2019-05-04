@@ -21,6 +21,7 @@ locations = [
     {'name': 'trash_can',       'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
 
     {'name': 'tv_table',        'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'tv',              'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
     {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'},
     {'name': 'couch',           'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
     {'name': 'left_armchair',   'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
