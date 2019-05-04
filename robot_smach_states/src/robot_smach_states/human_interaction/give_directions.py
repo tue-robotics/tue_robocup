@@ -14,7 +14,7 @@ from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorSta
 
 # Robot Smach States
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
-from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
+from robot_smach_states.util.designators.ed_designators import Designator
 
 
 class GiveDirections(smach.State):
@@ -22,13 +22,13 @@ class GiveDirections(smach.State):
     Robot tells the operator how to get to a certain entity
     """
     def __init__(self, robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
-        # type: (Robot, EdEntityDesignator, float, float) -> None
+        # type: (Robot, Designator, float, float) -> None
         """
         Init
         :param robot: API object
         :type robot: Robot
         :param entity_designator: resolving to the entity the operator wants to go to
-        :type entity_designator: EdEntityDesignator
+        :type entity_designator: Designator
         :param x_threshold: if the entity is closer than this distance in x-direction w.r.t. the path frame
         it is considered 'passed'
         :type x_threshold: float
