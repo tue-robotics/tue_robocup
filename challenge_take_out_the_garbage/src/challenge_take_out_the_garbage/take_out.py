@@ -6,6 +6,8 @@ import smach
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+import robot_smach_states.manipulation as manipulation
+from robot_skills.arms import PublicArm
 
 from robot_skills.util.kdl_conversions import FrameStamped
 
@@ -159,6 +161,58 @@ class PlaceSingleItem(smach.State):
 
         return "succeeded" if result == "done" else "failed"
 
+
+class HandoverFromHuman(smach.StateMachine):
+    '''
+    State that enables low level grab reflex. Besides a robot object, needs
+    an arm and an entity to grab, which is either one from ed through the
+    grabbed_entity_designator or it is made up in the
+    CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
+    as id.
+    '''
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=15, arm_configuration="handover_to_human"):
+        """
+        Hold up hand to accept an object and close hand once something is inserted
+        :param robot: Robot with which to execute this behavior
+        :param arm_designator: ArmDesignator resolving to arm accept item into
+        :param grabbed_entity_label: What ID to give a dummy item in case no grabbed_entity_designator is supplied
+        :param grabbed_entity_designator: EntityDesignator resolving to the accepted item. Can be a dummy
+        :param timeout: How long to hold hand over before closing without anything
+        :param arm_configuration: Which pose to put arm in when holding hand up for the item.
+        """
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed','timeout'])
+
+        ds.check_type(arm_designator, PublicArm)
+        if not grabbed_entity_designator and grabbed_entity_label == "":
+            rospy.logerr("No grabbed entity label or grabbed entity designator given")
+
+        with self:
+            smach.StateMachine.add("POSE", manipulation.ArmToJointConfig(robot, arm_designator, arm_configuration),
+                                   transitions ={'succeeded': 'OPEN_BEFORE_INSERT','failed':'OPEN_BEFORE_INSERT'})
+
+            smach.StateMachine.add(
+                'OPEN_BEFORE_INSERT',
+                manipulation.SetGripper(
+                    robot=robot,
+                    arm_designator=arm_designator,
+                    gripperstate=manipulation.GripperState.OPEN),
+                transitions={'succeeded': 'SAY1',
+                             'failed': 'SAY1'}
+            )
+
+            smach.StateMachine.add("SAY1", states.Say(robot,'Please hand over the object by putting the top of the bag between'
+                                                     ' my grippers and push firmly into my camera.'),
+                            transitions={'spoken': 'CLOSE_AFTER_INSERT'})
+
+            smach.StateMachine.add( 'CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(robot,
+                                                                                        arm_designator,
+                                                                                        grabbed_entity_label=grabbed_entity_label,
+                                                                                        grabbed_entity_designator=grabbed_entity_designator,
+                                                                                        timeout=timeout),
+                                transitions={'succeeded'    :   'succeeded',
+                                             'timeout'      :   'timeout',
+                                             'failed'       :   'failed'})
+
 """
 class ForceGrabTrash:
     grabs the bag with in a hacky way
@@ -233,7 +287,7 @@ class TakeOut(smach.StateMachine):
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
             # Ask for handover from human
-            smach.StateMachine.add("ASK_HANDOVER", states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
+            smach.StateMachine.add("ASK_HANDOVER", HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                                             grabbed_entity_label='thrash'),
                                    transitions={"succeeded": "LOWER_ARM",
                                                 "failed": "failed",
