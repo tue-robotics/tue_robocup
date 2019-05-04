@@ -183,20 +183,23 @@ class HearOptionsExtra(smach.State):
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
 
-        answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configable
-                                      timeout=self.time_out.to_sec())
-        if self.look_at_standing_person:
-            self.robot.head.cancel_goal()
+        try:
+            answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configable
+                                          timeout=self.time_out.to_sec())
 
-        if answer:
-            if answer.semantics:
-                self.speech_result_designator.write(answer)
-                return "heard"
-        else:
-            self.robot.speech.speak("Something is wrong with my ears, please take a look!")
+            if self.look_at_standing_person:
+                self.robot.head.cancel_goal()
+
+            if answer:
+                if answer.semantics:
+                    self.speech_result_designator.write(answer)
+                    return "heard"
+            else:
+                self.robot.speech.speak("Something is wrong with my ears, please take a look!")
+        except TimeoutException:
+            return 'no_result'
 
         return "no_result"
-
 
 ##########################################################################################################################################
 
