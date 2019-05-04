@@ -14,7 +14,7 @@ from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorSta
 
 # Robot Smach States
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
-from robot_smach_states.util.designators.ed_designators import EntityByIdDesignator
+from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
 
 
 class GiveDirections(smach.State):
@@ -22,7 +22,7 @@ class GiveDirections(smach.State):
     Robot tells the operator how to get to a certain entity
     """
     def __init__(self, robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
-        # type: (Robot, EntityByIdDesignator, float, float) -> None
+        # type: (Robot, EdEntityDesignator, float, float) -> None
         """
         Init
         :param robot: API object
@@ -48,6 +48,7 @@ class GiveDirections(smach.State):
         # Get the constraints for the global planner
         nav_constraints = OrderedDict()
         goal_entity = self._entity_designator.resolve()  # type: Entity
+        rospy.loginfo("Resolved to Entity: {}".format(goal_entity.id))
         if not goal_entity:
             rospy.logerr("Cannot give directions if I don't know where to go")
             self._robot.speech.speak("I'm sorry but I don't know where you want to go", mood="sad")

@@ -112,7 +112,10 @@ class HearOptions(smach.State):
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
 
-        return answer.sentence
+        if answer.sentence in self._options:
+            return answer.sentence
+
+        return 'no_result'
 
 
 class HearOptionsExtra(smach.State):
