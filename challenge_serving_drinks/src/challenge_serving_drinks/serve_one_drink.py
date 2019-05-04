@@ -156,6 +156,5 @@ class ServeOneDrink(smach.StateMachine):
                     robot=robot,
                     arm_designator=arm_designator),
                 transitions={"succeeded": "succeeded",
-                             "failed": "failed",  # ToDo: fallback?
-                             "timeout": "failed"}  # ToDo: fallback?
+                             "failed": "failed"}  # ToDo: fallback?
             )
