@@ -141,11 +141,11 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.robot.reset()
         self.robot.head.look_at_standing_person()
 
-        self.robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
+        self.robot.speech.speak("Please trigger me by stating my name directly into the microphone.", block=True)
 
         self.wait_to_be_called()
 
-        self.robot.speech.speak("What can I do for you?", block=True)
+        self.robot.speech.speak("What can I do for you? State your command loudly directly into my microphone, but please wait for the ping!.", block=True)
 
         while not rospy.is_shutdown():
             try:
@@ -153,7 +153,7 @@ class ConversationEngineWithHmi(ConversationEngine):
                                                            grammar=grammar,
                                                            target=target)
                 if not self.is_text_valid_input(sentence):
-                    self._say_to_user("I don't understand what you're saying, please rephrase")
+                    self._say_to_user("I don't understand what you're saying, please rephrase. Speak loudly and clearly after the ping.")
                     continue
 
                 self.timeout_count = 0
@@ -193,7 +193,7 @@ class ConversationEngineWithHmi(ConversationEngine):
                     rospy.logwarn("[GPSR] Timeout_count: {}".format(self.timeout_count))
 
     def heard_correct(self, sentence):
-        self.robot.speech.speak('I heard %s, is this correct?' % sentence)
+        self.robot.speech.speak('I heard %s, is this correct? Please speak loudly into the microphone and move away afterwards!' % sentence)
         try:
             if 'no' == self.robot.hmi.query('', 'T -> yes | no', 'T').sentence:
                 self.robot.speech.speak('Sorry, please try again')
