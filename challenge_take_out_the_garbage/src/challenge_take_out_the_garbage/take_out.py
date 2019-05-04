@@ -4,7 +4,6 @@ import smach
 
 # TU/e
 import robot_skills
-from robot_skills.arms import PseudoObjects
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
@@ -199,7 +198,7 @@ class TakeOut(smach.StateMachine):
                                    transitions={"done": "FAILED_TO_SEE",
                                                 "failed": "FAILED_TO_SEE"})
 
-            # State is not used, because not stable
+            # State is not used, because it can not grab bag
             smach.StateMachine.add("GRAB_TRASH", GrabSingleItem(robot=robot, grab_designator=trash_designator),
                                    transitions={"succeeded": "GO_TO_COLLECTION_ZONE",
                                                 "failed": "FAILED_TO_GRAB"})
@@ -214,14 +213,13 @@ class TakeOut(smach.StateMachine):
             #                                                      item_designator=trash_designator),
             #                        transitions={"succeeded": "succeeded",
             #                                     "failed": "failed"})
+
             smach.StateMachine.add("PLACE_ITEM", PlaceSingleItem(robot=robot, place_designator=drop_area_pose,
                                                                  item_designator=trash_designator),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
 
-
             # if it fails with inspect or grabbing
-
             smach.StateMachine.add("FAILED_TO_SEE", states.Say(robot, "I cannot see the bag, so please hand over the "
                                                                       "bag to me when I say it and listen to the my "
                                                                       "instructions.",
@@ -234,7 +232,7 @@ class TakeOut(smach.StateMachine):
                                               block=False),
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
-            #Ask for handover from human
+            # Ask for handover from human
             smach.StateMachine.add("ASK_HANDOVER", states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                                             grabbed_entity_label='thrash'),
                                    transitions={"succeeded": "LOWER_ARM",
@@ -253,12 +251,7 @@ class TakeOut(smach.StateMachine):
                                                                            " it away, please move away.", block=True),
                                    transitions={'spoken': 'GO_TO_COLLECTION_ZONE'})
 
-
-
             smach.StateMachine.add("TIMEOUT", states.Say(robot, "I have not received anything, so I will stop",
                                                          block=False),
                                    transitions={'spoken': "failed"})
 
-            # if it fails with placing it just goes to handover pose and drops it, depending on the drop location?
-            smach.StateMachine.add("FAILED_TO_PLACE", states.Say(robot, "I will try to place it again."),
-                                   transitions={'spoken': 'succeeded'})

@@ -68,6 +68,9 @@ class GrabTrash(smach.State):
         arm.send_joint_goal('handover', timeout=0)
         arm.wait_for_motion_done()
 
+        # Force drive to get closer to bin
+        self._robot.base.force_drive(0.15, -0.1, 0, 0.5)
+
         # Open gripper
         arm.send_gripper_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
@@ -120,7 +123,7 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.4),
+                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.3),
                                    transitions={"arrived": "PREPARE_AND_GRAB",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
