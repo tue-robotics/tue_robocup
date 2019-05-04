@@ -500,4 +500,5 @@ class ED(RobotPart):
             yaml.dump(file_data, f)
 
     def detect_people(self, rgb, depth, cam_info):
-        return self._ed_detect_people_srv(rgb, depth, cam_info)
+        result = self._ed_detect_people_srv(rgb, depth, cam_info)
+        return result.success, result.detected_person_ids

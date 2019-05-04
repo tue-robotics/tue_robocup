@@ -67,20 +67,6 @@ class FindPerson(smach.State):
 
         self._room = room
 
-        self._image_data = (None, None, None)
-
-        # camera topics
-        camera_base = '{robot_name}/{camera}'.format(robot_name=self._robot.robot_name, camera='head_rgbd_sensor')  # TODO: parametrize camera
-        depth_info_sub = message_filters.Subscriber('{}/depth/camera_info'.format(camera_base), CameraInfo)
-        depth_sub = message_filters.Subscriber('{}/depth/image'.format(camera_base), Image)
-        rgb_sub = message_filters.Subscriber('{}/rgb/image'.format(camera_base), Image)
-        self._ts = message_filters.TimeSynchronizer([rgb_sub, depth_sub, depth_info_sub], 1)
-        self._ts.registerCallback(self.callback)
-
-    def callback(self, rgb, depth, depth_info):
-        rospy.loginfo('got image cb')
-        self._image_data = (rgb, depth, depth_info)
-
     def execute(self, userdata=None):
         person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
 
@@ -110,6 +96,7 @@ class FindPerson(smach.State):
                 i = 0
             self._robot.head.wait_for_motion_done()
 
+            self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
             found_names = {person.id: person for person in found_people}

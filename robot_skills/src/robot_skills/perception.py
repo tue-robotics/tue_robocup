@@ -1,10 +1,11 @@
 # System
-from threading import Condition
+from threading import Condition, Event
 
 # ROS
 import rospy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CameraInfo
 from std_srvs.srv import Empty
+import message_filters
 
 # TU/e Robotics
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
@@ -38,6 +39,8 @@ class Perception(RobotPart):
             '/' + robot_name + '/people_detection/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client(
             '/' + robot_name + '/people_detection/face_recognition/clear', Empty)
+
+        self._image_data = (None, None, None)
 
         self._face_properties_srv = self.create_service_client(
             '/' + robot_name + '/people_detection/face_recognition/get_face_properties', GetFaceProperties)
@@ -267,3 +270,30 @@ class Perception(RobotPart):
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
         rospy.loginfo('face_properties:%s', face_log)
         return face_properties
+
+    def get_rgb_depth_caminfo(self, timeout=5):
+        event = Event()
+
+        def callback(rgb, depth, depth_info):
+            rospy.loginfo('Received rgb, depth, cam_info')
+            self._image_data = (rgb, depth, depth_info)
+            event.set()
+
+        # camera topics
+        camera_base = '{robot_name}/{camera}'.format(robot_name=self.robot_name, camera='head_rgbd_sensor')  # TODO: parametrize camera
+        depth_info_sub = message_filters.Subscriber('{}/rgb/camera_info'.format(camera_base), CameraInfo) # TODO Should be of the depth image
+        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(camera_base), Image)
+        rgb_sub = message_filters.Subscriber('{}/rgb/image_color'.format(camera_base), Image)
+
+        ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
+                                                         queue_size=1,
+                                                         slop=10)
+        ts.registerCallback(callback)
+        event.wait(timeout)
+        ts.callbacks.clear()
+        del ts, depth_info_sub, depth_sub, rgb_sub, callback
+
+        if any(self._image_data):
+            return self._image_data
+        else:
+            return None
