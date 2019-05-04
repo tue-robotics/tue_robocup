@@ -10,7 +10,7 @@ room_id = "living_room"
 operator_name = "default_guest"
 
 # Starting location
-starting_point = "serving_drinks_initial_pose"
+starting_point = "serving_drinks_initial"
 
 # Number of drinks to be served
 NR_DRINKS = 3
