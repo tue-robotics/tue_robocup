@@ -163,7 +163,7 @@ class PersonProperties(object):
         self.posture = posture
         self.reliability = reliability
         self.shirt_colors = shirt_colors
-        self.tags_dict = self.tags_dict
+        self.tags_dict = tags_dict
         self.velocity = velocity
 
     def __repr__(self):
@@ -203,7 +203,11 @@ def from_entity_info(e):
     if e.type == 'person':
         try:
             pp_dict = yaml.load(e.data)
-            pp = PersonProperties(**pp_dict)
+            tags_dict = dict(zip(pp_dict['tagnames'], pp_dict['tags']))
+            del pp_dict['position']
+            del pp_dict['tagnames']
+            del pp_dict['tags']
+            pp = PersonProperties(tags_dict=tags_dict, **pp_dict)
         except TypeError, te:
             rospy.logerr("Cannot instantiate PersonProperties from {}".format(e.data))
             pp = None
