@@ -124,8 +124,7 @@ class IdentifyPeople(State):
 
     def execute(self, userdata=None):
         entities = self._robot.ed.get_entities()
-        person_entities = [entity for entity in entities if (entity.is_a("waypoint") and
-                                                             entity.id.startswith("person"))]
+        person_entities = [entity for entity in entities if entity.is_a("person")]
         for person in person_entities:
             NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=person.id), radius=0.7)
             self._robot.head.look_at_standing_person()
@@ -151,8 +150,7 @@ class ReportPeople(State):
 
     def execute(self, userdata=None):
         entities = self._robot.ed.get_entities()
-        person_entities = [entity for entity in entities if (entity.is_a("waypoint") and
-                                                             entity.id.startswith("person"))]
+        person_entities = [entity for entity in entities if entity.is_a("person")]
 
         furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
 
