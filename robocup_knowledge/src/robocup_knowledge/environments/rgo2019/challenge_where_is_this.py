@@ -20,6 +20,15 @@ for loc in common.location_rooms:
 for loc in common.location_names:
     location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
 
+for loc in common.object_names:
+    category = common.get_object_category(loc)
+    if category not in common.category_locations:
+        continue
+
+    entity_id = common.get_object_category_location(category)[0]
+
+    location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (entity_id, loc)
+
 location_grammar += '\nDET_LOCATION[Y] -> LOCATION[Y] | the LOCATION[Y]'
 
 location_grammar += """
