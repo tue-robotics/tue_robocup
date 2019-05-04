@@ -179,7 +179,7 @@ class AskAvailability(smach.State):
         # Setup base
         grammar = 'O[P] -> BEVERAGE[P] | DET unavailable drink is BEVERAGE[P] | BEVERAGE[P] is unavailable'
         grammar += '\nBEVERAGE[B] -> BEV[B] | DET BEV[B]'
-        grammar += '\nDET -> a | an'
+        grammar += '\nDET -> a | an | the'
 
         # Add drinks
         for d in COMMON_KNOWLEDGE.objects:
@@ -240,7 +240,7 @@ class AskAvailability(smach.State):
         while not rospy.is_shutdown():
             attempt += 1
             try:
-                speech_result = self._robot.hmi.query(description="Can I learn which is unavailable?",
+                speech_result = self._robot.hmi.query(description="Which is the unavailable beverage?",
                                                       grammar=self._drinks_grammar,
                                                       target=self._drinks_target)
                 return speech_result
