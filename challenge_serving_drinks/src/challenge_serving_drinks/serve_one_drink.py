@@ -19,7 +19,7 @@ class ServeOneDrink(smach.StateMachine):
     """ Serves on drink to an operator
 
     """
-    def __init__(self, robot, idx):
+    def __init__(self, robot):
         # type: (Robot, int) -> str
         """ Initialization method
 
@@ -37,6 +37,7 @@ class ServeOneDrink(smach.StateMachine):
 
         with self:
 
+            # Get order
             smach.StateMachine.add(
                 "GET_ORDER",
                 GetOrder(
@@ -44,11 +45,11 @@ class ServeOneDrink(smach.StateMachine):
                     operator_name=operator_name,
                     drink_designator=drink_str_designator),
                 transitions={"succeeded": "INSPECT_BAR",
-                             "failed": "failed"}
+                             "failed": "failed"}  # ToDo: fallback?
             )
 
             # Inspect bar
-            # ToDo: optimize so that we don't re-inspect the bar if we already know where the object is located
+            # ToDo: optimize so that we don't re-inspect the bar if we already know where the object is located?
             smach.StateMachine.add(
                 "INSPECT_BAR",
                 states.Inspect(
@@ -59,6 +60,7 @@ class ServeOneDrink(smach.StateMachine):
                              "failed": "INSPECT_FALLBACK"}
             )
 
+            # Inspect bar fallback - ask for assistance
             smach.StateMachine.add(
                 "INSPECT_FALLBACK",
                 states.Say(
@@ -80,6 +82,7 @@ class ServeOneDrink(smach.StateMachine):
                              "failed": "GRASP_FALLBACK"}
             )
 
+            # Grasp drink fallback
             smach.StateMachine.add(
                 "GRASP_FALLBACK",
                 states.Say(
@@ -90,6 +93,7 @@ class ServeOneDrink(smach.StateMachine):
                 transitions={"spoken": "HANDOVER_FROM_HUMAN"}
             )
 
+            # Handover from human fallback
             smach.StateMachine.add(
                 "HANDOVER_FROM_HUMAN",
                 states.HandoverFromHuman(
@@ -135,8 +139,7 @@ class ServeOneDrink(smach.StateMachine):
                 transitions={"spoken": "HAND_OVER"}
             )
 
-            # Say the name and hand over the drink
-
+            # Say the name
             smach.StateMachine.add(
                 "SAY_THE_NAME",
                 states.Say(
@@ -146,21 +149,13 @@ class ServeOneDrink(smach.StateMachine):
                 transitions={"spoken": "HAND_OVER"}
             )
 
+            # Hand over the drink to the operator
             smach.StateMachine.add(
                 "HAND_OVER",
                 states.HandoverToHuman(
                     robot=robot,
                     arm_designator=arm_designator),
                 transitions={"succeeded": "succeeded",
-                             "failed": "HAND_OVER_FALLBACK"}  # ToDo: fallback
-            )
-
-            smach.StateMachine.add(
-                "HAND_OVER_FALLBACK",
-                states.Say(
-                    robot=robot,
-                    sentence="I am terribly sorry but I did not find you. "
-                             "Please come to me so I can hand over the drink",
-                    look_at_standing_person=True),
-                transitions={"spoken": "succeeded"}  # ToDo: handOver
+                             "failed": "failed",  # ToDo: fallback?
+                             "timeout": "failed"}  # ToDo: fallback?
             )
