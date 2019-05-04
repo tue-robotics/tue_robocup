@@ -91,18 +91,16 @@ V_FIND -> find | locate | look for | pinpoint | spot | meet
 TYPE_OR_CATEGORY -> NAMED_OBJECT | OBJECT_CATEGORY
 UNNAMED_PERSON -> a person | someone
 
-VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
 VP[{"action": "find", "object": X}] -> V_FIND NAMED_PERSON[X]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND NAMED_PERSON[X] MEETING_PP the ROOM_OR_LOCATION[Y]
-
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET TYPE_OR_CATEGORY[X] in the ROOM[Y]
-
-VP[{"action": "find"}] -> V_FIND DET object
-VP[{"action": "find", "source-location": Y}] -> V_FIND DET object in the ROOM[Y]
-
-VP[{"action": "find", "object": X}] -> V_FIND DET TYPE_OR_CATEGORY[X]
+VP[{"action": "find"}] -> V_FIND DET NAMED_OBJECT
 """
 
+## Unused actions in rgo2019
+# VP[{"action": "find", "object": {'type': 'person'}}] -> V_FIND UNNAMED_PERSON
+# VP[{"action": "find", "source-location": Y}] -> V_FIND DET object in the ROOM[Y]
+# VP[{"action": "find", "object": X}] -> V_FIND DET TYPE_OR_CATEGORY[X]
 
 # ##############################################################################
 #
@@ -115,10 +113,10 @@ V_FOLLOW -> come behind | come after | follow | go after | go behind
 
 VP[{"action": "follow", "target": X}] -> V_FOLLOW NAMED_PERSON[X]
 VP[{"action": "follow", "target": X, "source-location": Y, "target-location": Z}] -> V_FOLLOW NAMED_PERSON[X] from DET ROOM_OR_LOCATION[Y] to DET ROOM_OR_LOCATION[Z]
-
 VP[{"action": "follow", "target-location": Y, "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON to DET ROOM_OR_LOCATION[Y]
 VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 """
+## Unused actions in rgo2019
 # VP[{"action": "follow", "object": X, "location-from":Y, "location-to":Z}] -> V_FOLLOW NAMED_PERSON[X] from DET LOCATION[Y] to DET LOCATION[Z]
 
 ###############################################################################
@@ -130,12 +128,10 @@ VP[{"action": "follow", "target": {"type": "reference"}}] -> V_FOLLOW PPN_PERSON
 grammar += """
 V_GUIDE -> guide | escort | take | lead | accompany | conduct
 
+VP[{"action": "guide", "object": X}] -> V_GUIDE NAMED_PERSON[X]
 VP[{"action": "guide", "object": X, "target-location": Y}] -> V_GUIDE NAMED_PERSON[X] to the LOCATION[Y]
-
-
 VP[{"action": "guide", "object": X, "source-location": Y, "target-location": Z}] -> V_GUIDE NAMED_PERSON[X] to the LOCATION[Z] you GEN_VERB find PPN_PERSON MEETING_PP the LOCATION[Y]
 VP[{"action": "guide", "object": X, "source-location": Y, "target-location": Z}] -> V_GUIDE NAMED_PERSON[X] from the LOCATION[Y] to the LOCATION[Z]
-
 VPS[{"action": "guide", "object": {"type": "reference"}}] -> V_GUIDE PPN_PERSON
 VP[{"action": "guide", "target-location": Y, "object": {"type": "reference"}}] -> V_GUIDE PPN_PERSON to the ROOM_OR_LOCATION[Y]
 """
@@ -163,13 +159,11 @@ VP[{"action": "navigate-to", "target-location": X}] -> V_GOTO the ROOM_OR_LOCATI
 grammar += """
 V_PICKUP -> get | grasp | take | pick up | grab | retrieve
 
+VP[{"action": "pick-up", "object": {"type": "reference"}, "source-location": Y}] -> V_PICKUP PPN_OBJECT from the LOCATION[Y]
 VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET TYPE_OR_CATEGORY[X] from the LOCATION[Y]
-
 VP[{"action": "pick-up", "object": X}] -> V_PICKUP DET NAMED_OBJECT[X]
-VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET NAMED_OBJECT[X] from the LOCATION[Y]
-
 """
-
+## Unused in rgo2019
 # VP[{"action": "pick-up", "object": X, "source-location": Y}] -> V_PICKUP DET TYPE_OR_CATEGORY[X] from the LOCATION[Y]
 
 ###############################################################################
@@ -184,27 +178,26 @@ BRING_NAME -> OPERATOR | NAMED_PERSON
 
 OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT
 
-V_BRING -> bring | deliver | give | hand over | hand
+V_BRING -> bring | deliver | give | hand over | hand | take
 """
 
 grammar += """
-VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR_PROPERTY  NAMED_OBJECT[Z] to the LOCATION[Y]
-VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
-VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] from the ROOM[X] to the LOCATION[Y]
-
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR[Y] DET NAMED_OBJECT[Z]
-VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OPERATOR[Y] DET NAMED_OBJECT[Z] from the LOCATION[X]
-VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING to PERSON_AT_LOCATION[Y] DET NAMED_OBJECT[Z] from the LOCATION[X]
-
-VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to PERSON_AT_LOCATION[Y]
+VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR_PROPERTY NAMED_OBJECT[Z] to the LOCATION[Y]
+VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to OPERATOR[Y]
-
 VPS[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to PERSON_AT_LOCATION[X]
 VPS[{"action": "hand-over", "target-location": X, "object": {"type": "reference"}}] -> V_BRING PPN_OBJECT to OPERATOR[X]
 """
 
+## Unused grammar in rgo 2019
+# VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] from the ROOM[X] to the LOCATION[Y]
+# VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING OPERATOR[Y] DET NAMED_OBJECT[Z] from the LOCATION[X]
+# VP[{"action": "hand-over", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING to PERSON_AT_LOCATION[Y] DET NAMED_OBJECT[Z] from the LOCATION[X]
+# VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to PERSON_AT_LOCATION[Y]
 # VP[{"action": "hand-over", "target-location": Y, "object_category": Z}] -> V_BRING OPERATOR[Y] DET OBJECT_CATEGORY[Z]
 # VP[{"action": "hand-over", "target-location": Y, "object_category": Z}] -> V_BRING OBJECT_CATEGORY[Z] to OPERATOR[Y]
+
 
 ###############################################################################
 #
@@ -215,12 +208,12 @@ VPS[{"action": "hand-over", "target-location": X, "object": {"type": "reference"
 grammar += """
 V_PLACE -> put | place | leave | set
 
-VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
-
 VP[{"action": "place", "target-location": X, "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT on the LOCATION[X]
-VP[{"action": "place", "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT to the ROOM
 """
+## Unused actions in rgo2019
+# VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
+# VP[{"action": "place", "object": X, "target-location": Y}] -> V_PLACE DET NAMED_OBJECT[X] MANIPULATION_AREA_LOCATION[Y]
+# VP[{"action": "place", "object": {"type": "reference"}}] -> V_PLACE PPN_OBJECT to the ROOM
 
 ##############################################################################
 #
@@ -232,7 +225,6 @@ grammar += """
 V_SAY -> tell | say | ask
 V_SAY_UNDEFINED -> speak | say something
 
-VP[{"action": "say"}] -> V_SAY_UNDEFINED
 VP[{"action": "say", "sentence": X}] -> V_SAY SAY_SENTENCE[X]
 """
 grammar += '\nSAY_SENTENCE["can you please leave"] -> PPN_PERSON to leave'
@@ -246,7 +238,9 @@ grammar += '\nSAY_SENTENCE["today"] -> what day is today'
 grammar += '\nSAY_SENTENCE["tomorrow"] -> what day is tomorrow'
 grammar += '\nSAY_SENTENCE["joke"] -> a joke'
 grammar += '\nSAY_SENTENCE["something_about_self"] -> something about yourself'
-grammar += '\nSAY_SENTENCE["electric_sheep"] -> whether you dream or not on electric sheep'
+
+## Unused in rgo2019
+# VP[{"action": "say"}] -> V_SAY_UNDEFINED
 
 ##############################################################################
 #
@@ -256,7 +250,7 @@ grammar += '\nSAY_SENTENCE["electric_sheep"] -> whether you dream or not on elec
 
 grammar += """
 V_ANSWER_QUESTION -> answer a question
-VPS[{"action": "answer-question"}] -> V_ANSWER_QUESTION
+VP[{"action": "answer-question"}] -> V_ANSWER_QUESTION
 """
 
 if __name__ == "__main__":
