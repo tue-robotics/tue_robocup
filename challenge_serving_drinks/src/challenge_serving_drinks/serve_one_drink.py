@@ -34,6 +34,7 @@ class ServeOneDrink(smach.StateMachine):
         arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={})
         operator_name = ds.VariableDesignator(resolve_type=str)
         operator_designator = ds.VariableDesignator(resolve_type=Entity)
+        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id)
 
         with self:
 
@@ -133,8 +134,9 @@ class ServeOneDrink(smach.StateMachine):
                 "SAY_NOT_FOUND",
                 states.Say(
                     robot=robot,
-                    sentence="I am terribly sorry but I did not find you. "
-                             "Please come to me so I can hand over the drink",
+                    sentence="Hey {0}, I cannot find you!"
+                             "Please come to me to receive your {1}"
+                             .format(operator_name.resolve(), drink_str_designator.resolve()),
                     look_at_standing_person=True),
                 transitions={"spoken": "HAND_OVER"}
             )
@@ -144,7 +146,8 @@ class ServeOneDrink(smach.StateMachine):
                 "SAY_THE_NAME",
                 states.Say(
                     robot=robot,
-                    sentence="Hey {}, I am bringing your drink".format(operator_name.resolve()),
+                    sentence="Hey {0}, I am bringing your {1}"
+                             .format(operator_name.resolve(), drink_str_designator.resolve()),
                     look_at_standing_person=True),
                 transitions={"spoken": "HAND_OVER"}
             )
@@ -155,6 +158,16 @@ class ServeOneDrink(smach.StateMachine):
                 states.HandoverToHuman(
                     robot=robot,
                     arm_designator=arm_designator),
-                transitions={"succeeded": "succeeded",
-                             "failed": "failed"}  # ToDo: fallback?
+                transitions={"succeeded": "RETURN_TO_ROOM",
+                             "failed": "RETURN_TO_ROOM"}
+            )
+
+            smach.StateMachine.add(
+                "RETURN_TO_ROOM",
+                states.NavigateToRoom(
+                    robot=robot,
+                    entity_designator_room=room_designator),
+                transitions={"arrived": "succeeded",
+                             "unreachable": "failed",
+                             "goal_not_defined": "aborted"}
             )
