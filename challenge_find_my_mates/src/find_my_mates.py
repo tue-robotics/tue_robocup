@@ -203,6 +203,7 @@ class ReportPeople(State):
         self._robot.speech.speak(sentence, block=True)
         return 'Done'
 
+
 class AskNames(State):
     """
     Ask for which three people to describe
@@ -236,6 +237,7 @@ class AskNames(State):
             self._robot.speech.speak(
                 "I don't understand, I expected a command like " + ", ".join(challenge_knowledge.names))
             return 'Failed'
+
 
 def setup_statemachine(robot):
     sm = StateMachine(outcomes=['done', 'failed', 'aborted'])
