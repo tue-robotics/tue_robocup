@@ -124,7 +124,7 @@ class IdentifyPeople(State):
 
     def execute(self, userdata=None):
         entities = self._robot.ed.get_entities()
-        person_entities = [entity for entity in entities if entity.is_a("person")]
+        person_entities = [entity for entity in entities if (entity.is_a("waypoint") and entity.id.startswith("person"))]
         for person in person_entities:
             NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=person.id), radius=0.7)
             self._robot.head.look_at_standing_person()
@@ -135,6 +135,7 @@ class IdentifyPeople(State):
                 print("Detecting failed.")
                 continue
                 # catch exceptions
+            # ask name and update entity
         return 'Done'
 
 
@@ -170,9 +171,10 @@ class ReportPeople(State):
                     distance_closest = distance
             closest_entity.append(temp_entity_near)
 
-        sentence = "I found many people but none were as pretty as you."
+        self._robot.speech.speak('I found many people but none were as pretty as you.', block=True)
+        people_descriptions = {}
         for i, person in enumerate(person_entities):
-            sentence += "I found someone near the {}.\n".format(closest_entity[i].id)
+            sentence = "I found {} near the {}.\n".format(getattr(person, 'name'), closest_entity[i].id)
 
             unique_property = None
             properties = [prop for prop in dir(person) if not prop.startswith('__')]
@@ -190,6 +192,7 @@ class ReportPeople(State):
                     if attributes[attr] == 1:
                         unique_property = attr
 
+            # Edit these sentences based on available attributes
             if unique_property == 'gender':
                 sentence += "and the person was a {}.".format(getattr(person, unique_property))
             elif unique_property == 'tall':
@@ -197,10 +200,28 @@ class ReportPeople(State):
             elif unique_property == 'shirt_colour':
                 sentence += "and the person was wearing a mostly {} shirt.".format(getattr(person, unique_property))
 
-            if i > 2:
+            people_descriptions[getattr(person, 'name')] = sentence
+            if i > 3:
                 break
+        n = 0
+        while n < 3:
+            self._robot.speech.speak('Which mate would you like me to describe?', block=True)
+            try:
+                result = self._robot.hmi.query('Name', 'T -> ' + ' | '.join(challenge_knowledge.common.names), 'T')
+                command_recognized = result.sentence
+            except TimeoutException:
+                command_recognized = None
+            if command_recognized == "":
+                self._robot.speech.speak("I am still waiting for a command and did not hear anything")
+            elif command_recognized in challenge_knowledge.common.names:
+                    self._robot.speech.speak("OK, I will describe {}".format(command_recognized), block=True)
+                    self._robot.speech.speak(people_descriptions[command_recognized], block=True)
+                    n += 1
+            else:
+                self._robot.speech.speak(
+                    "I don't understand, I expected a command like " + ", ".join(challenge_knowledge.names))
+                continue
 
-        self._robot.speech.speak(sentence, block=True)
         return 'Done'
 
 
@@ -248,30 +269,16 @@ def setup_statemachine(robot):
         #                  Initialize(robot),
         #                  transitions={'initialized': 'INIT_POSE',
         #                               'abort': 'aborted'})
-        #
-        StateMachine.add('INIT_POSE',
-                         SetInitialPose(robot, STARTING_POINT),
-                         transitions={'done': 'WAIT_TIME',
-                                      'preempted': 'aborted',
-                                      # This transition will never happen at the moment.
-                                      #  It should never go to aborted.
-                                      'error': 'WAIT_TIME'})
+
+        StateMachine.add('INIT_POSE', SetInitialPose(robot, STARTING_POINT), transitions={'done': 'WAIT_TIME',
+                                                                                          'preempted': 'aborted',
+                                                                                          'error': 'WAIT_TIME'})
+
         # StateMachine.add('START_CHALLENGE',
         #                  StartChallengeRobust(robot, initial_pose=STARTING_POINT, door=False),
         #                  transitions={'Done': 'GO_TO_SEARCH_POSE',
         #                               'Aborted': 'aborted',
         #                               'Failed': 'WAIT_TIME'})
-        #
-        StateMachine.add('WAIT_TIME',
-                         WaitTime(robot, waittime=2.0),
-                         transitions={'waited': 'GO_TO_SEARCH_POSE',
-                                      'preempted': 'aborted'})
-
-        # StateMachine.add('ASK_FOR_NAMES',
-        #                  AskNames(robot),
-        #                  transitions={'Done': 'GO_TO_SEARCH_POSE',
-        #                               'Failed': 'GO_TO_SEARCH_POSE',
-        #                               'Aborted': 'aborted'})
 
         StateMachine.add('GO_TO_SEARCH_POSE',
                          NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=SEARCH_POINT), radius=0.4),
@@ -280,18 +287,14 @@ def setup_statemachine(robot):
                                       'unreachable': 'LOCATE_PEOPLE'})
 
         # locate three (or all four) people
-        StateMachine.add('LOCATE_PEOPLE',
-                         FindPeople(robot),
-                         transitions={'Done': 'IDENTIFY_PEOPLE',
-                                      'Aborted': 'done',
-                                      'Failed': 'LOCATE_PEOPLE'})
+        StateMachine.add('LOCATE_PEOPLE', FindPeople(robot), transitions={'Done': 'IDENTIFY_PEOPLE',
+                                                                          'Aborted': 'done',
+                                                                          'Failed': 'LOCATE_PEOPLE'})
 
         # drive past all thee people and fill their description
-        StateMachine.add('IDENTIFY_PEOPLE',
-                         IdentifyPeople(robot),
-                         transitions={'Done': 'GO_BACK_TO_OPERATOR',
-                                      'Aborted': 'done',
-                                      'Failed': 'GO_BACK_TO_OPERATOR'})
+        StateMachine.add('IDENTIFY_PEOPLE', IdentifyPeople(robot), transitions={'Done': 'GO_BACK_TO_OPERATOR',
+                                                                                'Aborted': 'done',
+                                                                                'Failed': 'GO_BACK_TO_OPERATOR'})
 
         # drive back to the operator to describe the mates
         StateMachine.add('GO_BACK_TO_OPERATOR',
@@ -307,11 +310,9 @@ def setup_statemachine(robot):
                                       'unreachable': 'GO_BACK_TO_OPERATOR'})
 
         # check how to uniquely define them
-        StateMachine.add('REPORT_PEOPLE',
-                         ReportPeople(robot),
-                         transitions={'Done': 'done',
-                                      'Aborted': 'done',
-                                      'Failed': 'failed'})
+        StateMachine.add('REPORT_PEOPLE', ReportPeople(robot), transitions={'Done': 'done',
+                                                                            'Aborted': 'done',
+                                                                            'Failed': 'failed'})
 
     return sm
 
@@ -319,8 +320,3 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('find_my_mates_exec')
     startup(setup_statemachine, challenge_name="find_my_mates")
-
-
-# Ask operator for names
-# Ask people for names
-# Provide descriptions of desired people
