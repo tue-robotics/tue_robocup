@@ -1,5 +1,6 @@
 # ROS
 import smach
+import rospy
 
 # Robot smach states
 import robot_smach_states as states
@@ -9,6 +10,7 @@ from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
 
 # Serving drinks
+from .sd_states import DescriptionStrDesignator
 from .get_order import GetOrder
 
 # Knowledge
@@ -28,13 +30,15 @@ class ServeOneDrink(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        drink_str_designator = ds.VariableDesignator(resolve_type=str)
-        drink_designator = ds.EdEntityDesignator(robot=robot, type=drink_str_designator)
-        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
-        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={})
-        operator_name = ds.VariableDesignator(resolve_type=str)
-        operator_designator = ds.VariableDesignator(resolve_type=Entity)
-        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id)
+        drink_str_designator = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
+        drink_designator = ds.EdEntityDesignator(robot=robot, type_designator=drink_str_designator, name='drink_des')
+
+        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id, name='room_des')
+        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id, name='bar_des')
+        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={}, name='arm_des')
+
+        operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
+        operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
 
         with self:
 
@@ -58,18 +62,7 @@ class ServeOneDrink(smach.StateMachine):
                     entityDes=bar_designator,
                     navigation_area="in_front_of"),
                 transitions={"done": "GRASP_DRINK",
-                             "failed": "INSPECT_FALLBACK"}
-            )
-
-            # Inspect bar fallback - ask for assistance
-            smach.StateMachine.add(
-                "INSPECT_FALLBACK",
-                states.Say(
-                    robot=robot,
-                    sentence="Oh, I cannot inspect the bar. "
-                             "Please hand me over the drink",
-                    look_at_standing_person=True),
-                transitions={"spoken": "HANDOVER_FROM_HUMAN"}
+                             "failed": "FALLBACK_BAR"}
             )
 
             # Grasp drink
@@ -80,16 +73,15 @@ class ServeOneDrink(smach.StateMachine):
                     item=drink_designator,
                     arm=arm_designator),
                 transitions={"done": "FIND_OPERATOR",
-                             "failed": "GRASP_FALLBACK"}
+                             "failed": "FALLBACK_BAR"}
             )
 
-            # Grasp drink fallback
+            # Inspect or grasp fallback - ask for assistance
             smach.StateMachine.add(
-                "GRASP_FALLBACK",
+                "FALLBACK_BAR",
                 states.Say(
                     robot=robot,
-                    sentence="Oh, I cannot reach that. "
-                             "Please hand me over the drink",
+                    sentence=DescriptionStrDesignator(operator_name, drink_str_designator, "fallback_bar"),
                     look_at_standing_person=True),
                 transitions={"spoken": "HANDOVER_FROM_HUMAN"}
             )
@@ -134,9 +126,7 @@ class ServeOneDrink(smach.StateMachine):
                 "SAY_NOT_FOUND",
                 states.Say(
                     robot=robot,
-                    sentence="Hey {0}, I cannot find you!"
-                             "Please come to me to receive your {1}"
-                             .format(operator_name.resolve(), drink_str_designator.resolve()),
+                    sentence=DescriptionStrDesignator(operator_name, drink_str_designator, "not_found_operator"),
                     look_at_standing_person=True),
                 transitions={"spoken": "HAND_OVER"}
             )
@@ -146,8 +136,7 @@ class ServeOneDrink(smach.StateMachine):
                 "SAY_THE_NAME",
                 states.Say(
                     robot=robot,
-                    sentence="Hey {0}, I am bringing your {1}"
-                             .format(operator_name.resolve(), drink_str_designator.resolve()),
+                    sentence=DescriptionStrDesignator(operator_name, drink_str_designator, "found_operator"),
                     look_at_standing_person=True),
                 transitions={"spoken": "HAND_OVER"}
             )

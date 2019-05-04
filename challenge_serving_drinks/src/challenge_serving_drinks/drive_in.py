@@ -24,10 +24,10 @@ class DriveIn(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id)
-        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id)
-        drink_str_designator = ds.VariableDesignator(resolve_type=str)
-        unavailable_drink_designator = ds.EdEntityDesignator(robot=robot, type=drink_str_designator)
+        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id, name='bar_des')
+        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id, name='room_des')
+        drink_str_des = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
+        unavailable_drink_des = ds.EdEntityDesignator(robot=robot, type_designator=drink_str_des, name='unav_drink_des')
 
         with self:
             # Initialize
@@ -62,7 +62,7 @@ class DriveIn(smach.StateMachine):
                 "INSPECT_FALLBACK",
                 AskAvailability(
                     robot=robot,
-                    unavailable_drink_designator=unavailable_drink_designator),
+                    unavailable_drink_designator=unavailable_drink_des),
                 transitions={"succeeded": "NAVIGATE_TO_ROOM",
                              "failed": "NAVIGATE_TO_ROOM"},
             )
