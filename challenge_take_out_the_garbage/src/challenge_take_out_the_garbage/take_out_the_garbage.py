@@ -6,6 +6,7 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
 from challenge_take_out_the_garbage.take_out import DefaultGrabDesignator, GrabSingleItem, TakeOut
+from challenge_take_out_the_garbage.pick_up import PickUpTrash
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
@@ -47,7 +48,12 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("SAY_START_CHALLENGE",
                                    states.Say(robot, "I will start cleaning up the trash", block= True),
-                                   transitions={'spoken': 'TAKE_OUT'})
+                                   transitions={'spoken': "PICK_UP_TRASH"}) # 'TAKE_OUT'})
+
+            smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
+                                                                arm_designator=arm_designator),
+                                   transitions={"succeeded": "ANNOUNCE_END",
+                                                "failed": "ANNOUNCE_END"})
 
             smach.StateMachine.add("TAKE_OUT",
                                    TakeOut(robot=robot, trashbin_designator=trashbin_designator,
@@ -56,6 +62,7 @@ class TakeOutGarbage(smach.StateMachine):
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "aborted": "aborted",
                                                 "failed": "ANNOUNCE_END"})
+
 
             if trashbin_designator2 is not None:
                 next_state = "TAKE_OUT2"
