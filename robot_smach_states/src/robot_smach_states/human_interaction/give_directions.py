@@ -121,8 +121,11 @@ class GiveDirections(smach.State):
                 passed_room_ids.append(room.id)
 
         # With this information: start creating the text for the robot
-        start_room_id = kdl_path_rooms[0][1].id
-        sentence = "We are now in the {}.\n".format(start_room_id)
+        # ToDo: kdl_path_rooms should not be empty
+        sentence = ""
+        if kdl_path_rooms:
+            start_room_id = kdl_path_rooms[0][1].id
+            sentence += "We are now in the {}.\n".format(start_room_id)
 
         # We need to remember the 'previous' room id so the robot can mention when the next room is entered
         prev_room_id = start_room_id
