@@ -1,13 +1,12 @@
 # ROS
-import rospy
 import smach
 
 # TU/e Robotics
 import robot_smach_states as states
+import robot_smach_states.util.designators as ds
 
 from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator
 
 # Serving drinks
 from .sd_states import AskDrink, DetectWaving
@@ -35,7 +34,7 @@ class GetOrder(smach.StateMachine):
 
             # Operator id
             caller_id = "operator"
-            caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot, id=caller_id)
+            caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id)
 
             # Detect - people without drinks  #ToDo: implement!
 
