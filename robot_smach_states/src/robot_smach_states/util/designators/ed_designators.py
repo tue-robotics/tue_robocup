@@ -236,6 +236,7 @@ class EntityByIdDesignator(Designator):
     def __repr__(self):
         return "EntityByIdDesignator(id={}, name={})".format(self.id_, self.name)
 
+
 class ReasonedEntityDesignator(Designator):
     def __init__(self, robot, query, name=None):
         """
