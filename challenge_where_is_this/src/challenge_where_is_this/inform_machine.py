@@ -81,18 +81,6 @@ class InformMachine(smach.StateMachine):
                                    transitions={'heard': "GIVE_DIRECTIONS",
                                                 'no_result': 'failed'})
 
-            # @smach.cb_interface(outcomes=["succeeded"])
-            # def update_ds(userdata=None):
-            #     sem = self.answer_des.resolve().semantics
-            #     print(sem["target-location"]["id"])
-            #     self.entity_des = ds.EntityByIdDesignator(robot, id=sem["target-location"]["id"])
-            #
-            #     return "succeeded"
-            #
-            # smach.StateMachine.add("UPDATE_DS",
-            #                        smach.CBState(update_ds),
-            #                        transitions={'succeeded': 'GIVE_DIRECTIONS'})
-
             smach.StateMachine.add('GIVE_DIRECTIONS',
                                    GiveDirections(robot, self.entity_des),
                                    transitions={'succeeded': "succeeded",
