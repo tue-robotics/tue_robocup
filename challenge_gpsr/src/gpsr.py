@@ -96,7 +96,8 @@ class ConversationEngineWithHmi(ConversationEngine):
 
                 sentence, semantics = self.robot.hmi.query(description=description,
                                                            grammar=grammar,
-                                                           target=target)
+                                                           target=target,
+                                                           timeout=20)
 
                 if not self.is_text_valid_input(sentence):
                     self._say_to_user("I don't understand what you're saying, please rephrase")
