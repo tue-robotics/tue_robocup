@@ -87,9 +87,8 @@ class HandoverFromHuman(smach.StateMachine):
                                 transitions={'succeeded'    :   'SAY1',
                                              'failed'       :   'SAY1'})
 
-            smach.StateMachine.add("SAY1", Say(robot,'Please hand over the object by putting the top of the bag between'
-                                                     ' my grippers and push firmly into my camera.'),
-                            transitions={'spoken': 'CLOSE_AFTER_INSERT'})
+            smach.StateMachine.add("SAY1", Say(robot,'Please hand over the object by pushing it gently in my gripper'),
+                            transitions={'spoken':'CLOSE_AFTER_INSERT'})
 
             smach.StateMachine.add( 'CLOSE_AFTER_INSERT', CloseGripperOnHandoverToRobot(robot,
                                                                                         arm_designator,
