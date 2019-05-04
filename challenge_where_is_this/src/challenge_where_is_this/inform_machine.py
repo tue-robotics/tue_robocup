@@ -96,24 +96,24 @@ class InformMachine(smach.StateMachine):
             self.entity_des = EntityFromHmiResults(robot, self.answer_des)
 
             smach.StateMachine.add("ANNOUNCE_ITEM",
-                                   states.Say(robot, "Hello, my name is {}. Please call me by my name for guiding, Please don't stand too close".
+                                   states.Say(robot, "Hello, my name is {}. Please call me by my name. Talk loudly into my microphone and wait for the ping".
                                               format(robot.robot_name), block=True),
                                    transitions={'spoken': 'WAIT_TO_BE_CALLED'})
 
             smach.StateMachine.add('WAIT_TO_BE_CALLED',
-                                   states.HearOptions(robot, ["{}".format(robot.robot_name)], rospy.Duration(20)),
+                                   states.HearOptions(robot, ["{}".format(robot.robot_name)], rospy.Duration(10)),
                                    transitions={'{}'.format(robot.robot_name): "INSTRUCT",
                                                 'no_result': 'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add("INSTRUCT",
                                    states.Say(robot,
-                                              ["Please tell me where you would like to go",
-                                               "Where do you want to go?"]
+                                              ["Please tell me where you would like to go. Talk loudly into my microphone and wait for the ping",
+                                               "Where do you want to go? Talk loudly into my microphone and wait for the ping"]
                                               , block=True),
                                    transitions={'spoken': 'LISTEN_FOR_LOCATION'})
 
             smach.StateMachine.add('LISTEN_FOR_LOCATION',
-                                   states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable, rospy.Duration(30)),
+                                   states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable, rospy.Duration(15)),
                                    transitions={'heard': "INSTRUCT_FOR_WAIT",
                                                 'no_result': 'failed'})
 

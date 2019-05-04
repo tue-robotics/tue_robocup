@@ -78,7 +78,7 @@ class Say(smach.State):
 
         # robot.head.cancel_goal()
         # ToDo: hack
-        rospy.sleep(0.5)
+        rospy.sleep(len(sentence)*0.05)
 
         return "spoken"
 
@@ -104,7 +104,7 @@ class HearOptions(smach.State):
             answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T',
                                            timeout=self._timeout.to_sec())
         except TimeoutException:
-            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+           # self._robot.speech.speak("Something is wrong with my ears, please take a look!")
             return 'no_result'
         # except Exception as e:
         #     rospy.logfatal(
