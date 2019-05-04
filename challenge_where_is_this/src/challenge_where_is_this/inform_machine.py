@@ -79,7 +79,7 @@ class SayWaitDes(smach.StateMachine):
                                    transitions={'succeeded': 'SAY_TEXT'})
 
             smach.StateMachine.add("SAY_TEXT",
-                                   states.Say(robot, self.text_des, block=False),
+                                   states.Say(robot, self.text_des, block=True),
                                    transitions={'spoken': 'succeeded'})
 
 
@@ -96,8 +96,8 @@ class InformMachine(smach.StateMachine):
             self.entity_des = EntityFromHmiResults(robot, self.answer_des)
 
             smach.StateMachine.add("ANNOUNCE_ITEM",
-                                   states.Say(robot, "Hello, my name is {}. Please call me by my name for guiding".
-                                              format(robot.robot_name), block=False),
+                                   states.Say(robot, "Hello, my name is {}. Please call me by my name for guiding, Please don't stand too close".
+                                              format(robot.robot_name), block=True),
                                    transitions={'spoken': 'WAIT_TO_BE_CALLED'})
 
             smach.StateMachine.add('WAIT_TO_BE_CALLED',
@@ -109,7 +109,7 @@ class InformMachine(smach.StateMachine):
                                    states.Say(robot,
                                               ["Please tell me where you would like to go",
                                                "Where do you want to go?"]
-                                              , block=False),
+                                              , block=True),
                                    transitions={'spoken': 'LISTEN_FOR_LOCATION'})
 
             smach.StateMachine.add('LISTEN_FOR_LOCATION',

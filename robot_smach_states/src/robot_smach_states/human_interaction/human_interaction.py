@@ -77,6 +77,8 @@ class Say(smach.State):
         self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
 
         # robot.head.cancel_goal()
+        # ToDo: hack
+        rospy.sleep(0.5)
 
         return "spoken"
 
