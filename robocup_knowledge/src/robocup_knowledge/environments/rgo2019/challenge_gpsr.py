@@ -183,7 +183,9 @@ V_BRING -> bring | deliver | give | hand over | hand | take
 
 grammar += """
 
-VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING DET OBJECT_CATEGORY[Z] to OPERATOR[Y]            
+VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING OBJECT_CATEGORY[Z] to OPERATOR[Y]  
+VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING OPERATOR[Y] DET OBJECT_CATEGORY[Z]    
+
 
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR[Y] DET NAMED_OBJECT[Z]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR_PROPERTY NAMED_OBJECT[Z] to the LOCATION[Y]
