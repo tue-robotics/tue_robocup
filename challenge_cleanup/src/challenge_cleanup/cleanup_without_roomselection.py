@@ -87,15 +87,15 @@ class AskWhichRoomToClean(smach.State):
         self.robot = robot
         self.roomw = roomw
         self.answerw = answerw
-        self.cleanup_locations = cleanup_locationsw
+        self.cleanup_locationsw = cleanup_locationsw
 
     def collect_cleanup_locations(self):
         cleaning_locations = []
         for loc in challenge_knowledge.cleaning_locations:
-            if loc["room"] == self.roomw:
+            if loc["room"] == self.roomw.resolve():
                 cleaning_locations.append(loc)
-            self.cleanup_locationsw.write(cleaning_locations)
-            rospy.loginfo("Cleaning locations: {}".format(cleaning_locations))
+        self.cleanup_locationsw.write(cleaning_locations)
+        rospy.loginfo("Cleaning locations: {}".format(self.cleanup_locationsw.resolve()))
         return
 
     def execute(self, userdata):
@@ -115,6 +115,8 @@ class AskWhichRoomToClean(smach.State):
                                                                target="T")
                     rospy.loginfo("sentence: {}".format(speech_result.sentence))
                     rospy.loginfo("semantics: {}".format(speech_result.semantics))
+                    self.roomw.write(speech_result.sentence)
+                    rospy.loginfo("roomw: {}".format(self.roomw.resolve()))
                     break
                 except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
                     if count < 5:
@@ -129,6 +131,7 @@ class AskWhichRoomToClean(smach.State):
 
             try:
                 # Now: confirm
+#                self.roomw.write(speech_result.sentence)
                 self.robot.speech.speak("I understood that the {} should be cleaned "
                                              "is this correct?".format(speech_result.sentence))
             except:
@@ -142,8 +145,8 @@ class AskWhichRoomToClean(smach.State):
                 return "failed"
 
             self.robot.head.cancel_goal()
-            self.robot.speech.speak("Ok, I will clean the {}".format(speech_result.sentence), block=False)
-            self.roomw.write(speech_result.sentence)
+#            self.robot.speech.speak("Ok, I will clean the {}".format(speech_result.sentence), block=False)
+            self.robot.speech.speak("Ok, I will clean the {}".format(self.roomw.resolve()), block=False)
             self.collect_cleanup_locations()
 
 
@@ -173,13 +176,13 @@ def setup_statemachine(robot):
     roomw =roomr.writeable
     answerr = VariableDesignator('yes', resolve_type=str)
     answerw = VariableWriter(answerr)
-    cleanup_locationsr = VariableDesignator(resolve_type=[str])
+    cleanup_locationsr = VariableDesignator([{'1':'2','3':'4'}])
     cleanup_locationsw = cleanup_locationsr.writeable
 
     # Show object locations in designated room
     # cleaning_locations = collect_cleanup_entities(room)
 #    cleaning_locations = collect_cleanup_entities(roomr.resolve())
-#    rospy.loginfo("Cleaning locations: {}".format(cleaning_locations))
+#    rospy.loginfo("Cleaning locations: {}".format(cleanup_locationsr))
 
     with sm:
 
@@ -225,16 +228,17 @@ def setup_statemachine(robot):
                                                               "What a mess here, let's clean this room!",
                                                               "Let's see if I can find some garbage here",
                                                               "All I want to do is clean this mess up!"], block=False),
-                               transitions={"spoken": "INSPECT_0"})
+#                               transitions={"spoken": "INSPECT_0"})
+                               transitions={"spoken": "RETURN_TO_OPERATOR"})
 
-        for i, place in enumerate(cleanup_locationsr):
-            next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleaning_locations) else "RETURN_TO_OPERATOR"
-
-            smach.StateMachine.add("INSPECT_%d" % i,
-                                   CleanInspect(robot, place["name"], place["room"], place["navigate_area"],
-                                                     place["segment_areas"]),
-                                   transitions={"done": next_state})
-
+        # for i, place in enumerate(cleanup_locationsr):
+        #     next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleanup_locationsr) else "RETURN_TO_OPERATOR"
+        #
+        #     smach.StateMachine.add("INSPECT_%d" % i,
+        #                            CleanInspect(robot, place["name"], place["room"], place["navigate_area"],
+        #                                              place["segment_areas"]),
+        #                            transitions={"done": next_state})
+        #
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
                                                                      waypoint_designator=EntityByIdDesignator(robot=robot,
