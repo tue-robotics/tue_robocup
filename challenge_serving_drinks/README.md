@@ -78,19 +78,23 @@ Launch procedure:
     
 ## ToDo:
 
+    Status after RGO2019:
+    
+        - After the initial inspection we ask for the unavailable drink.
+        - Should be checked if the passing of the inspected objects is correct and it works.
+        - Waving detection implemented, should be tested.
+        - Detection of people, holding drinks not yet implemented. Is it necessary?
+
 	Enchancements:
 
-		- Add/Check the fallback states
-		- Add driving to inspect the bar right after start
-		- Storing info for the available drinks
-		- Add people with drink detection
+        - Storing info for the available drinks (implemented, not tested)
+        - Detect people holding drinks
 
-	Testing:
+	Tested successfully:
 
-		- Waving people detection
-		- Learn people and their names
-		- Inspecting bar
-		- Grasping a drink
-		- Find specific person in the room stating his/her name and requested drink
-		- Hand over drink
-		- Run full challenge
+        - Learn people and their names
+        - Inspecting bar
+        - Grasping a drink (handover from human)
+        - Find specific person in the room stating his/her name and requested drink
+        - Hand over drink
+        - Run full challenge :)
