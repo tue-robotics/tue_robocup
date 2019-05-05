@@ -1,10 +1,10 @@
 # ROS
 import smach
-import rospy
 
 # Robot smach states
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+
 from robot_skills.util.entity import Entity
 from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
@@ -21,7 +21,7 @@ class ServeOneDrink(smach.StateMachine):
     """ Serves on drink to an operator
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot, bar_designator, room_designator, objects_list_des, unav_drink_des):
         # type: (Robot, int) -> str
         """ Initialization method
 
@@ -30,12 +30,11 @@ class ServeOneDrink(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
+        # Designators
+        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={}, name='arm_des')
+
         drink_str_designator = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
         drink_designator = ds.EdEntityDesignator(robot=robot, type_designator=drink_str_designator, name='drink_des')
-
-        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id, name='room_des')
-        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id, name='bar_des')
-        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={}, name='arm_des')
 
         operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
         operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
@@ -48,13 +47,14 @@ class ServeOneDrink(smach.StateMachine):
                 GetOrder(
                     robot=robot,
                     operator_name=operator_name,
-                    drink_designator=drink_str_designator),
+                    drink_designator=drink_str_designator,
+                    available_drinks_designator=objects_list_des,
+                    unavailable_drink_designator=unav_drink_des),
                 transitions={"succeeded": "INSPECT_BAR",
                              "failed": "failed"}  # ToDo: fallback?
             )
 
             # Inspect bar
-            # ToDo: optimize so that we don't re-inspect the bar if we already know where the object is located?
             smach.StateMachine.add(
                 "INSPECT_BAR",
                 states.Inspect(

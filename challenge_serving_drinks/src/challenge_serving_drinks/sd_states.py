@@ -25,7 +25,8 @@ class AskDrink(smach.State):
     This is based on the 'TakeOrder' class of the the restaurant challenge. Might
     be nice to merge these two.
     """
-    def __init__(self, robot, drink_designator, max_tries=3, max_queries_per_try=3):
+    def __init__(self, robot, drink_designator, available_drinks_designator, unavailable_drink_designator,
+                 max_tries=3, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """ Initialization method
 
@@ -37,6 +38,8 @@ class AskDrink(smach.State):
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
         self._drink_designator = drink_designator
+        self._available_drinks_designator = available_drinks_designator
+        self._unavailable_drink_designator = unavailable_drink_designator
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
 
@@ -70,6 +73,8 @@ class AskDrink(smach.State):
         while nr_tries < self._max_tries and not rospy.is_shutdown():
             nr_tries += 1
             rospy.loginfo("AskDrink: attempt {} of {}".format(nr_tries, self._max_tries))
+            rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
+            rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
 
             # Ask the operator a question
             self._robot.speech.speak(
@@ -83,24 +88,123 @@ class AskDrink(smach.State):
                 block=True
             )
 
-            # Try to get the answer
-            try:
-                speech_result = self._query_drink(self._max_queries_per_try)
-            except TimeoutException:
-                continue
+            # ToDo: add checks for the alternative answers
+            # Check if there is data for the drinks availability
+            if self._unavailable_drink_designator:
+                # Try to get the answer
+                try:
+                    speech_result = self._query_drink(self._max_queries_per_try)
+                except TimeoutException:
+                    continue
 
-            # Ask for confirmation
-            self._robot.speech.speak(
-                "I understood that you would like {}, is that correct?".format(speech_result.semantics)
-            )
-            if not self._confirm():
-                continue
+                # Ask for confirmation
+                self._robot.speech.speak(
+                    "I understood that you would like {}, is that correct?".format(speech_result.semantics)
+                )
+                if not self._confirm():
+                    continue
 
-            # Store the type in the designator
-            self._drink_designator.write(str(speech_result.semantics))
-            rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
+                if speech_result.semantics == self._unavailable_drink_designator.resolve():
+                    # Announce that the drink is unavailable
+                    self._robot.speech.speak(
+                        "Unfortunately we don't have {}, what else can I bring for you".format(speech_result.semantics)
+                    )
 
-            return "succeeded"
+                    # Try to get the alternative answer
+                    try:
+                        alt_speech_result = self._query_drink(self._max_queries_per_try)
+                    except TimeoutException:
+                        continue
+
+                    # Ask for confirmation
+                    self._robot.speech.speak(
+                        "I understood that you would like {}, is that correct?".format(alt_speech_result.semantics)
+                    )
+                    if not self._confirm():
+                        continue
+
+                    # Store the type in the designator
+                    self._drink_designator.write(str(alt_speech_result.semantics))
+                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
+
+                    return "succeeded"
+
+                else:
+                    # Store the type in the designator
+                    self._drink_designator.write(str(speech_result.semantics))
+                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
+
+                    return "succeeded"
+
+            # ToDo: check if it works for inspected items (correct passing of data and resolving of the designator)
+            elif self._available_drinks_designator:
+                # Try to get the answer
+                try:
+                    speech_result = self._query_drink(self._max_queries_per_try)
+                except TimeoutException:
+                    continue
+
+                # Ask for confirmation
+                self._robot.speech.speak(
+                    "I understood that you would like {}, is that correct?".format(speech_result.semantics)
+                )
+                if not self._confirm():
+                    continue
+
+                if speech_result.semantics in self._available_drinks_designator.resolve():
+                    # Store the type in the designator
+                    self._drink_designator.write(str(speech_result.semantics))
+                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
+
+                    return "succeeded"
+
+                else:
+                    # Announce that the drink is unavailable
+                    self._robot.speech.speak(
+                        "Unfortunately we don't have {}, what else can I bring for you".format(speech_result.semantics)
+                    )
+
+                    # Try to get the alternative answer
+                    try:
+                        alt_speech_result = self._query_drink(self._max_queries_per_try)
+                    except TimeoutException:
+                        continue
+
+                    # Ask for confirmation
+                    self._robot.speech.speak(
+                        "I understood that you would like {}, is that correct?".format(alt_speech_result.semantics)
+                    )
+                    if not self._confirm():
+                        continue
+
+                    # Store the type in the designator
+                    self._drink_designator.write(str(alt_speech_result.semantics))
+                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
+
+                    return "succeeded"
+
+            else:
+                # We should not end up here
+                rospy.logerr("Missing drinks information")
+
+                # Try to get the answer
+                try:
+                    speech_result = self._query_drink(self._max_queries_per_try)
+                except TimeoutException:
+                    continue
+
+                # Ask for confirmation
+                self._robot.speech.speak(
+                    "I understood that you would like {}, is that correct?".format(speech_result.semantics)
+                )
+                if not self._confirm():
+                    continue
+
+                # Store the type in the designator
+                self._drink_designator.write(str(speech_result.semantics))
+                rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
+
+                return "succeeded"
 
         self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
         # ToDo: fill default?
@@ -229,7 +333,7 @@ class AskAvailability(smach.State):
 
         self._robot.speech.speak("I am sorry but I cannot understand you. I will continue with my tasks", block=False)
         self._robot.head.cancel_goal()
-        rospy.loginfo("Available drink still unknown")
+        rospy.loginfo("Unavailable drink still unknown")
         return "failed"
 
     def _query_drink(self, max_tries):
@@ -407,7 +511,6 @@ class DescriptionStrDesignator(ds.Designator):
 if __name__ == "__main__":
 
     # Test code
-
     import sys
 
     rospy.init_node('get_drinks')
