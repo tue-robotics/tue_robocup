@@ -34,9 +34,16 @@ class DriveIn(smach.StateMachine):
             smach.StateMachine.add(
                 'INITIALIZE',
                 states.Initialize(robot),
-                transitions={"initialized": "SET_INITIAL_POSE",
+                transitions={"initialized": "WAIT_1",
                              "abort": "aborted"}
             )
+
+            #wait for one second so that initialise has time to finish
+            smach.StateMachine.add(
+                    "WAIT_1",
+                    states.WaitTime(robot, waittime=1),
+                    transitions={"waited": "SET_INITIAL_POSE",
+                                "preempted": "SET_INITIAL_POSE"})
 
             smach.StateMachine.add(
                 'SET_INITIAL_POSE',
