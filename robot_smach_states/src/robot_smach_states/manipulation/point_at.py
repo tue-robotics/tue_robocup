@@ -68,10 +68,11 @@ class PointAt(smach.State):
 
         maxvel = np.pi / 10.0  # Max rotation speed in rad/s
         duration = abs(rotate_base/maxvel)  # duration of rotation, in s
+        vel = maxvel * np.sign(rotate_base)
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
-                                                                                       np.degrees(maxvel),
+                                                                                       np.degrees(vel),
                                                                                        duration))
-        self._robot.base.force_drive(0, 0, maxvel, duration)
+        self._robot.base.force_drive(0, 0, vel, duration)
 
         arm.send_joint_goal('point_at', timeout=0)
         arm.wait_for_motion_done()
