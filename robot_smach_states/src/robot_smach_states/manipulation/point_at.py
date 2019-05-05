@@ -67,7 +67,7 @@ class PointAt(smach.State):
         # vth is in radians/sec but we rotate for 1 s to that should equal $rotate_base in the end.
 
         maxvel = np.pi / 10.0  # Max rotation speed in rad/s
-        duration = rotate_base/maxvel  # duration of rotation, in s
+        duration = abs(rotate_base/maxvel)  # duration of rotation, in s
         rospy.loginfo("Rotate base by {:.3f}deg. At {:.3f}deg/s this takes {}s".format(np.degrees(rotate_base),
                                                                                        np.degrees(maxvel),
                                                                                        duration))
