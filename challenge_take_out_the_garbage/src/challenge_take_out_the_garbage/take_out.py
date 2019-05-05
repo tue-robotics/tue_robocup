@@ -213,18 +213,6 @@ class HandoverFromHuman(smach.StateMachine):
                                              'timeout'      :   'timeout',
                                              'failed'       :   'failed'})
 
-"""
-class ForceGrabTrash:
-    grabs the bag with in a hacky way
-
-    def __init__(self):
-
-        smach.State.__init__(self, outcomes=["done", "failed"])
-
-        smach.StateMachine.add("SAY_TRY_AGAIN", states.Say("The thrash bag looks difficult to grab, let me try to grab")
-
-"""
-
 class TakeOut(smach.StateMachine):
 
     def __init__(self, robot, trashbin_designator, trash_designator, drop_designator, arm_designator):

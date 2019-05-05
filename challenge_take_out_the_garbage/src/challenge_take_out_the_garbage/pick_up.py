@@ -96,6 +96,8 @@ class GrabTrash(smach.State):
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
+
+
         return "succeeded"
 
 
@@ -113,7 +115,8 @@ class PickUpTrash(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("GO_BIN",
-                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.5),
+                                   states.NavigateToSymbolic(robot, {trashbin_designator: 'in_front_of'},
+                                                             trashbin_designator),
                                    transitions={"arrived": "PICK_UP_TRASH",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
@@ -123,7 +126,7 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   states.NavigateToSymbolic(robot, {trashbin_designator: 'in_front_of'}, trashbin_designator),
+                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.25),
                                    transitions={"arrived": "PREPARE_AND_GRAB",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
