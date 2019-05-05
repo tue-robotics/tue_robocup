@@ -3,7 +3,6 @@ import smach
 
 # Robot smach states
 import robot_smach_states as states
-import robot_smach_states.util.designators as ds
 from robocup_knowledge import knowledge_loader
 
 # Serving drinks
@@ -17,17 +16,16 @@ class DriveIn(smach.StateMachine):
     """ Serves on drink to an operator
 
     """
-    def __init__(self, robot):
+    def __init__(self, robot, bar_designator, room_designator, objects_list_des, unav_drink_des):
         """ Initialization method
 
         :param robot: robot api object
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        bar_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.bar_id, name='bar_des')
-        room_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.room_id, name='room_des')
-        drink_str_des = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
-        unavailable_drink_des = ds.EdEntityDesignator(robot=robot, type_designator=drink_str_des, name='unav_drink_des')
+        # ToDo: check the storing of the available drinks: see inspect_shelves from challenge storing groceries,
+        #  inspections designator is in smach states -> world model
+        #  Classification result is in robot skills -> world model ed
 
         with self:
             # Initialize
@@ -38,12 +36,15 @@ class DriveIn(smach.StateMachine):
                              "abort": "aborted"}
             )
 
-            #wait for one second so that initialise has time to finish
+            # Wait for one second so that initialise has time to finish
             smach.StateMachine.add(
                     "WAIT_1",
-                    states.WaitTime(robot, waittime=1),
+                    states.WaitTime(
+                        robot=robot,
+                        waittime=1),
                     transitions={"waited": "SET_INITIAL_POSE",
-                                "preempted": "SET_INITIAL_POSE"})
+                                 "preempted": "SET_INITIAL_POSE"}
+            )
 
             smach.StateMachine.add(
                 'SET_INITIAL_POSE',
@@ -59,8 +60,9 @@ class DriveIn(smach.StateMachine):
                 states.Inspect(
                     robot=robot,
                     entityDes=bar_designator,
-                    navigation_area="in_front_of"),
-                transitions={"done": "NAVIGATE_TO_ROOM",  # ToDo: transition to "AVAILABLE_DRINKS"
+                    navigation_area="in_front_of",
+                    objectIDsDes=objects_list_des),
+                transitions={"done": "INSPECT_FALLBACK",  # ToDo: transition to NAVIGATE_TO_ROOM
                              "failed": "INSPECT_FALLBACK"}
             )
 
@@ -69,20 +71,12 @@ class DriveIn(smach.StateMachine):
                 "INSPECT_FALLBACK",
                 AskAvailability(
                     robot=robot,
-                    unavailable_drink_designator=unavailable_drink_des),
+                    unavailable_drink_designator=unav_drink_des.writeable),
                 transitions={"succeeded": "NAVIGATE_TO_ROOM",
                              "failed": "NAVIGATE_TO_ROOM"},
             )
 
-            # Store the available drinks  # ToDo: implement storing the available drinks
-            # smach.StateMachine.add(
-            #     "AVAILABLE_DRINKS",
-            #     StoreDrinks(
-            #         robot=robot,
-            #         available_drinks_designator=available_drinks_designator.writeable),
-            #     transitions={"succeeded": "NAVIGATE_TO_ROOM"},
-            # )
-
+            # Navigate to the predefined room
             smach.StateMachine.add(
                 "NAVIGATE_TO_ROOM",
                 states.NavigateToRoom(

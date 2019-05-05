@@ -20,7 +20,8 @@ class GetOrder(smach.StateMachine):
     states.
 
     """
-    def __init__(self, robot, operator_name, drink_designator):
+    def __init__(self, robot, operator_name, drink_designator,
+                 available_drinks_designator, unavailable_drink_designator):
         # type: (Robot, str, VariableDesignator) -> None
         """ Initialization method
 
@@ -36,7 +37,7 @@ class GetOrder(smach.StateMachine):
             caller_id = "operator"
             caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id, name='caller_des')
 
-            # Detect - people without drinks  #ToDo: implement!
+            # Detect - people holding drinks and people without drinks  #ToDo: implement!
 
             # Detect fallback - detect waving people
             smach.StateMachine.add(
@@ -45,7 +46,7 @@ class GetOrder(smach.StateMachine):
                     robot=robot,
                     sentence="Looks like everyone has a drink",
                     look_at_standing_person=True),
-                transitions={"spoken": "ASK_STEP_IN_FRONT"}
+                transitions={"spoken": "ASK_STEP_IN_FRONT"}  # ToDo: transition to WAIT_FOR_WAVING
             )
 
             smach.StateMachine.add(
@@ -73,7 +74,7 @@ class GetOrder(smach.StateMachine):
                     robot=robot,
                     entity_designator=caller_designator,
                     radius=1.1),
-                transitions={'arrived': 'LEARN_OPERATOR',
+                transitions={'arrived': 'LEARN_NAME',
                              'unreachable': 'ASK_STEP_IN_FRONT',
                              'goal_not_defined': 'WAIT_FOR_WAVING'}
             )
@@ -128,7 +129,7 @@ class GetOrder(smach.StateMachine):
                 "LEARN_OPERATOR_FALLBACK",
                 states.Say(
                     robot=robot,
-                    sentence="Something went wrong. I will call you when I'm back",
+                    sentence="Something went wrong but I will call you by name when I'm back",
                     look_at_standing_person=True),
                 transitions={"spoken": "ASK_DRINK"}
             )
@@ -138,7 +139,9 @@ class GetOrder(smach.StateMachine):
                 "ASK_DRINK",
                 AskDrink(
                     robot=robot,
-                    drink_designator=drink_designator.writeable),
+                    drink_designator=drink_designator.writeable,
+                    available_drinks_designator=available_drinks_designator,
+                    unavailable_drink_designator=unavailable_drink_designator),
                 transitions={"succeeded": "succeeded",
                              "failed": "failed"},
             )
