@@ -128,6 +128,22 @@ class IdentifyPeople(State):
         for person in person_entities:
             NavigateToWaypoint(self._robot, EntityByIdDesignator(self._robot, id=person.id), radius=0.7)
             self._robot.head.look_at_standing_person()
+            self._robot.speech.speak("Please tell me your name.", block=True)
+
+            try:
+                result = self._robot.hmi.query('What names?', 'T -> ' + ' | '.join(challenge_knowledge.names), 'T',
+                                               timeout=self._time_out)
+                command_recognized = result.sentence
+            except TimeoutException:
+                command_recognized = None
+            if command_recognized == "":
+                self._robot.speech.speak("I could not hear your name, please tell me your name.")
+            elif command_recognized in challenge_knowledge.names:
+                self._robot.speech.speak(
+                    "OK, I understand your name is {}, but I will think of a nice nickname.".format(command_recognized))
+            else:
+                self._robot.speech.speak(
+                    "I don't understand, I expected a command like " + ", ".join(challenge_knowledge.names))
             try:
                 print("Detecting this person")
                 # detect person -> update person entity with certain attributes
