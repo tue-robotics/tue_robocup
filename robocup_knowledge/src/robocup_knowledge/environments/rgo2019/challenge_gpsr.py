@@ -9,7 +9,7 @@ not_understood_sentences = [
         "All this noise is messing with my audio. Try again."
     ]
 
-initial_pose = "initial_pose"
+initial_pose = "gpsr_meeting_point"
 starting_pose = "gpsr_meeting_point"
 exit_waypoint = "exit_1_rips"
 
@@ -182,6 +182,9 @@ V_BRING -> bring | deliver | give | hand over | hand | take
 """
 
 grammar += """
+
+VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING DET OBJECT_CATEGORY[Z] to OPERATOR[Y]            
+
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR[Y] DET NAMED_OBJECT[Z]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR_PROPERTY NAMED_OBJECT[Z] to the LOCATION[Y]
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
@@ -197,6 +200,13 @@ VPS[{"action": "hand-over", "target-location": X, "object": {"type": "reference"
 # VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to PERSON_AT_LOCATION[Y]
 # VP[{"action": "hand-over", "target-location": Y, "object_category": Z}] -> V_BRING OPERATOR[Y] DET OBJECT_CATEGORY[Z]
 # VP[{"action": "hand-over", "target-location": Y, "object_category": Z}] -> V_BRING OBJECT_CATEGORY[Z] to OPERATOR[Y]
+
+## PLACE (within handover)
+#
+# grammar += """
+# VP[{"action": "place", "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] to the LOCATION[Y]
+# VP[{"action": "place", "source-location": X, "target-location": Y, "object": Z}] -> V_BRING DET NAMED_OBJECT[Z] from the LOCATION[X] to the LOCATION[Y]
+# """
 
 
 ###############################################################################
