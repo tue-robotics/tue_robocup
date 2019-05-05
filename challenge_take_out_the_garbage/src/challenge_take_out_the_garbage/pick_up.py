@@ -7,6 +7,8 @@ import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
+from ed_msgs.msg import EntityInfo
+
 from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_from_XYZRPY
 
 
@@ -96,7 +98,10 @@ class GrabTrash(smach.State):
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
+        # ToDo: the arm should have an occupied state, so that an occupied designator can be used in drop down
 
+        handed_entity = EntityInfo(id="trash")
+        arm.occupied_by = handed_entity
 
         return "succeeded"
 
@@ -126,7 +131,7 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.25),
+                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.4),
                                    transitions={"arrived": "PREPARE_AND_GRAB",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
