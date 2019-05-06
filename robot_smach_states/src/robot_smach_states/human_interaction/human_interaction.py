@@ -12,15 +12,13 @@ import smach
 # TU/e Robotics
 from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
-from robot_smach_states.utility import WaitForDesignator
 from hmi import HMIResult
-
 
 # Say: Immediate say
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
-##########################################################################################################################################
+########################################################################################################################
 
 
 class Say(smach.State):
@@ -201,7 +199,7 @@ class HearOptionsExtra(smach.State):
 
         return "no_result"
 
-##########################################################################################################################################
+########################################################################################################################
 
 
 class AskContinue(smach.StateMachine):
@@ -224,7 +222,7 @@ class AskContinue(smach.StateMachine):
                                                 'no_result': 'no_response'})
 
 
-##########################################################################################################################################
+########################################################################################################################
 
 
 class WaitForPersonInFront(smach.State):
@@ -249,8 +247,7 @@ class WaitForPersonInFront(smach.State):
             rospy.sleep(rospy.Duration(self.sleep_interval))
         return 'failed'
 
-
-##########################################################################################################################################
+########################################################################################################################
 
 
 class LearnPerson(smach.State):
@@ -275,7 +272,6 @@ class LearnPerson(smach.State):
             ds.check_resolve_type(name_designator, str)
         self._name_designator = name_designator
         self._nr_tries = nr_tries
-
 
     def execute(self, userdata=None):
 
@@ -309,7 +305,7 @@ class LearnPerson(smach.State):
         return "failed"
 
 
-##########################################################################################################################################
+########################################################################################################################
 
 
 class WaitForPersonEntity(smach.State):
@@ -329,7 +325,7 @@ class WaitForPersonEntity(smach.State):
         detected_humans = None
 
         while counter < self.attempts:
-            print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
+            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             detected_humans = detect_human_in_front(self.robot)
             if detected_humans:
@@ -340,6 +336,8 @@ class WaitForPersonEntity(smach.State):
             rospy.sleep(self.sleep_interval)
 
         return 'failed'
+
+########################################################################################################################
 
 
 class WaitForPersonDetection(smach.State):
@@ -359,14 +357,14 @@ class WaitForPersonDetection(smach.State):
         desgnResult = None
 
         while counter < self.attempts:
-            print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
+            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             rospy.logerr(
                 "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
             rospy.logerr("I will return an empty detection list!")
             detections = []
             if detections:
-                print "[WaitForPersonDetection] " + "Found a human!"
+                print("[WaitForPersonDetection] " + "Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -374,8 +372,7 @@ class WaitForPersonDetection(smach.State):
 
         return 'failed'
 
-
-##########################################################################################################################################
+########################################################################################################################
 
 
 def detect_human_in_front(robot):
@@ -397,13 +394,12 @@ def detect_human_in_front(robot):
         x = pose_base_link.pose.frame.p.x()
         y = pose_base_link.pose.frame.p.y()
 
-        print "Detection (x,y) in base link: (%f,%f)" % (x, y)
+        print("Detection (x,y) in base link: (%f,%f)" % (x, y))
 
         if 0.0 < x < 1.5 and -1.0 < y < 1.0:
             return True
 
-
-##########################################################################################################################################
+########################################################################################################################
 
 
 def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
@@ -449,7 +445,7 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
     return count
 
 
-##########################################################################################################################################
+########################################################################################################################
 
 class AskPersonName(smach.State):
     """
