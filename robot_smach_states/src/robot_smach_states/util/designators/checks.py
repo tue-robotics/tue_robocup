@@ -2,6 +2,7 @@
 __author__ = 'loy'
 import core
 
+
 def check_resolve_type(designator, *allowed_types):
     """
     >>> from robot_smach_states.util.designators.core import Designator
@@ -60,11 +61,12 @@ def check_type(designator_or_value, *allowed_types):
       ...
     TypeError: ...
     """
-    if hasattr(designator_or_value, "resolve_type"): #If its a designator: ...
+    if hasattr(designator_or_value, "resolve_type"):  # If its a designator: ...
         check_resolve_type(designator_or_value, *allowed_types)
     else:
         if not type(designator_or_value) in allowed_types:
             raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+
 
 def is_writeable(variable_writer):
     if isinstance(variable_writer, core.VariableWriter):
