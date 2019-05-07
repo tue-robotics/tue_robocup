@@ -33,6 +33,16 @@ def check_resolve_type(designator, *allowed_types):
     Traceback (most recent call last):
       ...
     TypeError: ...
+
+    >>> d7 = Designator(["a", "b", "c"], resolve_type=[str])
+    >>> check_resolve_type(d7, [str])
+
+    >>> d8 = Designator(["a", "b", "c"], resolve_type=[str])
+    >>> #The resolve_type is actually [str] but we check for int, thus get an exception
+    >>> check_resolve_type(d8, str)
+    Traceback (most recent call last):
+      ...
+    TypeError: Designator(resolve_type=[<type 'str'>], name=None) resolves to [<type 'str'>] but should resolve to one of (<type 'str'>,)
     """
 
     if isinstance(designator.resolve_type, list):
