@@ -36,14 +36,19 @@ def check_resolve_type(designator, *allowed_types):
     """
 
     if isinstance(designator.resolve_type, list):
-        real_resolve_type = designator.resolve_type[0]
-        real_allowed_type = allowed_types[0][0] #allowed_types is a list (because of the *).
+        real_resolve_type = designator.resolve_type[0]  # Designator should only resolve to one type.
+        for allowed_type in allowed_types:  # allowed_types is a tuple (because of the *).
+            real_allowed_type = allowed_type[0] if isinstance(allowed_type, list) else allowed_type
 
-        if not real_resolve_type == real_allowed_type:
-            raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
+            if not real_resolve_type == real_allowed_type:
+                raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator,
+                                                                                              designator.resolve_type,
+                                                                                              allowed_types))
 
-    if not designator.resolve_type in allowed_types:
-        raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
+    if designator.resolve_type not in allowed_types:
+        raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator,
+                                                                                      designator.resolve_type,
+                                                                                      allowed_types))
 
 
 def check_type(designator_or_value, *allowed_types):
