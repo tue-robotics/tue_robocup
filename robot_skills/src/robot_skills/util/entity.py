@@ -17,7 +17,7 @@ class Entity(object):
 
     """
     def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time,
-                 person_properties=None):
+                 person=None):
         """ Constructor
 
         :param identifier: str with the id of this entity
@@ -37,7 +37,7 @@ class Entity(object):
         self.super_types = super_types
         self._last_update_time = last_update_time
 
-        self._person_properties = person_properties
+        self._person = person
 
     @property
     def volumes(self):
@@ -142,20 +142,20 @@ class Entity(object):
         self._pose = pose_msg_to_kdl_frame(pose)
 
     @property
-    def person_properties(self):
-        if self._person_properties:
-            return self._person_properties
+    def person(self):
+        if self._person:
+            return self._person
         else:
             rospy.logwarn("{} is not a person".format(self))
             return None
 
-    @person_properties.setter
-    def person_properties(self, value):
-        self._person_properties = value
+    @person.setter
+    def person(self, value):
+        self._person = value
 
     def __repr__(self):
-        return "Entity(id='{id}', type='{type}', frame={frame}, person_properties={pp})"\
-            .format(id=self.id, type=self.type, frame=self.pose, pp=self._person_properties)
+        return "Entity(id='{id}', type='{type}', frame={frame}, person={pp})"\
+            .format(id=self.id, type=self.type, frame=self.pose, pp=self._person)
 
 
 class PersonProperties(object):
@@ -228,7 +228,7 @@ def from_entity_info(e):
             del pp_dict['position']
             del pp_dict['tagnames']
             del pp_dict['tags']
-            entity.person_properties = PersonProperties(tags_dict=tags_dict, parent_entity=entity, **pp_dict)
+            entity.person = PersonProperties(tags_dict=tags_dict, parent_entity=entity, **pp_dict)
         except TypeError, te:
             rospy.logerr("Cannot instantiate PersonProperties from {}".format(e.data))
 
