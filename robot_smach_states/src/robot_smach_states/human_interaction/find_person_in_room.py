@@ -17,6 +17,7 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.designators import check_type
 from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
 
 # class CheckIfPersonInRoom(smach.State):
 #     def __init__(self, robot, room):
@@ -98,17 +99,18 @@ class FindPerson(smach.State):
 
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
-            found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
-            found_names = {person.id: person for person in found_people}
+            found_person_entities = [self._robot.ed.get_entity(id) for id in found_people_ids]
+            found_names = {entity.person.name: entity for entity in found_person_entities if entity.is_a('person')}
 
             found_person = None
 
             if self._discard_other_labels:
-                found_person = found_names.get(person_label, None)
+                found_person = found_names.get(person_label, None)  # type: Entity
             else:
                 # find which of those is closest
                 robot_pose = self._robot.base.get_location()
-                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
+                found_person = min(found_person_entities,
+                                   key=lambda person: person.pose.frame.p - robot_pose.frame.p)  # type: Entity
 
             if self._room:
                 room_entity = self._robot.ed.get_entity(id=self._room)
