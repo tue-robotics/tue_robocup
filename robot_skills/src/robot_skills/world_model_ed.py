@@ -12,7 +12,7 @@ import visualization_msgs.msg
 import ed_msgs.srv
 from ed_msgs.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 import ed_sensor_integration.srv
-from ed_people_detector_msgs.srv import EdDetectPeople, EdDetectPeopleRequest
+from ed_people_detection_msgs.srv import EdDetectPeople, EdDetectPeopleRequest
 from ed_perception.srv import Classify
 from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
@@ -66,7 +66,7 @@ class ED(RobotPart):
         self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name,
                                                             ed_sensor_integration.srv.RayTrace)
 
-        self._ed_detect_people_srv = self.create_service_client('/%s/ed/people_detector/detect_people' % robot_name,
+        self._ed_detect_people_srv = self.create_service_client('/%s/ed/people_detection/detect_people' % robot_name,
                                                                 EdDetectPeople)
 
         self._tf_listener = tf_listener
