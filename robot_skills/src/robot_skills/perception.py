@@ -34,16 +34,16 @@ class Perception(RobotPart):
         self._camera_last_image = None
 
         self._annotate_srv = self.create_service_client(
-            '/' + robot_name + '/people_detection/face_recognition/annotate', Annotate)
+            '/' + robot_name + '/people_recognition/face_recognition/annotate', Annotate)
         self._recognize_srv = self.create_service_client(
-            '/' + robot_name + '/people_detection/face_recognition/recognize', Recognize)
+            '/' + robot_name + '/people_recognition/face_recognition/recognize', Recognize)
         self._clear_srv = self.create_service_client(
-            '/' + robot_name + '/people_detection/face_recognition/clear', Empty)
+            '/' + robot_name + '/people_recognition/face_recognition/clear', Empty)
 
         self._image_data = (None, None, None)
 
         self._face_properties_srv = self.create_service_client(
-            '/' + robot_name + '/people_detection/face_recognition/get_face_properties', GetFaceProperties)
+            '/' + robot_name + '/people_recognition/face_recognition/get_face_properties', GetFaceProperties)
 
         self._projection_srv = self.create_service_client(projection_srv_name, Project2DTo3D)
 
