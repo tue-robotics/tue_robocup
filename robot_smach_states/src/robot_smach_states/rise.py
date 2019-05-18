@@ -21,7 +21,7 @@ class HeroHmiPose(smach.State):
     def execute(self, _):
         arm = self._robot.get_arm()
 
-        #get position to look at
+        # Get position to look at after turning. Transform the position to map frame since turning will move base_link
         goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self._robot.robot_name + "/base_link")
         tf_goal = goal.projectToFrame('/map', self._robot.tf_listener)
 
