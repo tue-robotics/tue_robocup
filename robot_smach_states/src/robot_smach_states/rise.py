@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # ROS
-import rospy
+
 import smach
 
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -48,20 +48,9 @@ class HmiPose(smach.State):
 
 class RiseForHMI(smach.StateMachine):
     """
-    Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
-    item there
+    Get the robot in a nice pose for human machine interaction. This is more complicated for HERO compared to
+    AMIGO and SERGIO.
     :param robot: Robot to execute state with
-    :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
-    :param place_pose: The place pose can be one of three things:
-        1: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-        2: EdEntityDesignator resolving to an object on which the robot should place something
-        3: A string identifying an object on which the robot should place something
-    :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-    ArmHoldingEntityDesignator
-    :param place_volume (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
-    shelf3'
-    :param update_supporting_entity (optional) bool to indicate whether the supporting entity should be updated.
-    This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
     """
 
     def __init__(self, robot):
