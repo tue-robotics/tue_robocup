@@ -41,7 +41,6 @@ class GetTrashBin(smach.State):
         new_frame = FrameStamped(frame_updated, "map")
 
         # new_frame.header.stamp
-        print("{}".format(new_frame))
         self._robot.ed.update_entity(self._robot, e.id, frame_stamped=new_frame)
         if e:
             return "succeeded"
