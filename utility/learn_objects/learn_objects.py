@@ -55,11 +55,23 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         count = 0
         while not rospy.is_shutdown() and count < 10:
-            res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
-            segmented = res.new_ids + res.updated_ids
-            object_classifications = robot.ed.classify(ids=segmented)
-            rospy.sleep(2)
             robot.speech.speak("Say Cheese")
+            res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
+            segmented_object_ids = res.new_ids + res.updated_ids
+
+            if len(segmented_object_ids) <= 0:
+                rospy.logwarn("no entities segmented. Make sure there are objects in the segmentation area")
+
+            #save cropped images(ids=segmented_object_ids)
+
+
+                e.measuremnt
+
+            #segmented = res.new_ids + res.updated_ids
+            #object_classifications = robot.ed.classify(ids=segmented)
+
+
+            rospy.sleep(2)
             count += 1
         robot.speech.speak("Pause")
         rospy.sleep(5)
