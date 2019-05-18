@@ -6,7 +6,7 @@ import smach
 from robot_skills.util.kdl_conversions import VectorStamped
 
 
-class HeroHMIPose(smach.State):
+class HeroHmiPose(smach.State):
     """
     State to ensure that hero's arm is out of the way so that the robot
     may move his torso up.
@@ -32,6 +32,19 @@ class HeroHMIPose(smach.State):
         arm.wait_for_motion_done()
         return "succeeded"
 
+class HmiPose(smach.State):
+    """
+    State to puts the robot in a position for hmi
+    :param robot: Robot to execute state with
+    """
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self._robot = robot
+
+    def execute(self, _):
+        self._robot.head.look_at_standing_person()
+        return "succeeded"
+
 
 class RiseForHMI(smach.StateMachine):
     """
@@ -55,6 +68,11 @@ class RiseForHMI(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         with self:
-            smach.StateMachine.add('ARM_OUT_OF_WAY', HeroHMIPose(robot),
-                                   transitions={'succeeded': 'done',
-                                                'failed': 'failed'})
+            if robot.robot_name == 'hero2':
+                smach.StateMachine.add('HERO_HMI_POSE', HeroHmiPose(robot),
+                                       transitions={'succeeded': 'done',
+                                                    'failed': 'failed'})
+            else:
+                smach.StateMachine.add('HMI_POSE', HmiPose(robot),
+                                       transitions={'succeeded': 'done',
+                                                    'failed': 'failed'})
