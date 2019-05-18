@@ -55,7 +55,7 @@ class FindPeople(State):
                                                          y=2.0 * look_distance * math.sin(angle), z=1.7,
                                                          frame_id="/%s/base_link" % self._robot.robot_name)
                            for angle in look_angles])
-        n = 0
+        n = 0 # This represents the number of detected people, once four people are detected, this state is exited. 
         i = 0
 
         while (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
