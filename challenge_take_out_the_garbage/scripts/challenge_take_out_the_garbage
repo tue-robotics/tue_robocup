@@ -9,12 +9,5 @@ from robot_smach_states.util.startup import startup
 from challenge_take_out_the_garbage.take_out_the_garbage import TakeOutGarbage
 
 if __name__ == "__main__":
-    rospy.init_node('take_out_the_garbage')   # ToDo: Change back to state_machine after a launch file is made
+    rospy.init_node('take_out_the_garbage')
     startup(TakeOutGarbage)
-
-    # rospy.init_node("state_machine_garbage")
-    # robot = robot_constructor("amigo")   # ToDo: Make configurable
-    # state_machine = TakeOutGarbage(robot)
-    # state_machine.execute()
-    # raw_input("Press any key to exit")
-
