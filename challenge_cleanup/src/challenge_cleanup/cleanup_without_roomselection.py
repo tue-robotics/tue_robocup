@@ -46,6 +46,9 @@ from robot_smach_states.util.designators import VariableDesignator, VariableWrit
 from clean_inspect import CleanInspect
 from robot_smach_states.utility import SetInitialPose
 
+# Try the new designator iterator (2019-05-14)
+from robot_smach_states import designator_iterator
+
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
 
@@ -200,6 +203,11 @@ def setup_statemachine(robot):
         #                        transitions={"arrived": "INQUIRE_ROOM",
         #                                     "unreachable": "INQUIRE_ROOM",
         #                                     "goal_not_defined": "INQUIRE_ROOM"})
+
+
+        # The next two states 'teleport' the robot from the initial_pose to the challenge starting point
+        # in the arena. These states replace the two states above, which do not work correctly.
+
         smach.StateMachine.add("INITIALIZE",
                                robot_smach_states.Initialize(robot),
                                transitions={"initialized": "SET_INITIAL_POSE",
@@ -209,6 +217,7 @@ def setup_statemachine(robot):
                                transitions={"done":    "INQUIRE_ROOM",
                                             "preempted": "Aborted",
                                             "error":  "INQUIRE_ROOM"})
+
         smach.StateMachine.add("INQUIRE_ROOM",
                                 AskWhichRoomToClean(robot, roomw, answerw, cleanup_locationsw),
                                 transitions={"done":    "VERIFY",
