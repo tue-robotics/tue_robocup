@@ -1,17 +1,20 @@
 #! /usr/bin/env python
 
+import sys
+
 import rospy
 import PyKDL as kdl
 
 
 from robot_smach_states.util.designators import EntityByIdDesignator
 from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.robot_constructor import robot_constructor
 
 
 def look_at_entity(robot, location_des):
-    #look on top of the surface
+    # look on top of the surface
     entity = location_des.resolve()
-    area  = "on_top_of"  #TODO make the area variable and/or a designator
+    area = "on_top_of"
     search_volume = entity.volumes[area]
     x_obj = 0.5 * (search_volume.min_corner.x() + search_volume.max_corner.x())
     y_obj = 0.5 * (search_volume.min_corner.y() + search_volume.max_corner.y())
@@ -28,21 +31,26 @@ def look_at_entity(robot, location_des):
 
 
 if __name__ == '__main__':
-    rospy.init_node('learn_objects_exec')
+    rospy.init_node('learn_objects')
 
-    #TODO make this so that it also works for AMIGO and SERGIO
-    from robot_skills import Hero as Robot
-    robot = Robot()
+    if len(sys.argv) < 2:
+        print("Please specify a robot name")
+        sys.exit()
 
-    #TODO make table entity variable
+    robot_name = sys.argv[1]
+    if robot_name != "hero":
+        rospy.logwarn("Currently learn_objects is designed to be used with hero. It will not work for other robots")
+        sys.exit()
+
     location = "hero_case"
+
+    robot = robot_constructor(robot_name)
+
     location_des = EntityByIdDesignator(robot, location)
 
     arm = robot.leftArm()
     arm.send_joint_goal('arm_out_of_way')
     arm.wait_for_motion_done()
-    #robot.leftArm().send_joint_goal("arm_out_of_way")
-    #robot.leftArm().wait_for_motion_done()
 
     robot.torso.high()
     robot.torso.wait_for_motion_done()
