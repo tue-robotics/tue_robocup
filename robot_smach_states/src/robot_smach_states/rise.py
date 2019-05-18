@@ -12,24 +12,26 @@ class HeroHmiPose(smach.State):
     may move his torso up.
     :param robot: Robot to execute state with
     """
-    def __init__(self, robot):
+    def __init__(self, robot, rotation=1.57, rotational_speed=1):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
+        self._rotation = rotation
+        self._rot_speed = rotational_speed
 
     def execute(self, _):
-        rotation = 1.57
-        rot_speed = 1
         arm = self._robot.get_arm()
 
         #get position to look at
         goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self._robot.robot_name + "/base_link")
         tf_goal = goal.projectToFrame('/map', self._robot.tf_listener)
 
+        rotation_duration = self._rotation / self._rot_speed
         if arm.has_joint_goal('arm_out_of_way'):
             arm.send_joint_goal('arm_out_of_way', 0.0)
-            self._robot.base.force_drive(0, 0, rot_speed, rotation / rot_speed)
+            self._robot.base.force_drive(0, 0, self._rot_speed, rotation_duration)
         self._robot.head.look_at_point(tf_goal)
         arm.wait_for_motion_done()
+        self._robot.head.wait_for_motion_done()
         return "succeeded"
 
 class HmiPose(smach.State):
@@ -43,6 +45,7 @@ class HmiPose(smach.State):
 
     def execute(self, _):
         self._robot.head.look_at_standing_person()
+        self._robot.head.wait_for_motion_done()
         return "succeeded"
 
 
@@ -57,7 +60,7 @@ class RiseForHMI(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         with self:
-            if robot.robot_name == 'hero2':
+            if robot.robot_name == 'hero':
                 smach.StateMachine.add('HERO_HMI_POSE', HeroHmiPose(robot),
                                        transitions={'succeeded': 'done',
                                                     'failed': 'failed'})
