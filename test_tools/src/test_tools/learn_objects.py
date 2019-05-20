@@ -27,7 +27,42 @@ def look_at_entity(robot, location_des):
     robot.head.look_at_point(VectorStamped(x, y, z, "/map"), timeout=0)
     rospy.loginfo("Looking at position ({}, {}, {})".format(x, y, z))
     robot.head.wait_for_motion_done()
-    rospy.loginfo("done looking a the {}".format(entity.id))
+
+
+def take_picture(robot, entity):
+    res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
+    segmented = res.new_ids + res.updated_ids
+    robot.ed.classify(ids=segmented)
+
+
+def learn_objects(robot, location):
+    arm = robot.leftArm()
+    if arm.has_joint_goal('arm_out_of_way'):
+        rospy.loginfo('Getting arm out of the way')
+        arm.send_joint_goal('arm_out_of_way')
+        arm.wait_for_motion_done()
+
+    look_at_entity(robot, location)
+
+    entity = location.resolve()
+    while not rospy.is_shutdown():
+        count = 0
+        while not rospy.is_shutdown():
+            robot.speech.speak("Cheese")
+            take_picture(robot, entity)
+            rospy.sleep(1)
+
+            count += 1
+            if count > 10:
+                break
+
+            robot.speech.speak("move")  # instruct the user to move the objects
+            rospy.sleep(1)
+
+        robot.speech.speak("Switch")
+        rospy.sleep(5)
+        robot.speech.speak("clear")  #warn the user that a picture will be taken soon
+        rospy.sleep(1)
 
 
 if __name__ == '__main__':
@@ -39,35 +74,11 @@ if __name__ == '__main__':
 
     robot_name = sys.argv[1]
     if robot_name != "hero":
-        rospy.logwarn("Currently learn_objects is designed to be used with hero. It will not work for other robots")
-        sys.exit()
-
-    location = "hero_case"
+        rospy.logwarn("Learn_objects is designed to be used with hero. It is unknown how it works for other robots")
 
     robot = robot_constructor(robot_name)
 
+    location = "hero_case"
     location_des = EntityByIdDesignator(robot, location)
 
-    arm = robot.leftArm()
-    arm.send_joint_goal('arm_out_of_way')
-    arm.wait_for_motion_done()
-
-    robot.torso.high()
-    robot.torso.wait_for_motion_done()
-
-    look_at_entity(robot, location_des)
-
-    entity = location_des.resolve()
-    while not rospy.is_shutdown():
-        count = 0
-        while not rospy.is_shutdown() and count < 10:
-            robot.speech.speak("Say Cheese")
-            res = robot.ed.update_kinect("{} {}".format("on_top_of", entity.id))
-            segmented = res.new_ids + res.updated_ids
-            object_classifications = robot.ed.classify(ids=segmented)
-            rospy.sleep(2)
-            count += 1
-        robot.speech.speak("Pause")
-        rospy.sleep(5)
-
-
+    learn_objects(robot, location_des)
