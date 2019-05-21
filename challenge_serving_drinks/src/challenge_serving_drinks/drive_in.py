@@ -54,7 +54,7 @@ class DriveIn(smach.StateMachine):
                              "error": "INSPECT_BAR"}
             )
 
-            # Inspect bar
+            # Inspect bar and store the list of available drinks
             smach.StateMachine.add(
                 "INSPECT_BAR",
                 states.Inspect(
