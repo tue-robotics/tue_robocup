@@ -3,7 +3,7 @@ import rospy
 from std_msgs.msg import ColorRGBA
 
 # TU/e Robotics
-from amigo_msgs.msg import RGBLightCommand
+from tue_msgs.msg import RGBLightCommand
 from robot_skills.robot_part import RobotPart
 
 LISTENING = ColorRGBA(0, 1, 0, 1)
