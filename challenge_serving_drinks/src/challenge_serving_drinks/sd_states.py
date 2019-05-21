@@ -364,6 +364,7 @@ class DetectWaving(smach.State):
         waving_persons = []
         i = 0
         while not rospy.is_shutdown() and not waving_persons:
+            # ToDo: It looks like this goes on forever if no waving person is found.
             header, waving_persons = self.wait_for_waving_person(head_samples=head_samples)
 
             angle = look_angles[i % len(look_angles)]
