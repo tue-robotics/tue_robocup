@@ -139,6 +139,7 @@ class GetOrder(smach.StateMachine):
                 "ASK_DRINK",
                 AskDrink(
                     robot=robot,
+                    operator_name=operator_name,
                     drink_designator=drink_designator.writeable,
                     available_drinks_designator=available_drinks_designator,
                     unavailable_drink_designator=unavailable_drink_designator),

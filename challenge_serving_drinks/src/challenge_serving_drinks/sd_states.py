@@ -7,6 +7,7 @@ import rospy
 import smach
 
 # TU/e Robotics
+import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from hmi import TimeoutException
@@ -19,23 +20,22 @@ from Queue import Queue, Empty
 COMMON_KNOWLEDGE = knowledge_loader.load_knowledge("common")
 
 
-class AskDrink(smach.State):
-    """ Asks the operator what he/she would like to drink.
-
-    This is based on the 'TakeOrder' class of the the restaurant challenge. Might
-    be nice to merge these two.
+class CheckAvailability(smach.State):
     """
+    Hears the desired drink and checks its availability.
+    """
+
     def __init__(self, robot, drink_designator, available_drinks_designator, unavailable_drink_designator,
                  max_tries=3, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
-        """ Initialization method
-
+        """
+        Initialization method
         :param robot: robot api object
         :param drink_designator: designator in which the drink (entity type) is stored
         :param max_tries: (int) maximum number of times the robot asks which drink
         :param max_queries_per_try: (int) maximum number of queries to the HMI server per try
         """
-        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+
         self._robot = robot
         self._drink_designator = drink_designator
         self._available_drinks_designator = available_drinks_designator
@@ -46,10 +46,12 @@ class AskDrink(smach.State):
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
 
+        smach.State.__init__(self, outcomes=["available", "unavailable", "aborted"])
+
     @staticmethod
     def _setup_drinks_grammar():
-        """ Sets up the grammar to ask which drink someone would like based on the objects in the knowlegde.
-
+        """
+        Sets up the grammar to ask which drink someone would like based on the objects in the knowlegde.
         :return: tuple(str, str) grammar and target
         """
 
@@ -67,8 +69,6 @@ class AskDrink(smach.State):
 
     def execute(self, userdata=None):
 
-        self._robot.head.look_at_standing_person()
-
         nr_tries = 0
         while nr_tries < self._max_tries and not rospy.is_shutdown():
             nr_tries += 1
@@ -76,140 +76,27 @@ class AskDrink(smach.State):
             rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
             rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
 
-            # Ask the operator a question
-            self._robot.speech.speak(
-                random.choice([
-                    "What would you like to drink?",
-                    "Which drink would you like?",
-                    "What would you like to quench your thirst?",
-                    "What can I get you?",
-                    "Please tell me which drink you want",
-                ]),
-                block=True
-            )
+            # Try to get the answer
+            try:
+                speech_result = self._query_drink(self._max_queries_per_try)
+            except TimeoutException:
+                return "aborted"
 
-            # ToDo: add checks for the alternative answers
-            # Check if there is data for the drinks availability
-            if self._unavailable_drink_designator:
-                # Try to get the answer
-                try:
-                    speech_result = self._query_drink(self._max_queries_per_try)
-                except TimeoutException:
-                    continue
+            # ToDo: Check if the drink is in the list of available drinks
+            # Check if the drink is unavailable
+            # if speech_result.semantics in self._available_drinks_designator.resolve():
+            #     # Store the requested drink in the designator
+            #     self._drink_designator.write(str(speech_result.semantics))
+            #     rospy.loginfo("Requested drink: {}".format(self._drink_designator.resolve()))
+            #     return "available"
 
-                # Ask for confirmation
-                self._robot.speech.speak(
-                    "I understood that you would like {}, is that correct?".format(speech_result.semantics)
-                )
-                if not self._confirm():
-                    continue
-
-                if speech_result.semantics == self._unavailable_drink_designator.resolve():
-                    # Announce that the drink is unavailable
-                    self._robot.speech.speak(
-                        "Unfortunately we don't have {}, what else can I bring for you".format(speech_result.semantics)
-                    )
-
-                    # Try to get the alternative answer
-                    try:
-                        alt_speech_result = self._query_drink(self._max_queries_per_try)
-                    except TimeoutException:
-                        continue
-
-                    # Ask for confirmation
-                    self._robot.speech.speak(
-                        "I understood that you would like {}, is that correct?".format(alt_speech_result.semantics)
-                    )
-                    if not self._confirm():
-                        continue
-
-                    # Store the type in the designator
-                    self._drink_designator.write(str(alt_speech_result.semantics))
-                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
-
-                    return "succeeded"
-
-                else:
-                    # Store the type in the designator
-                    self._drink_designator.write(str(speech_result.semantics))
-                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
-
-                    return "succeeded"
-
-            # ToDo: check if it works for inspected items (correct passing of data and resolving of the designator)
-            elif self._available_drinks_designator:
-                # Try to get the answer
-                try:
-                    speech_result = self._query_drink(self._max_queries_per_try)
-                except TimeoutException:
-                    continue
-
-                # Ask for confirmation
-                self._robot.speech.speak(
-                    "I understood that you would like {}, is that correct?".format(speech_result.semantics)
-                )
-                if not self._confirm():
-                    continue
-
-                if speech_result.semantics in self._available_drinks_designator.resolve():
-                    # Store the type in the designator
-                    self._drink_designator.write(str(speech_result.semantics))
-                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
-
-                    return "succeeded"
-
-                else:
-                    # Announce that the drink is unavailable
-                    self._robot.speech.speak(
-                        "Unfortunately we don't have {}, what else can I bring for you".format(speech_result.semantics)
-                    )
-
-                    # Try to get the alternative answer
-                    try:
-                        alt_speech_result = self._query_drink(self._max_queries_per_try)
-                    except TimeoutException:
-                        continue
-
-                    # Ask for confirmation
-                    self._robot.speech.speak(
-                        "I understood that you would like {}, is that correct?".format(alt_speech_result.semantics)
-                    )
-                    if not self._confirm():
-                        continue
-
-                    # Store the type in the designator
-                    self._drink_designator.write(str(alt_speech_result.semantics))
-                    rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
-
-                    return "succeeded"
-
+            if speech_result.semantics == self._unavailable_drink_designator.resolve():
+                return "unavailable"
             else:
-                # We should not end up here
-                rospy.logerr("Missing drinks information")
-
-                # Try to get the answer
-                try:
-                    speech_result = self._query_drink(self._max_queries_per_try)
-                except TimeoutException:
-                    continue
-
-                # Ask for confirmation
-                self._robot.speech.speak(
-                    "I understood that you would like {}, is that correct?".format(speech_result.semantics)
-                )
-                if not self._confirm():
-                    continue
-
-                # Store the type in the designator
+                # Store the requested drink in the designator
                 self._drink_designator.write(str(speech_result.semantics))
-                rospy.loginfo("Drink to fetch: {}".format(self._drink_designator.resolve()))
-
-                return "succeeded"
-
-        self._robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
-        # ToDo: fill default?
-        self._robot.head.cancel_goal()
-        return "failed"
+                rospy.loginfo("Requested drink: {}".format(self._drink_designator.resolve()))
+                return "available"
 
     def _query_drink(self, max_tries):
         """
@@ -237,18 +124,76 @@ class AskDrink(smach.State):
                 "Please speak up, as I didn't hear your order",
             ]))
 
-    def _confirm(self):
-        """
-        Queries the HMI server for confirmation
-        :return: (bool) whether the understood beverage was correct
-        """
-        try:
-            speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
-                                                                                          "T[False] -> no", target="T")
-        except TimeoutException:
-            return False
 
-        return speech_result.semantics
+class AskDrink(smach.StateMachine):
+    """
+    Asks the operator what he/she would like to drink.
+    """
+    def __init__(self, robot, operator_name, drink_designator, available_drinks_designator,
+                 unavailable_drink_designator):
+        # type (Robot, VariableDesignator) -> None
+        """
+        Initialization method
+        :param robot: robot api object
+        :param drink_designator: designator in which the drink (entity type) is stored
+        """
+
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
+
+        with self:
+
+            # Ask for order
+            smach.StateMachine.add(
+                "ASK_FOR_ORDER",
+                states.Say(
+                    robot=robot,
+                    sentence=random.choice(["What would you like to drink?",
+                                            "Which drink would you like?",
+                                            "What would you like to quench your thirst?",
+                                            "What can I get you?",
+                                            "Please tell me which drink you want"]),
+                    look_at_standing_person=True),
+                transitions={"spoken": "CHECK_AVAILABILITY"}
+            )
+
+            # Check availability
+            smach.StateMachine.add(
+                "CHECK_AVAILABILITY",
+                CheckAvailability(
+                    robot=robot,
+                    drink_designator=drink_designator,
+                    available_drinks_designator=available_drinks_designator,
+                    unavailable_drink_designator=unavailable_drink_designator),
+                transitions={"available": "ASK_FOR_CONFIRMATION",
+                             "unavailable": "STATE_UNAVAILABLE",
+                             "aborted": "aborted"})
+
+            # Ask for confirmation
+            smach.StateMachine.add(
+                "ASK_FOR_CONFIRMATION",
+                states.Say(
+                    robot=robot,
+                    sentence=DescriptionStrDesignator("confirmation_available", drink_designator, operator_name),
+                    look_at_standing_person=True),
+                transitions={"spoken": "HEAR_CONFIRMATION"}
+            )
+
+            # Hear the confirmation
+            smach.StateMachine.add("HEAR_CONFIRMATION",
+                                   states.HearOptions(robot=robot, options=["yes", "no"]),
+                                   transitions={"yes": "succeeded",
+                                                "no": "ASK_FOR_ORDER",
+                                                "no_result": "ASK_FOR_ORDER"})  # ToDo: fallback?
+
+            # Announce that the drink is unavailable
+            smach.StateMachine.add(
+                "STATE_UNAVAILABLE",
+                states.Say(
+                    robot=robot,
+                    sentence=DescriptionStrDesignator("state_unavailable", unavailable_drink_designator, operator_name),
+                    look_at_standing_person=True),
+                transitions={"spoken": "ASK_FOR_ORDER"}
+            )
 
 
 class AskAvailability(smach.State):
@@ -484,7 +429,7 @@ class DetectWaving(smach.State):
 
 
 class DescriptionStrDesignator(ds.Designator):
-    def __init__(self, operator_name_des, drink_request_des, message_type ,name=None):
+    def __init__(self, message_type, drink_request_des, operator_name_des, name=None):
         super(DescriptionStrDesignator, self).__init__(resolve_type=str, name=name)
 
         ds.check_type(operator_name_des, str)
@@ -504,29 +449,27 @@ class DescriptionStrDesignator(ds.Designator):
                    "Please come to me to receive your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "fallback_bar":
             return "Oh, I cannot inspect the bar. Please hand me over the {drink}".format(drink=drink_request)
+        elif self.message_type == "confirmation_available":
+            return "I understood that you would like {drink}, is that correct?".format(drink=drink_request)
+        elif self.message_type == "state_unavailable":
+            return random.choice([
+                    "Unfortunately we don't have {drink}".format(drink=drink_request),
+                    "The requested {drink} is unavailable".format(drink=drink_request),
+                    "I'm sorry but {drink} is out of stock".format(drink=drink_request),
+            ])
         else:
-            rospy.logerr("No message type defined for DescriptionStrDesignator")
+            rospy.logerr("No correct message type defined for DescriptionStrDesignator")
 
 
 if __name__ == "__main__":
 
     # Test code
-    import sys
 
     rospy.init_node('get_drinks')
 
-    robot_name = sys.argv[1]
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        print("unknown robot")
-        sys.exit()
+    from robot_skills.get_robot import get_robot_from_argv
 
-    _robot = Robot()
+    _robot = get_robot_from_argv(index=1)
 
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(0.5)  # wait for tf cache to be filled

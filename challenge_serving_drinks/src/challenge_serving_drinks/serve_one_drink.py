@@ -81,7 +81,7 @@ class ServeOneDrink(smach.StateMachine):
                 "FALLBACK_BAR",
                 states.Say(
                     robot=robot,
-                    sentence=DescriptionStrDesignator(operator_name, drink_str_designator, "fallback_bar"),
+                    sentence=DescriptionStrDesignator("fallback_bar", drink_str_designator, operator_name),
                     look_at_standing_person=True),
                 transitions={"spoken": "HANDOVER_FROM_HUMAN"}
             )
@@ -126,7 +126,7 @@ class ServeOneDrink(smach.StateMachine):
                 "SAY_NOT_FOUND",
                 states.Say(
                     robot=robot,
-                    sentence=DescriptionStrDesignator(operator_name, drink_str_designator, "not_found_operator"),
+                    sentence=DescriptionStrDesignator("not_found_operator", drink_str_designator, operator_name),
                     look_at_standing_person=True),
                 transitions={"spoken": "HAND_OVER"}
             )
@@ -136,7 +136,7 @@ class ServeOneDrink(smach.StateMachine):
                 "SAY_THE_NAME",
                 states.Say(
                     robot=robot,
-                    sentence=DescriptionStrDesignator(operator_name, drink_str_designator, "found_operator"),
+                    sentence=DescriptionStrDesignator("found_operator", drink_str_designator, operator_name),
                     look_at_standing_person=True),
                 transitions={"spoken": "HAND_OVER"}
             )
