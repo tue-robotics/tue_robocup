@@ -6,10 +6,3 @@ find_package(catkin REQUIRED)
 catkin_python_setup()
 
 catkin_package()
-
-#############
-## Testing ##
-#############
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
