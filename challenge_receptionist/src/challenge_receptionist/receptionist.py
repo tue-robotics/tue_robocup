@@ -121,8 +121,8 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('HEAR_DRINK_ANSWER',
                                    states.HearOptionsExtra(robot,
-                                                      self.drink_spec_des,
-                                                      guest_drink_des.writeable),
+                                                           self.drink_spec_des,
+                                                           guest_drink_des.writeable),
                                    transitions={'heard': 'succeeded',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
 
@@ -154,7 +154,9 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                                 'goal_not_defined': 'abort'})
 
             smach.StateMachine.add('SAY_LOOKING_FOR_GUEST',
-                                   states.Say(robot, ["Now I should be looking at the guest and pointing at him or her"], block=True),
+                                   states.Say(robot,
+                                              ["Now I should be looking at the guest and pointing at him or her"],
+                                              block=True),
                                    transitions={'spoken': 'INTRODUCE_GUEST'})
 
             smach.StateMachine.add('FIND_GUEST',
@@ -166,7 +168,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
 
             smach.StateMachine.add('POINT_AT_GUEST',
                                    states.PointAt(robot=robot,
-                                                  arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                                                  arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
                                                   point_at_designator=guest_ent_des,
                                                   look_at_designator=operator_des),
                                    transitions={"succeeded": "INTRODUCE_GUEST",
@@ -206,6 +208,7 @@ class CheckVolumeEmpty(smach.StateMachine):
                                    transitions={'empty': 'empty',
                                                 'occupied': 'occupied'})
 
+
 class FindEmptySeat(smach.StateMachine):
     def __init__(self, robot, seats_to_inspect):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
@@ -228,6 +231,7 @@ class FindEmptySeat(smach.StateMachine):
                                    states.Say(robot, ["Please sit here"], block=True),
                                    transitions={'spoken': 'succeeded'})
 
+
 class ChallengeReceptionist(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
@@ -240,7 +244,8 @@ class ChallengeReceptionist(smach.StateMachine):
         self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
         self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
         self.guest1_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest1_drink')
-        self.guest1_drinkname_des = FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink', name='guest1_drinkname')
+        self.guest1_drinkname_des = FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink',
+                                                     name='guest1_drinkname')
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -255,7 +260,8 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'error': 'LEARN_GUEST_1'})
 
             smach.StateMachine.add('LEARN_GUEST_1',
-                                   LearnGuest(robot, self.door_waypoint, self.guest1_entity_des, self.guest1_name_des, self.guest1_drink_des),
+                                   LearnGuest(robot, self.door_waypoint, self.guest1_entity_des, self.guest1_name_des,
+                                              self.guest1_drink_des),
                                    transitions={'succeeded': 'GOTO_LIVINGROOM_1',
                                                 'abort': 'abort'})
 
@@ -268,10 +274,10 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'goal_not_defined': 'abort'})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des, self.guest1_name_des, self.guest1_drinkname_des),
+                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des,
+                                                            self.guest1_name_des, self.guest1_drinkname_des),
                                    transitions={'succeeded': 'succeeded',
                                                 'abort': 'abort'})
-
 
             # - [x] Wait at the door, say you're waiting
             # - [x] Wait until person can come in
@@ -288,5 +294,3 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [ ] Say to guest what John's favourite drink is
             # - [ ] Iterate to guest 2
             # - Change ED API to accept list of entity IDs
-
-
