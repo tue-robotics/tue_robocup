@@ -75,7 +75,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         else:
             rospy.logwarn("Not going to meeting point, challenge has param skip:=true set")
 
-        if (self.tasks_done >= self.tasks_to_be_done and not self.skip) or (self.finished and not self.skip):
+        if (self.tasks_done >= self.tasks_to_be_done or self.finished) and not self.skip:
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
                                                                               id=self.knowledge.exit_waypoint),
