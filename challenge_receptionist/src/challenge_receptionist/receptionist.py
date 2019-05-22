@@ -98,7 +98,8 @@ class LearnGuest(smach.StateMachine):
             smach.StateMachine.add('ASK_GUEST_NAME',
                                    states.AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
                                    transitions={'succeeded': 'LEARN_PERSON',
-                                                'failed': 'SAY_HELLO'})
+                                                'failed': 'SAY_HELLO',
+                                                'timeout': 'SAY_HELLO'})
 
             smach.StateMachine.add('LEARN_PERSON',
                                    states.LearnPerson(robot, name_designator=guest_name_des),
