@@ -12,6 +12,7 @@ import hmi
 
 from action_server import Client as ActionClient
 
+from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
 from robot_smach_states import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
@@ -33,7 +34,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.skip = False
 
         self.time_limit = 0
-        self.tasks_to_be_done = 999
+        self.tasks_to_be_done = 0
         self.tasks_done = 0
         self.finished = False
         self.start_time = rospy.get_time()
@@ -74,7 +75,7 @@ class ConversationEngineWithHmi(ConversationEngine):
         else:
             rospy.logwarn("Not going to meeting point, challenge has param skip:=true set")
 
-        if self.tasks_done >= self.tasks_to_be_done and not self.skip:
+        if (self.tasks_done >= self.tasks_to_be_done or self.finished) and not self.skip:
             nwc = NavigateToWaypoint(robot=self.robot,
                                      waypoint_designator=EntityByIdDesignator(robot=self.robot,
                                                                               id=self.knowledge.exit_waypoint),
@@ -95,7 +96,8 @@ class ConversationEngineWithHmi(ConversationEngine):
 
                 sentence, semantics = self.robot.hmi.query(description=description,
                                                            grammar=grammar,
-                                                           target=target)
+                                                           target=target,
+                                                           timeout=20)
 
                 if not self.is_text_valid_input(sentence):
                     self._say_to_user("I don't understand what you're saying, please rephrase")
@@ -139,11 +141,11 @@ class ConversationEngineWithHmi(ConversationEngine):
         self.robot.reset()
         self.robot.head.look_at_standing_person()
 
-        self.robot.speech.speak("Trigger me by saying my name, and wait for the ping.", block=True)
+        self.robot.speech.speak("Please trigger me by stating my name directly into the microphone after the ping.", block=True)
 
         self.wait_to_be_called()
 
-        self.robot.speech.speak("What can I do for you?", block=True)
+        self.robot.speech.speak("Please state your command clearly into the microphone after the ping!.", block=True)
 
         while not rospy.is_shutdown():
             try:
@@ -151,7 +153,7 @@ class ConversationEngineWithHmi(ConversationEngine):
                                                            grammar=grammar,
                                                            target=target)
                 if not self.is_text_valid_input(sentence):
-                    self._say_to_user("I don't understand what you're saying, please rephrase")
+                    self._say_to_user("I don't understand what you're saying, please try again.")
                     continue
 
                 self.timeout_count = 0
@@ -162,6 +164,7 @@ class ConversationEngineWithHmi(ConversationEngine):
                 if correct:
                     # Pass the heard sentence to the conv.engine. This parses it again, but fuck efficiency for now
                     self.user_to_robot_text(sentence)
+                    rospy.sleep(self._tc_fuckup_time)
                     break
             except (hmi.TimeoutException , hmi.GoalNotSucceededException) as e:
                 rospy.logwarn("HMI failed when getting command: {}" .format(e))
@@ -191,7 +194,7 @@ class ConversationEngineWithHmi(ConversationEngine):
                     rospy.logwarn("[GPSR] Timeout_count: {}".format(self.timeout_count))
 
     def heard_correct(self, sentence):
-        self.robot.speech.speak('I heard %s, is this correct?' % sentence)
+        self.robot.speech.speak('I heard %s, is this correct? Please speak loudly into the microphone!' % sentence)
         try:
             if 'no' == self.robot.hmi.query('', 'T -> yes | no', 'T').sentence:
                 self.robot.speech.speak('Sorry, please try again')
@@ -248,16 +251,7 @@ def main():
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        raise ValueError('unknown robot')
-
-    robot = Robot()
+    robot = get_robot(robot_name)
 
     if eegpsr:
         knowledge = load_knowledge('challenge_eegpsr')
