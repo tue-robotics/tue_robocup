@@ -221,7 +221,6 @@ class AskContinue(smach.StateMachine):
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
 
-
 ########################################################################################################################
 
 
@@ -240,8 +239,8 @@ class WaitForPersonInFront(smach.State):
         self.robot.head.look_at_standing_person()
 
         for i in range(self.attempts):
-            self._image_data = self._robot.perception.get_rgb_depth_caminfo()
-            success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
+            image_data = self.robot.perception.get_rgb_depth_caminfo()
+            success, found_people_ids = self.robot.ed.detect_people(*image_data)
             if any(found_people_ids):
                 return 'success'
             rospy.sleep(rospy.Duration(self.sleep_interval))
