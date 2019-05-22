@@ -4,7 +4,7 @@
 bar_id = "bar"
 
 # Room where the party takes place, i.e., where the robot should look for people
-room_id = "living_room"
+room_id = "livingroom"
 
 # Default guest
 operator_name = "default_guest"
