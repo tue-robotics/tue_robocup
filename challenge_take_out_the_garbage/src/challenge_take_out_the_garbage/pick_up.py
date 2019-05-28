@@ -84,7 +84,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Send to grab trash pose
-        arm.send_joint_goal('grab_bag_trash_bin')
+        arm.send_joint_goal('grab_trash_bag')
         arm.wait_for_motion_done()
 
         # Go down and grab
