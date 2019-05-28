@@ -68,43 +68,50 @@ class FindPeople(State):
             self._robot.head.wait_for_motion_done()
             raw_detections = self._robot.perception.detect_faces()
 
-            if raw_detections:
-                for detection in raw_detections:
-                    roi = detection.roi
-                    try:
-                        person_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
-                    except Exception as e:
-                        rospy.logerr("head.project_roi failed: %s", e)
-                        continue  # move onto next detection
+            if not raw_detections:
+                continue
 
-                    # ToDo: This should be the ED people detector
-                    detected_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
-                                                                              center_point=person_pos_kdl)
+            for detection in raw_detections:
+                roi = detection.roi
+                try:
+                    person_pos_kdl = self._robot.perception.project_roi(roi=roi, frame_id="map")
+                except Exception as e:
+                    rospy.logerr("head.project_roi failed: %s", e)
+                    continue  # move onto next detection
 
-                    room_entity = self._robot.ed.get_entity(id=ROOM_ID)
-                    if not room_entity.in_volume(detected_person.pose.extractVectorStamped(), 'in'):
-                        detected_person = None
+                # ToDo: This should be the ED people detector
+                detected_person = self._robot.ed.get_closest_laser_entity(radius=self._look_distance,
+                                                                          center_point=person_pos_kdl)
 
-                    for person in self._people:
-                        if person.pose.extractVectorStamped() - detected_person._pose.extractVectorStamped() > \
-                            self._min_dist and self._robot.ed.get_entities(id=STARTING_POINT).\
-                            _pose.extractVectorStamped() - detected_person.pose.extractVectorStamped() > self._min_dist:
-                            self._people[n] = detected_person
+                room_entity = self._robot.ed.get_entity(id=ROOM_ID)
+                if not room_entity.in_volume(detected_person.pose.extractVectorStamped(), 'in'):
+                    detected_person = None
 
-                            rospy.loginfo(
-                                "I found someone at {}".format(self._people[n].pose.extractVectorStamped(),
-                                                               block=False))
+                add_person = True
+                for person in self._people:
+                    new_person = (person.pose.frame.p - detected_person.pose.frame.p).Norm() > self._min_dist
+                    person_not_operator = (self._robot.ed.get_entities(id=STARTING_POINT).pose.frame.p - detected_person.pose.frame.p).Norm() > self._min_dist
+                    if not new_person or not person_not_operator:
+                        add_person = False
+                        break
 
-                            self._robot.ed.update_entity(
-                                id="person" + str(n),
-                                frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "map"),
-                                type="waypoint")
+                if add_person:
+                    self._people[n] = detected_person
 
-                            n += 1
+                    rospy.loginfo(
+                        "I found someone at {}".format(self._people[n].pose.extractVectorStamped(),
+                                                       block=False))
 
-                    if len(self._people) > 3:
-                        self._robot.head.close()
-                        return 'done'
+                    self._robot.ed.update_entity(
+                        id="person" + str(n),
+                        frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "map"),
+                        type="waypoint")
+
+                    n += 1
+
+                if len(self._people) > 3:
+                    self._robot.head.close()
+                    return 'done'
 
         self._robot.head.close()
         return 'done'
