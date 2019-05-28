@@ -1,33 +1,5 @@
 #!/usr/bin/python
 
-"""
-Clean UP [Housekeeper] challenge
-This challenge is described in the 2019 RoboCup@Home Rulebook / Draft version
-
-Main goal
-Upon entrance, the robot requests the operator which room shall be cleaned. All misplaced known objects
-found in this room must be taken to their predefined locations and unknown objects thrown in the trash bin.
-
-Timelimit: 5 minutes
-
-Number of objects: 5 to 10
-Objects can be anywhere, including the floor, seats, and on furniture. All objects are visible from
-at least 1.0 m distance (no occlusions) and have the following distributions:
-    Known objects: Any two regular and two alike objects
-    Unknown objects: One unknown object at grasping distance (i.e. no decorations)
-
-Reward: 1000 pts (100 pts per object)
-Bonus: max 500 pts
-
-Adapted from the r5cop_demo challenge (see the repo)
-
-Difference from goal:
-- Robot does not inspect the floor, Can we dynamically inspect the floor, or must we stop to inspect?
-- Limited inspection of cabinets
-- trash_bin and trash_can not handled correctly as disposers. Only one of the two.
-
-
-"""
 #ToDo: iterating over designators, such as a dictionary, is NOT possible. This means that choosing the
 #ToDo: room to cleanup cannot be done from within the state machine. Major Bummer!!!
 #Choosing before entering the state machine seems the easiest option to implement, but is not
@@ -46,7 +18,7 @@ from robot_smach_states.util.designators import VariableDesignator, VariableWrit
 from clean_inspect import CleanInspect
 from robot_smach_states.utility import SetInitialPose
 
-# Try the new designator iterator (2019-05-14)
+# ToDo: Try the new designator iterator (2019-05-14)
 from robot_smach_states import designator_iterator
 
 from robocup_knowledge import load_knowledge
@@ -63,15 +35,18 @@ class VerifyWorldModelInfo(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-    # Look for trash units
+    # Look for trash units; can be in living_room and kitchen.
+    # THIS IS ARENA DEPENDANT!! (Should be handled in a different way?)
+    # There should be an 'underscore_rule' : trash_bin or trashbin???
+    #   (Different between rgo2019 and robotivs_testlab knowledge)
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:
-            if loc["room"] == "living_room":
-                if "trash_bin" not in ids:
-                    return "failed"
+            # if loc["room"] == "living_room":
+            #     if "trash_bin" not in ids:
+            #         return "failed"
             if loc["room"] == "kitchen":
-                if "trash_can" not in ids:
+                if "trashbin" not in ids:
                     return "failed"
 
     # Make sure the world model and local knowledge match
@@ -98,6 +73,7 @@ class AskWhichRoomToClean(smach.State):
             if loc["room"] == self.roomw.resolve():
                 cleaning_locations.append(loc)
         self.cleanup_locationsw.write(cleaning_locations)
+        # Show the cleanup list on screen
         rospy.loginfo("Cleaning locations: {}".format(self.cleanup_locationsw.resolve()))
         return
 
@@ -157,6 +133,7 @@ class AskWhichRoomToClean(smach.State):
 
         nr_of_tries += 1
 
+# This should be removed once the designator iteration works.
 # def collect_cleanup_entities(room):
 #     """
 #     Create list of points to visit in the selected room
@@ -175,20 +152,18 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     robot.ed.reset()
     # Designators
+    # Room to search through
     roomr = VariableDesignator('kitchen', resolve_type=str)
     roomw =roomr.writeable
+    # Answer given by operator
     answerr = VariableDesignator('yes', resolve_type=str)
     answerw = VariableWriter(answerr)
-    cleanup_locationsr = VariableDesignator([{'1':'2','3':'4'}])
+    # Cleanup location as defined in local knowledge
+    cleanup_locationsr = VariableDesignator([{'1':'2', '3':'4'}])
     cleanup_locationsw = cleanup_locationsr.writeable
 
-    # Show object locations in designated room
-    # cleaning_locations = collect_cleanup_entities(room)
-#    cleaning_locations = collect_cleanup_entities(roomr.resolve())
-#    rospy.loginfo("Cleaning locations: {}".format(cleanup_locationsr))
-
     with sm:
-
+        # Somehow, the next commented states do not work properly.....
         # Start challenge via StartChallengeRobust
         # smach.StateMachine.add("START_CHALLENGE_ROBUST",
         #                        robot_smach_states.StartChallengeRobust(robot,challenge_knowledge.initial_pose),
@@ -225,7 +200,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('VERIFY',
                            VerifyWorldModelInfo(robot),
-                           transitions={"done": "Done", "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
+                           transitions={"done": "SAY_START_CHALLENGE", "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
 
         smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE',
                            robot_smach_states.Say(robot, ["My knowledge of the world is not complete!",
@@ -240,6 +215,9 @@ def setup_statemachine(robot):
 #                               transitions={"spoken": "INSPECT_0"})
                                transitions={"spoken": "RETURN_TO_OPERATOR"})
 
+# Here the designator cleanup_locationsr has to be iterated over to visit all locations of the room (see designator_iterator.py)
+# How is this to be done?
+
         # for i, place in enumerate(cleanup_locationsr):
         #     next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleanup_locationsr) else "RETURN_TO_OPERATOR"
         #
@@ -248,6 +226,7 @@ def setup_statemachine(robot):
         #                                              place["segment_areas"]),
         #                            transitions={"done": next_state})
         #
+
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
                                                                      waypoint_designator=EntityByIdDesignator(robot=robot,
@@ -270,20 +249,9 @@ def setup_statemachine(robot):
 def main():
     rospy.init_node('cleanup_challenge')
 
-    skip = rospy.get_param('~skip', False)
-    robot_name = rospy.get_param('~robot_name')
+    # For testing purposes, pick a default room
     room = 'bedroom'
 
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        raise ValueError('unknown robot')
-
-    robot = Robot()
     robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup")
 
 
