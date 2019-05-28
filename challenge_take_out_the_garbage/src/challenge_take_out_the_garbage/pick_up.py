@@ -77,7 +77,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        self._robot.base.force_drive(0.15, 0, 0, 0.5)
+        self._robot.base.force_drive(0.15, 0.1, 0, 0.5)
 
         # Open gripper
         arm.send_gripper_goal('open')
