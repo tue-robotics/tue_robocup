@@ -1,3 +1,5 @@
+# CLEAN UP KNOWLEDGE FILE ROBOTICS_TESTLABS
+
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
@@ -25,3 +27,4 @@ grammar_target = "T"
 
 grammar = "T -> kitchen"
 grammar += "\nT -> livingroom"
+grammar += "\nT -> hallway"
