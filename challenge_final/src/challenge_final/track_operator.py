@@ -4,6 +4,7 @@ import threading
 import rospy
 import smach
 from geometry_msgs.msg import Twist
+from hmi import TimeoutException
 
 
 class TrackFace(smach.State):
