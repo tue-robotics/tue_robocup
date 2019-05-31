@@ -111,13 +111,13 @@ class GrabTrash(smach.State):
 
 
 class HandoverFromHuman(smach.StateMachine):
-    '''
+    """
     State that enables low level grab reflex. Besides a robot object, needs
     an arm and an entity to grab, which is either one from ed through the
     grabbed_entity_designator or it is made up in the
     CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
     as id.
-    '''
+    """
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=15, arm_configuration="handover_to_human"):
         """
         Hold up hand to accept an object and close hand once something is inserted
