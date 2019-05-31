@@ -13,7 +13,6 @@ class dropPoseDesignator(ds.Designator):
     """
     def __init__(self, robot, drop_height, name):
         """
-
         :param robot: robot object
         :param drop_height: height to drop the object from
         :param name: name of pose
