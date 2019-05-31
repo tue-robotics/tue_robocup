@@ -114,18 +114,8 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add('LISTEN_FOR_LOCATION',
                                    states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable, rospy.Duration(15)),
-                                   transitions={'heard': "CONFIRM_SAY",
+                                   transitions={'heard': "INSTRUCT_FOR_WAIT",
                                                 'no_result': 'failed'})
-            smach.StateMachine.add("CONFIRM_SAY",
-                                   states.Say(robot,
-                                              "I heard you would like to go to the {}".format(self.entity_des.resolve().id), block=True),
-                                   transitions={'spoken': 'CONFIRM_HEAR'})
-                                   
-            smach.StateMachine.add('CONFIRM_HEAR',
-                                   states.HearOptions(robot, ["yes", "no"], rospy.Duration(10)),
-                                   transitions={'yes': "INSTRUCT_FOR_WAIT",
-                                                'no': 'ANNOUNCE_ITEM',
-                                                'no_result': 'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add("INSTRUCT_FOR_WAIT",
                                    SayWaitDes(robot, self.entity_des),
