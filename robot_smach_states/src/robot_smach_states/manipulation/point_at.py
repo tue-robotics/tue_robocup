@@ -60,7 +60,7 @@ class PointAt(smach.State):
         vs = point_at_ent.pose.extractVectorStamped()  # VectorStamped
         vector_in_bs = vs.projectToFrame('base_link', self._robot.tf_listener)
         # tan(angle) = dy / dx
-        # angle = tan(dy / dx)
+        # angle = arctan(dy / dx)
         # Arm to position in a safe way
         rotate_base = np.arctan2(vector_in_bs.vector.y(), vector_in_bs.vector.x())  # Radians
         # For 1 second, rotate the base with vth == rotate_base.
