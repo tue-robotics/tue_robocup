@@ -17,7 +17,7 @@ from robot_skills.util.image_operations import img_recognitions_to_rois, img_cut
 
 
 class Perception(RobotPart):
-    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None):
+    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None, camera_base_ns=''):
         super(Perception, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         if image_topic is None:
             self.image_topic = "/" + self.robot_name + "/top_kinect/rgb/image"
@@ -28,6 +28,8 @@ class Perception(RobotPart):
             projection_srv_name = '/' + robot_name + '/top_kinect/project_2d_to_3d'
         else:
             projection_srv_name = projection_srv
+
+        self._camera_base_ns = camera_base_ns
 
         self._camera_lazy_sub = None
         self._camera_cv = Condition()
@@ -280,10 +282,9 @@ class Perception(RobotPart):
             event.set()
 
         # camera topics
-        camera_base = '{robot_name}/{camera}'.format(robot_name=self.robot_name, camera='head_rgbd_sensor')  # TODO: parametrize camera
-        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(camera_base), CameraInfo)
-        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(camera_base), Image)
-        rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(camera_base), Image)
+        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns), CameraInfo)
+        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
+        rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
 
         ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
                                                          queue_size=1,
