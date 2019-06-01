@@ -123,11 +123,6 @@ class FindPerson(smach.State):
                 self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
-                # self._robot.ed.update_entity(
-                #     id=person_label,
-                #     frame_stamped=kdl_conversions.FrameStamped(kdl.Frame(person_pos_kdl.vector), "/map"),
-                #     type="waypoint")
-
                 if self._found_entity_designator:
                     self._found_entity_designator.write(found_person)
 
