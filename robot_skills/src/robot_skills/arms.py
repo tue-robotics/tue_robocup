@@ -17,14 +17,6 @@ from tue_msgs.msg import GripperCommand
 
 from robot_skills.robot_part import RobotPart
 
-# If the grasp sensor distance is smaller than this value, the gripper is holding an object
-
-GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
-GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
-GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.02, 0.18]))
-# Temporary: this should be approximately 0.02 once the sensor is correctly setup
-GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.0025, 0.18]))
-
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
 
@@ -89,7 +81,7 @@ class PublicArm(object):
         """
         Query the object currently held by the arm.
         """
-        self._test_die(self._has_occupied_by, "occupied_by", 
+        self._test_die(self._has_occupied_by, "occupied_by",
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         return self._arm.occupied_by
 
@@ -98,7 +90,7 @@ class PublicArm(object):
         """
         Set the object currently held by the arm,
         """
-        self._test_die(self._has_occupied_by, "occupied_by", 
+        self._test_die(self._has_occupied_by, "occupied_by",
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         self._arm.occupied_by = value
 
@@ -110,7 +102,7 @@ class PublicArm(object):
         return configuration in self._available_joint_goals
 
     def send_joint_goal(self, configuration, timeout=5.0):
-        self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration, 
+        self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_goals=['{}'])".format(configuration))
         return self._arm.send_joint_goal(configuration, timeout)
 
@@ -227,13 +219,18 @@ class GripperMeasurement(object):
         self._distance = distance
         self._stamp = rospy.Time.now()
 
+        # If the grasp sensor distance is smaller than this value, the gripper is holding an object
+        self.GRASP_SENSOR_THRESHOLD = rospy.get_param("skills/arm/grasp_sensor/threshold", 0.1)
+        self.GRASP_SENSOR_TIMEOUT = rospy.get_param("skills/arm/grasp_sensor/timeout", 0.5)
+        self.GRASP_SENSOR_LIMITS = tuple(rospy.get_param("skills/arm/grasp_sensor/limits", [0.0025, 0.18]))
+
     def _is_recent(self):
         """
         Checks if the sensor data is recent
 
         :return: bool True if recent, i.e., measurement is less than GRASP_SENSOR_TIMEOUT old, False otherwise
         """
-        return (rospy.Time.now() - self._stamp).to_sec() < GRASP_SENSOR_TIMEOUT
+        return (rospy.Time.now() - self._stamp).to_sec() < self.GRASP_SENSOR_TIMEOUT
 
     @property
     def distance(self):
@@ -246,7 +243,7 @@ class GripperMeasurement(object):
         # Check if data is recent
         if not self._is_recent():
             return float('nan')
-        elif not GRASP_SENSOR_LIMITS[0] < self._distance < GRASP_SENSOR_LIMITS[1]:
+        elif not self.GRASP_SENSOR_LIMITS[0] < self._distance < self.GRASP_SENSOR_LIMITS[1]:
             return float('nan')
         else:
             return self._distance
@@ -259,7 +256,7 @@ class GripperMeasurement(object):
 
         :return: bool if holding
         """
-        return self._is_recent() and GRASP_SENSOR_LIMITS[0] < self._distance < GRASP_SENSOR_THRESHOLD
+        return self._is_recent() and self.GRASP_SENSOR_LIMITS[0] < self._distance < self.GRASP_SENSOR_THRESHOLD
 
     @property
     def is_unknown(self):
@@ -269,7 +266,7 @@ class GripperMeasurement(object):
 
         :return: bool if unknown
         """
-        return not self._is_recent() or self._distance < GRASP_SENSOR_LIMITS[0]
+        return not self._is_recent() or self._distance < self.GRASP_SENSOR_LIMITS[0]
 
     @property
     def is_empty(self):
@@ -278,7 +275,7 @@ class GripperMeasurement(object):
 
         :return: bool if holding
         """
-        return self._is_recent() and self._distance > GRASP_SENSOR_THRESHOLD
+        return self._is_recent() and self._distance > self.GRASP_SENSOR_THRESHOLD
 
     def __repr__(self):
         return "Distance: {}, is_holding: {}, is_unknown: {}, " \
