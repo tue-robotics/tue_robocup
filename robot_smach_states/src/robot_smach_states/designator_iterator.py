@@ -57,6 +57,7 @@ class IterateDesignator(smach.State):
         self._current_elements = None
 
     def execute(self, userdata=None):
+        import pdb; pdb.set_trace()
         if self._current_elements is None:
             self._current_elements = iter(self.collection_des.resolve())
 
