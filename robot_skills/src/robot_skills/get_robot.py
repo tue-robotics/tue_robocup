@@ -19,7 +19,7 @@ ROBOTS = {
 }
 
 
-def get_robot_from_argv(index, default_robot_name="amigo"):
+def get_robot_from_argv(index, default_robot_name="hero"):
     """
     Construct a robot from the name given in the command-line or from the default robot name.
     :param index: Index in the command-line arguments where a robot name may be available.
