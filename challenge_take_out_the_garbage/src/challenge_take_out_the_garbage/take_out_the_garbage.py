@@ -1,5 +1,6 @@
 # ROS
 import smach
+import rospy
 
 # Robot smach states
 import robot_smach_states as states
@@ -27,10 +28,14 @@ class TakeOutGarbage(smach.StateMachine):
         trash_designator = ds.EntityByIdDesignator(robot=robot, id="trash")
 
         # Look if there is a second trash bin present
-        if CHALLENGE_KNOWLEDGE.trashbin_id2 is not None:
+        if hasattr(CHALLENGE_KNOWLEDGE, "trashbin_id2"):
             trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
                                                          id=CHALLENGE_KNOWLEDGE.trashbin_id2)
             trash_designator2 = ds.EntityByIdDesignator(robot=robot, id="trash")
+            next_state = "PICK_UP_TRASH2"
+        else:
+            rospy.logwarn("There is no second trash bin")
+            next_state = "ANNOUNCE_END"
 
         drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
         arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
@@ -58,34 +63,33 @@ class TakeOutGarbage(smach.StateMachine):
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "failed": "failed",
                                                 "aborted": "aborted"})
-            if trash_designator2 is not None:
-                next_state = "PICK_UP_TRASH2"
-            else:
-                next_state = "ANNOUNCE_END"
 
             smach.StateMachine.add("ANNOUNCE_TASK",
                                    states.Say(robot, "First bag has been dropped at the collection zone",
                                               block=False),
                                    transitions={'spoken': next_state})
 
-            smach.StateMachine.add("PICK_UP_TRASH2", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator2,
-                                                                 arm_designator=arm_designator),
-                                   transitions={"succeeded": "DROP_DOWN_TRASH2",
-                                                "failed": "ANNOUNCE_END",
-                                                "aborted": "ANNOUNCE_END"})
+            if next_state == "PICK_UP_TRASH2":
 
-            smach.StateMachine.add("DROP_DOWN_TRASH2",
-                                   DropDownTrash(robot=robot, trash_designator=trash_designator2,
-                                                 drop_designator=drop_zone_designator),
-                                   transitions={"succeeded": "ANNOUNCE_TASK2",
-                                                "failed": "failed",
-                                                "aborted": "aborted"})
+                smach.StateMachine.add("PICK_UP_TRASH2", PickUpTrash(robot=robot,
+                                                                     trashbin_designator=trashbin_designator2,
+                                                                     arm_designator=arm_designator),
+                                       transitions={"succeeded": "DROP_DOWN_TRASH2",
+                                                    "failed": "ANNOUNCE_END",
+                                                    "aborted": "ANNOUNCE_END"})
 
-            smach.StateMachine.add("ANNOUNCE_TASK2",
-                                   states.Say(robot, "Second bag has been dropped at the collection zone."
-                                                     "All the thrash has been taken care of",
-                                              block=False),
-                                   transitions={'spoken': 'succeeded'})
+                smach.StateMachine.add("DROP_DOWN_TRASH2",
+                                       DropDownTrash(robot=robot, trash_designator=trash_designator2,
+                                                     drop_designator=drop_zone_designator),
+                                       transitions={"succeeded": "ANNOUNCE_TASK2",
+                                                    "failed": "failed",
+                                                    "aborted": "aborted"})
+
+                smach.StateMachine.add("ANNOUNCE_TASK2",
+                                       states.Say(robot, "Second bag has been dropped at the collection zone."
+                                                         "All the thrash has been taken care of",
+                                                  block=False),
+                                       transitions={'spoken': 'succeeded'})
 
             smach.StateMachine.add("ANNOUNCE_END",
                                    states.Say(robot, "I have finished taking out the trash.",
