@@ -233,7 +233,7 @@ class ReportPeople(State):
             except TimeoutException:
                 command_recognized = None
             if command_recognized == "":
-                self._robot.speech.speak("I am still waiting for a command and did not hear anything")
+                self._robot.speech.speak("I am still waiting for a name and did not hear anything")
             elif command_recognized in challenge_knowledge.common.names:
                     self._robot.speech.speak("OK, I will describe {}".format(command_recognized), block=True)
                     self._robot.speech.speak(people_descriptions[command_recognized], block=True)
