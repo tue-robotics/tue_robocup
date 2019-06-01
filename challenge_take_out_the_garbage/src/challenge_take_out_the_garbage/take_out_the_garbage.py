@@ -8,6 +8,7 @@ from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
 from challenge_take_out_the_garbage.drop_down import DropDownTrash
+from challenge_take_out_the_garbage.measure_garbage import MeasureGarbage
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
@@ -53,9 +54,13 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
                                                                 arm_designator=arm_designator),
-                                   transitions={"succeeded": "DROP_DOWN_TRASH",
+                                   transitions={"succeeded": "MEASURE_GARBAGE",
                                                 "failed": "ANNOUNCE_END",
                                                 "aborted": "ANNOUNCE_END"})
+
+            smach.StateMachine.add("MEASURE_GARBAGE", MeasureGarbage(robot=robot),
+                                   transitions={"succeeded": "DROP_DOWN_TRASH",
+                                                "failed": "ANNOUNCE_END"})
 
             smach.StateMachine.add("DROP_DOWN_TRASH",
                                    DropDownTrash(robot=robot, trash_designator=trash_designator,
