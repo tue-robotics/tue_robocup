@@ -147,7 +147,7 @@ class IdentifyPeople(State):
                     "OK, I understand your name is {}, but I will think of a nice nickname.".format(command_recognized))
             else:
                 self._robot.speech.speak(
-                    "I don't understand, I expected a command like " + ", ".join(challenge_knowledge.names))
+                    "I don't understand, I expected one of the following names: " + ", ".join(challenge_knowledge.names))
             try:
                 rospy.loginfo("Detecting this person")
                 # detect person -> update person entity with certain attributes
