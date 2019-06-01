@@ -125,7 +125,7 @@ class EdEntityDesignator(Designator):
         super(EdEntityDesignator, self).__init__(resolve_type=Entity, name=name)
 
         assert not type or type_designator is None, "Specify either type or type_designator, not both"
-        assert center_point is None or type_designator is None, \
+        assert center_point is None or center_point_designator is None, \
             "Specify either center_point or center_point_designator, not both"
         assert not id or id_designator is None, "Specify either id or id_designator, not both"
 
@@ -141,15 +141,15 @@ class EdEntityDesignator(Designator):
         self.criteriafuncs = criteriafuncs or []
         self.weight_function = weight_function or (lambda entity: 0)
 
-        if type_designator:  # the resolve type of type_designator can be either st or list
+        if type_designator:  # the resolve type of type_designator can be either str or list
             check_resolve_type(type_designator, str, list)
         self.type_designator = type_designator
 
-        if center_point_designator:  # the resolve type of type_designator can be either st or list
+        if center_point_designator:  # the resolve type of type_designator can be either VectorStamped
             check_resolve_type(center_point_designator, VectorStamped)
         self.center_point_designator = center_point_designator
 
-        if id_designator:
+        if id_designator: # the resolve type of id_designator must be str
             check_resolve_type(id_designator, str)
         self.id_designator = id_designator
 
