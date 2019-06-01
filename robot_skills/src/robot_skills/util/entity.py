@@ -161,6 +161,21 @@ class Entity(object):
 class PersonProperties(object):
     def __init__(self, name, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
                  tags_dict, velocity, parent_entity):
+        """
+        Container for several properties related to a person
+        :param name: the person's name. This is separate from the entity, which is unique while this doesn't have to be
+        :param age: Estimated age of the person
+        :param emotion: str indicating the emotion
+        :param gender: Predicted gender of the person
+        :param gender_confidence: Confidence of the classifier in the gender above.
+        :param pointing_pose: In which direction is the person pointing
+        :param posture: String with a value like 'sitting', 'laying', 'standing' etc.
+        :param reliability:  ?
+        :param shirt_colors: list of 3 shirt colors, sorted from most dominant to less dominant
+        :param tags_dict: Other tags
+        :param velocity: Velocity with which the person in moving
+        :param parent_entity: The Entity that these properties belong to
+        """
         self._name = name
         self.age = age
         self.emotion = emotion
