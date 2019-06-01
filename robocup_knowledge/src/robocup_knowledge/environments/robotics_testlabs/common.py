@@ -116,7 +116,10 @@ def get_location_from_room(room_id):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-drink_names = [obj['name'] for obj in objects if obj['category'] == 'drink']
+def object_names_of_category(category):
+    return [obj['name'] for obj in objects if obj['category'] == category]
+
+drink_names = object_names_of_category('drink')
 drink_spec = "T['drink': O] -> OPTIONS[O]\n\n"
 for dn in drink_names:
     drink_spec += "OPTIONS['{drink}'] -> {drink}\n".format(drink=dn)
