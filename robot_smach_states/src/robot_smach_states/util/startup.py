@@ -63,7 +63,7 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
             rospy.loginfo("Setting initial pose of (%f,%f,%f)", x, y, yaw)
             robot.base.set_initial_pose(x, y, yaw)
         except:
-            rospy.logerr("Failed to parse initial pose x, y, yaw from %s" % init_pose)
+            rospy.logerr("Failed to parse initial pose x, y, yaw")
 
     introserver = None
 
