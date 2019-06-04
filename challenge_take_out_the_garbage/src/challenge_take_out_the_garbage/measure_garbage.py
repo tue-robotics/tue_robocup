@@ -24,7 +24,7 @@ class MeasureForce(object):
         self._robot = robot
 
     def get_force(self):
-        ft_sensor_topic = '/hero/wrist_wrench/raw'
+        ft_sensor_topic = '/'+self._robot.robot_name+'/wrist_wrench/raw'
 
         force_grab = rospy.wait_for_message(ft_sensor_topic, WrenchStamped)
 

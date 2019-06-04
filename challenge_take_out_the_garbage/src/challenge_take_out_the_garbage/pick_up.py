@@ -28,6 +28,9 @@ class GetTrashBin(smach.State):
     def execute(self, userdata=None):
         e = self._trashbin.resolve()
 
+        if not e:
+            raise Exception("trashbin designator is empty")
+
         # get original entity pose
         frame_original = self._robot.ed.get_entity(id=e.id)._pose
 
