@@ -1,44 +1,23 @@
-# Storing groceries
+# Where is this?
 
-Responsible: Janno
+Responsible: Matthijs
+
+The robot has to explain and show people where they can find places in the arena (e.g. Where is the TV?).
+The robot has to tell the operator how to get there (de.
 
 ## Startup
 
-1. Place the robot near or in front of the bookcase, cabinet or closet it is supposed to grasp from. This is currently hardcoded into variable BOOKCASE.
-2. Place 5 items in the bookcase on various shelves
-3. Put a number of items on the table
+1. Place the robot near the appointed position (determined by TC on the spot)
+2. Ask who ever stands in front of the robot where they woulf like to be guided to.
+3. Explain, in a summarized fashion, how to get there
+4. Then physically take the operator there in a type of tour guide
 
-amigo1/sergio1:
+amigo1/sergio1/hero1:
 
-    amigo-start
+    hero-start
 
-amigo2/sergio2:
+amigo2/sergio2/hero2:
 
-    Mount usb stick:
-
-    rosrun challenge_storing_groceries mount_usb # usb dir in /home/amigo should be green
-    
-    amigo-challenge-storing-groceries
+    hero-challenge-where-is-this
 
 # Notes
-
-Before the challenge
---------------------
-To run this in simulation, you first need to add the simulated objects to the simulator. In order to do so, run:
-rosrun challenge_storing_groceries add_entities.py
-
-During the challenge
---------------------
-
-    Nothing to do, just tay out the way :-)
-
-After the challenge
--------------------
-
-    - Get the USB stick and inspect the classes in the file manipulation.pdf --> ToDo
-
-Installation
-------------
-
-If you encounter an error when importing Pisa, install the broken dependency
-sudo pip install html5lib==1.0b8
