@@ -46,6 +46,12 @@ class StartChallengeRobust(smach.StateMachine):
                                    transitions={"initialized": "INSTRUCT_WAIT_FOR_DOOR" if door else "INIT_POSE",
                                                 "abort": "Aborted"})
 
+            # We wait a while before starting the challenge, otherwise some software is not initialised yet.
+            smach.StateMachine.add("WAIT_FOR_COMPONENTS",
+                                   utility.WaitTime(robot, 5),
+                                   transitions={"waited": "INIT_POSE",
+                                                "abort": "Aborted"})
+
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                    human_interaction.Say(robot, ["Hi there, I will now wait until the door is opened",
                                                                  "I'm waiting for the door"], block=False),
