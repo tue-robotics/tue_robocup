@@ -217,12 +217,12 @@ class Inspect(smach.StateMachine):
 
 if __name__ == "__main__":
 
-    from robot_skills.amigo import Amigo
+    from robot_skills import get_robot_from_argv
     from robot_smach_states.util.designators import EdEntityDesignator
 
     rospy.init_node('state_machine')
 
-    robot = Amigo()
+    robot = get_robot_from_argv(index=1)
 
     sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="closet"))
     print sm.execute()

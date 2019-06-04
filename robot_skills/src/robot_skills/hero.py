@@ -18,7 +18,8 @@ class Hero(robot.Robot):
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
                                                                "/hero/head_rgbd_sensor/rgb/image_raw",
-                                                               "/hero/head_rgbd_sensor/project_2d_to_3d"))
+                                                               "/hero/head_rgbd_sensor/project_2d_to_3d",
+                                                               camera_base_ns='hero/head_rgbd_sensor'))
         # self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
@@ -37,7 +38,7 @@ class Hero(robot.Robot):
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
-       
+
         #rename joint names
         self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
 

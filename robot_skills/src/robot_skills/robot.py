@@ -162,7 +162,7 @@ class Robot(object):
 
         # Check that collection arguments are really a collection of objects, but not strings.
         # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
-        def seq_or_none(obj): 
+        def seq_or_none(obj):
             return not isinstance(obj, str) and (isinstance(obj, Sequence) or obj is None)
         assert seq_or_none(required_gripper_types)
         assert seq_or_none(desired_gripper_types)
@@ -240,7 +240,11 @@ class Robot(object):
             # Unlike the other properties, it is likely not exactly known what objects will be used.
             # For this reason, it seems better not to limit objects to the set specified in required
             # _objects and desired_objects.
-            uses_objects = (required_objects is not None or desired_objects is not None)
+            # uses_objects = (required_objects is not None or desired_objects is not None)
+
+            # ToDO: HACK for not specifying any requirements:
+            # We often want to use the arm for object manipulation, so this is always needed
+            uses_objects = True # (required_objects is not None or desired_objects is not None)
 
             # Success!
             if not matching_grippers:

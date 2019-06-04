@@ -1,10 +1,11 @@
 # System
-from threading import Condition
+from threading import Condition, Event
 
 # ROS
 import rospy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CameraInfo
 from std_srvs.srv import Empty
+import message_filters
 
 # TU/e Robotics
 from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
@@ -16,7 +17,7 @@ from robot_skills.util.image_operations import img_recognitions_to_rois, img_cut
 
 
 class Perception(RobotPart):
-    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None):
+    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None, camera_base_ns=''):
         super(Perception, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         if image_topic is None:
             self.image_topic = "/" + self.robot_name + "/top_kinect/rgb/image"
@@ -28,15 +29,23 @@ class Perception(RobotPart):
         else:
             projection_srv_name = projection_srv
 
+        self._camera_base_ns = camera_base_ns
+
         self._camera_lazy_sub = None
         self._camera_cv = Condition()
         self._camera_last_image = None
 
-        self._annotate_srv = self.create_service_client('/' + robot_name + '/face_recognition/annotate', Annotate)
-        self._recognize_srv = self.create_service_client('/' + robot_name + '/face_recognition/recognize', Recognize)
-        self._clear_srv = self.create_service_client('/' + robot_name + '/face_recognition/clear', Empty)
+        self._annotate_srv = self.create_service_client(
+            '/' + robot_name + '/people_recognition/face_recognition/annotate', Annotate)
+        self._recognize_srv = self.create_service_client(
+            '/' + robot_name + '/people_recognition/face_recognition/recognize', Recognize)
+        self._clear_srv = self.create_service_client(
+            '/' + robot_name + '/people_recognition/face_recognition/clear', Empty)
 
-        self._face_properties_srv = self.create_service_client('/' + robot_name + '/face_recognition/get_face_properties', GetFaceProperties)
+        self._image_data = (None, None, None)
+
+        self._face_properties_srv = self.create_service_client(
+            '/' + robot_name + '/people_recognition/face_recognition/get_face_properties', GetFaceProperties)
 
         self._projection_srv = self.create_service_client(projection_srv_name, Project2DTo3D)
 
@@ -50,11 +59,8 @@ class Perception(RobotPart):
         self._camera_cv.release()
 
     def get_image(self, timeout=5):
-        # lazy subscribe to the kinect
+        # lazy subscribe to the rgb(d) camera
         if not self._camera_lazy_sub:
-            # for test with tripod kinect
-            # self._camera_lazy_sub = rospy.Subscriber("/camera/rgb/image_rect_color", Image, self._image_cb)
-            # for the robot
             rospy.loginfo("Creating subscriber")
             self._camera_lazy_sub = rospy.Subscriber(self.image_topic, Image, self._image_cb)
             rospy.loginfo('lazy subscribe to %s', self._camera_lazy_sub.name)
@@ -266,3 +272,29 @@ class Perception(RobotPart):
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])
         rospy.loginfo('face_properties:%s', face_log)
         return face_properties
+
+    def get_rgb_depth_caminfo(self, timeout=5):
+        event = Event()
+
+        def callback(rgb, depth, depth_info):
+            rospy.loginfo('Received rgb, depth, cam_info')
+            self._image_data = (rgb, depth, depth_info)
+            event.set()
+
+        # camera topics
+        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns), CameraInfo)
+        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
+        rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
+
+        ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
+                                                         queue_size=1,
+                                                         slop=10)
+        ts.registerCallback(callback)
+        event.wait(timeout)
+        ts.callbacks.clear()
+        del ts, depth_info_sub, depth_sub, rgb_sub, callback
+
+        if any(self._image_data):
+            return self._image_data
+        else:
+            return None

@@ -25,10 +25,12 @@ import smach_ros
 from robot_skills.util.robot_constructor import robot_constructor
 
 
-def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
+def startup(statemachine_creator, statemachine_args = (), initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
     '''
     :param statemachine_creator: a function that outputs a statemachine.
-        The function should take a robot as input.
+        The function should take a robot as its first input.
+    :param statemachine_args: A list of arguments. If the statemachine_creator
+        function takes any arguments besides robot these can be placed here.
     :param initial_state the state to start the state machine in.
         Can be supplied as command line argument
     :param robot_name name of the robot to pass to the state machine'''
@@ -61,13 +63,13 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
             rospy.loginfo("Setting initial pose of (%f,%f,%f)", x, y, yaw)
             robot.base.set_initial_pose(x, y, yaw)
         except:
-            rospy.logerr("Failed to parse initial pose x, y, yaw from %s" % init_pose)
+            rospy.logerr("Failed to parse initial pose x, y, yaw")
 
     introserver = None
 
     with robot:
         # build the state machine
-        executioner = statemachine_creator(robot)
+        executioner = statemachine_creator(robot, *statemachine_args)
         if initial_state:
             initial_state = [initial_state]
             rospy.logwarn(

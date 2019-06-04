@@ -1,33 +1,18 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 
+# System
 import random
 import time
 
-import sys
-
+# ROS
 import rospy
 
-if len(sys.argv) < 2:
-    print("Please specify a robot name")
-    sys.exit()
+# TU/e Robotics
+from robot_skills import get_robot_from_argv
 
-robot_name = sys.argv[1]
 
 rospy.init_node("audio_test")
-if robot_name == "amigo":
-    from robot_skills.amigo import Amigo
-    robot = Amigo()
-elif robot_name == "sergio":
-    from robot_skills.sergio import Sergio
-    robot = Sergio()
-elif robot_name == "hero":
-    from robot_skills.hero import Hero
-    robot = Hero()
-
-else:
-    print("Unknown robot '%s'" % robot_name)
-    sys.exit()
+robot = get_robot_from_argv(index=1)
 
 hmi = robot.hmi
 s = robot.speech
