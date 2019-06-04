@@ -212,7 +212,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=EntityByIdDesignator(robot=robot,
+                                                                     waypoint_designator=ds.EntityByIdDesignator(robot=robot,
                                                                                  id=challenge_knowledge.starting_point),
                                                                      radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
