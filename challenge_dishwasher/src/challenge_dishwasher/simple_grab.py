@@ -205,9 +205,13 @@ class FindAndGrab(StateMachine):
 
 
 if __name__ == '__main__':
+
+    from robot_skills import get_robot_from_argv
+
     rospy.init_node('test_open_dishwasher')
 
-    robot = Amigo()
+    robot = get_robot_from_argv(index=1)
+
     robot.ed.reset()
     robot.leftArm.reset()
     robot.torso.reset()

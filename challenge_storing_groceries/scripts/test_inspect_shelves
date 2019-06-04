@@ -1,14 +1,16 @@
 #!/usr/bin/python
 
+import sys
 import rospy
-from robot_skills.amigo import Amigo
+from robot_skills import get_robot_from_argv
 from challenge_storing_groceries.inspect_shelves import InspectShelves
 
 
 if __name__ == '__main__':
     rospy.init_node('test_inspect_shelves')
 
-    robot = Amigo()
+    robot = get_robot_from_argv(index=1)
+
     robot.ed.reset()
     s = InspectShelves(robot)
     result = s.execute(None)

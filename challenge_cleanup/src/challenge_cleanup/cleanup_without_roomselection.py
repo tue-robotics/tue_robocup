@@ -14,12 +14,8 @@ import sys
 import hmi
 
 import robot_smach_states
-from robot_smach_states.util.designators import VariableDesignator, VariableWriter, EntityByIdDesignator
+import robot_smach_states.util.designators as ds
 from clean_inspect import CleanInspect
-from robot_smach_states.utility import SetInitialPose
-
-# ToDo: Try the new designator iterator (2019-05-14)
-from robot_smach_states import designator_iterator
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
@@ -38,7 +34,7 @@ class VerifyWorldModelInfo(smach.State):
     # Look for trash units; can be in living_room and kitchen.
     # THIS IS ARENA DEPENDANT!! (Should be handled in a different way?)
     # There should be an 'underscore_rule' : trash_bin or trashbin???
-    #   (Different between rgo2019 and robotivs_testlab knowledge)
+    #   (Different between rgo2019 and robotics_testlab knowledge)
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:
@@ -59,6 +55,7 @@ class VerifyWorldModelInfo(smach.State):
         return "done"
 
 class AskWhichRoomToClean(smach.State):
+# Logic in this code is still flawed. No correct repetition.....
 
     def __init__(self, robot, roomw, answerw, cleanup_locationsw):
         smach.State.__init__(self, outcomes=["failed", "done"])
@@ -124,7 +121,6 @@ class AskWhichRoomToClean(smach.State):
                 return "failed"
 
             self.robot.head.cancel_goal()
-#            self.robot.speech.speak("Ok, I will clean the {}".format(speech_result.sentence), block=False)
             self.robot.speech.speak("Ok, I will clean the {}".format(self.roomw.resolve()), block=False)
             self.collect_cleanup_locations()
 
@@ -133,34 +129,22 @@ class AskWhichRoomToClean(smach.State):
 
         nr_of_tries += 1
 
-# This should be removed once the designator iteration works.
-# def collect_cleanup_entities(room):
-#     """
-#     Create list of points to visit in the selected room
-#     :param room:
-#     :return:
-#     """
-#     cleaning_locations = []
-#     for loc in challenge_knowledge.cleaning_locations:
-#         if loc["room"] == room:
-#             cleaning_locations.append(loc)
-#     return cleaning_locations
-
-
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     robot.ed.reset()
     # Designators
     # Room to search through
-    roomr = VariableDesignator('kitchen', resolve_type=str)
+    roomr = ds.VariableDesignator('kitchen', resolve_type=str)
     roomw =roomr.writeable
     # Answer given by operator
-    answerr = VariableDesignator('yes', resolve_type=str)
-    answerw = VariableWriter(answerr)
+    answerr = ds.VariableDesignator('yes', resolve_type=str)
+    answerw = ds.VariableWriter(answerr)
+
     # Cleanup location as defined in local knowledge
-    cleanup_locationsr = VariableDesignator([{'1':'2', '3':'4'}])
+    cleanup_locationsr = ds.VariableDesignator([{'1':'2', '3':'4'}])
     cleanup_locationsw = cleanup_locationsr.writeable
+    location_des = ds.VariableDesignator(resolve_type=dict)
 
     with sm:
         # Somehow, the next commented states do not work properly.....
@@ -212,20 +196,19 @@ def setup_statemachine(robot):
                                                               "What a mess here, let's clean this room!",
                                                               "Let's see if I can find some garbage here",
                                                               "All I want to do is clean this mess up!"], block=False),
-#                               transitions={"spoken": "INSPECT_0"})
-                               transitions={"spoken": "RETURN_TO_OPERATOR"})
+                              transitions={"spoken": "ITERATE_NEXT_LOC"})
+                               # transitions={"spoken": "RETURN_TO_OPERATOR"})
 
 # Here the designator cleanup_locationsr has to be iterated over to visit all locations of the room (see designator_iterator.py)
 # How is this to be done?
+        smach.StateMachine.add('ITERATE_NEXT_LOC',
+                               robot_smach_states.IterateDesignator(cleanup_locationsr, location_des.writeable),
+                               transitions={"next": "INSPECT",
+                                            "stop_iteration": "RETURN_TO_OPERATOR"})
 
-        # for i, place in enumerate(cleanup_locationsr):
-        #     next_state = "INSPECT_%d" % (i + 1) if i + 1 < len(cleanup_locationsr) else "RETURN_TO_OPERATOR"
-        #
-        #     smach.StateMachine.add("INSPECT_%d" % i,
-        #                            CleanInspect(robot, place["name"], place["room"], place["navigate_area"],
-        #                                              place["segment_areas"]),
-        #                            transitions={"done": next_state})
-        #
+        smach.StateMachine.add("INSPECT",
+                                CleanInspect(robot, location_des),
+                                transitions={"done": "ITERATE_NEXT_LOC"})
 
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
