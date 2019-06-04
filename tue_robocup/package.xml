@@ -28,6 +28,7 @@
   <run_depend>challenge_test</run_depend>
   <run_depend>challenge_demo</run_depend>
   <run_depend>test_tools</run_depend>
+   <run_depend>challenge_take_out_the_garbage</run_depend>
 
   <export>
     <metapackage/>
