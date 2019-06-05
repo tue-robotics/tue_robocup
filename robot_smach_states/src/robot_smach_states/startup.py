@@ -50,7 +50,7 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add("WAIT_FOR_COMPONENTS",
                                    utility.WaitTime(robot, 5),
                                    transitions={"waited": "INIT_POSE",
-                                                "abort": "Aborted"})
+                                                "preempted": "Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                    human_interaction.Say(robot, ["Hi there, I will now wait until the door is opened",
@@ -74,7 +74,7 @@ class StartChallengeRobust(smach.StateMachine):
                                    transitions={"spoken": "INIT_POSE"})
 
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial
-            # pose is set, since it is thinks the robot is standing in front of a wall if door is closed and 
+            # pose is set, since it is thinks the robot is standing in front of a wall if door is closed and
             # localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
                                    utility.SetInitialPose(robot, initial_pose),
