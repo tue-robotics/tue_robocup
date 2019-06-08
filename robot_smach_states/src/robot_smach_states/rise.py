@@ -113,10 +113,10 @@ class HeroInspectPose(smach.State):
         if arm.has_joint_goal('arm_out_of_way'):
             pose = arm._arm.default_configurations['arm_out_of_way']
             pose[0] = z_arm
-            rospy.loginfo('pose for the arm: {}'.format(pose))
             arm._arm._send_joint_trajectory([pose])
         else:
             rospy.logwarn('Warning: robot does not have an "arm_out_of_way" joint goal')
+            return "failed"
         self._robot.base.force_drive(0, 0, self._rot_speed, rotation_duration)
         arm.wait_for_motion_done()
         return "succeeded"
@@ -155,7 +155,7 @@ class RiseForInspect(smach.StateMachine):
 
         with self:
             if robot.robot_name == 'hero':
-                smach.StateMachine.add('HERO_INSPECT_POSE', HeroInspectPose(robot, entity, volume=None),
+                smach.StateMachine.add('HERO_INSPECT_POSE', HeroInspectPose(robot, entity, volume),
                                        transitions={'succeeded': 'done',
                                                     'failed': 'failed'})
             else:
