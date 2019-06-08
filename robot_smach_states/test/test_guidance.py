@@ -4,7 +4,7 @@ import std_srvs.srv
 import robot_smach_states.util.designators as ds
 
 from robot_skills.get_robot import get_robot_from_argv
-from robot_smach_states.navigation.guidance import GuideToSymbolic
+from robot_smach_states.navigation import guidance
 
 OPERATOR_AVAILABLE = True
 
@@ -17,6 +17,7 @@ def toggle_operator(_):
     """
     global OPERATOR_AVAILABLE
     OPERATOR_AVAILABLE = not OPERATOR_AVAILABLE
+    rospy.loginfo("Operator available: {}".format(OPERATOR_AVAILABLE))
     return std_srvs.srv.EmptyResponse()
 
 
@@ -32,16 +33,18 @@ if __name__ == "__main__":
     rospy.Service("toggle_operator", std_srvs.srv.Empty, toggle_operator)
 
     # Instantiate GuideToSymbolic machine
-    s = GuideToSymbolic(r,
-                        {ds.EntityByIdDesignator(r, id=e_id): "in_front_of"},
-                        ds.EntityByIdDesignator(r, id=e_id)
-                        )
+    s = guidance.GuideToSymbolic(r,
+                                 {ds.EntityByIdDesignator(r, id=e_id): "in_front_of"},
+                                 ds.EntityByIdDesignator(r, id=e_id)
+                                 )
 
     # Mock the _check_operator method
-    execute_state = s.get_children()["EXECUTE_PLAN"]
-    execute_state._check_operator = lambda: OPERATOR_AVAILABLE
+    # noinspection PyUnusedLocal
+    def _mock_detect_operator(robot, distance=1.0, radius=0.5):
+        return OPERATOR_AVAILABLE
+    guidance._detect_operator_behind_robot = _mock_detect_operator
 
-    rospy.loginfo('\nCall:\nrosservice call /toggle_operator "{}"\n\nto toggle operator availability\n'.format('{}'))
+    rospy.loginfo('\n\nCall:\nrosservice call /toggle_operator "{}"\n\nto toggle operator availability\n'.format('{}'))
 
     # Execute the state
     s.execute()

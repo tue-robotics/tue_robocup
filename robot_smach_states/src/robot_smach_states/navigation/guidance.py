@@ -5,7 +5,7 @@ Module contains states to guide an operator to a designated location.
 # ROS
 import rospy
 import smach
-from PyKDL as kdl
+import PyKDL as kdl
 
 # Robot skills
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -15,17 +15,40 @@ import navigation
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 
 
+def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
+    """
+    Checks if a person is within <radius> of the position <distance> behind the <robot>
+
+    :param robot: (Robot) api object
+    :param distance: (float) follow distance
+    :param radius: (float) radius around the position at <distance> behind the robot
+    :return: (bool) whether an operator was detected
+    """
+    image_data = robot.perception.get_rgb_depth_caminfo()
+    success, found_people_ids = robot.ed.detect_people(*image_data)
+    found_people = [robot.ed.get_entity(id_) for id_ in found_people_ids]
+
+    # Assume the operator is around 1.0 m behind the robot
+    base_pose = robot.pose.get_location()
+    expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
+
+    for person in found_people:
+        if (person.pose.frame.p - expected_person_pos).Norm() < radius:
+            return True
+    return False
+
+
 class ExecutePlanGuidance(smach.State):
     """
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
     operator" is returned.
     """
-    def __init__(self, robot, distance_threshold=2.0):
-        smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "check_operator"])
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
-        self._distance_threshold = distance_threshold
-        self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
-        self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
+        self._distance_threshold = 1.0  # Only check if the operator is there once we've drived for this distance
+        # self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
+        # self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
         # defined by the follow distance
         
     def execute(self, userdata=None):
@@ -57,10 +80,11 @@ class ExecutePlanGuidance(smach.State):
             distance += (new_position - old_position).Norm()
             old_position = new_position
             if distance > self._distance_threshold:
-                rospy.loginfo(
+                rospy.logdebug(
                     "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
-                self.robot.base.local_planner.cancelCurrentPlan()
-                return "check_operator"
+                if not self._check_operator():
+                    self.robot.base.local_planner.cancelCurrentPlan()
+                return "lost_operator"
 
             rate.sleep()
 
@@ -71,18 +95,8 @@ class ExecutePlanGuidance(smach.State):
         :return: (bool)
         """
         # ToDo: make robust (use time stamp?)
-        image_data = self.robot.perception.get_rgb_depth_caminfo()
-        success, found_people_ids = self._robot.ed.detect_people(*image_data)
-        found_people = [self.robot.ed.get_entity(id_) for id_ in found_people_ids]
-
-        # Assume the operator is around 1.0 m behind the robot
-        base_pose = self.robot.pose.get_location()
-        expected_person_pos = base_pose.frame * kdl.Vector(-self._follow_distance, 0.0, 0.0)
-
-        for person in found_people:
-            if (person.pose.frame.p - expected_person_pos).Norm() < self._operator_radius_threshold:
-                return True
-        return False
+        print("Checking operator")
+        return _detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
 
     def _get_base_position(self):
         """
@@ -94,32 +108,37 @@ class ExecutePlanGuidance(smach.State):
         return frame_stamped.frame.p
 
 
-class CheckOperator(smach.State):
-    def __init__(self, robot):
+class WaitForOperator(smach.State):
+    def __init__(self, robot, timeout=10.0):
         """
         Smach state to check if the operator is still following the robot.
 
         :param robot: (Robot) robot api object
+        :param timeout: (float) if the operator has not been detected for this period, "is_lost" will be returned
         """
-        smach.State.__init__(self, outcomes=["is_following", "is_lost"])
+        smach.State.__init__(self, outcomes=["is_following", "is_lost", "preempted"])
         self._robot = robot
+        self._timeout = timeout
 
     def execute(self, ud):
 
-        # Remember the start position
-        start_pose = self._robot.base.get_location()
+        self._robot.speech.speak("It seems that we have lost each other. Please stand one meter behind me.")
 
-        # Rotate 90 degrees
-        vth = 1.0
-        force_timeout = 1.5
-        self._robot.base.force_drive(0.0, 0.0, vth, force_timeout)
+        rate = rospy.Rate(2.0)
+        t_start = rospy.Time.now()
+        while not rospy.is_shutdown():
 
-        self._robot.speech.speak("Now I'm supposed to check if my operator is still there")
+            # Check if the operator is there
+            if _detect_operator_behind_robot(self._robot):
+                self._robot.speech.speak("There you are", block=False)
+                return "is_following"
 
-        # Rotate back
-        self._robot.base.force_drive(0.0, 0.0, -vth, force_timeout)
+            # Check timeout
+            if (rospy.Time.now() - t_start).to_sec() > self._timeout:
+                rospy.loginfo("Guide - Wait for operator: timeout {} exceeded".format(self._timeout))
+                return "is_lost"
 
-        return "is_following"
+        return "preempted"
 
 
 class Guide(smach.StateMachine):
@@ -143,9 +162,9 @@ class Guide(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "blocked": "PLAN_BLOCKED",
                                                 "preempted": "preempted",
-                                                "check_operator": "CHECK_OPERATOR"})
+                                                "lost_operator": "WAIT_FOR_OPERATOR"})
 
-            smach.StateMachine.add("CHECK_OPERATOR", CheckOperator(self.robot),
+            smach.StateMachine.add("WAIT_FOR_OPERATOR", WaitForOperator(self.robot),
                                    transitions={"is_following": "GET_PLAN",
                                                 "is_lost": "lost_operator"})
 
