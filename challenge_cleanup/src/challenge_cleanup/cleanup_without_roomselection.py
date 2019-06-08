@@ -1,9 +1,5 @@
 #!/usr/bin/python
 
-#ToDo: iterating over designators, such as a dictionary, is NOT possible. This means that choosing the
-#ToDo: room to cleanup cannot be done from within the state machine. Major Bummer!!!
-#Choosing before entering the state machine seems the easiest option to implement, but is not
-#really satisfactory. (see previous version of this module)
 
 import rospy
 import smach
@@ -197,7 +193,6 @@ def setup_statemachine(robot):
                                                               "Let's see if I can find some garbage here",
                                                               "All I want to do is clean this mess up!"], block=False),
                               transitions={"spoken": "ITERATE_NEXT_LOC"})
-                               # transitions={"spoken": "RETURN_TO_OPERATOR"})
 
 # Here the designator cleanup_locationsr has to be iterated over to visit all locations of the room (see designator_iterator.py)
 # How is this to be done?

@@ -1,4 +1,5 @@
 import smach
+import rospy
 
 import robot_smach_states
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, \
@@ -46,6 +47,8 @@ class CleanInspect(smach.StateMachine):
         navigate_area = ValueByKeyDesignator(location_des, 'navigation_area', str, name='navigate_area')
         location_id = ValueByKeyDesignator(location_des, 'name', str, name='location_id')
         room_id = ValueByKeyDesignator(location_des, 'room', str, name='room_id')
+
+
 #/new
         # Set up the designators for this machine
         e_classifications_des = VariableDesignator([], resolve_type=[ClassificationResult], name='e_classifications_des')
@@ -81,7 +84,6 @@ class CleanInspect(smach.StateMachine):
                                     transitions={'done': "HANDLE_DETECTED_ENTITIES"})
 
             # Determine the next state, either it is the next iter or done
-            #next_state = "NAVIGATE_%d" % (i + 1) if i + 1 < len(segment_areas) else "done"
 
             smach.StateMachine.add("SAY_UNREACHABLE",
                                     robot_smach_states.Say(robot, ["I failed to inspect the %s" % location_id], block=True),
