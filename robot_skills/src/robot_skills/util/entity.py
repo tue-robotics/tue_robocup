@@ -244,8 +244,8 @@ def from_entity_info(e):
             del pp_dict['tagnames']
             del pp_dict['tags']
             entity.person_properties = PersonProperties(tags_dict=tags_dict, parent_entity=entity, **pp_dict)
-        except TypeError, te:
-            rospy.logerr("Cannot instantiate PersonProperties from {}".format(e.data))
+        except TypeError as te:
+            rospy.logerr("Cannot instantiate PersonProperties from {}: {}".format(e.data, te))
 
     return entity
 
