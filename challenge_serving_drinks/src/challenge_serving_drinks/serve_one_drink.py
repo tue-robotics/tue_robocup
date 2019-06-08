@@ -18,16 +18,20 @@ CHALLENGE_KNOWLEDGE = knowledge_loader.load_knowledge("challenge_serving_drinks"
 
 
 class ServeOneDrink(smach.StateMachine):
-    """ Serves on drink to an operator
-
+    """
+    Serves on drink to an operator
     """
     def __init__(self, robot, bar_designator, room_designator, objects_list_des, unav_drink_des):
         # type: (Robot, int) -> str
-        """ Initialization method
-
-        :param robot: robot api object
-        :param idx: index of the drink that is served (used for the operator name)
         """
+        Initialization method
+        :param robot: robot api object
+        :param bar_designator: entity designator of the bar location
+        :param room_designator: entity designator of the room location
+        :param objects_list_des: variable designator of the detected drinks
+        :param unav_drink_des: variable designator of the unavailable drink
+        """
+
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         # Designators
@@ -42,28 +46,19 @@ class ServeOneDrink(smach.StateMachine):
         with self:
 
             # Get order
-            smach.StateMachine.add(
-                "GET_ORDER",
-                GetOrder(
-                    robot=robot,
-                    operator_name=operator_name,
-                    drink_designator=drink_str_designator,
-                    available_drinks_designator=objects_list_des,
-                    unavailable_drink_designator=unav_drink_des),
-                transitions={"succeeded": "INSPECT_BAR",
-                             "failed": "failed"}  # ToDo: fallback?
-            )
+            smach.StateMachine.add("GET_ORDER",
+                                   GetOrder(robot=robot, operator_name=operator_name,
+                                            drink_designator=drink_str_designator,
+                                            available_drinks_designator=objects_list_des,
+                                            unavailable_drink_designator=unav_drink_des),
+                                   transitions={"succeeded": "INSPECT_BAR",
+                                                "failed": "failed"})  # ToDo: fallback?
 
             # Inspect bar
-            smach.StateMachine.add(
-                "INSPECT_BAR",
-                states.Inspect(
-                    robot=robot,
-                    entityDes=bar_designator,
-                    navigation_area="in_front_of"),
-                transitions={"done": "GRASP_DRINK",
-                             "failed": "FALLBACK_BAR"}
-            )
+            smach.StateMachine.add("INSPECT_BAR",
+                                   states.Inspect(robot=robot, entityDes=bar_designator, navigation_area="in_front_of"),
+                                   transitions={"done": "GRASP_DRINK",
+                                                "failed": "FALLBACK_BAR"})
 
             # Grasp drink
             smach.StateMachine.add(
