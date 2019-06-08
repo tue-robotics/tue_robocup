@@ -5,6 +5,10 @@ Module contains states to guide an operator to a designated location.
 # ROS
 import rospy
 import smach
+from PyKDL as kdl
+
+# Robot skills
+from robot_skills.util.kdl_conversions import VectorStamped
 
 # robot_smach_states.navigation
 import navigation
@@ -20,15 +24,19 @@ class ExecutePlanGuidance(smach.State):
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "check_operator"])
         self.robot = robot
         self._distance_threshold = distance_threshold
+        self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
+        self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
+        # defined by the follow distance
         
     def execute(self, userdata=None):
 
-        # Cancel head goal, we need it for navigation :)
-        self.robot.head.close()
+        # Look backwards to have the operator in view
+        self.robot.head.look_at_point(VectorStamped(-1.0, 0.0, 1.75, self.robot.base_link_frame))
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
         old_position = self._get_base_position()
+        operator_stamp = rospy.Time.now()  # Assume the operator is near if we start here
         while not rospy.is_shutdown():
 
             # ToDo: check if need to check for operator
@@ -55,6 +63,26 @@ class ExecutePlanGuidance(smach.State):
                 return "check_operator"
 
             rate.sleep()
+
+    def _check_operator(self):
+        """
+        Checks if the operator is still sufficiently close
+
+        :return: (bool)
+        """
+        # ToDo: make robust (use time stamp?)
+        image_data = self.robot.perception.get_rgb_depth_caminfo()
+        success, found_people_ids = self._robot.ed.detect_people(*image_data)
+        found_people = [self.robot.ed.get_entity(id_) for id_ in found_people_ids]
+
+        # Assume the operator is around 1.0 m behind the robot
+        base_pose = self.robot.pose.get_location()
+        expected_person_pos = base_pose.frame * kdl.Vector(-self._follow_distance, 0.0, 0.0)
+
+        for person in found_people:
+            if (person.pose.frame.p - expected_person_pos).Norm() < self._operator_radius_threshold:
+                return True
+        return False
 
     def _get_base_position(self):
         """
