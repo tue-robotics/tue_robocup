@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>challenge_take_out_the_garbage</name>
+  <version>0.0.0</version>
+  <description>The challenge_take_out_the_garbage package</description>
+
+  <maintainer email="kevin.acnowlogia@gmail.com">Kevin Dang</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>robot_skills</depend>
+  <depend>robot_smach_states</depend>
+  
+</package>
