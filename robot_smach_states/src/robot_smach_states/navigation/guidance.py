@@ -77,8 +77,20 @@ class CheckOperator(smach.State):
         self._robot = robot
 
     def execute(self, ud):
+
+        # Remember the start position
+        start_pose = self._robot.base.get_location()
+
+        # Rotate 90 degrees
+        vth = 1.0
+        force_timeout = 1.5
+        self._robot.base.force_drive(0.0, 0.0, vth, force_timeout)
+
         self._robot.speech.speak("Now I'm supposed to check if my operator is still there")
-        # ToDo: do something useful
+
+        # Rotate back
+        self._robot.base.force_drive(0.0, 0.0, -vth, force_timeout)
+
         return "is_following"
 
 
