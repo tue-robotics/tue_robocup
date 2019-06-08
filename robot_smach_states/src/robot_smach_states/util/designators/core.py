@@ -24,6 +24,13 @@ class Designator(object):
     instances = []
 
     def __init__(self, initial_value=None, resolve_type=None, name=None):
+        """
+        Initialization method
+
+        :param initial_value: () initial value
+        :param resolve_type: (type) type to which this designator should resolve
+        :param name: (str) name used for debugging purposes
+        """
         super(Designator, self).__init__()
 
         self._name = name
@@ -97,8 +104,10 @@ class Designator(object):
 
     def _get_current(self):
         caller_info = get_caller_info()
-        raise DeprecationWarning("Using designator.current (as in {}:{}) is deprecated. Use designator.resolve() instead".format(self, caller_info["filename"],
-                                                                                             caller_info["line_number"]))
+        raise DeprecationWarning(
+            "Using designator.current (as in {}:{}) is deprecated."
+            "Use designator.resolve() instead".format(self, caller_info["filename"],
+                                                      caller_info["line_number"]))
 
     current = property(_get_current)
 
@@ -137,24 +146,33 @@ class VariableDesignator(Designator):
 
         if isinstance(value, list) and isinstance(self.resolve_type, list):
             if value and not issubclass(type(value[0]), resolve_type[0]):
-                raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
+                raise TypeError(
+                    "Assigned value does not match resolve_type for {0}. "
+                    "Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         else:
             if not issubclass(type(value), resolve_type):
-                raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
+                raise TypeError(
+                    "Assigned value does not match resolve_type for {0}. "
+                    "Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
 
     def _resolve(self):
         return self._current
 
     def _set_current(self, value):
-        raise DeprecationWarning("Cannot directly write to a VariableDesignator, use a VariableWriter instead. E.g. XxxState(robot, someVariableDes.writable)")
+        raise DeprecationWarning(
+            "Cannot directly write to a VariableDesignator, use a VariableWriter instead. "
+            "E.g. XxxState(robot, someVariableDes.writable)")
 
     def _get_current(self):
         caller_info = get_caller_info()
-        raise DeprecationWarning("Using designator.current (as in {}:{} is deprecated. Use designator.resolve() instead".format(self, caller_info["filename"],
-                                                                                             caller_info["line_number"]))
+        raise DeprecationWarning(
+            "Using designator.current (as in {}:{} is deprecated. "
+            "Use designator.resolve() instead".format(self, caller_info["filename"],
+                                                      caller_info["line_number"]))
 
-    current = property(_get_current, _set_current) #TODO: Once all state machines use the VariableWriter, the _set_current can be removed
+    # ToDo: Once all state machines use the VariableWriter, the _set_current can be removed
+    current = property(_get_current, _set_current)
 
 
 class VariableWriter(object):
@@ -197,7 +215,7 @@ class VariableWriter(object):
         VariableWriter.instances += [self]
 
     def write(self, value):
-        '''
+        """
         Write a value to the designator this writer is associated with.
         :param value: the value to be written
         :return: None
@@ -209,25 +227,28 @@ class VariableWriter(object):
         In case the value-list has an element,
             this element must be of the type specified by the only element in the resolve_type-list
         In case the value-list is empty, we simply assign that empty list without any type checking.
-        '''
+        """
         if isinstance(value, list) and isinstance(self.variable_designator.resolve_type, list):
-            if value == []:
+            if not value:
                 self.variable_designator._set_current_protected(value)
             elif isinstance(value[0], self.variable_designator.resolve_type[0]):
                 self.variable_designator._set_current_protected(value)
             else:
-                raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
+                raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(
+                    type(value),
                     self.variable_designator,
                     self.variable_designator.resolve_type))
         elif isinstance(value, self.variable_designator.resolve_type):
             self.variable_designator._set_current_protected(value)
         else:
-            raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
+            raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(
+                type(value),
                 self.variable_designator,
                 self.variable_designator.resolve_type))
 
     def _set_current(self, value):
-        print "writable(VariableDesignator).current = ...  is deprecated, use writable(VariableDesignator).write(...) instead"
+        print "writable(VariableDesignator).current = ...  is deprecated, " \
+              "use writable(VariableDesignator).write(...) instead"
         self.variable_designator._set_current_protected(value)
 
     current = property(VariableDesignator._get_current, _set_current)
@@ -251,6 +272,7 @@ class VariableWriter(object):
 
 writeable = VariableWriter
 
+
 class TestDesignator(unittest.TestCase):
     def test_resolve_type(self):
         d1 = Designator("some string", name="tester1", resolve_type=str)
@@ -267,6 +289,7 @@ class TestDesignator(unittest.TestCase):
         v = Designator(['a', 'b', 'c'])
         self.assertEqual(v.resolve_type, [str])
         self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
+
 
 class TestVariableDesignator(unittest.TestCase):
     def test_basics(self):
@@ -285,13 +308,14 @@ class TestVariableDesignator(unittest.TestCase):
         with self.assertRaises(DeprecationWarning):
             v.current = "Goodbye"
 
-        self.assertEqual(v.resolve(), "Hello") #No change
+        self.assertEqual(v.resolve(), "Hello")  # No change
 
     def test_list(self):
         # import ipdb; ipdb.set_trace()
         v = VariableDesignator(['a', 'b', 'c'])
         self.assertEqual(v.resolve_type, [str])
         self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
+
 
 class TestVariableWriter(unittest.TestCase):
     def test_basics(self):
@@ -325,4 +349,4 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    unittest.main() #Some tests could not be expressed well as doctests because of the format in Designator.__str__
+    unittest.main()  # Some tests could not be expressed well as doctests because of the format in Designator.__str__

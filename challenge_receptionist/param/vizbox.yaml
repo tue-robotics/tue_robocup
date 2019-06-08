@@ -1,0 +1,7 @@
+story:
+    title: 'Receptionist'
+    storyline:
+        - "To to the entrance and wait for a guest"
+        - "Ask the guest's name and favourite drink"
+        - "Guide the guest to the operator and introduce the guest"
+        - "Repeat for another guest"

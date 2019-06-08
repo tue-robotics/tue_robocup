@@ -75,7 +75,7 @@ class ResetArmsTorso(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        for arm in robot.arms:
+        for arm in self.robot.arms.itervalues():
             arm.reset()
             arm.send_gripper_goal('close', timeout=self.timeout)
         self.robot.torso.reset()
@@ -87,9 +87,11 @@ class ResetArmsTorsoHead(smach.State):
     # Does this check with the database in the reasoner
     def __init__(self,robot, timeout=0.0):
         smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
 
     def execute(self, userdata=None):
-        for arm in robot.arms:
+        for arm in self.robot.arms.itervalues():
             arm.reset()
             arm.send_gripper_goal('close', timeout=self.timeout)
         self.robot.head.reset(timeout=self.timeout)

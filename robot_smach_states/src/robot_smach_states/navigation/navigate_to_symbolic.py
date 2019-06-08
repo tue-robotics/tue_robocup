@@ -3,7 +3,6 @@ from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
