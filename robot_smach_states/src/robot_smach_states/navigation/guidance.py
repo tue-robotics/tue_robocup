@@ -186,24 +186,4 @@ class GuideToSymbolic(Guide):
             self.robot, self._entity_designator_area_name_map, self._entity_lookat_designator)
 
 
-if __name__ == "__main__":
 
-    # Example code
-    # (imports placed here because these are only relevant here)
-    import rospy
-    import sys
-    import robot_smach_states.util.designators as ds
-    from robot_skills.get_robot import get_robot_from_argv
-
-    assert len(sys.argv) == 3, "Please provide the robot name and the entity id of the object to guide to," \
-                               "e.g., 'python guidance.py amigo bed'"
-
-    rospy.init_node("test_guidance")
-    r = get_robot_from_argv(1)
-    e_id = sys.argv[2]
-
-    s = GuideToSymbolic(r,
-                        {ds.EntityByIdDesignator(r, id=e_id): "in_front_of"},
-                        ds.EntityByIdDesignator(r, id=e_id)
-                        )
-    s.execute()
