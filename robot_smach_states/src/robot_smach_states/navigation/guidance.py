@@ -8,7 +8,7 @@ import smach
 
 # robot_smach_states.navigation
 import navigation
-from .navigate_to_symbolic import NavigateToSymbolic
+from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 
 
 class ExecutePlanGuidance(smach.State):
@@ -71,7 +71,8 @@ class Guide(smach.StateMachine):
 
         :param robot: (Robot) robot api object
         """
-        smach.StateMachine.__init__(self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator"])
+        smach.StateMachine.__init__(
+            self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
         self.robot = robot
 
         with self:
