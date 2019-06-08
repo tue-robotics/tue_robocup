@@ -319,6 +319,11 @@ class Robot(object):
         rospy.loginfo("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
         pass
 
+    def move_to_hmi_pose(self, inspection_position):
+        # ToDo: add docstring
+        rospy.loginfo("move_to_hmi_pose() not implemented for {} object".format(self.robot_name))
+        pass
+
     def __enter__(self):
         pass
 

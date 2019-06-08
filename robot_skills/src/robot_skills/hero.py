@@ -88,6 +88,18 @@ class Hero(robot.Robot):
         arm.wait_for_motion_done()
         return True
 
+    def move_to_hmi_pose(self):
+        arm = self.get_arm()
+
+        rotation = 1.57
+        rotation_speed = 1
+        rotation_duration = rotation / rotation_speed
+        if arm.has_joint_goal('arm_out_of_way'):
+            arm.send_joint_goal('arm_out_of_way', 0.0)
+            self.base.force_drive(0, 0, rotation_speed, rotation_duration)
+        arm.wait_for_motion_done()
+        return "succeeded"
+
 
 if __name__ == "__main__":
     rospy.init_node("hero")
