@@ -16,19 +16,19 @@ class ExecutePlanGuidance(smach.State):
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
     operator" is returned.
     """
-    def __init__(self, robot):
+    def __init__(self, robot, distance_threshold=2.0):
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "check_operator"])
         self.robot = robot
-        self.t_last_free = None
+        self._distance_threshold = distance_threshold
         
     def execute(self, userdata=None):
-
-        self.t_last_free = rospy.Time.now()
 
         # Cancel head goal, we need it for navigation :)
         self.robot.head.close()
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
+        distance = 0.0
+        old_position = self._get_base_position()
         while not rospy.is_shutdown():
 
             # ToDo: check if need to check for operator
@@ -45,7 +45,25 @@ class ExecutePlanGuidance(smach.State):
             elif status == "blocked":
                 return "blocked"
 
+            new_position = self._get_base_position()
+            distance += (new_position - old_position).Norm()
+            old_position = new_position
+            if distance > self._distance_threshold:
+                rospy.loginfo(
+                    "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
+                self.robot.base.local_planner.cancelCurrentPlan()
+                return "check_operator"
+
             rate.sleep()
+
+    def _get_base_position(self):
+        """
+        Gets the base position as a kdl Vector
+
+        :return: (kdl Vector) with current base position
+        """
+        frame_stamped = self.robot.base.get_location()
+        return frame_stamped.frame.p
 
 
 class CheckOperator(smach.State):
@@ -85,7 +103,7 @@ class Guide(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "blocked": "PLAN_BLOCKED",
                                                 "preempted": "preempted",
-                                                "check_operator": "lost_operator"})  # ToDo: update
+                                                "check_operator": "CHECK_OPERATOR"})
 
             smach.StateMachine.add("CHECK_OPERATOR", CheckOperator(self.robot),
                                    transitions={"is_following": "GET_PLAN",
