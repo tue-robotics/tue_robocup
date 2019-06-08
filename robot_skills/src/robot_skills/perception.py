@@ -274,6 +274,12 @@ class Perception(RobotPart):
         return face_properties
 
     def get_rgb_depth_caminfo(self, timeout=5):
+        """
+        Get an rgb image and and depth image, along with camera info for the depth camera.
+        The returned tuple can serve as input for world_model_ed.ED.detect_people.
+        :param timeout: How long to wait until the images are all collected.
+        :return: tuple(rgb, depth, depth_info) or a None if no images could be gathered.
+        """
         event = Event()
 
         def callback(rgb, depth, depth_info):
