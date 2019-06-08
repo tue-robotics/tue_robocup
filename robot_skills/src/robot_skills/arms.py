@@ -140,10 +140,14 @@ class PublicArm(object):
     def send_gripper_goal(self, state, timeout=5.0, gripper_type=None):
         """
         Tell the gripper to perform a motion.
-
         :param state: New state of the gripper.
+        :type state: str (GripperState)
         :param timeout: Amount of time availble to reach the goal, default is 5
+        :type timeout: float
         :param gripper_type: Optional type of gripper to perform the action.
+        :type gripper_type: str
+        :return: succes
+        :rtype: bool
         """
         if gripper_type is None:
             gripper_type = self.default_gripper_type
@@ -597,8 +601,11 @@ class Arm(RobotPart):
         """
         Send a GripperCommand to the gripper of this arm and wait for finishing
         :param state: open or close
+        :type state: str (GripperState)
         :param timeout: timeout in seconds; timeout of 0.0 is not allowed
+        :type timeout: float
         :return: True of False
+        :rtype: bool
         """
         goal = GripperCommandGoal()
 

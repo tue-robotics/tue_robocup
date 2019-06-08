@@ -16,9 +16,6 @@ from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from tue_msgs.msg import People
 from Queue import Queue, Empty
 
-# Knowledge
-COMMON_KNOWLEDGE = knowledge_loader.load_knowledge("common")
-
 
 class CheckAvailability(smach.State):
     """
@@ -26,12 +23,15 @@ class CheckAvailability(smach.State):
     """
 
     def __init__(self, robot, drink_designator, available_drinks_designator, unavailable_drink_designator,
-                 max_tries=3, max_queries_per_try=3):
+                 objects, max_tries=3, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
         :param robot: robot api object
-        :param drink_designator: designator in which the drink (entity type) is stored
+        :param drink_designator: (VariableDesignator) in which the drink to fetch is stored
+        :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
+        :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param objects: Objects from common knowledge
         :param max_tries: (int) maximum number of times the robot asks which drink
         :param max_queries_per_try: (int) maximum number of queries to the HMI server per try
         """
@@ -40,6 +40,7 @@ class CheckAvailability(smach.State):
         self._drink_designator = drink_designator
         self._available_drinks_designator = available_drinks_designator
         self._unavailable_drink_designator = unavailable_drink_designator
+        self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
 
@@ -62,7 +63,7 @@ class CheckAvailability(smach.State):
         grammar += '\nDET -> a | an'
 
         # Add drinks
-        for d in COMMON_KNOWLEDGE.objects:
+        for d in self._objects:
             if d["category"] == "drink":
                 grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
         return grammar, "O"
@@ -130,12 +131,16 @@ class AskDrink(smach.StateMachine):
     Asks the operator what he/she would like to drink.
     """
     def __init__(self, robot, operator_name, drink_designator, available_drinks_designator,
-                 unavailable_drink_designator):
+                 unavailable_drink_designator, objects):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
         :param robot: robot api object
-        :param drink_designator: designator in which the drink (entity type) is stored
+        :param operator_name: (EntityDesignator) in which the operator's name is stored
+        :param drink_designator: (VariableDesignator) in which the drink to fetch is stored
+        :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
+        :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param objects: Objects from common knowledge
         """
 
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
@@ -143,40 +148,33 @@ class AskDrink(smach.StateMachine):
         with self:
 
             # Ask for order
-            smach.StateMachine.add(
-                "ASK_FOR_ORDER",
-                states.Say(
-                    robot=robot,
-                    sentence=random.choice(["What would you like to drink?",
-                                            "Which drink would you like?",
-                                            "What would you like to quench your thirst?",
-                                            "What can I get you?",
-                                            "Please tell me which drink you want"]),
-                    look_at_standing_person=True),
-                transitions={"spoken": "CHECK_AVAILABILITY"}
-            )
+            smach.StateMachine.add("ASK_FOR_ORDER",
+                                   states.Say(robot=robot,
+                                              sentence=random.choice(["What would you like to drink?",
+                                                                      "Which drink would you like?",
+                                                                      "What would you like to quench your thirst?",
+                                                                      "What can I get you?",
+                                                                      "Please tell me which drink you want"]),
+                                              look_at_standing_person=True),
+                                   transitions={"spoken": "CHECK_AVAILABILITY"})
 
             # Check availability
-            smach.StateMachine.add(
-                "CHECK_AVAILABILITY",
-                CheckAvailability(
-                    robot=robot,
-                    drink_designator=drink_designator,
-                    available_drinks_designator=available_drinks_designator,
-                    unavailable_drink_designator=unavailable_drink_designator),
-                transitions={"available": "ASK_FOR_CONFIRMATION",
-                             "unavailable": "STATE_UNAVAILABLE",
-                             "aborted": "aborted"})
+            smach.StateMachine.add("CHECK_AVAILABILITY",
+                                   CheckAvailability(robot=robot, drink_designator=drink_designator,
+                                                     available_drinks_designator=available_drinks_designator,
+                                                     unavailable_drink_designator=unavailable_drink_designator,
+                                                     objects=objects),
+                                   transitions={"available": "ASK_FOR_CONFIRMATION",
+                                                "unavailable": "STATE_UNAVAILABLE",
+                                                "aborted": "aborted"})
 
             # Ask for confirmation
-            smach.StateMachine.add(
-                "ASK_FOR_CONFIRMATION",
-                states.Say(
-                    robot=robot,
-                    sentence=DescriptionStrDesignator("confirmation_available", drink_designator, operator_name),
-                    look_at_standing_person=True),
-                transitions={"spoken": "HEAR_CONFIRMATION"}
-            )
+            smach.StateMachine.add("ASK_FOR_CONFIRMATION",
+                                   states.Say(robot=robot,
+                                              sentence=DescriptionStrDesignator("confirmation_available",
+                                                                                drink_designator, operator_name),
+                                              look_at_standing_person=True),
+                                   transitions={"spoken": "HEAR_CONFIRMATION"})
 
             # Hear the confirmation
             smach.StateMachine.add("HEAR_CONFIRMATION",
@@ -186,14 +184,13 @@ class AskDrink(smach.StateMachine):
                                                 "no_result": "ASK_FOR_ORDER"})  # ToDo: fallback?
 
             # Announce that the drink is unavailable
-            smach.StateMachine.add(
-                "STATE_UNAVAILABLE",
-                states.Say(
-                    robot=robot,
-                    sentence=DescriptionStrDesignator("state_unavailable", unavailable_drink_designator, operator_name),
-                    look_at_standing_person=True),
-                transitions={"spoken": "ASK_FOR_ORDER"}
-            )
+            smach.StateMachine.add("STATE_UNAVAILABLE",
+                                   states.Say(robot=robot,
+                                              sentence=DescriptionStrDesignator("state_unavailable",
+                                                                                unavailable_drink_designator,
+                                                                                operator_name),
+                                              look_at_standing_person=True),
+                                   transitions={"spoken": "ASK_FOR_ORDER"})
 
 
 class AskAvailability(smach.State):
@@ -202,18 +199,20 @@ class AskAvailability(smach.State):
     This is based on the 'TakeOrder' class of the the restaurant challenge. Might
     be nice to merge these two.
     """
-    def __init__(self, robot, unavailable_drink_designator, max_tries=3, max_queries_per_try=3):
+    def __init__(self, robot, unavailable_drink_designator, objects, max_tries=3, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """ Initialization method
 
         :param robot: robot api object
-        :param unavailable_drink_designator: designator in which the unavailable drink (entity type) is stored
+        :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param objects: Objects from common knowledge
         :param max_tries: (int) maximum number of times the robot asks which drink
         :param max_queries_per_try: (int) maximum number of queries to the HMI server per try
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
         self._unavailable_drink_designator = unavailable_drink_designator
+        self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
 
@@ -233,7 +232,7 @@ class AskAvailability(smach.State):
         grammar += '\nDET -> a | an | the'
 
         # Add drinks
-        for d in COMMON_KNOWLEDGE.objects:
+        for d in self._objects:
             if d["category"] == "drink":
                 grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
         return grammar, "O"
@@ -328,8 +327,8 @@ class DetectWaving(smach.State):
     be nice to merge these two.
     """
     def __init__(self, robot, caller_id):
-        """ Constructor
-
+        """
+        Constructor
         :param robot: robot object
         """
         smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
@@ -352,13 +351,7 @@ class DetectWaving(smach.State):
 
         head_samples = 20
         look_distance = 3.0
-        look_angles = [0,
-                       0,
-                       0,
-                       10,
-                       -10,
-                       20,
-                       -20]
+        look_angles = [0, 0, 0, 10, -10, 20, -20]
         self.clear_queue()
 
         waving_persons = []
@@ -475,9 +468,6 @@ if __name__ == "__main__":
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(0.5)  # wait for tf cache to be filled
 
-    state = AskDrink(robot=_robot,
-                     drink_designator=ds.VariableDesignator(type=str).writeable,
-                     max_tries=1,
-                     max_queries_per_try=1,
-                     )
+    state = AskDrink(robot=_robot, drink_designator=ds.VariableDesignator(type=str).writeable, max_tries=1,
+                     max_queries_per_try=1)
     state.execute(None)

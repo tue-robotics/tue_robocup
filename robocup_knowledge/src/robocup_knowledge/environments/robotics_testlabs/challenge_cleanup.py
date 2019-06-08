@@ -1,3 +1,4 @@
+# CLEAN UP KNOWLEDGE FILE ROBOTICS_TESTLABS
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
@@ -15,9 +16,7 @@ starting_pose = "gpsr_meeting_point"
 cleaning_locations = [
     {'name': 'couch_table',   'room': 'livingroom', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
     {'name': 'dinner_table',  'room': 'livingroom', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
-
     {'name': 'cabinet',       'room': 'kitchen',    'navigate_area': 'near',   'segment_areas': ['on_top_of']},
-
     {'name': 'hallway_table', 'room': 'hallway',    'navigate_area': 'near',   'segment_areas': ['on_top_of']}
 ]
 
@@ -25,3 +24,4 @@ grammar_target = "T"
 
 grammar = "T -> kitchen"
 grammar += "\nT -> livingroom"
+grammar += "\nT -> hallway"
