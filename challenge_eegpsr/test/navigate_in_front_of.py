@@ -1,25 +1,12 @@
 #!/usr/bin/env python
 
 import rospy, sys, robot_smach_states, random
+from robot_skills import get_robot_from_argv
 
 if __name__ == "__main__":
     rospy.init_node('navigate_in_front_of')
 
-    # Create Robot object based on argv[1]
-    if len(sys.argv) < 2:
-        print "Usage: ./navigate_in_front_of.py [amigo/sergio] [entityIds]..."
-        sys.exit()
-
-    robot_name = sys.argv[1]
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    else:
-        print "unknown robot"
-        sys.exit()
-
-    robot = Robot()
+    robot = get_robot_from_argv(index=1)
 
     if len(sys.argv) > 2:
         ids = sys.argv[2:]

@@ -12,6 +12,7 @@ import visualization_msgs.msg
 import ed_msgs.srv
 from ed_msgs.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 import ed_sensor_integration.srv
+from ed_people_recognition_msgs.srv import EdRecognizePeople, EdRecognizePeopleRequest
 from ed_perception.srv import Classify
 from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
@@ -64,6 +65,9 @@ class ED(RobotPart):
                                                             ed_sensor_integration.srv.GetImage)
         self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name,
                                                             ed_sensor_integration.srv.RayTrace)
+
+        self._ed_detect_people_srv = self.create_service_client('/%s/ed/people_recognition/detect_people' % robot_name,
+                                                                EdRecognizePeople)
 
         self._tf_listener = tf_listener
 
@@ -358,7 +362,7 @@ class ED(RobotPart):
 
         """
 
-        res = self._ed_classify_srv(ids=ids)
+        res = self._ed_classify_srv(ids=ids, unknown_probability=0.3)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
@@ -494,3 +498,7 @@ class ED(RobotPart):
         # Dump the data to file
         with open(filename, "w") as f:
             yaml.dump(file_data, f)
+
+    def detect_people(self, rgb, depth, cam_info):
+        result = self._ed_detect_people_srv(rgb, depth, cam_info)
+        return result.success, result.detected_person_ids

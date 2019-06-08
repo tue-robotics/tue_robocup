@@ -1,0 +1,11 @@
+#!/usr/bin/python
+
+import rospy
+from robot_smach_states.util.startup import startup
+from challenge_where_is_this.where_is_this import WhereIsThis
+
+
+if __name__ == '__main__':
+    rospy.init_node('where_is_this')
+
+    startup(WhereIsThis)

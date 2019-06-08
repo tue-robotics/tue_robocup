@@ -1,10 +1,12 @@
 # System
+import yaml
 
 # ROS
 import rospy
 import PyKDL as kdl
 
 # TU/e Robotics
+from ed_msgs.msg import EntityInfo
 from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
 from robot_skills.util.shape import shape_from_entity_info
 from robot_skills.util.volume import volumes_from_entity_volumes_msg
@@ -14,7 +16,8 @@ class Entity(object):
     """ Holds all data concerning entities
 
     """
-    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time):
+    def __init__(self, identifier, object_type, frame_id, pose, shape, volumes, super_types, last_update_time,
+                 person_properties=None):
         """ Constructor
 
         :param identifier: str with the id of this entity
@@ -33,6 +36,8 @@ class Entity(object):
         self._volumes = volumes if volumes else {}
         self.super_types = super_types
         self._last_update_time = last_update_time
+
+        self._person_properties = person_properties
 
     @property
     def volumes(self):
@@ -74,7 +79,7 @@ class Entity(object):
         :rtype: List[Entities]
         """
 
-        entities = [e  for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
+        entities = [e for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
 
         return entities
 
@@ -136,8 +141,67 @@ class Entity(object):
         """ Setter """
         self._pose = pose_msg_to_kdl_frame(pose)
 
+    @property
+    def person_properties(self):
+        if self._person_properties:
+            return self._person_properties
+        else:
+            rospy.logwarn("{} is not a person".format(self))
+            return None
+
+    @person_properties.setter
+    def person_properties(self, value):
+        self._person_properties = value
+
     def __repr__(self):
-        return "Entity(id='{id}', type='{type}', frame={frame})".format(id=self.id, type=self.type, frame=self.pose)
+        return "Entity(id='{id}', type='{type}', frame={frame}, person_properties={pp})"\
+            .format(id=self.id, type=self.type, frame=self.pose, pp=self._person_properties)
+
+
+class PersonProperties(object):
+    def __init__(self, name, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
+                 tags_dict, velocity, parent_entity):
+        """
+        Container for several properties related to a person
+        :param name: the person's name. This is separate from the entity, which is unique while this doesn't have to be
+        :param age: Estimated age of the person
+        :param emotion: str indicating the emotion
+        :param gender: Predicted gender of the person
+        :param gender_confidence: Confidence of the classifier in the gender above.
+        :param pointing_pose: In which direction is the person pointing
+        :param posture: String with a value like 'sitting', 'laying', 'standing' etc.
+        :param reliability:  ?
+        :param shirt_colors: list of 3 shirt colors, sorted from most dominant to less dominant
+        :param tags_dict: Other tags
+        :param velocity: Velocity with which the person in moving
+        :param parent_entity: The Entity that these properties belong to
+        """
+        self._name = name
+        self.age = age
+        self.emotion = emotion
+        self.gender = gender
+        self.gender_confidence = gender_confidence
+        self.pointing_pose = pointing_pose
+        self.posture = posture
+        self.reliability = reliability
+        self.shirt_colors = shirt_colors
+        self.tags_dict = tags_dict
+        self.velocity = velocity
+
+        self._parent_entity = parent_entity
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        rospy.loginfo("Changing {}'s name to {}".format(self._parent_entity.id, value))
+        self._name = value
+
+    def __repr__(self):
+        return "PersonProperties(age='{age}', gender='{g}', gender_confidence={gc}, shirt_colors={sc})"\
+            .format(age=self.age, g=self.gender, gc=self.gender_confidence, sc=self.shirt_colors)
 
 
 def from_entity_info(e):
@@ -146,6 +210,7 @@ def from_entity_info(e):
     :param e: ed_msgs.msg.EntityInfo
     :return: Entity
     """
+    assert isinstance(e, EntityInfo)
     identifier = e.id
     object_type = e.type
     frame_id = "/map"  # ED has all poses in map
@@ -161,15 +226,28 @@ def from_entity_info(e):
     super_types = e.types
 
     # TODO: this must be part of the definition of the entity in ED.
-    if e.has_shape and not any(
-        [name in e.id for name in ["amigo", "sergio", "hero"]]) and e.id != "floor" and "wall" not in e.id:
+    if e.has_shape and not any([name in e.id for name in ["amigo", "sergio", "hero"]])\
+        and e.id != "floor" and "wall" not in e.id:
         super_types += ["furniture"]
 
     if 'possible_human' in e.flags:
         super_types += ["possible_human"]
 
-    return Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
+    entity = Entity(identifier=identifier, object_type=object_type, frame_id=frame_id, pose=pose, shape=shape,
                   volumes=volumes, super_types=super_types, last_update_time=last_update_time)
+
+    if e.type == 'person':
+        try:
+            pp_dict = yaml.load(e.data)
+            tags_dict = dict(zip(pp_dict['tagnames'], pp_dict['tags']))
+            del pp_dict['position']
+            del pp_dict['tagnames']
+            del pp_dict['tags']
+            entity.person_properties = PersonProperties(tags_dict=tags_dict, parent_entity=entity, **pp_dict)
+        except TypeError, te:
+            rospy.logerr("Cannot instantiate PersonProperties from {}".format(e.data))
+
+    return entity
 
 
 if __name__ == "__main__":
