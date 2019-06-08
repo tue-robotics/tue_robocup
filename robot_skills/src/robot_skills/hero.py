@@ -50,6 +50,44 @@ class Hero(robot.Robot):
 
         self.configure()
 
+    def move_to_inspect_pose(self, inspect_target):
+        # calculate the arm_lift_link which must be sent
+        z_over = 0.3  # height the robot should look over the surface
+        z_hh = 0.9  # height of the robots head at z_arm=0
+        torso_to_arm_ratio = 2  # motion of arm/motion of torso
+        z_head = inspect_target.z() + z_over
+
+        # check whether moving the arm is necessary
+        if z_head < 1.2:
+            rospy.loginfo('Entity is low enough. we dont need to move the arm')
+            return True
+
+        # saturate the arm lift goal
+        z_arm = (z_head - z_hh) * torso_to_arm_ratio
+        if z_arm > 0.69:
+            z_arm = 0.69
+            rospy.logwarn('Warning: looking at excessively high surface')
+        elif z_arm < 0.0:
+            z_arm = 0.0
+            rospy.logwarn('Surface is low enough, we dont need to move the arm.')
+
+        arm = self.get_arm()
+
+        # turn the robot
+        rotation = 1.57
+        rotation_speed = 1
+        rotation_duration = rotation / rotation_speed
+        if arm.has_joint_goal('arm_out_of_way'):
+            pose = arm._arm.default_configurations['arm_out_of_way']
+            pose[0] = z_arm
+            arm._arm._send_joint_trajectory([pose])
+        else:
+            rospy.logwarn('Warning: robot does not have an "arm_out_of_way" joint goal')
+            return False
+        self.base.force_drive(0, 0, rotation_speed, rotation_duration)
+        arm.wait_for_motion_done()
+        return True
+
 
 if __name__ == "__main__":
     rospy.init_node("hero")
