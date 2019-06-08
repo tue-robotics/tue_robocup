@@ -54,7 +54,7 @@ class TakeOutGarbage(smach.StateMachine):
 
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
                                                                 arm_designator=arm_designator),
-                                   transitions={"succeeded": "DROP_DOWN_THASH)",
+                                   transitions={"succeeded": "DROP_DOWN_TRASH)",
                                                 "failed": "ANNOUNCE_END",
                                                 "aborted": "ANNOUNCE_END"})
 
