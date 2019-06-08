@@ -1,3 +1,4 @@
+import os
 import rospy
 import sys
 import std_srvs.srv
@@ -30,7 +31,6 @@ if __name__ == "__main__":
     rospy.init_node("test_guidance")
     r = get_robot_from_argv(1)
     e_id = sys.argv[2]
-    rospy.Service("toggle_operator", std_srvs.srv.Empty, toggle_operator)
 
     # Instantiate GuideToSymbolic machine
     s = guidance.GuideToSymbolic(r,
@@ -38,13 +38,14 @@ if __name__ == "__main__":
                                  ds.EntityByIdDesignator(r, id=e_id)
                                  )
 
-    # Mock the _check_operator method
-    # noinspection PyUnusedLocal
-    def _mock_detect_operator(robot, distance=1.0, radius=0.5):
-        return OPERATOR_AVAILABLE
-    guidance._detect_operator_behind_robot = _mock_detect_operator
-
-    rospy.loginfo('\n\nCall:\nrosservice call /toggle_operator "{}"\n\nto toggle operator availability\n'.format('{}'))
+    # In simulation, mock the _check_operator method
+    if os.getenv("ROBOT_REAL", "false").lower() != "true":
+        # noinspection PyUnusedLocal
+        def _mock_detect_operator(robot, distance=1.0, radius=0.5):
+            return OPERATOR_AVAILABLE
+        guidance._detect_operator_behind_robot = _mock_detect_operator
+        rospy.Service("toggle_operator", std_srvs.srv.Empty, toggle_operator)
+        rospy.loginfo('\n\nCall:\nrosservice call /toggle_operator "{}"\n\nto toggle operator availability\n'.format('{}'))
 
     # Execute the state
     s.execute()

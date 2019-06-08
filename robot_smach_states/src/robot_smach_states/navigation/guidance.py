@@ -83,8 +83,9 @@ class ExecutePlanGuidance(smach.State):
                 rospy.logdebug(
                     "Distance {} exceeds threshold {}, check for operator".format(distance, self._distance_threshold))
                 if not self._check_operator():
+                    rospy.loginfo("Lost operator while guiding, cancelling plan")
                     self.robot.base.local_planner.cancelCurrentPlan()
-                return "lost_operator"
+                    return "lost_operator"
 
             rate.sleep()
 
@@ -95,7 +96,6 @@ class ExecutePlanGuidance(smach.State):
         :return: (bool)
         """
         # ToDo: make robust (use time stamp?)
-        print("Checking operator")
         return _detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
 
     def _get_base_position(self):
@@ -137,6 +137,8 @@ class WaitForOperator(smach.State):
             if (rospy.Time.now() - t_start).to_sec() > self._timeout:
                 rospy.loginfo("Guide - Wait for operator: timeout {} exceeded".format(self._timeout))
                 return "is_lost"
+
+            rate.sleep()
 
         return "preempted"
 
