@@ -14,17 +14,17 @@ challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks"
 
 class DriveIn(smach.StateMachine):
     """
-    Initialization, inspecting and driving in the room
+    Initialize at the designated place, drive to and inspect the bar, store the detected drinks or ask for the
+    unavailable drink, and navigate to the room where are the operators
     """
     def __init__(self, robot, bar_designator, room_designator, objects_list_des, unav_drink_des):
         """
-        Initialize at the designated place, drive to and inspect the bar, store the detected drinks or ask for the
-        unavailable drink, and navigate to the room where are the operators
+        Initialization method
         :param robot: robot api object
-        :param bar_designator: entity designator of the bar location
-        :param room_designator: entity designator of the room location
-        :param objects_list_des: variable designator of the detected drinks
-        :param unav_drink_des: variable designator of the unavailable drink
+        :param bar_designator: (EntityDesignator) in which the bar location is stored
+        :param room_designator: (EntityDesignator) in which the room location is stored
+        :param objects_list_des: (VariableDesignator) in which the available drinks are stored
+        :param unav_drink_des: (VariableDesignator) in which the unavailable drink is stored
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
