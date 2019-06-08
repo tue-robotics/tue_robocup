@@ -122,6 +122,14 @@ class HeroInspectPose(smach.State):
         return "succeeded"
 
 
+class PassThrough(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['done'])
+
+    def execute(self, _):
+        return "done"
+
+
 class RiseForHMI(smach.StateMachine):
     """
     Get the robot in a nice pose for human machine interaction. This is more complicated for HERO compared to
@@ -159,6 +167,5 @@ class RiseForInspect(smach.StateMachine):
                                        transitions={'succeeded': 'done',
                                                     'failed': 'failed'})
             else:
-                smach.StateMachine.add('INSPECT_POSE', HmiPose(robot),
-                                       transitions={'succeeded': 'done',
-                                                    'failed': 'failed'})
+                smach.StateMachine.add('NO_RISE_NEEDED', PassThrough(),
+                                       transitions={'done': 'done'})
