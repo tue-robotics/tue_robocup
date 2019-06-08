@@ -314,6 +314,11 @@ class Robot(object):
             if name not in self._ignored_parts:
                 part.process_hardware_status(diagnostic_dict)
 
+    def move_to_inspect_pose(self, inspection_position):
+        # ToDo: add docstring
+        rospy.loginfo("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
+        pass
+
     def __enter__(self):
         pass
 
