@@ -35,21 +35,12 @@ class DriveIn(smach.StateMachine):
         with self:
             # Initialize
             smach.StateMachine.add("INITIALIZE",
-                                   states.Initialize(robot),
-                                   transitions={"initialized": "WAIT_1",
-                                                "abort": "aborted"})
-
-            # Wait for one second so that initialise has time to finish
-            smach.StateMachine.add("WAIT_1",
-                                   states.WaitTime(robot=robot, waittime=1),
-                                   transitions={"waited": "SET_INITIAL_POSE",
-                                                "preempted": "SET_INITIAL_POSE"})
-
-            smach.StateMachine.add("SET_INITIAL_POSE",
-                                   states.SetInitialPose(robot, challenge_knowledge.starting_point),
-                                   transitions={"done": "INSPECT_BAR",
-                                                "preempted": "aborted",
-                                                "error": "INSPECT_BAR"})
+                                   states.StartChallengeRobust(robot=robot,
+                                                               initial_pose=challenge_knowledge.starting_point,
+                                                               use_entry_points=False, door=False),
+                                   transitions={"Done": "INSPECT_BAR",
+                                                "Aborted": "aborted",
+                                                "Failed": "failed"})
 
             # Inspect bar and store the list of available drinks
             smach.StateMachine.add("INSPECT_BAR",
