@@ -2,6 +2,9 @@
 Module contains states to guide an operator to a designated location.
 """
 
+# System
+import enum
+
 # ROS
 import rospy
 import smach
@@ -16,7 +19,7 @@ import navigation
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 
 
-def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
+def detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     # type: (Robot, float, float) -> bool
     """
     Checks if a person is within <radius> of the position <distance> behind the <robot>
@@ -40,19 +43,29 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     return False
 
 
+class GuideMode(enum.Enum):
+    REGULAR = 0  # Regular mode
+    TOUR_GUIDE = 1  # Tour_guide mode: robot also mentions furniture entities along the way
+
+
 class ExecutePlanGuidance(smach.State):
     """
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
     operator" is returned.
     """
-    def __init__(self, robot):
+    def __init__(self, robot, mode=GuideMode.REGULAR):
         # type: (Robot) -> None
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
         self._distance_threshold = 1.0  # Only check if the operator is there once we've drived for this distance
+        self._mode = mode
         # self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
         # self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
         # defined by the follow distance
+
+        # Tour guide attributes
+        self._room_ids = []
+        self._object_ids = []
         
     def execute(self, userdata=None):
 
@@ -97,7 +110,7 @@ class ExecutePlanGuidance(smach.State):
         :return: (bool)
         """
         # ToDo: make robust (use time stamp?)
-        return _detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
+        return detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
 
     def _get_base_position(self):
         # type: () -> kdl.Vector
@@ -132,7 +145,7 @@ class WaitForOperator(smach.State):
         while not rospy.is_shutdown():
 
             # Check if the operator is there
-            if _detect_operator_behind_robot(self._robot):
+            if detect_operator_behind_robot(self._robot):
                 self._robot.speech.speak("There you are", block=False)
                 return "is_following"
 
