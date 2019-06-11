@@ -47,6 +47,43 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
     pass
 
 
+def sentence_from_directions(directions):
+    # type: (list) -> str
+    """
+    Creates a pronounceable string from a list of directions
+
+    :param directions: (list(DirectionItems)). N.B.: starting room is in item with *no object_id* and *no side*. Final
+    object_id is in item with *no side*
+    :return: str with pronounceable string
+    :raises: (AssertionError) if len < 0 or no object id in last item
+    """
+    assert len(directions) > 0 and directions[-1].object_id is not None,\
+        "Directions should at least contain item with target id"
+
+    result = ""
+    previous_room_id = ""
+    for idx, item in enumerate(directions[:-1]):  # type: int, DirectionItem
+
+        # Check for start room
+        if idx == 0 and item.object_id is None and item.side is None:
+            result += "We are now in the {}\n".format(item.room_id)
+            previous_room_id = item.room_id
+            continue
+
+        # Check for next room
+        if item.room_id != previous_room_id:
+            result += "You now enter the {}\n".format(item.room_id)
+
+        # Add item id
+        result += "You walk by the {} on your {}\n".format(item.object_id, item.side)
+
+        previous_room_id = item.room_id
+
+    # Add the target id that's stored in the final item
+    result += "You have now reached the {}".format(directions[-1].object_id)
+
+    return result
+
 
 class GiveDirections(smach.State):
     """
@@ -154,17 +191,18 @@ class GiveDirections(smach.State):
         # With this information: start creating the text for the robot
         # ToDo: kdl_path_rooms should not be empty
         sentence = ""
+        result = []
         start_room_id = ""
         if kdl_path_rooms:
             start_room_id = kdl_path_rooms[0][1].id
             sentence += "We are now in the {}.\n".format(start_room_id)
+            result.append(DirectionItem(None, start_room_id, None))
 
         # We need to remember the 'previous' room id so the robot can mention when the next room is entered
         prev_room_id = start_room_id
 
         # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
         passed_ids = []
-        result = []
         for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
                                                         kdl_path_rooms[1:]):
 
@@ -209,7 +247,7 @@ class GiveDirections(smach.State):
                     break
                 else:
                     sentence += "You walk by the {} on your {}.\n".format(entity_id, side.value)
-                    result.append(DirectionItem(entity_id, room.id, side))
+                    result.append(DirectionItem(entity_id, room.id, side.value))
 
                 passed_ids.append(entity_id)
 
@@ -221,6 +259,9 @@ class GiveDirections(smach.State):
         rospy.loginfo("Result: {}".format(result))
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
+
+        new_sentence = sentence_from_directions(result)
+        rospy.loginfo("New sentence: {}".format(new_sentence))
 
         self._robot.speech.speak(sentence)
 
