@@ -51,6 +51,10 @@ class Hero(robot.Robot):
         self.configure()
 
     def move_to_inspect_pose(self, inspect_target):
+        """
+        This poses the robot for an inspect.
+        :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        """
         # calculate the arm_lift_link which must be sent
         z_over = 0.3  # height the robot should look over the surface
         z_hh = 0.9  # height of the robots head at z_arm=0
@@ -89,6 +93,9 @@ class Hero(robot.Robot):
         return True
 
     def move_to_hmi_pose(self):
+        """
+        This poses the robot for conversations.
+        """
         arm = self.get_arm()
 
         rotation = 1.57

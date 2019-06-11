@@ -315,12 +315,17 @@ class Robot(object):
                 part.process_hardware_status(diagnostic_dict)
 
     def move_to_inspect_pose(self, inspection_position):
-        # ToDo: add docstring
+        """
+        This poses the robot for an inspect.
+        :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        """
         rospy.loginfo("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
         pass
 
-    def move_to_hmi_pose(self, inspection_position):
-        # ToDo: add docstring
+    def move_to_hmi_pose(self):
+        """
+        This poses the robot for conversations.
+        """
         rospy.loginfo("move_to_hmi_pose() not implemented for {} object".format(self.robot_name))
         pass
 
