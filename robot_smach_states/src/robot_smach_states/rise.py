@@ -11,8 +11,7 @@ from robot_skills.util.kdl_conversions import VectorStamped
 
 class RiseForHMI(smach.State):
     """
-    State to ensure that hero's arm is out of the way so that the robot
-    may move his torso up.
+    State to pose the robot for conversations
     :param robot: Robot to execute state with
     """
     def __init__(self, robot):
@@ -20,7 +19,7 @@ class RiseForHMI(smach.State):
         self._robot = robot
 
     def execute(self, _):
-        # Get position to look at after turning. Transform the position to map frame since turning will move base_link
+        # Get position to look at. Transform the position to map frame since taking the hmi pose may move base link
         goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self._robot.robot_name + "/base_link")
         tf_goal = goal.projectToFrame('/map', self._robot.tf_listener)
 
@@ -33,9 +32,11 @@ class RiseForHMI(smach.State):
 
 class RiseForInspect(smach.State):
     """
-    State to ensure that hero's arm is out of the way so that the robot
-    may move his torso up.
+    State to ensure that the robot is in a proper position to inspect. This means its head is at the correct height
+    and his vision is unobstructed. (no arm in front of its face)
     :param robot: Robot to execute state with
+    :param entity: entity which is to be inspected
+    :param volume: volume of the entity which is to be inspected
     """
     def __init__(self, robot, entity, volume=None):
         smach.State.__init__(self, outcomes=['done', 'failed'])
@@ -57,11 +58,9 @@ class RiseForInspect(smach.State):
             y_obj = 0.5 * (search_volume.min_corner.y() + search_volume.max_corner.y())
             z_obj = search_volume.min_corner.z()
             pos = entity.pose.frame * kdl.Vector(x_obj, y_obj, z_obj)
-            z = pos.z()
         else:
             # Look at the top of the entity to inspect
             pos = entity.pose.frame.p
-            z = pos.z() + entity.shape.z_max
 
         if self._robot.move_to_inspect_pose(pos):
             return "done"
