@@ -1,6 +1,7 @@
 # System
+import enum
 import math
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 
 # ROS
 import PyKDL as kdl
@@ -15,6 +16,36 @@ from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorSta
 # Robot Smach States
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.util.designators.ed_designators import Designator
+
+
+class Side(enum.Enum):
+    LEFT = "left"
+    RIGHT = "right"
+
+
+DirectionItem = namedtuple("DirectionItem", ["object_id", "room_id", "side"])
+
+
+def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
+    # type: (Robot, Designator, float, float) -> None
+    """
+    Computes a list of named tuples of the furniture objects that are passed and in which rooms these are on which side
+    of the operator when moving towards a certain entity
+
+    :param robot: API object
+    :type robot: Robot
+    :param entity_designator: resolving to the entity the operator wants to go to
+    :type entity_designator: Designator
+    :param x_threshold: if the entity is closer than this distance in x-direction w.r.t. the path frame
+    it is considered 'passed'
+    :type x_threshold: float
+    :param y_threshold: if the entity is closer than this distance in y-direction w.r.t. the path frame
+    it is considered 'passed'
+    :type y_threshold: float
+    :return:
+    """
+    pass
+
 
 
 class GiveDirections(smach.State):
@@ -133,6 +164,7 @@ class GiveDirections(smach.State):
 
         # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
         passed_ids = []
+        result = []
         for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
                                                         kdl_path_rooms[1:]):
 
@@ -162,7 +194,8 @@ class GiveDirections(smach.State):
                     rospy.logdebug("Appending {}: ({}, {})".format(
                         entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
 
-                    side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+                    # side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+                    side = Side.LEFT if entity_pose_path.p.y() >= 0.0 else Side.RIGHT
 
                     to_add.append((entity.id, entity_pose_path.p.y(), side))
 
@@ -175,7 +208,8 @@ class GiveDirections(smach.State):
                     reached_target = True
                     break
                 else:
-                    sentence += "You walk by the {} on your {}.\n".format(entity_id, side)
+                    sentence += "You walk by the {} on your {}.\n".format(entity_id, side.value)
+                    result.append(DirectionItem(entity_id, room.id, side))
 
                 passed_ids.append(entity_id)
 
@@ -183,6 +217,8 @@ class GiveDirections(smach.State):
                 break
 
         sentence += "You have now reached the {}.\n".format(target_entity.id)
+        result.append(DirectionItem(target_entity.id, room.id, None))
+        rospy.loginfo("Result: {}".format(result))
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 
@@ -327,3 +363,13 @@ if __name__ == "__main__":
     state = GiveDirections(robot=robot,
                            entity_designator=ds.EntityByIdDesignator(robot=robot, id=furniture_id))
     state.execute()
+
+# Outcome from init pose to bed
+# [INFO][/give_directions][1560279947.767195]: 'We are now in the hallway.
+# You walk by the hallway table on your left.
+# You enter the workshop.
+# You walk by the operator table on your right.
+# You enter the bedroom.
+# You walk by the black cabinet5 on your left.
+# You have now reached the bed.
+# '
