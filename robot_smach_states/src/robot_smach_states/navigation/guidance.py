@@ -9,6 +9,7 @@ import PyKDL as kdl
 
 # Robot skills
 from robot_skills.util.kdl_conversions import VectorStamped
+from robot_smach_states.util.designators import EdEntityDesignator
 
 # robot_smach_states.navigation
 import navigation
@@ -16,6 +17,7 @@ from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymboli
 
 
 def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
+    # type: (Robot, float, float) -> bool
     """
     Checks if a person is within <radius> of the position <distance> behind the <robot>
 
@@ -44,6 +46,7 @@ class ExecutePlanGuidance(smach.State):
     operator" is returned.
     """
     def __init__(self, robot):
+        # type: (Robot) -> None
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
         self._distance_threshold = 1.0  # Only check if the operator is there once we've drived for this distance
@@ -61,8 +64,6 @@ class ExecutePlanGuidance(smach.State):
         old_position = self._get_base_position()
         operator_stamp = rospy.Time.now()  # Assume the operator is near if we start here
         while not rospy.is_shutdown():
-
-            # ToDo: check if need to check for operator
 
             if self.preempt_requested():
                 self.robot.base.local_planner.cancelCurrentPlan()
@@ -99,6 +100,7 @@ class ExecutePlanGuidance(smach.State):
         return _detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
 
     def _get_base_position(self):
+        # type: () -> kdl.Vector
         """
         Gets the base position as a kdl Vector
 
@@ -110,6 +112,7 @@ class ExecutePlanGuidance(smach.State):
 
 class WaitForOperator(smach.State):
     def __init__(self, robot, timeout=10.0):
+        # type: (Robot, float) -> None
         """
         Smach state to check if the operator is still following the robot.
 
@@ -145,6 +148,7 @@ class WaitForOperator(smach.State):
 
 class Guide(smach.StateMachine):
     def __init__(self, robot):
+        # type: (robot) -> None
         """
         Base Smach state to guide an operator to a designated position
 
@@ -184,6 +188,7 @@ class GuideToSymbolic(Guide):
     """ Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
+        # type: (Robot, dict, EdEntityDesignator) -> None
         """ Constructor
 
         :param robot: robot object
@@ -197,6 +202,7 @@ class GuideToSymbolic(Guide):
         self._entity_lookat_designator = entity_lookat_designator
 
     def generate_constraint(self):
+        # type: () -> tuple
         """
         Generates the constraint using the generate constraint method of NavigateToSymbolic
 
@@ -205,6 +211,3 @@ class GuideToSymbolic(Guide):
         """
         return NavigateToSymbolic.generate_constraint(
             self.robot, self._entity_designator_area_name_map, self._entity_lookat_designator)
-
-
-
