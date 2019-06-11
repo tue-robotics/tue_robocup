@@ -72,12 +72,9 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
     target_entity = entity_designator.resolve()  # type: Entity
     rospy.loginfo("Resolved to Entity: {}".format(target_entity.id))
     if not target_entity:
-        raise RuntimeError("Cannot give directions if I don't know where to go")
+        raise RuntimeError("I cannot give directions if I don't know where to go")
 
-    if target_entity.is_a("room"):
-        possible_areas = ["in"]
-    else:
-        possible_areas = ["in_front_of", "near"]
+    possible_areas = ["in"] if target_entity.is_a("room") else ["in_front_of", "near"]
     for area in possible_areas:
         nav_constraints[area] = NavigateToSymbolic.generate_constraint(
             robot=robot,
@@ -85,7 +82,7 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
             entity_lookat_designator=entity_designator)
 
     if not nav_constraints:
-        raise RuntimeError("Cannot give directions if I don't know where to go")
+        raise RuntimeError("I cannot give directions if I don't know where to go")
 
     # Call the global planner for the shortest path to this entity
     path = None
@@ -95,7 +92,7 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
             break
 
     if path is None:
-        raise RuntimeError("I'm sorry but I don't know how to get to the {}".format(target_entity.id))
+        raise RuntimeError("I don't know how to get to the {}".format(target_entity.id))
 
     # Convert the path to a list of kdl Vectors
     assert (all([p.header.frame_id.endswith("map") for p in path])), "Not all path poses are defined w.r.t. 'map'"
@@ -105,6 +102,8 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
     entities = robot.ed.get_entities()
     furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
     room_entities = [room for room in entities if room.type == "room"]
+
+    # ToDo (future) separate parts above and below here to improve testability
 
     # Match the furniture entities to rooms
     furniture_entities_room = {room: [] for room in room_entities}  # maps room entities to furniture entities
