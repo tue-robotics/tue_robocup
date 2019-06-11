@@ -345,6 +345,7 @@ if __name__ == "__main__":
     import sys
     import robot_smach_states.util.designators as ds
     import numpy as np
+    from robot_skills.get_robot import get_robot_from_argv
 
     def _test_rooms(robot):
         # type: (Robot) -> None
@@ -365,18 +366,7 @@ if __name__ == "__main__":
 
     rospy.init_node('give_directions')
 
-    robot_name = sys.argv[1]
-    if robot_name == 'amigo':
-        from robot_skills.amigo import Amigo as Robot
-    elif robot_name == 'sergio':
-        from robot_skills.sergio import Sergio as Robot
-    elif robot_name == 'hero':
-        from robot_skills.hero import Hero as Robot
-    else:
-        print("unknown robot")
-        sys.exit()
-
-    robot = Robot()
+    robot = get_robot_from_argv(index=1)
 
     if len(sys.argv) > 2:
         furniture_id = sys.argv[2]
