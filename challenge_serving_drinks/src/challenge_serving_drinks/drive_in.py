@@ -7,6 +7,7 @@ import robot_smach_states as states
 # Serving drinks
 from .sd_states import AskAvailability
 
+
 class DriveIn(smach.StateMachine):
     """
     Initialize at the designated place, drive to and inspect the bar, store the detected drinks or ask for the
