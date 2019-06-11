@@ -40,8 +40,12 @@ class ServingDrinks(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("DRIVE_IN",
-                                   DriveIn(robot=robot, bar_designator=bar_designator, room_designator=room_designator,
-                                           objects_list_des=objects_list_des, unav_drink_des=unav_drink_des),
+                                   DriveIn(robot=robot,
+                                           initial_pose=challenge_knowledge.starting_point,
+                                           bar_designator=bar_designator,
+                                           room_designator=room_designator,
+                                           objects_list_des=objects_list_des,
+                                           unav_drink_des=unav_drink_des),
                                    transitions={"succeeded": "SAY_HI",
                                                 "failed": "SAY_HI",
                                                 "aborted": "aborted"})

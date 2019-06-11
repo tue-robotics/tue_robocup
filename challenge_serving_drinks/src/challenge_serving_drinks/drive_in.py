@@ -3,24 +3,20 @@ import smach
 
 # Robot smach states
 import robot_smach_states as states
-from robocup_knowledge import knowledge_loader
 
 # Serving drinks
 from .sd_states import AskAvailability
-
-# Knowledge
-challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks")
-
 
 class DriveIn(smach.StateMachine):
     """
     Initialize at the designated place, drive to and inspect the bar, store the detected drinks or ask for the
     unavailable drink, and navigate to the room where are the operators
     """
-    def __init__(self, robot, bar_designator, room_designator, objects_list_des, unav_drink_des):
+    def __init__(self, robot, initial_pose, bar_designator, room_designator, objects_list_des, unav_drink_des):
         """
         Initialization method
         :param robot: robot api object
+        :param initial_pose: Initial pose of the robot
         :param bar_designator: (EntityDesignator) in which the bar location is stored
         :param room_designator: (EntityDesignator) in which the room location is stored
         :param objects_list_des: (VariableDesignator) in which the available drinks are stored
@@ -36,7 +32,7 @@ class DriveIn(smach.StateMachine):
             # Initialize
             smach.StateMachine.add("INITIALIZE",
                                    states.StartChallengeRobust(robot=robot,
-                                                               initial_pose=challenge_knowledge.starting_point,
+                                                               initial_pose=initial_pose,
                                                                use_entry_points=False, door=False),
                                    transitions={"Done": "INSPECT_BAR",
                                                 "Aborted": "aborted",
