@@ -1,4 +1,4 @@
-# RIPS KNOWLEDGE FILE RGO2019
+# WHERE IS THIS KNOWLEDGE FILE ROBOTICS TESTLABS
 
 # TU/e Robotics
 from robocup_knowledge import knowledge_loader
