@@ -39,7 +39,7 @@ class RiseForInspect(smach.State):
     :param volume: volume of the entity which is to be inspected
     """
     def __init__(self, robot, entity, volume=None):
-        smach.State.__init__(self, outcomes=['done', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
         self._entity = entity
         self._volume = volume
@@ -63,6 +63,6 @@ class RiseForInspect(smach.State):
             pos = entity.pose.frame.p
 
         if self._robot.move_to_inspect_pose(pos):
-            return "done"
+            return "succeeded"
         else:
             return "failed"

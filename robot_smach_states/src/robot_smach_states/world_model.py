@@ -212,8 +212,8 @@ class Inspect(smach.StateMachine):
                                                     'arrived': 'RISE'})
 
             smach.StateMachine.add('RISE', RiseForInspect(robot, entityDes, searchArea),
-                                   transitions={'done': 'SEGMENT',
-                                                'failed': 'failed'})
+                                   transitions={'succeeded': 'SEGMENT',
+                                                'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
                                                              threshold=threshold),
