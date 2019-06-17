@@ -48,46 +48,45 @@ class Hero(robot.Robot):
         for arm in self.arms.itervalues():
             arm._operational = True
 
+        # verify joint goal required for posing
+        assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
+            "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
+
         self.configure()
 
     def move_to_inspect_pose(self, inspect_target):
         """
         This poses the robot for an inspect.
+
         :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        :return result: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
         z_over = 0.3  # height the robot should look over the surface
         z_hh = 0.9  # height of the robots head at z_arm=0
-        torso_to_arm_ratio = 2  # motion of arm/motion of torso
+        torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
         z_head = inspect_target.z() + z_over
 
         # check whether moving the arm is necessary
         if z_head < 1.2:
-            rospy.loginfo('Entity is low enough. we dont need to move the arm')
+            rospy.logdebug('Entity is low enough. we dont need to move the arm')
             return True
 
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
-        if z_arm > 0.69:
-            z_arm = 0.69
-            rospy.logwarn('Warning: looking at excessively high surface')
-        elif z_arm < 0.0:
-            z_arm = 0.0
-            rospy.logwarn('Surface is low enough, we dont need to move the arm.')
+        z_arm = min(0.69, max(z_arm, 0.0)) # arm_lift_joint limit
 
-        arm = self.get_arm()
+        arm = self.parts['leftArm']
 
         # turn the robot
         rotation = 1.57
-        rotation_speed = 1
+        rotation_speed = 1.0
         rotation_duration = rotation / rotation_speed
-        if arm.has_joint_goal('arm_out_of_way'):
-            pose = arm._arm.default_configurations['arm_out_of_way']
-            pose[0] = z_arm
-            arm._arm._send_joint_trajectory([pose])
-        else:
-            rospy.logwarn('Warning: robot does not have an "arm_out_of_way" joint goal')
-            return False
+
+        pose = arm.default_configurations['arm_out_of_way']
+        pose[0] = z_arm
+        arm._send_joint_trajectory([pose])
+
         self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
         return True
@@ -95,6 +94,8 @@ class Hero(robot.Robot):
     def move_to_hmi_pose(self):
         """
         This poses the robot for conversations.
+
+        :return None
         """
         arm = self.get_arm()
 
@@ -105,7 +106,6 @@ class Hero(robot.Robot):
             arm.send_joint_goal('arm_out_of_way', 0.0)
             self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
-        return "succeeded"
 
 
 if __name__ == "__main__":
