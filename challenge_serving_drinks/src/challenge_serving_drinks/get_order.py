@@ -19,7 +19,7 @@ class GetOrder(smach.StateMachine):
     """
     def __init__(self, robot, operator_name, drink_designator,
                  available_drinks_designator, unavailable_drink_designator,
-                 name_options):
+                 name_options, objects):
         # type: (Robot, str, VariableDesignator) -> None
         """
         Initialization method
@@ -29,6 +29,7 @@ class GetOrder(smach.StateMachine):
         :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
         :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
         :param name_options: Names from common knowledge
+        :param objects: Objects from common knowledge
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
@@ -105,6 +106,7 @@ class GetOrder(smach.StateMachine):
                                    AskDrink(robot=robot, operator_name=operator_name,
                                             drink_designator=drink_designator.writeable,
                                             available_drinks_designator=available_drinks_designator,
-                                            unavailable_drink_designator=unavailable_drink_designator),
+                                            unavailable_drink_designator=unavailable_drink_designator,
+                                            objects=objects),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"},)

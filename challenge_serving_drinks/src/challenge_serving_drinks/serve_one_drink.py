@@ -18,7 +18,7 @@ class ServeOneDrink(smach.StateMachine):
     Serves on drink to an operator
     """
     def __init__(self, robot, bar_designator, room_id, room_designator,
-                 objects_list_des, unav_drink_des, name_options):
+                 objects_list_des, unav_drink_des, name_options, objects):
         # type: (Robot, int) -> str
         """
         Initialization method
@@ -29,6 +29,7 @@ class ServeOneDrink(smach.StateMachine):
         :param objects_list_des: (VariableDesignator) in which the available drinks are stored
         :param unav_drink_des: (VariableDesignator) in which the unavailable drink is stored
         :param name_options: Names from common knowledge
+        :param objects: Objects from common knowledge
         """
 
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
@@ -51,7 +52,8 @@ class ServeOneDrink(smach.StateMachine):
                                             drink_designator=drink_str_designator,
                                             available_drinks_designator=objects_list_des,
                                             unavailable_drink_designator=unav_drink_des,
-                                            name_options=name_options),
+                                            name_options=name_options,
+                                            objects=objects),
                                    transitions={"succeeded": "INSPECT_BAR",
                                                 "failed": "failed"})  # ToDo: fallback?
 

@@ -46,7 +46,8 @@ class ServingDrinks(smach.StateMachine):
                                            bar_designator=bar_designator,
                                            room_designator=room_designator,
                                            objects_list_des=objects_list_des,
-                                           unav_drink_des=unav_drink_des),
+                                           unav_drink_des=unav_drink_des,
+                                           objects=common_knowledge.objects),
                                    transitions={"succeeded": "SAY_HI",
                                                 "failed": "SAY_HI",
                                                 "aborted": "aborted"})
@@ -67,7 +68,8 @@ class ServingDrinks(smach.StateMachine):
                                                      room_designator=room_designator,
                                                      objects_list_des=objects_list_des,
                                                      unav_drink_des=unav_drink_des,
-                                                     name_options=common_knowledge.names),
+                                                     name_options=common_knowledge.names,
+                                                     objects=common_knowledge.objects),
                                        transitions={"succeeded": next_state,
                                                     "failed": next_state,
                                                     "aborted": "aborted"})
