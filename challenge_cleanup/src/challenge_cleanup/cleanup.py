@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-
 import rospy
 import smach
 import random
