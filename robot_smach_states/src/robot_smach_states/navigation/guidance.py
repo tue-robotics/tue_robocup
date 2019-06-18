@@ -31,7 +31,7 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     found_people = [robot.ed.get_entity(id_) for id_ in found_people_ids]
 
     # Assume the operator is around 1.0 m behind the robot
-    base_pose = robot.pose.get_location()
+    base_pose = robot.base.get_location()
     expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
 
     for person in found_people:
