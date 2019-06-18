@@ -6,30 +6,30 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from robot_skills.util.entity import Entity
-from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
 
 # Serving drinks
 from .sd_states import DescriptionStrDesignator
 from .get_order import GetOrder
 
-# Knowledge
-challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks")
-
 
 class ServeOneDrink(smach.StateMachine):
     """
     Serves on drink to an operator
     """
-    def __init__(self, robot, bar_designator, room_designator, objects_list_des, unav_drink_des):
+    def __init__(self, robot, bar_designator, room_id, room_designator,
+                 objects_list_des, unav_drink_des, name_options, objects):
         # type: (Robot, int) -> str
         """
         Initialization method
         :param robot: robot api object
         :param bar_designator: (EntityDesignator) in which the bar location is stored
+        :param room_id: room ID from challenge knowledge
         :param room_designator: (EntityDesignator) in which the room location is stored
         :param objects_list_des: (VariableDesignator) in which the available drinks are stored
         :param unav_drink_des: (VariableDesignator) in which the unavailable drink is stored
+        :param name_options: Names from common knowledge
+        :param objects: Objects from common knowledge
         """
 
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
@@ -47,10 +47,13 @@ class ServeOneDrink(smach.StateMachine):
 
             # Get order
             smach.StateMachine.add("GET_ORDER",
-                                   GetOrder(robot=robot, operator_name=operator_name,
+                                   GetOrder(robot=robot,
+                                            operator_name=operator_name,
                                             drink_designator=drink_str_designator,
                                             available_drinks_designator=objects_list_des,
-                                            unavailable_drink_designator=unav_drink_des),
+                                            unavailable_drink_designator=unav_drink_des,
+                                            name_options=name_options,
+                                            objects=objects),
                                    transitions={"succeeded": "INSPECT_BAR",
                                                 "failed": "failed"})  # ToDo: fallback?
 
@@ -84,7 +87,7 @@ class ServeOneDrink(smach.StateMachine):
 
             # Find operator
             smach.StateMachine.add("FIND_OPERATOR",
-                                   states.FindPersonInRoom(robot=robot, area=challenge_knowledge.room_id,
+                                   states.FindPersonInRoom(robot=robot, area=room_id,
                                                            name=operator_name, discard_other_labels=True,
                                                            found_entity_designator=operator_designator.writeable),
                                    transitions={"found": "GOTO_OPERATOR",

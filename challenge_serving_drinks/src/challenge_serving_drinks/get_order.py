@@ -11,9 +11,6 @@ from robot_skills.robot import Robot
 # Serving drinks
 from .sd_states import AskDrink, DetectWaving
 
-# Knowledge
-common_knowledge = knowledge_loader.load_knowledge("common")
-
 
 class GetOrder(smach.StateMachine):
     """
@@ -21,7 +18,8 @@ class GetOrder(smach.StateMachine):
     states.
     """
     def __init__(self, robot, operator_name, drink_designator,
-                 available_drinks_designator, unavailable_drink_designator):
+                 available_drinks_designator, unavailable_drink_designator,
+                 name_options, objects):
         # type: (Robot, str, VariableDesignator) -> None
         """
         Initialization method
@@ -30,6 +28,8 @@ class GetOrder(smach.StateMachine):
         :param drink_designator: (VariableDesignator) in which the drink to fetch is stored
         :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
         :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param name_options: Names from common knowledge
+        :param objects: Objects from common knowledge
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
@@ -75,7 +75,7 @@ class GetOrder(smach.StateMachine):
             # Ask operator for his name
             smach.StateMachine.add("LEARN_NAME",
                                    states.AskPersonName(robot=robot, person_name_des=operator_name.writeable,
-                                                        name_options=common_knowledge.names, default_name="john",
+                                                        name_options=name_options, default_name="john",
                                                         nr_tries=2),
                                    transitions={"succeeded": "LEARN_OPERATOR",
                                                 "failed": "LEARN_NAME_FALLBACK",
@@ -106,6 +106,7 @@ class GetOrder(smach.StateMachine):
                                    AskDrink(robot=robot, operator_name=operator_name,
                                             drink_designator=drink_designator.writeable,
                                             available_drinks_designator=available_drinks_designator,
-                                            unavailable_drink_designator=unavailable_drink_designator),
+                                            unavailable_drink_designator=unavailable_drink_designator,
+                                            objects=objects),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"},)

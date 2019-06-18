@@ -15,6 +15,7 @@ from .serve_one_drink import ServeOneDrink
 
 # Knowledge
 challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks")
+common_knowledge = knowledge_loader.load_knowledge("common")
 
 
 class ServingDrinks(smach.StateMachine):
@@ -40,8 +41,13 @@ class ServingDrinks(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("DRIVE_IN",
-                                   DriveIn(robot=robot, bar_designator=bar_designator, room_designator=room_designator,
-                                           objects_list_des=objects_list_des, unav_drink_des=unav_drink_des),
+                                   DriveIn(robot=robot,
+                                           initial_pose=challenge_knowledge.starting_point,
+                                           bar_designator=bar_designator,
+                                           room_designator=room_designator,
+                                           objects_list_des=objects_list_des,
+                                           unav_drink_des=unav_drink_des,
+                                           objects=common_knowledge.objects),
                                    transitions={"succeeded": "SAY_HI",
                                                 "failed": "SAY_HI",
                                                 "aborted": "aborted"})
@@ -56,9 +62,14 @@ class ServingDrinks(smach.StateMachine):
                 next_state = "SERVE_DRINK_{}".format(idx + 1) if idx < challenge_knowledge.NR_DRINKS else "SAY_DONE"
 
                 smach.StateMachine.add("SERVE_DRINK_{}".format(idx),
-                                       ServeOneDrink(robot=robot, bar_designator=bar_designator,
-                                                     room_designator=room_designator, objects_list_des=objects_list_des,
-                                                     unav_drink_des=unav_drink_des),
+                                       ServeOneDrink(robot=robot,
+                                                     bar_designator=bar_designator,
+                                                     room_id=challenge_knowledge.room_id,
+                                                     room_designator=room_designator,
+                                                     objects_list_des=objects_list_des,
+                                                     unav_drink_des=unav_drink_des,
+                                                     name_options=common_knowledge.names,
+                                                     objects=common_knowledge.objects),
                                        transitions={"succeeded": next_state,
                                                     "failed": next_state,
                                                     "aborted": "aborted"})

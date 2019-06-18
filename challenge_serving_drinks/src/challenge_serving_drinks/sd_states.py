@@ -16,9 +16,6 @@ from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
 from tue_msgs.msg import People
 from Queue import Queue, Empty
 
-# Knowledge
-COMMON_KNOWLEDGE = knowledge_loader.load_knowledge("common")
-
 
 class CheckAvailability(smach.State):
     """
@@ -26,7 +23,7 @@ class CheckAvailability(smach.State):
     """
 
     def __init__(self, robot, drink_designator, available_drinks_designator, unavailable_drink_designator,
-                 max_tries=3, max_queries_per_try=3):
+                 objects, max_tries=3, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
@@ -34,6 +31,7 @@ class CheckAvailability(smach.State):
         :param drink_designator: (VariableDesignator) in which the drink to fetch is stored
         :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
         :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param objects: Objects from common knowledge
         :param max_tries: (int) maximum number of times the robot asks which drink
         :param max_queries_per_try: (int) maximum number of queries to the HMI server per try
         """
@@ -42,6 +40,7 @@ class CheckAvailability(smach.State):
         self._drink_designator = drink_designator
         self._available_drinks_designator = available_drinks_designator
         self._unavailable_drink_designator = unavailable_drink_designator
+        self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
 
@@ -64,7 +63,7 @@ class CheckAvailability(smach.State):
         grammar += '\nDET -> a | an'
 
         # Add drinks
-        for d in COMMON_KNOWLEDGE.objects:
+        for d in self._objects:
             if d["category"] == "drink":
                 grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
         return grammar, "O"
@@ -132,7 +131,7 @@ class AskDrink(smach.StateMachine):
     Asks the operator what he/she would like to drink.
     """
     def __init__(self, robot, operator_name, drink_designator, available_drinks_designator,
-                 unavailable_drink_designator):
+                 unavailable_drink_designator, objects):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
@@ -141,6 +140,7 @@ class AskDrink(smach.StateMachine):
         :param drink_designator: (VariableDesignator) in which the drink to fetch is stored
         :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
         :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param objects: Objects from common knowledge
         """
 
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
@@ -162,7 +162,8 @@ class AskDrink(smach.StateMachine):
             smach.StateMachine.add("CHECK_AVAILABILITY",
                                    CheckAvailability(robot=robot, drink_designator=drink_designator,
                                                      available_drinks_designator=available_drinks_designator,
-                                                     unavailable_drink_designator=unavailable_drink_designator),
+                                                     unavailable_drink_designator=unavailable_drink_designator,
+                                                     objects=objects),
                                    transitions={"available": "ASK_FOR_CONFIRMATION",
                                                 "unavailable": "STATE_UNAVAILABLE",
                                                 "aborted": "aborted"})
@@ -198,18 +199,20 @@ class AskAvailability(smach.State):
     This is based on the 'TakeOrder' class of the the restaurant challenge. Might
     be nice to merge these two.
     """
-    def __init__(self, robot, unavailable_drink_designator, max_tries=3, max_queries_per_try=3):
+    def __init__(self, robot, unavailable_drink_designator, objects, max_tries=3, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """ Initialization method
 
         :param robot: robot api object
         :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
+        :param objects: Objects from common knowledge
         :param max_tries: (int) maximum number of times the robot asks which drink
         :param max_queries_per_try: (int) maximum number of queries to the HMI server per try
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self._robot = robot
         self._unavailable_drink_designator = unavailable_drink_designator
+        self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
 
@@ -229,7 +232,7 @@ class AskAvailability(smach.State):
         grammar += '\nDET -> a | an | the'
 
         # Add drinks
-        for d in COMMON_KNOWLEDGE.objects:
+        for d in self._objects:
             if d["category"] == "drink":
                 grammar += "\nBEV['{}'] -> {}[B]".format(d["name"], d["name"].replace('_', ' '))
         return grammar, "O"
