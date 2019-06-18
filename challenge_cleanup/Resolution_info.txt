@@ -1,0 +1,47 @@
+29jan2019 - HvR
+RoboCup@Home Rulebook 2019, p46 - 5.1 Clean Up (Housekeeper)
+
+Simplified Challenge description:
+1. Start
+2. Wait for info about the requested room to 'clean'
+3. Move to the room
+4. Visit each piece of furniture, seat, (including the floor!) to look for an object
+5. Segment each camera snapshot and distinghuish between known and unknown objects. ('known' and 'unknown' depend on the
+    set recognition threshold.
+6. Keep a list of the 'known' objects
+7. After all locations have been examined, move to the starting position in the room
+8. Recite the list of objects frm the 'known-object' list
+9. Leave the arena
+10. End
+
+Needed challenge_knowledge:
+1. Layout of all the possible rooms
+2. For each room: Some sort of shortest route to search the room furniture and the floor
+3. Object knowledge (category/name) and required placement location for the objects
+
+
+
+How to make challenge_knowledge?
+- Arena layout (floorplan)                  (In robocup_knowledge-> environments-> <environment> -> common.py)
+- Furniture objects with 'on_top_of' areas  (In ed_object_models-> models-> <environment> -> <object> -> model.yaml)
+- Known objects                             (In cleanup.py)
+- Challenge start/end point location        (In cleanup.py)
+- Waypointlists to get to each room from the start point    (In common.py)
+- Route (waypointlist?) within each room to cover the search area.  (In cleanup.py)
+
+1. Start
+   Load challenge knowledge (CK) from robocup_knowledge
+2. Wait for info about the requested room to 'clean'
+   Ask "Which room needs cleaning?"
+   Loop until operator answer is understood
+3. Move to the room via waypoints (CK) (robot_smach_states->navigation
+   If needed wait for door to open, or let the robot do it
+4. Loop through the list of waypoints for that room (CK)
+    a. Take snapshot
+    b. Analyse/Segment the snapshot
+    c. Update lists of known/unknown objects (threshold dependant)
+   Got next waypoint
+5. If all waypoints are examined goto the starting point in the room
+6. Report known objects to operator
+7. Wait for 'continue'
+8. Leave the arena area.
