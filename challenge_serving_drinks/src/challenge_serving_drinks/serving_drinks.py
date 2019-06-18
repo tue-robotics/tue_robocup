@@ -15,6 +15,7 @@ from .serve_one_drink import ServeOneDrink
 
 # Knowledge
 challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks")
+common_knowledge = knowledge_loader.load_knowledge("common")
 
 
 class ServingDrinks(smach.StateMachine):
@@ -65,7 +66,8 @@ class ServingDrinks(smach.StateMachine):
                                                      room_id=challenge_knowledge.room_id,
                                                      room_designator=room_designator,
                                                      objects_list_des=objects_list_des,
-                                                     unav_drink_des=unav_drink_des),
+                                                     unav_drink_des=unav_drink_des,
+                                                     name_options=common_knowledge.names),
                                        transitions={"succeeded": next_state,
                                                     "failed": next_state,
                                                     "aborted": "aborted"})
