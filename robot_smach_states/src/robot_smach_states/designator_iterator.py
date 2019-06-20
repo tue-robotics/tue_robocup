@@ -1,4 +1,5 @@
 import smach
+import rospy
 
 import robot_smach_states.util.designators.core as ds
 from robot_smach_states.util.designators import is_writeable
@@ -58,7 +59,9 @@ class IterateDesignator(smach.State):
 
     def execute(self, userdata=None):
         if self._current_elements is None:
-            self._current_elements = iter(self.collection_des.resolve())
+            collection = self.collection_des.resolve()
+            rospy.loginfo("Current elements: {}".format(collection))
+            self._current_elements = iter(collection)
 
         try:
             self.element_des.write(next(self._current_elements))
