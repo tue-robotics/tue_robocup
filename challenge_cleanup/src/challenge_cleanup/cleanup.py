@@ -51,6 +51,7 @@ class VerifyWorldModelInfo(smach.State):
 
 class AskWhichRoomToClean(smach.State):
 # Logic in this code is still flawed. No correct repetition.....
+# EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
 
     def __init__(self, robot, roomw, answerw, cleanup_locationsw):
         smach.State.__init__(self, outcomes=["failed", "done"])
@@ -100,20 +101,28 @@ class AskWhichRoomToClean(smach.State):
                         self.robot.head.cancel_goal()
                         return "failed"
 
+                # try:
+                #     self.robot.speech.speak("I understand that the {} should be cleaned, "
+                #                             .format(speech_result.sentence))
+                #     speech_result = self.robot.hmi.query(description="Is this correct?",
+                #                                          grammar="T[True] -> yes;"
+                #                                                  "T[False] -> no",
+                #                                          target="T")
+                # except hmi.TimeoutException:
+                #     return "failed"
             try:
                 # Now: confirm
-#                self.roomw.write(speech_result.sentence)
-                self.robot.speech.speak("I understood that the {} should be cleaned "
+                self.robot.speech.speak("I understood that the {} should be cleaned,  "
                                              "is this correct?".format(speech_result.sentence))
             except:
                 continue
 
-            try:
-                speech_result = self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
-                                                                                            "T[False] -> no",
-                                                                                     target="T")
-            except TimeoutException:
-                return "failed"
+            # try:
+            #     speech_result = self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+            #                                                                                 "T[False] -> no",
+            #                                                                          target="T")
+            # except hmi.TimeoutException:
+            #     return "failed"
 
             self.robot.head.cancel_goal()
             self.robot.speech.speak("Ok, I will clean the {}".format(self.roomw.resolve()), block=False)
@@ -128,6 +137,8 @@ def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     robot.ed.reset()
+    # The probability number must be determined experimentaly
+    robot.ed.set_unknown_probability(0.3)
     # Designators
     # Room to search through
     roomr = ds.VariableDesignator('kitchen', resolve_type=str)
