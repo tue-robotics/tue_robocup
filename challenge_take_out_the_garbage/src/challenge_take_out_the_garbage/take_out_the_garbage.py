@@ -8,7 +8,6 @@ from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
 from challenge_take_out_the_garbage.drop_down import DropDownTrash
-from challenge_take_out_the_garbage.measure_garbage import MeasureGarbage
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
@@ -34,8 +33,9 @@ class TakeOutGarbage(smach.StateMachine):
                                                          id=CHALLENGE_KNOWLEDGE.trashbin_id2)
             trash_designator2 = ds.EntityByIdDesignator(robot=robot, id="trash")
             next_state = "PICK_UP_TRASH2"
+            rospy.loginfo("There is a second trash bin")
         else:
-            rospy.logwarn("There is no second trash bin")
+            rospy.loginfo("There is no second trash bin")
             next_state = "ANNOUNCE_END"
 
         drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
@@ -58,10 +58,6 @@ class TakeOutGarbage(smach.StateMachine):
                                                 "failed": "ANNOUNCE_END",
                                                 "aborted": "ANNOUNCE_END"})
 
-            # smach.StateMachine.add("MEASURE_GARBAGE", MeasureGarbage(robot=robot),
-            #                        transitions={"succeeded": "DROP_DOWN_TRASH",
-            #                                     "failed": "ANNOUNCE_END"})
-
             smach.StateMachine.add("DROP_DOWN_TRASH",
                                    DropDownTrash(robot=robot, trash_designator=trash_designator,
                                                  drop_designator=drop_zone_designator),
@@ -75,9 +71,8 @@ class TakeOutGarbage(smach.StateMachine):
                                    transitions={'spoken': next_state})
 
             if next_state == "PICK_UP_TRASH2":
-
                 smach.StateMachine.add("PICK_UP_TRASH2", PickUpTrash(robot=robot,
-                                                                     trashbin_designator=trashbin_designator2,
+                                                                     trashbin_designator=trashbin_designator,
                                                                      arm_designator=arm_designator),
                                        transitions={"succeeded": "DROP_DOWN_TRASH2",
                                                     "failed": "ANNOUNCE_END",
@@ -100,4 +95,5 @@ class TakeOutGarbage(smach.StateMachine):
                                    states.Say(robot, "I have finished taking out the trash.",
                                               block=False),
                                    transitions={'spoken': 'succeeded'})
+
 

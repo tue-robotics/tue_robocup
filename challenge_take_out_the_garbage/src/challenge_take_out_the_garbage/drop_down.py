@@ -1,10 +1,14 @@
 # ROS
 import smach
+import rospy
 
 # TU/e
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util.kdl_conversions import FrameStamped
+from robocup_knowledge import load_knowledge
+CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
+
 
 
 class dropPoseDesignator(ds.Designator):
@@ -27,8 +31,9 @@ class dropPoseDesignator(ds.Designator):
 
         # Query ed
         try:
-            frame = self._robot.ed.get_entity(id="drop_area")._pose
+            frame = self._robot.ed.get_entity(id=CHALLENGE_KNOWLEDGE.drop_zone_id)._pose
         except:
+            rospy.logwarn("The provided entity has no _pose")
             return None
 
         frame.p.z(self._drop_height)
@@ -48,7 +53,7 @@ class DropDownTrash(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        drop_area_pose = dropPoseDesignator(robot, 0.6, "drop_pose")
+        drop_area_pose = dropPoseDesignator(robot, 0.6, CHALLENGE_KNOWLEDGE.drop_zone_id)
         arm_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={})
         self._trash_designator = trash_designator
         self._drop_designator = drop_designator

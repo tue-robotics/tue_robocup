@@ -1,6 +1,8 @@
 # ROS
 import rospy
+import numpy
 import smach
+from geometry_msgs.msg import WrenchStamped
 
 # TU/e
 import robot_smach_states as states
@@ -10,6 +12,28 @@ from robot_skills.arms import PublicArm
 
 from ed_msgs.msg import EntityInfo
 from robot_skills.util.kdl_conversions import FrameStamped
+
+
+class MeasureForce(object):
+    """
+    Measure the three forces in the arm
+    """
+    def __init__(self, robot):
+        """
+
+        """
+        self._robot = robot
+
+    def get_force(self):
+        ft_sensor_topic = '/'+self._robot.robot_name+'/wrist_wrench/raw'
+
+        force_grab = rospy.wait_for_message(ft_sensor_topic, WrenchStamped)
+
+        force_data_x = force_grab.wrench.force.x
+        force_data_y = force_grab.wrench.force.y
+        force_data_z = force_grab.wrench.force.z
+
+        return [force_data_x, force_data_y, force_data_z]
 
 
 class GetTrashBin(smach.State):
@@ -72,6 +96,10 @@ class GrabTrash(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
+        measure_force = MeasureForce(self._robot)
+        arm_weight = measure_force.get_force()
+        minimal_weight = 0.1           #weight in kg's
+
         # Torso up (non-blocking)
         self._robot.torso.reset()
 
@@ -101,6 +129,30 @@ class GrabTrash(smach.State):
         self._robot.torso.wait_for_motion_done()
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
+
+        # arm_with_object_weight = measure_force.get_force()
+        # weight_object = sum(abs(numpy.subtract(arm_weight, arm_with_object_weight)))/9.81
+        # if weight_object < minimal_weight:
+        #     rospy.loginfo("The weight I feel is %s", )
+        #     self._robot.speech.speak("Apparentely I did not pick up the trash, let me try again")
+        #
+        #     # Go down and grab
+        #     self._robot.torso.send_goal("grab_trash_down")
+        #     self._robot.torso.wait_for_motion_done()
+        #     arm.send_gripper_goal('close')
+        #     arm.wait_for_motion_done()
+        #
+        #     # Go up and back to pre grasp position
+        #     self._robot.torso.send_goal("grab_trash_up")
+        #     self._robot.torso.wait_for_motion_done()
+        #     arm.send_joint_goal('handover')
+        #     arm.wait_for_motion_done()
+        #
+        #     arm_with_object_weight = measure_force.get_force()
+        #     if sum(abs(numpy.subtract(arm_weight, arm_with_object_weight))) < dummy_value:
+        #         self._robot.speech.speak("Unfortunately I can not pick up the trash myself. Let me switch to plan B!")
+        #         return "failed"
+
 
         # Go back and pull back arm
         self._robot.base.force_drive(-0.125, 0, 0, 2.0)
