@@ -237,4 +237,4 @@ if __name__ == "__main__":
     robot = get_robot_from_argv(index=1)
 
     sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="closet"))
-    print sm.execute()
+    print(sm.execute())
