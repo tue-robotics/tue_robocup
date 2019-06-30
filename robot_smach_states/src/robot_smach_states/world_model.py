@@ -95,7 +95,8 @@ class UpdateEntityPose(smach.State):
 
 
 class SegmentObjects(smach.State):
-    """ Look at an entiy and segment objects within the area desired.
+    """
+    Look at an entity and segment objects within the area desired.
     """
     def __init__(self, robot, segmented_entity_ids_designator, entity_to_inspect_designator,
                  segmentation_area="on_top_of",
@@ -177,8 +178,8 @@ class SegmentObjects(smach.State):
 
 
 class Inspect(smach.StateMachine):
-    """ Class to navigate to a(n) (furniture) object and segment the objects on top of it.
-
+    """
+    Class to navigate to a(n) (furniture) object and segment the objects on top of it.
     """
     def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area="",
                  threshold=0.0):
