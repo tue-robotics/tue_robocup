@@ -98,7 +98,7 @@ class GuideToRoomOrObject(smach.StateMachine):
             def determine_type(userdata=None):
                 entity = entity_des.resolve()
                 entity_type = entity.type
-                if entity_type is 'room':
+                if entity_type == 'room':
                     return 'room'
                 else:
                     return 'object'
