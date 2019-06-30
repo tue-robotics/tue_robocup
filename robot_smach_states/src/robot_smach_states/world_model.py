@@ -95,24 +95,28 @@ class UpdateEntityPose(smach.State):
 
 
 class SegmentObjects(smach.State):
-    """ Look at an entiy and segment objects within the area desired.
+    """
+    Look at an entity and segment objects within the area desired.
     """
     def __init__(self, robot, segmented_entity_ids_designator, entity_to_inspect_designator,
-                 segmentation_area="on_top_of",
-                 threshold=0.0):
+                 segmentation_area="on_top_of", unknown_threshold=0.0, filter_threshold=0.0):
         """ Constructor
 
         :param robot: robot object
         :param segmented_entity_ids_designator: designator that is used to store the segmented objects
         :param entity_to_inspect_designator: EdEntityDesignator indicating the (furniture) object to inspect
         :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param threshold: float for classification score. Entities whose classification score is lower are ignored
+        :param unknown_threshold: Entities whose classification score is lower are not marked with a type
+        :type unknown_threshold: float
+        :param filter_threshold: Entities whose classification score is lower are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
+        :type filter_threshold: float
         """
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
-        self.threshold = threshold
+        self.unknown_threshold = unknown_threshold
+        self.filter_threshold = filter_threshold
 
         ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
@@ -145,20 +149,20 @@ class SegmentObjects(smach.State):
             _color_info(">> Segmented %d objects!" % len(segmented_object_ids))
 
             # Classify and update IDs
-            object_classifications = self.robot.ed.classify(ids=segmented_object_ids)
+            object_classifications = self.robot.ed.classify(ids=segmented_object_ids, unknown_threshold=self.unknown_threshold)
 
             if object_classifications:
                 for idx, obj in enumerate(object_classifications):
                     _color_info("   - Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id))
 
-                if self.threshold:
+                if self.filter_threshold:
                     over_threshold = [obj for obj in object_classifications if
-                                              obj.probability >= self.threshold]
+                                      obj.probability >= self.filter_threshold]
 
                     dropped = {obj.id: obj.probability for obj in object_classifications if
-                               obj.probability < self.threshold}
-                    rospy.loginfo("Dropping {l} entities due to low class. score (< {th}): {dropped}"
-                                  .format(th=self.threshold, dropped=dropped, l=len(dropped)))
+                               obj.probability < self.filter_threshold}
+                    rospy.loginfo("Dropping {ln} entities due to low class. score (< {th}): {dropped}"
+                                  .format(th=self.filter_threshold, dropped=dropped, ln=len(dropped)))
 
                     object_classifications = over_threshold
 
@@ -177,21 +181,24 @@ class SegmentObjects(smach.State):
 
 
 class Inspect(smach.StateMachine):
-    """ Class to navigate to a(n) (furniture) object and segment the objects on top of it.
-
+    """
+    Class to navigate to a(n) (furniture) object and segment the objects on top of it.
     """
     def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area="",
-                 threshold=0.0):
-        """ Constructor
-
+                 unknown_threshold=0.0, filter_threshold=0.0):
+        """
+        Constructor
         :param robot: robot object
         :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
         :param objectIDsDes: designator that is used to store the segmented objects
         :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
         If left empty, NavigateToObserve is used.
-        :param threshold: float for classification score. Entities whose classification score is lower are ignored
+        :param unknown_threshold: Entities whose classification score is lower are not marked with a type
+        :type unknown_threshold: float
+        :param filter_threshold: Entities whose classification score is lower are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
+        :type filter_threshold: float
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -216,7 +223,7 @@ class Inspect(smach.StateMachine):
                                                 'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
-                                                             threshold=threshold),
+                                                             unknown_threshold=unknown_threshold, filter_threshold=filter_threshold),
                                    transitions={'done': 'done'})
 
 
@@ -230,4 +237,4 @@ if __name__ == "__main__":
     robot = get_robot_from_argv(index=1)
 
     sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="closet"))
-    print sm.execute()
+    print(sm.execute())
