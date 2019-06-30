@@ -123,9 +123,11 @@ class SegmentObjects(smach.State):
 
         if isinstance(segmentation_area, str):
             self.segmentation_area_des = ds.VariableDesignator(segmentation_area)
-        else:
+        elif isinstance(segmentation_area, ds.Designator):
             # ds.check_resolve_type(segmentation_area, "str")
             self.segmentation_area_des = segmentation_area
+        else:
+            raise RuntimeError("segmentation_area is not a str or Designator")
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.is_writeable(segmented_entity_ids_designator)
