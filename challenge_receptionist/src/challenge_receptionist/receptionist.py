@@ -5,7 +5,8 @@ import smach
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
 from robot_skills.util.entity import Entity
-from robot_skills.classification_result import ClassificationResult
+from challenge_receptionist.challenge_receptionist_challenge.find_empty_seat import FindEmptySeat
+from challenge_receptionist.challenge_receptionist_challenge.learn_guest import LearnGuest, FieldOfHMIResult
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
@@ -24,107 +25,6 @@ class GuestDescriptionStrDesignator(ds.Designator):
         name = self.guest_name_des.resolve()
         drinkname = self.drinkname.resolve()
         return "This is {name} whose favourite drink is {drink}".format(name=name, drink=drinkname)
-
-
-class FieldOfHMIResult(ds.Designator):
-    """
-    Extract a field of a QueryResult
-    """
-    def __init__(self, query_result_des, semantics_field, name=None):
-        """
-        Construct a designator that picks a field out of the semantics dict of a QueryResult
-        (such as resulting from a HearOptionsExtra-state)
-        :param query_result_des: A designator resolving to a QueryResult
-        :param semantics_field: str (or string designator) used in query_result.semantics[semantics_field]
-        :param name: Name for this designator for debugging purposes
-        """
-        super(FieldOfHMIResult, self).__init__(resolve_type=str, name=name)
-
-        ds.check_type(query_result_des, HMIResult)
-        ds.check_type(semantics_field, str)
-
-        self.query_result_des = query_result_des
-        self.semantics_field = semantics_field
-
-    def _resolve(self):
-        try:
-            field = self.semantics_field.resolve() if hasattr(self.semantics_field, 'resolve') else self.semantics_field
-            return self.query_result_des.resolve().semantics[field]
-        except Exception as e:
-            rospy.logerr(e)
-            return None
-
-
-class LearnGuest(smach.StateMachine):
-    def __init__(self, robot, door_waypoint, guest_ent_des, guest_name_des, guest_drink_des):
-        """
-
-        :param robot: Robot that should execute this state
-        :param door_waypoint: Entity-designator resolving to a waypoint Where are guests expected to come in
-        :param guest_ent_des: Entity of the guest
-        :param guest_name_des: designator that the name (str) of the guest is written to
-        :param guest_drink_des: designator that the drink type (str) of the drink the guest wants
-        """
-        smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
-
-        self.drink_spec_des = ds.Designator(challenge_knowledge.common.drink_spec, name='drink_spec')
-
-        with self:
-            smach.StateMachine.add('GOTO_DOOR',
-                                   states.NavigateToWaypoint(robot,
-                                                             door_waypoint,
-                                                             challenge_knowledge.waypoint_door['radius']),
-                                   transitions={'arrived': 'SAY_PLEASE_COME_IN',
-                                                'unreachable': 'SAY_PLEASE_COME_IN',
-                                                'goal_not_defined': 'abort'})
-
-            smach.StateMachine.add('SAY_PLEASE_COME_IN',
-                                   states.Say(robot, ["Please come in, I'm waiting"],
-                                              block=True,
-                                              look_at_standing_person=True),
-                                   transitions={'spoken': 'WAIT_FOR_GUEST'})
-
-            smach.StateMachine.add("WAIT_FOR_GUEST",
-                                   states.WaitForPersonInFront(robot, attempts=30, sleep_interval=1),
-                                   transitions={'success': 'SAY_HELLO',
-                                                'failed': 'SAY_PLEASE_COME_IN'})
-
-            smach.StateMachine.add('SAY_HELLO',
-                                   states.Say(robot, ["Hi there, I'll learn your face now"],
-                                              block=True,
-                                              look_at_standing_person=True),
-                                   transitions={'spoken': 'ASK_GUEST_NAME'})
-
-            smach.StateMachine.add('ASK_GUEST_NAME',
-                                   states.AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
-                                   transitions={'succeeded': 'LEARN_PERSON',
-                                                'failed': 'SAY_HELLO',
-                                                'timeout': 'SAY_HELLO'})
-
-            smach.StateMachine.add('LEARN_PERSON',
-                                   states.LearnPerson(robot, name_designator=guest_name_des),
-                                   transitions={'succeeded': 'SAY_GUEST_LEARNED',
-                                                'failed': 'SAY_FAILED_LEARNING'})
-
-            smach.StateMachine.add('SAY_FAILED_LEARNING',
-                                   states.Say(robot, ["Oops, I'm confused, let's try again"],
-                                              block=False),
-                                   transitions={'spoken': 'LEARN_PERSON'})
-
-            smach.StateMachine.add('SAY_GUEST_LEARNED',
-                                   states.Say(robot, ["Okidoki, now I know what you look like"], block=True),
-                                   transitions={'spoken': 'SAY_DRINK_QUESTION'})
-
-            smach.StateMachine.add('SAY_DRINK_QUESTION',
-                                   states.Say(robot, ["What's your favorite drink?"], block=True),
-                                   transitions={'spoken': 'HEAR_DRINK_ANSWER'})
-
-            smach.StateMachine.add('HEAR_DRINK_ANSWER',
-                                   states.HearOptionsExtra(robot,
-                                                           self.drink_spec_des,
-                                                           guest_drink_des.writeable),
-                                   transitions={'heard': 'succeeded',
-                                                'no_result': 'SAY_DRINK_QUESTION'})
 
 
 class IntroduceGuestToOperator(smach.StateMachine):
@@ -229,6 +129,13 @@ class ChallengeReceptionist(smach.StateMachine):
             smach.StateMachine.add('INTRODUCE_GUEST',
                                    IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des,
                                                             self.guest1_name_des, self.guest1_drinkname_des),
+                                   transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
+                                                'abort': 'FIND_SEAT_FOR_GUEST'})
+
+            smach.StateMachine.add('FIND_SEAT_FOR_GUEST',
+                                   FindEmptySeat(robot,
+                                                 seats_to_inspect=challenge_knowledge.seats,
+                                                 room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room)),
                                    transitions={'succeeded': 'succeeded',
                                                 'abort': 'abort'})
 
@@ -246,4 +153,4 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
             # - [ ] Iterate to guest 2
             # - [ ] Change ED API to accept list of entity IDs
-            # - [ ] Point at empty chair for guest to sit in
+            # - [x] Point at empty chair for guest to sit in
