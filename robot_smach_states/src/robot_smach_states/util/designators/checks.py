@@ -59,12 +59,25 @@ def check_type(designator_or_value, *allowed_types):
     Traceback (most recent call last):
       ...
     TypeError: ...
+
+    >>> d2 = Designator(["a"], resolve_type=[str])
+    >>> check_type(d2, [str])
+    >>> c2 = ["a"]
+    >>> check_type(c2, [str])
+    >>> check_type(c2, [int])  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
     """
     if hasattr(designator_or_value, "resolve_type"): #If its a designator: ...
         check_resolve_type(designator_or_value, *allowed_types)
     else:
-        if not type(designator_or_value) in allowed_types:
-            raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+        if isinstance(designator_or_value, list) and isinstance(allowed_types[0], list):
+            if not type(designator_or_value[0]) in allowed_types[0]:
+                raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+        else:
+            if not type(designator_or_value) in allowed_types:
+                raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
 
 def is_writeable(variable_writer):
     if isinstance(variable_writer, core.VariableWriter):
