@@ -77,6 +77,15 @@ class ED(RobotPart):
                                                  queue_size=10)
 
         self.robot_name = robot_name
+        self._unknown_probability = 0.0
+
+    @property
+    def unknown_probability(self):
+        return self._unknown_probability
+
+    @unknown_probability.setter
+    def unknown_probability(self, value):
+        self._unknown_probability = value
 
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
@@ -362,7 +371,7 @@ class ED(RobotPart):
 
         """
 
-        res = self._ed_classify_srv(ids=ids, unknown_probability=0.3)
+        res = self._ed_classify_srv(ids=ids, unknown_probability=self._unknown_probability)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
