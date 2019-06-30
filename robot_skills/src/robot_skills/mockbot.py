@@ -256,9 +256,9 @@ class ED(MockedRobotPart):
         res.deleted_ids = []
         return res
 
-    def classify(self, ids, types=None):
+    def classify(self, ids, types=None, unknown_threshold=0.0):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
-        return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
+        return [ClassificationResult(e.id, e.type, random.uniform(0, 1), None) for e in entities]
 
     def detect_people(self, rgb, depth, cam_info):
         return True, [self._dynamic_entities['operator'].id]
