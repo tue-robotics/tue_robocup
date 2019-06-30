@@ -180,10 +180,16 @@ class InformMachine(smach.StateMachine):
                                    states.Say(robot,
                                               ["We have arrived"]
                                               , block=True),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
 
             smach.StateMachine.add("FAILURE",
                                    states.Say(robot,
                                               ["I have failed you."]
                                               , block=True),
-                                   transitions={'spoken': 'failed'})
+                                   transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
+
+            smach.StateMachine.add("RETURN_TO_INFORMATION_POINT",
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, 'starting_point')),
+                                   transitions={'arrived': 'succeeded',
+                                                'unreachable': 'failed',
+                                                'goal_not_defined': 'failed'})
