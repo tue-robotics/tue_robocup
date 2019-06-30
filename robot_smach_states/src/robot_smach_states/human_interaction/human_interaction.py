@@ -22,7 +22,8 @@ from hmi import HMIResult
 
 
 class Say(smach.State):
-    """Say a sentence or pick a random one from a list.
+    """
+    Say a sentence or pick a random one from a list.
 
     >>> from mock import MagicMock
     >>> robot = MagicMock()
@@ -37,26 +38,31 @@ class Say(smach.State):
     >>> #After many calls, all options in the list will very likely have been called at least one.
     >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)
+    """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False):
+                 look_at_standing_person=False, resolve_once=False, random_once=False):
         smach.State.__init__(self, outcomes=["spoken"])
         ds.check_type(sentence, str, list)
-        # ds.check_type(language, str)
-        # ds.check_type(personality, str)
-        # ds.check_type(voice, str)
-        # ds.check_type(mood, str)
-        ds.check_type(block, bool)
+        isinstance(language, str)
+        isinstance(personality, str)
+        isinstance(voice, str)
+        isinstance(mood, str)
+        isinstance(block, bool)
 
         self.robot = robot
-        self.sentence = sentence
+        if random_once and isinstance(sentence, list):
+            self.sentence = random.choice(sentence)
+        else:
+            self.sentence = sentence
         self.language = language
         self.personality = personality
         self.voice = voice
         self.mood = mood
         self.block = block
         self.look_at_standing_person = look_at_standing_person
+        self.resolve_once = resolve_once
 
     def execute(self, userdata=None):
         # robot.head.look_at_standing_person()
@@ -65,14 +71,20 @@ class Say(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
-            self.sentence = random.choice(self.sentence)
+        if isinstance(self.sentence, ds.Designator):
+            if self.resolve_once:
+                sentence = self.sentence = self.sentence.resolve()
+            else:
+                sentence = self.sentence.resolve()
+        else:
+            sentence = self.sentence
 
-        sentence = str(self.sentence.resolve() if hasattr(self.sentence, "resolve") else self.sentence)
+        if not isinstance(sentence, str) and isinstance(sentence, list):
+            sentence = random.choice(sentence)
 
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
-        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
+        self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
 
         # robot.head.cancel_goal()
         # ToDo: hack
