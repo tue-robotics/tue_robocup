@@ -102,14 +102,14 @@ class AskWhichRoomToClean(smach.State):
 
             try:
                 # Now: confirm
-#                self.roomw.write(speech_result.sentence)
-                self.robot.speech.speak("I understood that the {} should be cleaned "
-                                             "is this correct?".format(speech_result.sentence))
-            except:
+                # self.roomw.write(speech_result.sentence)
+                self.robot.speech.speak("I understood that the {} should be cleaned, is this correct?".format(
+                    speech_result.sentence))
+            except Exception:
                 continue
 
             try:
-                speech_result = self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+                self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
                                                                                             "T[False] -> no",
                                                                                      target="T")
             except TimeoutException:
@@ -119,10 +119,10 @@ class AskWhichRoomToClean(smach.State):
             self.robot.speech.speak("Ok, I will clean the {}".format(self.roomw.resolve()), block=False)
             self.collect_cleanup_locations()
 
-
             return "done"
 
         nr_of_tries += 1
+
 
 def setup_statemachine(robot):
 
