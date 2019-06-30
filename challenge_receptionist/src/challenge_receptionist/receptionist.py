@@ -55,6 +55,30 @@ class FieldOfHMIResult(ds.Designator):
             return None
 
 
+class SeatsInRoomDesignator(ds.Designator):
+    def __init__(self, robot, seat_ids, room, name=None):
+        super(SeatsInRoomDesignator, self).__init__(resolve_type=[Entity], name=name)
+
+        self.robot = robot
+
+        ds.check_type(room, str)
+        ds.check_type(seat_ids, [str])
+
+        self.room = room
+        self.seat_ids = seat_ids
+
+    def _resolve(self):
+        room = self.room.resolve() if hasattr(self.room, 'resolve') else self.room  # type: Entity
+        seats = [self.robot.ed.get_entity(seat_id) for seat_id in self.seat_ids]  # type: List[Entity]
+
+        seats_in_room = room.entities_in_volume(seats,"in")
+
+        return seats_in_room
+
+    def __repr__(self):
+        return "SeatsInRoomDesignator({}, {}, {}, {})".format(self.robot, self.seat_ids, self.room, self.name)
+
+
 class LearnGuest(smach.StateMachine):
     def __init__(self, robot, door_waypoint, guest_ent_des, guest_name_des, guest_drink_des):
         """
@@ -210,31 +234,28 @@ class CheckVolumeEmpty(smach.StateMachine):
 
 
 class FindEmptySeat(smach.StateMachine):
-    def __init__(self, robot, seats_to_inspect):
-        smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
+    """
+    Iterate over all seat-type objects and check that their 'on-top-of' volume is empty
+    That can be done with an Inspect and then query for any Entities inside that volume.
+    If there are none, then the seat is empty
+    """
+    def __init__(self, robot, seats_to_inspect, room):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        # We have to find an *empty* seat in the given room
-        # I'd say: iterate over all seat-type objects and check that their 'on-top-of' volume is empty
-        # That can be done with an Inspect and then query for any Entities inside that volume.
-        # If there are none, then the seat is empty
+        seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
+        seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
         with self:
-            seat_ent_des = None
-            # TODO: Use the DesignatorIterator for this
-            for curr_seat_id, next_seat_id in zip(seats_to_inspect, seats_to_inspect[1:]):
-                seat_ent_des = ds.EntityByIdDesignator(robot, curr_seat_id)
+            smach.StateMachine.add('ITERATE_NEXT_SEAT',
+                                   states.IterateDesignator(seats, seat_ent_des.writeable),
+                                   transitions={'next': 'CHECK_SEAT_EMPTY',
+                                                'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
 
-                smach.StateMachine.add('CHECK_SEAT_EMPTY_{}'.format(curr_seat_id),
-                                       CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of'),
-                                       transitions={'occupied': 'CHECK_SEAT_EMPTY_{}'.format(next_seat_id),
-                                                    'empty': 'POINT_AT_EMPTY_SEAT',
-                                                    'failed': 'abort'})
-
-            curr_seat_id = seats_to_inspect[-1]
-            smach.StateMachine.add('CHECK_SEAT_EMPTY_{}'.format(curr_seat_id),
+            smach.StateMachine.add('CHECK_SEAT_EMPTY',
                                    CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of'),
-                                   transitions={'occupied': 'SAY_NO_EMPTY_SEATS',
+                                   transitions={'occupied': 'ITERATE_NEXT_SEAT',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
-                                                'failed': 'abort'})
+                                                'failed': 'ITERATE_NEXT_SEAT'})
+
 
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
                                    states.PointAt(robot=robot,
@@ -250,7 +271,7 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
                                    states.Say(robot, ["Sorry, there are no empty seats. I guess you just have to stand"], block=True),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'failed'})
 
 
 class ChallengeReceptionist(smach.StateMachine):
