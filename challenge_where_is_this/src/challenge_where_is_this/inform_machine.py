@@ -8,6 +8,7 @@ import smach
 import robot_skills
 import robot_smach_states as states
 from robot_smach_states.human_interaction.give_directions import GiveDirections
+from robot_smach_states.navigation.guidance import GuideToSymbolic
 import robot_smach_states.util.designators as ds
 
 from robocup_knowledge import load_knowledge
@@ -83,6 +84,47 @@ class SayWaitDes(smach.StateMachine):
                                    transitions={'spoken': 'succeeded'})
 
 
+class GuideToRoomOrObject(smach.StateMachine):
+    def __init__(self, robot, entity_des):
+        """ Constructor
+        :param robot: robot object
+        :param entity_des: designator resolving to a room or a piece of furniture
+        """
+        smach.StateMachine.__init__(
+            self, outcomes=['arrived', 'unreachable', 'goal_not_defined', 'lost_operator', 'preempted'])
+
+        with self:
+            @smach.cb_interface(outcomes=["room", "object"])
+            def determine_type(userdata=None):
+                entity = entity_des.resolve()
+                entity_type = entity.type
+                if entity_type is 'room':
+                    return 'room'
+                else:
+                    return 'object'
+
+            smach.StateMachine.add('DETERMINE_TYPE',
+                                   smach.CBState(determine_type),
+                                   transitions={'room': 'GUIDE_TO_ROOM',
+                                                'object': 'GUIDE_TO_FURNITURE'})
+
+            smach.StateMachine.add('GUIDE_TO_ROOM',
+                                   GuideToSymbolic(robot, {entity_des: 'in'}, entity_des),
+                                   transitions={'arrived': 'arrived',
+                                                'unreachable': 'unreachable',
+                                                'goal_not_defined': 'goal_not_defined',
+                                                'lost_operator': 'lost_operator',
+                                                'preempted': 'preempted'})
+
+            smach.StateMachine.add('GUIDE_TO_FURNITURE',
+                                   GuideToSymbolic(robot, {entity_des: 'in_front_of'}, entity_des),
+                                   transitions={'arrived': 'arrived',
+                                                'unreachable': 'unreachable',
+                                                'goal_not_defined': 'goal_not_defined',
+                                                'lost_operator': 'lost_operator',
+                                                'preempted': 'preempted'})
+
+
 class InformMachine(smach.StateMachine):
     def __init__(self, robot):
         """ Constructor
@@ -123,11 +165,25 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add('GIVE_DIRECTIONS',
                                    GiveDirections(robot, self.entity_des),
-                                   transitions={'succeeded': "SUCCESS",
+                                   transitions={'succeeded': "GUIDE_OPERATOR",
                                                 'failed': 'failed'})
+
+            smach.StateMachine.add('GUIDE_OPERATOR',
+                                   GuideToRoomOrObject(robot, self.entity_des),
+                                   transitions={'arrived': 'SUCCESS',
+                                                'unreachable': 'FAILURE',
+                                                'goal_not_defined': 'FAILURE',
+                                                'lost_operator': 'FAILURE',
+                                                'preempted': 'failed'})
 
             smach.StateMachine.add("SUCCESS",
                                    states.Say(robot,
-                                              ["Good luck with finding your way"]
+                                              ["We have arrived"]
                                               , block=True),
                                    transitions={'spoken': 'succeeded'})
+
+            smach.StateMachine.add("FAILURE",
+                                   states.Say(robot,
+                                              ["I have failed you."]
+                                              , block=True),
+                                   transitions={'spoken': 'failed'})
