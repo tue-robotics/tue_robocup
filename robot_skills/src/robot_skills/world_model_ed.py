@@ -77,15 +77,6 @@ class ED(RobotPart):
                                                  queue_size=10)
 
         self.robot_name = robot_name
-        self._unknown_probability = 0.0
-
-    @property
-    def unknown_probability(self):
-        return self._unknown_probability
-
-    @unknown_probability.setter
-    def unknown_probability(self, value):
-        self._unknown_probability = value
 
     def wait_for_connections(self, timeout):
         """ Waits for the connections until they are connected
@@ -361,17 +352,21 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def classify(self, ids, types=None):
-        """ Classifies the entities with the given IDs
-        Args:
-            ids: list with IDs
-            types: list with types to identify
-
-        Returns: list with ClassificationResults, which is a named tuple with id, type and probability
-
+    def classify(self, ids, types=None, unknown_threshold=0.0):
+        # type: (List[str], List[str], float) -> List[ClassificationResult]
+        """
+        Classifies the entities with the given IDs
+        :param ids: list with IDs
+        :type ids: List[str]
+        :param types: list with types to identify
+        :type: types: List[str]
+        :param unknown_threshold: objects with a probability lower than this unknown_threshold are not set as a type
+        :type unknown_threshold: float
+        :return: List of classification results
+        :rtype: List[ClassificationResult]
         """
 
-        res = self._ed_classify_srv(ids=ids, unknown_probability=self._unknown_probability)
+        res = self._ed_classify_srv(ids=ids, unknown_probability=unknown_threshold)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 

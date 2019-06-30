@@ -1,8 +1,8 @@
-# Responsible: Sam
+# Responsible: Arpit
 
 ## CHALLENGE SERVING DRINKS
 
-## Scenario (RGO2019)
+## Scenario (RWC2019)
 
 I Start:
 
@@ -29,41 +29,43 @@ III Waiter duty:
         The bar can be any flat surface where objects can be placed, in any other room but the living room.
             *2h before test the bar location is specified and announced
         The Bartender may be standing either behind the bar or next to it, depending on the arena setup.
-        All available beverages are on top of the bar.  
+        All available beverages are on top of the bar.
         One of the drink requests is not available.
     Procedure:
         The robot drives to the bar, grabs the correct drink and returns to the living room.
         The robot finds the person, who requested the drink and hand it over.
 
-        *The robot may either hand-over drinks orhave attached a tray.  
+        *The robot may either hand-over drinks orhave attached a tray.
         *When a tray is used, the robot must be sure that the guest is taking the correct drink (guests may try to take the wrong one).
         *After giving the order (when the robot is not in the living room), the referees may re-arrange the people.
 
 
 ## Scoring sheet of RGO 2019:
 
-	*Partial scoring applies - we get points per served drink
-	*We get bonus rewards only if (at least) one main goal is successfuly executed
+    *Partial scoring applies - we get points per served drink
+    *We get bonus rewards only if (at least) one main goal is successfuly executed
 
-	OC instructions:
-		2h before test specify and announce the bar location!
+    OC instructions:
+        2h before test specify and announce the bar location!
 
-	The maximum time for this test is 5 minutes!
+    The maximum time for this test is 5 minutes!
 
-	Main Goal:
-		Deliver a drink to a guest:	                                3 x 250
-		
-		Penalties:
-			Each guest approaching to the robot to place order 	3 × –100
-			Each guest waving or calling the robot to place order 	3 × –50
-			Telling the robot which drink is unavailable 		2 × –100
+    Main Goal:
+        Deliver a drink to a guest:                                 3 x 250
 
-		Bonus rewards:
-			Inform a guest of drink unavailability upon request 	250
+        Penalties:
+            Each drink handed-over to the robot (bypass picking)    3 × –75
+            Each drink taken by a guest (bypass drink handover)     3 × –75
+            Each guest approaching to the robot to place order      3 × –100
+            Each guest waving or calling the robot to place order   3 × –50
+            Telling the robot which drink is unavailable            2 × –100
 
-	Total score (excluding penalties and bonuses):				750
+        Bonus rewards:
+            Inform a guest of drink unavailability upon request     250
 
-	Outstanding performance:						100
+    Total score (excluding penalties and standard bonuses):         1000
+
+    Outstanding performance:                                        100
 
 
 ## Testing / Running
@@ -75,22 +77,22 @@ Launch procedure:
     ```
     robot-challenge-serving-drinks
     ```
-    
+
 ## ToDo:
 
     Status after RGO2019:
-    
+
         - After the initial inspection we ask for the unavailable drink.
         - Should be checked if the passing of the inspected objects is correct and it works.
         - Waving detection implemented, should be tested.
         - Detection of people, holding drinks not yet implemented. Is it necessary?
 
-	Enchancements:
+    Enchancements:
 
         - Storing info for the available drinks (implemented, not tested)
         - Detect people holding drinks
 
-	Tested successfully:
+    Tested successfully:
 
         - Learn people and their names
         - Inspecting bar
