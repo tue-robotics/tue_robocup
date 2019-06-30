@@ -3,6 +3,8 @@ import os
 import yaml
 from math import sqrt
 
+from typing import List
+
 # ROS
 import rospkg
 import rospy
@@ -352,17 +354,19 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def classify(self, ids, types=None):
-        """ Classifies the entities with the given IDs
-        Args:
-            ids: list with IDs
-            types: list with types to identify
-
-        Returns: list with ClassificationResults, which is a named tuple with id, type and probability
-
+    def classify(self, ids, types=None, unknown_threshold=0.0):
+        # type: (List[str], List[str], float) -> None
+        """
+        Classifies the entities with the given IDs
+        :param ids: list with IDs
+        :type ids: List[str]
+        :param types: list with types to identify
+        :type: types: List[str]
+        :param unknown_threshold: objects with a probability lower than this threshold are not set as a type
+        :type unknown_threshold: float
         """
 
-        res = self._ed_classify_srv(ids=ids, unknown_probability=0.3)
+        res = self._ed_classify_srv(ids=ids, unknown_probability=unknown_threshold)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
