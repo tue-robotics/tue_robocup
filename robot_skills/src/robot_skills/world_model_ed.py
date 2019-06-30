@@ -355,7 +355,7 @@ class ED(RobotPart):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def classify(self, ids, types=None, unknown_threshold=0.0):
-        # type: (List[str], List[str], float) -> None
+        # type: (List[str], List[str], float) -> List[ClassificationResult]
         """
         Classifies the entities with the given IDs
         :param ids: list with IDs
