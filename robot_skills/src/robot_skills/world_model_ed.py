@@ -3,8 +3,6 @@ import os
 import yaml
 from math import sqrt
 
-from typing import List
-
 # ROS
 import rospkg
 import rospy
