@@ -259,7 +259,7 @@ class NavigateTo(smach.StateMachine):
                 transitions={'done'                                 : 'goal_not_defined'})
 
     def generateConstraint(self):
-        pass
+        pass  # ToDO: raise "NotImplementedError"
 
     def breakOut(self):
         '''
