@@ -2,7 +2,7 @@
 
 import rospy
 from robot_smach_states.util.startup import startup
-from challenge_serving_drinks.serving_drinks import ServingDrinks
+from challenge_serving_drinks import ServingDrinks
 
 
 if __name__ == '__main__':
