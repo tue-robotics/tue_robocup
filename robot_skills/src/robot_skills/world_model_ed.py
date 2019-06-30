@@ -362,7 +362,7 @@ class ED(RobotPart):
         :type ids: List[str]
         :param types: list with types to identify
         :type: types: List[str]
-        :param unknown_threshold: objects with a probability lower than this threshold are not set as a type
+        :param unknown_threshold: objects with a probability lower than this unknown_threshold are not set as a type
         :type unknown_threshold: float
         :return: List of classification results
         :rtype: List[ClassificationResult]
