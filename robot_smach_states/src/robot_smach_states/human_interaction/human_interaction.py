@@ -4,6 +4,7 @@
 import math
 import random
 import time
+from string import Formatter
 
 # ROS
 import rospy
@@ -15,6 +16,7 @@ import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 
 # Say: Immediate say
+# SayFormatted: Say with named placeholders for designators
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
@@ -91,6 +93,93 @@ class Say(smach.State):
         rospy.sleep(len(sentence)*0.05)
 
         return "spoken"
+
+
+class SayFormatted(smach.State):
+    """Say a sentence or pick a random one from a list.
+
+    >>> from mock import MagicMock
+    >>> robot = MagicMock()
+    >>> robot.speech = MagicMock()
+    >>> robot.speech.speak = MagicMock()
+    >>>
+    >>> sf = SayFormatted(robot, ["a", "b", "c"])
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes = [sf.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>>
+    >>> #After many calls, all options in the list will very likely have been called at least one.
+    >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
+    >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
+    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+
+    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
+                 look_at_standing_person=False, resolve_once=False, random_once=False, **kwargs):
+        smach.State.__init__(self, outcomes=["spoken"])
+        ds.check_type(sentence, str, list)
+        isinstance(language, str)
+        isinstance(personality, str)
+        isinstance(voice, str)
+        isinstance(mood, str)
+        isinstance(block, bool)
+
+        all(isinstance(v, ds.Designator) for v in kwargs.values())
+
+        if isinstance(sentence, str) or isinstance(sentence, list):
+            self._check_place_holders(sentence)
+
+        self.robot = robot
+        if random_once and isinstance(sentence, list):
+            self.sentence = random.choice(sentence)
+        else:
+            self.sentence = sentence
+        self.language = language
+        self.personality = personality
+        self.voice = voice
+        self.mood = mood
+        self.block = block
+        self.look_at_standing_person = look_at_standing_person
+        self.resolve_once = resolve_once
+        self.ph_designators = kwargs
+
+    def execute(self, userdata=None):
+        # robot.head.look_at_standing_person()
+
+        if not self.sentence:
+            rospy.logerr("sentence = None, not saying anything...")
+            return "spoken"
+
+        if isinstance(self.sentence, ds.Designator):
+            if self.resolve_once:
+                sentence = self.sentence = self.sentence.resolve()
+            else:
+                sentence = self.sentence.resolve()
+            self._check_place_holders(sentence)
+        else:
+            sentence = self.sentence
+
+        if not isinstance(sentence, str) and isinstance(sentence, list):
+            sentence = random.choice(sentence)
+
+        if self.look_at_standing_person:
+            self.robot.head.look_at_standing_person()
+        self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
+
+        # robot.head.cancel_goal()
+        # ToDo: hack
+        rospy.sleep(len(sentence) * 0.05)
+
+        return "spoken"
+
+    def _check_place_holders(self, sentence):
+        if isinstance(sentence, list):
+            for sen in sentence:
+                self._check_place_holders(sen)
+            return
+
+        place_holders = [x[1] for x in Formatter().parse(sentence) if x[1] is not None]
+        if not all(x in place_holders for x in self.ph_designators.keys()):
+            raise RuntimeError("Not all named place holders are provided")
 
 
 class HearOptions(smach.State):
