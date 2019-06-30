@@ -105,11 +105,10 @@ if __name__ == "__main__":
     class Test(smach.StateMachine):
         def __init__(self, robot):
             smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
-
             with self:
                 smach.StateMachine.add('FIND_EMTPY_SEAT',
                                        FindEmptySeat(robot,
-                                                     seats_to_inspect=['chair'],  # couch
+                                                     seats_to_inspect=['hallway_table'],  # couch
                                                      room=robot.ed.get_entity('hallway')))
 
 
