@@ -504,5 +504,16 @@ class ED(RobotPart):
             yaml.dump(file_data, f)
 
     def detect_people(self, rgb, depth, cam_info):
+        """
+        Detect people in the given color message, depth image aided by the depth camera's camera info
+        :param rgb: Color image
+        :type rgb: sensor_msgs/Image
+        :param depth: Depth image
+        :type depth: sensor_msgs/Image
+        :param cam_info: CamInfo for the camera that recorded the depth image.
+        :type cam_info: sensor_msgs/CamInfo
+        :return: bool success and a list strings with the IDs of the detected persons
+        :rtype: (bool, [str])
+        """
         result = self._ed_detect_people_srv(rgb, depth, cam_info)
         return result.success, result.detected_person_ids
