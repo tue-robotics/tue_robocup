@@ -171,9 +171,9 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add('GUIDE_OPERATOR',
                                    GuideToRoomOrObject(robot, self.entity_des),
                                    transitions={'arrived': 'SUCCESS',
-                                                'unreachable': 'FAILURE',
-                                                'goal_not_defined': 'FAILURE',
-                                                'lost_operator': 'FAILURE',
+                                                'unreachable': 'SAY_CANNOT_REACH',
+                                                'goal_not_defined': 'SAY_CANNOT_REACH',
+                                                'lost_operator': 'SAY_LOST_OPERATOR',
                                                 'preempted': 'failed'})
 
             smach.StateMachine.add("SUCCESS",
@@ -182,9 +182,15 @@ class InformMachine(smach.StateMachine):
                                               , block=True),
                                    transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
 
-            smach.StateMachine.add("FAILURE",
+            smach.StateMachine.add("SAY_CANNOT_REACH",
                                    states.Say(robot,
-                                              ["I have failed you."]
+                                              ["I am sorry but I cannot reach the destination."]
+                                              , block=True),
+                                   transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
+
+            smach.StateMachine.add("SAY_LOST_OPERATOR",
+                                   states.Say(robot,
+                                              ["Oops I have lost you completely."]
                                               , block=True),
                                    transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
 
