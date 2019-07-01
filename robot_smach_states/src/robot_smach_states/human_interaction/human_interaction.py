@@ -172,9 +172,11 @@ class SayFormatted(smach.State):
                 self._check_place_holders(sen)
             return
 
-        place_holders = [x[1] for x in Formatter().parse(sentence) if x[1] is not None]
-        if not all(x in place_holders for x in self.ph_designators.keys()):
-            raise RuntimeError("Not all named place holders are provided")
+        place_holders = set(x[1] for x in Formatter().parse(sentence) if x[1] is not None)
+        missing_ph = place_holders - set(self.ph_designators.keys())
+        if missing_ph:
+            raise RuntimeError("Not all named place holders are provided, missing: {}".
+                               format(" ".join(map(str, missing_ph))))
 
 
 class HearOptions(smach.State):
