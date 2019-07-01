@@ -9,7 +9,7 @@ import os
 
 import PyKDL
 import rospy
-from challenge_set_the_table.control_to_pose import ControlParameters, ControlToPose
+from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from geometry_msgs.msg import PoseStamped
 from robot_skills import Hero
 from robot_smach_states import NavigateToSymbolic

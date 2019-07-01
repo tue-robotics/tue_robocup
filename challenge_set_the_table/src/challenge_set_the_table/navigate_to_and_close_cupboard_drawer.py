@@ -8,10 +8,10 @@ import math
 import os
 
 import rospy
-from challenge_set_the_table.control_to_pose import ControlParameters, ControlToPose
 from geometry_msgs.msg import PoseStamped, Quaternion
 from robot_skills import Hero
 from robot_smach_states import NavigateToSymbolic
+from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 from tf.transformations import quaternion_from_euler
