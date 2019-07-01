@@ -109,7 +109,7 @@ if __name__ == "__main__":
                 smach.StateMachine.add('FIND_EMTPY_SEAT',
                                        FindEmptySeat(robot,
                                                      seats_to_inspect=['hallway_table'],  # couch
-                                                     room=robot.ed.get_entity('hallway')))
+                                                     room=ds.EntityByIdDesignator(robot, 'hallway')))
 
 
     startup(Test)
