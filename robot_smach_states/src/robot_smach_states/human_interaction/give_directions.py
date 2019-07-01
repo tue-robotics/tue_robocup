@@ -136,8 +136,32 @@ class GiveDirections(smach.State):
                     sentence += ", the {}".format(room)
                 sentence += " and the {}".format(passed_room_ids[-2])
             sentence += "\n"
+        sentence += "We will enter the {}\n".format(passed_room_ids[-1])
 
-        sentence += "You have now reached the {}.\n".format(target_entity.id)
+        # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
+        passed_ids = []
+        for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
+                                                        kdl_path_rooms[1:]):
+
+            # Check if we have entered the final room
+            if room.id != passed_room_ids[-1]:
+                continue
+
+            # Compute the pose of the entity w.r.t. the 'path'
+            entity_pose_path = self.get_entity_pose_in_path(position, next_position, target_entity.pose.frame)
+
+            # Check where the target is upon entering the room
+            angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
+            rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
+            if abs(angle) < 0.25*math.pi:
+                sentence += "The {} will be in front of you.\n".format(target_entity.id)
+            else:
+                side = "left" if angle > 0.0 else "right"
+                sentence += "The {} is on your {}.\n".format(target_entity.id, side)
+            break
+
+            # garbage
+
 
         # # We need to remember the 'previous' room id so the robot can mention when the next room is entered
         # prev_room_id = start_room_id
