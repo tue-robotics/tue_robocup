@@ -46,7 +46,7 @@ class MockedRobotPart(object):
 
 class Arm(arms.Arm):
     def __init__(self, robot_name, side, tf_listener):
-        self.side = side
+        super(Arm, self).__init__(self, robot_name, side, tf_listener)
 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
@@ -134,7 +134,7 @@ class Head(MockedRobotPart):
         self.atGoal = mock.MagicMock()
         self.look_at_standing_person = mock.MagicMock()
         self.look_at_point = mock.MagicMock()
-        self.look_at_ground_in_front_of_robot = mock.MagicMock() #TODO: Must return a EntityInfo
+        self.look_at_ground_in_front_of_robot = mock.MagicMock()  # TODO: Must return a EntityInfo
         self.setPanTiltGoal = mock.MagicMock()
         self.setLookAtGoal = mock.MagicMock()
         self.cancelGoal = mock.MagicMock()
@@ -176,7 +176,7 @@ class Speech(MockedRobotPart):
         self.buildList = mock.MagicMock()
 
     def speak(self, sentence, *args, **kwargs):
-        rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m")
+        rospy.loginfo("\x1b[1;32m'" + sentence + "'\x1b[0m")
 
 
 class Torso(MockedRobotPart):
@@ -281,9 +281,7 @@ class Mockbot(robot.Robot):
     >>> Mockbot()
     """
     def __init__(self, *args, **kwargs):
-        robot_name = "mockbot"
-
-        super(Mockbot, self).__init__(robot_name="mockbot", wait_services=False)
+        super(Mockbot, self).__init__(robot_name="robot_name", wait_services=False)
 
         self.tf_listener = mock.MagicMock()
         self.add_body_part('hmi', mock.MagicMock())
@@ -336,20 +334,20 @@ class Mockbot(robot.Robot):
 
 
 if __name__ == "__main__":
-    print "     _              __"
-    print "    / `\\  (~._    ./  )"
-    print "    \\__/ __`-_\\__/ ./"
-    print "   _ \\ \\/  \\  \\ |_   __"
-    print " (   )  \\__/ -^    \\ /  \\"
-    print "  \\_/ \"  \\  | o  o  |.. /  __"
-    print "       \\\\. --' ====  /  || /  \\"
-    print "         \\   .  .  |---__.\\__/"
-    print "         /  :     /   |   |"
-    print "         /   :   /     \\_/"
-    print "      --/ ::    ("
-    print "     (  |     (  (____"
-    print "   .--  .. ----**.____)"
-    print "   \\___/          "
+    print("     _              __")
+    print("    / `\\  (~._    ./  )")
+    print("    \\__/ __`-_\\__/ ./")
+    print("   _ \\ \\/  \\  \\ |_   __")
+    print(" (   )  \\__/ -^    \\ /  \\")
+    print("  \\_/ \"  \\  | o  o  |.. /  __")
+    print("       \\\\. --' ====  /  || /  \\")
+    print("         \\   .  .  |---__.\\__/")
+    print("         /  :     /   |   |")
+    print("         /   :   /     \\_/")
+    print("      --/ ::    (")
+    print("     (  |     (  (____")
+    print("   .--  .. ----**.____)")
+    print("   \\___/          ")
     import atexit
     from robot_skills.util import msg_constructors as msgs
 
@@ -385,7 +383,7 @@ if __name__ == "__main__":
        loc,rot = posestamped.pose.point, posestamped.pose.orientation
        rot_array = [rot.w, rot.x, rot.y, rot.z]
        rot3 = tf.transformations.euler_from_quaternion(rot_array)
-       print 'x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0])
+       print('x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0]))
        return loc.x, loc.y, rot3[0]
 
     def hear(text):
@@ -417,7 +415,7 @@ if __name__ == "__main__":
             mockbot.speech.speak("Nope, my ears are clogged", block=False)
 
 
-    print """\033[1;33m You can now command mockbot from the python REPL.
+    print("""\033[1;33m You can now command mockbot from the python REPL.
     Type e.g. help(mockbot) for help on objects and functions,
     or type 'mockbot.' <TAB> to see what methods are available.
     Also, try 'dir()'
@@ -430,4 +428,4 @@ if __name__ == "__main__":
         - head_down, head_reset, left/right_close/open, look_at_point(x,y,z),
         - get_pose_2d()
         - test_audio()
-    Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m"""
+    Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m""")
