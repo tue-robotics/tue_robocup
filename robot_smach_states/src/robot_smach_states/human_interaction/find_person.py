@@ -47,7 +47,6 @@ class FindPerson(smach.State):
         self._robot = robot
 
         self._properties = properties
-        self._query_entity_designator = query_entity_designator
         self._look_distance = look_distance
         self._speak = speak
         self._strict = strict
@@ -58,6 +57,10 @@ class FindPerson(smach.State):
         if result_designator:
             ds.is_writeable(result_designator)
         self._result_designator = result_designator
+
+        if query_entity_designator:
+            ds.check_type(query_entity_designator, ds.Entity)
+        self._query_entity_designator = query_entity_designator
 
     def execute(self, userdata=None):
         look_angles = None
@@ -110,6 +113,11 @@ class FindPerson(smach.State):
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
+
+            robot_pose = self._robot.base.get_location()
+            # TODO: Check probable bug here
+            found_people = filter(lambda x: (x.pose.frame.p -
+                robot_pose.frame.p).Norm() < self._look_distance, found_people)
 
 
             if self._properties:
