@@ -13,6 +13,8 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 
+__all__ = ['FindPerson', 'FindPersonInRoom']
+
 
 class FindPerson(smach.State):
     """
@@ -96,10 +98,7 @@ class FindPerson(smach.State):
         attempts = 0
 
         rate = rospy.Rate(2)
-        while not rospy.is_shutdown() and
-            attempts < self._attempts and
-            (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
-
+        while not rospy.is_shutdown() and attempts < self._attempts and (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
             if self.preempt_requested():
                 return 'failed'
 
