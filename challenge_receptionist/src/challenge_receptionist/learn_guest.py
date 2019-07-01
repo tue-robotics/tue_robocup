@@ -60,9 +60,15 @@ class LearnGuest(smach.StateMachine):
                                    states.NavigateToWaypoint(robot,
                                                              door_waypoint,
                                                              challenge_knowledge.waypoint_door['radius']),
-                                   transitions={'arrived': 'SAY_PLEASE_COME_IN',
-                                                'unreachable': 'SAY_PLEASE_COME_IN',
+                                   transitions={'arrived': 'SAY_OPEN_DOOR',
+                                                'unreachable': 'SAY_OPEN_DOOR',
                                                 'goal_not_defined': 'aborted'})
+
+            smach.StateMachine.add('SAY_OPEN_DOOR',
+                                   states.Say(robot, ["Someone please open the door, I'm expecting guests"],
+                                              block=True,
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_PLEASE_COME_IN',
                                    states.Say(robot, ["Please come in, I'm waiting"],
