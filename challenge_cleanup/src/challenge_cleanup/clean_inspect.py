@@ -2,30 +2,12 @@ import smach
 
 import robot_smach_states
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, \
-    Designator, check_type
+    ValueByKeyDesignator
 from handle_detected_entities import HandleDetectedEntities
 from robot_skills.classification_result import ClassificationResult
 
-class ValueByKeyDesignator(Designator):
-    def __init__(self, container, key, resolve_type, name=None):
-        """
-        Get a value from a dictionary by it's key
-        :param container: any object with a __getitem__ method or a designator that resolves to it
-        :param name: Name of the designator for introspection purposes
-        """
-        super(ValueByKeyDesignator, self).__init__(resolve_type=resolve_type, name=name)
-        # TODO: Add type checks to make sure that we can do container[key]
-        # OR container.resolve[key]
-        self._container = container
-        self._key = key
-
-    def _resolve(self):
-        container = self._container.resolve()
-        return container[self._key]
-
 
 class CleanInspect(smach.StateMachine):
-#    def __init__(self, robot, location_id, room_id, navigate_area, segment_areas):
     def __init__(self, robot, location_des):
         """
         Visit all selected locations from the list, and handle the found objects
