@@ -11,7 +11,9 @@ import smach
 import PyKDL as kdl
 
 # Robot skills
+from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
+from robot_smach_states.human_interaction.give_directions import get_directions  # ToDo: import not so nice
 from robot_smach_states.util.designators import EdEntityDesignator
 
 # robot_smach_states.navigation
@@ -54,8 +56,19 @@ class ExecutePlanGuidance(smach.State):
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
     operator" is returned.
     """
-    def __init__(self, robot, mode=GuideMode.REGULAR):
-        # type: (Robot) -> None
+    def __init__(self, robot, mode=GuideMode.REGULAR, target_entity_getter=None):
+        # type: (Robot, GuideMode, callable) -> None
+        """
+        Init method
+
+        :param robot: (Robot) Robot API object
+        :param mode: (GuideMode) indicates whether to just guide or to act as a 'tourguide'
+        :param target_entity_getter: (callable, optional). If the robot needs to act as a tourguide, it needs to know
+        which target entity to guide to. If mode is GuideMode, this must be defined.
+        """
+        assert mode == GuideMode.REGULAR or callable(target_entity_getter),\
+            "Either guide mode must be regular or a target entity getter must be specified"
+
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
         self._distance_threshold = 1.0  # Only check if the operator is there once we've drived for this distance
@@ -67,11 +80,16 @@ class ExecutePlanGuidance(smach.State):
         # Tour guide attributes
         self._room_ids = []
         self._object_ids = []
+        self._get_target_entity = target_entity_getter
         
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
         self.robot.head.look_at_point(VectorStamped(-1.0, 0.0, 1.75, self.robot.base_link_frame))
+
+        # Only get directions in tourguide mode
+        if self._mode == GuideMode.TOUR_GUIDE:
+            directions = get_directions(robot=self.robot, target_entity=self._get_target_entity())
 
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
@@ -197,12 +215,22 @@ class Guide(smach.StateMachine):
         raise NotImplementedError("Inheriting Guide states must implement a generate constraint method, preferably"
                                   "by re-using it from a navigation state.")
 
+    @staticmethod
+    def get_target_entity():
+        """
+        Must return the target entity when performing the tourguide
+
+        :return: (Entity)
+        """
+        raise NotImplementedError("Inheriting Guide states must implement a get target entity method in order to "
+                                  "enable the 'tourguide' mode")
+
 
 class GuideToSymbolic(Guide):
     """ Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
-    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
-        # type: (Robot, dict, EdEntityDesignator) -> None
+    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, guide_target_designator=None):
+        # type: (Robot, dict, EdEntityDesignator, EdEntityDesignator) -> None
         """ Constructor
 
         :param robot: robot object
@@ -210,10 +238,13 @@ class GuideToSymbolic(Guide):
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
+        :param guide_target_designator: (EdEntityDesignator) defining the entity where the robot is guiding towards .
+        If not defined, the lookat designator is used
         """
         super(GuideToSymbolic, self).__init__(robot)
         self._entity_designator_area_name_map = entity_designator_area_name_map
         self._entity_lookat_designator = entity_lookat_designator
+        self._guide_target_designator = entity_lookat_designator or guide_target_designator
 
     def generate_constraint(self):
         # type: () -> tuple
@@ -225,3 +256,12 @@ class GuideToSymbolic(Guide):
         """
         return NavigateToSymbolic.generate_constraint(
             self.robot, self._entity_designator_area_name_map, self._entity_lookat_designator)
+
+    def get_target_entity(self):
+        # type: () -> Entity
+        """
+        Returns the resolution of lookat designator as target entity
+
+        :return: (Entity)
+        """
+        return self._guide_target_designator.resolve()

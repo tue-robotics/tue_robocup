@@ -15,7 +15,7 @@ from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorSta
 
 # Robot Smach States
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
-from robot_smach_states.util.designators.ed_designators import Designator
+from robot_smach_states.util.designators.ed_designators import Designator, EdEntityDesignator
 
 
 class Side(enum.Enum):
@@ -26,38 +26,68 @@ class Side(enum.Enum):
 DirectionItem = namedtuple("DirectionItem", ["object_id", "room_id", "side"])
 
 
-def _get_entity_pose_in_path(point, next_point, entity_pose):
-    # type: (kdl.Vector, kdl.Vector, kdl.Frame) -> kdl.Frame
+def entity_close_to_path(position, next_position, entity, x_threshold, y_threshold):
     """
-    Computes the entity pose w.r.t. the virtual frame that is spanned by the two points
-    :param point: First point in fixed frame
-    :type point: kdl.Vector
-    :param next_point: Next point in fixed frame
-    :type next_point: kdl.Vector
-    :param entity_pose: (kdl.Frame) Entity pose in fixed frame
-    :type entity_pose: kdl.Frame
-    :return: Entity pose in virtual 'path' frame
-    :rtype: kdl.Frame
+    Determines whether an entity is close to the path designated by two positions
+
+    :param position: (kdl.Vector) First position
+    :param next_position: (kdl.Vector) Second position  # ToDo: replace by pose?
+    :param entity: (Entity) Entity to check  # ToDo: replace by position?
+    :param x_threshold: (float)
+    :param y_threshold: (float)
+    :return: (tuple(str, float, side)) with entity_id, y-distance and side of the entity w.r.t. the pose on the path.
+    If not within threshold, "None" is returned.
     """
-    # Determine a 6D path pose
-    path_pose = create_frame_from_points(point, next_point)
+    # Compute the pose of the entity w.r.t. the 'path'
+    path_pose = create_frame_from_points(position, next_position)  # Determine a 6D path pose
+    entity_pose_path = path_pose.Inverse() * entity.pose.frame  # Transform entity pose into path frame
+    # entity_pose_path = _get_entity_pose_in_path(position, next_position, entity.pose.frame)
 
-    # Transform entity pose into path frame
-    entity_pose_path = path_pose.Inverse() * entity_pose
+    # Check the distance
+    if abs(entity_pose_path.p.x()) < x_threshold and abs(entity_pose_path.p.y()) < y_threshold:
+        rospy.logdebug("Appending {}: ({}, {})".format(
+            entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
 
-    return entity_pose_path
+        # side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+        side = Side.LEFT if entity_pose_path.p.y() >= 0.0 else Side.RIGHT
+
+        # to_add.append((entity.id, entity_pose_path.p.y(), side))
+        return (entity.id, entity_pose_path.p.y(), side)
+    return None
 
 
-def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
-    # type: (Robot, Designator, float, float) -> list
+# def _get_entity_pose_in_path(point, next_point, entity_pose):
+#     # type: (kdl.Vector, kdl.Vector, kdl.Frame) -> kdl.Frame
+#     """
+#     Computes the entity pose w.r.t. the virtual frame that is spanned by the two points
+#     :param point: First point in fixed frame
+#     :type point: kdl.Vector
+#     :param next_point: Next point in fixed frame
+#     :type next_point: kdl.Vector
+#     :param entity_pose: (kdl.Frame) Entity pose in fixed frame
+#     :type entity_pose: kdl.Frame
+#     :return: Entity pose in virtual 'path' frame
+#     :rtype: kdl.Frame
+#     """
+#     # Determine a 6D path pose
+#     path_pose = create_frame_from_points(point, next_point)
+#
+#     # Transform entity pose into path frame
+#     entity_pose_path = path_pose.Inverse() * entity_pose
+#
+#     return entity_pose_path
+
+
+def get_directions(robot, target_entity, x_threshold=0.75, y_threshold=1.5):
+    # type: (Robot, Entity, float, float) -> list
     """
     Computes a list of named tuples of the furniture objects that are passed and in which rooms these are on which side
     of the operator when moving towards a certain entity
 
     :param robot: API object
     :type robot: Robot
-    :param entity_designator: resolving to the entity the operator wants to go to
-    :type entity_designator: Designator
+    :param target_entity: entity where the operator wants to go to
+    :type target_entity: Entity
     :param x_threshold: if the entity is closer than this distance in x-direction w.r.t. the path frame
     it is considered 'passed'
     :type x_threshold: float
@@ -69,13 +99,13 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
     """
     # Get the constraints for the global planner
     nav_constraints = OrderedDict()
-    target_entity = entity_designator.resolve()  # type: Entity
     rospy.loginfo("Resolved to Entity: {}".format(target_entity.id))
     if not target_entity:
         raise RuntimeError("I cannot give directions if I don't know where to go")
 
     possible_areas = ["in"] if target_entity.is_a("room") else ["in_front_of", "near"]
     for area in possible_areas:
+        entity_designator = EdEntityDesignator(id=target_entity.id)
         nav_constraints[area] = NavigateToSymbolic.generate_constraint(
             robot=robot,
             entity_designator_area_name_map={entity_designator: area},
@@ -163,18 +193,21 @@ def get_directions(robot, entity_designator, x_threshold=0.75, y_threshold=1.5):
                 rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
                 continue
 
-            # Compute the pose of the entity w.r.t. the 'path'
-            entity_pose_path = _get_entity_pose_in_path(position, next_position, entity.pose.frame)
-
-            # Check the distance
-            if abs(entity_pose_path.p.x()) < x_threshold and abs(entity_pose_path.p.y()) < y_threshold:
-                rospy.logdebug("Appending {}: ({}, {})".format(
-                    entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
-
-                # side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
-                side = Side.LEFT if entity_pose_path.p.y() >= 0.0 else Side.RIGHT
-
-                to_add.append((entity.id, entity_pose_path.p.y(), side))
+            # ToDo: replace by upper method
+            # # Compute the pose of the entity w.r.t. the 'path'
+            # path_pose = create_frame_from_points(position, next_position)  # Determine a 6D path pose
+            # entity_pose_path = path_pose.Inverse() * entity.pose.frame  # Transform entity pose into path frame
+            # # entity_pose_path = _get_entity_pose_in_path(position, next_position, entity.pose.frame)
+            #
+            # # Check the distance
+            # if abs(entity_pose_path.p.x()) < x_threshold and abs(entity_pose_path.p.y()) < y_threshold:
+            #     rospy.logdebug("Appending {}: ({}, {})".format(
+            #         entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
+            #
+            #     # side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+            #     side = Side.LEFT if entity_pose_path.p.y() >= 0.0 else Side.RIGHT
+            #
+            #     to_add.append((entity.id, entity_pose_path.p.y(), side))
 
         # Sort the list based on the distance
         to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
@@ -267,7 +300,8 @@ class GiveDirections(smach.State):
         t_start = rospy.Time.now()
 
         try:
-            directions = get_directions(self._robot, self._entity_designator, self._x_threshold, self._y_threshold)
+            target_entity = self._entity_designator.resolve()
+            directions = get_directions(self._robot, target_entity, self._x_threshold, self._y_threshold)
         except (AssertionError, RuntimeError) as e:
             rospy.logerr("Get directions failed: {}".format(e.message))
             self._robot.speech.speak("I'm sorry but {}".format(e.message))
