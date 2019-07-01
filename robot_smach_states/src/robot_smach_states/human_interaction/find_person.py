@@ -110,8 +110,13 @@ class FindPerson(smach.State):
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
 
-            result_people = None
 
+            if self._properties:
+                for k, v in self._properties.items():
+                    found_people = filter(lambda x:
+                            self._check_person_property(x, k, v), found_people)
+
+            result_people = None
 
             if self._query_entity_designator:
                 # TODO: Check if query_entity_designator is actually a
@@ -130,6 +135,8 @@ class FindPerson(smach.State):
                                 'in'), found_people)
                     except:
                         pass
+            else:
+                result_people = found_people
 
 
             if result_people:
@@ -147,3 +154,7 @@ class FindPerson(smach.State):
         self._robot.head.close()
         rospy.sleep(2.0)
         return 'failed'
+
+    def _check_person_property(self, person, prop_name, prop_value):
+        #TODO: Implement query of person
+        return False
