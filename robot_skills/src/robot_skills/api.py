@@ -1,5 +1,8 @@
 # ROS
+import cv2
 import rospy
+from cv_bridge import CvBridge
+from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Empty
 
 # TU/e Robotics
@@ -25,6 +28,7 @@ class Api(RobotPart):
         self._client = Client(simple_action_client=client)
 
         self.restart_srv = self.create_service_client('/' + robot_name + '/hmi/dragonfly_speech_recognition/restart_node', Empty)
+        self._image_from_ros_publisher = rospy.Publisher('/' + robot_name + '/hmi/image', CompressedImage, queue_size=1)
 
     def query(self, description, grammar, target, timeout=10):
         """
@@ -49,6 +53,11 @@ class Api(RobotPart):
             self._post_hook()
 
         return answer
+
+    def show_image(self, path_to_image, seconds=5.0):
+        compressed_image_msg = CvBridge().cv2_to_compressed_imgmsg(cv2.imread(path_to_image))
+        compressed_image_msg.header.stamp = rospy.Time.from_sec(seconds)
+        self._image_from_ros_publisher.publish(compressed_image_msg)
 
     @property
     def last_talker_id(self):
