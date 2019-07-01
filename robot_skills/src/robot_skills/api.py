@@ -55,6 +55,11 @@ class Api(RobotPart):
         return answer
 
     def show_image(self, path_to_image, seconds=5.0):
+        """
+        Show an image on the HMI display interface
+        :param path_to_image: Absolute path to image file
+        :param seconds: How many seconds you would like to display the image on the screen
+        """
         compressed_image_msg = CvBridge().cv2_to_compressed_imgmsg(cv2.imread(path_to_image))
         compressed_image_msg.header.stamp = rospy.Time.from_sec(seconds)
         self._image_from_ros_publisher.publish(compressed_image_msg)
