@@ -89,51 +89,51 @@ class Say(smach.State):
 
 
 class SayFormatted(smach.State):
-    """Say a sentence or pick a random one from a list.
+    """
+    Say a sentence or pick a random one from a list, which then is formatted with designators which are resolved on
+    runtime. The main sentence can be a str, [str] or a Designator to str or [str]
 
     >>> from mock import MagicMock
     >>> robot = MagicMock()
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
     >>>
-    >>> sf = SayFormatted(robot, ["a", "b", "c"])
+    >>> sayf = SayFormatted(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [sf.execute() for i in range(50)]
+    >>> outcomes = [sayf.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
     >>> #After many calls, all options in the list will very likely have been called at least one.
     >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)
+    """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False, resolve_once=False, random_once=False, **kwargs):
+                 look_at_standing_person=False, **kwargs):
         smach.State.__init__(self, outcomes=["spoken"])
         ds.check_type(sentence, str, list)
-        isinstance(language, str)
-        isinstance(personality, str)
-        isinstance(voice, str)
-        isinstance(mood, str)
-        isinstance(block, bool)
+        assert(isinstance(language, str) or isinstance(language, type(None)))
+        assert(isinstance(personality, str) or isinstance(personality, type(None)))
+        assert(isinstance(voice, str) or isinstance(voice, type(None)))
+        assert(isinstance(mood, str) or isinstance(mood, type(None)))
+        assert(isinstance(block, bool))
 
-        all(isinstance(v, ds.Designator) for v in kwargs.values())
+        assert(all(isinstance(v, ds.Designator) for v in kwargs.values()))
+
+        self.ph_designators = kwargs
 
         if isinstance(sentence, str) or isinstance(sentence, list):
             self._check_place_holders(sentence)
 
         self.robot = robot
-        if random_once and isinstance(sentence, list):
-            self.sentence = random.choice(sentence)
-        else:
-            self.sentence = sentence
+        self.sentence = sentence
         self.language = language
         self.personality = personality
         self.voice = voice
         self.mood = mood
         self.block = block
         self.look_at_standing_person = look_at_standing_person
-        self.resolve_once = resolve_once
-        self.ph_designators = kwargs
 
     def execute(self, userdata=None):
         # robot.head.look_at_standing_person()
@@ -143,16 +143,16 @@ class SayFormatted(smach.State):
             return "spoken"
 
         if isinstance(self.sentence, ds.Designator):
-            if self.resolve_once:
-                sentence = self.sentence = self.sentence.resolve()
-            else:
-                sentence = self.sentence.resolve()
+            sentence = self.sentence.resolve()
             self._check_place_holders(sentence)
         else:
             sentence = self.sentence
 
         if not isinstance(sentence, str) and isinstance(sentence, list):
             sentence = random.choice(sentence)
+
+        resolved_ph = {k: v.resolve() for k, v in self.ph_designators.items()}
+        sentence = sentence.format(**resolved_ph)
 
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
