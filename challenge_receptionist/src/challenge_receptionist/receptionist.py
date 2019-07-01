@@ -5,8 +5,8 @@ import smach
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
 from robot_skills.util.entity import Entity
-from challenge_receptionist.challenge_receptionist_challenge.find_empty_seat import FindEmptySeat
-from challenge_receptionist.challenge_receptionist_challenge.learn_guest import LearnGuest, FieldOfHMIResult
+from challenge_receptionist.find_empty_seat import FindEmptySeat
+from challenge_receptionist.learn_guest import LearnGuest, FieldOfHMIResult
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
@@ -87,7 +87,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
 
 class ChallengeReceptionist(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
 
         self.door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
         self.livingroom_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_livingroom['id'])
@@ -104,19 +104,19 @@ class ChallengeReceptionist(smach.StateMachine):
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
                                    transitions={'initialized': 'SET_INITIAL_POSE',
-                                                'abort': 'abort'})
+                                                'abort': 'aborted'})
 
             smach.StateMachine.add('SET_INITIAL_POSE',
                                    states.SetInitialPose(robot, challenge_knowledge.starting_point),
                                    transitions={'done': 'LEARN_GUEST_1',
-                                                "preempted": 'abort',
+                                                "preempted": 'aborted',
                                                 'error': 'LEARN_GUEST_1'})
 
             smach.StateMachine.add('LEARN_GUEST_1',
                                    LearnGuest(robot, self.door_waypoint, self.guest1_entity_des, self.guest1_name_des,
                                               self.guest1_drink_des),
                                    transitions={'succeeded': 'GOTO_LIVINGROOM_1',
-                                                'abort': 'abort'})
+                                                'aborted': 'aborted'})
 
             smach.StateMachine.add('GOTO_LIVINGROOM_1',
                                    states.NavigateToWaypoint(robot,
@@ -124,7 +124,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                              challenge_knowledge.waypoint_livingroom['radius']),
                                    transitions={'arrived': 'INTRODUCE_GUEST',
                                                 'unreachable': 'INTRODUCE_GUEST',
-                                                'goal_not_defined': 'abort'})
+                                                'goal_not_defined': 'aborted'})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
                                    IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des,
@@ -137,7 +137,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                  seats_to_inspect=challenge_knowledge.seats,
                                                  room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room)),
                                    transitions={'succeeded': 'succeeded',
-                                                'abort': 'abort'})
+                                                'failed': 'aborted'})
 
             # - [x] Wait at the door, say you're waiting
             # - [x] Wait until person can come in
