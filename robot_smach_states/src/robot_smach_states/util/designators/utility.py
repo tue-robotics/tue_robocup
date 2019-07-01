@@ -69,7 +69,7 @@ class LockingDesignator(Designator):
         self._current = None
         self._locked = False
 
-    def resolve(self):
+    def _resolve(self):
         if self._locked:
             if self._current == None:
                 self._current = self.to_be_locked.resolve()
@@ -88,7 +88,6 @@ class LockingDesignator(Designator):
 
 
 class AttrDesignator(Designator):
-
     """Get some attribute of the object a wrapped designator resolves to.
     For example:
     >>> d = Designator(object(), resolve_type=object)
@@ -105,7 +104,7 @@ class AttrDesignator(Designator):
         self.orig = orig
         self.attribute = attribute
 
-    def resolve(self):
+    def _resolve(self):
         orig = self.orig.resolve()
         if orig:
             return orig.__getattribute__(self.attribute)
@@ -130,7 +129,7 @@ class FuncDesignator(Designator):
         self.orig = orig
         self.func = func
 
-    def resolve(self):
+    def _resolve(self):
         orig = self.orig.resolve()
         if orig:
             try:
@@ -157,7 +156,7 @@ class DeferToRuntime(Designator):
         super(DeferToRuntime, self).__init__(resolve_type=resolve_type, name=name)
         self.func = func
 
-    def resolve(self):
+    def _resolve(self):
         return self.func()
 
 
