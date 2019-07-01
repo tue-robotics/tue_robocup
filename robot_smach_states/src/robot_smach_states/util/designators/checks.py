@@ -6,28 +6,28 @@ import core
 def check_resolve_type(designator, *allowed_types):
     """
     >>> from robot_smach_states.util.designators.core import Designator
-    >>> d1 = Designator("a", resolve_type=str)
+    >>> d1 = Designator("a", resolve_type=str, name='d1')
     >>> check_resolve_type(d1, str)
-    >>> d2 = Designator("a", resolve_type=str)
+    >>> d2 = Designator("a", resolve_type=str, name='d2')
     >>> check_resolve_type(d2, int, str)
 
-    >>> d3 = Designator("a", resolve_type=str)
+    >>> d3 = Designator("a", resolve_type=str, name='d3')
     >>> #The resolve_type is actually str but we check for int, thus get an exception
     >>> check_resolve_type(d3, int)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     TypeError: ...
 
-    >>> d4 = Designator("a", resolve_type=str)
+    >>> d4 = Designator("a", resolve_type=str, name='d4')
     >>> #The resolve_type is actually str but we check for int, thus get an exception
     >>> check_resolve_type(d4, float, int)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     TypeError: ...
 
-    >>> d5 = Designator(["a", "b", "c"], resolve_type=[str])
+    >>> d5 = Designator(["a", "b", "c"], resolve_type=[str], name='d5')
 
-    >>> d6 = Designator(["a", "b", "c"], resolve_type=[str])
+    >>> d6 = Designator(["a", "b", "c"], resolve_type=[str], name='d6')
     >>> #The resolve_type is actually [str] but we check for [int], thus get an exception
     >>> check_resolve_type(d6, [int])  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
@@ -61,11 +61,11 @@ def check_type(designator_or_value, *allowed_types):
       ...
     TypeError: ...
 
-    >>> d2 = Designator(["a"], resolve_type=[str])
-    >>> check_type(d2, [str])
-    >>> c2 = ["a"]
-    >>> check_type(c2, [str])
-    >>> check_type(c2, [int])  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> c3 = Designator(["a"], resolve_type=[str], name='c3')
+    >>> check_type(c3, [str])
+    >>> c4 = ["a"]
+    >>> check_type(c4, [str])
+    >>> check_type(c4, [int])  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     TypeError: ...
