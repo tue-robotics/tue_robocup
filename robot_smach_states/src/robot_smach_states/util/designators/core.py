@@ -113,7 +113,6 @@ class Designator(object):
 
 
 class VariableDesignator(Designator):
-
     """
     A VariableDesignator simply contains a variable that can be set if you have a writer for it.
 
@@ -247,8 +246,8 @@ class VariableWriter(object):
                 self.variable_designator.resolve_type))
 
     def _set_current(self, value):
-        print "writable(VariableDesignator).current = ...  is deprecated, " \
-              "use writable(VariableDesignator).write(...) instead"
+        print("writable(VariableDesignator).current = ...  is deprecated, " \
+              "use writable(VariableDesignator).write(...) instead")
         self.variable_designator._set_current_protected(value)
 
     current = property(VariableDesignator._get_current, _set_current)
