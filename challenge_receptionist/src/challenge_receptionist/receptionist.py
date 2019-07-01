@@ -164,5 +164,4 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [x] Point at guest1
             # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
             # - [ ] Iterate to guest 2
-            # - [ ] Change ED API to accept list of entity IDs
             # - [x] Point at empty chair for guest to sit in
