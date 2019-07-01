@@ -22,6 +22,6 @@ cleaning_locations = [
 
 grammar_target = "T"
 
-grammar = "T -> kitchen"
-grammar += "\nT -> livingroom"
-grammar += "\nT -> hallway"
+grammar = ""
+for room in common.rooms:
+    grammar += "\nT[{0}] -> {0}".format(room)
