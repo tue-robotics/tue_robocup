@@ -28,36 +28,64 @@ class GuestDescriptionStrDesignator(ds.Designator):
 
 
 class IntroduceGuestToOperator(smach.StateMachine):
-    def __init__(self, robot, operator_des, guest_ent_des, guest_name_des, guest_drinkname_des):
+    def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
         ds.check_type(guest_name_des, str)
         ds.check_type(guest_drinkname_des, str)
         ds.check_type(guest_ent_des, Entity)
 
+        all_old_guests = ds.VariableDesignator(resolve_type=[Entity])
+        current_old_guest = ds.VariableDesignator(resolve_type=Entity)
+
+        # TODO: iterate over all people in the room (excluding the guest, but that should be behind us and thus not visible)
+        # For each person:
+        #   0. Go to the person (old guest)
+        #   1. Look at the person and point at the guest
+        #   2. Say 'Hi <person name>, this is <guest name>
+
         with self:
-            smach.StateMachine.add('FIND_OPERATOR',
-                                   states.FindPersonInRoom(robot,
-                                                           # We're looking for any person and assume that thats the operator
-                                                           discard_other_labels=False,
-                                                           area=challenge_knowledge.waypoint_livingroom['id'],
-                                                           name=challenge_knowledge.operator_name,
-                                                           found_entity_designator=operator_des.writeable),
-                                   transitions={'found': 'GOTO_OPERATOR',
-                                                'not_found': 'GOTO_OPERATOR'})
+            # OLD
+            # smach.StateMachine.add('FIND_OLD_GUESTS',
+            #                        states.FindPersonInRoom(robot,
+            #                                                # We're looking for any person and assume that thats the operator
+            #                                                discard_other_labels=False,
+            #                                                area=challenge_knowledge.waypoint_livingroom['id'],
+            #                                                name=challenge_knowledge.operator_name,
+            #                                                found_entity_designator=operator_des.writeable),
+            #                        transitions={'found': 'GOTO_OPERATOR',
+            #                                     'not_found': 'GOTO_OPERATOR'})
+            # NEW, TODO, use new FindPersonInRoom made by Arpit
+            smach.StateMachine.add('FIND_OLD_GUESTS',
+                                    states.FindPersonInRoom(robot,
+                                        # We're looking for any person and assume they are old guests already there
+                                        discard_other_labels=False,
+                                        area=challenge_knowledge.waypoint_livingroom['id'],
+                                        name=challenge_knowledge.operator_name,
+                                        found_entity_designator=all_old_guests.writeable),
+                                    transitions = {'found': 'GOTO_OPERATOR',
+                                                   'not_found': 'GOTO_OPERATOR'})
+
+            smach.StateMachine.add('ITERATE_OLD_GUESTS',
+                                   states.NavigateToObserve(robot,
+                                                            all_old_guests,
+                                                            current_old_guest.writeable),
+                                   transitions={'next': 'GOTO_OPERATOR',
+                                                'stop_iteration': 'succeeded'})
 
             smach.StateMachine.add('GOTO_OPERATOR',
                                    states.NavigateToObserve(robot,
-                                                            operator_des),
-                                   transitions={'arrived': 'SAY_LOOKING_FOR_GUEST',
-                                                'unreachable': 'SAY_LOOKING_FOR_GUEST',
+                                                            current_old_guest),
+                                   transitions={'arrived': 'SAY_LOOK_AT_GUEST',
+                                                'unreachable': 'SAY_LOOK_AT_GUEST',
                                                 'goal_not_defined': 'abort'})
 
-            smach.StateMachine.add('SAY_LOOKING_FOR_GUEST',
-                                   states.Say(robot,
-                                              ["Hi {}, let me show you our guest".format(challenge_knowledge.operator_name)],
-                                              block=True),
-                                   transitions={'spoken': 'INTRODUCE_GUEST'})
+            smach.StateMachine.add('SAY_LOOK_AT_GUEST',
+                                   states.SayFormatted(robot,
+                                                       ["Hi {name}, let me show you our guest"],
+                                                       name=ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                                       block=True),
+                                   transitions={'spoken': 'FIND_GUEST'})
 
             smach.StateMachine.add('FIND_GUEST',
                                    states.FindPerson(robot=robot,
@@ -70,7 +98,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    states.PointAt(robot=robot,
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
                                                   point_at_designator=guest_ent_des,
-                                                  look_at_designator=operator_des),
+                                                  look_at_designator=current_old_guest),
                                    transitions={"succeeded": "INTRODUCE_GUEST",
                                                 "failed": "abort"})
 
@@ -82,7 +110,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
 
             smach.StateMachine.add('RESET_ARM',
                                    states.ResetArmsTorsoHead(robot),
-                                   transitions={'done': 'succeeded'})
+                                   transitions={'done': 'ITERATE_OLD_GUESTS'})
 
 
 class ChallengeReceptionist(smach.StateMachine):
