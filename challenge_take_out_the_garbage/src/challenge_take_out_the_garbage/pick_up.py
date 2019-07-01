@@ -25,7 +25,8 @@ class MeasureForce(object):
         self._robot = robot
 
     def get_force(self):
-        ft_sensor_topic = '/'+self._robot.robot_name+'/wrist_wrench/raw'
+        # ft_sensor_topic = '/'+self._robot.robot_name+'/wrist_wrench/raw'
+        ft_sensor_topic = '/'+self._robot.robot_name+'/wrist_wrench/compensated'
 
         force_grab = rospy.wait_for_message(ft_sensor_topic, WrenchStamped)
 
@@ -79,7 +80,7 @@ class GrabTrash(smach.State):
     """
     Set the arm in the prepare grasp position so it can safely go to the grasp position
     """
-    def __init__(self, robot, arm_designator):
+    def __init__(self, robot, arm_designator, try_num=3, minimal_weight=0.1):
         """
         :param robot: robot object
         :param arm_designator: arm designator resolving to the arm with which to grab
@@ -88,17 +89,22 @@ class GrabTrash(smach.State):
 
         self._robot = robot
         self._arm_designator = arm_designator
+        self._try_num = try_num
+        self._minimal_weight = minimal_weight
 
     def execute(self, userdata=None):
+        # TODO: remove this reset:
+        self._robot.ed.reset()
+        rospy.logerr("ED has been reset!")
+        # TODO end
 
         arm = self._arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        measure_force = MeasureForce(self._robot)
-        arm_weight = measure_force.get_force()
-        minimal_weight = 0.1           #weight in kg's
+        gravitation = 9.81
+        try_current = 0
 
         # Torso up (non-blocking)
         self._robot.torso.reset()
@@ -118,46 +124,47 @@ class GrabTrash(smach.State):
         arm.send_joint_goal('grab_trash_bag')
         arm.wait_for_motion_done()
 
-        # Go down and grab
-        self._robot.torso.send_goal("grab_trash_down")
-        self._robot.torso.wait_for_motion_done()
-        arm.send_gripper_goal('close')
-        arm.wait_for_motion_done()
+        measure_force = MeasureForce(self._robot)
+        # To be able to determine the weight of the object the difference between the default weight and the weight with
+        # the object needs to be taken. Note that initially the weight with the object is set to the default weight to
+        # be able to enter the while loop below.
+        arm_weight = measure_force.get_force()
+        arm_with_object_weight = arm_weight
+        weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight))/gravitation
+        while weight_object < self._minimal_weight and try_current < self._try_num:
+            if try_current == 0:
+                self._robot.speech.speak("Let me try to pick up the garbage")
+            else:
+                self._robot.speech.speak("I failed to pick up the trash, let me try again")
+                rospy.loginfo("The weight I felt is %s", weight_object)
+            try_current += 1
 
-        # Go up and back to pre grasp position
-        self._robot.torso.send_goal("grab_trash_up")
-        self._robot.torso.wait_for_motion_done()
-        arm.send_joint_goal('handover')
-        arm.wait_for_motion_done()
+            # Go down and grab
+            self._robot.torso.send_goal("grab_trash_down")
+            self._robot.torso.wait_for_motion_done()
+            arm.send_gripper_goal('close')
+            arm.wait_for_motion_done()
 
-        # arm_with_object_weight = measure_force.get_force()
-        # weight_object = sum(abs(numpy.subtract(arm_weight, arm_with_object_weight)))/9.81
-        # if weight_object < minimal_weight:
-        #     rospy.loginfo("The weight I feel is %s", )
-        #     self._robot.speech.speak("Apparentely I did not pick up the trash, let me try again")
-        #
-        #     # Go down and grab
-        #     self._robot.torso.send_goal("grab_trash_down")
-        #     self._robot.torso.wait_for_motion_done()
-        #     arm.send_gripper_goal('close')
-        #     arm.wait_for_motion_done()
-        #
-        #     # Go up and back to pre grasp position
-        #     self._robot.torso.send_goal("grab_trash_up")
-        #     self._robot.torso.wait_for_motion_done()
-        #     arm.send_joint_goal('handover')
-        #     arm.wait_for_motion_done()
-        #
-        #     arm_with_object_weight = measure_force.get_force()
-        #     if sum(abs(numpy.subtract(arm_weight, arm_with_object_weight))) < dummy_value:
-        #         self._robot.speech.speak("Unfortunately I can not pick up the trash myself. Let me switch to plan B!")
-        #         return "failed"
+            # Go up and back to pre grasp position
+            self._robot.torso.send_goal("grab_trash_up")
+            self._robot.torso.wait_for_motion_done()
 
+            arm_with_object_weight = measure_force.get_force()
+            weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
+            rospy.loginfo("weight_object = {}".format(weight_object))
+
+        self._robot.speech.speak("Look at this, the trash picks up the trash!")
+        self._robot.speech.speak("The real trash ways roughly {}".format(weight_object))
 
         # Go back and pull back arm
+        arm.send_joint_goal('handover')
+        arm.wait_for_motion_done()
         self._robot.base.force_drive(-0.125, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
+
+        if weight_object < self._minimal_weight:
+            return "failed"
 
         handed_entity = EntityInfo(id="trash")
         arm.occupied_by = handed_entity
@@ -249,7 +256,13 @@ class PickUpTrash(smach.StateMachine):
 
             smach.StateMachine.add("PREPARE_AND_GRAB", GrabTrash(robot=robot, arm_designator=arm_designator),
                                    transitions={"succeeded": "succeeded",
-                                                "failed": "ASK_HANDOVER"})
+                                                "failed": "ANNOUNCE_PICKUP_FAIL"})
+
+            smach.StateMachine.add("ANNOUNCE_PICKUP_FAIL",
+                                   states.Say(robot, "Unfortunately I could not pick up the trash myself, let's go to"
+                                                     "plan B!",
+                                              block=False),
+                                   transitions={'spoken': 'ASK_HANDOVER'})
 
             # Ask human to handover the trash bag
             smach.StateMachine.add("ASK_HANDOVER", HandoverFromHuman(robot=robot, arm_designator=arm_designator,
