@@ -83,32 +83,19 @@ class LearnGuest(smach.StateMachine):
 
             smach.StateMachine.add('ASK_GUEST_NAME',
                                    states.AskPersonName(robot, guest_name_des.writeable, challenge_knowledge.common.names),
-                                   transitions={'succeeded': 'LEARN_ITERATOR',
+                                   transitions={'succeeded': 'LEARN_PERSON',
                                                 'failed': 'SAY_HELLO',
                                                 'timeout': 'SAY_HELLO'})
 
-            learn_it = smach.Iterator(outcomes=['succeeded', 'failed'],
-                                      input_keys=[],
-                                      output_keys=[],
-                                      it=lambda: range(1),
-                                      it_label='index',
-                                      exhausted_outcome='failed')
-            with learn_it:
-                container_sm = states.LearnPerson(robot, name_designator=guest_name_des)
-
-
-                smach.Iterator.set_contained_state('LEARN_OPERATOR',
-                                             container_sm,
-                                             loop_outcomes=['failed'])
-
-            smach.StateMachine.add('LEARN_ITERATOR', learn_it,
-                                   {'succeeded': 'SAY_GUEST_LEARNED',
-                                    'failed': 'SAY_FAILED_LEARNING'})
+            smach.StateMachine.add('LEARN_PERSON',
+                                   states.LearnPerson(robot, name_designator=guest_name_des),
+                                   transitions={'succeeded': 'SAY_GUEST_LEARNED',
+                                                'failed': 'SAY_FAILED_LEARNING'})
 
             smach.StateMachine.add('SAY_FAILED_LEARNING',
-                                   states.Say(robot, ["Oops, I'm confused, let's try again"],
+                                   states.Say(robot, ["Not sure if I remember you, but I'll do my best"],
                                               block=False),
-                                   transitions={'spoken': 'failed'})
+                                   transitions={'spoken': 'SAY_DRINK_QUESTION'})
 
             smach.StateMachine.add('SAY_GUEST_LEARNED',
                                    states.Say(robot, ["Okidoki, now I know what you look like"], block=True),
