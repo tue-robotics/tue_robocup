@@ -4,10 +4,7 @@ import rospy
 import smach
 import random
 
-import sys
-
 import hmi
-
 import robot_smach_states
 import robot_smach_states.util.designators as ds
 from clean_inspect import CleanInspect
@@ -15,7 +12,6 @@ from clean_inspect import CleanInspect
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
 
-from robot_skills import robot
 
 class VerifyWorldModelInfo(smach.State):
     """
@@ -25,11 +21,11 @@ class VerifyWorldModelInfo(smach.State):
         smach.State.__init__(self, outcomes=["failed", "done"])
         self._robot = robot
 
-    def execute(self, userdata):
-    # Look for trash units; can be in living_room and kitchen.
-    # THIS IS ARENA DEPENDANT!! (Should be handled in a different way?)
-    # There should be an 'underscore_rule' : trash_bin or trashbin???
-    #   (Different between rgo2019 and robotics_testlab knowledge)
+    def execute(self, userdata=None):
+        # Look for trash units; can be in living_room and kitchen.
+        # THIS IS ARENA DEPENDANT!! (Should be handled in a different way?)
+        # There should be an 'underscore_rule' : trash_bin or trashbin???
+        # (Different between rgo2019 and robotics_testlab knowledge)
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:
@@ -49,10 +45,10 @@ class VerifyWorldModelInfo(smach.State):
 
         return "done"
 
-class AskWhichRoomToClean(smach.State):
-# Logic in this code is still flawed. No correct repetition.....
-# EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
 
+class AskWhichRoomToClean(smach.State):
+    # Logic in this code is still flawed. No correct repetition.....
+    # EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
     def __init__(self, robot, roomw, answerw, cleanup_locationsw):
         smach.State.__init__(self, outcomes=["failed", "done"])
         self.robot = robot
@@ -70,7 +66,7 @@ class AskWhichRoomToClean(smach.State):
         rospy.loginfo("Cleaning locations: {}".format(self.cleanup_locationsw.resolve()))
         return
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         max_tries = 5
         nr_of_tries = 0
         count = 0
@@ -122,7 +118,7 @@ class AskWhichRoomToClean(smach.State):
                 self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
                                                                                             "T[False] -> no",
                                                                                      target="T")
-            except TimeoutException:
+            except hmi.TimeoutException:
                 return "failed"
 
             self.robot.head.cancel_goal()
@@ -135,11 +131,8 @@ class AskWhichRoomToClean(smach.State):
 
 
 def setup_statemachine(robot):
-
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    robot.ed.reset()
-    # The probability number must be determined experimentaly
-    robot.ed.set_unknown_probability(0.3)
+    # The probability number must be determined experimentally
     # Designators
     # Room to search through
     roomr = ds.VariableDesignator('kitchen', resolve_type=str)
