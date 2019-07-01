@@ -415,14 +415,13 @@ class WaitForPersonEntity(smach.State):
 
     def execute(self, userdata=None):
         counter = 0
-        detected_humans = None
 
         while counter < self.attempts:
             print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             detected_humans = detect_human_in_front(self.robot)
             if detected_humans:
-                print "[WaitForPerson] " + "Found a human!"
+                print("[WaitForPersonDetection] Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -435,8 +434,8 @@ class WaitForPersonEntity(smach.State):
 
 class WaitForPersonDetection(smach.State):
     """
-        Wait until a person is seen/scanned in front of the robot.
-            Use paramaterers to costumize number of retries and sleep between retries
+    Wait until a person is seen/scanned in front of the robot.
+    Use parameters to customize number of retries and sleep between retries
     """
 
     def __init__(self, robot, attempts=1, sleep_interval=1):
@@ -447,7 +446,6 @@ class WaitForPersonDetection(smach.State):
 
     def execute(self, userdata=None):
         counter = 0
-        desgnResult = None
 
         while counter < self.attempts:
             print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
@@ -457,7 +455,7 @@ class WaitForPersonDetection(smach.State):
             rospy.logerr("I will return an empty detection list!")
             detections = []
             if detections:
-                print("[WaitForPersonDetection] " + "Found a human!")
+                print("[WaitForPersonDetection] Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -470,13 +468,13 @@ class WaitForPersonDetection(smach.State):
 
 def detect_human_in_front(robot):
     """
-        Scan for humans in the robots field of view. Return person detections if any
+    Scan for humans in the robots field of view. Return person detections if any
     """
 
     rospy.logerr(
         "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
     rospy.logerr("I will return an empty detection list!")
-    detections = []
+    result = []
 
     if not result:
         return False
