@@ -9,6 +9,6 @@ waypoint_door = {'id': 'door_opening_right_start', 'radius': 0.5}  # Somewhere f
 
 waypoint_livingroom = {'id': 'livingroom', 'radius': 0.5}  # From where to find John
 
-sitting_room = 'hallway'  # Where people will be guided to sit and the robot will find a seat
+sitting_room = 'livingroom'  # Where people will be guided to sit and the robot will find a seat
 
-seats = ['hallway_table']  # List of seats to check for empty-ness
+seats = ['bar']  # List of seats to check for empty-ness. These need an 'on_top_of' volume for the person to sit in

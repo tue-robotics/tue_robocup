@@ -115,8 +115,15 @@ class ChallengeReceptionist(smach.StateMachine):
             smach.StateMachine.add('LEARN_GUEST_1',
                                    LearnGuest(robot, self.door_waypoint, self.guest1_entity_des, self.guest1_name_des,
                                               self.guest1_drink_des),
-                                   transitions={'succeeded': 'GOTO_LIVINGROOM_1',
-                                                'aborted': 'aborted'})
+                                   transitions={'succeeded': 'SAY_GOTO_OPERATOR',
+                                                'aborted': 'aborted',
+                                                'failed': 'aborted'})
+
+            smach.StateMachine.add('SAY_GOTO_OPERATOR',
+                                   states.Say(robot, ["Okidoki, lets go to {}. Please follow me".format(challenge_knowledge.operator_name)],
+                                              block=True,
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'GOTO_LIVINGROOM_1'})
 
             smach.StateMachine.add('GOTO_LIVINGROOM_1',
                                    states.NavigateToWaypoint(robot,
@@ -136,8 +143,13 @@ class ChallengeReceptionist(smach.StateMachine):
                                    FindEmptySeat(robot,
                                                  seats_to_inspect=challenge_knowledge.seats,
                                                  room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room)),
-                                   transitions={'succeeded': 'succeeded',
-                                                'failed': 'aborted'})
+                                   transitions={'succeeded': 'SAY_DONE',
+                                                'failed': 'SAY_DONE'})
+
+            smach.StateMachine.add('SAY_DONE',
+                                   states.Say(robot, ["That's all folks, my job is done, bye bye!"],
+                                              block=False),
+                                   transitions={'spoken': 'succeeded'})
 
             # - [x] Wait at the door, say you're waiting
             # - [x] Wait until person can come in
