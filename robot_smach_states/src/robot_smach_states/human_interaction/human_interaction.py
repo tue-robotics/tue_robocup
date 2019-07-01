@@ -311,6 +311,11 @@ class AskContinue(smach.StateMachine):
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
 
+
+class AskYesNo(HearOptions):
+    def __init__(self, robot, timeout=rospy.Duration(10)):
+        HearOptions.__init__(self, robot, ['yes', 'no'], timeout)
+
 ########################################################################################################################
 
 
