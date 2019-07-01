@@ -209,9 +209,12 @@ class FindPersonInRoom(smach.StateMachine):
                                                 "goal_not_defined": "not_found"})
 
             # Wait for the operator to appear and detect what he's pointing at
-            smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name,
-                                                             discard_other_labels=discard_other_labels,
-                                                             found_entity_designator=found_entity_designator),
+            smach.StateMachine.add("FIND_PERSON",
+                                   FindPerson(robot=robot,
+                                              properties={'id': name},
+                                              query_entity_designator=room_designator,
+                                              result_designator=found_entity_designator,
+                                              speak=True),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
@@ -232,5 +235,3 @@ if __name__ == "__main__":
     else:
         print "Please provide robot name as argument."
         exit(1)
-
-
