@@ -86,51 +86,61 @@ class FindPerson(smach.State):
                       for angle in look_angles]
 
         i = 0
+        attempts = 0
 
         rate = rospy.Rate(2)
-        while (rospy.Time.now() - start_time).to_sec() < self._search_timeout and not rospy.is_shutdown():
+        while not rospy.is_shutdown() and
+            attempts < self._attempts and
+            (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
+
             if self.preempt_requested():
                 return 'failed'
 
             self._robot.head.look_at_point(head_goals[i])
             i += 1
+
             if i == len(head_goals):
                 i = 0
+                attempts += 1
+
             self._robot.head.wait_for_motion_done()
 
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
-            found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
-            found_names = {person.id: person for person in found_people}
+            found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
 
-            found_person = None
+            result_people = None
 
-            if self._discard_other_labels:
-                found_person = found_names.get(person_label, None)
-            else:
-                # find which of those is closest
-                robot_pose = self._robot.base.get_location()
-                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
 
-            if self._room:
-                room_entity = self._robot.ed.get_entity(id=self._room)
-                if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
-                    # If the person is not in the room we are looking for, ignore the person
-                    rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
-                                  .format(found_person.id, room_entity.id))
-                    found_person = None
+            if self._query_entity_designator:
+                # TODO: Check if query_entity_designator is actually a
+                # designator
+                query_entity = self._query_entity_designator.resolve()
+                result_people = filter(lambda x:
+                        query_entity.in_volume(x.pose.extractVectorStamped(),
+                        'in'), found_people)
 
-            if found_person:
-                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
+                # If people not in query_entity then try if query_entity in
+                # people
+                if not result_people:
+                    try:
+                        result_people = filter(lambda x:
+                            x.in_volume(query_entity.pose.extractVectorStamped(),
+                                'in'), found_people)
+                    except:
+                        pass
+
+
+            if result_people:
+                #self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
-                if self._found_entity_designator:
-                    self._found_entity_designator.write(found_person)
+                if self._result_designator:
+                    self._result_designator.write(result_people)
 
                 return 'found'
             else:
-                rospy.logwarn("Could not find {}".format(person_label))
+                rospy.logwarn("Could not find people meeting the requirements")
                 rate.sleep()
 
         self._robot.head.close()
