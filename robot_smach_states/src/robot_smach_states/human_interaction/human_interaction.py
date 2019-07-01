@@ -76,10 +76,6 @@ class Say(smach.State):
             self.robot.head.look_at_standing_person()
         self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
 
-        # robot.head.cancel_goal()
-        # ToDo: hack
-        rospy.sleep(len(sentence)*0.05)
-
         return "spoken"
 
 
@@ -159,10 +155,6 @@ class SayFormatted(smach.State):
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
         self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
-
-        # robot.head.cancel_goal()
-        # ToDo: hack
-        rospy.sleep(len(sentence) * 0.05)
 
         return "spoken"
 
