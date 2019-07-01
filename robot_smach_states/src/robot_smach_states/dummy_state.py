@@ -1,6 +1,9 @@
 import smach
 import robot_smach_states.util.designators as ds
 
+__all__ = ["DummyState"]
+
+
 class DummyState(smach.State):
     """
     DummyState to which returns the input outcome
