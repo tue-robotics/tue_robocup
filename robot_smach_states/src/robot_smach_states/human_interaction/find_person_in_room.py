@@ -17,18 +17,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 
-# class CheckIfPersonInRoom(smach.State):
-#     def __init__(self, robot, room):
-#         """
-#
-#         :param robot: robot api object
-#         :param room: room where person should be found
-#         """
-#         smach.State.__init__(self, outcomes=['true', 'false'])
-#         self._robot = robot
-#         self._room = room
-#
-#     def execute(self, userdata=None):
 
 class FindPerson(smach.State):
     """
