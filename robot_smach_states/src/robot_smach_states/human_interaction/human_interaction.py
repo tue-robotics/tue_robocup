@@ -32,9 +32,9 @@ class Say(smach.State):
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
     >>>
-    >>> sf = Say(robot, ["a", "b", "c"])
+    >>> say = Say(robot, ["a", "b", "c"])
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [sf.execute() for i in range(50)]
+    >>> outcomes = [say.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
     >>> #After many calls, all options in the list will very likely have been called at least one.
