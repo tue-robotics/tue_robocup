@@ -45,8 +45,8 @@ class MockedRobotPart(object):
 
 
 class Arm(arms.Arm):
-    def __init__(self, robot_name, side, tf_listener):
-        super(Arm, self).__init__(self, robot_name, side, tf_listener)
+    def __init__(self, robot_name, tf_listener, side):
+        super(Arm, self).__init__(self, robot_name, tf_listener, side)
 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
@@ -84,8 +84,8 @@ class Base(MockedRobotPart):
         self.analyzer = mock.MagicMock()
         self.global_planner = mock.MagicMock()
         self.local_planner = mock.MagicMock()
-        self.local_planner.getStatus = mock.MagicMock(return_value="arrived") #always arrive for now
-        self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"]) #always arrive for now
+        self.local_planner.getStatus = mock.MagicMock(return_value="arrived")  # always arrive for now
+        self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"])  # always arrive for now
 
 
 class Ears(MockedRobotPart):
@@ -107,8 +107,6 @@ class Ears(MockedRobotPart):
         answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
 
         return answer
-
-        # self.recognize = lambda spec, choices, time_out=None: answer
 
 
 class EButton(MockedRobotPart):
@@ -192,7 +190,7 @@ class Torso(MockedRobotPart):
         self.wait = mock.MagicMock()
         self.cancel_goal = mock.MagicMock()
         self._receive_torso_measurement = mock.MagicMock()
-        self.get_position    = mock.MagicMock()
+        self.get_position = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
 
 
@@ -281,7 +279,7 @@ class Mockbot(robot.Robot):
     >>> Mockbot()
     """
     def __init__(self, *args, **kwargs):
-        super(Mockbot, self).__init__(robot_name="robot_name", wait_services=False)
+        super(Mockbot, self).__init__(robot_name="mockbot", wait_services=False)
 
         self.tf_listener = mock.MagicMock()
         self.add_body_part('hmi', mock.MagicMock())
@@ -313,8 +311,8 @@ class Mockbot(robot.Robot):
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"base_link"
 
-        #Grasp offsets
-        #TODO: Don't hardcode, load from parameter server to make robot independent.
+        # Grasp offsets
+        # TODO: Don't hardcode, load from parameter server to make robot independent.
         self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
 
         self.publish_target = mock.MagicMock()
@@ -349,13 +347,12 @@ if __name__ == "__main__":
     print("   .--  .. ----**.____)")
     print("   \\___/          ")
     import atexit
-    from robot_skills.util import msg_constructors as msgs
 
     rospy.init_node("mockbot_executioner", anonymous=True)
     mockbot = Mockbot(wait_services=False)
-    robot = mockbot #All state machines use robot. ..., this makes copy/pasting easier.
+    robot = mockbot  # All state machines use robot. ..., this makes copy/pasting easier.
 
-    atexit.register(mockbot.close) #When exiting the interpreter, call mockbot.close(), which cancels all action goals etc.
+    atexit.register(mockbot.close)  # When exiting the interpreter, call mockbot.close(), which cancels all action goals etc.
 
     head_reset = lambda: mockbot.head.reset()
     head_down  = lambda: mockbot.head.reset()
@@ -377,7 +374,7 @@ if __name__ == "__main__":
         wf = WorldFaker()
         wf.insert({"position":(x,y,z)})
 
-    #Useful for making location-files
+    # Useful for making location-files
     def get_pose_2d():
        posestamped = mockbot.base.location
        loc,rot = posestamped.pose.point, posestamped.pose.orientation
@@ -392,7 +389,9 @@ if __name__ == "__main__":
         pub.publish(std_msgs.msg.String(text))
 
     def save_sentence(sentence):
-        """Let mockbot say a sentence and them move the generated speech file to a separate file that will not be overwritten"""
+        """
+        Let mockbot say a sentence and them move the generated speech file to a separate file that will not be overwritten
+        """
         speak(sentence)
         import os
         path = sentence.replace(" ", "_")
