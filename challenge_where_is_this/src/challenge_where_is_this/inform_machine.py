@@ -165,8 +165,14 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add('GIVE_DIRECTIONS',
                                    GiveDirections(robot, self.entity_des),
-                                   transitions={'succeeded': "GUIDE_OPERATOR",
+                                   transitions={'succeeded': "INSTRUCT_FOLLOW",
                                                 'failed': 'failed'})
+
+            smach.StateMachine.add("INSTRUCT_FOLLOW",
+                                   states.Say(robot,
+                                              ["Please follow me"]
+                                              , block=True),
+                                   transitions={'spoken': 'GUIDE_OPERATOR'})
 
             smach.StateMachine.add('GUIDE_OPERATOR',
                                    GuideToRoomOrObject(robot, self.entity_des),
