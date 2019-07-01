@@ -44,27 +44,23 @@ class Say(smach.State):
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False, resolve_once=False, random_once=False):
+                 look_at_standing_person=False):
         smach.State.__init__(self, outcomes=["spoken"])
         ds.check_type(sentence, str, list)
-        isinstance(language, str)
-        isinstance(personality, str)
-        isinstance(voice, str)
-        isinstance(mood, str)
-        isinstance(block, bool)
+        assert(isinstance(language, str) or isinstance(language, type(None)))
+        assert(isinstance(personality, str) or isinstance(personality, type(None)))
+        assert(isinstance(voice, str) or isinstance(voice, type(None)))
+        assert(isinstance(mood, str) or isinstance(mood, type(None)))
+        assert(isinstance(block, bool))
 
         self.robot = robot
-        if random_once and isinstance(sentence, list):
-            self.sentence = random.choice(sentence)
-        else:
-            self.sentence = sentence
+        self.sentence = sentence
         self.language = language
         self.personality = personality
         self.voice = voice
         self.mood = mood
         self.block = block
         self.look_at_standing_person = look_at_standing_person
-        self.resolve_once = resolve_once
 
     def execute(self, userdata=None):
         # robot.head.look_at_standing_person()
@@ -74,10 +70,7 @@ class Say(smach.State):
             return "spoken"
 
         if isinstance(self.sentence, ds.Designator):
-            if self.resolve_once:
-                sentence = self.sentence = self.sentence.resolve()
-            else:
-                sentence = self.sentence.resolve()
+            sentence = self.sentence.resolve()
         else:
             sentence = self.sentence
 
