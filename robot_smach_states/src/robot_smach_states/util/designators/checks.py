@@ -33,13 +33,21 @@ def check_resolve_type(designator, *allowed_types):
     Traceback (most recent call last):
       ...
     TypeError: ...
-    """
 
+    >>> d7 = Designator("a", resolve_type=str, name='d7')
+    >>> d8 = Designator(["a"], resolve_type=[str], name='d8')
+    >>> check_resolve_type(d7, str, [str])
+    >>> check_resolve_type(d8, str, [str])
+    >>> check_resolve_type(d7, [str], str)
+    >>> check_resolve_type(d8, [str], str)
+    """
     if isinstance(designator.resolve_type, list):
         real_resolve_type = designator.resolve_type[0]
-        real_allowed_type = allowed_types[0][0]  # allowed_types is a list (because of the *). ToDo: First element should be type with a __get_item__
 
-        if not real_resolve_type == real_allowed_type:
+        # allowed_types is a list (because of the *).
+        real_allowed_types = [allowed_type[0] if isinstance(allowed_type, list) else allowed_type for allowed_type in allowed_types]
+
+        if not real_resolve_type in real_allowed_types:
             raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
 
     if designator.resolve_type not in allowed_types:
