@@ -15,7 +15,6 @@ import message_filters
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.util.designators import check_type
 from robot_skills.util import kdl_conversions
 
 # class CheckIfPersonInRoom(smach.State):
@@ -50,7 +49,7 @@ class FindPerson(smach.State):
 
         self._robot = robot
 
-        check_type(person_label, str)
+        ds.check_type(person_label, str)
         self._person_label = person_label
 
         self._search_timeout = search_timeout
