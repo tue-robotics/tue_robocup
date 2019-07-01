@@ -2,6 +2,7 @@
 __author__ = 'loy'
 import core
 
+
 def check_resolve_type(designator, *allowed_types):
     """
     >>> from robot_smach_states.util.designators.core import Designator
@@ -36,12 +37,12 @@ def check_resolve_type(designator, *allowed_types):
 
     if isinstance(designator.resolve_type, list):
         real_resolve_type = designator.resolve_type[0]
-        real_allowed_type = allowed_types[0][0] #allowed_types is a list (because of the *).
+        real_allowed_type = allowed_types[0][0]  # allowed_types is a list (because of the *). ToDo: First element should be type with a __get_item__
 
         if not real_resolve_type == real_allowed_type:
             raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
 
-    if not designator.resolve_type in allowed_types:
+    if designator.resolve_type not in allowed_types:
         raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
 
 
@@ -69,7 +70,7 @@ def check_type(designator_or_value, *allowed_types):
       ...
     TypeError: ...
     """
-    if hasattr(designator_or_value, "resolve_type"): #If its a designator: ...
+    if hasattr(designator_or_value, "resolve_type"):  # If its a designator: ...
         check_resolve_type(designator_or_value, *allowed_types)
     else:
         if isinstance(designator_or_value, list) and isinstance(allowed_types[0], list):
@@ -78,6 +79,7 @@ def check_type(designator_or_value, *allowed_types):
         else:
             if not type(designator_or_value) in allowed_types:
                 raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+
 
 def is_writeable(variable_writer):
     if isinstance(variable_writer, core.VariableWriter):
