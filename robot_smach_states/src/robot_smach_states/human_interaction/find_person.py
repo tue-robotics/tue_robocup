@@ -31,14 +31,15 @@ class FindPerson(smach.State):
             values of the property.
         :param query_entity_designator: An entity designator to match all found
             people to
-        :param result_designator: A designator to write the search result to
+        :param result_designator: A designator to write the search result to.
+            The designator always has a list of found people written to it.
         :param look_distance: (float) The distance (radius) which the robot must look at
         :param speak: (bool) If True, the robot will speak while trying to find
-            a person
+            a named person
         :param strict: (bool) If True then only people with all specified
             properties is returned else all people with at least one true property
-        :param nearest: (bool) whether or not to discard recognitions based on the label
-        :param attempts: (int) Max number of attempts
+        :param nearest: (bool) If True, selects the person nearest to the robot
+        :param attempts: (int) Max number of search attempts
         :param search_timeout: (float) maximum time the robot is allowed to search
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
