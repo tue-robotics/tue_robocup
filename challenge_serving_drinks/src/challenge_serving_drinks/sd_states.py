@@ -13,7 +13,6 @@ import robot_smach_states.util.designators as ds
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
 from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from tue_msgs.msg import People
 from Queue import Queue, Empty
 
 
@@ -334,13 +333,13 @@ class DetectWaving(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
         self._robot = robot
         self._caller_id = caller_id
-        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
-        self.people_queue = Queue(maxsize=1)
+#        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
+#        self.people_queue = Queue(maxsize=1)
 
-    def people_cb(self, persons):
-        if persons.people:
-            rospy.logdebug('Received %d persons in the people cb', len(persons.people))
-        self.people_queue.put(persons)
+#    def people_cb(self, persons):
+#        if persons.people:
+#            rospy.logdebug('Received %d persons in the people cb', len(persons.people))
+#        self.people_queue.put(persons)
 
     def execute(self, userdata=None):
 
@@ -352,7 +351,7 @@ class DetectWaving(smach.State):
         head_samples = 20
         look_distance = 3.0
         look_angles = [0, 0, 0, 10, -10, 20, -20]
-        self.clear_queue()
+#        self.clear_queue()
 
         waving_persons = []
         i = 0
@@ -383,17 +382,17 @@ class DetectWaving(smach.State):
 
         return 'succeeded'
 
-    def clear_queue(self):
-        while True:
-            try:
-                self.people_queue.get_nowait()
-                rospy.loginfo("trying")
-            except Empty:
-                # There is probably an old measurement blocking in the callback thread, also remove that one
-                if not self.people_queue.empty():
-                    self.people_queue.get()
-                rospy.loginfo("returning")
-                return
+#    def clear_queue(self):
+#        while True:
+#            try:
+#                self.people_queue.get_nowait()
+#                rospy.loginfo("trying")
+#            except Empty:
+#                # There is probably an old measurement blocking in the callback thread, also remove that one
+#                if not self.people_queue.empty():
+#                    self.people_queue.get()
+#                rospy.loginfo("returning")
+#                return
 
     def wait_for_waving_person(self, head_samples):
         waving_persons = []
@@ -411,15 +410,15 @@ class DetectWaving(smach.State):
                 break
         return people_received.header, waving_persons
 
-    def wait_for_cb(self):
-        timeout = 1
-
-        people_received = People()
-        while not rospy.is_shutdown() and not people_received.people:
-            try:
-                return self.people_queue.get(timeout=timeout)
-            except Empty:
-                rospy.logwarn('No people message received within %d seconds', timeout)
+#    def wait_for_cb(self):
+#        timeout = 1
+#
+#        people_received = People()
+#        while not rospy.is_shutdown() and not people_received.people:
+#            try:
+#                return self.people_queue.get(timeout=timeout)
+#            except Empty:
+#                rospy.logwarn('No people message received within %d seconds', timeout)
 
 
 class DescriptionStrDesignator(ds.Designator):
