@@ -67,6 +67,7 @@ class FindPerson(smach.State):
             look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
             try:
                 person_label = self._properties["id"]
+                ds.check_type(person_label, "str")
                 person_label = person_label.resolve() if hasattr(person_label, 'resolve') else person_label
 
                 rospy.loginfo("Trying to find {}".format(person_label))
@@ -156,5 +157,16 @@ class FindPerson(smach.State):
         return 'failed'
 
     def _check_person_property(self, person, prop_name, prop_value):
-        #TODO: Implement query of person
+        person_attr_val = getattr(person, prop_name)
+        if prop_value:
+            if self._strict:
+                if person_attr_val == prop_value:
+                    return True
+            else:
+                if person_attr_val in prop_value:
+                    return True
+        else:
+            if person_attr_val:
+                return True
+
         return False
