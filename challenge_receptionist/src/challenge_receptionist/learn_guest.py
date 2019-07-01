@@ -33,7 +33,7 @@ class FieldOfHMIResult(ds.Designator):
     def _resolve(self):
         try:
             field = self.semantics_field.resolve() if hasattr(self.semantics_field, 'resolve') else self.semantics_field
-            return self.query_result_des.resolve().semantics[field]
+            return str(self.query_result_des.resolve().semantics[field])
         except Exception as e:
             rospy.logerr(e)
             return None
