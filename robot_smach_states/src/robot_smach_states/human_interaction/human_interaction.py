@@ -36,6 +36,11 @@ class Say(smach.State):
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes = [say.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>>
+    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
+    >>> say2.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
