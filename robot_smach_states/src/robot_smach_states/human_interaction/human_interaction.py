@@ -64,7 +64,7 @@ class Say(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if isinstance(self.sentence, ds.Designator):
+        if hasattr(self.sentence, "resolve"):
             sentence = self.sentence.resolve()
         else:
             sentence = self.sentence
@@ -140,7 +140,7 @@ class SayFormatted(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if isinstance(self.sentence, ds.Designator):
+        if hasattr(self.sentence, "resolve"):
             sentence = self.sentence.resolve()
             self._check_place_holders(sentence)
         else:
