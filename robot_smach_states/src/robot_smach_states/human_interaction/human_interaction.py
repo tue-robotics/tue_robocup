@@ -41,6 +41,13 @@ class Say(smach.State):
     >>> say2.execute()
     'spoken'
     >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
+    >>>
+    >>> d1 = ds.VariableDesignator(resolve_type=str).writeable
+    >>> d1.write('banana')
+    >>> say3 = Say(robot, d1)
+    >>> say3.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
