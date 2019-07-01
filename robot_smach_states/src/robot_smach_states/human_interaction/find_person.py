@@ -5,13 +5,10 @@ import math
 import sys
 
 # ROS
-import PyKDL as kdl
-import geometry_msgs
 import rospy
 import smach
 
 # TU/e Robotics
-import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 
@@ -64,6 +61,7 @@ class FindPerson(smach.State):
 
     def execute(self, userdata=None):
         look_angles = None
+        person_label = None
         if not self._properties:
             look_angles = [0]
         else:
@@ -80,6 +78,9 @@ class FindPerson(smach.State):
                             person_label),
                         block=False)
             except:
+                # The try except is to check if a named person is queried for
+                # in the properties. If there is none then exception is raised
+                # and nothing is to be done with it
                 pass
 
         start_time = rospy.Time.now()
@@ -128,8 +129,6 @@ class FindPerson(smach.State):
             result_people = None
 
             if self._query_entity_designator:
-                # TODO: Check if query_entity_designator is actually a
-                # designator
                 query_entity = self._query_entity_designator.resolve()
                 result_people = filter(lambda x:
                         query_entity.in_volume(x.pose.extractVectorStamped(),
@@ -138,6 +137,8 @@ class FindPerson(smach.State):
                 # If people not in query_entity then try if query_entity in
                 # people
                 if not result_people:
+                    # This is for a future feature when object recognition
+                    # becomes more advanced
                     try:
                         result_people = filter(lambda x:
                             x.in_volume(query_entity.pose.extractVectorStamped(),
@@ -149,7 +150,10 @@ class FindPerson(smach.State):
 
 
             if result_people:
-                #self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
+                if person_label and filter(lambda x:
+                        self._check_person_property(x, "id", person_label),
+                        result_people) and self._speak:
+                    self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
                 if self._result_designator:
@@ -160,6 +164,7 @@ class FindPerson(smach.State):
                 rospy.logwarn("Could not find people meeting the requirements")
                 rate.sleep()
 
+        rospy.logwarn("Exceeded trail or time limit")
         self._robot.head.close()
         rospy.sleep(2.0)
         return 'failed'
