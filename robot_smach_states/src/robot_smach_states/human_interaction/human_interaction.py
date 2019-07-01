@@ -36,6 +36,18 @@ class Say(smach.State):
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes = [say.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>>
+    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
+    >>> say2.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
+    >>>
+    >>> d1 = ds.VariableDesignator(resolve_type=str).writeable
+    >>> d1.write('banana')
+    >>> say3 = Say(robot, d1)
+    >>> say3.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
@@ -64,7 +76,7 @@ class Say(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if isinstance(self.sentence, ds.Designator):
+        if hasattr(self.sentence, "resolve"):
             sentence = self.sentence.resolve()
         else:
             sentence = self.sentence
@@ -140,7 +152,7 @@ class SayFormatted(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if isinstance(self.sentence, ds.Designator):
+        if hasattr(self.sentence, "resolve"):
             sentence = self.sentence.resolve()
             self._check_place_holders(sentence)
         else:
@@ -310,6 +322,11 @@ class AskContinue(smach.StateMachine):
                                    HearOptions(self.robot, ['continue'], self.timeout),
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
+
+
+class AskYesNo(HearOptions):
+    def __init__(self, robot, timeout=rospy.Duration(10)):
+        HearOptions.__init__(self, robot, ['yes', 'no'], timeout)
 
 ########################################################################################################################
 
