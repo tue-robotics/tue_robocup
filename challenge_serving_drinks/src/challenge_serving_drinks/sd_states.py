@@ -467,6 +467,6 @@ if __name__ == "__main__":
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(0.5)  # wait for tf cache to be filled
 
-    state = AskDrink(robot=_robot, drink_designator=ds.VariableDesignator(type=str).writeable, max_tries=1,
-                     max_queries_per_try=1)
+    state = AskDrink(robot=_robot,
+            drink_designator=ds.VariableDesignator(resolve_type=str).writeable)
     state.execute(None)

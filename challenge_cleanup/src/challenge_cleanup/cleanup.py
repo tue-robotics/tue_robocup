@@ -2,7 +2,7 @@
 
 import rospy
 import smach
-import random
+
 
 import hmi
 import robot_smach_states
@@ -25,7 +25,7 @@ class VerifyWorldModelInfo(smach.State):
         # Look for trash units; can be in living_room and kitchen.
         # THIS IS ARENA DEPENDANT!! (Should be handled in a different way?)
         # There should be an 'underscore_rule' : trash_bin or trashbin???
-        # (Different between rgo2019 and robotics_testlab knowledge)
+        # (Different between rgo2019 and robotics_testlabs knowledge)
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:
@@ -46,25 +46,48 @@ class VerifyWorldModelInfo(smach.State):
         return "done"
 
 
-class AskWhichRoomToClean(smach.State):
-    # Logic in this code is still flawed. No correct repetition.....
-    # EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
-    def __init__(self, robot, roomw, answerw, cleanup_locationsw):
-        smach.State.__init__(self, outcomes=["failed", "done"])
-        self.robot = robot
-        self.roomw = roomw
-        self.answerw = answerw
-        self.cleanup_locationsw = cleanup_locationsw
+class RoomToCleanUpLocations(smach.State):
+    def __init__(self, knowledge, room_des, cleanup_locations):
+        """
+        Determine cleaning locations on runtime
+        :param knowledge: challenge knowledge
+        :param room_des: Designator resolving to room
+        :type room_des: Designator(str)
+        :param cleanup_locations: Writable designator, which will be filled with a list of cleaning locations
+        """
+        smach.State.__init__(self, outcomes=["done"])
+        ds.check_type(room_des, str)
+        ds.is_writeable(cleanup_locations)
+        assert(hasattr(knowledge, "cleaning_locations"))
 
-    def collect_cleanup_locations(self):
+        self._knowledge = knowledge
+        self._room_des = room_des
+        self._cleanup_locations = cleanup_locations
+
+    def execute(self, userdata=None):
         cleaning_locations = []
-        for loc in challenge_knowledge.cleaning_locations:
-            if loc["room"] == self.roomw.resolve():
+        for loc in self._knowledge.cleaning_locations:
+            if loc["room"] == self._room_des.resolve():
                 cleaning_locations.append(loc)
-        self.cleanup_locationsw.write(cleaning_locations)
+        self._cleanup_locations.write(cleaning_locations)
         # Show the cleanup list on screen
+
         rospy.loginfo("Cleaning locations: {}".format(self.cleanup_locationsw.resolve()))
         return
+
+    def _confirm(self):
+        cgrammar = """
+        C[P] -> A[P]
+        A['yes'] -> yes
+        A['no'] -> no
+        """
+        try:
+            speech_result = self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+                                                                                          "T[False] -> no", target="T")
+        except hmi.TimeoutException:
+            return False
+
+        return speech_result.semantics
 
     def execute(self, userdata=None):
         max_tries = 5
@@ -74,7 +97,9 @@ class AskWhichRoomToClean(smach.State):
         self.robot.head.look_at_standing_person(3)
 
         while nr_of_tries < max_tries and not rospy.is_shutdown():
+            rospy.loginfo('nr_tries: %d', nr_of_tries)
             while not rospy.is_shutdown():
+                rospy.loginfo('count: %d', count)
                 count += 1
                 self.robot.speech.speak("Which room should I clean for you?", block=True)
                 try:
@@ -97,76 +122,71 @@ class AskWhichRoomToClean(smach.State):
                         self.robot.head.cancel_goal()
                         return "failed"
 
-                # try:
-                #     self.robot.speech.speak("I understand that the {} should be cleaned, "
-                #                             .format(speech_result.sentence))
-                #     speech_result = self.robot.hmi.query(description="Is this correct?",
-                #                                          grammar="T[True] -> yes;"
-                #                                                  "T[False] -> no",
-                #                                          target="T")
-                # except hmi.TimeoutException:
-                #     return "failed"
             try:
                 # Now: confirm
-                # self.roomw.write(speech_result.sentence)
-                self.robot.speech.speak("I understood that the {} should be cleaned, is this correct?".format(
+                self.robot.speech.speak("I understood that the {} should be cleaned".format(
                     speech_result.sentence))
             except Exception:
                 continue
 
-            try:
-                self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
-                                                                                            "T[False] -> no",
-                                                                                     target="T")
-            except hmi.TimeoutException:
+            if not self._confirm():
                 return "failed"
 
-            self.robot.head.cancel_goal()
-            self.robot.speech.speak("Ok, I will clean the {}".format(self.roomw.resolve()), block=False)
-            self.collect_cleanup_locations()
+        return "done"
 
-            return "done"
+class AskWhichRoomToClean(smach.StateMachine):
+    # Logic in this code is still flawed. No correct repetition.....
+    # EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
+    def __init__(self, robot, room_grammar, roomw, cleanup_locationsw):
+        smach.StateMachine.__init__(self, outcomes=["done"])
 
-        nr_of_tries += 1
+        hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
+        room_name_des = ds.AttrDesignator(hmi_result_des, "sentence", resolve_type=str)
+
+        @smach.cb_interface(outcomes=['done'])
+        def write_room(ud, des_read, des_write):
+            # type: (object, ds.Designator, ds.Designator) -> str
+            assert(ds.is_writeable(des_write))
+            assert(des_write.resolve_type == des_read.resolve_type)
+            des_write.write(des_read.resolve())
+            return 'done'
+
+        with self:
+            smach.StateMachine.add("ASK_WHICH_ROOM", robot_smach_states.Say(robot, "Which room should I clean for you?",
+                                                                            block=True),
+                                   transitions={"spoken": "HEAR_ROOM"})
+            smach.StateMachine.add("HEAR_ROOM", robot_smach_states.HearOptionsExtra(robot, room_grammar,
+                                                                                    ds.writeable(hmi_result_des)),
+                                   transitions={"heard": "SAY_HEARD_CORRECT",
+                                                "no_result": "ASK_WHICH_ROOM"})
+            smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.SayFormatted(
+                robot, "I understood that the {room} should be cleaned, is this correct?", room=room_name_des,
+                block=True),
+                                   transitions={"spoken": "HEAR_CORRECT"})
+            smach.StateMachine.add("HEAR_CORRECT", robot_smach_states.AskYesNo(robot),
+                                   transitions={"yes": "FILL_LOCATIONS",
+                                                "no": "ASK_WHICH_ROOM",
+                                                "no_result": "ASK_WHICH_ROOM"})
+            smach.StateMachine.add("FILL_LOCATIONS", RoomToCleanUpLocations(challenge_knowledge, roomw,
+                                                                            cleanup_locationsw),
+                                   transitions={"done": "WRITE_ROOM"})
+            smach.StateMachine.add('WRITE_ROOM', smach.CBState(write_room, cb_args=[room_name_des, roomw]),
+                                   transitions={'done': 'done'})
 
 
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    # The probability number must be determined experimentally
     # Designators
     # Room to search through
-    roomr = ds.VariableDesignator('kitchen', resolve_type=str)
-    roomw =roomr.writeable
-    # Answer given by operator
-    answerr = ds.VariableDesignator('yes', resolve_type=str)
-    answerw = ds.VariableWriter(answerr)
+    roomr = ds.VariableDesignator(resolve_type=str)
+    roomw = roomr.writeable
 
     # Cleanup location as defined in local knowledge
-    cleanup_locationsr = ds.VariableDesignator([{'1':'2', '3':'4'}])
+    cleanup_locationsr = ds.VariableDesignator([{'1': '2', '3': '4'}])
     cleanup_locationsw = cleanup_locationsr.writeable
     location_des = ds.VariableDesignator(resolve_type=dict)
 
     with sm:
-        # Somehow, the next commented states do not work properly.....
-        # Start challenge via StartChallengeRobust
-        # smach.StateMachine.add("START_CHALLENGE_ROBUST",
-        #                        robot_smach_states.StartChallengeRobust(robot,challenge_knowledge.initial_pose),
-        #                        transitions={"Done":    "GO_TO_START",
-        #                                     "Aborted": "GO_TO_START",
-        #                                     "Failed":  "GO_TO_START"})
-        # smach.StateMachine.add("GO_TO_START",
-        #                        robot_smach_states.NavigateToWaypoint(robot=robot,
-        #                                                              waypoint_designator=EntityByIdDesignator(robot=robot,
-        #                                                                          id=challenge_knowledge.starting_point),
-        #                                                              radius=0.3),
-        #                        transitions={"arrived": "INQUIRE_ROOM",
-        #                                     "unreachable": "INQUIRE_ROOM",
-        #                                     "goal_not_defined": "INQUIRE_ROOM"})
-
-
-        # The next two states 'teleport' the robot from the initial_pose to the challenge starting point
-        # in the arena. These states replace the two states above, which do not work correctly.
-
         smach.StateMachine.add("INITIALIZE",
                                robot_smach_states.Initialize(robot),
                                transitions={"initialized": "SET_INITIAL_POSE",
@@ -178,18 +198,18 @@ def setup_statemachine(robot):
                                             "error":  "INQUIRE_ROOM"})
 
         smach.StateMachine.add("INQUIRE_ROOM",
-                                AskWhichRoomToClean(robot, roomw, answerw, cleanup_locationsw),
-                                transitions={"done":    "VERIFY",
-                                             "failed":  "INQUIRE_ROOM"})
+                                AskWhichRoomToClean(robot, ds.Designator(challenge_knowledge.grammar), roomw,
+                                                    cleanup_locationsw),
+                                transitions={"done":    "VERIFY"})
 
-        smach.StateMachine.add('VERIFY',
-                           VerifyWorldModelInfo(robot),
-                           transitions={"done": "SAY_START_CHALLENGE", "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
+        smach.StateMachine.add('VERIFY', VerifyWorldModelInfo(robot),
+                               transitions={"done": "SAY_START_CHALLENGE",
+                                                                                  "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
 
-        smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE',
-                           robot_smach_states.Say(robot, ["My knowledge of the world is not complete!",
-                                                          "Please give me some more information!"], block=False),
-                           transitions={"spoken": "Aborted"})
+        smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE', robot_smach_states.Say(robot,
+                                                                ["My knowledge of the world is not complete!",
+                                                                "Please give me some more information!"], block=False),
+                               transitions={"spoken": "Aborted"})
 
         smach.StateMachine.add('SAY_START_CHALLENGE',
                                robot_smach_states.Say(robot, ["Starting the cleanup challenge",
@@ -206,22 +226,24 @@ def setup_statemachine(robot):
                                             "stop_iteration": "RETURN_TO_OPERATOR"})
 
         smach.StateMachine.add("INSPECT",
-                                CleanInspect(robot, location_des),
-                                transitions={"done": "ITERATE_NEXT_LOC"})
+                                CleanInspect(robot, location_des), transitions={"done": "ITERATE_NEXT_LOC"})
 
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=ds.EntityByIdDesignator(robot=robot,
-                                                                                 id=challenge_knowledge.starting_point),
+                                                                     waypoint_designator=ds.EntityByIdDesignator(
+                                                                         robot=robot,
+                                                                         id=challenge_knowledge.starting_point),
                                                                      radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
                                             "unreachable": "SAY_CLEANED_ROOM",
                                             "goal_not_defined": "SAY_CLEANED_ROOM"})
 
         smach.StateMachine.add('SAY_CLEANED_ROOM',
-                               robot_smach_states.Say(robot, ["I successfully cleaned the {}!".format(roomr),
-                                                              "All done. Am I a good robot now?",
-                                                              "There, I cleaned up your mess, are you happy now!"], block=False),
+                               robot_smach_states.SayFormatted(robot,
+                                   ["I successfully cleaned the {room}!",
+                                   "All done in the {room}. Am I a good robot now?",
+                                   "There, I cleaned up your mess in the {room}, are you happy now!"],
+                                                               room=roomr, block=False),
                                transitions={"spoken": "Done"})
 
     return sm

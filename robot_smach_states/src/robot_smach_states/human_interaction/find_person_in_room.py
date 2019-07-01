@@ -98,6 +98,9 @@ class FindPerson(smach.State):
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
+            rospy.loginfo("Found {} people, but filtering still to be done".format(len(found_people)))
+            found_people = [p for p in found_people if p]
+            rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
             found_names = {person.id: person for person in found_people}
 
             found_person = None
@@ -107,9 +110,10 @@ class FindPerson(smach.State):
             else:
                 # find which of those is closest
                 robot_pose = self._robot.base.get_location()
-                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
+                if found_people:
+                    found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
 
-            if self._room:
+            if self._room and found_person:
                 room_entity = self._robot.ed.get_entity(id=self._room)
                 if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
                     # If the person is not in the room we are looking for, ignore the person
