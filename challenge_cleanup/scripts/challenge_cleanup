@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
-# ROS
 import rospy
+from challenge_cleanup.cleanup import setup_statemachine
+from robot_smach_states.util.startup import startup
 
-# TU/e Robotics
-from robot_skills.util.robot_constructor import robot_constructor
 
-# We need more stuff here???
+if __name__ == "__main__":
+    rospy.init_node("challenge_cleanup")
+    startup(setup_statemachine)

@@ -168,7 +168,7 @@ class SayFormatted(smach.State):
         missing_ph = place_holders - set(self.ph_designators.keys())
         if missing_ph:
             raise RuntimeError("Not all named place holders are provided, missing: {}".
-                               format(" ".join(map(str, missing_ph))))
+                               format(", ".join(map(str, missing_ph))))
 
 
 class HearOptions(smach.State):
