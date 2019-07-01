@@ -134,7 +134,7 @@ class FuncDesignator(Designator):
         if orig:
             try:
                 return self.func(orig)
-            except Exception, e:
+            except Exception as e:
                 rospy.logerr("Cannot apply function {0} on {1}: {2}".format(self.func, orig, e))
                 return None
         else:
