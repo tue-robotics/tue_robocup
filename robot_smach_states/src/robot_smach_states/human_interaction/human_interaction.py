@@ -103,16 +103,17 @@ class SayFormatted(smach.State):
     >>> outcomes = [sayf.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
-    >>> #After many calls, all options in the list will very likely have been called at least one.
-    >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)
+    >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"])
+    >>> sayf2 = SayFormatted(robot, des, a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes2 = [sayf2.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes2)
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
                  look_at_standing_person=False, **kwargs):
         smach.State.__init__(self, outcomes=["spoken"])
-        ds.check_type(sentence, str, list)
+        ds.check_type(sentence, [str], str)
         assert(isinstance(language, str) or isinstance(language, type(None)))
         assert(isinstance(personality, str) or isinstance(personality, type(None)))
         assert(isinstance(voice, str) or isinstance(voice, type(None)))
