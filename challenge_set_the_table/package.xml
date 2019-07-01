@@ -10,7 +10,12 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>robot_skills</exec_depend>
   <exec_depend>robot_smach_states</exec_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>smach</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>tf_conversions</exec_depend>
+  <exec_depend>tf_conversions</exec_depend>
 </package>
