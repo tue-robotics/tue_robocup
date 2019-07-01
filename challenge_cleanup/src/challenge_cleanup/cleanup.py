@@ -2,7 +2,7 @@
 
 import rospy
 import smach
-import random
+
 
 import hmi
 import robot_smach_states
@@ -25,7 +25,7 @@ class VerifyWorldModelInfo(smach.State):
         # Look for trash units; can be in living_room and kitchen.
         # THIS IS ARENA DEPENDANT!! (Should be handled in a different way?)
         # There should be an 'underscore_rule' : trash_bin or trashbin???
-        # (Different between rgo2019 and robotics_testlab knowledge)
+        # (Different between rgo2019 and robotics_testlabs knowledge)
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:

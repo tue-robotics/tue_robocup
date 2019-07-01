@@ -7,7 +7,6 @@ from robot_skills.classification_result import ClassificationResult
 
 
 class CleanInspect(smach.StateMachine):
-    # def __init__(self, robot, location_id, room_id, navigate_area, segment_areas):
     def __init__(self, robot, location_des):
         """
         Visit all selected locations from the list, and handle the found objects
@@ -15,24 +14,17 @@ class CleanInspect(smach.StateMachine):
         """
 
         smach.StateMachine.__init__(self, outcomes=['done'])
-#new
-        # location = location_des.resolve()
-        # segment_areas = location['segment_areas']
-        # navigate_area = location['navigation_area']
-        # location_id = location['name']
-        # room_id = location['room']
 
         segment_areas = ValueByKeyDesignator(location_des, "segment_areas", [str], name='segment_areas')
         segment_area = VariableDesignator(resolve_type=str, name='segment_area')
 
-        navigation_area_des = ValueByKeyDesignator(location_des, key='navigation_area', resolve_type=str, name='navigation_area')
+        navigation_area_des = ValueByKeyDesignator(location_des, key='navigation_area', resolve_type=str,
+                                                   name='navigation_area')
         location_id_des = ValueByKeyDesignator(location_des, key='name', resolve_type=str, name='location_id')
-        room_id_des = ValueByKeyDesignator(location_des, key='room', resolve_type=str, name='room_id')
-#/new
+
         # Set up the designators for this machine
         e_classifications_des = VariableDesignator([], resolve_type=[ClassificationResult], name='e_classifications_des')
         e_des = EdEntityDesignator(robot, id_designator=location_id_des, name='e_des')
-        room_des = EdEntityDesignator(robot, id_designator=room_id_des, name='room_des')
 
         with self:
             smach.StateMachine.add('ITERATE_NEXT_AREA',
