@@ -146,12 +146,13 @@ def setup_statemachine(robot):
                                 transitions={"done":    "VERIFY"})
 
         smach.StateMachine.add('VERIFY', VerifyWorldModelInfo(robot),
-                           transitions={"done": "SAY_START_CHALLENGE", "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
+                               transitions={"done": "SAY_START_CHALLENGE",
+                                                                                  "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
 
-        smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE',
-                           robot_smach_states.Say(robot, ["My knowledge of the world is not complete!",
-                                                          "Please give me some more information!"], block=False),
-                           transitions={"spoken": "Aborted"})
+        smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE', robot_smach_states.Say(robot,
+                                                                ["My knowledge of the world is not complete!",
+                                                                "Please give me some more information!"], block=False),
+                               transitions={"spoken": "Aborted"})
 
         smach.StateMachine.add('SAY_START_CHALLENGE',
                                robot_smach_states.Say(robot, ["Starting the cleanup challenge",
@@ -168,13 +169,13 @@ def setup_statemachine(robot):
                                             "stop_iteration": "RETURN_TO_OPERATOR"})
 
         smach.StateMachine.add("INSPECT",
-                                CleanInspect(robot, location_des),
-                                transitions={"done": "ITERATE_NEXT_LOC"})
+                                CleanInspect(robot, location_des), transitions={"done": "ITERATE_NEXT_LOC"})
 
         smach.StateMachine.add("RETURN_TO_OPERATOR",
                                robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=ds.EntityByIdDesignator(robot=robot,
-                                                                                 id=challenge_knowledge.starting_point),
+                                                                     waypoint_designator=ds.EntityByIdDesignator(
+                                                                         robot=robot,
+                                                                         id=challenge_knowledge.starting_point),
                                                                      radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
                                             "unreachable": "SAY_CLEANED_ROOM",
@@ -184,7 +185,8 @@ def setup_statemachine(robot):
                                robot_smach_states.SayFormatted(robot,
                                    ["I successfully cleaned the {room}!",
                                    "All done in the {room}. Am I a good robot now?",
-                                   "There, I cleaned up your mess in the {room}, are you happy now!"], block=False),
+                                   "There, I cleaned up your mess in the {room}, are you happy now!"],
+                                                               room=roomr, block=False),
                                transitions={"spoken": "Done"})
 
     return sm
