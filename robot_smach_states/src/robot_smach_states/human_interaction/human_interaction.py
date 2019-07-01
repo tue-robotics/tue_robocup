@@ -103,6 +103,12 @@ class SayFormatted(smach.State):
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes2 = [sayf2.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes2)
+    >>>
+    >>> sayf3 = SayFormatted(robot, des, b=ds.VariableDesignator("hero"))
+    >>> sayf3.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    RuntimeError: ...
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
