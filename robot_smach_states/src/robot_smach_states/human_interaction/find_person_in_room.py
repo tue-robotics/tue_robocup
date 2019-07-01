@@ -5,12 +5,8 @@ import math
 import sys
 
 # ROS
-import PyKDL as kdl
-import geometry_msgs
 import rospy
 import smach
-from sensor_msgs.msg import Image, CameraInfo
-import message_filters
 
 # TU/e Robotics
 import robot_smach_states as states
@@ -23,108 +19,171 @@ class FindPerson(smach.State):
     Smach state to find a person. The robot looks around and tries to recognize all faces in view.
     """
 
-    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
-                 discard_other_labels=True, found_entity_designator=None, room=None):
+    def __init__(self, robot, properties=None, query_entity_designator=None,
+                 result_designator=None, look_distance=1.0, speak=False,
+                 strict=True, nearest=False, attempts=1, search_timeout=60):
         """ Initialization method
         :param robot: robot api object
-        :param person_label: (str) person label or a designator resolving to a str
+        :param properties: (dict) keyvalue pair of the properties a person must
+            possess. None as a value for a property would search for all possible
+            values of the property.
+        :param query_entity_designator: An entity designator to match all found
+            people to
+        :param result_designator: A designator to write the search result to.
+            The designator always has a list of found people written to it.
+        :param look_distance: (float) The distance (radius) which the robot must look at
+        :param speak: (bool) If True, the robot will speak while trying to find
+            a named person
+        :param strict: (bool) If True then only people with all specified
+            properties is returned else all people with at least one true property
+        :param nearest: (bool) If True, selects the person nearest to the robot
+        :param attempts: (int) Max number of search attempts
         :param search_timeout: (float) maximum time the robot is allowed to search
-        :param look_distance: (float) robot only considers laser entities within this radius
-        :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
-        :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
         self._robot = robot
 
-        ds.check_type(person_label, str)
-        self._person_label = person_label
+        self._properties = properties
+        self._look_distance = look_distance
+        self._speak = speak
+        self._strict = strict
+        self._nearest = nearest
 
         self._search_timeout = search_timeout
-        self._look_distance = look_distance
-        self._face_pos_pub = rospy.Publisher(
-            '/%s/find_person/person_detected_face' % robot.robot_name,
-            geometry_msgs.msg.PointStamped, queue_size=10)
-        self._probability_threshold = probability_threshold
-        self._discard_other_labels = discard_other_labels
 
-        if found_entity_designator:
-            ds.is_writeable(found_entity_designator)
-        self._found_entity_designator = found_entity_designator
+        if result_designator:
+            ds.is_writeable(result_designator)
+        self._result_designator = result_designator
 
-        self._room = room
+        if query_entity_designator:
+            ds.check_type(query_entity_designator, ds.Entity)
+        self._query_entity_designator = query_entity_designator
 
     def execute(self, userdata=None):
-        person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
+        look_angles = None
+        person_label = None
+        if not self._properties:
+            look_angles = [0]
+        else:
+            look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
+            try:
+                person_label = self._properties["id"]
+                ds.check_type(person_label, "str")
+                person_label = person_label.resolve() if hasattr(person_label, 'resolve') else person_label
 
-        rospy.loginfo("Trying to find {}".format(person_label))
-        self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("{}, please look at me while I am looking for you".format(person_label),
-                                 block=False)
+                rospy.loginfo("Trying to find {}".format(person_label))
+                if self._speak:
+                    self._robot.speech.speak(
+                            "{}, please look at me while I am looking for you".format(
+                            person_label),
+                        block=False)
+            except:
+                # The try except is to check if a named person is queried for
+                # in the properties. If there is none then exception is raised
+                # and nothing is to be done with it
+                pass
+
         start_time = rospy.Time.now()
 
-        look_distance = 2.0  # magic number 4
-        look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
-        head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
-                                                    y=look_distance * math.sin(angle), z=1.3,
+        head_goals = [kdl_conversions.VectorStamped(x=self._look_distance * math.cos(angle),
+                                                    y=self._look_distance * math.sin(angle),
+                                                    z=1.5,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
                       for angle in look_angles]
 
         i = 0
+        attempts = 0
 
         rate = rospy.Rate(2)
-        while (rospy.Time.now() - start_time).to_sec() < self._search_timeout and not rospy.is_shutdown():
+        while not rospy.is_shutdown() and
+            attempts < self._attempts and
+            (rospy.Time.now() - start_time).to_sec() < self._search_timeout:
+
             if self.preempt_requested():
                 return 'failed'
 
             self._robot.head.look_at_point(head_goals[i])
             i += 1
+
             if i == len(head_goals):
                 i = 0
+                attempts += 1
+
             self._robot.head.wait_for_motion_done()
 
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
-            found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
-            rospy.loginfo("Found {} people, but filtering still to be done".format(len(found_people)))
-            found_people = [p for p in found_people if p]
-            rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
-            found_names = {person.id: person for person in found_people}
+            found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
 
-            found_person = None
+            robot_pose = self._robot.base.get_location()
+            # TODO: Check probable bug here
+            found_people = filter(lambda x: (x.pose.frame.p -
+                robot_pose.frame.p).Norm() < self._look_distance, found_people)
 
-            if self._discard_other_labels:
-                found_person = found_names.get(person_label, None)
+
+            if self._properties:
+                for k, v in self._properties.items():
+                    found_people = filter(lambda x:
+                            self._check_person_property(x, k, v), found_people)
+
+            result_people = None
+
+            if self._query_entity_designator:
+                query_entity = self._query_entity_designator.resolve()
+                result_people = filter(lambda x:
+                        query_entity.in_volume(x.pose.extractVectorStamped(),
+                        'in'), found_people)
+
+                # If people not in query_entity then try if query_entity in
+                # people
+                if not result_people:
+                    # This is for a future feature when object recognition
+                    # becomes more advanced
+                    try:
+                        result_people = filter(lambda x:
+                            x.in_volume(query_entity.pose.extractVectorStamped(),
+                                'in'), found_people)
+                    except:
+                        pass
             else:
-                # find which of those is closest
-                robot_pose = self._robot.base.get_location()
-                if found_people:
-                    found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
+                result_people = found_people
 
-            if self._room and found_person:
-                room_entity = self._robot.ed.get_entity(id=self._room)
-                if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
-                    # If the person is not in the room we are looking for, ignore the person
-                    rospy.loginfo("We found a person '{}' but was not in desired room '{}' so ignoring that person"
-                                  .format(found_person.id, room_entity.id))
-                    found_person = None
 
-            if found_person:
-                rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
+            if result_people:
+                if person_label and filter(lambda x:
+                        self._check_person_property(x, "id", person_label),
+                        result_people) and self._speak:
+                    self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
-                if self._found_entity_designator:
-                    self._found_entity_designator.write(found_person)
+                if self._result_designator:
+                    self._result_designator.write(result_people)
 
                 return 'found'
             else:
-                rospy.logwarn("Could not find {}".format(person_label))
+                rospy.logwarn("Could not find people meeting the requirements")
                 rate.sleep()
 
+        rospy.logwarn("Exceeded trail or time limit")
         self._robot.head.close()
         rospy.sleep(2.0)
         return 'failed'
+
+    def _check_person_property(self, person, prop_name, prop_value):
+        person_attr_val = getattr(person, prop_name)
+        if prop_value:
+            if self._strict:
+                if person_attr_val == prop_value:
+                    return True
+            else:
+                if person_attr_val in prop_value:
+                    return True
+        else:
+            if person_attr_val:
+                return True
+
+        return False
 
 
 class _DecideNavigateState(smach.State):
