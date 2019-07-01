@@ -45,7 +45,7 @@ class DriveIn(smach.StateMachine):
             smach.StateMachine.add("INSPECT_BAR",
                                    states.Inspect(robot=robot, entityDes=bar_designator, navigation_area="in_front_of",
                                                   objectIDsDes=objects_list_des),
-                                   transitions={"done": "INSPECT_FALLBACK",  # ToDo: transition to NAVIGATE_TO_ROOM
+                                   transitions={"done": "NAVIGATE_TO_ROOM",
                                                 "failed": "INSPECT_FALLBACK"})
 
             # Inspect fallback - ask the bartender which drink is unavailable and store the unavailable drink
