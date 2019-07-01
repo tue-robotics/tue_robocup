@@ -112,7 +112,7 @@ class SayFormatted(smach.State):
     """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False, **kwargs):
+                 look_at_standing_person=False, **place_holders):
         smach.State.__init__(self, outcomes=["spoken"])
         ds.check_type(sentence, [str], str)
         assert(isinstance(language, str) or isinstance(language, type(None)))
@@ -121,9 +121,9 @@ class SayFormatted(smach.State):
         assert(isinstance(mood, str) or isinstance(mood, type(None)))
         assert(isinstance(block, bool))
 
-        assert(all(isinstance(v, ds.Designator) for v in kwargs.values()))
+        assert(all(isinstance(v, ds.Designator) for v in place_holders.values()))
 
-        self.ph_designators = kwargs
+        self.ph_designators = place_holders
 
         if isinstance(sentence, str) or isinstance(sentence, list):
             self._check_place_holders(sentence)
