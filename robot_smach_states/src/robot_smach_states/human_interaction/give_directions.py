@@ -128,61 +128,96 @@ class GiveDirections(smach.State):
             start_room_id = kdl_path_rooms[0][1].id
             sentence += "We are now in the {}.\n".format(start_room_id)
 
-        # We need to remember the 'previous' room id so the robot can mention when the next room is entered
-        prev_room_id = start_room_id
+        if len(passed_room_ids) > 2:
+            sentence += "We will pass through "
+            sentence += "the {}".format(passed_room_ids[1])
+            if len(passed_room_ids) > 3:
+                for room in passed_room_ids[2:-2]:
+                    sentence += ", the {}".format(room)
+                sentence += " and the {}".format(passed_room_ids[-2])
+            sentence += "\n"
+        sentence += "We will enter the {}\n".format(passed_room_ids[-1])
 
         # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
         passed_ids = []
         for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
                                                         kdl_path_rooms[1:]):
 
-            # Check if the room has changed
-            if prev_room_id != room.id:
-                sentence += "You enter the {}.\n".format(room.id)
-                prev_room_id = room.id
+            # Check if we have entered the final room
+            if room.id != passed_room_ids[-1]:
+                continue
 
-            furniture_objects = furniture_entities_room[room]  # Furniture objects of the room in which this waypoint
-            # is situated
-            to_add = []  # will contain tuples (str, distance, str) with the entity id, the distance between this
-            # waypoint and the center of this entity (in x-direction) and the side where the entity is (w.r.t. the path)
-            reached_target = False
-            for entity in furniture_objects:  # type: Entity
-                rospy.logdebug("\tEntity: {}".format(room.id))
+            # Compute the pose of the entity w.r.t. the 'path'
+            entity_pose_path = self.get_entity_pose_in_path(position, next_position, target_entity.pose.frame)
 
-                # Check if in passed ids
-                if entity.id in passed_ids:
-                    rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
-                    continue
+            # Check where the target is upon entering the room
+            angle = math.atan2(entity_pose_path.p.y(), entity_pose_path.p.x())
+            rospy.loginfo("angle = {} rad, {} degrees".format(angle, angle * 180 / math.pi))
+            if abs(angle) < 0.25*math.pi:
+                sentence += "The {} will be in front of you.\n".format(target_entity.id)
+            else:
+                side = "left" if angle > 0.0 else "right"
+                sentence += "The {} is on your {}.\n".format(target_entity.id, side)
+            break
 
-                # Compute the pose of the entity w.r.t. the 'path'
-                entity_pose_path = self.get_entity_pose_in_path(position, next_position, entity.pose.frame)
+            # garbage
 
-                # Check the distance
-                if abs(entity_pose_path.p.x()) < self._x_threshold and abs(entity_pose_path.p.y()) < self._y_threshold:
-                    rospy.logdebug("Appending {}: ({}, {})".format(
-                        entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
 
-                    side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
-
-                    to_add.append((entity.id, entity_pose_path.p.y(), side))
-
-            # Sort the list based on the distance
-            to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
-
-            # Add all items to the list
-            for entity_id, _, side in to_add:
-                if entity_id == target_entity.id:
-                    reached_target = True
-                    break
-                else:
-                    sentence += "You walk by the {} on your {}.\n".format(entity_id, side)
-
-                passed_ids.append(entity_id)
-
-            if reached_target:
-                break
-
-        sentence += "You have now reached the {}.\n".format(target_entity.id)
+        # # We need to remember the 'previous' room id so the robot can mention when the next room is entered
+        # prev_room_id = start_room_id
+        #
+        # # Keep track of the ids of the entities that are passed so that the robot doesn't mention any entity twice
+        # passed_ids = []
+        # for (position, room), (next_position, _) in zip(kdl_path_rooms[:-1],
+        #                                                 kdl_path_rooms[1:]):
+        #
+        #     # Check if the room has changed
+        #     if prev_room_id != room.id:
+        #         sentence += "You enter the {}.\n".format(room.id)
+        #         prev_room_id = room.id
+        #
+        #     furniture_objects = furniture_entities_room[room]  # Furniture objects of the room in which this waypoint
+        #     # is situated
+        #     to_add = []  # will contain tuples (str, distance, str) with the entity id, the distance between this
+        #     # waypoint and the center of this entity (in x-direction) and the side where the entity is (w.r.t. the path)
+        #     reached_target = False
+        #     for entity in furniture_objects:  # type: Entity
+        #         rospy.logdebug("\tEntity: {}".format(room.id))
+        #
+        #         # Check if in passed ids
+        #         if entity.id in passed_ids:
+        #             rospy.logdebug("Skipping {}, already in passed ids".format(room.id))
+        #             continue
+        #
+        #         # Compute the pose of the entity w.r.t. the 'path'
+        #         entity_pose_path = self.get_entity_pose_in_path(position, next_position, entity.pose.frame)
+        #
+        #         # Check the distance
+        #         if abs(entity_pose_path.p.x()) < self._x_threshold and abs(entity_pose_path.p.y()) < self._y_threshold:
+        #             rospy.logdebug("Appending {}: ({}, {})".format(
+        #                 entity.id, entity_pose_path.p.x(), entity_pose_path.p.y()))
+        #
+        #             side = "left" if entity_pose_path.p.y() >= 0.0 else "right"
+        #
+        #             to_add.append((entity.id, entity_pose_path.p.y(), side))
+        #
+        #     # Sort the list based on the distance
+        #     to_add.sort(key=lambda id_distance_tuple: id_distance_tuple[1])
+        #
+        #     # Add all items to the list
+        #     for entity_id, _, side in to_add:
+        #         if entity_id == target_entity.id:
+        #             reached_target = True
+        #             break
+        #         else:
+        #             sentence += "You walk by the {} on your {}.\n".format(entity_id, side)
+        #
+        #         passed_ids.append(entity_id)
+        #
+        #     if reached_target:
+        #         break
+        #
+        # sentence += "You have now reached the {}.\n".format(target_entity.id)
 
         rospy.loginfo("Directions computation took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
 

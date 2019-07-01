@@ -1,6 +1,7 @@
 """
 Module contains states to guide an operator to a designated location.
 """
+import math
 
 # ROS
 import rospy
@@ -8,7 +9,7 @@ import smach
 import PyKDL as kdl
 
 # Robot skills
-from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 from robot_smach_states.util.designators import EdEntityDesignator
 
 # robot_smach_states.navigation
@@ -40,6 +41,126 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     return False
 
 
+class TourGuide(object):
+    def __init__(self, robot, x_threshold=0.75, y_threshold=1.5):
+        self._robot = robot
+        self._x_threshold = x_threshold
+        self._y_threshold = y_threshold
+
+        self.initialise()
+
+    def describe_near_objects(self):
+        # type: (-) -> string
+        """
+        Describes near objects based on the robots current position
+        :return: A description of the robots surroundings
+        :rtype: string
+        """
+        position = self._robot.base.get_location()
+
+        try:
+            room = self.get_room(position.frame.p)
+        except RuntimeError:
+            rospy.logwarn("position ({}) not in any room".format(position.frame.p))
+            return ""
+
+        if room.id not in self._passed_room_ids:
+            self._passed_room_ids.append(room.id)
+            rospy.logdebug("describe entering room: {}.\t passed rooms is now {}".format(room.id, self._passed_room_ids))
+            return "We now enter the {}".format(room.id)
+
+        # not entering a new room, checking furniture
+        furniture_objects = self._furniture_entities_room[room]  # Furniture objects in our current room
+        for entity in furniture_objects:  # type: Entity
+            # Check if in passed ids
+            if entity.id in self._passed_furniture_ids:
+                continue
+
+            # Compute the pose of the entity w.r.t. the 'path'
+            entity_relative_pose = position.frame.Inverse() * entity.pose.frame
+
+            # Check the distance
+            if abs(entity_relative_pose.p.x()) < self._x_threshold and abs(entity_relative_pose.p.y()) < self._y_threshold:
+                self._passed_furniture_ids.append(entity.id)
+                side = "left" if entity_relative_pose.p.y() >= 0.0 else "right"
+                rospy.logdebug(
+                    "describe passing entity: {}.\t passed entities is now {}".format(room.id, self._passed_room_ids))
+                return "On our {} you can see the {}".format(side, entity.id)
+
+        # no furniture passed, nothing of interest
+        return ""
+
+    def initialise(self):
+        entities = self._robot.ed.get_entities()
+        self._furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
+        self._room_entities = [room for room in entities if room.type == "room"]
+
+        # Match the furniture entities to rooms
+        self._furniture_entities_room = {room: [] for room in self._room_entities}  # map room entities to furniture entities
+        for item in self._furniture_entities:  # type: Entity
+
+            try:
+                room = self.get_room(item._pose.p)
+                self._furniture_entities_room[room].append(item)
+                rospy.loginfo("{} ({}) is in the {}".format(item.id, item._pose.p, room.id))
+            except RuntimeError:
+                rospy.logwarn("{} ({}) not in any room".format(item.id, item._pose.p))
+                # continue
+
+        self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
+        self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
+
+        # get initial room
+        position = self._robot.base.get_location()
+        try:
+            room = self.get_room(position.frame.p)
+            self._passed_room_ids.append(room.id)
+        except RuntimeError:
+            rospy.logwarn("position ({}) not in any room".format(position.frame.p))
+
+        # get initial entities
+        r = math.sqrt(self._x_threshold*self._x_threshold + self._y_threshold*self._y_threshold)
+        close_entities = self._robot.ed.get_entities(center_point=position.extractVectorStamped(), radius=r)
+        close_furniture_entities = [entity for entity in close_entities if entity.is_a("furniture")]
+        for entity in close_furniture_entities:
+            self._passed_furniture_ids.append(entity.id)
+        rospy.loginfo("reset TourGuide: passed rooms: {}.\t passed entities {}"
+                      .format(self._passed_room_ids, self._passed_furniture_ids))
+
+    def in_room(self, room, position):
+        # type: (Entity, kdl.Vector) -> bool
+        """
+        Checks if the given position is in the given room
+        :param room: Room entity
+        :type room: Entity
+        :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
+        entities
+        :type position: kdl.Vector
+        :return: whether or not the position is in the room
+        :rtype: bool
+        """
+        if room.in_volume(VectorStamped(vector=position), "in"):
+            return True
+        return False
+
+    def get_room(self, position):
+        # type: (kdl.Vector) -> Entity
+        """
+        Checks if the given position is in one of the provided rooms
+        :param rooms: list(Entity) containing all room entities
+        :type rooms: list[Entity]
+        :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room entities
+        :type position: kdl.Vector
+        :return: room entity
+        :rtype: Entity
+        :raises: (RuntimeError)
+        """
+        for room in self._room_entities:
+            if self.in_room(room, position):
+                return room
+        raise RuntimeError("Position {} is not in any room".format(position))
+
+
 class ExecutePlanGuidance(smach.State):
     """
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
@@ -53,6 +174,7 @@ class ExecutePlanGuidance(smach.State):
         # self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
         # self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
         # defined by the follow distance
+        self._tourguide = TourGuide(robot)
         
     def execute(self, userdata=None):
 
@@ -87,6 +209,10 @@ class ExecutePlanGuidance(smach.State):
                     rospy.loginfo("Lost operator while guiding, cancelling plan")
                     self.robot.base.local_planner.cancelCurrentPlan()
                     return "lost_operator"
+
+            sentence = self._tourguide.describe_near_objects()
+            if sentence != "":
+                self.robot.speech.speak(sentence)
 
             rate.sleep()
 
