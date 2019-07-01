@@ -232,17 +232,3 @@ def setup_statemachine(robot):
                                transitions={"spoken": "Done"})
 
     return sm
-
-
-
-def main():
-    rospy.init_node('cleanup_challenge')
-
-    # For testing purposes, pick a default room
-    room = 'bedroom'
-
-    robot_smach_states.util.startup(setup_statemachine, challenge_name="cleanup")
-
-
-if __name__ == '__main__':
-    main()
