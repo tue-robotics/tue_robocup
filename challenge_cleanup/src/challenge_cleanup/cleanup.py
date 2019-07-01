@@ -71,10 +71,68 @@ class RoomToCleanUpLocations(smach.State):
                 cleaning_locations.append(loc)
         self._cleanup_locations.write(cleaning_locations)
         # Show the cleanup list on screen
-        rospy.loginfo("Cleaning locations: {}".format(self._cleanup_locations.resolve()))
+
+        rospy.loginfo("Cleaning locations: {}".format(self.cleanup_locationsw.resolve()))
+        return
+
+    def _confirm(self):
+        cgrammar = """
+        C[P] -> A[P]
+        A['yes'] -> yes
+        A['no'] -> no
+        """
+        try:
+            speech_result = self.robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
+                                                                                          "T[False] -> no", target="T")
+        except hmi.TimeoutException:
+            return False
+
+        return speech_result.semantics
+
+    def execute(self, userdata=None):
+        max_tries = 5
+        nr_of_tries = 0
+        count = 0
+
+        self.robot.head.look_at_standing_person(3)
+
+        while nr_of_tries < max_tries and not rospy.is_shutdown():
+            rospy.loginfo('nr_tries: %d', nr_of_tries)
+            while not rospy.is_shutdown():
+                rospy.loginfo('count: %d', count)
+                count += 1
+                self.robot.speech.speak("Which room should I clean for you?", block=True)
+                try:
+                    speech_result = self.robot.hmi.query(description="",
+                                                               grammar=challenge_knowledge.grammar,
+                                                               target="T")
+                    rospy.loginfo("sentence: {}".format(speech_result.sentence))
+                    rospy.loginfo("semantics: {}".format(speech_result.semantics))
+                    self.roomw.write(speech_result.sentence)
+                    rospy.loginfo("roomw: {}".format(self.roomw.resolve()))
+                    break
+                except (hmi.TimeoutException, hmi.GoalNotSucceededException) as e:
+                    if count < 5:
+                        self.robot.speech.speak(random.choice(["I'm sorry, can you repeat",
+                                                         "Please repeat, I didn't hear you",
+                                                         "I didn't get that can you repeat it",
+                                                         "Please speak up, as I didn't hear you"]))
+                    else:
+                        self.robot.speech.speak("I am sorry but I cannot understand you. I will quit now", block=False)
+                        self.robot.head.cancel_goal()
+                        return "failed"
+
+            try:
+                # Now: confirm
+                self.robot.speech.speak("I understood that the {} should be cleaned".format(
+                    speech_result.sentence))
+            except Exception:
+                continue
+
+            if not self._confirm():
+                return "failed"
 
         return "done"
-
 
 class AskWhichRoomToClean(smach.StateMachine):
     # Logic in this code is still flawed. No correct repetition.....
@@ -118,7 +176,6 @@ class AskWhichRoomToClean(smach.StateMachine):
 
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    # The probability number must be determined experimentally
     # Designators
     # Room to search through
     roomr = ds.VariableDesignator(resolve_type=str)
