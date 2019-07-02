@@ -192,11 +192,9 @@ class SelfCleanup(smach.StateMachine):
                                                 "failed": "NAVIGATE_TO_TRASH"})
 
             smach.StateMachine.add('NAVIGATE_TO_TRASH',
-                                   robot_smach_states.NavigateToPlace(robot,
-                                                            trash_place_pose,
-                                                            OccupiedArmDesignator(robot,
-                                                                                  {},
-                                                                                  name="occupied_arm_designator")),
+                                   robot_smach_states.NavigateToPlace(robot, trash_place_pose,
+                                                                      OccupiedArmDesignator(robot, {},
+                                                                            name="occupied_arm_designator")),
                                    transitions={"arrived": "PLACE_IN_TRASH",
                                                 "unreachable": "SAY_PLACE_FAILED",
                                                 "goal_not_defined": "SAY_PLACE_FAILED"})
