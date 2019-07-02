@@ -1,10 +1,12 @@
 #! /usr/bin/env python
 import sys
 import rospy
+import traceback
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
 from robot_skills.util.entity import Entity
+from robot_skills.util.volume import Volume
 from robot_skills.classification_result import ClassificationResult
 
 
@@ -22,8 +24,14 @@ class CheckVolumeEmpty(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['empty', 'occupied'])
             def check_occupied(userdata):
+                seat = entity_des.resolve()  # type: Entity
                 seen_entities = seen_entities_des.resolve()
                 if seen_entities:
+                    try:
+                        vol = seat.volumes[volume]  # type: Volume
+                    except Exception as e:
+                        traceback.print_exc()
+                        rospy.logwarn("Could not get seat and volume, just assuming its occupied: {}".format(e))
                     return 'occupied'
                 else:
                     return 'empty'
