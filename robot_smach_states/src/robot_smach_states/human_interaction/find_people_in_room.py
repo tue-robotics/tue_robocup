@@ -182,6 +182,7 @@ class FindPeople(smach.State):
 
     def _check_person_property(self, person, prop_name, prop_value):
         person_attr_val = getattr(person.person_properties, prop_name)
+        rospy.loginfo("For person {}: {} is {}".format(person.id, prop_name, person_attr_val))
         if prop_value:
             if self._strict:
                 if person_attr_val == prop_value:
