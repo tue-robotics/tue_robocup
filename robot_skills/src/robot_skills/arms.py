@@ -102,10 +102,11 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_goals
 
-    def send_joint_goal(self, configuration, timeout=5.0):
+    def send_joint_goal(self, configuration, timeout=5.0, time_from_start=3.0):
         self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_goals=['{}'])".format(configuration))
-        return self._arm.send_joint_goal(configuration, timeout)
+        return self._arm.send_joint_goal(configuration, timeout=timeout,
+                                         time_from_start=time_from_start)
 
     # Joint trajectories
     def has_joint_trajectory(self, configuration):
@@ -114,10 +115,11 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration, timeout=5):
+    def send_joint_trajectory(self, configuration, timeout=5, time_from_start=3.0):
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
-        return self._arm.send_joint_trajectory(configuration, timeout)
+        return self._arm.send_joint_trajectory(configuration, timeout=timeout,
+                                               time_from_start=time_from_start)
 
     def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
                   allowed_touch_objects=None):
@@ -565,31 +567,35 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration, timeout=5.0):
+    def send_joint_goal(self, configuration, timeout=5.0, time_from_start=3.0):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration: name of configuration, configuration should be loaded as parameter
+        :param time_from_start: time it should take to get to the desired configuration
         :param timeout: timeout in seconds
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_configurations:
             return self._send_joint_trajectory([self.default_configurations[configuration]],
-                                               timeout=rospy.Duration(timeout))
+                                               timeout=rospy.Duration.from_sec(timeout),
+                                               time_from_start=time_from_start)
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration, timeout=5):
+    def send_joint_trajectory(self, configuration, timeout=5.0, time_from_start=3.0):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to
         the arm
         :param configuration: name of configuration, configuration should be loaded as parameter
         :param timeout: timeout in seconds
+        :param time_from_start: time it should take to get to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_trajectories:
             return self._send_joint_trajectory(self.default_trajectories[configuration],
-                                               timeout=rospy.Duration(timeout))
+                                               timeout=rospy.Duration.from_sec(timeout),
+                                               time_from_start=time_from_start)
         else:
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
@@ -697,7 +703,7 @@ class Arm(RobotPart):
             rospy.logerr(e)
             return False
 
-    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5), joint_names = None):
+    def _send_joint_trajectory(self, joints_references, time_from_start=3.0, timeout=rospy.Duration(5), joint_names=None):
         """
         Low level method that sends a array of joint references to the arm.
 
@@ -706,6 +712,7 @@ class Arm(RobotPart):
         succeeded. On timeout, it will return False.
         :param joints_references: list of joint configurations,
         which should be a list of the length equal to the number of joints to be moved
+        :param time_from_start: time it should take to get to the desired configuration
         :param timeout: timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not allowed
         :param joint_names: joint names, which need to me moved
         :return: True or False
@@ -719,7 +726,7 @@ class Arm(RobotPart):
             else:
                 joint_names = self.joint_names
 
-        time_from_start = rospy.Duration(3)
+        time_from_start = rospy.Duration.from_sec(time_from_start)
         ps = []
         for joints_reference in joints_references:
             if len(joints_reference) != len(joint_names):
@@ -898,13 +905,13 @@ class FakeArm(RobotPart):
                   allowed_touch_objects=[]):
         return False
 
-    def send_joint_goal(self, configuration, timeout=5.0):
+    def send_joint_goal(self, configuration, time_from_start=3.0, timeout=5.0):
         return False
 
-    def send_joint_trajectory(self, configuration, timeout=5):
+    def send_joint_trajectory(self, configuration, time_from_start=3.0, timeout=5):
         return False
 
-    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5), joint_names = None):
+    def _send_joint_trajectory(self, joints_references, time_from_start=3.0, timeout=rospy.Duration(5), joint_names = None):
         rospy.logwarn("_send_joint_trajectory called on FakeArm.")
         return False
 
