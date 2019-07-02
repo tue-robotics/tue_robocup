@@ -14,10 +14,10 @@ starting_pose = "gpsr_meeting_point"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
 cleaning_locations = [
-    {'name': 'couch_table',   'room': 'livingroom', 'navigation_area': 'near',   'segment_areas': ['on_top_of']},
-    {'name': 'dinner_table',  'room': 'livingroom', 'navigation_area': 'near',   'segment_areas': ['on_top_of']},
-    {'name': 'cabinet',       'room': 'kitchen',    'navigation_area': 'near',   'segment_areas': ['on_top_of']},
-    {'name': 'hallway_table', 'room': 'hallway',    'navigation_area': 'near',   'segment_areas': ['on_top_of']}
+    {'name': 'dinner_table',  'room': 'livingroom', 'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
+    {'name': 'couch_table',   'room': 'livingroom', 'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
+    {'name': 'cabinet',       'room': 'kitchen',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
+    {'name': 'hallway_table', 'room': 'hallway',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']}
 ]
 
 grammar_target = "T"
