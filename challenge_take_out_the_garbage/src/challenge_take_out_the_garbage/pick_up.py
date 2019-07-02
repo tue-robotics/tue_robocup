@@ -152,10 +152,6 @@ class GrabTrash(smach.State):
             self._robot.torso.send_goal("grab_trash_up")
             self._robot.torso.wait_for_motion_done()
 
-            #TODO: remove this sleep if the wait_for_motion_done works on the robot
-            # rospy.sleep(2)
-            #TODO end
-
             arm_with_object_weight = measure_force.get_force()
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
@@ -320,3 +316,13 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'spoken': "failed"})
 
 
+if __name__ == '__main__':
+    import os
+    import robot_smach_states.util.designators as ds
+    from robot_skills import Hero
+    rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
+    hero = Hero()
+    hero.reset()
+    
+    arm = ds.UnoccupiedArmDesignator(hero, {})
+    GrabTrash(hero, arm).execute()
