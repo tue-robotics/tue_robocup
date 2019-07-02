@@ -14,7 +14,7 @@ import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 
-__all__ = ['FindPeople', 'FindFirstPerson', 'FindPeopleInRoom']
+__all__ = ['FindPeople', 'FindFirstPerson', 'SetPoseFirstFoundPersonToEntity', 'FindPeopleInRoom']
 
 
 class FindPeople(smach.State):
@@ -228,7 +228,7 @@ class FindFirstPerson(smach.StateMachine):
         :param attempts: (int) Max number of search attempts
         :param search_timeout: (float) maximum time the robot is allowed to search
         """
-        super(FindPerson, self).__init__(outcomes=["found", "failed"])
+        super(FindFirstPerson, self).__init__(outcomes=["found", "failed"])
         ds.is_writeable(found_person_designator)
         ds.check_type(found_person_designator, Entity)
 
@@ -257,6 +257,76 @@ class FindFirstPerson(smach.StateMachine):
                                               found_person_designator),
                      transitions={'next': 'found',
                                   'stop_iteration': 'failed'})
+
+
+class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
+    """Wrapper around FirstFoundPerson and addition of
+    UpdateDestEntityPoseWithSrcEntity of top of it
+    """
+
+    def __init__(self,
+                 robot,
+                 found_person_designator,
+                 dst_entity_designator,
+                 dst_entity_type="waypoint",
+                 properties=None,
+                 query_entity_designator=None,
+                 look_distance=10.0,
+                 speak=False,
+                 strict=True,
+                 nearest=False,
+                 attempts=1,
+                 search_timeout=60):
+        """ Initialization method
+        :param robot: robot api object
+        :param found_person_designator: A designator to write the search result to.
+        :param dst_entity_designator: A designator of an Entity whose pose must be updated.
+        :param dst_entity_type: Type of the destination entity
+        :param properties: (dict) keyvalue pair of the properties a person must
+            possess. None as a value for a property would search for all possible
+            values of the property.
+        :param query_entity_designator: An entity designator to match all found
+            people to
+        :param look_distance: (float) The distance (radius) which the robot must look at
+        :param speak: (bool) If True, the robot will speak while trying to find
+            a named person
+        :param strict: (bool) If True then only people with all specified
+            properties is returned else all people with at least one true property
+        :param nearest: (bool) If True, selects the person nearest to the robot
+        :param attempts: (int) Max number of search attempts
+        :param search_timeout: (float) maximum time the robot is allowed to search
+        """
+        super(SetPoseFirstFoundPersonToEntity,
+              self).__init__(outcomes=["done", "failed"])
+
+        with self:
+            self.add("FIND_FIRST_PERSON",
+                     FindFirstPerson(
+                         robot=robot,
+                         found_person_designator=found_person_designator,
+                         properties=properties,
+                         query_entity_designator=query_entity_designator,
+                         look_distance=look_distance,
+                         speak=speak,
+                         strict=strict,
+                         nearest=nearest,
+                         attempts=attempts,
+                         search_timeout=search_timeout),
+                     transitions={
+                         'found': 'UPDATE_POSE',
+                         'failed': 'failed'
+                     })
+
+            self.add("UPDATE_POSE",
+                     states.UpdateDestEntityPoseWithSrcEntity(
+                         robot=robot,
+                         src_entity_designator=found_person_designator,
+                         dst_entity_designator=dst_entity_designator,
+                         dst_entity_type=dst_entity_type),
+                     transitions={
+                         'done': 'done',
+                         'failed': 'failed'
+                     })
 
 
 class _DecideNavigateState(smach.State):
