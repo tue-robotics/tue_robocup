@@ -47,10 +47,10 @@ class TourGuide(object):
         self._x_threshold = x_threshold
         self._y_threshold = y_threshold
 
-        self.initialise()
+        self.initialize()
 
     def describe_near_objects(self):
-        # type: (-) -> string
+        # type: () -> string
         """
         Describes near objects based on the robots current position
         :return: A description of the robots surroundings
@@ -90,7 +90,7 @@ class TourGuide(object):
         # no furniture passed, nothing of interest
         return ""
 
-    def initialise(self):
+    def initialize(self):
         entities = self._robot.ed.get_entities()
         self._furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
         self._room_entities = [room for room in entities if room.type == "room"]
