@@ -7,6 +7,7 @@ from robocup_knowledge import load_knowledge
 from robot_skills.util.entity import Entity
 from challenge_receptionist.find_empty_seat import FindEmptySeat
 from challenge_receptionist.learn_guest import LearnGuest, FieldOfHMIResult
+from math import radians
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
@@ -35,8 +36,8 @@ class IntroduceGuestToOperator(smach.StateMachine):
         ds.check_type(guest_drinkname_des, str)
         ds.check_type(guest_ent_des, Entity)
 
-        all_old_guests = ds.VariableDesignator(resolve_type=[Entity])
-        current_old_guest = ds.VariableDesignator(resolve_type=Entity)
+        all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
+        current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
 
         # TODO: iterate over all people in the room (excluding the guest, but that should be behind us and thus not visible)
         # For each person:
@@ -49,12 +50,11 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    states.FindPeopleInRoom(robot,
                                                            room=challenge_knowledge.waypoint_livingroom['id'],
                                                            found_people_designator=all_old_guests.writeable),
-                                   transitions = {'found': 'GOTO_OPERATOR',
-                                                   'not_found': 'GOTO_OPERATOR'})
+                                   transitions = {'found': 'ITERATE_OLD_GUESTS',
+                                                   'not_found': 'ITERATE_OLD_GUESTS'})
 
             smach.StateMachine.add('ITERATE_OLD_GUESTS',
-                                   states.NavigateToObserve(robot,
-                                                            all_old_guests,
+                                   states.IterateDesignator(all_old_guests,
                                                             current_old_guest.writeable),
                                    transitions={'next': 'GOTO_OPERATOR',
                                                 'stop_iteration': 'succeeded'})
@@ -71,12 +71,18 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                                        ["Hi {name}, let me show you our guest"],
                                                        name=ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
                                                        block=True),
-                                   transitions={'spoken': 'FIND_GUEST'})
+                                   transitions={'spoken': 'TURN_TO_GUEST'})
+
+            smach.StateMachine.add('TURN_TO_GUEST',
+                                   states.Turn(robot=robot,
+                                               radians=radians(180)),
+                                   transitions={"turned": "FIND_GUEST"})
 
             smach.StateMachine.add('FIND_GUEST',
                                    states.FindPerson(robot=robot,
                                                      person_label=guest_name_des,
-                                                     found_entity_designator=guest_ent_des.writeable),
+                                                     found_entity_designator=guest_ent_des.writeable,
+                                                     speak_when_found=False),
                                    transitions={"found": "POINT_AT_GUEST",
                                                 "failed": "abort"})
 
@@ -134,7 +140,7 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'failed': 'aborted'})
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
-                                   states.Say(robot, ["Okidoki, lets go to {}. Please follow me".format(challenge_knowledge.operator_name)],
+                                   states.Say(robot, ["Okidoki, lets go inside. Please follow me"],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_LIVINGROOM_1'})
