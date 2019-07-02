@@ -83,7 +83,7 @@ class GetOrder(smach.StateMachine):
 
             # Detect waving people fallback - ask operator in front
             smach.StateMachine.add("ASK_STEP_IN_FRONT",
-                                   states.Say(robot=robot, sentence="Please step in front of me to give your order",
+                                   states.Say(robot=robot, sentence="Sorry! I could not navigate to you. Please step in front of me to give your order",
                                               look_at_standing_person=True),
                                    transitions={"spoken": "LEARN_NAME"})
 
@@ -99,7 +99,7 @@ class GetOrder(smach.StateMachine):
             # Ask operator for his name fallback
             smach.StateMachine.add("LEARN_NAME_FALLBACK",
                                    states.Say(robot=robot,
-                                              sentence="Sorry, I did not get your name, I'll just call you John",
+                                              sentence="Sorry, I did not get your name, I'll just call you john",
                                               look_at_standing_person=True),
                                    transitions={"spoken": "LEARN_OPERATOR"})
 
@@ -124,4 +124,4 @@ class GetOrder(smach.StateMachine):
                                             unavailable_drink_designator=unavailable_drink_designator,
                                             objects=objects),
                                    transitions={"succeeded": "succeeded",
-                                                "failed": "failed"},)
+                                                "failed": "failed"})
