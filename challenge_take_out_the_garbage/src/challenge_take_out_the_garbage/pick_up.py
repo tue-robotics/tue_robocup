@@ -130,14 +130,15 @@ class GrabTrash(smach.State):
 
         while weight_object < self._minimal_weight and try_current < self._try_num:
             if try_current == 0:
-                self._robot.speech.speak("Let me try to pick up the garbage")
+                # self._robot.speech.speak("Let me try to pick up the garbage")
             else:
                 self._robot.speech.speak("I failed to pick up the trash, let me try again")
                 rospy.loginfo("The weight I felt is %s", weight_object)
             try_current += 1
 
             arm_weight=measure_force.get_force()
-
+            self._robot.speech.speak("empty weight moment")
+            rospy.loginfo("Empty weight %s", arm_weight)
             # Open gripper
             arm.send_gripper_goal('open')
             arm.wait_for_motion_done()
@@ -152,7 +153,9 @@ class GrabTrash(smach.State):
             self._robot.torso.send_goal("grab_trash_up")
             self._robot.torso.wait_for_motion_done()
 
+            self._robot.speech.speak("full weight moment")
             arm_with_object_weight = measure_force.get_force()
+            rospy.loginfo("Full weight %s", arm_with_object_weight)
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
