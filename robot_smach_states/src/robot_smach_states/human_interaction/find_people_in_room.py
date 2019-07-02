@@ -181,7 +181,7 @@ class FindPeople(smach.State):
         return 'failed'
 
     def _check_person_property(self, person, prop_name, prop_value):
-        person_attr_val = getattr(person, prop_name)
+        person_attr_val = getattr(person.person_properties, prop_name)
         if prop_value:
             if self._strict:
                 if person_attr_val == prop_value:
