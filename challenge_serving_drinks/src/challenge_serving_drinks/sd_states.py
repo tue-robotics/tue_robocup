@@ -319,7 +319,7 @@ class AskAvailability(smach.State):
         return speech_result.semantics
 
 
-class DetectWaving(smach.State):
+class DetectWaving(smach.StateMachine):
     """ Waits for waving person.
 
     This is based on the 'WaitForCustomer' class of the the restaurant challenge. Might
@@ -330,7 +330,7 @@ class DetectWaving(smach.State):
         Constructor
         :param robot: robot object
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
+        super(DetectWaving, self).__init__(outcomes=['succeeded', 'failed', 'aborted'])
         self._robot = robot
         self._caller_id = caller_id
 #        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
