@@ -42,12 +42,14 @@ class ServingDrinks(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("INITIALIZE",
-                                   states.StartChallengeRobust(robot=robot,
-                                                               initial_pose=challenge_knowledge.starting_point,
-                                                               use_entry_points=False, door=False),
-                                   transitions={"Done": "INSPECT_BAR",
-                                                "Aborted": "aborted",
-                                                "Failed": "SAY_HI"})
+                                   states.Initialize(robot=robot),
+                                   transitions={"initialized": "INITIAL_POSE",
+                                                "abort": "aborted"})
+
+            smach.StateMachine.add("INITIAL_POSE", states.SetInitialPose(robot, challenge_knowledge.starting_point),
+                                   transitions={"done": "INSPECT_BAR",
+                                                "preempted": "aborted",
+                                                "error": "INSPECT_BAR"})
 
             # Inspect bar and store the list of available drinks
             smach.StateMachine.add("INSPECT_BAR",
