@@ -6,7 +6,7 @@ from hmi import HMIResult
 from robocup_knowledge import load_knowledge
 from robot_skills.util.entity import Entity
 from challenge_receptionist.find_empty_seat import FindEmptySeat
-from challenge_receptionist.learn_guest import LearnGuest, FieldOfHMIResult
+from challenge_receptionist.learn_guest import LearnGuest
 from math import radians
 
 challenge_knowledge = load_knowledge('challenge_receptionist')
