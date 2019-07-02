@@ -230,7 +230,7 @@ class PublicArm(object):
                 joint_names=self._arm.joint_names,
                 points=[JointTrajectoryPoint(
                     positions=[current_joint_state[n] for n in self._arm.joint_names],
-                    time_from_start=rospy.Duration.from_sec(timeout)
+                    time_from_start=rospy.Duration.from_sec(0.5)
                 )]
             )
         ))
