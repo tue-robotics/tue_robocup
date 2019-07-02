@@ -1,3 +1,4 @@
+# System
 import random
 
 # ROS
@@ -7,14 +8,11 @@ import smach
 # TU/e
 import robot_skills
 import robot_smach_states as states
+import robot_smach_states.util.designators as ds
+from hmi import HMIResult
+from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction.give_directions import GiveDirections
 from robot_smach_states.navigation.guidance import GuideToSymbolic
-import robot_smach_states.util.designators as ds
-
-from robocup_knowledge import load_knowledge
-
-from hmi import HMIResult
-
 
 knowledge = load_knowledge("challenge_where_is_this")
 
@@ -50,6 +48,7 @@ class EntityFromHmiResults(ds.Designator):
             return None
 
 
+# ToDo: replace by Human Interaction SayFormatted
 class SayWaitDes(smach.StateMachine):
     def __init__(self, robot, entity_des):
         """ Constructor
@@ -138,7 +137,8 @@ class InformMachine(smach.StateMachine):
             self.entity_des = EntityFromHmiResults(robot, self.answer_des)
 
             smach.StateMachine.add("ANNOUNCE_ITEM",
-                                   states.Say(robot, "Hello, my name is {}. Please call me by my name. Talk loudly into my microphone and wait for the ping".
+                                   states.Say(robot, "Hello, my name is {}. Please call me by my name. "
+                                                     "Talk loudly into my microphone and wait for the ping".
                                               format(robot.robot_name), block=True),
                                    transitions={'spoken': 'WAIT_TO_BE_CALLED'})
 
@@ -149,13 +149,16 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add("INSTRUCT",
                                    states.Say(robot,
-                                              ["Please tell me where you would like to go. Talk loudly into my microphone and wait for the ping",
-                                               "Where do you want to go? Talk loudly into my microphone and wait for the ping"]
-                                              , block=True),
+                                              ["Please tell me where you would like to go. "
+                                               "Talk loudly into my microphone and wait for the ping",
+                                               "Where do you want to go? "
+                                               "Talk loudly into my microphone and wait for the ping"],
+                                              block=True),
                                    transitions={'spoken': 'LISTEN_FOR_LOCATION'})
 
             smach.StateMachine.add('LISTEN_FOR_LOCATION',
-                                   states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable, rospy.Duration(15)),
+                                   states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable,
+                                                           rospy.Duration(15)),
                                    transitions={'heard': "INSTRUCT_FOR_WAIT",
                                                 'no_result': 'failed'})
 
@@ -170,8 +173,8 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add("INSTRUCT_FOLLOW",
                                    states.Say(robot,
-                                              ["Please follow me"]
-                                              , block=True),
+                                              ["Please follow me"],
+                                              block=True),
                                    transitions={'spoken': 'GUIDE_OPERATOR'})
 
             smach.StateMachine.add('GUIDE_OPERATOR',
@@ -184,20 +187,20 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add("SUCCESS",
                                    states.Say(robot,
-                                              ["We have arrived"]
-                                              , block=True),
+                                              ["We have arrived"],
+                                              block=True),
                                    transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
 
             smach.StateMachine.add("SAY_CANNOT_REACH",
                                    states.Say(robot,
-                                              ["I am sorry but I cannot reach the destination."]
-                                              , block=True),
+                                              ["I am sorry but I cannot reach the destination."],
+                                              block=True),
                                    transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
 
             smach.StateMachine.add("SAY_LOST_OPERATOR",
                                    states.Say(robot,
-                                              ["Oops I have lost you completely."]
-                                              , block=True),
+                                              ["Oops I have lost you completely."],
+                                              block=True),
                                    transitions={'spoken': 'RETURN_TO_INFORMATION_POINT'})
 
             smach.StateMachine.add("RETURN_TO_INFORMATION_POINT",
