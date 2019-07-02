@@ -11,7 +11,7 @@ class DummyState(smach.State):
     DummyState to which returns the input outcome
     """
 
-    def __init__(self, result_designator):
+    def __init__(self, result_designator, *args, **kwargs):
         """
         :param result_designator: (VariableDesignator) or (str) The result to
             be returned
@@ -37,7 +37,8 @@ if __name__ == "__main__":
 
     with sm:
         sm.add('FOO',
-               DummyState("yay"),
+               DummyState(robot="arpit",
+                          result_designator="yay"),
                transitions={
                    'succeeded': 'outcome1',
                    'failed': 'outcome2',
