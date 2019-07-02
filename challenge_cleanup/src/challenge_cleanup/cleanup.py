@@ -204,7 +204,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('VERIFY', VerifyWorldModelInfo(robot),
                                transitions={"done": "SAY_START_CHALLENGE",
-                                                                                  "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
+                                            "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
 
         smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE', robot_smach_states.Say(robot,
                                                                 ["My knowledge of the world is not complete!",
