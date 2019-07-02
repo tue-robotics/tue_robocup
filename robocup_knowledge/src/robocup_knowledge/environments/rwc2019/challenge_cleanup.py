@@ -9,15 +9,35 @@ This means waypoints on the floor, and known (furniture) object points.
 Exact coordinates of the locations are in ed_object_models.
 """
 
+#TODO:check
 starting_point = "initial_pose"
-starting_pose = "gpsr_meeting_point"
+# starting_pose = "gpsr_meeting_point"
 
-# required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
-cleaning_locations = [
-    {'name': 'dinner_table',  'room': 'livingroom', 'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
-    {'name': 'couch_table',   'room': 'livingroom', 'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
-    {'name': 'cabinet',       'room': 'kitchen',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
-    {'name': 'hallway_table', 'room': 'hallway',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']}
+locations = [
+    {'name': 'bedroom_chest',   'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'bed',             'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'sidetable',      'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'shelf',           'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+
+    {'name': 'trash_bin',       'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'kitchen_table',   'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'island',          'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'sink',            'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'dishwasher',      'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'fridge',          'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+
+    {'name': 'shoe_rack',       'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'safe',            'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'desk',            'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'coat_hanger',     'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+
+    {'name': 'coffee_table',    'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'couch',           'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'armchair',        'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'display_cabinet', 'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'trash_bin1',      'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'sideboard',       'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']}
 ]
 
 grammar_target = "T"
