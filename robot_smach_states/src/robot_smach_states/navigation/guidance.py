@@ -105,7 +105,7 @@ class TourGuide(object):
                 rospy.logwarn("{} ({}) not in any room".format(item.id, item._pose.p))
                 continue
             self._furniture_entities_room[room].append(item)
-            rospy.loginfo("{} ({}) is in the {}".format(item.id, item._pose.p, room.id))
+            rospy.logdebug("{} ({}) is in the {}".format(item.id, item._pose.p, room.id))
 
         self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
         self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
