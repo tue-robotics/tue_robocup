@@ -80,7 +80,7 @@ class DropDownTrash(smach.StateMachine):
     """
     State that makes the robot go to the drop zone and drop the trash bag there
     """
-    def __init__(self, robot, drop_designator):
+    def __init__(self, robot, drop_zone_id):
         """
         :param robot: robot object
         :param drop_designator: EdEntityDesignator designating the collection zone
@@ -91,7 +91,9 @@ class DropDownTrash(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
-                                   states.NavigateToObserve(robot, drop_designator),
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=drop_zone_id),
+                                                             radius=0.5),
+
                                    transitions={"arrived": "DROP_TRASH",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
@@ -104,3 +106,8 @@ class DropDownTrash(smach.StateMachine):
                                    states.HandoverToHuman(robot=robot, arm_designator=arm_designator),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
+
+
+#states.NavigateToObserve(robot, drop_designator),
+#states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1),
+#                                                         radius=0.5),
