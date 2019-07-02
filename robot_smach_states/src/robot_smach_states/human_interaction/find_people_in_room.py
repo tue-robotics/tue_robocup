@@ -240,7 +240,7 @@ class FindFirstPerson(smach.StateMachine):
                          robot=robot,
                          properties=properties,
                          query_entity_designator=query_entity_designator,
-                         found_people_designator=found_people_designator.writable,
+                         found_people_designator=found_people_designator.writeable,
                          look_distance=look_distance,
                          speak=speak,
                          strict=strict,
