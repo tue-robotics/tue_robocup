@@ -8,6 +8,7 @@ import PyKDL as kdl
 import visualization_msgs.msg
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
+from robot_skills.force_sensor import ForceSensor
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 # TU/e Robotics
@@ -194,6 +195,26 @@ class PublicArm(object):
         """
         return self._arm.base_offset
 
+    def move_down_until_force_sensor_edge_up(self, timeout=10):
+        """
+        Move down the arm (hero specific, only joint arm_lift_joint) until the force sensor detects an edge up
+
+        A force_sensor.TimeOutException will be raised if no edge up is detected within timeout
+
+        :param timeout: Max duration for edge up detection
+        """
+        self._arm._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
+            trajectory=JointTrajectory(
+                joint_names=rospy.get_param('/{}/skills/torso/joint_names'.format(self._arm.robot_name)),
+                points=[JointTrajectoryPoint(
+                    positions=[0],
+                    time_from_start=rospy.Duration.from_sec(timeout)
+                )]
+            )
+        ))
+        self._arm.force_sensor.wait_for_edge_up(timeout)
+        self._arm.cancel_goals()
+
     def _test_die(self, cond, feature, hint=''):
         """
         Test the condition, if it fails, die with an assertion error explaining what is wrong.
@@ -363,6 +384,8 @@ class Arm(RobotPart):
         self._marker_publisher = rospy.Publisher(
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
+
+        self.force_sensor = ForceSensor("/" + robot_name + "/wrist_wrench/raw")
 
     def collect_gripper_types(self, gripper_type):
         """
