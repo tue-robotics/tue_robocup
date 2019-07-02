@@ -25,15 +25,3 @@ grammar_target = "T"
 grammar = ""
 for room in common.rooms:
     grammar += "\nT[{0}] -> {0}".format(room)
-
-grammar = "T -> kitchen"
-grammar += "\nT -> livingroom"
-grammar += "\nT -> hallway"
-
-location_grammar = """
-L[P] -> LOCATION[P] | bring it to the LOCATION[P] | please bring it to LOCATION[P]
-"""
-
-for l in common.locations:
-    location_grammar += "\nLOCATION['{}'] -> {}[P]".format(l["name"], l["name"].replace('_',' '))
-
