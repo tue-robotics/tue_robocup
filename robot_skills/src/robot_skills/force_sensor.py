@@ -8,12 +8,12 @@ class TimeOutException(Exception):
 
 
 class ForceSensor(object):
-    def __init__(self, topic, force_norm_threshold=5):
+    def __init__(self, topic, force_norm_threshold=2.5):
         """
         Class for conveniently using a force sensor
 
         :param topic: Topic to use for WrenchStamped measurement
-        :param force_norm_threshold: Edge up if norm exceeds this value (defaults to 100)
+        :param force_norm_threshold: Edge up if norm exceeds this value (defaults to 2.5)
         """
         self._topic = topic
 
