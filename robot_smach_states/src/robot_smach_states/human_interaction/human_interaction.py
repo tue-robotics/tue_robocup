@@ -349,6 +349,7 @@ class WaitForPersonInFront(smach.State):
             image_data = self.robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self.robot.ed.detect_people(*image_data)
             if any(found_people_ids):
+                rospy.loginfo("There are {} people in front of me (1 is enough): {}".format(len(found_people_ids), found_people_ids))
                 return 'success'
             rospy.sleep(rospy.Duration(self.sleep_interval))
         return 'failed'
