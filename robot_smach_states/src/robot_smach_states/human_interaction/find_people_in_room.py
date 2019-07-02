@@ -12,17 +12,18 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
+from robot_skills.util.entity import Entity
 
-__all__ = ['FindPerson', 'FindPersonInRoom']
+__all__ = ['FindPeople', 'FindPeopleInRoom']
 
 
-class FindPerson(smach.State):
+class FindPeople(smach.State):
     """
     Smach state to find a person. The robot looks around and tries to recognize all faces in view.
     """
 
     def __init__(self, robot, properties=None, query_entity_designator=None,
-                 result_designator=None, look_distance=1.0, speak=False,
+                 found_people_designator=None, look_distance=10.0, speak=False,
                  strict=True, nearest=False, attempts=1, search_timeout=60):
         """ Initialization method
         :param robot: robot api object
@@ -31,7 +32,7 @@ class FindPerson(smach.State):
             values of the property.
         :param query_entity_designator: An entity designator to match all found
             people to
-        :param result_designator: A designator to write the search result to.
+        :param found_people_designator: A designator to write the search result to.
             The designator always has a list of found people written to it.
         :param look_distance: (float) The distance (radius) which the robot must look at
         :param speak: (bool) If True, the robot will speak while trying to find
@@ -51,15 +52,17 @@ class FindPerson(smach.State):
         self._speak = speak
         self._strict = strict
         self._nearest = nearest
+        self._attempts = attempts
 
         self._search_timeout = search_timeout
 
-        if result_designator:
-            ds.is_writeable(result_designator)
-        self._result_designator = result_designator
+        if found_people_designator:
+            ds.is_writeable(found_people_designator)
+            ds.check_type(found_people_designator, [Entity])
+        self._found_people_designator = found_people_designator
 
         if query_entity_designator:
-            ds.check_type(query_entity_designator, ds.Entity)
+            ds.check_type(query_entity_designator, Entity)
         self._query_entity_designator = query_entity_designator
 
     def execute(self, userdata=None):
@@ -115,56 +118,65 @@ class FindPerson(smach.State):
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
 
+            rospy.loginfo("Found {} people".format(len(found_people)))
+            found_people = [p for p in found_people if p]
+            rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
+
             robot_pose = self._robot.base.get_location()
             # TODO: Check probable bug here
-            found_people = filter(lambda x: (x.pose.frame.p -
-                robot_pose.frame.p).Norm() < self._look_distance, found_people)
+            found_people = filter(lambda x: (x.pose.frame.p - robot_pose.frame.p).Norm() < self._look_distance,
+                                  found_people)
+
+            rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
 
 
             if self._properties:
                 for k, v in self._properties.items():
                     found_people = filter(lambda x:
                             self._check_person_property(x, k, v), found_people)
+                    rospy.loginfo("{} people remaining after {}={} check".format(len(found_people), k, v))
 
-            result_people = None
+            result_people = []
 
             if self._query_entity_designator:
                 query_entity = self._query_entity_designator.resolve()
-                result_people = filter(lambda x:
-                        query_entity.in_volume(x.pose.extractVectorStamped(),
-                        'in'), found_people)
+                if query_entity:
+                    result_people = filter(lambda x: query_entity.in_volume(x.pose.extractVectorStamped(), 'in'),
+                                           found_people)
+                    rospy.loginfo("{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))
 
-                # If people not in query_entity then try if query_entity in
-                # people
-                if not result_people:
-                    # This is for a future feature when object recognition
-                    # becomes more advanced
-                    try:
-                        result_people = filter(lambda x:
-                            x.in_volume(query_entity.pose.extractVectorStamped(),
-                                'in'), found_people)
-                    except:
-                        pass
+                    # If people not in query_entity then try if query_entity in
+                    # people
+                    if not result_people:
+                        # This is for a future feature when object recognition
+                        # becomes more advanced
+                        try:
+                            result_people = filter(lambda x: x.in_volume(query_entity.pose.extractVectorStamped(), 'in'),
+                                                   found_people)
+                            rospy.loginfo(
+                                "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))
+                        except:
+                            pass
             else:
                 result_people = found_people
 
 
             if result_people:
-                if person_label and filter(lambda x:
-                        self._check_person_property(x, "id", person_label),
-                        result_people) and self._speak:
+                if person_label and \
+                    filter(lambda x: self._check_person_property(x, "id", person_label), result_people) \
+                    and self._speak:
                     self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
-                if self._result_designator:
-                    self._result_designator.write(result_people)
+                if self._found_people_designator:
+                    self._found_people_designator.write(result_people)
 
                 return 'found'
             else:
                 rospy.logwarn("Could not find people meeting the requirements")
                 rate.sleep()
 
-        rospy.logwarn("Exceeded trail or time limit")
+        rospy.logwarn("Exceeded trial or time limit")
         self._robot.head.close()
         rospy.sleep(2.0)
         return 'failed'
@@ -214,12 +226,12 @@ class _DecideNavigateState(smach.State):
         return "none"
 
 
-class FindPersonInRoom(smach.StateMachine):
-    """ Uses NavigateToWaypoint or NavigateToRoom and subsequently tries to find a person
+class FindPeopleInRoom(smach.StateMachine):
+    """ Uses NavigateToWaypoint or NavigateToRoom and subsequently tries to find people in that room
     in that room.
     """
 
-    def __init__(self, robot, area, name, discard_other_labels=True, found_person_designator=None):
+    def __init__(self, robot, room, found_people_designator):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
@@ -230,8 +242,11 @@ class FindPersonInRoom(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=area + "_waypoint")
-        room_designator = ds.EntityByIdDesignator(robot=robot, id=area)
+        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=room + "_waypoint")
+        room_designator = ds.EntityByIdDesignator(robot=robot, id=room)
+        ds.check_type(found_people_designator, [Entity])
+        ds.is_writeable(found_people_designator)
+
 
         with self:
             smach.StateMachine.add("DECIDE_NAVIGATE_STATE",
@@ -244,22 +259,21 @@ class FindPersonInRoom(smach.StateMachine):
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
                                    states.NavigateToWaypoint(robot=robot,
                                                              waypoint_designator=waypoint_designator, radius=0.15),
-                                   transitions={"arrived": "FIND_PERSON",
+                                   transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
                                                                              entity_designator_room=room_designator),
-                                   transitions={"arrived": "FIND_PERSON",
+                                   transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
             # Wait for the operator to appear and detect what he's pointing at
-            smach.StateMachine.add("FIND_PERSON",
-                                   FindPerson(robot=robot,
-                                              properties={'id': name},
+            smach.StateMachine.add("FIND_PEOPLE",
+                                   FindPeople(robot=robot,
                                               query_entity_designator=room_designator,
-                                              result_designator=found_person_designator,
+                                              found_people_designator=found_people_designator,
                                               speak=True),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
@@ -272,12 +286,15 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
         _area = sys.argv[2]
-        _name = sys.argv[3]
 
         rospy.init_node('test_follow_operator')
         _robot = get_robot(robot_name)
-        sm = FindPersonInRoom(_robot, _area, _name)
+
+        people = ds.VariableDesignator(resolve_type=[Entity])
+        sm = FindPeopleInRoom(_robot, _area, people.writeable)
         sm.execute()
+
+        rospy.loginfo("Found {}".format(people.resolve()))
     else:
         print "Please provide robot name as argument."
         exit(1)
