@@ -25,3 +25,29 @@ grammar_target = "T"
 grammar = ""
 for room in common.rooms:
     grammar += "\nT[{0}] -> {0}".format(room)
+
+location_grammar = """
+T[P] -> LOCATION[P] | bring it to the LOCATION[P] | please bring it to LOCATION[P]
+"""
+for l in common.locations:
+    location_grammar += "\nLOCATION[{}] -> {}".format(l["name"], l["name"].replace('_', ' '))
+
+
+if __name__ == "__main__":
+    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
+
+    from grammar_parser.cfgparser import CFGParser
+
+    import sys
+    grammar_parser = CFGParser.fromstring(location_grammar)
+
+    if len(sys.argv) > 2:
+        sentence = " ".join(sys.argv[2:])
+    else:
+        sentence = grammar_parser.get_random_sentence("T")
+
+    print("Parsing sentence:\n\n{}\n\n".format(sentence))
+
+    result = grammar_parser.parse("T", sentence)
+
+    print("Result:\n\n{}".format(result))
