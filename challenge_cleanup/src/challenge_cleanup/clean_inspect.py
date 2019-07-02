@@ -61,4 +61,4 @@ class CleanInspect(smach.StateMachine):
 
             smach.StateMachine.add("HANDLE_DETECTED_ENTITIES",
                                    HandleDetectedEntities(robot, e_classifications_des, location_id_des, segment_area),
-                                   transitions={"done": "done"})
+                                   transitions={"done": "ITERATE_NEXT_AREA"})
