@@ -46,8 +46,7 @@ class Robot(object):
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
-    @property
-    def joint_states(self):
+    def get_joint_states(self):
         msg = rospy.wait_for_message("/{}/joint_states".format(self.robot_name), JointState)
         return dict(zip(msg.name, msg.position))
 

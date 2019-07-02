@@ -15,7 +15,7 @@ from robot_skills.util import concurrent_util
 
 
 class Torso(RobotPart):
-    def __init__(self, robot_name, tf_listener, joint_states):
+    def __init__(self, robot_name, tf_listener, get_joint_states):
         """
         constructor
         :param robot_name: robot_name
@@ -39,7 +39,7 @@ class Torso(RobotPart):
                                                 JointState, self._receive_torso_measurement)
 
         self.subscribe_hardware_status('spindle')
-        self._joint_states = joint_states
+        self._get_joint_states = get_joint_states
 
     def close(self):
         """
@@ -125,7 +125,7 @@ class Torso(RobotPart):
         # hardware TrajectoryActionLib server.
 
         # Fill with required joint names (desired in hardware / gazebo impl)
-        current_joint_state = self._joint_states
+        current_joint_state = self._get_joint_states()
         missing_joint_names = [n for n in self._arm_joint_names if n not in self.joint_names]
         torso_goal.trajectory.joint_names += missing_joint_names
         torso_goal.trajectory.points[0].positions += [current_joint_state[n] for n in missing_joint_names]

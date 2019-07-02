@@ -206,7 +206,7 @@ class PublicArm(object):
         :param timeout: Max duration for edge up detection
         """
         # Fill with required joint names (desired in hardware / gazebo impl)
-        current_joint_state = dict(self._arm.joint_states)
+        current_joint_state = self._arm.get_joint_states()
         current_joint_state['arm_lift_joint'] = 0
 
         self._arm._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
@@ -335,11 +335,12 @@ class Arm(RobotPart):
     #To open left gripper
     >>> left.send_gripper_goal_open(10)
     """
-    def __init__(self, robot_name, tf_listener, joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, side):
         """
         constructor
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
+        :param get_joint_states: get_joint_states function for getting the last joint states
         :param side: left or right
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
@@ -393,7 +394,7 @@ class Arm(RobotPart):
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.force_sensor = ForceSensor("/" + robot_name + "/wrist_wrench/raw")
-        self.joint_states = joint_states
+        self.get_joint_states = get_joint_states
 
     def collect_gripper_types(self, gripper_type):
         """
