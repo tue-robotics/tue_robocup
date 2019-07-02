@@ -4,10 +4,10 @@ common = knowledge_loader.load_knowledge("common")
 operator_name = "john"
 
 #TODO
-starting_point = "initial_pose"
+starting_point = "receptionist_start"
 
 #TODO
-waypoint_door = {'id': 'door_opening_right_start', 'radius': 0.5}  # Somewhere facing the door to where ppl enter
+waypoint_door = {'id': 'look_at_entry_door_wp', 'radius': 0.5}  # Somewhere facing the door to where ppl enter
 
 #TODO:Check
 waypoint_livingroom = {'id': 'living_room', 'radius': 0.5}  # From where to find John
