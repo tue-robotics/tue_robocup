@@ -109,7 +109,7 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
         super(UpdateDestEntityPoseWithSrcEntity, self).__init__(outcomes=["done", "failed"])
         self._robot = robot
         ds.check_type(src_entity_designator, Entity)
-        ds.check_type(dst_entity_designator, Entity)
+        ds.check_type(dst_entity_designator, Entity, str)
         self._src_entity_designator = src_entity_designator
         self._dst_entity_designator = dst_entity_designator
         self._dst_entity_type = dst_entity_type
@@ -128,9 +128,16 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
                 src_entity.id)) or (not dst_entity):
             return "failed"
         else:
-            self._robot.ed.update_entity(id=dst_entity.id,
+            dst_id = None
+            if isinstance(dst_entity, Entity):
+                dst_id = dst_entity.id
+            else:
+                dst_id = dst_entity
+
+            self._robot.ed.update_entity(id=dst_id,
                                          frame_stamped=src_entity.pose(),
                                          type=self._dst_entity_type)
+
             return "done"
 
 
