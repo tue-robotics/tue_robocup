@@ -8,6 +8,7 @@ from geometry_msgs.msg import WrenchStamped
 import robot_smach_states as states
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arms import PublicArm
+import robot_smach_states.util.designators as ds
 
 from ed_msgs.msg import EntityInfo
 from robot_skills.util.kdl_conversions import FrameStamped
