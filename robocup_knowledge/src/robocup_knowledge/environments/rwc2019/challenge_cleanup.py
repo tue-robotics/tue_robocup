@@ -9,9 +9,9 @@ This means waypoints on the floor, and known (furniture) object points.
 Exact coordinates of the locations are in ed_object_models.
 """
 
-#TODO:check
+# TODO: check
 starting_point = "initial_pose"
-# starting_pose = "gpsr_meeting_point"
+waiting_point = "registration_table1"  # ToDo; CHANGE
 
 locations = [
     {'name': 'bedroom_chest',   'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
@@ -39,6 +39,8 @@ locations = [
     {'name': 'trash_bin1',      'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'sideboard',       'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']}
 ]
+
+trashbin_id = "trash_bin"
 
 grammar_target = "T"
 
