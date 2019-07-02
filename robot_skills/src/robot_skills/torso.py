@@ -96,6 +96,7 @@ class Torso(RobotPart):
         torso_goal_point = trajectory_msgs.msg.JointTrajectoryPoint()
         torso_goal.trajectory.joint_names = self.joint_names
         torso_goal_point.positions = torso_pos
+        torso_goal_point.time_from_start = rospy.Duration.from_sec(1.5)
         torso_goal.trajectory.points.append(torso_goal_point)
 
         for i in range(0, len(self.joint_names)):
