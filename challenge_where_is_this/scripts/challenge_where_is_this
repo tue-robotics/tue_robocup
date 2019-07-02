@@ -1,7 +1,12 @@
 #!/usr/bin/python
 
+# System
 import rospy
+
+# TU/e Robotics
 from robot_smach_states.util.startup import startup
+
+# Challenge where is this
 from challenge_where_is_this.where_is_this import WhereIsThis
 
 

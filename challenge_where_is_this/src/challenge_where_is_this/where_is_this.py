@@ -1,17 +1,12 @@
-#!/usr/bin/python
-
 # ROS
-import rospy
-import PyKDL as kdl
 import smach
 
 # TU/e Robotics
 import robot_smach_states as states
-import robot_smach_states.util.designators as ds
 from robot_skills.util.kdl_conversions import FrameStamped
 
-# Challenge storing groceries
-from inform_machine import InformMachine
+# Challenge where is this
+from .inform_machine import InformMachine
 
 
 class WhereIsThis(smach.StateMachine):
@@ -60,4 +55,3 @@ class WhereIsThis(smach.StateMachine):
             smach.StateMachine.add('AT_END',
                                    states.Say(robot, "Goodbye"),
                                    transitions={'spoken': 'Done'})
-
