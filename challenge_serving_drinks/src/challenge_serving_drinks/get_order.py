@@ -9,7 +9,7 @@ from robocup_knowledge import knowledge_loader
 from robot_skills.robot import Robot
 
 # Serving drinks
-from .sd_states import AskDrink, DetectWaving
+from .sd_states import AskDrink
 
 
 class GetOrder(smach.StateMachine):
@@ -61,11 +61,16 @@ class GetOrder(smach.StateMachine):
                                               look_at_standing_person=True),
                                    transitions={"spoken": "WAIT_FOR_WAVING"})
 
-            smach.StateMachine.add("WAIT_FOR_WAVING",
-                                   DetectWaving(robot=robot, caller_id=caller_id),
-                                   transitions={"succeeded": "SAY_I_HAVE_SEEN",
-                                                "failed": "ASK_STEP_IN_FRONT",
-                                                "aborted": "ASK_STEP_IN_FRONT"})
+            smach.StateMachine.add(
+                "WAIT_FOR_WAVING",
+                states.SetPoseFirstFoundPersonToEntity(
+                    robot=robot,
+                    properties={'tags': ['LWave', 'RWave']},
+                    dst_entity_designator=caller_designator),
+                transitions={
+                    "done": "SAY_I_HAVE_SEEN",
+                    "failed": "ASK_STEP_IN_FRONT"
+                })
 
             # Navigate to person who wants to place an order
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
