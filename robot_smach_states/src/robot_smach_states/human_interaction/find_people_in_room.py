@@ -256,7 +256,7 @@ class FindFirstPerson(smach.StateMachine):
                      states.IterateDesignator(found_people_designator,
                                               found_person_designator),
                      transitions={'next': 'found',
-                                  'stop_iteration': 'failed'}
+                                  'stop_iteration': 'failed'})
 
 
 class _DecideNavigateState(smach.State):
