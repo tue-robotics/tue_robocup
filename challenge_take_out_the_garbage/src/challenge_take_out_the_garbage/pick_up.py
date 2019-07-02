@@ -135,6 +135,13 @@ class GrabTrash(smach.State):
                 rospy.loginfo("The weight I felt is %s", weight_object)
             try_current += 1
 
+            # This opening and closing is to make sure that the gripper is empty and closed before measuring the forces
+            # It is necessary to close the gripper since the gripper is also closed at the final measurement
+            arm.send_gripper_goal('open')
+            arm.wait_for_motion_done()
+            arm.send_gripper_goal('close')
+            arm.wait_for_motion_done()
+
             arm_weight = measure_force.get_force()
             rospy.loginfo("Empty weight %s", arm_weight)
 
