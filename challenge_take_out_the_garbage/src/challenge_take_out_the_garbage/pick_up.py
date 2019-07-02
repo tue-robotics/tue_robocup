@@ -130,7 +130,7 @@ class GrabTrash(smach.State):
 
         while weight_object < self._minimal_weight and try_current < self._try_num:
             if try_current == 0:
-                # self._robot.speech.speak("Let me try to pick up the garbage")
+                self._robot.speech.speak("Let me try to pick up the garbage")
             else:
                 self._robot.speech.speak("I failed to pick up the trash, let me try again")
                 rospy.loginfo("The weight I felt is %s", weight_object)
