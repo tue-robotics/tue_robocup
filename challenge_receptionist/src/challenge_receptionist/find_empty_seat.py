@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import sys
 import rospy
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
@@ -45,6 +46,9 @@ class SeatsInRoomDesignator(ds.Designator):
 
     def _resolve(self):
         room = self.room.resolve() if hasattr(self.room, 'resolve') else self.room  # type: Entity
+        if not room:
+            rospy.logwarn("Room is None, so cannot find seats there")
+            return None
         seats = [self.robot.ed.get_entity(seat_id) for seat_id in self.seat_ids]  # type: List[Entity]
 
         true_seats = [seat for seat in seats if seat is not None]  # get_entity returns None if entity does not exist
@@ -107,17 +111,21 @@ class FindEmptySeat(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    rospy.init_node("find_emtpy_seat")
-    from robot_smach_states.util.startup import startup
+    from robot_skills import get_robot
 
-    class Test(smach.StateMachine):
-        def __init__(self, robot):
-            smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
-            with self:
-                smach.StateMachine.add('FIND_EMTPY_SEAT',
-                                       FindEmptySeat(robot,
-                                                     seats_to_inspect=['hallway_table'],  # couch
-                                                     room=ds.EntityByIdDesignator(robot, 'hallway')))
+    if len(sys.argv) > 3:
+        robot_name = sys.argv[1]
+        room = sys.argv[2]
+        seats_to_inspect = sys.argv[3:]
 
+        rospy.init_node('test_find_emtpy_seat')
+        robot = get_robot(robot_name)
 
-    startup(Test)
+        sm = FindEmptySeat(robot,
+                           seats_to_inspect=seats_to_inspect,
+                           room=ds.EntityByIdDesignator(robot, room))
+        sm.execute()
+    else:
+        print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
+        exit(1)
+

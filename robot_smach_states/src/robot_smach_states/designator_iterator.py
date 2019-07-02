@@ -68,7 +68,9 @@ class IterateDesignator(smach.State):
             self._current_elements = iter(collection)
 
         try:
-            self.element_des.write(next(self._current_elements))
+            next_elem = next(self._current_elements)
+            rospy.loginfo("Iterate to next element {}".format(next_elem))
+            self.element_des.write(next_elem)
             return 'next'
         except StopIteration:
             self._current_elements = None

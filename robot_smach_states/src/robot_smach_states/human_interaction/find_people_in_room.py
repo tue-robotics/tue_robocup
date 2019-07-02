@@ -341,7 +341,7 @@ if __name__ == "__main__":
         robot_name = sys.argv[1]
         _area = sys.argv[2]
 
-        rospy.init_node('test_follow_operator')
+        rospy.init_node('test_find_people_in_room')
         _robot = get_robot(robot_name)
 
         people = ds.VariableDesignator(resolve_type=[Entity])
