@@ -6,7 +6,6 @@ from geometry_msgs.msg import WrenchStamped
 
 # TU/e
 import robot_smach_states as states
-import robot_smach_states.util.designators as ds
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arms import PublicArm
 
@@ -114,8 +113,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        #TODO
-        # self._robot.base.force_drive(0.1, -0.07, 0, 2.0)
+        self._robot.base.force_drive(0.1, -0.07, 0, 2.0)
 
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')
@@ -138,10 +136,6 @@ class GrabTrash(smach.State):
             try_current += 1
 
             arm_weight = measure_force.get_force()
-            # TODO
-            import rospy
-            rospy.sleep(2.0)
-            self._robot.speech.speak("empty weight moment")
             rospy.loginfo("Empty weight %s", arm_weight)
 
             # Open gripper
@@ -158,28 +152,22 @@ class GrabTrash(smach.State):
             self._robot.torso.send_goal("grab_trash_up")
             self._robot.torso.wait_for_motion_done()
 
-            # TODO
-            self._robot.speech.speak("full weight moment")
             arm_with_object_weight = measure_force.get_force()
             rospy.loginfo("Full weight %s", arm_with_object_weight)
-
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
         # Go back and pull back arm
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
-        #TODO
-        # self._robot.base.force_drive(-0.125, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.125, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
         if weight_object < self._minimal_weight:
             return "failed"
 
-        self._robot.speech.speak("Look at this, the trash picks up the trash!")
-        self._robot.speech.speak("The real trash ways roughly {}".format(weight_object))
-
+        self._robot.speech.speak("Look at this I can pick up the trash!")
         handed_entity = EntityInfo(id="trash")
         arm.occupied_by = handed_entity
 
