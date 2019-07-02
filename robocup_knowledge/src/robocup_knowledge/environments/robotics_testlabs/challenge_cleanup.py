@@ -20,17 +20,19 @@ cleaning_locations = [
     {'name': 'hallway_table', 'room': 'hallway',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']}
 ]
 
+trashbin_id = "trashbin"
+
 grammar_target = "T"
 
 grammar = ""
 for room in common.rooms:
     grammar += "\nT[{0}] -> {0}".format(room)
 
-location_grammar = """
+category_grammar = """
 T[P] -> LOCATION[P] | bring it to the LOCATION[P] | please bring it to LOCATION[P]
 """
 for l in common.locations:
-    location_grammar += "\nLOCATION[{}] -> {}".format(l["name"], l["name"].replace('_', ' '))
+    category_grammar += "\nLOCATION[{}] -> {}".format(l["name"], l["name"].replace('_', ' '))
 
 
 if __name__ == "__main__":
@@ -39,7 +41,7 @@ if __name__ == "__main__":
     from grammar_parser.cfgparser import CFGParser
 
     import sys
-    grammar_parser = CFGParser.fromstring(location_grammar)
+    grammar_parser = CFGParser.fromstring(category_grammar)
 
     if len(sys.argv) > 2:
         sentence = " ".join(sys.argv[2:])

@@ -14,19 +14,20 @@ challenge_knowledge = load_knowledge('challenge_cleanup')
 
 
 class DropPoseDesignator(ds.Designator):
-    def __init__(self, robot, drop_height, name):
+    def __init__(self, robot, entity_des, drop_height, name=None):
         super(DropPoseDesignator, self).__init__(resolve_type=FrameStamped, name=name)
 
         self._robot = robot
+        self._entity_des = entity_des
         self._drop_height = drop_height
 
     def _resolve(self):
-        # Query ed
-        #ToDo: Make this happen for the bin in the chosen room...
+        # ToDo: Make this happen for the bin in the chosen room...
 
         try:
-            frame = self._robot.ed.get_entity(id="trash_bin")._pose
+            frame = self._entity_des.resolve()._pose
         except Exception:
+            rospy.logerr(Exception.message)
             return None
 
         frame.p.z(self._drop_height)
@@ -35,45 +36,49 @@ class DropPoseDesignator(ds.Designator):
 
 
 class StorePlaceDesignator(ds.Designator):
-    def __init__(self, robot, name, selected_entity_designator):
+    def __init__(self, robot, selected_entity_type_category_designator, name=None):
         super(StorePlaceDesignator, self).__init__(resolve_type=Entity, name=name)
 
         self._robot = robot
-        self._selected_entity_designator = selected_entity_designator
+        self._selected_entity_type_category_designator = selected_entity_type_category_designator
 
     def _resolve(self):
-        e = self._selected_entity_designator.resolve()
+        type_category = self._selected_entity_type_category_designator.resolve()
 
-        if e is None:
-            rospy.logerr("Could not resolve the selected entity!")
+        if type_category is None:
+            rospy.logerr("Could not resolve the type/category!")
             return None
 
-        item_category = challenge_knowledge.common.get_object_category(e.type)
+        item_category = challenge_knowledge.common.get_object_category(type_category)
         if item_category is not None:
             location, area_name = challenge_knowledge.common.get_object_category_location(item_category)
-            entities = self._robot.ed.get_entities(id=location)
-            if entities:
-                return entities[0]
-            else:
-                return None
+        elif type_category in challenge_knowledge.common.object_categories:
+            location, area_name = challenge_knowledge.common.get_object_category_location(type_category)
         else:
             rospy.logerr("Could not resolve the object category of {}".format(e.type))
             return None
 
+        entities = self._robot.ed.get_entities(id=location)
+        if entities:
+            return entities[0]
+        else:
+            return None
 
-class StoreAreaDesignator(ds.Designator):
-    def __init__(self, robot, name, selected_entity_designator):
-        super(StoreAreaDesignator, self).__init__(resolve_type=str, name=name)
+
+class StorePlaceLocation(smach.State):
+    def __init__(self, robot, selected_entity_designator, store_loc_des):
+        smach.State.__init__(self, outcomes=["done", "failed"])
 
         self._robot = robot
         self._selected_entity_designator = selected_entity_designator
+        self._store_loc_des = store_loc_des
 
-    def _resolve(self):
+    def execute(self, userdata=None):
         e = self._selected_entity_designator.resolve()
 
         if e is None:
             rospy.logerr("Could not resolve the selected entity!")
-            return None
+            return "failed"
 
         item_category = challenge_knowledge.common.get_object_category(e.type)
         if item_category is not None:
@@ -81,14 +86,42 @@ class StoreAreaDesignator(ds.Designator):
             return area_name
         else:
             rospy.logerr("Could not resolve the object category of {}".format(e.type))
-            return None
+            return "failed"
 
 
-class DetermineCleanupLocation(smach.State):
-    def __init__(self, robot, selected_entity_designator):
+class CategoryToLocation(smach.State):
+    def __init__(self, category_des, entity_id_des, area_name_des):
         smach.State.__init__(self, outcomes=["trashbin", "other", "failed"])
+
+        self._category_des = category_des
+        self._entity_id_des = entity_id_des
+        self._area_name_des = area_name_des
+
+    def execute(self, ud=None):
+        category = self._category_des.resolve()
+        if not category:
+            return "failed"
+
+        if category == "unknown":
+            self._entity_id_des.write(challenge_knowledge.trashbin_id)
+            return "trashbin"
+
+        location, area_name = challenge_knowledge.common.get_object_category_location(category)
+        if not location:
+            return "failed"
+
+        self._entity_id_des.write(location)
+        if area_name:
+            self._area_name_des.write(area_name)
+        return "other"
+
+
+class EntityToCategory(smach.State):
+    def __init__(self, robot, selected_entity_designator, category_des):
+        smach.State.__init__(self, outcomes=["done", "failed"])
         self._robot = robot
         self._selected_entity_designator = selected_entity_designator
+        self._category_des = category_des
 
     def execute(self, userdata=None):
         selected_entity = self._selected_entity_designator.resolve()
@@ -97,12 +130,41 @@ class DetermineCleanupLocation(smach.State):
             rospy.logerr("Could not resolve the selected entity!")
             return "failed"
 
-        rospy.loginfo("The type of the entity is '%s'" % selected_entity.type)
+        rospy.loginfo("The type of the entity is '{}'".format(selected_entity.type))
 
-        if challenge_knowledge.common.is_known_object(selected_entity.type):
-            return "other"
+        category = challenge_knowledge.common.get_object_category(selected_entity.type)
+        if category:
+            self._category_des.write(category)
+            return "done"
         else:
-            return "trashbin"
+            return "failed"
+
+
+class OperatorToCategory(smach.StateMachine):
+    def __init__(self, robot, object_category_des, room_des):
+        smach.StateMachine.__init__(self, outcomes=["done", "failed"])
+
+        room_id_des = ds.AttrDesignator(room_des, "id", resolve_type=str)
+
+        with self:
+            smach.StateMachine.add("LOOK_INTO_ROOM", robot_smach_states.NavigateToRoom(robot, room_des, room_des),
+                                   transitions={"arrived": "SAY_COME_TO_ME",
+                                                "unreachable": "SAY_COME_TO_ME",
+                                                "goal_not_defined": "SAY_COME_TO_ME"})
+
+            smach.StateMachine.add("SAY_COME_TO_ME", robot_smach_states.SayFormatted(robot,
+                                                        "Operator, please come to me in the {room}",
+                                                                                     room=room_id_des, block=True),
+                                   transitions={"spoken": "WAIT_FOR_OPERATOR"})
+
+            smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.FindPerson(robot),
+                                   transitions={"found": "ASK_WHICH_CATERGORY",
+                                                "failed": "ASK_WHICH_CATERGORY"})
+
+            smach.StateMachine.add("ASK_WHICH_CATERGORY", AskWhichCategory(robot,
+                ds.Designator(challenge_knowledge.category_grammar),
+                                                                           object_category_des),
+                                   transitions={"done": "done"})
 
 
 class ArmFree(smach.State):
@@ -129,17 +191,17 @@ class ArmOccupied(smach.State):
         return "no"
 
 
-class AskWhereToDrop(smach.StateMachine):
+class AskWhichCategory(smach.StateMachine):
     # Logic in this code is still flawed. No correct repetition.....
     # EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
-    def __init__(self, robot, location_grammar, drop_locationw):
+    def __init__(self, robot, category_grammar, categoryw):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
         hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
-        furniture_name_des = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
+        category_des = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
 
         @smach.cb_interface(outcomes=['done'])
-        def write_room(ud, des_read, des_write):
+        def write_category(ud, des_read, des_write):
             # type: (object, ds.Designator, ds.Designator) -> str
             assert(ds.is_writeable(des_write))
             assert(des_write.resolve_type == des_read.resolve_type)
@@ -148,23 +210,23 @@ class AskWhereToDrop(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("ASK_WHERE_TO_DROP", robot_smach_states.Say(robot,
-                "Please look at the object in my gripper and tell me where to bring it", block=True),
+                "Please look at the object in my gripper and tell me which category it is", block=True),
                                    transitions={"spoken": "HEAR_LOCATION"})
 
-            smach.StateMachine.add("HEAR_LOCATION", robot_smach_states.HearOptionsExtra(robot, location_grammar,
+            smach.StateMachine.add("HEAR_LOCATION", robot_smach_states.HearOptionsExtra(robot, category_grammar,
                                                                                         ds.writeable(hmi_result_des)),
                                    transitions={"heard": "SAY_HEARD_CORRECT",
-                                                "no_result": "ASK_WHICH_ROOM"})
+                                                "no_result": "ASK_WHERE_TO_DROP"})
             smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.SayFormatted(
-                robot, "I understood that the object should be placed at the {furniture}, is this correct?",
-                furniture=furniture_name_des,
+                robot, "I understood that the object is of category {category}, is this correct?",
+                category=category_des,
                 block=True),
                                    transitions={"spoken": "HEAR_CORRECT"})
             smach.StateMachine.add("HEAR_CORRECT", robot_smach_states.AskYesNo(robot),
-                                   transitions={"yes": "WRITE_LOCATION",
+                                   transitions={"yes": "WRITE_CATEGORY",
                                                 "no": "ASK_WHERE_TO_DROP",
                                                 "no_result": "ASK_WHERE_TO_DROP"})
-            smach.StateMachine.add('WRITE_LOCATION', smach.CBState(write_room, cb_args=[furniture_name_des, drop_locationw]),
+            smach.StateMachine.add('WRITE_CATEGORY', smach.CBState(write_category, cb_args=[category_des, categoryw]),
                                    transitions={'done': 'done'})
 
 
@@ -174,15 +236,18 @@ class SelfCleanup(smach.StateMachine):
     - Bring it to the predefined destination, or
     - Drop it in the designated waste bin
     """
-    def __init__(self, robot, selected_entity_designator):
+    def __init__(self, robot, selected_entity_designator, room_des):
 
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
-        trash_place_pose = DropPoseDesignator(robot, 0.6, "drop_pose")
-        trash_designator = ds.EntityByIdDesignator(robot, "trash_bin")
-        item_store_entity = StorePlaceDesignator(robot,
-                                                 "store_entity",
-                                                 selected_entity_designator)
+        store_entity_id_des = ds.VariableDesignator(resolve_type=str, name="store_entity_id")
+        store_entity_des = ds.EdEntityDesignator(robot, id_designator=store_entity_id_des)
+
+        store_area_name_des = ds.VariableDesignator(resolve_type=str, name="store_entity_id")
+
+        trash_place_pose = DropPoseDesignator(robot, store_entity_des, 0.6, "drop_pose")
+
+        category_des = ds.VariableDesignator(resolve_type=str, name="category_des")
 
         with self:
 
@@ -204,7 +269,7 @@ class SelfCleanup(smach.StateMachine):
                                                                   "Let's clean up this object",
                                                                   "Away with this garbage",
                                                                   "Everything will be cleaned"], block=False),
-                                   transitions={"spoken": "DETERMINE_PLACE_LOCATION"})
+                                   transitions={"spoken": "GET_CATEGORY"})
 
             smach.StateMachine.add('SAY_GRAB_FAILED',
                                    robot_smach_states.Say(robot, ["I could not grab the item.",
@@ -218,11 +283,23 @@ class SelfCleanup(smach.StateMachine):
                                                 "no": "CHECK_ARM_OCCUPIED"})
 
             smach.StateMachine.add('CHECK_ARM_OCCUPIED', ArmOccupied(robot),
-                                   transitions={"yes": "DETERMINE_PLACE_LOCATION",
+                                   transitions={"yes": "GET_CATEGORY",
                                                 "no": "done"})
 
-            smach.StateMachine.add('DETERMINE_PLACE_LOCATION', DetermineCleanupLocation(robot,
-                                                                                        selected_entity_designator),
+            # # ROBOT
+            # smach.StateMachine.add('GET_CATEGORY',
+            #                        EntityToCategory(robot, selected_entity_designator, category_des.writeable),
+            #                        transitions={"done": "DETERMINE_PLACE_LOCATION",
+            #                                     "failed": "NAVIGATE_TO_TRASH"})
+
+            # OPERATOR
+            smach.StateMachine.add('GET_CATEGORY', OperatorToCategory(robot, category_des.writeable, room_des),
+                                   transitions={"done": "DETERMINE_PLACE_LOCATION",
+                                                "failed": "NAVIGATE_TO_TRASH"})
+
+            smach.StateMachine.add('DETERMINE_PLACE_LOCATION',
+                                   CategoryToLocation(category_des, store_entity_id_des.writeable,
+                                                      store_area_name_des.writeable),
                                    transitions={"trashbin": "INSPECT_TRASH",
                                                 "other": "PLACE_TO_STORE",
                                                 "failed": "NAVIGATE_TO_TRASH"})
@@ -237,7 +314,7 @@ class SelfCleanup(smach.StateMachine):
 
             smach.StateMachine.add('INSPECT_TRASH',
                                    robot_smach_states.Inspect(robot,
-                                                              trash_designator),
+                                                              store_entity_des),
                                    transitions={"done": "PLACE_IN_TRASH",
                                                 "failed": "SAY_PLACE_FAILED"})
 
@@ -245,14 +322,13 @@ class SelfCleanup(smach.StateMachine):
                                    robot_smach_states.Place(robot, 
                                                             selected_entity_designator, 
                                                             trash_place_pose,
-                                                            ds.OccupiedArmDesignator(robot,
-                                                                                  {},
+                                                            ds.OccupiedArmDesignator(robot, {},
                                                                                   name="occupied_arm_designator")),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
 
             smach.StateMachine.add('PLACE_TO_STORE', robot_smach_states.Place(robot, selected_entity_designator,
-                                                                              item_store_entity,
+                                                                              store_entity_des,
                                                                               ds.OccupiedArmDesignator(robot, {}, name=
                                                                                 "occupied_arm_designator"),
                                                                                 "on_top_of"),
@@ -273,121 +349,121 @@ class SelfCleanup(smach.StateMachine):
                                    transitions={"spoken": "CHECK_ARM_OCCUPIED"})
 
 
-class SelfCleanup2(smach.StateMachine):
-    """
-    Grab the current object and:
-    - Bring it to the predefined destination, or
-    - Drop it in the designated waste bin
-    """
-    def __init__(self, robot, selected_entity_designator, room_des):
-
-        smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
-
-        trash_place_pose = DropPoseDesignator(robot, 0.6, "drop_pose")
-
-        room_id_des = ds.AttrDesignator(room_des, "id")
-        furniture_id_des = ds.VariableDesignator(resolve_type=str, name="drop_location")
-
-        with self:
-            smach.StateMachine.add("SPEAK", robot_smach_states.SayFormatted(robot, ["I will pick-up the {object}",
-                                                                                    "Let's move the {object}"],
-                                                                            object=selected_entity_designator,
-                                                                            block=True),
-                                   transitions={"spoken": "GRAB"})
-
-            smach.StateMachine.add("GRAB",
-                                   robot_smach_states.Grab(robot, selected_entity_designator,
-                                                           ds.UnoccupiedArmDesignator(robot, {},
-                                                                                      name="empty_arm_designator")),
-                                   transitions={"done": "SAY_GRAB_SUCCESS",
-                                                "failed": "SAY_GRAB_FAILED"})
-
-            smach.StateMachine.add("LOOK_INTO_ROOM", robot_smach_states.NavigateToRoom(robot, room_des, room_des),
-                                   transitions={"arrived": "SAY_COME_TO_ME",
-                                                "unreachable": "SAY_COME_TO_ME",
-                                                "goal_not_defined": "SAY_COME_TO_ME"})
-
-            smach.StateMachine.add("SAY_COME_TO_ME", robot_smach_states.SayFormatted(robot,
-                                                        "Operator, please come to me in the {room}",
-                                                                                     room=room_id_des, block=True),
-                                   transitions={"spoken": "WAIT_FOR_OPERATOR"})
-
-            smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.FindPerson(robot),
-                                   transitions={"found": "SAY_WHERE_TO_PLACE",
-                                                "failed": "SAY_WHERE_TO_PLACE"})
-
-            smach.StateMachine.add("ASK_WHERE_TO_PLACE", AskWhereToDrop(robot, challenge_knowledge.location_grammar,
-                                                                        furniture_id_des),
-                                   transitions={"spoken": ""})
-
-            smach.StateMachine.add('SAY_GRAB_SUCCESS',
-                                   robot_smach_states.Say(robot, ["Now I am going to toss the item in the trashbin",
-                                                                  "Let's clean up this object",
-                                                                  "Away with this garbage",
-                                                                  "Everything will be cleaned"], block=False),
-                                   transitions={"spoken": "DETERMINE_PLACE_LOCATION"})
-
-            smach.StateMachine.add('SAY_GRAB_FAILED',
-                                   robot_smach_states.Say(robot, ["I could not grab the item.",
-                                                                  "I failed to grasp the item",
-                                                                  "I cannot reach the item",
-                                                                  "Item grab failed"], block=False),
-                                   transitions={"spoken": "failed"})
-
-            smach.StateMachine.add('CHECK_ARM_FREE', ArmFree(robot),
-                                   transitions={"yes": "done",
-                                                "no": "CHECK_ARM_OCCUPIED"})
-
-            smach.StateMachine.add('CHECK_ARM_OCCUPIED', ArmOccupied(robot),
-                                   transitions={"yes": "DETERMINE_PLACE_LOCATION",
-                                                "no": "done"})
-
-            smach.StateMachine.add('DETERMINE_PLACE_LOCATION', DetermineCleanupLocation(robot,
-                                                                                        selected_entity_designator),
-                                   transitions={"trashbin": "INSPECT_TRASH",
-                                                "other": "PLACE_TO_STORE",
-                                                "failed": "NAVIGATE_TO_TRASH"})
-
-            smach.StateMachine.add('NAVIGATE_TO_TRASH',
-                                   robot_smach_states.NavigateToPlace(robot, trash_place_pose,
-                                                                      ds.OccupiedArmDesignator(robot, {},
-                                                                              name="occupied_arm_designator")),
-                                   transitions={"arrived": "PLACE_IN_TRASH",
-                                                "unreachable": "SAY_PLACE_FAILED",
-                                                "goal_not_defined": "SAY_PLACE_FAILED"})
-
-            smach.StateMachine.add('INSPECT_TRASH',
-                                   robot_smach_states.Inspect(robot,
-                                                              trash_designator),
-                                   transitions={"done": "PLACE_IN_TRASH",
-                                                "failed": "SAY_PLACE_FAILED"})
-
-            smach.StateMachine.add('PLACE_IN_TRASH',
-                                   robot_smach_states.Place(robot,
-                                                            selected_entity_designator,
-                                                            trash_place_pose,
-                                                            ds.OccupiedArmDesignator(robot, {},
-                                                                                     name="occupied_arm_designator")),
-                                   transitions={"done": "SAY_PLACE_SUCCESS",
-                                                "failed": "SAY_PLACE_FAILED"})
-
-            smach.StateMachine.add('PLACE_TO_STORE', robot_smach_states.Place(robot, selected_entity_designator,
-                                                                              item_store_entity,
-                                                                              ds.OccupiedArmDesignator(robot, {}, name=
-                                                                              "occupied_arm_designator"),
-                                                                              "on_top_of"),
-                                   transitions={"done": "SAY_PLACE_SUCCESS",
-                                                "failed": "SAY_PLACE_FAILED"})
-
-            smach.StateMachine.add('SAY_PLACE_SUCCESS',
-                                   robot_smach_states.Say(robot, ["Bye bye!",
-                                                                  "Yeah!",
-                                                                  "Successfully disposed the item",
-                                                                  "Another score for HERO"], block=False),
-                                   transitions={"spoken": "CHECK_ARM_OCCUPIED"})
-
-            smach.StateMachine.add('SAY_PLACE_FAILED',
-                                   robot_smach_states.Say(robot, ["I could not cleanup the item.",
-                                                                  "I cannot put the item in the trashbin",
-                                                                  "Item cleanup failed"], block=False),
-                                   transitions={"spoken": "CHECK_ARM_OCCUPIED"})
+# class SelfCleanup2(smach.StateMachine):
+#     """
+#     Grab the current object and:
+#     - Bring it to the predefined destination, or
+#     - Drop it in the designated waste bin
+#     """
+#     def __init__(self, robot, selected_entity_designator, room_des):
+#
+#         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
+#
+#         trash_place_pose = DropPoseDesignator(robot, 0.6, "drop_pose")
+#
+#         room_id_des = ds.AttrDesignator(room_des, "id")
+#         furniture_id_des = ds.VariableDesignator(resolve_type=str, name="drop_location")
+#
+#         with self:
+#             smach.StateMachine.add("SPEAK", robot_smach_states.SayFormatted(robot, ["I will pick-up the {object}",
+#                                                                                     "Let's move the {object}"],
+#                                                                             object=selected_entity_designator,
+#                                                                             block=True),
+#                                    transitions={"spoken": "GRAB"})
+#
+#             smach.StateMachine.add("GRAB",
+#                                    robot_smach_states.Grab(robot, selected_entity_designator,
+#                                                            ds.UnoccupiedArmDesignator(robot, {},
+#                                                                                       name="empty_arm_designator")),
+#                                    transitions={"done": "SAY_GRAB_SUCCESS",
+#                                                 "failed": "SAY_GRAB_FAILED"})
+#
+#             smach.StateMachine.add("LOOK_INTO_ROOM", robot_smach_states.NavigateToRoom(robot, room_des, room_des),
+#                                    transitions={"arrived": "SAY_COME_TO_ME",
+#                                                 "unreachable": "SAY_COME_TO_ME",
+#                                                 "goal_not_defined": "SAY_COME_TO_ME"})
+#
+#             smach.StateMachine.add("SAY_COME_TO_ME", robot_smach_states.SayFormatted(robot,
+#                                                         "Operator, please come to me in the {room}",
+#                                                                                      room=room_id_des, block=True),
+#                                    transitions={"spoken": "WAIT_FOR_OPERATOR"})
+#
+#             smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.FindPerson(robot),
+#                                    transitions={"found": "ASK_WHERE_TO_PLACE",
+#                                                 "failed": "ASK_WHERE_TO_PLACE"})
+#
+#             smach.StateMachine.add("ASK_WHERE_TO_PLACE", AskWhereToDrop(robot, challenge_knowledge.location_grammar,
+#                                                                         furniture_id_des),
+#                                    transitions={"done": "CHECK_ARM_FREE"})
+#
+#             # smach.StateMachine.add('SAY_GRAB_SUCCESS',
+#             #                        robot_smach_states.Say(robot, ["Now I am going to toss the item in the trashbin",
+#             #                                                       "Let's clean up this object",
+#             #                                                       "Away with this garbage",
+#             #                                                       "Everything will be cleaned"], block=False),
+#             #                        transitions={"spoken": "DETERMINE_PLACE_LOCATION"})
+#             #
+#             # smach.StateMachine.add('SAY_GRAB_FAILED',
+#             #                        robot_smach_states.Say(robot, ["I could not grab the item.",
+#             #                                                       "I failed to grasp the item",
+#             #                                                       "I cannot reach the item",
+#             #                                                       "Item grab failed"], block=False),
+#             #                        transitions={"spoken": "failed"})
+#
+#             smach.StateMachine.add('CHECK_ARM_FREE', ArmFree(robot),
+#                                    transitions={"yes": "done",
+#                                                 "no": "CHECK_ARM_OCCUPIED"})
+#
+#             smach.StateMachine.add('CHECK_ARM_OCCUPIED', ArmOccupied(robot),
+#                                    transitions={"yes": "DETERMINE_PLACE_LOCATION",
+#                                                 "no": "done"})
+#
+#             smach.StateMachine.add('DETERMINE_PLACE_LOCATION', DetermineCleanupLocation(robot,
+#                                                                                         selected_entity_designator),
+#                                    transitions={"trashbin": "INSPECT_TRASH",
+#                                                 "other": "PLACE_TO_STORE",
+#                                                 "failed": "NAVIGATE_TO_TRASH"})
+#
+#             smach.StateMachine.add('NAVIGATE_TO_TRASH',
+#                                    robot_smach_states.NavigateToPlace(robot, trash_place_pose,
+#                                                                       ds.OccupiedArmDesignator(robot, {},
+#                                                                               name="occupied_arm_designator")),
+#                                    transitions={"arrived": "PLACE_IN_TRASH",
+#                                                 "unreachable": "SAY_PLACE_FAILED",
+#                                                 "goal_not_defined": "SAY_PLACE_FAILED"})
+#
+#             smach.StateMachine.add('INSPECT_TRASH',
+#                                    robot_smach_states.Inspect(robot,
+#                                                               trash_designator),
+#                                    transitions={"done": "PLACE_IN_TRASH",
+#                                                 "failed": "SAY_PLACE_FAILED"})
+#
+#             smach.StateMachine.add('PLACE_IN_TRASH',
+#                                    robot_smach_states.Place(robot,
+#                                                             selected_entity_designator,
+#                                                             trash_place_pose,
+#                                                             ds.OccupiedArmDesignator(robot, {},
+#                                                                                      name="occupied_arm_designator")),
+#                                    transitions={"done": "SAY_PLACE_SUCCESS",
+#                                                 "failed": "SAY_PLACE_FAILED"})
+#
+#             smach.StateMachine.add('PLACE_TO_STORE', robot_smach_states.Place(robot, selected_entity_designator,
+#                                                                               item_store_entity,
+#                                                                               ds.OccupiedArmDesignator(robot, {}, name=
+#                                                                               "occupied_arm_designator"),
+#                                                                               "on_top_of"),
+#                                    transitions={"done": "SAY_PLACE_SUCCESS",
+#                                                 "failed": "SAY_PLACE_FAILED"})
+#
+#             smach.StateMachine.add('SAY_PLACE_SUCCESS',
+#                                    robot_smach_states.Say(robot, ["Bye bye!",
+#                                                                   "Yeah!",
+#                                                                   "Successfully disposed the item",
+#                                                                   "Another score for HERO"], block=False),
+#                                    transitions={"spoken": "CHECK_ARM_OCCUPIED"})
+#
+#             smach.StateMachine.add('SAY_PLACE_FAILED',
+#                                    robot_smach_states.Say(robot, ["I could not cleanup the item.",
+#                                                                   "I cannot put the item in the trashbin",
+#                                                                   "Item cleanup failed"], block=False),
+#                                    transitions={"spoken": "CHECK_ARM_OCCUPIED"})

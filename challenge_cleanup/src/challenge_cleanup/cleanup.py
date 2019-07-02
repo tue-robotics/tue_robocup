@@ -83,7 +83,8 @@ class AskWhichRoomToClean(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
         hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
-        room_name_des = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
+        room_name_des = ds.FuncDesignator(ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode),
+                                          str, resolve_type=str)
 
         @smach.cb_interface(outcomes=['done'])
         def write_room(ud, des_read, des_write):
@@ -159,10 +160,8 @@ def setup_statemachine(robot):
                                                               "What a mess here, let's clean this room!",
                                                               "Let's see if I can find some garbage here",
                                                               "All I want to do is clean this mess up!"], block=False),
-                              transitions={"spoken": "ITERATE_NEXT_LOC"})
+                               transitions={"spoken": "ITERATE_NEXT_LOC"})
 
-# Here the designator cleanup_locationsr has to be iterated over to visit all locations of the room (see designator_iterator.py)
-# How is this to be done?
         smach.StateMachine.add('ITERATE_NEXT_LOC',
                                robot_smach_states.IterateDesignator(cleanup_locationsr, location_des.writeable),
                                transitions={"next": "INSPECT",
