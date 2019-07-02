@@ -9,7 +9,7 @@ names = female_names + male_names
 locations = [
     {'name': 'bedroom_chest',   'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
     {'name': 'bed',             'room': 'bedroom',          'category': 'utility',      'manipulation': 'no'},
-    {'name': 'side_table',      'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'sidetable',      'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
     {'name': 'shelf',           'room': 'bedroom',          'category': 'shelf',        'manipulation': 'yes'},
 
     {'name': 'trash_bin',       'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
@@ -27,8 +27,9 @@ locations = [
 
     {'name': 'coffee_table',    'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
     {'name': 'couch',           'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
-    {'name': 'arm_chair',       'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'armchair',        'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
     {'name': 'display_cabinet', 'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'trash_bin1',      'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
     {'name': 'sideboard',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'}
 ]
 
@@ -37,15 +38,15 @@ location_categories = list(set([ o["category"] for o in locations ]))
 location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
-rooms = location_rooms + ['corridor']
-
 objects = [
+    {'category': 'drink',               'name': 'beer',            'color': 'brown',       'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'chocolate_milk',  'color': 'brownish',    'volume': 404,      'weight': 325},
+    {'category': 'drink',               'name': 'coke',            'color': 'red',         'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'juice',           'color': 'purplish',    'volume': 216,      'weight': 200},
+    {'category': 'drink',               'name': 'lemonade',        'color': 'yellow',      'volume': 216,      'weight': 200},
+    {'category': 'drink',               'name': 'tea_bag',         'color': 'bluegreen',   'volume': 270,      'weight': 222},
+    {'category': 'drink',               'name': 'water',           'color': 'white',       'volume': 270,      'weight': 222}
 
-    {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brownish',    'volume': 404,      'weight': 325},
-    {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 270,      'weight': 222},
-    {'category': 'drink',               'name': 'grape_juice',      'color': 'purplish',    'volume': 216,      'weight': 200},
-    {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 216,      'weight': 200},
-    {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 270,      'weight': 222}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
@@ -57,10 +58,20 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
+    "cleaning_stuff": {"sink": "on_top_of"},
+    "containers": {"display_cabinet": "on_top_of"},
+    "cutlery": {"kitchen_cabinet": "shelf2"},
+    "drinks": {"sideboard": "on_top_of"},
+    "candies": {"desk": "on_top_off"},
+    "food": {"shelf": "on_top_of"},
+    "fruits": {"kitchen_table": "on_top_off"},
+    "snacks": {"coffee_table": "on_top_of"},
+    "tableware": {"kitchen_cabinet": "shelf3"}
 }
 
 inspect_areas = {
     "shelf": ["shelf2", "shelf3", "shelf4", "shelf5"],
+    "kitchen_cabinet": ["shelf1", "shelf2"]
 }
 
 inspect_positions = {
