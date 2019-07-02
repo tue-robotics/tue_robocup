@@ -186,12 +186,15 @@ class FindPeople(smach.State):
         if prop_value:
             if self._strict:
                 if person_attr_val == prop_value:
+                    rospy.loginfo("Executing strict=True")
                     return True
             else:
                 if person_attr_val in prop_value:
+                    rospy.loginfo("Executing strict=False")
                     return True
         else:
             if person_attr_val:
+                rospy.loginfo("By passing strict check")
                 return True
 
         return False
