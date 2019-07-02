@@ -94,6 +94,46 @@ class UpdateEntityPose(smach.State):
         return "done"
 
 
+class UpdateDestEntityPoseWithSrcEntity(smach.State):
+    """ Update the pose of an entity from another entity"""
+
+    def __init__(self, robot, src_entity_designator, dst_entity_designator,
+                 dst_entity_type="waypoint"):
+        """ Constructor
+
+        :param robot: robot object
+        :param src_entity_designator: (EdEntityDesignator) indicating the object from which the pose should be selected
+        :param dst_entity_designator: (EdEntityDesignator) indicating the object of which the pose must be updated
+        :param dst_entity_type: (str) Destination entity type
+        """
+        super(UpdateDestEntityPoseWithSrcEntity, self).__init__(outcomes=["done", "failed"])
+        self._robot = robot
+        ds.check_type(src_entity_designator, Entity)
+        ds.check_type(dst_entity_designator, Entity)
+        self._src_entity_designator = src_entity_designator
+        self._dst_entity_designator = dst_entity_designator
+        self._dst_entity_type = dst_entity_type
+
+    def execute(self, userdata=None):
+        """ Looks at the entity and updates its pose using the update kinect service """
+        src_entity = self._src_entity_designator.resolve() if hasattr(
+            self._src_entity_designator,
+            'resolve') else self._src_entity_designator
+
+        dst_entity = self._dst_entity_designator.resolve() if hasattr(
+            self._dst_entity_designator,
+            'resolve') else self._dst_entity_designator
+
+        if (not src_entity) or (not self._robot.ed.get_entity(
+                src_entity.id)) or (not dst_entity):
+            return "failed"
+        else:
+            self._robot.ed.update_entity(id=dst_entity.id,
+                                         frame_stamped=src_entity.pose(),
+                                         type=self._dst_entity_type)
+            return "done"
+
+
 class SegmentObjects(smach.State):
     """
     Look at an entity and segment objects within the area desired.
