@@ -12,6 +12,7 @@ from robocup_knowledge import knowledge_loader
 # Challenge serving drinks
 from .drive_in import DriveIn
 from .serve_one_drink import ServeOneDrink
+from .sd_states import AskAvailability
 
 # Knowledge
 challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks")
@@ -40,17 +41,35 @@ class ServingDrinks(smach.StateMachine):
         unav_drink_des = ds.VariableDesignator(resolve_type=str, name='unav_drink_str_des')
 
         with self:
-            smach.StateMachine.add("DRIVE_IN",
-                                   DriveIn(robot=robot,
-                                           initial_pose=challenge_knowledge.starting_point,
-                                           bar_designator=bar_designator,
-                                           room_designator=room_designator,
-                                           objects_list_des=objects_list_des,
-                                           unav_drink_des=unav_drink_des,
-                                           objects=common_knowledge.objects),
-                                   transitions={"succeeded": "SAY_HI",
-                                                "failed": "SAY_HI",
-                                                "aborted": "aborted"})
+            smach.StateMachine.add("INITIALIZE",
+                                   states.StartChallengeRobust(robot=robot,
+                                                               initial_pose=challenge_knowledge.starting_point,
+                                                               use_entry_points=False, door=False),
+                                   transitions={"Done": "INSPECT_BAR",
+                                                "Aborted": "aborted",
+                                                "Failed": "SAY_HI"})
+
+            # Inspect bar and store the list of available drinks
+            smach.StateMachine.add("INSPECT_BAR",
+                                   states.Inspect(robot=robot, entityDes=bar_designator, navigation_area="in_front_of",
+                                                  objectIDsDes=objects_list_des),
+                                   transitions={"done": "NAVIGATE_TO_ROOM",
+                                                "failed": "INSPECT_FALLBACK"})
+
+            # Inspect fallback - ask the bartender which drink is unavailable and store the unavailable drink
+            smach.StateMachine.add("INSPECT_FALLBACK",
+                                   AskAvailability(robot=robot,
+                                                   unavailable_drink_designator=unav_drink_des.writeable,
+                                                   objects=common_knowledge.objects),
+                                   transitions={"succeeded": "NAVIGATE_TO_ROOM",
+                                                "failed": "NAVIGATE_TO_ROOM"})
+
+            # Navigate to the predefined room
+            smach.StateMachine.add("NAVIGATE_TO_ROOM",
+                                   states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
+                                   transitions={"arrived": "SAY_HI",
+                                                "unreachable": "SAY_HI",
+                                                "goal_not_defined": "aborted"})
 
             smach.StateMachine.add("SAY_HI",
                                    states.Say(robot, "Hi, I am {}. I'll be your waiter today".format(robot.robot_name)),

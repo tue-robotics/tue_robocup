@@ -19,7 +19,6 @@ class ServeOneDrink(smach.StateMachine):
     """
     def __init__(self, robot, bar_designator, room_id, room_designator,
                  objects_list_des, unav_drink_des, name_options, objects):
-        # type: (Robot, int) -> str
         """
         Initialization method
         :param robot: robot api object
