@@ -4,7 +4,7 @@ from robot_smach_states.util.designators import EntityByIdDesignator
 import robot_skills.util.kdl_conversions as kdl
 
 from operator_cleanup import OperatorCleanup
-from self_cleanup import SelfCleanup
+from self_cleanup import SelfCleanup, SelfCleanup2
 
 
 def _loginfo_color(text):
@@ -91,7 +91,7 @@ class HandleDetectedEntities(smach.StateMachine):
     - handle the entity yourself, or
     - have the operator handle the object
     """
-    def __init__(self, robot, found_entity_classifications_designator, location_id, segment_area):
+    def __init__(self, robot, found_entity_classifications_designator, location_id, segment_area, room_des):
 
         smach.StateMachine.__init__(self, outcomes=['done'])
 
@@ -111,10 +111,12 @@ class HandleDetectedEntities(smach.StateMachine):
                                                 "operator": "OPERATOR_CLEANUP",
                                                 "failed": "SELECT_ENTITY"})
 
-            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id,
-                                                               segment_area),
+            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator),
                                    transitions={"done": "SELECT_ENTITY",
                                                 "failed": "SELECT_ENTITY"})
+            # smach.StateMachine.add("SELF_CLEANUP", SelfCleanup2(robot, selected_entity_designator, room_des),
+            #                        transitions={"done": "SELECT_ENTITY",
+            #                                     "failed": "SELECT_ENTITY"})
 
             smach.StateMachine.add("OPERATOR_CLEANUP", OperatorCleanup(robot, selected_entity_designator, location_id,
                                                                        segment_area),
