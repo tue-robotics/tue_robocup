@@ -25,7 +25,7 @@ trashbin_id = "trashbin"
 grammar_target = "T"
 
 grammar = ""
-for room in common.rooms:
+for room in common.location_rooms:
     grammar += "\nT[{0}] -> {0}".format(room)
 
 category_grammar = """
