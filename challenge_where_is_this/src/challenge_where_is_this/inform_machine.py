@@ -1,4 +1,5 @@
 # System
+import os
 import random
 
 # ROS
@@ -12,7 +13,13 @@ import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
 from robot_smach_states.human_interaction.give_directions import GiveDirections
-from robot_smach_states.navigation.guidance import GuideToSymbolic
+from robot_smach_states.navigation import guidance
+
+# Challenge where is this
+from .simulation import mock_detect_operator
+
+if os.getenv("ROBOT_REAL", "false").lower() != "true":
+    guidance._detect_operator_behind_robot = mock_detect_operator
 
 knowledge = load_knowledge("challenge_where_is_this")
 
@@ -108,7 +115,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 'object': 'GUIDE_TO_FURNITURE'})
 
             smach.StateMachine.add('GUIDE_TO_ROOM',
-                                   GuideToSymbolic(robot, {entity_des: 'in'}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: 'in'}, entity_des),
                                    transitions={'arrived': 'arrived',
                                                 'unreachable': 'unreachable',
                                                 'goal_not_defined': 'goal_not_defined',
@@ -116,7 +123,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 'preempted': 'preempted'})
 
             smach.StateMachine.add('GUIDE_TO_FURNITURE',
-                                   GuideToSymbolic(robot, {entity_des: 'in_front_of'}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: 'in_front_of'}, entity_des),
                                    transitions={'arrived': 'arrived',
                                                 'unreachable': 'unreachable',
                                                 'goal_not_defined': 'goal_not_defined',
