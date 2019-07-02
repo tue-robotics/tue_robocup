@@ -118,7 +118,8 @@ class ServeOneDrink(smach.StateMachine):
             # Hand over the drink to the operator
             smach.StateMachine.add("HAND_OVER",
                                    states.HandoverToHuman(robot=robot, arm_designator=arm_designator),
-                                   transitions={"succeeded": "RETURN_TO_ROOM","failed": "RETURN_TO_ROOM"})
+                                   transitions={"succeeded": "RETURN_TO_ROOM",
+                                                "failed": "RETURN_TO_ROOM"})
 
             smach.StateMachine.add("RETURN_TO_ROOM",
                                    states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
