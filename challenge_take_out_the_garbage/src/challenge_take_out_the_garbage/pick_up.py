@@ -114,6 +114,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
+        #TODO
         # self._robot.base.force_drive(0.1, -0.07, 0, 2.0)
 
         # Send to grab trash pose
@@ -136,9 +137,13 @@ class GrabTrash(smach.State):
                 rospy.loginfo("The weight I felt is %s", weight_object)
             try_current += 1
 
-            arm_weight=measure_force.get_force()
+            arm_weight = measure_force.get_force()
+            # TODO
+            import rospy
+            rospy.sleep(2.0)
             self._robot.speech.speak("empty weight moment")
             rospy.loginfo("Empty weight %s", arm_weight)
+
             # Open gripper
             arm.send_gripper_goal('open')
             arm.wait_for_motion_done()
@@ -153,15 +158,18 @@ class GrabTrash(smach.State):
             self._robot.torso.send_goal("grab_trash_up")
             self._robot.torso.wait_for_motion_done()
 
+            # TODO
             self._robot.speech.speak("full weight moment")
             arm_with_object_weight = measure_force.get_force()
             rospy.loginfo("Full weight %s", arm_with_object_weight)
+
             weight_object = numpy.linalg.norm(numpy.subtract(arm_weight, arm_with_object_weight)) / gravitation
             rospy.loginfo("weight_object = {}".format(weight_object))
 
         # Go back and pull back arm
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
+        #TODO
         # self._robot.base.force_drive(-0.125, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
