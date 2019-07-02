@@ -63,7 +63,7 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                                             current_old_guest),
                                    transitions={'arrived': 'SAY_LOOK_AT_GUEST',
                                                 'unreachable': 'SAY_LOOK_AT_GUEST',
-                                                'goal_not_defined': 'abort'})
+                                                'goal_not_defined': 'SAY_LOOK_AT_GUEST'})
 
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
                                    states.SayFormatted(robot,
@@ -80,27 +80,36 @@ class IntroduceGuestToOperator(smach.StateMachine):
             smach.StateMachine.add('FIND_GUEST',
                                    states.FindPerson(robot=robot,
                                                      person_label=guest_name_des,
+                                                     search_timeout=30,
                                                      found_entity_designator=guest_ent_des.writeable,
                                                      speak_when_found=False),
                                    transitions={"found": "POINT_AT_GUEST",
-                                                "failed": "abort"})
+                                                "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
 
             smach.StateMachine.add('POINT_AT_GUEST',
                                    states.PointAt(robot=robot,
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot,{'required_goals':['point_at']}),
                                                   point_at_designator=guest_ent_des,
                                                   look_at_designator=current_old_guest),
-                                   transitions={"succeeded": "INTRODUCE_GUEST",
-                                                "failed": "abort"})
+                                   transitions={"succeeded": "INTRODUCE_GUEST_BY_POINTING",
+                                                "failed": "INTRODUCE_GUEST_WITHOUT_POINTING"})
 
-            smach.StateMachine.add('INTRODUCE_GUEST',
+            smach.StateMachine.add('INTRODUCE_GUEST_BY_POINTING',
                                    states.Say(robot, GuestDescriptionStrDesignator(guest_name_des, guest_drinkname_des),
                                               block=True,
-                                              look_at_standing_person=False),
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'RESET_ARM'})
+
+            smach.StateMachine.add('INTRODUCE_GUEST_WITHOUT_POINTING',
+                                   states.SayFormatted(robot,
+                                                       "Our new guest is {name} who likes {drink}",
+                                                       name=guest_name_des, drink=guest_drinkname_des,
+                                                       block=True,
+                                                       look_at_standing_person=True),
                                    transitions={'spoken': 'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
-                                   states.ResetArmsTorsoHead(robot),
+                                   states.ResetArms(robot),
                                    transitions={'done': 'ITERATE_OLD_GUESTS'})
 
 
@@ -124,8 +133,8 @@ class HandleSingleGuest(smach.StateMachine):
                                               guest_name_des,
                                               guest_drink_des),
                                    transitions={'succeeded': 'SAY_GOTO_OPERATOR',
-                                                'aborted': 'aborted',
-                                                'failed': 'aborted'})
+                                                'aborted': 'SAY_GOTO_OPERATOR',
+                                                'failed': 'SAY_GOTO_OPERATOR'})
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
                                    states.Say(robot, ["Okidoki, lets go inside. Please follow me"],
