@@ -141,9 +141,9 @@ def setup_statemachine(robot):
                                             "error":  "INQUIRE_ROOM"})
 
         smach.StateMachine.add("INQUIRE_ROOM",
-                                AskWhichRoomToClean(robot, ds.Designator(challenge_knowledge.grammar), roomw,
-                                                    cleanup_locationsw),
-                                transitions={"done":    "VERIFY"})
+                               AskWhichRoomToClean(robot, ds.Designator(challenge_knowledge.grammar), roomw,
+                                                   cleanup_locationsw),
+                               transitions={"done":    "VERIFY"})
 
         smach.StateMachine.add('VERIFY', VerifyWorldModelInfo(robot),
                                transitions={"done": "SAY_START_CHALLENGE",
