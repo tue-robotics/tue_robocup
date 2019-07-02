@@ -140,7 +140,7 @@ class PublicArm(object):
 
         return gripper_type is not None and gripper_type in self._available_gripper_types
 
-    def send_gripper_goal(self, state, timeout=5.0, gripper_type=None):
+    def send_gripper_goal(self, state, timeout=5.0, gripper_type=None, max_torque=0.1):
         """
         Tell the gripper to perform a motion.
         :param state: New state of the gripper.
@@ -149,6 +149,7 @@ class PublicArm(object):
         :type timeout: float
         :param gripper_type: Optional type of gripper to perform the action.
         :type gripper_type: str
+        :param max_torque: How much force to apply, range between 0 and 1, only applied if closing the gripper
         :return: succes
         :rtype: bool
         """
@@ -158,7 +159,7 @@ class PublicArm(object):
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                        "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         # Specified type of gripper currently not used.
-        return self._arm.send_gripper_goal(state, timeout)
+        return self._arm.send_gripper_goal(state, timeout, max_torque=max_torque)
 
     def handover_to_human(self, timeout=10, gripper_type=None):
         if gripper_type is None:
@@ -646,13 +647,14 @@ class Arm(RobotPart):
         """
         self._occupied_by = value
 
-    def send_gripper_goal(self, state, timeout=5.0):
+    def send_gripper_goal(self, state, timeout=5.0, max_torque=0.1):
         """
         Send a GripperCommand to the gripper of this arm and wait for finishing
         :param state: open or close
         :type state: str (GripperState)
         :param timeout: timeout in seconds; timeout of 0.0 is not allowed
         :type timeout: float
+        :param max_torque: How much force to apply, range between 0 and 1, only applied if closing the gripper
         :return: True of False
         :rtype: bool
         """
@@ -662,6 +664,7 @@ class Arm(RobotPart):
             goal.command.direction = GripperCommand.OPEN
         elif state == GripperState.CLOSE:
             goal.command.direction = GripperCommand.CLOSE
+            goal.command.max_torque = max_torque
         else:
             rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
             return False
