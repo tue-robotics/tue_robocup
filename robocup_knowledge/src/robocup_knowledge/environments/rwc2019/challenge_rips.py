@@ -1,4 +1,4 @@
-# RIPS KNOWLEDGE FILE RWC2018
+# RIPS KNOWLEDGE FILE RWC2019
 
 starting_point = "initial_pose"
 
