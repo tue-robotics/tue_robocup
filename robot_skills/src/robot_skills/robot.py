@@ -5,7 +5,7 @@ import rospy
 import tf
 import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
 
 # TU/e
@@ -45,6 +45,11 @@ class Robot(object):
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
+
+    @property
+    def joint_states(self):
+        msg = rospy.wait_for_message("/{}/joint_states".format(self.robot_name), JointState)
+        return dict(zip(msg.name, msg.position))
 
     def add_body_part(self, partname, bodypart):
         """

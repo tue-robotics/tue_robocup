@@ -205,15 +205,20 @@ class PublicArm(object):
 
         :param timeout: Max duration for edge up detection
         """
+        # Fill with required joint names (desired in hardware / gazebo impl)
+        current_joint_state = dict(self._arm.joint_states)
+        current_joint_state['arm_lift_joint'] = 0
+
         self._arm._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
             trajectory=JointTrajectory(
-                joint_names=rospy.get_param('/{}/skills/torso/joint_names'.format(self._arm.robot_name)),
+                joint_names=self._arm.joint_names,
                 points=[JointTrajectoryPoint(
-                    positions=[0],
+                    positions=[current_joint_state[n] for n in self._arm.joint_names],
                     time_from_start=rospy.Duration.from_sec(timeout)
                 )]
             )
         ))
+
         self._arm.force_sensor.wait_for_edge_up(timeout)
         self._arm.cancel_goals()
 
@@ -330,7 +335,7 @@ class Arm(RobotPart):
     #To open left gripper
     >>> left.send_gripper_goal_open(10)
     """
-    def __init__(self, robot_name, tf_listener, side):
+    def __init__(self, robot_name, tf_listener, joint_states, side):
         """
         constructor
         :param robot_name: robot_name
@@ -388,6 +393,7 @@ class Arm(RobotPart):
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.force_sensor = ForceSensor("/" + robot_name + "/wrist_wrench/raw")
+        self.joint_states = joint_states
 
     def collect_gripper_types(self, gripper_type):
         """
