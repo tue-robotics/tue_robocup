@@ -3,12 +3,17 @@ common = knowledge_loader.load_knowledge("common")
 
 operator_name = "john"
 
+#TODO
 starting_point = "initial_pose"
 
+#TODO
 waypoint_door = {'id': 'door_opening_right_start', 'radius': 0.5}  # Somewhere facing the door to where ppl enter
 
-waypoint_livingroom = {'id': 'livingroom', 'radius': 0.5}  # From where to find John
+#TODO:Check
+waypoint_livingroom = {'id': 'living_room', 'radius': 0.5}  # From where to find John
 
-sitting_room = 'livingroom'  # Where people will be guided to sit and the robot will find a seat
+#TODO:Check
+sitting_room = 'living_room'  # Where people will be guided to sit and the robot will find a seat
 
-seats = ['bar']  # List of seats to check for empty-ness. These need an 'on_top_of' volume for the person to sit in
+#TODO:Check
+seats = ['couch', 'armchair']  # List of seats to check for empty-ness. These need an 'on_top_of' volume for the person to sit in
