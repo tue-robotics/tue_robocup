@@ -36,7 +36,7 @@ class FindPerson(smach.State):
     Smach state to find a person. The robot looks around and tries to recognize all faces in view.
     """
 
-    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
+    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True):
         """ Initialization method
         :param robot: robot api object
