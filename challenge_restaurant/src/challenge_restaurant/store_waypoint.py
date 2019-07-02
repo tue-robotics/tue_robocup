@@ -200,19 +200,19 @@ class StoreWaypoint(smach.State):
         base_pose = base_loc.frame
 
         # Create automatic side detection state and execute
-        self._robot.speech.speak("I am now going to look for the table", block=False)
-        automatic_side_detection = AutomaticSideDetection2(self._robot)
-        side = automatic_side_detection.execute({})
-        self._robot.head.look_at_standing_person()
+        # self._robot.speech.speak("I am now going to look for the table", block=False)
+        # automatic_side_detection = AutomaticSideDetection2(self._robot)
+        # side = automatic_side_detection.execute({})
+        # self._robot.head.look_at_standing_person()
 
-        self._robot.speech.speak("The {} is to my {}".format(self._location_id, side))
+        # self._robot.speech.speak("The {} is to my {}".format(self._location_id, side))
 
-        self._robot.head.cancel_goal()
+        # self._robot.head.cancel_goal()
 
-        if side == "left":
-            base_pose.M.DoRotZ(math.pi / 2)
-        elif side == "right":
-            base_pose.M.DoRotZ(-math.pi / 2)
+        # if side == "left":
+        #     base_pose.M.DoRotZ(math.pi / 2)
+        # elif side == "right":
+        #     base_pose.M.DoRotZ(-math.pi / 2)
 
         # Add to param server
         loc_dict = {'x': base_pose.p.x(), 'y': base_pose.p.y(), 'phi': base_pose.M.GetRPY()[2]}
