@@ -131,15 +131,38 @@ def setup_statemachine(robot):
     location_des = ds.VariableDesignator(resolve_type=dict)
 
     with sm:
-        smach.StateMachine.add("INITIALIZE",
-                               robot_smach_states.Initialize(robot),
-                               transitions={"initialized": "SET_INITIAL_POSE",
-                                            "abort": "Aborted"})
-        smach.StateMachine.add("SET_INITIAL_POSE",
-                               robot_smach_states.SetInitialPose(robot,challenge_knowledge.starting_point),
-                               transitions={"done":    "INQUIRE_ROOM",
-                                            "preempted": "Aborted",
-                                            "error":  "INQUIRE_ROOM"})
+        smach.StateMachine.add("START_ROBUST",
+                               robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.starting_point),
+                               transitions={"Done": "GO_TO_WAITING_POINT",
+                                            "Aborted": "GO_TO_WAITING_POINT",
+                                            "Failed": "GO_TO_WAITING_POINT"})
+
+        smach.StateMachine.add(
+            "GO_TO_WAITING_POINT",
+            robot_smach_states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot,
+                                                                                 challenge_knowledge.waiting_point)),
+            transitions={"arrived": "INQUIRE_ROOM",
+                         "unreachable": "GO_TO_WAITING_POINT1",
+                         "goal_not_defined": "GO_TO_WAITING_POINT1"})
+
+        smach.StateMachine.add(
+            "GO_TO_WAITING_POINT1",
+            robot_smach_states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot,
+                                                                                 challenge_knowledge.waiting_point),
+                                                  radius=0.3),
+            transitions={"arrived": "INQUIRE_ROOM",
+                         "unreachable": "INQUIRE_ROOM",
+                         "goal_not_defined": "INQUIRE_ROOM"})
+
+        # smach.StateMachine.add("INITIALIZE",
+        #                        robot_smach_states.Initialize(robot),
+        #                        transitions={"initialized": "SET_INITIAL_POSE",
+        #                                     "abort": "Aborted"})
+        # smach.StateMachine.add("SET_INITIAL_POSE",
+        #                        robot_smach_states.SetInitialPose(robot,challenge_knowledge.starting_point),
+        #                        transitions={"done":    "INQUIRE_ROOM",
+        #                                     "preempted": "Aborted",
+        #                                     "error":  "INQUIRE_ROOM"})
 
         smach.StateMachine.add("INQUIRE_ROOM",
                                AskWhichRoomToClean(robot, ds.Designator(challenge_knowledge.grammar), roomw,

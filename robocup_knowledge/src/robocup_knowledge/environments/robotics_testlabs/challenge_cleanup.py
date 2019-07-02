@@ -10,7 +10,7 @@ Exact coordinates of the locations are in ed_object_models.
 """
 
 starting_point = "initial_pose"
-starting_pose = "gpsr_meeting_point"
+waiting_point = "gpsr_meeting_point"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
 cleaning_locations = [
