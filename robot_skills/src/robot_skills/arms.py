@@ -197,13 +197,14 @@ class PublicArm(object):
         """
         return self._arm.base_offset
 
-    def move_down_until_force_sensor_edge_up(self, timeout=10):
+    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
         """
         Move down the arm (hero specific, only joint arm_lift_joint) until the force sensor detects an edge up
 
         A force_sensor.TimeOutException will be raised if no edge up is detected within timeout
 
         :param timeout: Max duration for edge up detection
+        :param retract_distance: How much to retract if we have reached a surface
         """
         # Fill with required joint names (desired in hardware / gazebo impl)
         current_joint_state = self._arm.get_joint_states()
@@ -221,6 +222,18 @@ class PublicArm(object):
 
         self._arm.force_sensor.wait_for_edge_up(timeout)
         self._arm.cancel_goals()
+
+        current_joint_state = self._arm.get_joint_states()
+        current_joint_state['arm_lift_joint'] += retract_distance
+        self._arm._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
+            trajectory=JointTrajectory(
+                joint_names=self._arm.joint_names,
+                points=[JointTrajectoryPoint(
+                    positions=[current_joint_state[n] for n in self._arm.joint_names],
+                    time_from_start=rospy.Duration.from_sec(timeout)
+                )]
+            )
+        ))
 
     def _test_die(self, cond, feature, hint=''):
         """
