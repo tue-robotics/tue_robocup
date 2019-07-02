@@ -266,9 +266,9 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
 
     def __init__(self,
                  robot,
-                 found_person_designator,
                  dst_entity_designator,
                  dst_entity_type="waypoint",
+                 found_person_designator=None,
                  properties=None,
                  query_entity_designator=None,
                  look_distance=10.0,
@@ -298,6 +298,10 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
         """
         super(SetPoseFirstFoundPersonToEntity,
               self).__init__(outcomes=["done", "failed"])
+
+        if not found_person_designator:
+            found_person_designator = ds.VariableDesignator(resolve_type=Entity, 'new_person')
+            found_person_designator = found_person_designator.writable
 
         with self:
             self.add("FIND_FIRST_PERSON",
