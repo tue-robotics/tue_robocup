@@ -64,6 +64,7 @@ class GetOrder(smach.StateMachine):
             smach.StateMachine.add("WAIT_FOR_WAVING",
                                    DetectWaving(robot=robot, caller_id=caller_id),
                                    transitions={"succeeded": "SAY_I_HAVE_SEEN",
+                                                "failed": "ASK_STEP_IN_FRONT",
                                                 "aborted": "ASK_STEP_IN_FRONT"})
 
             # Navigate to person who wants to place an order
