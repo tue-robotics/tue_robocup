@@ -22,6 +22,8 @@ class CleanInspect(smach.StateMachine):
                                                    name='navigation_area')
         location_id_des = ValueByKeyDesignator(location_des, key='name', resolve_type=str, name='location_id')
 
+        room_des = EdEntityDesignator(id_designator=ValueByKeyDesignator(location_des, key="room"))
+
         # Set up the designators for this machine
         e_classifications_des = VariableDesignator([], resolve_type=[ClassificationResult], name='e_classifications_des')
         e_des = EdEntityDesignator(robot, id_designator=location_id_des, name='e_des')
@@ -60,5 +62,5 @@ class CleanInspect(smach.StateMachine):
                                    transitions={"spoken": "done"})
 
             smach.StateMachine.add("HANDLE_DETECTED_ENTITIES",
-                                   HandleDetectedEntities(robot, e_classifications_des, location_id_des, segment_area),
+                                   HandleDetectedEntities(robot, e_classifications_des, location_id_des, segment_area, room_des),
                                    transitions={"done": "ITERATE_NEXT_AREA"})
