@@ -189,7 +189,9 @@ class FindPeople(smach.State):
                     rospy.loginfo("Executing strict=True")
                     return True
             else:
-                if person_attr_val in prop_value:
+                if (isinstance(person_attr_val, list)
+                        and filter(lambda x: x in prop_value, person_attr_val)
+                    ) or person_attr_val in prop_value:
                     rospy.loginfo("Executing strict=False")
                     return True
         else:
