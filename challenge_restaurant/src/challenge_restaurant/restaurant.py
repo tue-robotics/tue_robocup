@@ -43,8 +43,14 @@ class Restaurant(smach.StateMachine):
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
                                    transitions={'done': 'WAIT_FOR_CUSTOMER'})
 
+            # smach.StateMachine.add('WAIT_FOR_CUSTOMER',
+            #                        WaitForCustomer(robot, caller_id, kitchen_designator),
+            #                        transitions={'succeeded': 'SAY_I_HAVE_SEEN',
+            #                                     'aborted': 'STOP'})
+            # Implement new find state to detect nearest waving person
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
-                                   WaitForCustomer(robot, caller_id, kitchen_designator),
+                                   states.FindFirstPerson(robot, caller_id, properties={'tags': ['LWave', 'RWave']},
+                                                          nearest=True),
                                    transitions={'succeeded': 'SAY_I_HAVE_SEEN',
                                                 'aborted': 'STOP'})
 
