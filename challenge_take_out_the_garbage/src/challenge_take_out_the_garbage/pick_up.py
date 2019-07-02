@@ -114,7 +114,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        self._robot.base.force_drive(0.1, -0.07, 0, 2.0)
+        self._robot.base.force_drive(0.1, 0.0, 0, 2.0)
 
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')

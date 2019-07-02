@@ -60,7 +60,7 @@ class TakeOutGarbage(smach.StateMachine):
                                                 "aborted": "ANNOUNCE_END"})
 
             smach.StateMachine.add("DROP_DOWN_TRASH",
-                                   DropDownTrash(robot=robot, drop_designator=drop_zone_designator),
+                                   DropDownTrash(robot=robot, drop_zone_id=CHALLENGE_KNOWLEDGE.drop_zone_id),
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "failed": "failed",
                                                 "aborted": "aborted"})
@@ -79,7 +79,7 @@ class TakeOutGarbage(smach.StateMachine):
                                                     "aborted": "ANNOUNCE_END"})
 
                 smach.StateMachine.add("DROP_DOWN_TRASH2",
-                                       DropDownTrash(robot=robot, drop_designator=drop_zone_designator),
+                                       DropDownTrash(robot=robot, drop_zone_id=CHALLENGE_KNOWLEDGE.drop_zone_id),
                                        transitions={"succeeded": "ANNOUNCE_TASK2",
                                                     "failed": "failed",
                                                     "aborted": "aborted"})
