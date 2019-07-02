@@ -37,7 +37,7 @@ class FindPerson(smach.State):
     """
 
     def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
-                 discard_other_labels=True, found_entity_designator=None, room=None):
+                 discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True):
         """ Initialization method
         :param robot: robot api object
         :param person_label: (str) person label or a designator resolving to a str
@@ -66,6 +66,8 @@ class FindPerson(smach.State):
         self._found_entity_designator = found_entity_designator
 
         self._room = room
+
+        self.speak_when_found = speak_when_found
 
     def execute(self, userdata=None):
         person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
@@ -120,7 +122,8 @@ class FindPerson(smach.State):
 
             if found_person:
                 rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
+                if self.speak_when_found:
+                    self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
                 if self._found_entity_designator:
