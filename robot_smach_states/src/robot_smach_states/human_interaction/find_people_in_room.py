@@ -322,8 +322,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
               self).__init__(outcomes=["done", "failed"])
 
         if not found_person_designator:
-            found_person_designator = ds.VariableDesignator(resolve_type=Entity, name='new_person')
-            found_person_designator = found_person_designator.writable
+            found_person_designator = ds.VariableDesignator(resolve_type=Entity, name='new_person').writeable
 
         with self:
             self.add("FIND_FIRST_PERSON",
