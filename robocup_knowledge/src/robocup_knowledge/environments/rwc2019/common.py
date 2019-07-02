@@ -7,23 +7,29 @@ names = female_names + male_names
 
 # This dict holds all locations
 locations = [
-    {'name': 'side_table',      'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'bedroom_chest',   'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
     {'name': 'bed',             'room': 'bedroom',          'category': 'utility',      'manipulation': 'no'},
-    {'name': 'desk',            'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'side_table',      'room': 'bedroom',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'shelf',           'room': 'bedroom',          'category': 'shelf',        'manipulation': 'yes'},
 
-    {'name': 'cupboard',        'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
-    {'name': 'storage_table',   'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
-    {'name': 'sink',            'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
-    {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
-    {'name': 'counter',         'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'trash_bin',       'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',          'category': 'shelf',        'manipulation': 'yes'},
+    {'name': 'kitchen_table',   'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'island',          'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'sink',            'room': 'kitchen',          'category': 'table',        'manipulation': 'yes'},
+    {'name': 'dishwasher',      'room': 'kitchen',          'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'fridge',          'room': 'kitchen',          'category': 'utility',      'manipulation': 'no'},
 
-    {'name': 'dining_table',    'room': 'dining_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'shoe_rack',       'room': 'office',           'category': 'table',        'manipulation': 'yes'},
+    {'name': 'safe',            'room': 'office',           'category': 'table',        'manipulation': 'yes'},
+    {'name': 'desk',            'room': 'office',           'category': 'table',        'manipulation': 'yes'},
+    {'name': 'coat_hanger',     'room': 'office',           'category': 'utility',      'manipulation': 'no'},
 
-    {'name': 'end_table',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
-    {'name': 'couch',           'room': 'living_room',      'category': 'utility',      'manipulation': 'no'},
-    {'name': 'bookcase',        'room': 'living_room',      'category': 'shelf',        'manipulation': 'yes'},
-    {'name': 'door',            'room': 'corridor',         'category': 'utility',      'manipulation': 'no'},
-    {'name': 'gpsr_entrance',   'room': 'corridor',         'category': 'utility',      'manipulation': 'no'}
+    {'name': 'coffee_table',    'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'couch',           'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'arm_chair',       'room': 'living_room',      'category': 'utility',      'manipulation': 'yes'},
+    {'name': 'display_cabinet', 'room': 'living_room',      'category': 'table',        'manipulation': 'yes'},
+    {'name': 'sideboard',       'room': 'living_room',      'category': 'table',        'manipulation': 'yes'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -34,38 +40,12 @@ manipulation_locations = list(set([ o["name"] for o in locations if o["manipulat
 rooms = location_rooms + ['corridor']
 
 objects = [
-    {'category': 'cleaning_stuff',      'name': 'cloth',            'color': 'purple',      'volume': 315,      'weight': 37},
-    {'category': 'cleaning_stuff',      'name': 'scrubby',          'color': 'yellowish',   'volume': 100,      'weight': 22},
-    {'category': 'cleaning_stuff',      'name': 'sponge',           'color': 'blue',        'volume': 247,      'weight': 15},
-
-    {'category': 'container',           'name': 'basket',           'color': 'beige',       'volume': 3487,     'weight': 43},
-    {'category': 'container',           'name': 'tray',             'color': 'white',       'volume': 4508,     'weight': 120},
-
-    {'category': 'cutlery',             'name': 'fork',             'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'cutlery',             'name': 'knife',            'color': 'green',       'volume': 22,       'weight': 10},
-    {'category': 'cutlery',             'name': 'spoon',            'color': 'green',       'volume': 23,       'weight': 10},
 
     {'category': 'drink',               'name': 'chocolate_drink',  'color': 'brownish',    'volume': 404,      'weight': 325},
     {'category': 'drink',               'name': 'coke',             'color': 'red',         'volume': 270,      'weight': 222},
     {'category': 'drink',               'name': 'grape_juice',      'color': 'purplish',    'volume': 216,      'weight': 200},
     {'category': 'drink',               'name': 'orange_juice',     'color': 'orange',      'volume': 216,      'weight': 200},
-    {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 270,      'weight': 222},
-
-    {'category': 'food',                'name': 'cereal',           'color': 'blue',        'volume': 336,      'weight': 21},
-    {'category': 'food',                'name': 'noodles',          'color': 'yellowish',   'volume': 297,      'weight': 85},
-    {'category': 'food',                'name': 'sausages',         'color': 'blue',        'volume': 223,      'weight': 113},
-
-    {'category': 'fruit',               'name': 'apple',            'color': 'greenred',    'volume': 360,      'weight': 85},
-    {'category': 'fruit',               'name': 'orange',           'color': 'orange',      'volume': 380,      'weight': 140},
-    {'category': 'fruit',               'name': 'paprika',          'color': 'red',         'volume': 402,      'weight': 90},
-
-    {'category': 'snack',               'name': 'crackers',         'color': 'orange',      'volume': 243,      'weight': 28},
-    {'category': 'snack',               'name': 'potato_chips',     'color': 'black',       'volume': 4080,     'weight': 200},
-    {'category': 'snack',               'name': 'pringles',         'color': 'green',       'volume': 1125,     'weight': 156},
-
-    {'category': 'tableware',           'name': 'bowl',             'color': 'green',       'volume': 458,      'weight': 65},
-    {'category': 'tableware',           'name': 'cup',              'color': 'green',       'volume': 300,      'weight': 50},
-    {'category': 'tableware',           'name': 'dish',             'color': 'green',       'volume': 672,      'weight': 70}
+    {'category': 'drink',               'name': 'sprite',           'color': 'bluegreen',   'volume': 270,      'weight': 222}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
@@ -77,19 +57,10 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 # object_known_objects = list(set([ o["name"] for o in objects ]))
 
 category_locations = {
-    "drink": {"counter": "on_top_of"},
-    "cleaning_stuff": {"side_table": "on_top_of"},
-    "cutlery": {"storage_table": "on_top_of"},
-    "snack": {"bookcase": "shelf3"},               # educated guess
-    "fruit": {"bookcase": "shelf2"},               # educated guess
-    "container": {"end_table": "on_top_of"},
-    "food": {"cupboard": "shelf2"},                 # educated guess
-    "tableware": {"storage_table": "on_top_of"}
 }
 
 inspect_areas = {
-    "bookcase": ["shelf2", "shelf3", "shelf4"],
-    "cupboard": ["shelf3", "shelf4"]
+    "shelf": ["shelf2", "shelf3", "shelf4", "shelf5"],
 }
 
 inspect_positions = {
@@ -98,10 +69,6 @@ inspect_positions = {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 most_probable_location_in_room_map = {
-    'bedroom': 'side_table',        # educated guess
-    'kitchen': 'cupboard',          # educated guess
-    'dining_room': 'dining_table',  # educated guess
-    'living_room': 'end_table'      # educated guess
 }
 
 def get_location_from_room(room_id):
