@@ -43,6 +43,7 @@ class ForceSensor(object):
         Returns if an edge up event is detected. Will raise a TimeOutException if no edge up is detected within timeout.
         :param timeout: Edge up wait patience
         """
+        self._edge_up = False
         self._calibrated_msg = None
         subscriber = rospy.Subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
 
