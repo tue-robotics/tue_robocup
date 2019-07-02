@@ -219,14 +219,14 @@ class FindPersonInRoom(smach.StateMachine):
     in that room.
     """
 
-    def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None):
+    def __init__(self, robot, area, name, discard_other_labels=True, found_person_designator=None):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
         to this waypoint. Else, it will navigate to the room called "<area>"
         :param name: (str) Name of the person to look for
         :param discard_other_labels: (bool) Whether or not to discard faces based on label
-        :param found_entity_designator: (Designator) A designator that will resolve to the found object
+        :param found_person_designator: (Designator) A designator that will resolve to the found object
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
@@ -259,7 +259,7 @@ class FindPersonInRoom(smach.StateMachine):
                                    FindPerson(robot=robot,
                                               properties={'id': name},
                                               query_entity_designator=room_designator,
-                                              result_designator=found_entity_designator,
+                                              result_designator=found_person_designator,
                                               speak=True),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
