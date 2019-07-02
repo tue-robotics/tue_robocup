@@ -696,7 +696,7 @@ class Arm(RobotPart):
             else:
                 joint_names = self.joint_names
 
-        time_from_start = rospy.Duration()
+        time_from_start = rospy.Duration(3)
         ps = []
         for joints_reference in joints_references:
             if len(joints_reference) != len(joint_names):
