@@ -42,7 +42,8 @@ class GetOrder(smach.StateMachine):
             # Detect - people holding drinks and people without drinks  #ToDo: implement!
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS",
                                    states.Say(robot=robot, sentence="Trying to find people without a drink",
-                                              look_at_standing_person=True),
+                                              look_at_standing_person=True,
+                                              block=True),
                                    transitions={"spoken": "FIND_PERSON_WITHOUT_DRINK"})
 
             # TODO: Change DummyState to actual state
@@ -58,25 +59,23 @@ class GetOrder(smach.StateMachine):
             smach.StateMachine.add("ASK_FOR_WAVING",
                                    states.Say(robot=robot,
                                               sentence="Could not find people without a drink. Please wave if you want me to bring you something",
-                                              look_at_standing_person=True),
+                                              look_at_standing_person=True,
+                                              block=True),
                                    transitions={"spoken": "WAIT_FOR_WAVING"})
 
-            smach.StateMachine.add(
-                "WAIT_FOR_WAVING",
-                states.SetPoseFirstFoundPersonToEntity(
-                    robot=robot,
-                    properties={'tags': ['LWave', 'RWave']},
-                    dst_entity_designator=caller_designator),
-                transitions={
-                    "done": "SAY_I_HAVE_SEEN",
-                    "failed": "ASK_STEP_IN_FRONT"
-                })
+            smach.StateMachine.add("WAIT_FOR_WAVING",
+                                   states.SetPoseFirstFoundPersonToEntity(robot=robot,
+                                                                          properties={'tags': ['LWave', 'RWave']},
+                                                                          dst_entity_designator=caller_designator),
+                                   transitions={"done": "SAY_I_HAVE_SEEN",
+                                                "failed": "ASK_STEP_IN_FRONT"})
 
             # Navigate to person who wants to place an order
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
                                    states.Say(robot=robot,
                                               sentence="Found person who may want to place an order. I will be there shortly!",
-                                              look_at_standing_person=True),
+                                              look_at_standing_person=True,
+                                              block=True),
                                    transitions={"spoken": "NAVIGATE_TO_PERSON"})
 
             # Navigate to waving people
@@ -89,14 +88,18 @@ class GetOrder(smach.StateMachine):
 
             # Detect waving people fallback - ask operator in front
             smach.StateMachine.add("ASK_STEP_IN_FRONT",
-                                   states.Say(robot=robot, sentence="Sorry! I could not navigate to you. Please step in front of me to give your order",
-                                              look_at_standing_person=True),
+                                   states.Say(robot=robot,
+                                              sentence="Sorry! I could not navigate to you. Please step in front of me to give your order",
+                                              look_at_standing_person=True,
+                                              block=True),
                                    transitions={"spoken": "LEARN_NAME"})
 
             # Ask operator for his name
             smach.StateMachine.add("LEARN_NAME",
-                                   states.AskPersonName(robot=robot, person_name_des=operator_name.writeable,
-                                                        name_options=name_options, default_name="john",
+                                   states.AskPersonName(robot=robot,
+                                                        person_name_des=operator_name.writeable,
+                                                        name_options=name_options,
+                                                        default_name="john",
                                                         nr_tries=2),
                                    transitions={"succeeded": "LEARN_OPERATOR",
                                                 "failed": "LEARN_NAME_FALLBACK",
@@ -111,7 +114,9 @@ class GetOrder(smach.StateMachine):
 
             # Learn operator
             smach.StateMachine.add("LEARN_OPERATOR",
-                                   states.LearnPerson(robot=robot, name_designator=operator_name, nr_tries=5),
+                                   states.LearnPerson(robot=robot,
+                                                      name_designator=operator_name,
+                                                      nr_tries=5),
                                    transitions={"succeeded": "ASK_DRINK",
                                                 "failed": "LEARN_OPERATOR_FALLBACK"})
 
@@ -119,12 +124,14 @@ class GetOrder(smach.StateMachine):
             smach.StateMachine.add("LEARN_OPERATOR_FALLBACK",
                                    states.Say(robot=robot,
                                               sentence="Something went wrong but I will call you by name when I'm back",
-                                              look_at_standing_person=True),
+                                              look_at_standing_person=True,
+                                              block=True),
                                    transitions={"spoken": "ASK_DRINK"})
 
             # Ask for preferred beverage
             smach.StateMachine.add("ASK_DRINK",
-                                   AskDrink(robot=robot, operator_name=operator_name,
+                                   AskDrink(robot=robot,
+                                            operator_name=operator_name,
                                             drink_designator=drink_designator.writeable,
                                             available_drinks_designator=available_drinks_designator,
                                             unavailable_drink_designator=unavailable_drink_designator,
