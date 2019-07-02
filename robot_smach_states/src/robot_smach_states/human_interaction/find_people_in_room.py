@@ -19,7 +19,22 @@ __all__ = ['FindPeople', 'FindFirstPerson', 'SetPoseFirstFoundPersonToEntity', '
 
 class FindPeople(smach.State):
     """
-    Smach state to find a person. The robot looks around and tries to recognize all faces in view.
+    Smach state to find a person. The robot looks around and tries to find
+    people in its view.
+
+    >>> # The requried imports on robot console
+    >>> import robot_smach_states as states
+    >>> import robot_smach_states.util.designators as ds
+    >>> from robot_skills.util.entity import Entity
+    >>>
+    >>> # Designator to store the result
+    >>> des = ds.VariableDesignator(resolve_type=[Entity])
+    >>>
+    >>> sm = state.FindPeople(robot=robot, properties={'id': 'NAME'}, found_people_designator=des.writeable)
+    >>> sm.execute()
+    >>> des.resolve()
+    Entity(id=something, )
+
     """
 
     def __init__(self, robot, properties=None, query_entity_designator=None,
