@@ -114,7 +114,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        self._robot.base.force_drive(0.1, -0.07, 0, 2.0)
+        # self._robot.base.force_drive(0.1, -0.07, 0, 2.0)
 
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')
@@ -159,7 +159,7 @@ class GrabTrash(smach.State):
         # Go back and pull back arm
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
-        self._robot.base.force_drive(-0.125, 0, 0, 2.0)
+        # self._robot.base.force_drive(-0.125, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
@@ -323,6 +323,6 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
-    
+
     arm = ds.UnoccupiedArmDesignator(hero, {})
-    GrabTrash(hero, arm).execute()
+    GrabTrash(hero, arm, 100, 2).execute()
