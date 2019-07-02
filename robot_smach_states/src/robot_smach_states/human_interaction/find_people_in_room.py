@@ -129,7 +129,6 @@ class FindPeople(smach.State):
 
             rospy.loginfo("{} people remaining after distance < {}-check".format(len(found_people), self._look_distance))
 
-
             if self._properties:
                 for k, v in self._properties.items():
                     found_people = filter(lambda x:
@@ -155,7 +154,7 @@ class FindPeople(smach.State):
                                                    found_people)
                             rospy.loginfo(
                                 "{} result_people remaining after 'in'-'{}' check".format(len(result_people), query_entity.id))
-                        except:
+                        except Exception:
                             pass
             else:
                 result_people = found_people
@@ -301,7 +300,6 @@ class FindPeopleInRoom(smach.StateMachine):
         ds.check_type(found_people_designator, [Entity])
         ds.is_writeable(found_people_designator)
 
-
         with self:
             smach.StateMachine.add("DECIDE_NAVIGATE_STATE",
                                    _DecideNavigateState(robot=robot, waypoint_designator=waypoint_designator,
@@ -350,5 +348,5 @@ if __name__ == "__main__":
 
         rospy.loginfo("Found {}".format(people.resolve()))
     else:
-        print "Please provide robot name as argument."
+        print("Please provide robot name as argument.")
         exit(1)
