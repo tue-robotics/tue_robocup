@@ -57,13 +57,11 @@ class IntroduceGuestToOperator(smach.StateMachine):
             #                                     'not_found': 'GOTO_OPERATOR'})
             # NEW, TODO, use new FindPersonInRoom made by Arpit
             smach.StateMachine.add('FIND_OLD_GUESTS',
-                                    states.FindPersonInRoom(robot,
-                                        # We're looking for any person and assume they are old guests already there
-                                        discard_other_labels=False,
-                                        area=challenge_knowledge.waypoint_livingroom['id'],
-                                        name=challenge_knowledge.operator_name,
-                                        found_entity_designator=all_old_guests.writeable),
-                                    transitions = {'found': 'GOTO_OPERATOR',
+                                   states.FindPersonInRoom(robot, area=challenge_knowledge.waypoint_livingroom['id'],
+                                                           name=challenge_knowledge.operator_name,
+                                                           discard_other_labels=False,
+                                                           found_person_designator=all_old_guests.writeable),
+                                   transitions = {'found': 'GOTO_OPERATOR',
                                                    'not_found': 'GOTO_OPERATOR'})
 
             smach.StateMachine.add('ITERATE_OLD_GUESTS',
