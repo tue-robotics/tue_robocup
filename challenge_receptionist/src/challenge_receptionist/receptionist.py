@@ -39,7 +39,6 @@ class IntroduceGuestToOperator(smach.StateMachine):
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
         current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
 
-        # TODO: iterate over all people in the room (excluding the guest, but that should be behind us and thus not visible)
         # For each person:
         #   0. Go to the person (old guest)
         #   1. Look at the person and point at the guest
@@ -105,20 +104,65 @@ class IntroduceGuestToOperator(smach.StateMachine):
                                    transitions={'done': 'ITERATE_OLD_GUESTS'})
 
 
+class HandleSingleGuest(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
+
+        door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
+        livingroom_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_livingroom['id'])
+
+        guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
+        guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')
+        guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
+        guest_drinkname_des = FieldOfHMIResult(guest_drink_des, semantics_field='drink', name='guest_drinkname')
+
+        with self:
+            smach.StateMachine.add('LEARN_GUEST',
+                                   LearnGuest(robot,
+                                              door_waypoint,
+                                              guest_entity_des,
+                                              guest_name_des,
+                                              guest_drink_des),
+                                   transitions={'succeeded': 'SAY_GOTO_OPERATOR',
+                                                'aborted': 'aborted',
+                                                'failed': 'aborted'})
+
+            smach.StateMachine.add('SAY_GOTO_OPERATOR',
+                                   states.Say(robot, ["Okidoki, lets go inside. Please follow me"],
+                                              block=True,
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'GOTO_LIVINGROOM'})
+
+            smach.StateMachine.add('GOTO_LIVINGROOM',
+                                   states.NavigateToWaypoint(robot,
+                                                             livingroom_waypoint,
+                                                             challenge_knowledge.waypoint_livingroom['radius']),
+                                   transitions={'arrived': 'INTRODUCE_GUEST',
+                                                'unreachable': 'INTRODUCE_GUEST',
+                                                'goal_not_defined': 'aborted'})
+
+            smach.StateMachine.add('INTRODUCE_GUEST',
+                                   IntroduceGuestToOperator(robot,
+                                                            guest_entity_des,
+                                                            guest_name_des,
+                                                            guest_drinkname_des),
+                                   transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
+                                                'abort': 'FIND_SEAT_FOR_GUEST'})
+
+            smach.StateMachine.add('FIND_SEAT_FOR_GUEST',
+                                   FindEmptySeat(robot,
+                                                 seats_to_inspect=challenge_knowledge.seats,
+                                                 room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room)),
+                                   transitions={'succeeded': 'succeeded',
+                                                'failed': 'aborted'})
+
+
 class ChallengeReceptionist(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
 
-        self.door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
-        self.livingroom_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_livingroom['id'])
-
-        self.operator_designator = ds.VariableDesignator(resolve_type=Entity)
-
-        self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
-        self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
-        self.guest1_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest1_drink')
-        self.guest1_drinkname_des = FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink',
-                                                     name='guest1_drinkname')
+        runs = ds.Designator([0, 1])
+        run = ds.VariableDesignator(resolve_type=int)
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -128,45 +172,19 @@ class ChallengeReceptionist(smach.StateMachine):
 
             smach.StateMachine.add('SET_INITIAL_POSE',
                                    states.SetInitialPose(robot, challenge_knowledge.starting_point),
-                                   transitions={'done': 'LEARN_GUEST_1',
+                                   transitions={'done': 'ITERATE_NUM_GUESTS',
                                                 "preempted": 'aborted',
-                                                'error': 'LEARN_GUEST_1'})
+                                                'error': 'ITERATE_NUM_GUESTS'})
 
-            smach.StateMachine.add('LEARN_GUEST_1',
-                                   LearnGuest(robot, self.door_waypoint, self.guest1_entity_des, self.guest1_name_des,
-                                              self.guest1_drink_des),
-                                   transitions={'succeeded': 'SAY_GOTO_OPERATOR',
-                                                'aborted': 'aborted',
-                                                'failed': 'aborted'})
+            smach.StateMachine.add('ITERATE_NUM_GUESTS',
+                                   states.IterateDesignator(runs, run.writeable),
+                                   transitions={'next': 'HANDLE_SINGLE_GUEST',
+                                                'stop_iteration': 'SAY_DONE'})
 
-            smach.StateMachine.add('SAY_GOTO_OPERATOR',
-                                   states.Say(robot, ["Okidoki, lets go inside. Please follow me"],
-                                              block=True,
-                                              look_at_standing_person=True),
-                                   transitions={'spoken': 'GOTO_LIVINGROOM_1'})
-
-            smach.StateMachine.add('GOTO_LIVINGROOM_1',
-                                   states.NavigateToWaypoint(robot,
-                                                             self.livingroom_waypoint,
-                                                             challenge_knowledge.waypoint_livingroom['radius']),
-                                   transitions={'arrived': 'INTRODUCE_GUEST',
-                                                'unreachable': 'INTRODUCE_GUEST',
-                                                'goal_not_defined': 'aborted'})
-
-            smach.StateMachine.add('INTRODUCE_GUEST',
-                                   IntroduceGuestToOperator(robot,
-                                                            self.guest1_entity_des,
-                                                            self.guest1_name_des,
-                                                            self.guest1_drinkname_des),
-                                   transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
-                                                'abort': 'FIND_SEAT_FOR_GUEST'})
-
-            smach.StateMachine.add('FIND_SEAT_FOR_GUEST',
-                                   FindEmptySeat(robot,
-                                                 seats_to_inspect=challenge_knowledge.seats,
-                                                 room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room)),
-                                   transitions={'succeeded': 'SAY_DONE',
-                                                'failed': 'SAY_DONE'})
+            smach.StateMachine.add('HANDLE_SINGLE_GUEST',
+                                   HandleSingleGuest(robot),
+                                   transitions={'succeeded': 'ITERATE_NUM_GUESTS',
+                                                'aborted': 'ITERATE_NUM_GUESTS',})
 
             smach.StateMachine.add('SAY_DONE',
                                    states.Say(robot, ["That's all folks, my job is done, bye bye!"],
@@ -185,5 +203,5 @@ class ChallengeReceptionist(smach.StateMachine):
             # - [x]   rotate head until <guest1> is detected
             # - [x] Point at guest1
             # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
-            # - [ ] Iterate to guest 2
+            # - [x] Iterate to guest 2
             # - [x] Point at empty chair for guest to sit in
