@@ -25,13 +25,12 @@ class TakeOutGarbage(smach.StateMachine):
         # Create designators
         trashbin_designator = ds.EdEntityDesignator(robot=robot,
                                                     id=CHALLENGE_KNOWLEDGE.trashbin_id)
-        trash_designator = ds.EntityByIdDesignator(robot=robot, id="trash")
 
         # Look if there is a second trash bin present
+        trashbin_designator2 = None
         if hasattr(CHALLENGE_KNOWLEDGE, "trashbin_id2"):
             trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
                                                          id=CHALLENGE_KNOWLEDGE.trashbin_id2)
-            trash_designator2 = ds.EntityByIdDesignator(robot=robot, id="trash")
             next_state = "PICK_UP_TRASH2"
             rospy.loginfo("There is a second trash bin")
         else:
@@ -59,8 +58,7 @@ class TakeOutGarbage(smach.StateMachine):
                                                 "aborted": "ANNOUNCE_END"})
 
             smach.StateMachine.add("DROP_DOWN_TRASH",
-                                   DropDownTrash(robot=robot, trash_designator=trash_designator,
-                                                 drop_designator=drop_zone_designator),
+                                   DropDownTrash(robot=robot, drop_designator=drop_zone_designator),
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "failed": "failed",
                                                 "aborted": "aborted"})
@@ -72,15 +70,14 @@ class TakeOutGarbage(smach.StateMachine):
 
             if next_state == "PICK_UP_TRASH2":
                 smach.StateMachine.add("PICK_UP_TRASH2", PickUpTrash(robot=robot,
-                                                                     trashbin_designator=trashbin_designator,
+                                                                     trashbin_designator=trashbin_designator2,
                                                                      arm_designator=arm_designator),
                                        transitions={"succeeded": "DROP_DOWN_TRASH2",
                                                     "failed": "ANNOUNCE_END",
                                                     "aborted": "ANNOUNCE_END"})
 
                 smach.StateMachine.add("DROP_DOWN_TRASH2",
-                                       DropDownTrash(robot=robot, trash_designator=trash_designator2,
-                                                     drop_designator=drop_zone_designator),
+                                       DropDownTrash(robot=robot, drop_designator=drop_zone_designator),
                                        transitions={"succeeded": "ANNOUNCE_TASK2",
                                                     "failed": "failed",
                                                     "aborted": "aborted"})

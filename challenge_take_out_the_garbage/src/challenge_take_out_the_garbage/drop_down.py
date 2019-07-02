@@ -10,66 +10,94 @@ from robocup_knowledge import load_knowledge
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
-
-class dropPoseDesignator(ds.Designator):
+class DropTrash(smach.StateMachine):
     """
-    Designator to resolver the drop pose
+    State that moves the robot to the drop bag position and opens the gripper
     """
-    def __init__(self, robot, drop_height, name):
+    def __init__(self, robot, arm_designator):
         """
+
         :param robot: robot object
-        :param drop_height: height to drop the object from
-        :param name: name of pose
         """
-        super(dropPoseDesignator, self).__init__(resolve_type=FrameStamped, name=name)
 
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
-        self._drop_height = drop_height
+        self._arm_designator = arm_designator
 
-    def _resolve(self):
-        frame = None
+    def execute(self, userdata=None):
+        arm = self._arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
 
-        # Query ed
-        try:
-            frame = self._robot.ed.get_entity(id=CHALLENGE_KNOWLEDGE.drop_zone_id)._pose
-        except:
-            rospy.logwarn("The provided entity has no _pose")
-            return None
+        # Torso up (non-blocking)
+        self._robot.torso.reset()
 
-        frame.p.z(self._drop_height)
+        # Arm to position in a safe way
+        arm.send_joint_goal('handover')
+        arm.wait_for_motion_done()
+        arm.send_gripper_goal('open')
+        arm.wait_for_motion_done()
+        arm.send_joint_goal('reset')
+        arm.wait_for_motion_done()
+        arm.send_gripper_goal('close')
+        arm.wait_for_motion_done()
+        return "succeeded"
 
-        return FrameStamped(frame, "/map")
+
+# class DropPoseDesignator(ds.Designator):
+#     """
+#     Designator to resolver the drop pose
+#     """
+#     def __init__(self, robot, drop_height, name):
+#         """
+#         :param robot: robot object
+#         :param drop_height: height to drop the object from
+#         :param name: name of pose
+#         """
+#         super(DropPoseDesignator, self).__init__(resolve_type=FrameStamped, name=name)
+#
+#         self._robot = robot
+#         self._drop_height = drop_height
+#         self._name = name
+#
+#     def _resolve(self):
+#         frame = None
+#
+#         # Query ed
+#         try:
+#             frame = self._robot.ed.get_entity(id=self._name)._pose
+#         except:
+#             rospy.logwarn("The provided entity has no _pose")
+#             return None
+#
+#         frame.p.z(self._drop_height)
+#
+#         return FrameStamped(frame, "/map")
 
 
 class DropDownTrash(smach.StateMachine):
     """
     State that makes the robot go to the drop zone and drop the trash bag there
     """
-    def __init__(self, robot, trash_designator, drop_designator):
+    def __init__(self, robot, drop_designator):
         """
         :param robot: robot object
-        :param trash_designator: EdEntityDesignator designating the trash
         :param drop_designator: EdEntityDesignator designating the collection zone
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        drop_area_pose = dropPoseDesignator(robot, 0.6, CHALLENGE_KNOWLEDGE.drop_zone_id)
         arm_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={})
-        self._trash_designator = trash_designator
-        self._drop_designator = drop_designator
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
-                                   states.NavigateToObserve(robot, self._drop_designator),
-                                   transitions={"arrived": "PLACE_TRASH",
+                                   states.NavigateToObserve(robot, drop_designator),
+                                   transitions={"arrived": "DROP_TRASH",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
 
-            smach.StateMachine.add("PLACE_TRASH",
-                                   states.Place(robot=robot, item_to_place=trash_designator,
-                                                place_pose=drop_area_pose, place_volume="on_top_of",
-                                                arm=arm_designator),
-                                   transitions={"done": "succeeded",
+            smach.StateMachine.add("DROP_TRASH", DropTrash(robot=robot, arm_designator=arm_designator),
+                                   transitions={"succeeded": "succeeded",
                                                 "failed": "HANDOVER"})
 
             smach.StateMachine.add("HANDOVER",
