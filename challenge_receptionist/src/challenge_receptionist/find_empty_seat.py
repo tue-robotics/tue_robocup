@@ -91,11 +91,19 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
                                    states.Say(robot, ["Please sit here"], block=True),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
                                    states.Say(robot, ["Sorry, there are no empty seats. I guess you just have to stand"], block=True),
-                                   transitions={'spoken': 'failed'})
+                                   transitions={'spoken': 'RESET_FAIL'})
+
+            smach.StateMachine.add('RESET_FAIL',
+                                   states.ResetArmsTorsoHead(robot),
+                                   transitions={'done': 'failed'})
+
+            smach.StateMachine.add('RESET_SUCCESS',
+                                   states.ResetArmsTorsoHead(robot),
+                                   transitions={'done': 'succeeded'})
 
 
 if __name__ == "__main__":
