@@ -114,7 +114,7 @@ class HandleSingleGuest(smach.StateMachine):
         guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
         guest_name_des = ds.VariableDesignator('guest 1', name='guest_name')
         guest_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest_drink')
-        guest_drinkname_des = FieldOfHMIResult(guest_drink_des, semantics_field='drink', name='guest_drinkname')
+        guest_drinkname_des = ds.FieldOfHMIResult(guest_drink_des, semantics_field='drink', name='guest_drinkname')
 
         with self:
             smach.StateMachine.add('LEARN_GUEST',

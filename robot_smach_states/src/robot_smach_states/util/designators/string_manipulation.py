@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import rospy
+from robot_smach_states.util.designators.checks import check_type
 from robot_smach_states.util.designators.core import Designator
 from hmi import HMIResult
 
@@ -18,8 +19,8 @@ class FieldOfHMIResult(Designator):
         """
         super(FieldOfHMIResult, self).__init__(resolve_type=str, name=name)
 
-        ds.check_type(query_result_des, HMIResult)
-        ds.check_type(semantics_field, str)
+        check_type(query_result_des, HMIResult)
+        check_type(semantics_field, str)
 
         self.query_result_des = query_result_des
         self.semantics_field = semantics_field
