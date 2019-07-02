@@ -44,6 +44,10 @@ class StorePlaceDesignator(Designator):
     def _resolve(self):
         e = self._selected_entity_designator.resolve()
 
+        if e is None:
+            rospy.logerr("Could not resolve the selected entity!")
+            return None
+
         item_category = challenge_knowledge.common.get_object_category(e.type)
         if item_category is not None:
             location, area_name = challenge_knowledge.common.get_object_category_location(item_category)
@@ -53,7 +57,7 @@ class StorePlaceDesignator(Designator):
             else:
                 return None
         else:
-            rospy.logerr("Could not resolve the selected entity!")
+            rospy.logerr("Could not resolve the object category of {}".format(e.type))
             return None
 
 
@@ -67,12 +71,16 @@ class StoreAreaDesignator(Designator):
     def _resolve(self):
         e = self._selected_entity_designator.resolve()
 
+        if e is None:
+            rospy.logerr("Could not resolve the selected entity!")
+            return None
+
         item_category = challenge_knowledge.common.get_object_category(e.type)
         if item_category is not None:
             location, area_name = challenge_knowledge.common.get_object_category_location(item_category)
             return area_name
         else:
-            rospy.logerr("Could not resolve the selected entity!")
+            rospy.logerr("Could not resolve the object category of {}".format(e.type))
             return None
 
 
