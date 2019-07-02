@@ -196,7 +196,7 @@ class FindPeople(smach.State):
         return False
 
 
-class FindPerson(smach.StateMachine):
+class FindFirstPerson(smach.StateMachine):
     """ Wrapper around FindPeople to get the first person that matches the
     search criteria """
 
