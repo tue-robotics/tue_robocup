@@ -230,7 +230,7 @@ if __name__ == "__main__":
         _area = sys.argv[2]
         _name = sys.argv[3]
 
-        rospy.init_node('test_follow_operator')
+        rospy.init_node('test_find_person_in_room')
         _robot = get_robot(robot_name)
         sm = FindPersonInRoom(_robot, _area, _name)
         sm.execute()
