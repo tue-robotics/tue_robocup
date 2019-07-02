@@ -85,7 +85,7 @@ class NavigateToAndOpenCupboard(StateMachine):
         with self:
             StateMachine.add("NAVIGATE_TO_CUPBOARD",
                              NavigateToSymbolic(robot, {cupboard: cupboard_navigation_area}, cupboard),
-                             transitions={'arrived': 'OPEN_CUPBOARD',
+                             transitions={'arrived': 'failed',
                                           'unreachable': 'failed',
                                           'goal_not_defined': 'failed'})
 
