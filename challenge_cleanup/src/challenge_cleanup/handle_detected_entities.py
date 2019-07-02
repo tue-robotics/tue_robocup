@@ -1,12 +1,11 @@
 import smach
 import rospy
-import robot_smach_states
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator
-import robot_skills.util.msg_constructors as msgs
+from robot_smach_states.util.designators import EntityByIdDesignator
 import robot_skills.util.kdl_conversions as kdl
 
 from operator_cleanup import OperatorCleanup
 from self_cleanup import SelfCleanup
+
 
 def _loginfo_color(text):
     rospy.loginfo('\033[94m' + text + '\033[0m')
@@ -19,12 +18,12 @@ class SelectEntity(smach.State):
         self._entity_classifications_designator = entitity_classifications_designator
         self._selected_entity_designator = selected_entity_designator
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         # Try to pop item from entities_ids_designator
         try:
             entity_classification = self._entity_classifications_designator.resolve().pop()
-        except:
+        except Exception:
             return "no_entities_left"
 
         rospy.loginfo("We have selected the entity with id %s" % entity_classification.id)
@@ -48,15 +47,13 @@ class DetermineAction(smach.State):
         # Check if the object is on the ground
         if e.pose.frame.p.z() < 0.4:
             _loginfo_color("Object is on the ground, we cannot grasp it, call for help")
-            action = "operator"
+            return "operator"
         else:
             _loginfo_color("Object is not on the ground, we can grasp it")
-            action = "self"
+            return "self"
 
-        return action
-
-    def execute(self, userdata):
-        rospy.sleep(0.1) #sleep because ed needs time to update
+    def execute(self, userdata=None):
+        rospy.sleep(0.1)  # sleep because ed needs time to update
         selected_entity = self._selected_entity_designator.resolve()
 
         if not selected_entity:
@@ -114,8 +111,12 @@ class HandleDetectedEntities(smach.StateMachine):
                                                 "operator": "OPERATOR_CLEANUP",
                                                 "failed": "SELECT_ENTITY"})
 
-            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id, segment_area),
-                                   transitions={"done": "SELECT_ENTITY", "failed": "SELECT_ENTITY"})
+            smach.StateMachine.add("SELF_CLEANUP", SelfCleanup(robot, selected_entity_designator, location_id,
+                                                               segment_area),
+                                   transitions={"done": "SELECT_ENTITY",
+                                                "failed": "SELECT_ENTITY"})
 
-            smach.StateMachine.add("OPERATOR_CLEANUP", OperatorCleanup(robot, selected_entity_designator, location_id, segment_area),
-                                   transitions={"cleanup": "SELF_CLEANUP", "no_cleanup": "SELECT_ENTITY"})
+            smach.StateMachine.add("OPERATOR_CLEANUP", OperatorCleanup(robot, selected_entity_designator, location_id,
+                                                                       segment_area),
+                                   transitions={"cleanup": "SELF_CLEANUP",
+                                                "no_cleanup": "SELECT_ENTITY"})
