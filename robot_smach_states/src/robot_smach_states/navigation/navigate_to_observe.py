@@ -32,7 +32,7 @@ class NavigateToObserve(NavigateTo):
         e = self.entity_designator.resolve()
 
         if not e:
-            rospy.logerr("No such entity")
+            rospy.logerr("No entity from {}".format(self.entity_designator))
             return None
 
         rospy.logdebug("Navigating to grasp entity '{}'".format(e.id))
