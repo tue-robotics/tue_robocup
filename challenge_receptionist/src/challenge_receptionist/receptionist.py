@@ -45,22 +45,10 @@ class IntroduceGuestToOperator(smach.StateMachine):
         #   2. Say 'Hi <person name>, this is <guest name>
 
         with self:
-            # OLD
-            # smach.StateMachine.add('FIND_OLD_GUESTS',
-            #                        states.FindPersonInRoom(robot,
-            #                                                # We're looking for any person and assume that thats the operator
-            #                                                discard_other_labels=False,
-            #                                                area=challenge_knowledge.waypoint_livingroom['id'],
-            #                                                name=challenge_knowledge.operator_name,
-            #                                                found_entity_designator=operator_des.writeable),
-            #                        transitions={'found': 'GOTO_OPERATOR',
-            #                                     'not_found': 'GOTO_OPERATOR'})
-            # NEW, TODO, use new FindPersonInRoom made by Arpit
             smach.StateMachine.add('FIND_OLD_GUESTS',
-                                   states.FindPersonInRoom(robot, area=challenge_knowledge.waypoint_livingroom['id'],
-                                                           name=challenge_knowledge.operator_name,
-                                                           discard_other_labels=False,
-                                                           found_person_designator=all_old_guests.writeable),
+                                   states.FindPeopleInRoom(robot,
+                                                           room=challenge_knowledge.waypoint_livingroom['id'],
+                                                           found_people_designator=all_old_guests.writeable),
                                    transitions = {'found': 'GOTO_OPERATOR',
                                                    'not_found': 'GOTO_OPERATOR'})
 
@@ -160,8 +148,10 @@ class ChallengeReceptionist(smach.StateMachine):
                                                 'goal_not_defined': 'aborted'})
 
             smach.StateMachine.add('INTRODUCE_GUEST',
-                                   IntroduceGuestToOperator(robot, self.operator_designator, self.guest1_entity_des,
-                                                            self.guest1_name_des, self.guest1_drinkname_des),
+                                   IntroduceGuestToOperator(robot,
+                                                            self.guest1_entity_des,
+                                                            self.guest1_name_des,
+                                                            self.guest1_drinkname_des),
                                    transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
                                                 'abort': 'FIND_SEAT_FOR_GUEST'})
 
