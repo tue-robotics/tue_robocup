@@ -202,9 +202,9 @@ class FindPerson(smach.StateMachine):
 
     def __init__(self,
                  robot,
+                 found_person_designator,
                  properties=None,
                  query_entity_designator=None,
-                 found_people_designator=None,
                  look_distance=10.0,
                  speak=False,
                  strict=True,
@@ -218,8 +218,7 @@ class FindPerson(smach.StateMachine):
             values of the property.
         :param query_entity_designator: An entity designator to match all found
             people to
-        :param found_people_designator: A designator to write the search result to.
-            The designator always has a list of found people written to it.
+        :param found_person_designator: A designator to write the search result to.
         :param look_distance: (float) The distance (radius) which the robot must look at
         :param speak: (bool) If True, the robot will speak while trying to find
             a named person
@@ -230,6 +229,10 @@ class FindPerson(smach.StateMachine):
         :param search_timeout: (float) maximum time the robot is allowed to search
         """
         super(FindPerson, self).__init__(outcomes=["found", "failed"])
+        ds.is_writeable(found_person_designator)
+        ds.check_type(found_person_designator, Entity)
+
+        found_people_designator = ds.VariableDesignator(resolve_type=[Entity], name='new_people')
 
         with self:
             self.add("FIND_PEOPLE",
@@ -237,7 +240,7 @@ class FindPerson(smach.StateMachine):
                          robot=robot,
                          properties=properties,
                          query_entity_designator=query_entity_designator,
-                         found_people_designator=found_people_designator,
+                         found_people_designator=found_people_designator.writable,
                          look_distance=look_distance,
                          speak=speak,
                          strict=strict,
@@ -248,6 +251,12 @@ class FindPerson(smach.StateMachine):
                          'found': 'GET_FIRST_ITERATE',
                          'failed': 'failed'
                      })
+
+            self.add("GET_FIRST_ITERATE",
+                     states.IterateDesignator(found_people_designator,
+                                              found_person_designator),
+                     transitions={'next': 'found',
+                                  'stop_iteration': 'failed'}
 
 
 class _DecideNavigateState(smach.State):
