@@ -1,6 +1,5 @@
 # System
 import os
-import random
 
 # ROS
 import rospy
@@ -53,41 +52,6 @@ class EntityFromHmiResults(ds.Designator):
             return entities[0]
         else:
             return None
-
-
-# ToDo: replace by Human Interaction SayFormatted
-class SayWaitDes(smach.StateMachine):
-    def __init__(self, robot, entity_des):
-        """ Constructor
-        :param robot: robot object
-        """
-        smach.StateMachine.__init__(self, outcomes=["succeeded"])
-
-        with self:
-            self.text_des = ds.VariableDesignator(resolve_type=str).writeable
-
-            @smach.cb_interface(outcomes=["succeeded"])
-            def get_text(userdata=None):
-                entity = entity_des.resolve()
-                entity_id = None
-                if entity:
-                    entity_id = entity.id
-                if entity_id:
-                    text = ["Let me think how to get to the {}".format(entity_id),
-                            "I will now determine the best route to the {}".format(entity_id)]
-                else:
-                    text = ["Let me think how to get to there", "I will now determine the best route"]
-
-                self.text_des.write(random.choice(text))
-                return "succeeded"
-
-            smach.StateMachine.add("GET_TEXT",
-                                   smach.CBState(get_text),
-                                   transitions={'succeeded': 'SAY_TEXT'})
-
-            smach.StateMachine.add("SAY_TEXT",
-                                   states.Say(robot, self.text_des, block=True),
-                                   transitions={'spoken': 'succeeded'})
 
 
 class GuideToRoomOrObject(smach.StateMachine):
@@ -170,8 +134,12 @@ class InformMachine(smach.StateMachine):
                                                 'no_result': 'failed'})
 
             smach.StateMachine.add("INSTRUCT_FOR_WAIT",
-                                   SayWaitDes(robot, self.entity_des),
-                                   transitions={'succeeded': 'GIVE_DIRECTIONS'})
+                                   states.human_interaction.SayFormatted(
+                                       robot,
+                                       ["Let me think how to get to the {entity_id}",
+                                        "I will now determine the best route to the {entity_id}"],
+                                       entity_id=ds.AttrDesignator(self.entity_des, "id", resolve_type=str)),
+                                   transitions={'spoken': 'GIVE_DIRECTIONS'})
 
             smach.StateMachine.add('GIVE_DIRECTIONS',
                                    GiveDirections(robot, self.entity_des),
