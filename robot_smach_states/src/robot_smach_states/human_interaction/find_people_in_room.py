@@ -14,7 +14,7 @@ import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 
-__all__ = ['FindPeople', 'FindPerson', 'FindPeopleInRoom']
+__all__ = ['FindPeople', 'FindFirstPerson', 'FindPeopleInRoom']
 
 
 class FindPeople(smach.State):
