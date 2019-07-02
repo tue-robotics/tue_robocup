@@ -97,7 +97,10 @@ class Robot(object):
         results = {}
         for partname, bodypart in self.parts.iteritems():
             rospy.logdebug("Resetting {}".format(partname))
-            bodypart.reset()
+            if self.robot_name == 'hero' and partname == 'torso':
+                rospy.logwarn("Skipping reset of %s", partname)
+            else:
+                bodypart.reset()
         return all(results.values())
 
     def standby(self):
