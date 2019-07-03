@@ -154,7 +154,7 @@ class GetOrder(smach.StateMachine):
             # Learn operator fallback
             smach.StateMachine.add("LEARN_OPERATOR_FALLBACK",
                                    states.Say(robot=robot,
-                                              sentence="Something went wrong but I will call you by name when I'm back",
+                                              sentence="I will call you by your name when I'm back",
                                               look_at_standing_person=True,
                                               block=True),
                                    transitions={"spoken": "LEARN_OPERATOR_FLAG_TOGGLE"})
