@@ -58,23 +58,23 @@ class Hero(robot.Robot):
         """
         This poses the robot for an inspect.
 
-        :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        :param inspect_target: kdl.Frame with the pose of the entity to be inspected.
         :return result: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
-        z_over = 0.3  # height the robot should look over the surface
+        z_over = 0.4  # height the robot should look over the surface
         z_hh = 0.9  # height of the robots head at z_arm=0
         torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
         z_head = inspect_target.z() + z_over
 
         # check whether moving the arm is necessary
-        if z_head < 1.2:
-            rospy.logdebug('Entity is low enough. we dont need to move the arm')
+        if z_head < 1.1:
+            rospy.logdebug("Entity is low enough. we don't need to move the arm")
             return True
 
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
-        z_arm = min(0.69, max(z_arm, 0.0)) # arm_lift_joint limit
+        z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
         arm = self.parts['leftArm']
 
