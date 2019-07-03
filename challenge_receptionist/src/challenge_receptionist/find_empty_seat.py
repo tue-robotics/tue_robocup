@@ -113,8 +113,9 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
                                    states.SayFormatted(robot,
-                                                       ["Please sit here {name}"],
+                                                       ["Please sit on the {seat}, {name}"],
                                                        name=seat_is_for,
+                                                       seat=ds.AttrDesignator(seat_ent_des, 'id', resolve_type=str),
                                                        block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
@@ -123,8 +124,8 @@ class FindEmptySeat(smach.StateMachine):
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
                                                   point_at_designator=seat_ent_des,
                                                   look_at_designator=seat_ent_des),
-                                   transitions={"succeeded": "SAY_SEAT_EMPTY",
-                                                "failed": "SAY_SEAT_EMPTY"})
+                                   transitions={"succeeded": "SAY_SEAT_PARTIALLY_OCCUPIED",
+                                                "failed": "SAY_SEAT_PARTIALLY_OCCUPIED"})
 
             smach.StateMachine.add('SAY_SEAT_PARTIALLY_OCCUPIED',
                                    states.SayFormatted(robot,
