@@ -1,17 +1,14 @@
 # System
-import threading
 import time
 
 # ROS
 from actionlib_msgs.msg import GoalStatus
 import control_msgs.msg
 import rospy
-from sensor_msgs.msg import JointState
 import trajectory_msgs.msg
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
-from robot_skills.util import concurrent_util
 
 
 class Torso(RobotPart):
@@ -33,10 +30,6 @@ class Torso(RobotPart):
         # Init action client
         self.ac_move_torso = self.create_simple_action_client('/' + self.robot_name + '/body/joint_trajectory_action',
                                                               control_msgs.msg.FollowJointTrajectoryAction)
-
-        # Init joint measurement subscriber
-        self.torso_sub = self.create_subscriber('/' + self.robot_name + '/torso/measurements',
-                                                JointState, self._receive_torso_measurement)
 
         self.subscribe_hardware_status('spindle')
         self._get_joint_states = get_joint_states
@@ -206,20 +199,11 @@ class Torso(RobotPart):
         warnings.warn("Please use wait_for_motion_done instead", Warning)
         self.wait_for_motion_done(timeout)
 
-    _lock = threading.RLock()
-
-    @concurrent_util.synchronized(_lock)
-    def _receive_torso_measurement(self, jointstate):
-        """
-        Callback function of joint measurement subscriber
-        :param jointstate: JointState
-        :return: no return
-        """
-        self.current_position = jointstate
-
     def get_position(self):
         """
         Get the current joint positions
         :return: list of current positions
         """
-        return self.current_position.position
+        # return self.current_position.position
+        joint_states = self._get_joint_states()
+        return [joint_states[joint_name] for joint_name in self.joint_names]
