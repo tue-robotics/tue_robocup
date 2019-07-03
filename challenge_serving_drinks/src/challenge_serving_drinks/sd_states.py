@@ -146,6 +146,11 @@ class AskDrink(smach.StateMachine):
         with self:
 
             # Ask for order
+            smach.StateMachine.add("RISE_FOR_HMI",
+                                   states.RiseForHMI(robot=robot),
+                                   transitions={"succeeded": "ASK_FOR_ORDER",
+                                                "failed": "ASK_FOR_ORDER"})
+
             smach.StateMachine.add("ASK_FOR_ORDER",
                                    states.Say(robot=robot,
                                               sentence=random.choice(["What would you like to drink?",
@@ -166,6 +171,7 @@ class AskDrink(smach.StateMachine):
                                                 "unavailable": "STATE_UNAVAILABLE",
                                                 "aborted": "aborted"})
 
+
             # Ask for confirmation
             smach.StateMachine.add("ASK_FOR_CONFIRMATION",
                                    states.Say(robot=robot,
@@ -173,6 +179,7 @@ class AskDrink(smach.StateMachine):
                                                                                 drink_designator, operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "HEAR_CONFIRMATION"})
+
 
             # Hear the confirmation
             smach.StateMachine.add("HEAR_CONFIRMATION",
