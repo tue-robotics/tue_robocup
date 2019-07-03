@@ -337,7 +337,11 @@ class DescriptionStrDesignator(ds.Designator):
 
     def _resolve(self):
         operator_name = self.operator_name_des.resolve()
+        if not operator_name:
+            rospy.logerr("Could not resolve operator name")
         drink_request = self.drink_request_des.resolve()
+        if not drink_request:
+            rospy.logerr("Could not resolve drink request")
         if self.message_type == "found_operator":
             return "Hey {name}, I'm bringing your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "not_found_operator":
