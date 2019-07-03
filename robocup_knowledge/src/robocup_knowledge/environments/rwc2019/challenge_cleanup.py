@@ -30,7 +30,7 @@ cleaning_locations = [
     {'name': 'shoe_rack',       'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'safe',            'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'desk',            'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
-    {'name': 'coat_hanger',     'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+ #   {'name': 'coat_hanger',     'room': 'office',       'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
 
     {'name': 'coffee_table',    'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'couch',           'room': 'living_room',  'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
