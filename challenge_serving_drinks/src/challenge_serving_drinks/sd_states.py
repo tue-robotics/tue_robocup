@@ -42,12 +42,12 @@ class CheckAvailability(smach.State):
         self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
-        self.trial = -1
+        self.trial = 0
 
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
 
-        smach.State.__init__(self, outcomes=["available", "unavailable", "aborted"])
+        smach.State.__init__(self, outcomes=["available", "unavailable", "aborted", "bad_operator"])
 
     def _setup_drinks_grammar(self):
         """
@@ -70,7 +70,7 @@ class CheckAvailability(smach.State):
     def execute(self, userdata=None):
 
         self.trial += 1
-        while self.trial < self._max_tries and not rospy.is_shutdown():
+        while self.trial < (self._max_tries + 1) and not rospy.is_shutdown():
             rospy.loginfo("AskDrink: attempt {} of {}".format(self.trial, self._max_tries))
             rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
             rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
@@ -97,7 +97,7 @@ class CheckAvailability(smach.State):
                 rospy.loginfo("Requested drink: {}".format(self._drink_designator.resolve()))
                 return "available"
 
-        return "aborted"
+        return "bad_operator"
 
     def _query_drink(self, max_tries):
         """
@@ -171,7 +171,8 @@ class AskDrink(smach.StateMachine):
                                                      objects=objects),
                                    transitions={"available": "ASK_FOR_CONFIRMATION",
                                                 "unavailable": "STATE_UNAVAILABLE",
-                                                "aborted": "aborted"})
+                                                "aborted": "aborted",
+                                                "bad_operator": "SAY_BAD_OPERATOR"})
 
 
             # Ask for confirmation
@@ -199,6 +200,12 @@ class AskDrink(smach.StateMachine):
                                               look_at_standing_person=True),
                                    transitions={"spoken": "ASK_FOR_ORDER"})
 
+            # Tell the operator to stop fucking around!
+            smach.StateMachine.add("SAY_BAD_OPERATOR",
+                                   states.Say(robot=robot,
+                                              sentence="I'm not going to ask you again as I have already informed you twice that your request is unavailable",
+                                              look_at_standing_person=True),
+                                   transitions={"spoken": "aborted"})
 
 class AskAvailability(smach.State):
     """ Asks the bartender which is the unavailable drink.
@@ -222,6 +229,7 @@ class AskAvailability(smach.State):
         self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
+        self._trial = 0
 
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
@@ -247,10 +255,9 @@ class AskAvailability(smach.State):
 
         self._robot.head.look_at_standing_person()
 
-        nr_tries = 0
-        while nr_tries < self._max_tries and not rospy.is_shutdown():
-            nr_tries += 1
-            rospy.loginfo("AskAvailable: attempt {} of {}".format(nr_tries, self._max_tries))
+        while self._trial < self._max_tries and not rospy.is_shutdown():
+            self._trial += 1
+            rospy.loginfo("AskAvailable: attempt {} of {}".format(self._trial, self._max_tries))
 
             # Ask the bartender a question
             self._robot.speech.speak(
