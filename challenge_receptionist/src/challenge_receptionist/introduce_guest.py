@@ -35,7 +35,7 @@ class IntroduceGuest(smach.StateMachine):
         ds.check_type(guest_ent_des, Entity)
 
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
-        current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
+        current_old_guest = ds.VariableDesignator('folks', resolve_type=Entity, name='current_old_guest')
 
         # For each person:
         #   0. Go to the person (old guest)
