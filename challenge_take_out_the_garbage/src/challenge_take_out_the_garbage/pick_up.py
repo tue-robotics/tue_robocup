@@ -9,6 +9,7 @@ import robot_smach_states as states
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arms import PublicArm
 import robot_smach_states.util.designators as ds
+from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBin
 
 from ed_msgs.msg import EntityInfo
 from robot_skills.util.kdl_conversions import FrameStamped
@@ -102,16 +103,6 @@ class GrabTrash(smach.State):
         gravitation = 9.81
         try_current = 0
 
-        # Torso up (non-blocking)
-        self._robot.torso.reset()
-
-        # Arm to position in a safe way
-        arm.send_joint_goal('handover')
-        arm.wait_for_motion_done()
-
-        # Force drive to get closer to bin
-        self._robot.base.force_drive(0.05, 0.0, 0, 2.0)
-
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')
         arm.wait_for_motion_done()
@@ -164,7 +155,7 @@ class GrabTrash(smach.State):
         # Go back and pull back arm
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
-        self._robot.base.force_drive(-0.1, -0.01, 0, 2.0)
+        self._robot.base.force_drive(-0.1, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
@@ -260,11 +251,9 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
-                                                          arm_designator=arm_designator),
-                                   transitions={"arrived": "PREPARE_AND_GRAB",
-                                                "goal_not_defined": "aborted",
-                                                "unreachable": "ASK_HANDOVER"})
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.id, radius=0.45,
+                                                     yaw_offset=-0.2),
+                                   transitions={"done": "PREPARE_AND_GRAB"})
 
             smach.StateMachine.add("PREPARE_AND_GRAB", GrabTrash(robot=robot, arm_designator=arm_designator),
                                    transitions={"succeeded": "succeeded",
