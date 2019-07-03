@@ -6,7 +6,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from robot_skills.classification_result import ClassificationResult
-from robot_skills.robot import Robot
 from robocup_knowledge import knowledge_loader
 
 # Challenge serving drinks

@@ -6,7 +6,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from robot_skills.util.entity import Entity
-from robot_skills.robot import Robot
 
 # Serving drinks
 from .sd_states import DescriptionStrDesignator
