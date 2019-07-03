@@ -16,8 +16,8 @@ so that the robot will introduce new guests to John (and other already introduce
 6. Find an empty seat for the new guest
 
 ## TODO:
-- [.] Person detection does not work all the time...
+- [x] Person detection does not work all the time...
 - [x] Fallback for failing person detection?
-- [.] Fix launch files so that ED does not crash due to missing services (mentioned by Rein)
-- [ ] Challenge crashes (ED detect people not available)
+- [x] Fix launch files so that ED does not crash due to missing services (mentioned by Rein)
+- [x] Challenge crashes (ED detect people not available)
 - [ ] Rise robot before human-robot interaction
