@@ -38,7 +38,8 @@ class ControlToTrashBin(StateMachine):
                     ),
                     orientation=Quaternion(
                         *quaternion_from_euler(
-                            0, 0, math.atan2(trash_bin_to_base_vector.y(), trash_bin_to_base_vector.x()) - math.pi
+                            0, 0, math.atan2(trash_bin_to_base_vector.y(),
+                                             trash_bin_to_base_vector.x()) - math.pi + yaw_offset
                         )
                     )
                 )
@@ -54,5 +55,5 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
-    ControlToTrashBin(hero, 'trash_bin1', 0.45, 0.2).execute()
+    ControlToTrashBin(hero, 'trash_bin', 0.45, -0.2).execute()
     hero.leftArm().send_joint_goal('grab_trash_bag')
