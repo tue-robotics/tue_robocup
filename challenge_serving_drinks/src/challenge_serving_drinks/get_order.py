@@ -176,6 +176,7 @@ if __name__ == "__main__":
     from robot_skills.classification_result import ClassificationResult
     import rospy
     from robocup_knowledge import knowledge_loader
+    import sys
     common_knowledge = knowledge_loader.load_knowledge("common")
 
     if len(sys.argv) > 1:
@@ -190,7 +191,7 @@ if __name__ == "__main__":
         available_drinks = [ClassificationResult('beer', None, None, None),
                             ClassificationResult('juice', None, None, None),
                             ClassificationResult('coke', None, None, None)]
-        available_drinks_designator = ds.VariableDesignator(inital_value=available_drinks, resolve_type=[ClassificationResult], name='objects_list_des')
+        available_drinks_designator = ds.VariableDesignator(initial_value=available_drinks, resolve_type=[ClassificationResult], name='objects_list_des')
         unavailable_drink_designator = ds.VariableDesignator(initial_value="tea_bag", resolve_type=str, name='unav_drink_str_des')
 
         name_options = common_knowledge.names
