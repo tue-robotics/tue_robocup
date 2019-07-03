@@ -299,7 +299,7 @@ if __name__ == '__main__':
 
     arm = ds.UnoccupiedArmDesignator(hero, {})
 
-    sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
-    sm.execute()
+    #sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
+    #sm.execute()
 
-    # GrabTrash(hero, arm, 100, 2).execute()
+    GrabTrash(hero, arm, 100, 2).execute()
