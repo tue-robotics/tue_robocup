@@ -114,7 +114,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        self._robot.base.force_drive(0.1, 0.0, 0, 2.0)
+        self._robot.base.force_drive(0.1, -0.035, 0, 2.0)
 
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')
@@ -140,7 +140,7 @@ class GrabTrash(smach.State):
             # It is necessary to close the gripper since the gripper is also closed at the final measurement
             arm.send_gripper_goal('open')
             arm.wait_for_motion_done()
-            arm.send_gripper_goal('close')
+            arm.send_gripper_goal('close',max_torque=0.7)
             arm.wait_for_motion_done()
 
             arm_weight = measure_force.get_force()
@@ -182,7 +182,7 @@ class GrabTrash(smach.State):
         return "succeeded"
 
 
-class HandoverFromHuman(smach.StateMachine):
+class HandoverFromHumanFigure(smach.StateMachine):
     """
     State that enables low level grab reflex. Besides a robot object, needs
     an arm and an entity to grab, which is either one from ed through the
@@ -225,7 +225,7 @@ class HandoverFromHuman(smach.StateMachine):
                                    states.ShowImageState(robot=robot, package_name='challenge_take_out_the_garbage',
                                                          path_to_image_in_package=
                                                          'src/challenge_take_out_the_garbage/beun_picture.png',
-                                                         seconds=100),
+                                                         seconds=5),
                                    transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
 
             smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(robot,
@@ -234,28 +234,7 @@ class HandoverFromHuman(smach.StateMachine):
                                                                                         grabbed_entity_designator=grabbed_entity_designator,
                                                                                         timeout=timeout),
                                    transitions={'succeeded'    :   'succeeded',
-                                                'timeout'      :   'SAY2',
-                                                'failed'       :   'failed'})
-
-            smach.StateMachine.add("SAY2", states.Say(robot, 'Please hand over the trash by putting the top of the bag'
-                                                             ' between my grippers and push firmly into my camera as'
-                                                             ' will be shown on my screen.'),
-                                   transitions={'spoken': 'SHOW_IMAGE2'})
-
-            smach.StateMachine.add("SHOW_IMAGE2",
-                                   states.ShowImageState(robot=robot, package_name='challenge_take_out_the_garbage',
-                                                         path_to_image_in_package=
-                                                         'src/challenge_take_out_the_garbage/beun_picture.png',
-                                                         seconds=100),
-                                   transitions={'succeeded': 'CLOSE_AFTER_INSERT2'})
-
-            smach.StateMachine.add('CLOSE_AFTER_INSERT2', manipulation.CloseGripperOnHandoverToRobot(robot,
-                                                                                        arm_designator,
-                                                                                        grabbed_entity_label=grabbed_entity_label,
-                                                                                        grabbed_entity_designator=grabbed_entity_designator,
-                                                                                        timeout=timeout),
-                                   transitions={'succeeded'    :   'succeeded',
-                                                'timeout'      :   'timeout',
+                                                'timeout'      :   'failed',
                                                 'failed'       :   'failed'})
 
 
@@ -284,7 +263,8 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   states.NavigateToObserve(robot, trashbin_designator, radius=0.4),
+                                   states.NavigateToSymbolic(robot, {trashbin_designator: 'in_front_of'},
+                                                             trashbin_designator),
                                    transitions={"arrived": "PREPARE_AND_GRAB",  #beun "PREPARE_AND_GRAB", "ASK_HANDOVER",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "ASK_HANDOVER"})
@@ -300,7 +280,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
             # Ask human to handover the trash bag
-            smach.StateMachine.add("ASK_HANDOVER", HandoverFromHuman(robot=robot, arm_designator=arm_designator,
+            smach.StateMachine.add("ASK_HANDOVER", HandoverFromHumanFigure(robot=robot, arm_designator=arm_designator,
                                                                      grabbed_entity_label='thrash'),
                                    transitions={"succeeded": "LOWER_ARM",
                                                 "failed": "failed",
@@ -332,4 +312,8 @@ if __name__ == '__main__':
     hero.reset()
 
     arm = ds.UnoccupiedArmDesignator(hero, {})
-    GrabTrash(hero, arm, 100, 2).execute()
+
+    sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
+    sm.execute()
+
+    # GrabTrash(hero, arm, 100, 2).execute()
