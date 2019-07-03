@@ -66,7 +66,8 @@ class GetOrder(smach.StateMachine):
             smach.StateMachine.add("WAIT_FOR_WAVING",
                                    states.SetPoseFirstFoundPersonToEntity(robot=robot,
                                                                           properties={'tags': ['LWave', 'RWave']},
-                                                                          dst_entity_designator=caller_designator),
+                                                                          strict=False,
+                                                                          dst_entity_designator=caller_id),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
                                                 "failed": "ASK_STEP_IN_FRONT"})
 
