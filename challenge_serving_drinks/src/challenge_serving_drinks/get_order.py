@@ -62,17 +62,17 @@ class GetOrder(smach.StateMachine):
 
             # TODO: Change DummyState to actual state
             smach.StateMachine.add("FIND_PERSON_WITHOUT_DRINK",
-                                   states.DummyState(robot=robot,
-                                                     result_designator="failed",
-                                                     caller_id=caller_id),
-                                   transitions={"succeeded": "SAY_I_HAVE_SEEN",
-                                                "failed": "ASK_FOR_WAVING",
+                                   states.SetPoseFirstFoundPersonToEntity(robot=robot,
+                                                                          properties={'tags': ['LNotHolding', 'RNotHolding']},
+                                                                          strict=True,
+                                                                          dst_entity_designator=caller_id),
+                                   transitions={"done": "SAY_I_HAVE_SEEN",
                                                 "aborted": "ASK_FOR_WAVING"})
 
             # Detect fallback - detect waving people
             smach.StateMachine.add("ASK_FOR_WAVING",
                                    states.Say(robot=robot,
-                                              sentence="Could not find people without a drink. Please raise your arm completely and wave, if you want me to bring you something",
+                                              sentence="Could not detect people without drinks. Please raise your arm completely and wave, if you want me to bring you something",
                                               look_at_standing_person=True,
                                               block=True),
                                    transitions={"spoken": "WAIT_FOR_WAVING"}) # Change to WAIT_FOR_WAVING
