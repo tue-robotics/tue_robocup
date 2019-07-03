@@ -90,6 +90,13 @@ class FindEmptySeat(smach.StateMachine):
             seat_is_for = ds.Designator(' ')
 
         with self:
+            smach.StateMachine.add('SAY_LETS_FIND_SEAT',
+                                   states.SayFormatted(robot,
+                                                       ["Let me find a place for {name} to sit. Please be patient while I check out where there's place to sit"],
+                                                       name=seat_is_for,
+                                                       block=False),
+                                   transitions={'spoken': 'ITERATE_NEXT_SEAT'})
+
             smach.StateMachine.add('ITERATE_NEXT_SEAT',
                                    states.IterateDesignator(seats, seat_ent_des.writeable),
                                    transitions={'next': 'CHECK_SEAT_EMPTY',
