@@ -79,11 +79,16 @@ class FindEmptySeat(smach.StateMachine):
     That can be done with an Inspect and then query for any Entities inside that volume.
     If there are none, then the seat is empty
     """
-    def __init__(self, robot, seats_to_inspect, room):
+    def __init__(self, robot, seats_to_inspect, room, seat_is_for=None):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
         seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
+        if seat_is_for:
+            ds.check_type(seat_is_for, str)
+        else:
+            seat_is_for = ds.Designator(' ')
+
         with self:
             smach.StateMachine.add('ITERATE_NEXT_SEAT',
                                    states.IterateDesignator(seats, seat_ent_des.writeable),
@@ -107,7 +112,10 @@ class FindEmptySeat(smach.StateMachine):
                                                 "failed": "SAY_SEAT_EMPTY"})
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
-                                   states.Say(robot, ["Please sit here"], block=True),
+                                   states.SayFormatted(robot,
+                                                       ["Please sit here {name}"],
+                                                       name=seat_is_for,
+                                                       block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('POINT_AT_PARTIALLY_OCCUPIED_SEAT',
@@ -119,11 +127,17 @@ class FindEmptySeat(smach.StateMachine):
                                                 "failed": "SAY_SEAT_EMPTY"})
 
             smach.StateMachine.add('SAY_SEAT_PARTIALLY_OCCUPIED',
-                                   states.Say(robot, ["I think there's some space left here where you can sit"], block=True),
+                                   states.SayFormatted(robot,
+                                                       ["I think there's some space left here where you can sit {name}"],
+                                                       name=seat_is_for,
+                                                       block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
-                                   states.Say(robot, ["Sorry, there are no empty seats. I guess you just have to stand"], block=True),
+                                   states.SayFormatted(robot,
+                                                       ["Sorry, there are no empty seats. I guess you just have to stand {name}"],
+                                                       name=seat_is_for,
+                                                       block=True),
                                    transitions={'spoken': 'RESET_FAIL'})
 
             smach.StateMachine.add('RESET_FAIL',
