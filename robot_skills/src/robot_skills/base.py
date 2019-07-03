@@ -193,13 +193,16 @@ class Base(RobotPart):
 
         return plan
 
-    def force_drive(self, vx, vy, vth, timeout):
+    def force_drive(self, vx, vy, vth, timeout, ax=float('inf'), ay=float('inf'), ath=float('inf')):
         """ Forces the robot to drive by sending a command velocity directly to the base controller. N.B.: all collision
         avoidance is bypassed.
 
         :param vx: forward velocity in m/s
         :param vy: sideways velocity in m/s
         :param vth: rotational velocity in rad/s
+        :param ax: forward acceleration in m/s^2
+        :param ay: sideways acceleration in m/s^2
+        :param ath: rotational acceleration in rad/s^2
         :param timeout: duration for this motion in seconds
         """
         # Cancel the local planner goal
@@ -207,12 +210,20 @@ class Base(RobotPart):
 
         v = geometry_msgs.msg.Twist()        # Initialize velocity
         t_start = rospy.Time.now()
+        t_end = rospy.Time.now() + rospy.Duration.from_sec(timeout)
+
+        def _abs_max(value, abs_max_value):
+            if value == 0:
+                return 0
+            return (value / abs(value)) * min(abs_max_value, abs(value))
 
         # Drive
-        v.linear.x = vx
-        v.linear.y = vy
-        v.angular.z= vth
-        while (rospy.Time.now() - t_start) < rospy.Duration(timeout):
+        while rospy.Time.now() < t_end:
+            seconds_from_start = rospy.Time.now().to_sec() - t_start.to_sec()
+
+            v.linear.x = _abs_max(vx, ax * seconds_from_start)
+            v.linear.y = _abs_max(vy, ay * seconds_from_start)
+            v.angular.z = _abs_max(vth, ath * seconds_from_start)
             self._cmd_vel.publish(v)
             rospy.sleep(0.1)
 
