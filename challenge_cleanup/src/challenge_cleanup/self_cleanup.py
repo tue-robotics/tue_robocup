@@ -379,7 +379,8 @@ class SelfCleanup(smach.StateMachine):
 #                                    robot_smach_states.Grab(robot, selected_entity_designator,
 #                                                            ds.UnoccupiedArmDesignator(robot, {},
 #                                                                                       name="empty_arm_designator")),
-#                                    transitions={"done": "SAY_GRAB_SUCCESS",
+#                                    transitions={"done": " planner couldn't plan a path to the specified constraints. Are the constraints you specified valid?
+# SAY_GRAB_SUCCESS",
 #                                                 "failed": "SAY_GRAB_FAILED"})
 #
 #             smach.StateMachine.add("LOOK_INTO_ROOM", robot_smach_states.NavigateToRoom(robot, room_des, room_des),
