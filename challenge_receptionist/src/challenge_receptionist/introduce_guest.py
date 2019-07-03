@@ -27,7 +27,7 @@ class GuestDescriptionStrDesignator(ds.Designator):
 
 
 class IntroduceGuest(smach.StateMachine):
-    def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des):
+    def __init__(self, robot, guest_ent_des, guest_name_des, guest_drinkname_des, assume_john=False):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'abort'])
 
         ds.check_type(guest_name_des, str)
@@ -43,6 +43,14 @@ class IntroduceGuest(smach.StateMachine):
         #   2. Say 'Hi <person name>, this is <guest name>
 
         with self:
+            smach.StateMachine.add('SAY_INTRO',
+                                   states.SayFormatted(robot,
+                                                       ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
+                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                                       guest_name=guest_name_des,
+                                                       block=False),
+                                   transitions={'spoken': 'FIND_OLD_GUESTS'})
+
             smach.StateMachine.add('FIND_OLD_GUESTS',
                                    states.FindPeopleInRoom(robot,
                                                            room=challenge_knowledge.waypoint_livingroom['id'],
@@ -66,7 +74,7 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_LOOK_AT_GUEST',
                                    states.SayFormatted(robot,
                                                        ["Hi {name}, let me show you our guest"],
-                                                       name=ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
                                                        block=True),
                                    transitions={'spoken': 'TURN_TO_GUEST'})
 
@@ -108,7 +116,7 @@ class IntroduceGuest(smach.StateMachine):
 
             smach.StateMachine.add('RESET_ARM',
                                    states.ResetArms(robot),
-                                   transitions={'done': 'ITERATE_OLD_GUESTS'})
+                                   transitions={'done': 'succeeded' if assume_john else 'ITERATE_OLD_GUESTS'})
 
 
 if __name__ == "__main__":

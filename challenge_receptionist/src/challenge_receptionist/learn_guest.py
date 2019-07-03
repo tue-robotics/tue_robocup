@@ -42,7 +42,7 @@ class LearnGuest(smach.StateMachine):
                                    transitions={'spoken': 'SAY_PLEASE_COME_IN'})
 
             smach.StateMachine.add('SAY_PLEASE_COME_IN',
-                                   states.Say(robot, ["Please come in, I'm waiting"],
+                                   states.Say(robot, ["Please come in, I'm waiting for someone to step in front of me"],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_GUEST'})
