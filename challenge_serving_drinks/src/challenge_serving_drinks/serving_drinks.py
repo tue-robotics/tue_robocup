@@ -56,8 +56,21 @@ class UpdateUnavailableDrinkList(smach.State):
 
 
 class IdentifyUnavailableDrinkFromRecognitions(smach.State):
-    def __init__(self, robot, objects, objects_list_des, unavailable_drink_designator):
+    def __init__(self, objects, objects_list_des, unavailable_drink_designator):
         super(IdentifyUnavailableDrinkFromRecognitions, self).__init__(outcomes=["done", "failed"])
+        ds.is_writable(unavailable_drink_designator)
+        ds.check_type(unavailable_drink_designator, str)
+        ds.check_type(objects_list_des, [ClassificationResult])
+
+        self._objects = objects
+        self._objects_list_des = objects_list_des
+        self._unavailable_drink_designator = unavailable_drink_designator
+
+    def execute(self, userdata=None):
+        objects_classification_list = self._objects_list_des.resolve() if hasattr(self._objects_list_des, "resolve") else self._objects_list_des
+
+        for common_object in self._objects:
+
 
 class ServingDrinks(smach.StateMachine):
     """
