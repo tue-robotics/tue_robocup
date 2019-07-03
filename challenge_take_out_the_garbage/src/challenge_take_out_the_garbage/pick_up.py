@@ -142,7 +142,7 @@ class GrabTrash(smach.State):
 
             # Go down and grab
             try:
-                arm.move_down_until_force_sensor_edge_up()
+                arm.move_down_until_force_sensor_edge_up(timeout=7)
             except TimeOutException:
                 rospy.logwarn("No forces were felt, however no action is taken!")
                 pass
@@ -283,7 +283,7 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.id, radius=0.45,
+                                   ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.id, radius=0.4,
                                                      yaw_offset=-0.2),
                                    transitions={"done": "PREPARE_AND_GRAB"})
 
