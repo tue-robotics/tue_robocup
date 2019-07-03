@@ -261,6 +261,9 @@ class CloseGripperOnHandoverToRobot(smach.State):
             rospy.sleep(2.0)
             return "succeeded"
         else:
+            rospy.logwarn("Eventhough no force is felt the gripper will close")
+            arm.send_gripper_goal('close')
+            rospy.sleep(2.0)
             return "timeout"
 
 
