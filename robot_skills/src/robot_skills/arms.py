@@ -588,35 +588,35 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration, timeout=5.0, time_from_start=3.0):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration: name of configuration, configuration should be loaded as parameter
-        :param time_from_start: time it should take to get to the desired configuration
+        :param max_joint_vel: speed the robot can have when getting to the desired configuration
         :param timeout: timeout in seconds
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_configurations:
             return self._send_joint_trajectory([self.default_configurations[configuration]],
                                                timeout=rospy.Duration.from_sec(timeout),
-                                               time_from_start=time_from_start)
+                                               max_joint_vel=max_joint_vel)
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration, timeout=5.0, time_from_start=3.0):
+    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to
         the arm
         :param configuration: name of configuration, configuration should be loaded as parameter
         :param timeout: timeout in seconds
-        :param time_from_start: time it should take to get to the desired configuration
+        :param max_joint_vel: speed the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_trajectories:
             return self._send_joint_trajectory(self.default_trajectories[configuration],
                                                timeout=rospy.Duration.from_sec(timeout),
-                                               time_from_start=time_from_start)
+                                               max_joint_vel=max_joint_vel)
         else:
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
@@ -726,7 +726,7 @@ class Arm(RobotPart):
             rospy.logerr(e)
             return False
 
-    def _send_joint_trajectory(self, joints_references, time_from_start=3.0, timeout=rospy.Duration(5), joint_names=None):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_names=None):
         """
         Low level method that sends a array of joint references to the arm.
 
@@ -735,7 +735,7 @@ class Arm(RobotPart):
         succeeded. On timeout, it will return False.
         :param joints_references: list of joint configurations,
         which should be a list of the length equal to the number of joints to be moved
-        :param time_from_start: time it should take to get to the desired configuration
+        :param max_joint_vel: speed the robot can have when getting to the desired configuration
         :param timeout: timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not allowed
         :param joint_names: joint names, which need to me moved
         :return: True or False
@@ -749,15 +749,19 @@ class Arm(RobotPart):
             else:
                 joint_names = self.joint_names
 
-        time_from_start = rospy.Duration.from_sec(time_from_start)
         ps = []
+        time_from_start = 0.0
+        start_joint_state = self.get_joint_states
+        prev_joint_ref = [start_joint_state[jn] for jn in joint_names]
         for joints_reference in joints_references:
+            max_diff = sorted([abs(prev - new) for prev, new in zip(prev_joint_ref, joints_reference)])[-1]
             if len(joints_reference) != len(joint_names):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
                               % (len(joint_names), len(joints_references)))
+            time_from_start += max_diff/max_joint_vel
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
-                time_from_start=time_from_start))
+                time_from_start=rospy.Duration.from_sec(time_from_start)))
 
         joint_trajectory = JointTrajectory(joint_names=joint_names,
                                            points=ps)
@@ -928,13 +932,13 @@ class FakeArm(RobotPart):
                   allowed_touch_objects=[]):
         return False
 
-    def send_joint_goal(self, configuration, time_from_start=3.0, timeout=5.0):
+    def send_joint_goal(self, configuration, max_joint_vel=0.7, timeout=5.0):
         return False
 
-    def send_joint_trajectory(self, configuration, time_from_start=3.0, timeout=5):
+    def send_joint_trajectory(self, configuration, max_joint_vel=0.7, timeout=5):
         return False
 
-    def _send_joint_trajectory(self, joints_references, time_from_start=3.0, timeout=rospy.Duration(5), joint_names = None):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_names = None):
         rospy.logwarn("_send_joint_trajectory called on FakeArm.")
         return False
 
