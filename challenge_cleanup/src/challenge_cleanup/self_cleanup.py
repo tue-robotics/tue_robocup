@@ -102,7 +102,7 @@ class CategoryToLocation(smach.State):
         if not category:
             return "failed"
 
-        if category == "unknown":
+        if category == "trash":
             self._entity_id_des.write(challenge_knowledge.trashbin_id)
             return "trashbin"
 
@@ -211,7 +211,8 @@ class AskWhichCategory(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("ASK_WHERE_TO_DROP", robot_smach_states.Say(robot,
-                "Please look at the object in my gripper and tell me which category it is", block=True),
+                "Please look at the object in my gripper and tell me which category it is. If it should be thrown away,"
+                "call it trash", block=True),
                                    transitions={"spoken": "HEAR_LOCATION"})
 
             smach.StateMachine.add("HEAR_LOCATION", robot_smach_states.HearOptionsExtra(robot, category_grammar,
@@ -268,9 +269,9 @@ class SelfCleanup(smach.StateMachine):
                                                 "failed": "SAY_GRAB_FAILED"})
 
             smach.StateMachine.add('SAY_GRAB_SUCCESS',
-                                   robot_smach_states.Say(robot, ["Now I am going to toss the item in the trashbin",
+                                   robot_smach_states.Say(robot, ["Now I am going to move this item",
                                                                   "Let's clean up this object",
-                                                                  "Away with this garbage",
+                                                                  "Away with this one",
                                                                   "Everything will be cleaned"], block=False),
                                    transitions={"spoken": "GET_CATEGORY"})
 
