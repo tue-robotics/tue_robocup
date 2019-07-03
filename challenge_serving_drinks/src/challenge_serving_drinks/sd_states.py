@@ -42,6 +42,7 @@ class CheckAvailability(smach.State):
         self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
+        self.trial = -1
 
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
@@ -68,9 +69,8 @@ class CheckAvailability(smach.State):
 
     def execute(self, userdata=None):
 
-        nr_tries = 0
-        while nr_tries < self._max_tries and not rospy.is_shutdown():
-            nr_tries += 1
+        self.trial += 1
+        while self.trial < self._max_tries and not rospy.is_shutdown():
             rospy.loginfo("AskDrink: attempt {} of {}".format(nr_tries, self._max_tries))
             rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
             rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
@@ -337,7 +337,11 @@ class DescriptionStrDesignator(ds.Designator):
 
     def _resolve(self):
         operator_name = self.operator_name_des.resolve()
+        if not operator_name:
+            rospy.logerr("Could not resolve operator name")
         drink_request = self.drink_request_des.resolve()
+        if not drink_request:
+            rospy.logerr("Could not resolve drink request")
         if self.message_type == "found_operator":
             return "Hey {name}, I'm bringing your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "not_found_operator":
