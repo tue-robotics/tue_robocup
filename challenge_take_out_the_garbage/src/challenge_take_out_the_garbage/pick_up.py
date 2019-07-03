@@ -110,7 +110,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        self._robot.base.force_drive(0.1, 0, 0, 2.0)
+        self._robot.base.force_drive(0.05, 0.0, 0, 2.0)
 
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')
@@ -136,7 +136,7 @@ class GrabTrash(smach.State):
             # It is necessary to close the gripper since the gripper is also closed at the final measurement
             arm.send_gripper_goal('open')
             arm.wait_for_motion_done()
-            arm.send_gripper_goal('close',max_torque=0.7)
+            arm.send_gripper_goal('close')
             arm.wait_for_motion_done()
 
             arm_weight = measure_force.get_force()
@@ -149,7 +149,7 @@ class GrabTrash(smach.State):
             # Go down and grab
             self._robot.torso.send_goal("grab_trash_down")
             self._robot.torso.wait_for_motion_done()
-            arm.send_gripper_goal('close')
+            arm.send_gripper_goal('close', max_torque=1.0)
             arm.wait_for_motion_done()
 
             # Go up and back to pre grasp position
@@ -164,7 +164,7 @@ class GrabTrash(smach.State):
         # Go back and pull back arm
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
-        self._robot.base.force_drive(-0.125, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.1, -0.01, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
 
