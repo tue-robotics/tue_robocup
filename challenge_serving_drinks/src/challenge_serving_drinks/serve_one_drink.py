@@ -43,6 +43,7 @@ class ServeOneDrink(smach.StateMachine):
 
         operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
         operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
+        learn_check_designator = ds.VariableDesignator(initial_value=True, resolve_type=bool, name='learn_check_des')
 
         with self:
 
@@ -59,7 +60,8 @@ class ServeOneDrink(smach.StateMachine):
                                             available_drinks_designator=objects_list_des,
                                             unavailable_drink_designator=unav_drink_des,
                                             name_options=name_options,
-                                            objects=objects),
+                                            objects=objects,
+                                            learn_check_designator=learn_check_designator.writeable),
                                    transitions={"succeeded": "INSPECT_BAR",
                                                 "failed": "failed"})  # ToDo: fallback?
 
