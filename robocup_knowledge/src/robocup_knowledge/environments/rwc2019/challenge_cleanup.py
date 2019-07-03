@@ -49,14 +49,16 @@ for room in common.location_rooms:
     grammar += "\nT[{0}] -> {0}".format(room)
 
 category_grammar = """
-T[P] -> LOCATION[P] | bring it to the LOCATION[P] | please bring it to LOCATION[P]
+T[P] -> CATEGORY[P] | it is a CATEGORY[P] | the category is CATEGORY[P]
 """
-for l in common.locations:
-    category_grammar += "\nLOCATION[{}] -> {}".format(l["name"], l["name"].replace('_', ' '))
+for l in common.category_locations:
+    category_grammar += "\nCATEGORY[{}] -> {}".format(l, l.replace('_', ' '))
+
+category_grammar += "\nCATEGORY[{}] -> {}".format("trash", "trash".replace('_', ' '))
 
 
 if __name__ == "__main__":
-    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
+    print("GPSR Grammar:\n\n{}\n\n".format(category_grammar))
 
     from grammar_parser.cfgparser import CFGParser
 
