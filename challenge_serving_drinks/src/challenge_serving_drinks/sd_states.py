@@ -42,6 +42,7 @@ class CheckAvailability(smach.State):
         self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
+        self.trial = -1
 
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
@@ -68,9 +69,8 @@ class CheckAvailability(smach.State):
 
     def execute(self, userdata=None):
 
-        nr_tries = 0
-        while nr_tries < self._max_tries and not rospy.is_shutdown():
-            nr_tries += 1
+        self.trial += 1
+        while self.trial < self._max_tries and not rospy.is_shutdown():
             rospy.loginfo("AskDrink: attempt {} of {}".format(nr_tries, self._max_tries))
             rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
             rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
