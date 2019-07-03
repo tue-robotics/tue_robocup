@@ -2,6 +2,7 @@ import smach
 import rospy
 from robot_smach_states.util.designators import EntityByIdDesignator
 import robot_skills.util.kdl_conversions as kdl
+from robot_skills.util.entity import Entity
 
 from operator_cleanup import OperatorCleanup
 from self_cleanup import SelfCleanup  # , SelfCleanup2
@@ -12,19 +13,38 @@ def _loginfo_color(text):
 
 
 class SelectEntity(smach.State):
-    def __init__(self, robot, entitity_classifications_designator, selected_entity_designator):
+    def __init__(self, robot, entitity_classifications_designator, selected_entity_designator, xy_limit=0.15,
+                 xy_ratio=4):
         smach.State.__init__(self, outcomes=["entity_selected", "no_entities_left"])
         self._robot = robot
         self._entity_classifications_designator = entitity_classifications_designator
         self._selected_entity_designator = selected_entity_designator
+        self._xy_limit = xy_limit
+        self._xy_ratio = max(xy_ratio, 0.001)
+        self._xy_ratio = max(self._xy_ratio, 1/self._xy_ratio)
 
     def execute(self, userdata=None):
 
         # Try to pop item from entities_ids_designator
-        try:
-            entity_classification = self._entity_classifications_designator.resolve().pop()
-        except Exception:
-            return "no_entities_left"
+        correct_entity = False
+        while not correct_entity:
+            try:
+                entity_classification = self._entity_classifications_designator.resolve().pop()
+            except Exception:
+                return "no_entities_left"
+
+            entity = EntityByIdDesignator(self._robot, entity_classification.id).resolve()  # type: Entity
+            shape = entity.shape
+            size_x = max(shape.x_max - shape.x_min, 0.001)
+            size_y = max(shape.y_max - shape.y_min, 0.001)
+
+            if size_x > self._xy_limit or size_y > self._xy_limit:
+                continue
+
+            if not 1/min(self._xy_ratio, 1000) <= size_x/size_y <= min(self._xy_ratio, 1000):
+                continue
+
+            correct_entity = True
 
         rospy.loginfo("We have selected the entity with id %s" % entity_classification.id)
         self._selected_entity_designator.id_ = entity_classification.id
@@ -38,7 +58,8 @@ class DetermineAction(smach.State):
         self._robot = robot
         self._selected_entity_designator = selected_entity_designator
 
-    def _get_action_outcome(self, e):
+    @staticmethod
+    def _get_action_outcome(e):
         _loginfo_color("== GET ACTION OUTCOME ==")
         _loginfo_color("Entity type: '%s'" % e.type)
 
