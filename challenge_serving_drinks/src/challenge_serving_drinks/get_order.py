@@ -75,7 +75,7 @@ class GetOrder(smach.StateMachine):
                                               sentence="Could not find people without a drink. Please raise your arm completely and wave, if you want me to bring you something",
                                               look_at_standing_person=True,
                                               block=True),
-                                   transitions={"spoken": "SAY_COULD_NOT_FIND_WAVING"}) # Change to WAIT_FOR_WAVING
+                                   transitions={"spoken": "WAIT_FOR_WAVING"}) # Change to WAIT_FOR_WAVING
 
             smach.StateMachine.add("WAIT_FOR_WAVING",
                                    states.SetPoseFirstFoundPersonToEntity(robot=robot,
