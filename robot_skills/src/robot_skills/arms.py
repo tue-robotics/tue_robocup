@@ -102,11 +102,11 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_goals
 
-    def send_joint_goal(self, configuration, timeout=5.0, time_from_start=3.0):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
         self._test_die(configuration in self._available_joint_goals, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_goals=['{}'])".format(configuration))
         return self._arm.send_joint_goal(configuration, timeout=timeout,
-                                         time_from_start=time_from_start)
+                                         max_joint_vel=max_joint_vel)
 
     # Joint trajectories
     def has_joint_trajectory(self, configuration):
@@ -115,11 +115,11 @@ class PublicArm(object):
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration, timeout=5, time_from_start=3.0):
+    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7):
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
-                                               time_from_start=time_from_start)
+                                               max_joint_vel=max_joint_vel)
 
     def send_goal(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
                   allowed_touch_objects=None):
