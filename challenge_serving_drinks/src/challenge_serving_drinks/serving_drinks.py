@@ -31,6 +31,34 @@ class CheckInspect(smach.State):
             return "false"
 
 
+class UpdateUnavailableDrinkList(smach.State):
+    def __init__(self, unavailable_drink_list_designator, drink_to_add_designator):
+        super(UpdateUnavailableDrink, self).__init__(outcomes=["done", "failed"])
+        ds.is_writable(unavailable_drink_list_designator)
+        ds.check_type(unavailable_drink_list_designator, [str])
+        ds.check_type(drink_to_add_designator, str)
+
+        self.unavailable_drink_list_designator = unavailable_drink_list_designator
+        self.drink_to_add_designator = drink_to_add_designator
+
+    def execute(self, userdata=None):
+        drink_to_add = self.drink_to_add_designator.resolve() if hasattr(self.drink_to_add_designator, "resolve") else self.drink_to_add_designator
+
+        if not drink_to_add:
+            return "failed"
+        else:
+            unavailable_drink_list = self.unavailable_drink_list_designator.resolve() if hasattr(self.unavailable_drink_list_designator, "resolve") else self.unavailable_drink_list_designator
+            if drink_to_add not in unavailable_drink_list:
+                unavailable_drink_list.append(drink_to_add)
+                self.unavailable_drink_list_designator.write(unavailable_drink_list)
+
+            return "done"
+
+
+class IdentifyUnavailableDrinkFromRecognitions(smach.State):
+    def __init__(self, robot, objects, objects_list_des, unavailable_drink_designator):
+        super(IdentifyUnavailableDrinkFromRecognitions, self).__init__(outcomes=["done", "failed"])
+
 class ServingDrinks(smach.StateMachine):
     """
     State machine for 'Serving Drinks' challenge.
