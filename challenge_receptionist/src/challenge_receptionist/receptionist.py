@@ -67,7 +67,8 @@ class HandleSingleGuest(smach.StateMachine):
             smach.StateMachine.add('FIND_SEAT_FOR_GUEST',
                                    FindEmptySeat(robot,
                                                  seats_to_inspect=challenge_knowledge.seats,
-                                                 room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room)),
+                                                 room=ds.EntityByIdDesignator(robot, challenge_knowledge.sitting_room),
+                                                 seat_is_for=guest_name_des),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'aborted'})
 
