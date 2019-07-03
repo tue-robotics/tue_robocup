@@ -34,7 +34,9 @@ class ServeOneDrink(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         # Designators
-        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={}, name='arm_des')
+        arm_designator = ds.UnoccupiedArmDesignator(robot=robot,
+                                                    arm_properties={},
+                                                    name='arm_des').lockable()
 
         drink_str_designator = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
         drink_designator = ds.EdEntityDesignator(robot=robot, type_designator=drink_str_designator, name='drink_des')
@@ -43,6 +45,11 @@ class ServeOneDrink(smach.StateMachine):
         operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
 
         with self:
+
+            # Lock the arm_designator
+            smach.StateMachine.add("LOCK_ARM",
+                                   states.LockDesignator(arm_designator),
+                                   transitions={'locked': "GET_ORDER"})
 
             # Get order
             smach.StateMachine.add("GET_ORDER",
@@ -118,8 +125,12 @@ class ServeOneDrink(smach.StateMachine):
             # Hand over the drink to the operator
             smach.StateMachine.add("HAND_OVER",
                                    states.HandoverToHuman(robot=robot, arm_designator=arm_designator),
-                                   transitions={"succeeded": "RETURN_TO_ROOM",
-                                                "failed": "RETURN_TO_ROOM"})
+                                   transitions={"succeeded": "UNLOCK_ARM",
+                                                "failed": "UNLOCK_ARM"})
+
+            smach.StateMachine.add("UNLOCK_ARM",
+                                   states.UnlockDesignator(arm_designator),
+                                   transitions={'unlocked': "RETURN_TO_ROOM"})
 
             smach.StateMachine.add("RETURN_TO_ROOM",
                                    states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
