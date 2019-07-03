@@ -208,7 +208,9 @@ class EdEntityDesignator(Designator):
                 else:
                     return entities[0]
 
-        rospy.logerr("No entities found in {0}".format(self))
+        # Should not be logged as error because when a None value check is
+        # implemented in the calling function, the log becomes misleading
+        rospy.logwarn("No entities found in {0}".format(self))
         return None
 
 
