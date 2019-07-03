@@ -86,8 +86,12 @@ class LearnGuest(smach.StateMachine):
                                    states.HearOptionsExtra(robot,
                                                            self.drink_spec_des,
                                                            guest_drink_des.writeable),
-                                   transitions={'heard': 'succeeded',
+                                   transitions={'heard': 'RESET_1',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
+
+            smach.StateMachine.add('RESET_1',
+                                   states.ResetArms(robot),
+                                   transitions={'done': 'succeeded'})
 
 
 if __name__ == "__main__":

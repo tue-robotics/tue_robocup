@@ -36,9 +36,10 @@ class HandleSingleGuest(smach.StateMachine):
                                                 'failed': 'SAY_GOTO_OPERATOR'})
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR',
-                                   states.Say(robot, ["Okidoki, lets go inside. Please follow me"],
-                                              block=True,
-                                              look_at_standing_person=True),
+                                   states.SayFormatted(robot, ["Okidoki, you are {name} and you like {drink}, lets go inside. Please follow me"],
+                                                       name=guest_name_des, drink=guest_drinkname_des,
+                                                       block=True,
+                                                       look_at_standing_person=True),
                                    transitions={'spoken': 'GOTO_LIVINGROOM'})
 
             smach.StateMachine.add('GOTO_LIVINGROOM',
@@ -97,19 +98,13 @@ class ChallengeReceptionist(smach.StateMachine):
             smach.StateMachine.add('SAY_DONE',
                                    states.Say(robot, ["That's all folks, my job is done, bye bye!"],
                                               block=False),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'GO_BACK'})
 
-            # - [x] Wait at the door, say you're waiting
-            # - [x] Wait until person can come in
-            # - [x] Ask their name
-            # - [x] Ask their favourite drink
-            # - [x] Ask for favourite drink <drink1>
-            # - [x] GOTO living room
-            # - [x] Locate John (not sure how that should work, maybe just FindPersonInRoom)
-            # - [x] GOTO John
-            # - [x] Locate guest1:
-            # - [x]   rotate head until <guest1> is detected
-            # - [x] Point at guest1
-            # - [x] Say: This is <guest1> and (s)he likes to drink <drink1>
-            # - [x] Iterate to guest 2
-            # - [x] Point at empty chair for guest to sit in
+            smach.StateMachine.add('GO_BACK',
+                                   states.NavigateToWaypoint(robot,
+                                                             ds.EntityByIdDesignator(robot,
+                                                                                     id=challenge_knowledge.waypoint_door['id']),
+                                                             challenge_knowledge.waypoint_door['radius']),
+                                   transitions={'arrived': 'succeeded',
+                                                'unreachable': 'succeeded',
+                                                'goal_not_defined': 'succeeded'})
