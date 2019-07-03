@@ -182,7 +182,7 @@ class GrabTrash(smach.State):
         return "succeeded"
 
 
-class HandoverFromHuman(smach.StateMachine):
+class HandoverFromHumanFigure(smach.StateMachine):
     """
     State that enables low level grab reflex. Besides a robot object, needs
     an arm and an entity to grab, which is either one from ed through the
@@ -280,7 +280,7 @@ class PickUpTrash(smach.StateMachine):
                                    transitions={'spoken': 'ASK_HANDOVER'})
 
             # Ask human to handover the trash bag
-            smach.StateMachine.add("ASK_HANDOVER", HandoverFromHuman(robot=robot, arm_designator=arm_designator,
+            smach.StateMachine.add("ASK_HANDOVER", HandoverFromHumanFigure(robot=robot, arm_designator=arm_designator,
                                                                      grabbed_entity_label='thrash'),
                                    transitions={"succeeded": "LOWER_ARM",
                                                 "failed": "failed",
@@ -312,4 +312,8 @@ if __name__ == '__main__':
     hero.reset()
 
     arm = ds.UnoccupiedArmDesignator(hero, {})
-    GrabTrash(hero, arm, 100, 2).execute()
+
+    sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
+    sm.execute()
+
+    # GrabTrash(hero, arm, 100, 2).execute()
