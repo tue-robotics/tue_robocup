@@ -37,7 +37,7 @@ class GetOrder(smach.StateMachine):
 
             # Operator id
             caller_id = "operator"
-            caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id, name="caller_des")
+            caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id, name="caller_des", none_resolve=True)
 
             # Detect - people holding drinks and people without drinks  #ToDo: implement!
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS",
