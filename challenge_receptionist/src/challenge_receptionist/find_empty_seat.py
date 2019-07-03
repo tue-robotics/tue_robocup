@@ -102,7 +102,6 @@ class FindEmptySeat(smach.StateMachine):
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
                                                 'failed': 'ITERATE_NEXT_SEAT'})
 
-
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
                                    states.PointAt(robot=robot,
                                                   arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
