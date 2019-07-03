@@ -76,7 +76,8 @@ class ServeOneDrink(smach.StateMachine):
                                             objects=objects,
                                             learn_check_designator=learn_check_designator.writeable),
                                    transitions={"succeeded": "INSPECT_BAR",
-                                                "failed": "failed"})  # ToDo: fallback?
+                                                "failed": "failed",
+                                                "aborted": "aborted"})
 
             # Inspect bar
             smach.StateMachine.add("INSPECT_BAR",
