@@ -156,7 +156,7 @@ class ServingDrinks(smach.StateMachine):
                                                      objects=common_knowledge.objects),
                                        transitions={"succeeded": next_state,
                                                     "failed": next_state,
-                                                    "aborted": "aborted"})
+                                                    "aborted": next_state})
 
             smach.StateMachine.add("SAY_DONE",
                                    states.Say(robot, "My job here is done. Enjoy your day and see you next time"),
