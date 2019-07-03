@@ -119,8 +119,10 @@ class ServeOneDrink(smach.StateMachine):
                                                 "goal_not_defined": "aborted"})
             # Find operator
             smach.StateMachine.add("FIND_OPERATOR",
-                                   states.FindPersonInRoom(robot=robot, area=room_id,
-                                                           name=operator_name, discard_other_labels=True,
+                                   states.FindPersonInRoom(robot=robot,
+                                                           area=room_id,
+                                                           name=operator_name,
+                                                           discard_other_labels=True,
                                                            found_entity_designator=operator_designator.writeable),
                                    transitions={"found": "GOTO_OPERATOR",
                                                 "not_found": "SAY_NOT_FOUND"})
