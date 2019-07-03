@@ -19,6 +19,20 @@ challenge_knowledge = knowledge_loader.load_knowledge("challenge_serving_drinks"
 common_knowledge = knowledge_loader.load_knowledge("common")
 
 
+class CheckInspect(smach.State):
+    def __init__(self, designator, *resolve_types):
+        super(CheckInspect, self).__init__(outcomes=["true", "false"])
+        ds.check_type(designator, *resolve_types)
+        self.designator = designator
+
+    def execute(self, userdata=None):
+        val = self.designator.resolve() if hasattr(self.designator, "resolve") else self.designator
+        if val:
+            return "true"
+        else:
+            return "false"
+
+
 class ServingDrinks(smach.StateMachine):
     """
     State machine for 'Serving Drinks' challenge.
@@ -46,17 +60,27 @@ class ServingDrinks(smach.StateMachine):
                                    transitions={"initialized": "INITIAL_POSE",
                                                 "abort": "aborted"})
 
-            smach.StateMachine.add("INITIAL_POSE", states.SetInitialPose(robot, challenge_knowledge.starting_point),
+            smach.StateMachine.add("INITIAL_POSE",
+                                   states.SetInitialPose(robot,
+                                                         challenge_knowledge.starting_point),
                                    transitions={"done": "INSPECT_BAR",
                                                 "preempted": "aborted",
                                                 "error": "INSPECT_BAR"})
 
             # Inspect bar and store the list of available drinks
             smach.StateMachine.add("INSPECT_BAR",
-                                   states.Inspect(robot=robot, entityDes=bar_designator, navigation_area="in_front_of",
+                                   states.Inspect(robot=robot,
+                                                  entityDes=bar_designator,
+                                                  navigation_area="in_front_of",
                                                   objectIDsDes=objects_list_des),
-                                   transitions={"done": "NAVIGATE_TO_ROOM",
+                                   transitions={"done": "CHECK_INSPECT_RESULT",
                                                 "failed": "INSPECT_FALLBACK"})
+
+            smach.StateMachine.add("CHECK_INSPECT_RESULT",
+                                   CheckInspect(objects_list_des,
+                                                [ClassificationResult]),
+                                   transitions={"true": "NAVIGATE_TO_ROOM",
+                                                "false": "INSPECT_FALLBACK"})
 
             # Inspect fallback - ask the bartender which drink is unavailable and store the unavailable drink
             smach.StateMachine.add("INSPECT_FALLBACK",
