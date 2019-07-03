@@ -12,7 +12,7 @@ from robot_skills.classification_result import ClassificationResult
 
 class CheckVolumeEmpty(smach.StateMachine):
     def __init__(self, robot, entity_des, volume):
-        smach.StateMachine.__init__(self, outcomes=['empty', 'occupied', 'failed'])
+        smach.StateMachine.__init__(self, outcomes=['empty', 'occupied',  'partially_occupied', 'failed'])
 
         seen_entities_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
@@ -29,6 +29,10 @@ class CheckVolumeEmpty(smach.StateMachine):
                 if seen_entities:
                     try:
                         vol = seat.volumes[volume]  # type: Volume
+                        occupied_space = sum(on_seat.size for on_seat in seen_entities)
+                        remaining_space = vol.size - occupied_space
+                        if remaining_space > 0.2: #  m^3, I estimate I occupy some 0.5m wide, 0.5m long 0.8m high space on top of a seat
+                            return 'partially_occupied'
                     except Exception as e:
                         traceback.print_exc()
                         rospy.logwarn("Could not get seat and volume, just assuming its occupied: {}".format(e))
@@ -90,6 +94,7 @@ class FindEmptySeat(smach.StateMachine):
                                    CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of'),
                                    transitions={'occupied': 'ITERATE_NEXT_SEAT',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
+                                                'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
                                                 'failed': 'ITERATE_NEXT_SEAT'})
 
 
@@ -103,6 +108,18 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
                                    states.Say(robot, ["Please sit here"], block=True),
+                                   transitions={'spoken': 'RESET_SUCCESS'})
+
+            smach.StateMachine.add('POINT_AT_PARTIALLY_OCCUPIED_SEAT',
+                                   states.PointAt(robot=robot,
+                                                  arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                                                  point_at_designator=seat_ent_des,
+                                                  look_at_designator=seat_ent_des),
+                                   transitions={"succeeded": "SAY_SEAT_EMPTY",
+                                                "failed": "SAY_SEAT_EMPTY"})
+
+            smach.StateMachine.add('SAY_SEAT_PARTIALLY_OCCUPIED',
+                                   states.Say(robot, ["I think there's some space left here where you can sit"], block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
