@@ -29,11 +29,11 @@ class VerifyWorldModelInfo(smach.State):
 
         ids = [e.id for e in self._robot.ed.get_entities()]
         for loc in challenge_knowledge.cleaning_locations:
-            # if loc["room"] == "living_room":
-            #     if "trash_bin" not in ids:
-            #         return "failed"
-            if loc["room"] == "kitchen":
-                if "trashbin" not in ids:
+             if loc["room"] == "living_room":
+                 if "trash_bin1" not in ids:
+                     return "failed"
+             if loc["room"] == "kitchen":
+                if "trash_bin" not in ids:
                     return "failed"
 
     # Make sure the world model and local knowledge match
