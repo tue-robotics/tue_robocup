@@ -58,7 +58,7 @@ class Hero(robot.Robot):
         """
         This poses the robot for an inspect.
 
-        :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        :param inspect_target: kdl.Frame with the pose of the entity to be inspected.
         :return result: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
@@ -74,7 +74,7 @@ class Hero(robot.Robot):
 
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
-        z_arm = min(0.69, max(z_arm, 0.0)) # arm_lift_joint limit
+        z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
         arm = self.parts['leftArm']
 
