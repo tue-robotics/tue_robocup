@@ -61,7 +61,7 @@ class GetOrder(smach.StateMachine):
                                               sentence="Could not find people without a drink. Please wave if you want me to bring you something",
                                               look_at_standing_person=True,
                                               block=True),
-                                   transitions={"spoken": "WAIT_FOR_WAVING"})
+                                   transitions={"spoken": "SAY_COULD_NOT_FIND_WAVING"}) # Change to WAIT_FOR_WAVING
 
             smach.StateMachine.add("WAIT_FOR_WAVING",
                                    states.SetPoseFirstFoundPersonToEntity(robot=robot,
@@ -69,12 +69,19 @@ class GetOrder(smach.StateMachine):
                                                                           strict=False,
                                                                           dst_entity_designator=caller_id),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
-                                                "failed": "ASK_STEP_IN_FRONT"})
+                                                "failed": "SAY_COULD_NOT_FIND_WAVING"})
 
             # Navigate to person who wants to place an order
+            smach.StateMachine.add("SAY_COULD_NOT_FIND_WAVING",
+                                   states.Say(robot=robot,
+                                              sentence="I did not find any waving person.",
+                                              look_at_standing_person=True,
+                                              block=True),
+                                   transitions={"spoken": "ASK_STEP_IN_FRONT"})
+
             smach.StateMachine.add("SAY_I_HAVE_SEEN",
                                    states.Say(robot=robot,
-                                              sentence="Found person who may want to place an order. I will be there shortly!",
+                                              sentence="Found person who might want to place an order. I will be there shortly!",
                                               look_at_standing_person=True,
                                               block=True),
                                    transitions={"spoken": "NAVIGATE_TO_PERSON"})
@@ -84,13 +91,19 @@ class GetOrder(smach.StateMachine):
                                    states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
                                                             radius=1.1),
                                    transitions={"arrived": "LEARN_NAME",
-                                                "unreachable": "ASK_STEP_IN_FRONT",
+                                                "unreachable": "SAY_COULD_NOT_NAVIGATE",
                                                 "goal_not_defined": "SAY_PEOPLE_WITHOUT_DRINKS"})
 
             # Detect waving people fallback - ask operator in front
+            smach.StateMachine.add("SAY_COULD_NOT_NAVIGATE",
+                                   states.Say(robot=robot,
+                                              sentence="Sorry! I could not navigate to you.",
+                                              look_at_standing_person=True),
+                                   transitions={"spoken": "ASK_STEP_IN_FRONT"})
+
             smach.StateMachine.add("ASK_STEP_IN_FRONT",
                                    states.Say(robot=robot,
-                                              sentence="Sorry! I could not navigate to you. Please step in front of me to give your order",
+                                              sentence="Please step in front of me to give your order",
                                               look_at_standing_person=True,
                                               block=True),
                                    transitions={"spoken": "LEARN_NAME"})
