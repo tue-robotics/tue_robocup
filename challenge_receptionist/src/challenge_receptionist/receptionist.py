@@ -13,7 +13,12 @@ challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
 class HandleSingleGuest(smach.StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, assume_john):
+        """
+
+        :param robot:
+        :param assume_john: bool indicating that John (the homeowner) is already there.
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'aborted'])
 
         door_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_door['id'])
@@ -52,9 +57,10 @@ class HandleSingleGuest(smach.StateMachine):
 
             smach.StateMachine.add('INTRODUCE_GUEST',
                                    IntroduceGuest(robot,
-                                                            guest_entity_des,
-                                                            guest_name_des,
-                                                            guest_drinkname_des),
+                                                  guest_entity_des,
+                                                  guest_name_des,
+                                                  guest_drinkname_des,
+                                                  assume_john=assume_john),
                                    transitions={'succeeded': 'FIND_SEAT_FOR_GUEST',
                                                 'abort': 'FIND_SEAT_FOR_GUEST'})
 
@@ -81,19 +87,19 @@ class ChallengeReceptionist(smach.StateMachine):
 
             smach.StateMachine.add('SET_INITIAL_POSE',
                                    states.SetInitialPose(robot, challenge_knowledge.starting_point),
-                                   transitions={'done': 'ITERATE_NUM_GUESTS',
+                                   transitions={'done': 'HANDLE_GUEST_1',
                                                 "preempted": 'aborted',
-                                                'error': 'ITERATE_NUM_GUESTS'})
+                                                'error': 'HANDLE_GUEST_1'})
 
-            smach.StateMachine.add('ITERATE_NUM_GUESTS',
-                                   states.IterateDesignator(runs, run.writeable),
-                                   transitions={'next': 'HANDLE_SINGLE_GUEST',
-                                                'stop_iteration': 'SAY_DONE'})
+            smach.StateMachine.add('HANDLE_GUEST_1',
+                                   HandleSingleGuest(robot, assume_john=True),
+                                   transitions={'succeeded': 'HANDLE_GUEST_2',
+                                                'aborted': 'HANDLE_GUEST_2'})
 
-            smach.StateMachine.add('HANDLE_SINGLE_GUEST',
-                                   HandleSingleGuest(robot),
-                                   transitions={'succeeded': 'ITERATE_NUM_GUESTS',
-                                                'aborted': 'ITERATE_NUM_GUESTS',})
+            smach.StateMachine.add('HANDLE_GUEST_2',
+                                   HandleSingleGuest(robot, assume_john=False),
+                                   transitions={'succeeded': 'SAY_DONE',
+                                                'aborted': 'SAY_DONE'})
 
             smach.StateMachine.add('SAY_DONE',
                                    states.Say(robot, ["That's all folks, my job is done, bye bye!"],
