@@ -103,8 +103,8 @@ class ServeOneDrink(smach.StateMachine):
                                    states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                             grabbed_entity_designator=drink_designator),
                                    transitions={"succeeded": "CHECK_LEARN_OPERATOR",
-                                                "failed": "CHECK_LEARN_OPERATOR",  # ToDo: fallback?
-                                                "timeout": "CHECK_LEARN_OPERATOR"})  # ToDo: fallback?
+                                                "failed": "CHECK_LEARN_OPERATOR",
+                                                "timeout": "CHECK_LEARN_OPERATOR"})
 
             smach.StateMachine.add("CHECK_LEARN_OPERATOR",
                                    CheckBool(learn_check_designator),
@@ -112,7 +112,8 @@ class ServeOneDrink(smach.StateMachine):
                                                 "false": "GO_TO_ROOM"})
 
             smach.StateMachine.add("GO_TO_ROOM",
-                                   states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
+                                   states.NavigateToRoom(robot=robot,
+                                                         entity_designator_room=room_designator),
                                    transitions={"arrived": "SAY_NOT_FOUND",
                                                 "unreachable": "failed",
                                                 "goal_not_defined": "aborted"})
@@ -128,7 +129,8 @@ class ServeOneDrink(smach.StateMachine):
 
             # Move to this person
             smach.StateMachine.add("GOTO_OPERATOR",
-                                   states.NavigateToObserve(robot=robot, entity_designator=operator_designator),
+                                   states.NavigateToObserve(robot=robot,
+                                                            entity_designator=operator_designator),
                                    transitions={"arrived": "SAY_THE_NAME",
                                                 "unreachable": "SAY_NOT_FOUND",
                                                 "goal_not_defined": "SAY_NOT_FOUND"})
@@ -137,21 +139,24 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add("SAY_NOT_FOUND",
                                    states.Say(robot=robot,
                                               sentence=DescriptionStrDesignator("not_found_operator",
-                                                                                drink_str_designator, operator_name),
+                                                                                drink_str_designator,
+                                                                                operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "HAND_OVER"})
 
             # Say the name
             smach.StateMachine.add("SAY_THE_NAME",
                                    states.Say(robot=robot,
-                                              sentence=DescriptionStrDesignator("found_operator", drink_str_designator,
+                                              sentence=DescriptionStrDesignator("found_operator",
+                                                                                drink_str_designator,
                                                                                 operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "HAND_OVER"})
 
             # Hand over the drink to the operator
             smach.StateMachine.add("HAND_OVER",
-                                   states.HandoverToHuman(robot=robot, arm_designator=arm_designator),
+                                   states.HandoverToHuman(robot=robot,
+                                                          arm_designator=arm_designator),
                                    transitions={"succeeded": "UNLOCK_ARM",
                                                 "failed": "UNLOCK_ARM"})
 
@@ -160,7 +165,8 @@ class ServeOneDrink(smach.StateMachine):
                                    transitions={'unlocked': "RETURN_TO_ROOM"})
 
             smach.StateMachine.add("RETURN_TO_ROOM",
-                                   states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
+                                   states.NavigateToRoom(robot=robot,
+                                                         entity_designator_room=room_designator),
                                    transitions={"arrived": "succeeded",
                                                 "unreachable": "failed",
                                                 "goal_not_defined": "aborted"})
