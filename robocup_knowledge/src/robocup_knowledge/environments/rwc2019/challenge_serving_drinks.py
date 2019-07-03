@@ -2,7 +2,7 @@
 
 # Bar where the drinks are located
 #TODO:Check
-bar_id = "sideboard"
+bar_id = "display_cabinet"
 
 # Room where the party takes place, i.e., where the robot should look for people
 #TODO:Check
