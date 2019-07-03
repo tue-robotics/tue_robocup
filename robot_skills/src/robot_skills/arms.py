@@ -751,7 +751,7 @@ class Arm(RobotPart):
 
         ps = []
         time_from_start = 0.0
-        start_joint_state = self.get_joint_states
+        start_joint_state = self.get_joint_states()
         prev_joint_ref = [start_joint_state[jn] for jn in joint_names]
         for joints_reference in joints_references:
             max_diff = sorted([abs(prev - new) for prev, new in zip(prev_joint_ref, joints_reference)])[-1]
