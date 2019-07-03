@@ -71,7 +71,7 @@ class CheckAvailability(smach.State):
 
         self.trial += 1
         while self.trial < self._max_tries and not rospy.is_shutdown():
-            rospy.loginfo("AskDrink: attempt {} of {}".format(nr_tries, self._max_tries))
+            rospy.loginfo("AskDrink: attempt {} of {}".format(self.trial, self._max_tries))
             rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
             rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
 
