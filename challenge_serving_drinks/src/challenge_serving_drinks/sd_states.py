@@ -341,7 +341,7 @@ class DescriptionStrDesignator(ds.Designator):
         if self.message_type == "found_operator":
             return "Hey {name}, I'm bringing your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "not_found_operator":
-            return "Hey {name} I cannot find you!"\
+            return "Hey {name} I'm back."\
                    "Please come to me to receive your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "fallback_bar":
             return "Oh, I cannot inspect the bar. Please hand me over the {drink}".format(drink=drink_request)

@@ -13,6 +13,20 @@ from .sd_states import DescriptionStrDesignator
 from .get_order import GetOrder
 
 
+class CheckBool(smach.State):
+    def __init__(self, check_designator):
+        super(CheckBool, self).__init__(outcomes=["true", "false"])
+        ds.check_type(check_designator, bool)
+        self._check_designator = check_designator
+
+    def execute(self, userdata=None):
+        val = self._check_designator.resolve() if hasattr(self._check_designator, "resolve") else self._check_designator
+        if val:
+            return "true"
+        else:
+            return "false"
+
+
 class ServeOneDrink(smach.StateMachine):
     """
     Serves on drink to an operator
@@ -43,6 +57,7 @@ class ServeOneDrink(smach.StateMachine):
 
         operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
         operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
+        learn_check_designator = ds.VariableDesignator(initial_value=True, resolve_type=bool, name='learn_check_des')
 
         with self:
 
@@ -59,7 +74,8 @@ class ServeOneDrink(smach.StateMachine):
                                             available_drinks_designator=objects_list_des,
                                             unavailable_drink_designator=unav_drink_des,
                                             name_options=name_options,
-                                            objects=objects),
+                                            objects=objects,
+                                            learn_check_designator=learn_check_designator.writeable),
                                    transitions={"succeeded": "INSPECT_BAR",
                                                 "failed": "failed"})  # ToDo: fallback?
 
@@ -87,10 +103,20 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add("HANDOVER_FROM_HUMAN",
                                    states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                             grabbed_entity_designator=drink_designator),
-                                   transitions={"succeeded": "FIND_OPERATOR",
-                                                "failed": "FIND_OPERATOR",  # ToDo: fallback?
-                                                "timeout": "FIND_OPERATOR"})  # ToDo: fallback?
+                                   transitions={"succeeded": "CHECK_LEARN_OPERATOR",
+                                                "failed": "CHECK_LEARN_OPERATOR",  # ToDo: fallback?
+                                                "timeout": "CHECK_LEARN_OPERATOR"})  # ToDo: fallback?
 
+            smach.StateMachine.add("CHECK_LEARN_OPERATOR",
+                                   CheckBool(learn_check_designator),
+                                   transitions={"true": "FIND_OPERATOR",
+                                                "false": "GO_TO_ROOM"})
+
+            smach.StateMachine.add("GO_TO_ROOM",
+                                   states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
+                                   transitions={"arrived": "SAY_NOT_FOUND",
+                                                "unreachable": "failed",
+                                                "goal_not_defined": "aborted"})
             # Find operator
             smach.StateMachine.add("FIND_OPERATOR",
                                    states.FindPersonInRoom(robot=robot, area=room_id,
