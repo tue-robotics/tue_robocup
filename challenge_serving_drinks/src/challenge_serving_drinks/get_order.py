@@ -67,12 +67,19 @@ class GetOrder(smach.StateMachine):
                                                                           strict=True,
                                                                           dst_entity_designator=caller_id),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
-                                                "aborted": "ASK_FOR_WAVING"})
+                                                "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
 
             # Detect fallback - detect waving people
+            smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS_FAILED",
+                                   states.Say(robot=robot,
+                                              sentence="Could not detect people without drinks",
+                                              look_at_standing_person=True,
+                                              block=True),
+                                   transitions={"spoken": "ASK_FOR_WAVING"})
+
             smach.StateMachine.add("ASK_FOR_WAVING",
                                    states.Say(robot=robot,
-                                              sentence="Could not detect people without drinks. Please raise your arm completely and wave, if you want me to bring you something",
+                                              sentence="Please raise your arm completely and wave, if you want me to bring you something",
                                               look_at_standing_person=True,
                                               block=True),
                                    transitions={"spoken": "WAIT_FOR_WAVING"}) # Change to WAIT_FOR_WAVING
