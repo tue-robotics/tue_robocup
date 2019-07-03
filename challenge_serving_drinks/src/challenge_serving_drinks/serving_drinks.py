@@ -10,7 +10,6 @@ from robot_skills.robot import Robot
 from robocup_knowledge import knowledge_loader
 
 # Challenge serving drinks
-from .drive_in import DriveIn
 from .serve_one_drink import ServeOneDrink
 from .sd_states import AskAvailability
 
