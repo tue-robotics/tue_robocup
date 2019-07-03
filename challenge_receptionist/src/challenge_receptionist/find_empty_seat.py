@@ -127,11 +127,11 @@ class FindEmptySeat(smach.StateMachine):
                                    transitions={'spoken': 'RESET_FAIL'})
 
             smach.StateMachine.add('RESET_FAIL',
-                                   states.ResetArmsTorsoHead(robot),
+                                   states.ResetArms(robot),
                                    transitions={'done': 'failed'})
 
             smach.StateMachine.add('RESET_SUCCESS',
-                                   states.ResetArmsTorsoHead(robot),
+                                   states.ResetArms(robot),
                                    transitions={'done': 'succeeded'})
 
 
