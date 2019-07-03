@@ -5,9 +5,6 @@ import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
-from robocup_knowledge import knowledge_loader
-from robot_skills.robot import Robot
-
 # Serving drinks
 from .sd_states import AskDrink
 
