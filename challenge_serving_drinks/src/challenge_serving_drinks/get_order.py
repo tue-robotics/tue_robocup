@@ -72,7 +72,7 @@ class GetOrder(smach.StateMachine):
             # Detect fallback - detect waving people
             smach.StateMachine.add("ASK_FOR_WAVING",
                                    states.Say(robot=robot,
-                                              sentence="Could not find people without a drink. Please wave if you want me to bring you something",
+                                              sentence="Could not find people without a drink. Please raise your arm completely and wave, if you want me to bring you something",
                                               look_at_standing_person=True,
                                               block=True),
                                    transitions={"spoken": "SAY_COULD_NOT_FIND_WAVING"}) # Change to WAIT_FOR_WAVING
@@ -170,3 +170,43 @@ class GetOrder(smach.StateMachine):
                                             objects=objects),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
+
+if __name__ == "__main__":
+    from robot_skills import get_robot
+    from robot_skills.classification_result import ClassificationResult
+    import rospy
+    from robocup_knowledge import knowledge_loader
+    common_knowledge = knowledge_loader.load_knowledge("common")
+
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+
+        rospy.init_node('test_get_order')
+
+        robot = get_robot(robot_name)
+        operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
+        drink_str_designator = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
+
+        available_drinks = [ClassificationResult('beer', None, None, None),
+                            ClassificationResult('juice', None, None, None),
+                            ClassificationResult('coke', None, None, None)]
+        available_drinks_designator = ds.VariableDesignator(inital_value=available_drinks, resolve_type=[ClassificationResult], name='objects_list_des')
+        unavailable_drink_designator = ds.VariableDesignator(initial_value="tea_bag", resolve_type=str, name='unav_drink_str_des')
+
+        name_options = common_knowledge.names
+        objects = common_knowledge.objects
+        learn_check_designator = ds.VariableDesignator(initial_value=True, resolve_type=bool, name='learn_check_des')
+
+        sm = GetOrder(robot,
+                      operator_name,
+                      drink_str_designator,
+                      available_drinks_designator,
+                      unavailable_drink_designator,
+                      name_options,
+                      objects,
+                      learn_check_designator.writeable)
+        sm.execute()
+    else:
+        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable")
+        exit(1)
+
