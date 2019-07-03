@@ -177,7 +177,7 @@ class GetOrder(smach.StateMachine):
                                             objects=objects),
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed",
-                                                "aborted": "failed"})
+                                                "aborted": "aborted"})
 
 if __name__ == "__main__":
     from robot_skills import get_robot
