@@ -136,7 +136,7 @@ class GrabTrash(smach.State):
             # It is necessary to close the gripper since the gripper is also closed at the final measurement
             arm.send_gripper_goal('open')
             arm.wait_for_motion_done()
-            arm.send_gripper_goal('close')
+            arm.send_gripper_goal('close', max_torque=1.0)
             arm.wait_for_motion_done()
 
             arm_weight = measure_force.get_force()
