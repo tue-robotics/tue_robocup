@@ -135,7 +135,7 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
                 dst_id = dst_entity
 
             self._robot.ed.update_entity(id=dst_id,
-                                         frame_stamped=src_entity.pose(),
+                                         frame_stamped=src_entity.pose,
                                          type=self._dst_entity_type)
 
             return "done"
