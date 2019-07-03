@@ -93,10 +93,6 @@ class GrabTrash(smach.State):
         self._minimal_weight = minimal_weight
 
     def execute(self, userdata=None):
-        # TODO: remove this reset:
-        self._robot.ed.reset()
-        rospy.logerr("ED has been reset!")
-        # TODO end
 
         arm = self._arm_designator.resolve()
         if not arm:
@@ -114,7 +110,7 @@ class GrabTrash(smach.State):
         arm.wait_for_motion_done()
 
         # Force drive to get closer to bin
-        self._robot.base.force_drive(0.1, -0.035, 0, 2.0)
+        self._robot.base.force_drive(0.1, 0, 0, 2.0)
 
         # Send to grab trash pose
         arm.send_joint_goal('grab_trash_bag')
@@ -249,11 +245,12 @@ class PickUpTrash(smach.StateMachine):
         :param arm_designator: arm designator resolving to the arm with which to grab
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
+        place_pose_designator = ds.EmptySpotDesignator(robot, trashbin_designator)
 
         with self:
             smach.StateMachine.add("GO_BIN",
-                                   states.NavigateToSymbolic(robot, {trashbin_designator: 'in_front_of'},
-                                                             trashbin_designator),
+                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
+                                                          arm_designator=arm_designator),
                                    transitions={"arrived": "GET_BIN_POSITION",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
@@ -263,9 +260,9 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
-                                   states.NavigateToSymbolic(robot, {trashbin_designator: 'in_front_of'},
-                                                             trashbin_designator),
-                                   transitions={"arrived": "PREPARE_AND_GRAB",  #beun "PREPARE_AND_GRAB", "ASK_HANDOVER",
+                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
+                                                          arm_designator=arm_designator),
+                                   transitions={"arrived": "PREPARE_AND_GRAB",
                                                 "goal_not_defined": "aborted",
                                                 "unreachable": "ASK_HANDOVER"})
 

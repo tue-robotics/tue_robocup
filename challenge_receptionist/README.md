@@ -14,3 +14,10 @@ so that the robot will introduce new guests to John (and other already introduce
     - stating their name
     - stating their favorite drink
 6. Find an empty seat for the new guest
+
+## TODO:
+- [x] Person detection does not work all the time...
+- [x] Fallback for failing person detection?
+- [x] Fix launch files so that ED does not crash due to missing services (mentioned by Rein)
+- [x] Challenge crashes (ED detect people not available)
+- [ ] Rise robot before human-robot interaction
