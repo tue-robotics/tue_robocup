@@ -157,9 +157,9 @@ class OperatorToCategory(smach.StateMachine):
                                                                                      room=room_id_des, block=True),
                                    transitions={"spoken": "WAIT_FOR_OPERATOR"})
 
-            smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.FindPerson(robot),
-                                   transitions={"found": "ASK_WHICH_CATERGORY",
-                                                "failed": "ASK_WHICH_CATERGORY"})
+            smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.WaitTime(4),
+                                   transitions={"waited": "ASK_WHICH_CATERGORY",
+                                                "preempted": "ASK_WHICH_CATERGORY"})
 
             smach.StateMachine.add("ASK_WHICH_CATERGORY", AskWhichCategory(robot,
                 ds.Designator(challenge_knowledge.category_grammar),
