@@ -176,7 +176,8 @@ class GetOrder(smach.StateMachine):
                                             unavailable_drink_designator=unavailable_drink_designator,
                                             objects=objects),
                                    transitions={"succeeded": "succeeded",
-                                                "failed": "failed"})
+                                                "failed": "failed",
+                                                "aborted": "failed"})
 
 if __name__ == "__main__":
     from robot_skills import get_robot

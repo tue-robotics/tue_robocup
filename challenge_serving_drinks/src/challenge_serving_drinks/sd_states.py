@@ -97,6 +97,8 @@ class CheckAvailability(smach.State):
                 rospy.loginfo("Requested drink: {}".format(self._drink_designator.resolve()))
                 return "available"
 
+        return "aborted"
+
     def _query_drink(self, max_tries):
         """
         Queries the HMI server for <max_tries> times until a result has been obtained
