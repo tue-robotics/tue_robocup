@@ -243,6 +243,8 @@ class SelfCleanup(smach.StateMachine):
         store_entity_id_des = ds.VariableDesignator(resolve_type=str, name="store_entity_id")
         store_entity_des = ds.EdEntityDesignator(robot, id_designator=store_entity_id_des)
 
+        selected_entity_type_des = ds.AttrDesignator(selected_entity_designator, "type", resolve_type=str)
+
         store_area_name_des = ds.VariableDesignator(resolve_type=str, name="store_entity_id")
 
         trash_place_pose = DropPoseDesignator(robot, store_entity_des, 0.6, "drop_pose")
@@ -253,7 +255,7 @@ class SelfCleanup(smach.StateMachine):
 
             smach.StateMachine.add("SPEAK", robot_smach_states.SayFormatted(robot, ["I will pick-up the {object}",
                                                                                     "Let's move the {object}"],
-                                                                            object=selected_entity_designator,
+                                                                            object=selected_entity_type_des,
                                                                             block=True),
                                    transitions={"spoken": "GRAB"})
 

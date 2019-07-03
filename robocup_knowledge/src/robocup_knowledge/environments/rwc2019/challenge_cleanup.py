@@ -17,10 +17,10 @@ cleaning_locations = [
     {'name': 'bedroom_chest',   'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'bed',             'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'sidetable',       'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
-    {'name': 'shelf',           'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'shelf',           'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['shelf2','shelf3','shelf4','shelf5']},
 
 #    {'name': 'trash_bin',       'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
-    {'name': 'kitchen_cabinet', 'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
+    {'name': 'kitchen_cabinet', 'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['shelf1','shelf2','shelf3']},
     {'name': 'kitchen_table',   'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'island',          'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
     {'name': 'sink',            'room': 'kitchen',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},
