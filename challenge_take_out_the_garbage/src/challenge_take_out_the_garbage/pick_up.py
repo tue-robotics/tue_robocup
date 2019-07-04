@@ -88,7 +88,7 @@ class GrabTrash(smach.State):
     Set the arm in the prepare grasp position so it can safely go to the grasp position
     """
 
-    def __init__(self, robot, arm_designator, try_num=3, minimal_weight=0.1):
+    def __init__(self, robot, arm_designator, try_num=1, minimal_weight=0.1):
         """
         :param robot: robot object
         :param arm_designator: arm designator resolving to the arm with which to grab
@@ -168,9 +168,9 @@ class GrabTrash(smach.State):
         self._robot.base.force_drive(-0.1, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
-
-        if weight_object < self._minimal_weight:
-            return "failed"
+        #
+        # if weight_object < self._minimal_weight:
+        #     return "failed"
 
         self._robot.speech.speak("Look at this I can pick up the trash!")
         handed_entity = EntityInfo(id="trash")
