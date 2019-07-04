@@ -34,7 +34,7 @@ class CheckInspect(smach.State):
 class UpdateUnavailableDrinkList(smach.State):
     def __init__(self, unavailable_drink_list_designator, drink_to_add_designator):
         super(UpdateUnavailableDrinkList, self).__init__(outcomes=["done", "failed"])
-        ds.is_writable(unavailable_drink_list_designator)
+        ds.is_writeable(unavailable_drink_list_designator)
         ds.check_type(unavailable_drink_list_designator, [str])
         ds.check_type(drink_to_add_designator, str)
 
