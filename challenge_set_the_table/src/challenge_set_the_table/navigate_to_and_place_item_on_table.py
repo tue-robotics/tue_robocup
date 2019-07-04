@@ -89,11 +89,11 @@ class PlaceItemOnTable(StateMachine):
         def _place_and_retract(_):
             send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
             send_gripper_goal("open")
+            robot.head.look_up()
+            robot.head.wait_for_motion_done()
             send_joint_goal([0.69, 0, -1.57, 0, 0])
             send_gripper_goal("close")
             robot.base.force_drive(-0.1, 0, 0, 1)  # Drive backwards at 0.1m/s for 1s, so 10cm
-            robot.head.look_up()
-            robot.head.wait_for_motion_done()
             arm.send_joint_goal("carrying_pose")
             return 'done'
 
@@ -128,11 +128,11 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
         table = EdEntityDesignator(robot=robot, id=table_id)
 
         with self:
-            StateMachine.add("NAVIGATE_TO_TABLE",
-                             NavigateToSymbolic(robot, {table: table_navigation_area}, table),
-                             transitions={'arrived': 'NAVIGATE_TO_TABLE_CLOSE',
-                                          'unreachable': 'failed',
-                                          'goal_not_defined': 'failed'})
+            # StateMachine.add("NAVIGATE_TO_TABLE",
+            #                  NavigateToSymbolic(robot, {table: table_navigation_area}, table),
+            #                  transitions={'arrived': 'NAVIGATE_TO_TABLE_CLOSE',
+            #                               'unreachable': 'failed',
+            #                               'goal_not_defined': 'failed'})
 
             StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",
                              NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
