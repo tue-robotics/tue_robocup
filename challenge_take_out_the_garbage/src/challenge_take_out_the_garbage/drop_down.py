@@ -100,6 +100,23 @@ class DropDownTrash(smach.StateMachine):
 
                                    transitions={"arrived": "DROP_TRASH",
                                                 "goal_not_defined": "aborted",
+                                                "unreachable": "OPEN_DOOR_PLEASE"})
+
+            smach.StateMachine.add("OPEN_DOOR_PLEASE",
+                                   states.Say(robot, "Can you please open the door for me? It seems blocked!"),
+                                   transitions={"spoken": "WAIT_FOR_DOOR_OPEN"})
+
+            smach.StateMachine.add("WAIT_FOR_DOOR_OPEN",
+                                   states.WaitTime(robot=robot, waittime=5),
+                                   transitions={"waited": "GO_TO_COLLECTION_ZONE2",
+                                                "preempted": "GO_TO_COLLECTION_ZONE2"})
+
+            smach.StateMachine.add("GO_TO_COLLECTION_ZONE2",
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=drop_zone_id),
+                                                             radius=0.5),
+
+                                   transitions={"arrived": "DROP_TRASH",
+                                                "goal_not_defined": "aborted",
                                                 "unreachable": "failed"})
 
             smach.StateMachine.add("DROP_TRASH", DropTrash(robot=robot, arm_designator=arm_designator),
