@@ -16,3 +16,6 @@ starting_point = "serving_drinks_initial"
 
 # Number of drinks to be served
 NR_DRINKS = 3
+
+# Maximum number of unavailable drinks at the start of the challenge
+MAX_UNAVAILABLE_DRINKS = 1
