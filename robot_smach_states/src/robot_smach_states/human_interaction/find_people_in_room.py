@@ -3,6 +3,7 @@
 # System
 import math
 import sys
+import numpy as np
 
 # ROS
 import rospy
@@ -83,10 +84,10 @@ class FindPeople(smach.State):
     def execute(self, userdata=None):
         look_angles = None
         person_label = None
-        if not self._properties:
-            look_angles = [0]
-        else:
-            look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
+
+        look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
+
+        if self._properties:
             try:
                 person_label = self._properties["id"]
                 ds.check_type(person_label, "str")
@@ -189,7 +190,7 @@ class FindPeople(smach.State):
                 return 'found'
             else:
                 rospy.logwarn("Could not find people meeting the requirements")
-                rate.sleep()
+                # rate.sleep()
 
         rospy.logwarn("Exceeded trial or time limit")
         self._robot.head.close()

@@ -3,6 +3,7 @@
 # System
 import math
 import sys
+import numpy as np
 
 # ROS
 import PyKDL as kdl
@@ -79,7 +80,7 @@ class FindPerson(smach.State):
         start_time = rospy.Time.now()
 
         look_distance = 2.0  # magic number 4
-        look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
+        look_angles = np.linspace(-np.pi/2, np.pi/2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
                                                     y=look_distance * math.sin(angle), z=1.3,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
