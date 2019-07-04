@@ -58,6 +58,7 @@ class GetTrashBin(smach.State):
         self._trashbin = trashbin
 
     def execute(self, userdata=None):
+        return "succeeded"
         e = self._trashbin.resolve()
 
         if not e:
