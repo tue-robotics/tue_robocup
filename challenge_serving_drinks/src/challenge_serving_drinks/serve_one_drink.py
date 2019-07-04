@@ -74,7 +74,8 @@ class ServeOneDrink(smach.StateMachine):
                                             unavailable_drink_designator=unav_drink_des,
                                             name_options=name_options,
                                             objects=objects,
-                                            learn_check_designator=learn_check_designator.writeable),
+                                            learn_check_designator=learn_check_designator.writeable,
+                                            target_room_designator=room_designator),
                                    transitions={"succeeded": "INSPECT_BAR",
                                                 "failed": "failed",
                                                 "aborted": "aborted"})
