@@ -58,7 +58,7 @@ class UpdateUnavailableDrinkList(smach.State):
 class IdentifyUnavailableDrinkFromRecognitions(smach.State):
     def __init__(self, objects, classification_list_designator, unavailable_drink_designator):
         super(IdentifyUnavailableDrinkFromRecognitions, self).__init__(outcomes=["done", "failed"])
-        ds.is_writable(unavailable_drink_designator)
+        ds.is_writeable(unavailable_drink_designator)
         ds.check_type(unavailable_drink_designator, str)
         ds.check_type(classification_list_designator, [ClassificationResult])
 
