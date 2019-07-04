@@ -5,11 +5,15 @@ from collections import namedtuple
 from robocup_knowledge import knowledge_loader
 
 BackupScenario = namedtuple("BackupScenario", ["entity_id", "sentence"])
+
 backup_scenarios = [
     BackupScenario("fridge", "I will take you to the fridge for a cold beer"),
     BackupScenario("bed", "You look tired, I will take you to the bed"),
     BackupScenario("desk", "I'll have you sit down at the desk so you can work on my speech recognition skills"),
 ]
+
+information_point_id = "where_is_this_information_point"
+initial_pose_id = "initial_pose"
 
 # Common knowledge
 common = knowledge_loader.load_knowledge("common")

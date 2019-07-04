@@ -18,8 +18,10 @@ from .simulation import mock_detect_operator
 if is_sim_mode():
     guidance._detect_operator_behind_robot = mock_detect_operator
 
+# Load and extract knowledge here so that stuff fails on startup if not defined
 knowledge = load_knowledge("challenge_where_is_this")
-BACKUP_SCENARIOS = knowledge.backup_scenarios  # Extract knowledge here so that stuff fails on startup if not defined
+BACKUP_SCENARIOS = knowledge.backup_scenarios
+INFORMATION_POINT_ID = knowledge.information_point_id
 
 
 class EntityFromHmiResults(ds.Designator):
@@ -224,7 +226,10 @@ class InformMachine(smach.StateMachine):
                                    transitions={"spoken": "RETURN_TO_INFORMATION_POINT"})
 
             smach.StateMachine.add("RETURN_TO_INFORMATION_POINT",
-                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, "starting_point")),
+                                   states.NavigateToWaypoint(
+                                       robot,
+                                       ds.EntityByIdDesignator(robot, INFORMATION_POINT_ID)
+                                   ),
                                    transitions={"arrived": "succeeded",
                                                 "unreachable": "failed",
                                                 "goal_not_defined": "failed"})
