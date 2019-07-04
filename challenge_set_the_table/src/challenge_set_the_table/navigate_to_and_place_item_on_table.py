@@ -63,12 +63,18 @@ class PlaceItemOnTable(StateMachine):
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
+        def send_joint_trajectory(goal_array, wait_for_motion_done=True):
+            arm._send_joint_trajectory(goal_array, timeout=rospy.Duration(0))
+            if wait_for_motion_done:
+                arm.wait_for_motion_done()
+
         def send_gripper_goal(open_close_string):
             arm.send_gripper_goal(open_close_string)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         @cb_interface(outcomes=['done'])
         def _pre_place(_):
+            rospy.loginfo("Preplacing...")
             robot.head.look_up()
             robot.head.wait_for_motion_done()
             send_joint_goal([0.69, 0, 0, 0, 0])
@@ -89,16 +95,20 @@ class PlaceItemOnTable(StateMachine):
 
         @cb_interface(outcomes=['done'], input_keys=["item_picked"])
         def _place_and_retract(user_data):
-            send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
+            rospy.loginfo("Placing...")
+            item_name = user_data["item_picked"]
+            if item_name == 'plate':
+                send_joint_trajectory([[0.69,-1.75,1.4,-1.5,-.3]]) # TODO: Do a different joint goal/trajectory
+            else:
+                send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
+
+            rospy.loginfo("Dropping...")
             send_gripper_goal("open")
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
-            item_name = user_data["item_picked"]
-            if item_name == 'plate':
-                send_joint_goal([0.69, 0, -1.57, 0, 0]) # TODO: Do a different joint goal/trajectory
-            else:
-                send_joint_goal([0.69, 0, -1.57, 0, 0])
+            rospy.loginfo("Retract...")
+            send_joint_goal([0.69, 0, -1.57, 0, 0])
             send_gripper_goal("close")
             robot.base.force_drive(-0.1, 0, 0, 1)  # Drive backwards at 0.1m/s for 1s, so 10cm
             arm.send_joint_goal("carrying_pose")
