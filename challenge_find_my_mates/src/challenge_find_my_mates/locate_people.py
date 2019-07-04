@@ -7,7 +7,9 @@
 import math
 import os
 import pickle
+import random
 import time
+from collections import deque
 from datetime import datetime
 
 import PyKDL
@@ -76,7 +78,14 @@ class LocatePeople(StateMachine):
                                                         frame_id="/%s/base_link" % robot.robot_name)
                           for angle in look_angles]
 
+            sentences = deque([
+                "Hi there mates, where are you, please look at me!",
+                "You are all looking great today! Keep looking at my camera",
+                "I am looking for my mates, lalalalaa!"
+            ])
             while len(PERSON_DETECTIONS) < 4 and not rospy.is_shutdown():
+                sentences.rotate(1)
+                robot.speech.speak(sentences[0], block=False)
                 for _ in range(NUM_LOOKS):
                     for head_goal in head_goals:
                         robot.head.look_at_point(head_goal)
@@ -110,7 +119,7 @@ class LocatePeople(StateMachine):
 
             return 'done'
 
-        @cb_interface(outcomes=['done'])
+        @cb_interface(outcomes=['done', 'failed'])
         def _data_association_persons_and_show_image_on_screen(_):
             global PERSON_DETECTIONS
 
@@ -144,7 +153,12 @@ class LocatePeople(StateMachine):
                 return clusters
 
             # filter in room and perform clustering until we have 4 options
-            person_detection_clusters = _get_clusters()
+            try:
+                person_detection_clusters = _get_clusters()
+            except ValueError as e:
+                rospy.logerr(e)
+                robot.speech.speak("Mates, where are you?", block=False)
+                return "failed"
 
             floorplan = cv2.imread(
                 os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
@@ -204,7 +218,7 @@ class LocatePeople(StateMachine):
         with self:
             self.add_auto('DETECT_PERSONS', CBState(detect_persons), ['done'])
             self.add('DATA_ASSOCIATION_AND_SHOW_IMAGE_ON_SCREEN',
-                     CBState(_data_association_persons_and_show_image_on_screen), transitions={'done': 'done'})
+                     CBState(_data_association_persons_and_show_image_on_screen), transitions={'done': 'done', 'failed': 'DETECT_PERSONS'})
 
 
 if __name__ == '__main__':
