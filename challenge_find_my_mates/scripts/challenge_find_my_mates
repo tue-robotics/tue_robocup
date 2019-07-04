@@ -31,7 +31,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GO_TO_SEARCH_POSE',
                                states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=SEARCH_POINT),
-                                                         radius=0.5),
+                                                         radius=0.375),
                                transitions={'arrived': 'LOCATE_PEOPLE',
                                             'goal_not_defined': 'failed',
                                             'unreachable': 'WAIT_SEARCH_POSE'})
