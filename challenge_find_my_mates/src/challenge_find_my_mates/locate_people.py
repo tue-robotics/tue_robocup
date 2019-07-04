@@ -165,10 +165,11 @@ class LocatePeople(StateMachine):
                 cv2.circle(floorplan, (px, py), 3, (0,0,255), 5)
 
                 try:
-                    px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width / 2 - 1)
-                    py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height / 2 - 1)
+                    px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width - 1)
+                    py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height - 1)
 
                     if px_image >= 0 and py_image >= 0:
+                        #could not broadcast input array from shape (150,150,3) into shape (106,150,3)
                         floorplan[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
                         cv2.rectangle(floorplan, (px_image, py_image),
                                       (px_image + calculated_width, py_image + desired_height),
