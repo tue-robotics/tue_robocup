@@ -24,21 +24,24 @@ class TakeOutGarbage(smach.StateMachine):
 
         # Create designators
         trashbin_designator = ds.EdEntityDesignator(robot=robot,
-                                                    id=CHALLENGE_KNOWLEDGE.trashbin_id)
-        trash_designator = ds.EntityByIdDesignator(robot=robot, id="trash")
+                                                    id=CHALLENGE_KNOWLEDGE.trashbin_id,
+                                                    name='trashbin_designator')
 
         # Look if there is a second trash bin present
+        # trashbin_designator2 = None
         if hasattr(CHALLENGE_KNOWLEDGE, "trashbin_id2"):
             trashbin_designator2 = ds.EdEntityDesignator(robot=robot,
-                                                         id=CHALLENGE_KNOWLEDGE.trashbin_id2)
-            trash_designator2 = ds.EntityByIdDesignator(robot=robot, id="trash")
-            next_state = "PICK_UP_TRASH2"
+                                                         id=CHALLENGE_KNOWLEDGE.trashbin_id2,
+                                                         name='trashbin_designator2')
+            next_state = "HELPER_WAYPOINT"
             rospy.loginfo("There is a second trash bin")
         else:
             rospy.loginfo("There is no second trash bin")
             next_state = "ANNOUNCE_END"
 
-        drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
+        # drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
+        helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.helper_waypoint)
+        end_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.end_waypoint)
         arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
 
         with self:
@@ -59,8 +62,7 @@ class TakeOutGarbage(smach.StateMachine):
                                                 "aborted": "ANNOUNCE_END"})
 
             smach.StateMachine.add("DROP_DOWN_TRASH",
-                                   DropDownTrash(robot=robot, trash_designator=trash_designator,
-                                                 drop_designator=drop_zone_designator),
+                                   DropDownTrash(robot=robot, drop_zone_id=CHALLENGE_KNOWLEDGE.drop_zone_id),
                                    transitions={"succeeded": "ANNOUNCE_TASK",
                                                 "failed": "failed",
                                                 "aborted": "aborted"})
@@ -70,17 +72,24 @@ class TakeOutGarbage(smach.StateMachine):
                                               block=False),
                                    transitions={'spoken': next_state})
 
-            if next_state == "PICK_UP_TRASH2":
+            if next_state == "HELPER_WAYPOINT":
+
+                smach.StateMachine.add("HELPER_WAYPOINT",
+                                       states.NavigateToWaypoint(robot=robot,
+                                                                 waypoint_designator=helper_waypoint_designator),
+                                       transitions={"arrived": "PICK_UP_TRASH2",
+                                                    "goal_not_defined": "PICK_UP_TRASH2",
+                                                    "unreachable": "PICK_UP_TRASH2"})
+
                 smach.StateMachine.add("PICK_UP_TRASH2", PickUpTrash(robot=robot,
-                                                                     trashbin_designator=trashbin_designator,
+                                                                     trashbin_designator=trashbin_designator2,
                                                                      arm_designator=arm_designator),
                                        transitions={"succeeded": "DROP_DOWN_TRASH2",
                                                     "failed": "ANNOUNCE_END",
                                                     "aborted": "ANNOUNCE_END"})
 
                 smach.StateMachine.add("DROP_DOWN_TRASH2",
-                                       DropDownTrash(robot=robot, trash_designator=trash_designator2,
-                                                     drop_designator=drop_zone_designator),
+                                       DropDownTrash(robot=robot, drop_zone_id=CHALLENGE_KNOWLEDGE.drop_zone_id),
                                        transitions={"succeeded": "ANNOUNCE_TASK2",
                                                     "failed": "failed",
                                                     "aborted": "aborted"})
@@ -89,11 +98,18 @@ class TakeOutGarbage(smach.StateMachine):
                                        states.Say(robot, "Second bag has been dropped at the collection zone."
                                                          "All the thrash has been taken care of",
                                                   block=False),
-                                       transitions={'spoken': 'succeeded'})
+                                       transitions={'spoken': 'ANNOUNCE_END'})
 
             smach.StateMachine.add("ANNOUNCE_END",
                                    states.Say(robot, "I have finished taking out the trash.",
                                               block=False),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'NAVIGATE_OUT'})
+
+            smach.StateMachine.add("NAVIGATE_OUT",
+                                   states.NavigateToWaypoint(robot=robot,
+                                                             waypoint_designator=end_waypoint_designator),
+                                   transitions={"arrived": "succeeded",
+                                                "goal_not_defined": "succeeded",
+                                                "unreachable": "succeeded"})
 
 
