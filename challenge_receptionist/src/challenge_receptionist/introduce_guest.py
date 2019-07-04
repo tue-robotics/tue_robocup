@@ -35,7 +35,7 @@ class IntroduceGuest(smach.StateMachine):
         ds.check_type(guest_ent_des, Entity)
 
         all_old_guests = ds.VariableDesignator(resolve_type=[Entity], name='all_old_guests')
-        current_old_guest = ds.VariableDesignator('folks', resolve_type=Entity, name='current_old_guest')
+        current_old_guest = ds.VariableDesignator(resolve_type=Entity, name='current_old_guest')
 
         # For each person:
         #   0. Go to the person (old guest)
@@ -46,7 +46,7 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_INTRO',
                                    states.SayFormatted(robot,
                                                        ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
-                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
                                                        guest_name=guest_name_des,
                                                        block=False),
                                    transitions={'spoken': 'FIND_OLD_GUESTS'})
