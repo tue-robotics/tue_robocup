@@ -110,6 +110,13 @@ class LocatePeople(StateMachine):
         @cb_interface(outcomes=['done'])
         def _data_association_persons_and_show_image_on_screen(_):
             global PERSON_DETECTIONS
+
+            try:
+                with open(os.path.expanduser('~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'w') as f:
+                    pickle.dump(PERSON_DETECTIONS, f)
+            except:
+                pass
+
             room_entity = robot.ed.get_entity(id=room_id)  # type: Entity
             room_volume = room_entity.volumes["in"]
             min_corner = room_entity.pose.frame * room_volume.min_corner
