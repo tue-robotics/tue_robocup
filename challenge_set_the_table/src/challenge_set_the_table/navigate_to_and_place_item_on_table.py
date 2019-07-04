@@ -18,6 +18,36 @@ from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 from tf_conversions import toMsg
 
+item_vector_dict = {
+    "plate": PyKDL.Vector(0, 0, 0),
+    "cup": PyKDL.Vector(0.2, -0.2, 0),
+    "knife": PyKDL.Vector(0, -0.2, 0),
+    "fork": PyKDL.Vector(0, 0.2, 0),
+    "spoon": PyKDL.Vector(0, -0.25, 0)
+}
+
+def item_vector_to_item_frame(item_vector):
+    frame = PyKDL.Frame(
+        PyKDL.Rotation.RPY(0, 0, -math.pi / 2),
+        PyKDL.Vector(0, 0.75, 0)
+    )
+
+    item_placement_vector = item_vector
+    item_frame = frame
+    item_frame.p = frame * item_placement_vector
+    rospy.loginfo("Placing at frame ({f}) * item_placement_vector ({ipv}) = {itf}".format(
+        f=frame,
+        ipv=item_placement_vector,
+        itf=item_frame))
+
+    return item_frame
+
+def item_frame_to_pose(item_frame, frame_id):
+    goal_pose = PoseStamped()
+    goal_pose.header.stamp = rospy.Time.now()
+    goal_pose.pose = toMsg(item_frame)
+
+    return goal_pose
 
 class PlaceItemOnTable(StateMachine):
     def __init__(self, robot, table_id):
@@ -41,36 +71,10 @@ class PlaceItemOnTable(StateMachine):
 
         @cb_interface(outcomes=['done'], input_keys=["item_picked"])
         def _align_with_table(user_data):
-            goal_pose = PoseStamped()
-            goal_pose.header.stamp = rospy.Time.now()
-            goal_pose.header.frame_id = table_id
-
-            frame = PyKDL.Frame(
-                PyKDL.Rotation.RPY(0, 0, -math.pi / 2),
-                PyKDL.Vector(0, 0.75, 0)
-            )
-
-            item_vector_dict = {
-                "plate": PyKDL.Vector(0, 0, 0),
-                "cup": PyKDL.Vector(0.2, -0.2, 0),
-                "knife": PyKDL.Vector(0, -0.2, 0),
-                "fork": PyKDL.Vector(0, 0.2, 0),
-                "spoon": PyKDL.Vector(0, -0.25, 0)
-            }
-
             item_placement_vector = item_vector_dict[user_data["item_picked"]]
-            item_frame = frame
-            item_frame.T = frame * item_placement_vector
-            rospy.loginfo("Placing {i} at frame ({f}) * item_placement_vector ({ipv}) = {ift}".format(
-                i=user_data["item_picked"],
-                f=frame,
-                ipv=item_placement_vector,
-                ift=item_frame.T))
+            item_frame = item_vector_to_item_frame(item_placement_vector)
 
-            goal_pose = PoseStamped()
-            goal_pose.header.stamp = rospy.Time.now()
-            goal_pose.header.frame_id = table_id
-            goal_pose.pose = toMsg(item_frame)
+            goal_pose = item_frame_to_pose(item_frame, table_id)
             rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return 'done'
@@ -149,6 +153,16 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
+
+    item_frames = {k:item_vector_to_item_frame(v) for k, v in item_vector_dict.items()}
+    import pprint
+    print('Item frames:')
+    pprint.pprint(item_frames)
+
+    item_poses = {k:item_frame_to_pose(v, 'kitchen_table') for k, v in item_frames.items()}
+    print('Item poses:')
+    pprint.pprint(item_poses)
+
     hero = Hero()
     hero.reset()
     state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close')
