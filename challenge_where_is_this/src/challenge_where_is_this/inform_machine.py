@@ -90,6 +90,14 @@ class GuideToRoomOrObject(smach.StateMachine):
             smach.StateMachine.add('GUIDE_TO_FURNITURE',
                                    guidance.GuideToSymbolic(robot, {entity_des: 'in_front_of'}, entity_des),
                                    transitions={'arrived': 'arrived',
+                                                'unreachable': 'GUIDE_NEAR_FURNITURE',  # Something is blocking in front
+                                                'goal_not_defined': 'GUIDE_NEAR_FURNITURE',  # in_front_of not defined
+                                                'lost_operator': 'lost_operator',
+                                                'preempted': 'preempted'})
+
+            smach.StateMachine.add('GUIDE_NEAR_FURNITURE',
+                                   guidance.GuideToSymbolic(robot, {entity_des: 'near'}, entity_des),
+                                   transitions={'arrived': 'arrived',
                                                 'unreachable': 'unreachable',
                                                 'goal_not_defined': 'goal_not_defined',
                                                 'lost_operator': 'lost_operator',
