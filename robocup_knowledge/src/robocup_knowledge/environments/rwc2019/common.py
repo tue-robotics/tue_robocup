@@ -45,8 +45,12 @@ objects = [
     {'category': 'drink',               'name': 'juice',           'color': 'purplish',    'volume': 216,      'weight': 200},
     {'category': 'drink',               'name': 'lemonade',        'color': 'yellow',      'volume': 216,      'weight': 200},
     {'category': 'drink',               'name': 'tea_bag',         'color': 'bluegreen',   'volume': 270,      'weight': 222},
-    {'category': 'drink',               'name': 'water',           'color': 'white',       'volume': 270,      'weight': 222}
-
+    {'category': 'drink',               'name': 'water',           'color': 'white',       'volume': 270,      'weight': 222},
+    {'category': 'food',                'name': 'carrot',          'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'food',                'name': 'cereals',         'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'food',                'name': 'noodles',         'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'food',                'name': 'onion',           'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'food',                'name': 'vegemite',        'color': 'blue',        'volume': 100,      'weight': 200}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))

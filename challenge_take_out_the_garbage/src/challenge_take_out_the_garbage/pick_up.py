@@ -128,10 +128,11 @@ class GrabTrash(smach.State):
 
             # This opening and closing is to make sure that the gripper is empty and closed before measuring the forces
             # It is necessary to close the gripper since the gripper is also closed at the final measurement
-            arm.send_gripper_goal('open')
-            arm.wait_for_motion_done()
-            arm.send_gripper_goal('close', max_torque=1.0)
-            arm.wait_for_motion_done()
+            
+            # arm.send_gripper_goal('open')
+            # arm.wait_for_motion_done()
+            # arm.send_gripper_goal('close', max_torque=1.0)
+            # arm.wait_for_motion_done()
 
             arm_weight = measure_force.get_force()
             rospy.loginfo("Empty weight %s", arm_weight)
@@ -163,11 +164,15 @@ class GrabTrash(smach.State):
             rospy.loginfo("weight_object = {}".format(weight_object))
 
         # Go back and pull back arm
+        self._robot.head.look_up()
+        self._robot.head.wait_for_motion_done()
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
         self._robot.base.force_drive(-0.1, 0, 0, 2.0)
+        self._robot.head.look_up()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
+        self._robot.head.reset()
         #
         # if weight_object < self._minimal_weight:
         #     return "failed"
@@ -268,22 +273,6 @@ class PickUpTrash(smach.StateMachine):
             #                        transitions={'done': 'GO_BIN'})
 
             smach.StateMachine.add("GO_BIN",
-                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
-                                                          arm_designator=arm_designator),
-                                   transitions={"arrived": "GET_BIN_POSITION",
-                                                "goal_not_defined": "aborted",
-                                                "unreachable": "OPEN_DOOR_PLEASE"})
-
-            smach.StateMachine.add("OPEN_DOOR_PLEASE",
-                                   states.Say(robot, "Can you please open the door for me? It seems blocked!"),
-                                   transitions={"spoken": "WAIT_FOR_DOOR_OPEN"})
-
-            smach.StateMachine.add("WAIT_FOR_DOOR_OPEN",
-                                   states.WaitTime(robot=robot, waittime=5),
-                                   transitions={"waited": "GO_BIN2",
-                                                "preempted": "GO_BIN2"})
-
-            smach.StateMachine.add("GO_BIN2",
                                    states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
                                                           arm_designator=arm_designator),
                                    transitions={"arrived": "GET_BIN_POSITION",
