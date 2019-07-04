@@ -78,12 +78,17 @@ class ED(RobotPart):
 
         self.robot_name = robot_name
 
-    def wait_for_connections(self, timeout):
+    def wait_for_connections(self, timeout, log_failing_connections=True):
         """ Waits for the connections until they are connected
+
         :param timeout: timeout in seconds
+        :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
+        multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
-        return super(ED, self).wait_for_connections(timeout) and self.navigation.wait_for_connections(timeout)
+        return (super(ED, self).wait_for_connections(timeout, log_failing_connections) and
+                self.navigation.wait_for_connections(timeout, log_failing_connections)
+                )
 
     # ----------------------------------------------------------------------------------------------------
     #                                             QUERYING

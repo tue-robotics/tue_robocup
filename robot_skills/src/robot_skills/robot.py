@@ -14,6 +14,8 @@ from robot_skills.util import decorators
 
 from collections import OrderedDict, Sequence
 
+CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
+
 
 class Robot(object):
     """
@@ -73,11 +75,28 @@ class Robot(object):
         This should be run at the end of the constructor of a child class.
         """
         # Wait for connections
+        connected = False
         s = rospy.Time.now()
-        for partname, bodypart in self.parts.iteritems():
-            bodypart.wait_for_connections(0.5)
-        e = rospy.Time.now()
-        rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+        r = rospy.Rate(1.0)
+        rospy.loginfo("Waiting for ROS connections")
+        while not connected and (rospy.Time.now() - s).to_sec() < CONNECTION_TIMEOUT:
+            connected_hypot = True
+            for bodypart in self.parts.itervalues():
+                connected_hypot = connected_hypot and bodypart.wait_for_connections(0.1, log_failing_connections=False)
+            if connected_hypot:
+                connected = True
+                break
+            r.sleep()
+            rospy.loginfo("Will wait for another {} seconds".format(
+                CONNECTION_TIMEOUT - (rospy.Time.now() - s).to_sec()))
+
+        # If connected: log how low it took
+        if connected:
+            e = rospy.Time.now()
+            rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+        else:  # Else: check again but now do log the errors
+            for bodypart in self.parts.itervalues():
+                bodypart.wait_for_connections(0.1, log_failing_connections=True)
 
         if not self.operational:
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
