@@ -38,7 +38,7 @@ class Restaurant(smach.StateMachine):
                                                 'abort': 'STOP'})
 
             smach.StateMachine.add('SAY_START',
-                                   states.Say(robot, 'Starting restaurant challenge'),
+                                   states.Say(robot, 'Starting restaurant challenge, I will starting looking for waving customers'),
                                    transitions={"spoken": 'STORE_KITCHEN'})
 
             smach.StateMachine.add('STORE_KITCHEN',
