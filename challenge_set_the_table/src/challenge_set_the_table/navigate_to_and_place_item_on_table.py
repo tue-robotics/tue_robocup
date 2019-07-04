@@ -51,7 +51,7 @@ def item_frame_to_pose(item_frame, frame_id):
     return goal_pose
 
 class PlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id, placement_height=0.64):
+    def __init__(self, robot, table_id, placement_height):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], input_keys=["item_picked"])
         arm = robot.get_arm()._arm
         self.placement_height = placement_height
@@ -113,7 +113,7 @@ class PlaceItemOnTable(StateMachine):
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area, placement_height=0.64):
+    def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area, placement_height=0.7):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
 
         table = EdEntityDesignator(robot=robot, id=table_id)
@@ -167,7 +167,11 @@ if __name__ == '__main__':
 
     hero = Hero()
     hero.reset()
-    placement_height = float(sys.argv[2])
+    try:
+        placement_height = float(sys.argv[2])
+    except IndexError:
+        rospy.logwarn("You can specify height as a optional parameter")
+        placement_height = 0.7
     state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close', placement_height)
     state_machine.userdata['item_picked'] = sys.argv[1]
     state_machine.execute()
