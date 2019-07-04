@@ -179,6 +179,7 @@ class GetOrder(smach.StateMachine):
                                                 "failed": "failed",
                                                 "aborted": "aborted"})
 
+
 if __name__ == "__main__":
     from robot_skills import get_robot
     from robot_skills.classification_result import ClassificationResult
@@ -199,8 +200,14 @@ if __name__ == "__main__":
         available_drinks = [ClassificationResult('beer', None, None, None),
                             ClassificationResult('juice', None, None, None),
                             ClassificationResult('coke', None, None, None)]
-        available_drinks_designator = ds.VariableDesignator(initial_value=available_drinks, resolve_type=[ClassificationResult], name='objects_list_des')
-        unavailable_drink_designator = ds.VariableDesignator(initial_value="tea_bag", resolve_type=str, name='unav_drink_str_des')
+
+        available_drinks_designator = ds.VariableDesignator(initial_value=available_drinks,
+                                                            resolve_type=[ClassificationResult],
+                                                            name='objects_list_des')
+
+        unavailable_drink_designator = ds.VariableDesignator(initial_value="tea_bag",
+                                                             resolve_type=str,
+                                                             name='unav_drink_str_des')
 
         name_options = common_knowledge.names
         objects = common_knowledge.objects
@@ -216,6 +223,6 @@ if __name__ == "__main__":
                       learn_check_designator.writeable)
         sm.execute()
     else:
-        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable")
+        print("Please provide robot_name as argument. Eg. 'hero'")
         exit(1)
 
