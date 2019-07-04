@@ -131,6 +131,7 @@ class TourGuide(object):
         # type: (Entity, kdl.Vector) -> bool
         """
         Checks if the given position is in the given room
+
         :param room: Room entity
         :type room: Entity
         :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
@@ -147,8 +148,7 @@ class TourGuide(object):
         # type: (kdl.Vector) -> Entity
         """
         Checks if the given position is in one of the provided rooms
-        :param rooms: list(Entity) containing all room entities
-        :type rooms: list[Entity]
+
         :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room entities
         :type position: kdl.Vector
         :return: room entity

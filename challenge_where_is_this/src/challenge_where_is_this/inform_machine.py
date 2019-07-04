@@ -1,6 +1,3 @@
-# System
-import os
-
 # ROS
 import rospy
 import smach
@@ -22,6 +19,7 @@ if is_sim_mode():
     guidance._detect_operator_behind_robot = mock_detect_operator
 
 knowledge = load_knowledge("challenge_where_is_this")
+BACKUP_SCENARIOS = knowledge.backup_scenarios  # Extract knowledge here so that stuff fails on startup if not defined
 
 
 class EntityFromHmiResults(ds.Designator):
@@ -152,13 +150,22 @@ class InformMachine(smach.StateMachine):
                                    transitions={"heard": "INSTRUCT_FOR_WAIT",
                                                 "no_result": "HANDLE_FAILED_HMI"})
 
-            @smach.cb_interface(outcomes=["retry", "failed"])
+            @smach.cb_interface(outcomes=["retry", "fallback", "failed"])
             def _handle_failed_hmi(userdata=None):
                 """ Handle failed HMI queries so we can try up to x times """
                 self._location_hmi_attempt += 1  # Increment
                 if self._location_hmi_attempt == self._max_hmi_attempts:
                     rospy.logwarn("HMI failed for the {} time, returning 'failed'".format(self._max_hmi_attempts))
-                    return "failed"
+
+                    if not BACKUP_SCENARIOS:
+                        rospy.logwarn("No fallback scenario's available anymore")
+                        return "failed"
+
+                    backup = BACKUP_SCENARIOS.pop(0)
+                    robot.speech.speak("I am sorry but I did not hear you", mood="sad", block=False)
+                    robot.speech.speak(backup.sentence, block=False)
+                    self.answer_des.writeable.write(HMIResult("", {"target-location": {"id": backup.entity_id}}))
+                    return "fallback"
 
                 rospy.loginfo("HMI failed for the {} time out of {}, retrying".format(
                     self._location_hmi_attempt, self._max_hmi_attempts))
@@ -168,6 +175,7 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add("HANDLE_FAILED_HMI",
                                    smach.CBState(_handle_failed_hmi),
                                    transitions={"retry": "INSTRUCT",
+                                                "fallback": "INSTRUCT_FOR_WAIT",
                                                 "failed": "failed"})
 
             smach.StateMachine.add("INSTRUCT_FOR_WAIT",
