@@ -520,5 +520,9 @@ class ED(RobotPart):
         :return: bool success and a list strings with the IDs of the detected persons
         :rtype: (bool, [str])
         """
-        result = self._ed_detect_people_srv(rgb, depth, cam_info)
-        return result.success, result.detected_person_ids
+        try:
+            result = self._ed_detect_people_srv(rgb, depth, cam_info)
+            return result.success, result.detected_person_ids
+        except Exception as e:
+            rospy.logerr('_ed_detect_people_srv failed!: {}'.format(e))
+            return False, []
