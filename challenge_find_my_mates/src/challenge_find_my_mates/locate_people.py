@@ -19,6 +19,7 @@ from geometry_msgs.msg import PointStamped
 from robot_skills import Hero
 from robot_skills.util import kdl_conversions
 from smach import StateMachine, cb_interface, CBState
+from challenge_find_my_mates.cluster import cluster_people
 
 NUM_LOOKS = 2
 PERSON_DETECTIONS = []
@@ -134,7 +135,7 @@ class LocatePeople(StateMachine):
 
                 # TODO cluster
 
-                clusters = in_room_detections
+                clusters = cluster_people(in_room_detections, np.array([6, 0]))
 
                 return clusters
 

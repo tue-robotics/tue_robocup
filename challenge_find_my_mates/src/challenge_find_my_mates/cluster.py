@@ -38,11 +38,9 @@ def cluster_people(people_dicts, room_center, plot=False):
 
     # import pdb; pdb.set_trace()
     for label, persons in label2hashable_dicts.items():
-        position = np.array([person['map_ps'].point.x,
-                             person['map_ps'].point.y])
-
+        # For each cluster, we want the detection that is closest to the cluster centroid/ kmeans.cluster_centers
         closest = sorted(persons, key=lambda person: np.hypot(*(np.array([person['map_ps'].point.x,
-                                                                          person['map_ps'].point.y]) - room_center)))
+                                                                          person['map_ps'].point.y]) - kmeans.cluster_centers_[label])))
         persons_closest_to_room_center[label] = closest[0]
 
     # persons_closest_to_room_center is a map of label to a {'rgb':..., 'person_detection':..., 'map_ps':...}
