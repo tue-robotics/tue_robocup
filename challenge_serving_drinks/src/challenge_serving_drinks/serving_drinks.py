@@ -33,7 +33,7 @@ class CheckInspect(smach.State):
 
 class UpdateUnavailableDrinkList(smach.State):
     def __init__(self, unavailable_drink_list_designator, drink_to_add_designator):
-        super(UpdateUnavailableDrink, self).__init__(outcomes=["done", "failed"])
+        super(UpdateUnavailableDrinkList, self).__init__(outcomes=["done", "failed"])
         ds.is_writable(unavailable_drink_list_designator)
         ds.check_type(unavailable_drink_list_designator, [str])
         ds.check_type(drink_to_add_designator, str)
@@ -70,6 +70,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
         objects_classification_list = self._objects_list_des.resolve() if hasattr(self._objects_list_des, "resolve") else self._objects_list_des
 
         for common_object in self._objects:
+            pass
 
 
 class ServingDrinks(smach.StateMachine):
