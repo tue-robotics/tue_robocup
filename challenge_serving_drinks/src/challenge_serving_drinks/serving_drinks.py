@@ -80,8 +80,8 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
                 self._unavailable_drink_designator.write(drink)
                 return "done"
 
-        # Even if no unavailable drink is found, return done
-        return "done"
+        # Even if no unavailable drink is found, return failed
+        return "failed"
 
 
 class ServingDrinks(smach.StateMachine):
@@ -132,6 +132,14 @@ class ServingDrinks(smach.StateMachine):
                                                 [ClassificationResult]),
                                    transitions={"true": "NAVIGATE_TO_ROOM",
                                                 "false": "INSPECT_FALLBACK"})
+
+
+            smach.StateMachine.add("IDENTIFY_UNAVAILABLE_DRINK",
+                                   IdentifyUnavailableDrinkFromRecognitions(objects=common_knowledge.objects,
+                                                                            classification_list_designator=objects_list_des,
+                                                                            unavailable_drink_designator=unav_drink_des.writeable),
+                                   transitions={"done": "NAVIGATE_TO_ROOM",
+                                                "failed": "INSPECT_FALLBACK"})
 
             # Inspect fallback - ask the bartender which drink is unavailable and store the unavailable drink
             smach.StateMachine.add("INSPECT_FALLBACK",
