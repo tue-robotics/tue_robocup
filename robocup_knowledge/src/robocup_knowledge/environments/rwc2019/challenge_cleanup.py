@@ -11,7 +11,7 @@ Exact coordinates of the locations are in ed_object_models.
 
 # TODO: check
 starting_point = "initial_pose"
-waiting_point = "registration_table1"  # ToDo; CHANGE
+waiting_point = "cleanup_initial"  # ToDo; CHANGE
 
 cleaning_locations = [
     {'name': 'bedroom_chest',   'room': 'bedroom',      'navigation_area': 'in_front_of', 'segment_areas': ['on_top_of']},

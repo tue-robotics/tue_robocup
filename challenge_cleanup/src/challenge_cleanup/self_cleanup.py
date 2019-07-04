@@ -266,6 +266,14 @@ class SelfCleanup(smach.StateMachine):
                                                            ds.UnoccupiedArmDesignator(robot, {},
                                                                                       name="empty_arm_designator")),
                                    transitions={"done": "SAY_GRAB_SUCCESS",
+                                                "failed": "ARM_RESET"})
+
+            smach.StateMachine.add("ARM_RESET", robot_smach_states.ArmToJointConfig(robot,
+                                                                                    ds.UnoccupiedArmDesignator(robot,
+                                                                                                               {},
+                                                                                    name="empty_arm_designator"),
+                                                                                    "reset"),
+                                   transitions={"succeeded": "SAY_GRAB_FAILED",
                                                 "failed": "SAY_GRAB_FAILED"})
 
             smach.StateMachine.add('SAY_GRAB_SUCCESS',
