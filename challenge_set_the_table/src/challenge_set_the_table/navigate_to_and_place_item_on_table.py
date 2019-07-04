@@ -67,6 +67,8 @@ class PlaceItemOnTable(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def _pre_place(_):
+            robot.head.look_up()
+            robot.head.wait_for_motion_done()
             send_joint_goal([0.69, 0, 0, 0, 0])
             send_joint_goal([0.69, -1.2, 0, -1.57, 0])
             return 'done'
@@ -78,12 +80,16 @@ class PlaceItemOnTable(StateMachine):
 
             goal_pose = item_frame_to_pose(item_frame, table_id)
             rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
+            robot.head.look_down()
+            robot.head.wait_for_motion_done()
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return 'done'
 
         @cb_interface(outcomes=['done'])
         def _place_and_retract(_):
             send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
+            robot.head.look_up()
+            robot.head.wait_for_motion_done()
             send_gripper_goal("open")
             send_joint_goal([0.69, 0, -1.57, 0, 0])
             send_gripper_goal("close")
@@ -92,6 +98,8 @@ class PlaceItemOnTable(StateMachine):
 
         @cb_interface(outcomes=['done'], input_keys=["item_picked"])
         def _ask_user(user_data):
+            robot.head.look_up()
+            robot.head.wait_for_motion_done()
             send_joint_goal([0, 0, 0, 0, 0])
 
             item_name = user_data["item_picked"]
