@@ -35,7 +35,13 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     base_pose = robot.base.get_location()
     expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
 
+    rospy.loginfo("\n\tBase pos, expected person pos: {}, {}".format(base_pose.p, expected_person_pos))
     for person in found_people:
+        rospy.loginfo("\n\tPerson at {}, distance: {} (radius = {})".format(
+            person.pose.frame.p,
+            (person.pose.frame.p - expected_person_pos).Norm(),
+            radius
+        ))
         if (person.pose.frame.p - expected_person_pos).Norm() < radius:
             return True
     return False
@@ -47,10 +53,10 @@ class TourGuide(object):
         self._x_threshold = x_threshold
         self._y_threshold = y_threshold
 
-        self.initialise()
+        self.initialize()
 
     def describe_near_objects(self):
-        # type: (-) -> string
+        # type: () -> string
         """
         Describes near objects based on the robots current position
         :return: A description of the robots surroundings
@@ -90,7 +96,7 @@ class TourGuide(object):
         # no furniture passed, nothing of interest
         return ""
 
-    def initialise(self):
+    def initialize(self):
         entities = self._robot.ed.get_entities()
         self._furniture_entities = [entity for entity in entities if entity.is_a("furniture")]
         self._room_entities = [room for room in entities if room.type == "room"]
@@ -105,7 +111,7 @@ class TourGuide(object):
                 rospy.logwarn("{} ({}) not in any room".format(item.id, item._pose.p))
                 continue
             self._furniture_entities_room[room].append(item)
-            rospy.loginfo("{} ({}) is in the {}".format(item.id, item._pose.p, room.id))
+            rospy.logdebug("{} ({}) is in the {}".format(item.id, item._pose.p, room.id))
 
         self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
         self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
@@ -131,6 +137,7 @@ class TourGuide(object):
         # type: (Entity, kdl.Vector) -> bool
         """
         Checks if the given position is in the given room
+
         :param room: Room entity
         :type room: Entity
         :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
@@ -147,8 +154,7 @@ class TourGuide(object):
         # type: (kdl.Vector) -> Entity
         """
         Checks if the given position is in one of the provided rooms
-        :param rooms: list(Entity) containing all room entities
-        :type rooms: list[Entity]
+
         :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room entities
         :type position: kdl.Vector
         :return: room entity
