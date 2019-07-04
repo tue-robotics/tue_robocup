@@ -1,6 +1,7 @@
 # ROS
 import PyKDL as kdl
 from kdl_conversions import point_msg_to_kdl_vector
+from numpy import abs
 
 
 class Volume(object):
@@ -29,6 +30,13 @@ class Volume(object):
         :return: True if inside, False otherwise
         """
         raise NotImplementedError("contains must be implemented by subclasses")
+
+    @property
+    def size(self):
+        return self._calc_size()
+
+    def _calc_size(self):
+        raise NotImplementedError("_calc_size must be implemented by subclasses")
 
 
 class BoxVolume(Volume):
@@ -59,6 +67,20 @@ class BoxVolume(Volume):
         return kdl.Vector(0.5 * (self._min_corner.x() + self._max_corner.x()),
                           0.5 * (self._min_corner.y() + self._max_corner.y()),
                           0.5 * (self._min_corner.z() + self._max_corner.z()))
+
+    def _calc_size(self):
+        """Calculate the size of a volume
+        >>> BoxVolume(kdl.Vector(0, 0, 0), kdl.Vector(1, 1, 1)).size
+        1.0
+        >>> BoxVolume(kdl.Vector(0, 0, 0), kdl.Vector(10, 10, 0.1)).size
+        10.0
+        >>> BoxVolume(kdl.Vector(0, 0, 0), kdl.Vector(1, 1, 10)).size
+        10.0
+        """
+        size_x = abs(self._max_corner.x() - self._min_corner.x())
+        size_y = abs(self._max_corner.y() - self._min_corner.y())
+        size_z = abs(self._max_corner.z() - self._min_corner.z())
+        return size_x * size_y * size_z
 
     @property
     def min_corner(self):
@@ -112,7 +134,7 @@ class CompositeBoxVolume(Volume):
 
     def _calc_center_point(self):
         """Calculate where the center of the box is located
-        >>> b = CompositeBoxVolume([kdl.Vector(0,0,0)], [kdl.Vector(1,1,1)])
+        >>> b = CompositeBoxVolume([(kdl.Vector(0,0,0), kdl.Vector(1,1,1))])
         >>> b.center_point
         [         0.5,         0.5,         0.5]
         """

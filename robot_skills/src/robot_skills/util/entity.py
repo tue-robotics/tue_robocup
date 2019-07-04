@@ -160,7 +160,7 @@ class Entity(object):
 
 class PersonProperties(object):
     def __init__(self, name, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
-                 tags_dict, velocity, parent_entity):
+                 tags, tagnames, velocity, parent_entity):
         """
         Container for several properties related to a person
         :param name: the person's name. This is separate from the entity, which is unique while this doesn't have to be
@@ -172,7 +172,8 @@ class PersonProperties(object):
         :param posture: String with a value like 'sitting', 'laying', 'standing' etc.
         :param reliability:  ?
         :param shirt_colors: list of 3 shirt colors, sorted from most dominant to less dominant
-        :param tags_dict: Other tags
+        :param tags: Other tags
+        :param tagnames: Other tagnames
         :param velocity: Velocity with which the person in moving
         :param parent_entity: The Entity that these properties belong to
         """
@@ -185,7 +186,8 @@ class PersonProperties(object):
         self.posture = posture
         self.reliability = reliability
         self.shirt_colors = shirt_colors
-        self.tags_dict = tags_dict
+        self.tags = tags
+        self.tagnames = tagnames
         self.velocity = velocity
 
         self._parent_entity = parent_entity
@@ -239,12 +241,9 @@ def from_entity_info(e):
     if e.type == 'person':
         try:
             pp_dict = yaml.load(e.data)
-            tags_dict = dict(zip(pp_dict['tagnames'], pp_dict['tags']))
             del pp_dict['position']
-            del pp_dict['tagnames']
-            del pp_dict['tags']
             del pp_dict['header']
-            entity.person_properties = PersonProperties(tags_dict=tags_dict, parent_entity=entity, **pp_dict)
+            entity.person_properties = PersonProperties(parent_entity=entity, **pp_dict)
         except TypeError as te:
             rospy.logerr("Cannot instantiate PersonProperties from {}: {}".format(e.data, te))
 

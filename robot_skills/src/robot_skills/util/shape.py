@@ -1,4 +1,5 @@
 # Robot skills
+import PyKDL as kdl
 from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
 
 
@@ -13,6 +14,13 @@ class Shape(object):
     def _calc_convex_hull(self):
         raise NotImplementedError("_calc_convex_hull must be implemented by subclasses. "
                                   "Class {cls} has no implementation".format(cls=self.__class__.__name__))
+
+    @property
+    def size(self):
+        return self._calc_size()
+
+    def _calc_size(self):
+        raise NotImplementedError("_calc_size must be implemented by subclasses")
 
     @property
     def x_min(self):
@@ -103,6 +111,20 @@ class RightPrism(Shape):
     def _calc_convex_hull(self):
         return self._convex_hull
 
+    def _calc_size(self):
+        """Calculate the rough size of a shape
+        >>> RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 1, 0), kdl.Vector(1, 1, 0), kdl.Vector(1, 0, 0)], z_min=0, z_max=1).size
+        1.0
+        >>> RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 2, 0), kdl.Vector(2, 2, 0), kdl.Vector(2, 0, 0)], z_min=0, z_max=2).size
+        8.0
+        """
+
+        # TODO: this only uses the bounding volume's size, which might not be accurate
+        size_x = abs(self.x_max - self.x_min)
+        size_y = abs(self.y_max - self.y_min)
+        size_z = abs(self.z_max - self.z_min)
+        return size_x * size_y * size_z
+
 
 def shape_from_entity_info(e):
     """ Creates a shape from the convex_hull, z_min and z_max of the EntityInfo object. If no convex hull is present,
@@ -118,3 +140,9 @@ def shape_from_entity_info(e):
     return RightPrism(convex_hull=[point_msg_to_kdl_vector(p) for p in e.convex_hull],
                       z_min=e.z_min,
                       z_max=e.z_max)
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()
