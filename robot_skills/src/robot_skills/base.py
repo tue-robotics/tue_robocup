@@ -173,13 +173,17 @@ class Base(RobotPart):
 
         self.subscribe_hardware_status('base')
 
-    def wait_for_connections(self, timeout):
+    def wait_for_connections(self, timeout, log_failing_connections=True):
         """ Waits for the connections until they are connected
+
         :param timeout: timeout in seconds
+        :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
+        multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
-        return self.global_planner.wait_for_connections(timeout=timeout) and \
-            self.local_planner.wait_for_connections(timeout=timeout)
+        return self.global_planner.wait_for_connections(
+            timeout=timeout, log_failing_connections=log_failing_connections) and \
+            self.local_planner.wait_for_connections(timeout=timeout, log_failing_connections=log_failing_connections)
 
     def move(self, position_constraint_string, frame):
         p = PositionConstraint()
