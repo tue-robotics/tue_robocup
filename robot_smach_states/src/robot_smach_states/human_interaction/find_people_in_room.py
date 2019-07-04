@@ -176,7 +176,7 @@ class FindPeople(smach.State):
 
             if result_people:
                 if self._nearest:
-                    result_people = result_people.sort(key=lambda e: (e.pose.frame.p - robot_pose.frame.p).Norm())
+                    result_people.sort(key=lambda e: (e.pose.frame.p - robot_pose.frame.p).Norm())
                 if person_label and \
                     filter(lambda x: self._check_person_property(x, "id", person_label), result_people) \
                     and self._speak:
