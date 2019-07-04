@@ -10,35 +10,6 @@ from hmi import HMIResult
 challenge_knowledge = load_knowledge('challenge_receptionist')
 
 
-class FieldOfHMIResult(ds.Designator):
-    """
-    Extract a field of a QueryResult
-    """
-    def __init__(self, query_result_des, semantics_field, name=None):
-        """
-        Construct a designator that picks a field out of the semantics dict of a QueryResult
-        (such as resulting from a HearOptionsExtra-state)
-        :param query_result_des: A designator resolving to a QueryResult
-        :param semantics_field: str (or string designator) used in query_result.semantics[semantics_field]
-        :param name: Name for this designator for debugging purposes
-        """
-        super(FieldOfHMIResult, self).__init__(resolve_type=str, name=name)
-
-        ds.check_type(query_result_des, HMIResult)
-        ds.check_type(semantics_field, str)
-
-        self.query_result_des = query_result_des
-        self.semantics_field = semantics_field
-
-    def _resolve(self):
-        try:
-            field = self.semantics_field.resolve() if hasattr(self.semantics_field, 'resolve') else self.semantics_field
-            return str(self.query_result_des.resolve().semantics[field])
-        except Exception as e:
-            rospy.logerr(e)
-            return None
-
-
 class LearnGuest(smach.StateMachine):
     def __init__(self, robot,
                  door_waypoint, guest_ent_des,
@@ -60,12 +31,18 @@ class LearnGuest(smach.StateMachine):
                                    states.NavigateToWaypoint(robot,
                                                              door_waypoint,
                                                              challenge_knowledge.waypoint_door['radius']),
-                                   transitions={'arrived': 'SAY_PLEASE_COME_IN',
-                                                'unreachable': 'SAY_PLEASE_COME_IN',
+                                   transitions={'arrived': 'SAY_OPEN_DOOR',
+                                                'unreachable': 'SAY_OPEN_DOOR',
                                                 'goal_not_defined': 'aborted'})
 
+            smach.StateMachine.add('SAY_OPEN_DOOR',
+                                   states.Say(robot, ["Someone please open the door, I'm expecting guests"],
+                                              block=True,
+                                              look_at_standing_person=True),
+                                   transitions={'spoken': 'SAY_PLEASE_COME_IN'})
+
             smach.StateMachine.add('SAY_PLEASE_COME_IN',
-                                   states.Say(robot, ["Please come in, I'm waiting"],
+                                   states.Say(robot, ["Please come in, I'm waiting for someone to step in front of me"],
                                               block=True,
                                               look_at_standing_person=True),
                                    transitions={'spoken': 'WAIT_FOR_GUEST'})
@@ -109,8 +86,12 @@ class LearnGuest(smach.StateMachine):
                                    states.HearOptionsExtra(robot,
                                                            self.drink_spec_des,
                                                            guest_drink_des.writeable),
-                                   transitions={'heard': 'succeeded',
+                                   transitions={'heard': 'RESET_1',
                                                 'no_result': 'SAY_DRINK_QUESTION'})
+
+            smach.StateMachine.add('RESET_1',
+                                   states.ResetArms(robot),
+                                   transitions={'done': 'succeeded'})
 
 
 if __name__ == "__main__":
@@ -129,7 +110,7 @@ if __name__ == "__main__":
             self.guest1_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest1_entity')
             self.guest1_name_des = ds.VariableDesignator('guest 1', name='guest1_name')
             self.guest1_drink_des = ds.VariableDesignator(resolve_type=HMIResult, name='guest1_drink')
-            self.guest1_drinkname_des = FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink',
+            self.guest1_drinkname_des = ds.FieldOfHMIResult(self.guest1_drink_des, semantics_field='drink',
                                                          name='guest1_drinkname')
 
             with self:
