@@ -9,10 +9,10 @@ import os
 
 import PyKDL
 import rospy
-from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from geometry_msgs.msg import PoseStamped
 from robot_skills import Hero
-from robot_smach_states import NavigateToSymbolic
+from robot_smach_states import NavigateToSymbolic, Say, WaitTime, ForceDrive
+from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 from tf_conversions import toMsg
@@ -45,8 +45,8 @@ class PlaceItemOnTable(StateMachine):
             goal_pose.header.frame_id = table_id
 
             frame = PyKDL.Frame(
-                PyKDL.Rotation.RPY(0, 0, math.pi),
-                PyKDL.Vector(0.9, 0, 0)
+                PyKDL.Rotation.RPY(0, 0, -math.pi / 2),
+                PyKDL.Vector(0, 0.75, 0)
             )
 
             item_vector_dict = {
@@ -98,7 +98,7 @@ class PlaceItemOnTable(StateMachine):
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id, table_navigation_area):
+    def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
 
         table = EdEntityDesignator(robot=robot, id=table_id)
@@ -106,9 +106,32 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
         with self:
             StateMachine.add("NAVIGATE_TO_TABLE",
                              NavigateToSymbolic(robot, {table: table_navigation_area}, table),
-                             transitions={'arrived': 'PLACE_ITEM_ON_TABLE',
+                             transitions={'arrived': 'NAVIGATE_TO_TABLE_CLOSE',
                                           'unreachable': 'failed',
                                           'goal_not_defined': 'failed'})
+
+            StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",
+                             NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
+                             transitions={'arrived': 'PLACE_ITEM_ON_TABLE',
+                                          'unreachable': 'FORCE_DRIVE',
+                                          'goal_not_defined': 'failed'})
+
+            StateMachine.add("FORCE_DRIVE",
+                             ForceDrive(robot, -0.1, 0, 0, 5.0),
+                             transitions={'done': 'SAY_PICK_AWAY_THE_CHAIR'})
+
+            StateMachine.add("SAY_PICK_AWAY_THE_CHAIR",
+                             Say(robot,
+                                 "Please pick away the chair, I cannot get close enough to the {}".format(table_id)),
+                             transitions={'spoken': 'WAIT_FOR_PICK_AWAY_CHAIR'})
+
+            StateMachine.add('WAIT_FOR_PICK_AWAY_CHAIR',
+                             WaitTime(robot, 5),
+                             transitions={'waited': 'SAY_THANKS', 'preempted': 'failed'})
+
+            StateMachine.add('SAY_THANKS',
+                             Say(robot, "Thank you darling"),
+                             transitions={'spoken': 'NAVIGATE_TO_TABLE_CLOSE'})
 
             StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id),
                              transitions={'succeeded': 'succeeded',
@@ -119,6 +142,6 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
-    state_machine = NavigateToAndPlaceItemOnTable(hero, 'dinner_table', 'in_front_of')
+    state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close')
     state_machine.userdata['item_picked'] = "knife"
     state_machine.execute()
