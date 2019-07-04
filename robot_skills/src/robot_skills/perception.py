@@ -3,6 +3,7 @@ from threading import Condition, Event
 
 # ROS
 import rospy
+from people_recognition_msgs.srv import RecognizePeople3D
 from sensor_msgs.msg import Image, CameraInfo
 from std_srvs.srv import Empty
 import message_filters
@@ -48,6 +49,8 @@ class Perception(RobotPart):
             '/' + robot_name + '/people_recognition/face_recognition/get_face_properties', GetFaceProperties)
 
         self._projection_srv = self.create_service_client(projection_srv_name, Project2DTo3D)
+        self._person_recognition_3d_srv = \
+            self.create_service_client('/' + robot_name + '/people_recognition/detect_people_3d', RecognizePeople3D)
 
     def close(self):
         pass
@@ -305,3 +308,6 @@ class Perception(RobotPart):
             return self._image_data
         else:
             return None
+
+    def detect_person_3d(self, rgb, depth, depth_info):
+        return self._person_recognition_3d_srv(image_rgb=rgb, image_depth=depth, camera_info_depth=depth_info).people
