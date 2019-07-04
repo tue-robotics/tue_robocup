@@ -79,17 +79,21 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
             return "failed"
 
         unavailable_drinks_count = 0
-        unavailable_drink = None
+        unavailable_drink = []
         for drink in self._drinks_list:
             if drink not in classification_list:
                 # TODO: Convert unavailable_drink to list because this becomes a bug if max_unavailable_drinks > 1
-                unavailable_drink = drink
-                rospy.loginfo("Found unavailable drink: {}".format(unavailable_drink))
+                unavailable_drink.append(drink)
+                rospy.loginfo("Found unavailable drink: {}".format(drink))
                 unavailable_drinks_count += 1
 
-        if unavailable_drinks_count == self._max_unavailable_drinks:
-            self._unavailable_drink_designator.write(unavailable_drink)
+        if unavailable_drinks_count == self._max_unavailable_drinks + 1:
+            for d in unavailable_drink:
+                if d is not "tea_bag":
+                    self._unavailable_drink_designator.write(d)
             return "done"
+        elif unavailable_drinks_count == self._max_unavailable_drinks:
+            self._unavailable_drink_designator.write(unavailable_drink[0])
         else:
             # Even if no unavailable drink is found, return failed
             rospy.loginfo("Unavailable drinks count: {}".format(unavailable_drinks_count))
