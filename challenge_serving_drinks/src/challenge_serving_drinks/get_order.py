@@ -33,7 +33,7 @@ class GetOrder(smach.StateMachine):
     """
     def __init__(self, robot, operator_name, drink_designator,
                  available_drinks_designator, unavailable_drink_designator,
-                 name_options, objects, learn_check_designator):
+                 name_options, objects, learn_check_designator, target_room_designator):
         # type: (Robot, str, VariableDesignator) -> None
         """
         Initialization method
@@ -44,6 +44,10 @@ class GetOrder(smach.StateMachine):
         :param unavailable_drink_designator: (VariableDesignator) in which the unavailable drink is stored
         :param name_options: Names from common knowledge
         :param objects: Objects from common knowledge
+        :param learn_check_designator: (VariableDesignator) Bool flag indicating whether the operator was learnt
+            successfully
+        :param target_room_designator: (EdEntityDesignator) Entity specifying the target room where the operator needs
+            to be searched for getting an order
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
@@ -65,7 +69,8 @@ class GetOrder(smach.StateMachine):
                                    states.SetPoseFirstFoundPersonToEntity(robot=robot,
                                                                           properties={'tags': ['LNotHolding', 'RNotHolding']},
                                                                           strict=True,
-                                                                          dst_entity_designator=caller_id),
+                                                                          dst_entity_designator=caller_id,
+                                                                          query_entity_designator=target_room_designator),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_PEOPLE_WITHOUT_DRINKS_FAILED"})
 
@@ -88,7 +93,8 @@ class GetOrder(smach.StateMachine):
                                    states.SetPoseFirstFoundPersonToEntity(robot=robot,
                                                                           properties={'tags': ['LWave', 'RWave']},
                                                                           strict=False,
-                                                                          dst_entity_designator=caller_id),
+                                                                          dst_entity_designator=caller_id,
+                                                                          query_entity_designator=target_room_designator),
                                    transitions={"done": "SAY_I_HAVE_SEEN",
                                                 "failed": "SAY_COULD_NOT_FIND_WAVING"})
 
