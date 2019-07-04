@@ -56,6 +56,13 @@ class Restaurant(smach.StateMachine):
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
 
+            # No Asking
+            # smach.StateMachine.add('SAY_I_HAVE_SEEN',
+            #                        states.Say(robot, 'I have seen a waving person, I will take the order, I will be there shortly! Coming your way my amigo!'),
+            #                        transitions={"spoken": 'NAVIGATE_TO_CUSTOMER'})
+            # End No Asking
+
+            # Asking for confirmation
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
                                    states.Say(robot, 'I have seen a waving person, should I continue?'),
                                    transitions={"spoken": 'WAIT_FOR_START'})
@@ -68,6 +75,7 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER',
                                    states.Say(robot, "I am at your service, I will be there shortly! Coming your way my amigo!", block=True),
                                    transitions={'spoken': 'NAVIGATE_TO_CUSTOMER'})
+            # End Asking for confirmation
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
                                    states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
@@ -77,7 +85,7 @@ class Restaurant(smach.StateMachine):
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
-                                   states.Say(robot, "Help, how do I get there?"),
+                                   states.Say(robot, "Help, lets try it another way"),
                                    transitions={'spoken': 'TURN_AROUND'})
 
             smach.StateMachine.add('TURN_AROUND',
