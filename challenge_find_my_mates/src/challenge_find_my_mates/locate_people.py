@@ -10,6 +10,7 @@ import pickle
 import time
 from datetime import datetime
 
+import PyKDL
 import cv2
 import numpy as np
 import rospkg
@@ -62,8 +63,9 @@ class LocatePeople(StateMachine):
             global PERSON_DETECTIONS
             global NUM_LOOKS
 
-            # with open('/home/rein/find_my_mate.pickle') as f:
+            # with open('/home/rein/mates/floorplan-2019-07-05-08-32-30.pickle', 'r') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
+            #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
             #
             # return "done"
 
@@ -123,17 +125,19 @@ class LocatePeople(StateMachine):
             min_corner = room_entity.pose.frame * room_volume.min_corner
             max_corner = room_entity.pose.frame * room_volume.max_corner
 
+            shrink = 0.25
+            min_corner_shrinked = PyKDL.Vector(min_corner.x() + shrink, min_corner.y() + shrink, 0)
+            max_corner_shrinked = PyKDL.Vector(max_corner.x() - shrink, max_corner.y() - shrink, 0)
+
             rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
 
             def _get_clusters():
                 def _in_room(p):
-                    return min_corner.x() < p.x < max_corner.x() and min_corner.y() < p.y < max_corner.y()
+                    return min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
 
                 in_room_detections = [d for d in PERSON_DETECTIONS if _in_room(d['map_ps'].point)]
 
                 rospy.loginfo("%d in room before clustering", len(in_room_detections))
-
-                # TODO cluster
 
                 clusters = cluster_people(in_room_detections, np.array([6, 0]))
 
@@ -186,6 +190,10 @@ class LocatePeople(StateMachine):
                         rospy.logerr("bound error")
                 except Exception as e:
                     rospy.logerr("Drawing image roi failed: {}".format(e))
+
+                label = "female" if person_detection['person_detection'].gender else "male"
+                label += ", " + str(person_detection['person_detection'].age)
+                cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
 
             filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
             cv2.imwrite(filename, floorplan)
