@@ -22,7 +22,7 @@ class CheckVolumeEmpty(smach.StateMachine):
                                    transitions = {"done": "CHECK",
                                                   "failed": "failed"})
 
-            @smach.cb_interface(outcomes=['empty', 'occupied'])
+            @smach.cb_interface(outcomes=['empty', 'occupied', 'partially_occupied'])
             def check_occupied(userdata):
                 seat = entity_des.resolve()  # type: Entity
                 seen_entities = seen_entities_des.resolve()
@@ -31,6 +31,7 @@ class CheckVolumeEmpty(smach.StateMachine):
                         vol = seat.volumes[volume]  # type: Volume
                         occupied_space = sum(on_seat.size for on_seat in seen_entities)
                         remaining_space = vol.size - occupied_space
+                        rospy.loginfo('Occupied space is {}, remaining space is {}'.format(occupied_space, remaining_space))
                         if remaining_space > 0.2: #  m^3, I estimate I occupy some 0.5m wide, 0.5m long 0.8m high space on top of a seat
                             return 'partially_occupied'
                     except Exception as e:
@@ -41,6 +42,7 @@ class CheckVolumeEmpty(smach.StateMachine):
                     return 'empty'
             smach.StateMachine.add('CHECK', smach.CBState(check_occupied),
                                    transitions={'empty': 'empty',
+                                                'partially_occupied': 'partially_occupied',
                                                 'occupied': 'occupied'})
 
 
