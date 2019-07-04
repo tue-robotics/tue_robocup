@@ -29,7 +29,7 @@ class ForceSensor(object):
             calibrated_force_norm = _norm(calibrated_msg.wrench.force)
             force_norm = _norm(msg.wrench.force)
 
-            rospy.loginfo("Force norm: %.2f", force_norm - calibrated_force_norm)
+            rospy.logdebug("Force norm: %.2f", force_norm - calibrated_force_norm)
 
             return abs(force_norm - calibrated_force_norm) > self._force_norm_threshold
 
