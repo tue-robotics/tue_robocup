@@ -6,6 +6,7 @@
 
 import math
 import os
+import sys
 
 import PyKDL
 import rospy
@@ -56,13 +57,21 @@ class PlaceItemOnTable(StateMachine):
                 "fork": PyKDL.Vector(0, 0.2, 0),
                 "spoon": PyKDL.Vector(0, -0.25, 0)
             }
+
+            item_placement_vector = item_vector_dict[user_data["item_picked"]]
             item_frame = frame
-            item_frame.T = frame * item_vector_dict[user_data["item_picked"]]
+            item_frame.T = frame * item_placement_vector
+            rospy.loginfo("Placing {i} at frame ({f}) * item_placement_vector ({ipv}) = {ift}".format(
+                i=user_data["item_picked"],
+                f=frame,
+                ipv=item_placement_vector,
+                ift=item_frame.T))
 
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = table_id
             goal_pose.pose = toMsg(item_frame)
+            rospy.loginfo("Placing {} at {}".format(user_data["item_picked"], goal_pose))
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return 'done'
 
@@ -143,5 +152,5 @@ if __name__ == '__main__':
     hero = Hero()
     hero.reset()
     state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close')
-    state_machine.userdata['item_picked'] = "knife"
+    state_machine.userdata['item_picked'] = sys.argv[1]
     state_machine.execute()
