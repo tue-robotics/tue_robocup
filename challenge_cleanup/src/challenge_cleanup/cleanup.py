@@ -28,13 +28,14 @@ class VerifyWorldModelInfo(smach.State):
         # (Different between rgo2019 and robotics_testlabs knowledge)
 
         ids = [e.id for e in self._robot.ed.get_entities()]
-        for loc in challenge_knowledge.cleaning_locations:
-             if loc["room"] == "living_room":
-                 if "trash_bin1" not in ids:
-                     return "failed"
-             if loc["room"] == "kitchen":
-                if "trash_bin" not in ids:
-                    return "failed"
+        # for loc in challenge_knowledge.cleaning_locations:
+            # ToDo: This depends on environment
+            # if loc["room"] == "living_room":
+            #     if "trash_bin1" not in ids:
+            #         return "failed"
+            # if loc["room"] == "kitchen":
+            #     if "trash_bin" not in ids:
+            #         return "failed"
 
     # Make sure the world model and local knowledge match
         for place in challenge_knowledge.cleaning_locations:
