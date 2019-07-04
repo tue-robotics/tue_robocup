@@ -16,6 +16,8 @@ from smach import StateMachine, cb_interface, CBState
 item_img_dict = {
     "plate": 'images/plate.png',
     "cup": 'images/cup.png',
+    "bowl": 'images/bowl.png',
+    "napkin": 'images/napkin.png',
     "knife": 'images/knife.png',
     "fork": 'images/fork.png',
     "spoon": 'images/spoon.png'
