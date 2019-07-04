@@ -296,6 +296,7 @@ class PickUpTrash(smach.StateMachine):
 
             @cb_interface(outcomes=['done'])
             def _joint_path(_):
+                robot.head.cancel_goal()
                 arm = arm_designator.resolve()
                 if not arm:
                     rospy.logerr("Could not resolve arm")
