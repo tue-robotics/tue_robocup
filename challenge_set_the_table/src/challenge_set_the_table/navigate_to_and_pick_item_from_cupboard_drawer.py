@@ -7,10 +7,19 @@
 import os
 
 import rospy
+import rospkg
 from robot_skills import Hero
 from robot_smach_states import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
+
+item_img_dict = {
+    "plate": 'images/plate.png',
+    "cup": 'images/cup.png',
+    "knife": 'images/knife.png',
+    "fork": 'images/fork.png',
+    "spoon": 'images/spoon.png'
+}
 
 
 class PickItemFromCupboardDrawer(StateMachine):
@@ -28,6 +37,18 @@ class PickItemFromCupboardDrawer(StateMachine):
             arm.send_gripper_goal(open_close_string)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
+        def show_image(package_name, path_to_image_in_package):
+            path = os.path.join(rospkg.RosPack().get_path(package_name), path_to_image_in_package)
+            if not os.path.exists(path):
+                rospy.logerr("Image path {} does not exist".format(path))
+            else:
+                try:
+                    rospy.loginfo("Showing {}".format(path))
+                    robot.hmi.show_image(path, 10)
+                except Exception as e:
+                    rospy.logerr("Could not show image {}: {}".format(path, e))
+            return 'succeeded'
+
         @cb_interface(outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
         def _ask_user(user_data):
             leftover_items = [item for item in required_items if item not in picked_items]
@@ -40,7 +61,9 @@ class PickItemFromCupboardDrawer(StateMachine):
             item_name = leftover_items[0]
             picked_items.append(item_name)
 
-            robot.speech.speak("Please put the {} in my gripper".format(item_name), block=False)
+            robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
+            show_image('challenge_set_the_table', item_img_dict[item_name])
+
             send_gripper_goal("open")
             rospy.sleep(5.0)
             robot.speech.speak("Thanks for that!", block=False)
