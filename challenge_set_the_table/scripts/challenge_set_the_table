@@ -61,7 +61,9 @@ def setup_state_machine(robot):
                          transitions={'initialized': 'SAY_START', 'abort': 'done'})
 
         StateMachine.add('SAY_START',
-                         Say(robot, "Let's set the table baby!"),
+                         Say(robot,
+                             "Let's set the table baby! If there are any chairs near the kitchen_table, please remove them",
+                             block=False),
                          transitions={'spoken': 'NAVIGATE_AND_OPEN_CUPBOARD'})
 
         # The pre-work
