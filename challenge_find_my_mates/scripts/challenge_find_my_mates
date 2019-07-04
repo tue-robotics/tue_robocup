@@ -3,13 +3,10 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import rospy
 import smach
-from challenge_find_my_mates.identify_people import IdentifyPeople
-from challenge_find_my_mates.inspect_people import InspectPeople
-from robot_skills.util.entity import Entity
-from robot_smach_states.util import startup
 
-from challenge_find_my_mates.report_people import ReportPeople
+from robot_smach_states.util import startup
 from robocup_knowledge import load_knowledge
+from challenge_find_my_mates import LocatePeople, ReportPeople
 
 challenge_knowledge = load_knowledge('challenge_find_my_mates')
 
@@ -22,16 +19,14 @@ OPERATOR_POINT = challenge_knowledge.starting_point
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['done', 'failed', 'aborted'])
 
-    found_people_designator = ds.VariableDesignator(resolve_type=[Entity], name='found_people_designator')
-
     with sm:
         smach.StateMachine.add('START_CHALLENGE_ROBUST', states.StartChallengeRobust(robot, STARTING_POINT),
-                               transitions={'done': 'GO_TO_SEARCH_POSE',
-                                            'preempted': 'aborted',
-                                            'error': 'GO_TO_SEARCH_POSE'})
+                               transitions={'Done': 'GO_TO_SEARCH_POSE',
+                                            'Aborted': 'aborted',
+                                            'Failed': 'GO_TO_SEARCH_POSE'})
 
         smach.StateMachine.add('SAY_START',
-                               states.Say(robot, "Finding your mates, lalalala!"),
+                               states.Say(robot, "Finding your mates, here we go!", block=False),
                                transitions={'spoken': 'GO_TO_SEARCH_POSE'})
 
         smach.StateMachine.add('GO_TO_SEARCH_POSE',
@@ -43,27 +38,21 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('WAIT_SEARCH_POSE',
                                states.WaitTime(robot, 5),
-                               transitions={'preempted': 'preempted',
+                               transitions={'preempted': 'aborted',
                                             'waited': 'GO_TO_SEARCH_POSE'})
+
+        # ToDo: add state to rise robot and tell people to look the robot's way
 
         # locate all four people
         smach.StateMachine.add('LOCATE_PEOPLE',
                                LocatePeople(robot,
-                                            found_people_designator=found_people_designator.writeable,
-                                            room_id=ROOM_ID),
-                                            attempts=2),
-                               transitions={'done': 'IDENTIFY_PEOPLE',
-                                            'aborted': 'done',
-                                            'failed': 'LOCATE_PEOPLE'})
-
-        # drive past all four people and fill their description
-        smach.StateMachine.add('IDENTIFY_PEOPLE',
-                               IdentifyPeople(robot,
-                                              found_people_designator=found_people_designator,
-                                              identified_people_designator=found_people_designator.writeable),
+                                            room_id=ROOM_ID
+                                            ),
                                transitions={'done': 'GO_BACK_TO_OPERATOR',
-                                            'aborted': 'done',
-                                            'failed': 'GO_BACK_TO_OPERATOR'})
+                                            }
+                               )
+
+        # ToDo: move body back to driving pose
 
         # drive back to the operator to describe the mates
         smach.StateMachine.add('GO_BACK_TO_OPERATOR',
@@ -76,14 +65,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('WAIT_GO_BACK',
                                states.WaitTime(robot, 5),
-                               transitions={'preempted': 'preempted',
+                               transitions={'preempted': 'aborted',
                                             'waited': 'GO_BACK_TO_OPERATOR'})
 
-        # check how to uniquely define them
-        smach.StateMachine.add('REPORT_PEOPLE', ReportPeople(robot, identified_people_designator),
-                               transitions={'done': 'done',
-                                            'aborted': 'done',
-                                            'failed': 'failed'})
+        # check how to uniquely define them  # ToDo: make this more interesting
+        smach.StateMachine.add('REPORT_PEOPLE', ReportPeople(robot),
+                               transitions={'done': 'done'}
+                               )
 
     return sm
 
