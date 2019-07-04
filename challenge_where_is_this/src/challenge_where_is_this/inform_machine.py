@@ -7,6 +7,7 @@ import smach
 
 # TU/e
 import robot_skills
+from robot_skills.simulation import is_sim_mode
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult
@@ -17,7 +18,7 @@ from robot_smach_states.navigation import guidance
 # Challenge where is this
 from .simulation import mock_detect_operator
 
-if os.getenv("ROBOT_REAL", "false").lower() != "true":
+if is_sim_mode():
     guidance._detect_operator_behind_robot = mock_detect_operator
 
 knowledge = load_knowledge("challenge_where_is_this")
