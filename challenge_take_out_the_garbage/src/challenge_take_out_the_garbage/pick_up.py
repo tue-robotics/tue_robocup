@@ -339,7 +339,7 @@ class PickUpTrash(smach.StateMachine):
                                                                            " it away, please move away.", block=True),
                                    transitions={'spoken': 'succeeded'})
 
-            smach.StateMachine.add("TIMEOUT", states.Say(robot, "I have not received anything, so I will stop",
+            smach.StateMachine.add("TIMEOUT", states.Say(robot, "I have not received anything, so I will just continue",
                                                          block=False),
                                    transitions={'spoken': "failed"})
 

@@ -7,7 +7,7 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
-from challenge_take_out_the_garbage.drop_down import DropDownTrash
+from challenge_take_out_the_garbage.drop_down import DropDownTrash, DropTrash
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
@@ -58,7 +58,7 @@ class TakeOutGarbage(smach.StateMachine):
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(robot=robot, trashbin_designator=trashbin_designator,
                                                                 arm_designator=arm_designator),
                                    transitions={"succeeded": "DROP_DOWN_TRASH",
-                                                "failed": "ANNOUNCE_END",
+                                                "failed": "HELPER_WAYPOINT",
                                                 "aborted": "ANNOUNCE_END"})
 
             smach.StateMachine.add("DROP_DOWN_TRASH",
@@ -111,5 +111,45 @@ class TakeOutGarbage(smach.StateMachine):
                                    transitions={"arrived": "succeeded",
                                                 "goal_not_defined": "succeeded",
                                                 "unreachable": "succeeded"})
+
+
+class TestDummy(smach.StateMachine):
+    def __init__(self, dummy_robot):
+
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", ])
+
+        # Create designators
+        dummy_trashbin_designator = ds.EdEntityDesignator(dummy_robot,
+                                                    id=CHALLENGE_KNOWLEDGE.trashbin_id2,
+                                                    name='trashbin_designator')
+        dummy_arm_designator_un = ds.UnoccupiedArmDesignator(dummy_robot, {})
+        dummy_arm_designator_oc = ds.OccupiedArmDesignator(dummy_robot, {})
+
+        with self:
+            smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(dummy_robot, dummy_trashbin_designator,
+                                                                dummy_arm_designator_un),
+                                   transitions={"succeeded": "TURN_BASE",
+                                                "failed": "TURN_BASE",
+                                                "aborted": "failed"})
+
+            smach.StateMachine.add("TURN_BASE", states.ForceDrive(dummy_robot, 0, 0, 0.5, 3),
+                                   transitions={"done": "DROP_TRASH"})
+
+            smach.StateMachine.add("DROP_TRASH",
+                                   DropTrash(dummy_robot, dummy_arm_designator_oc),
+                                   transitions={"succeeded": "succeeded",
+                                                "failed": "failed"})
+
+if __name__ == '__main__':
+    import os
+    import robot_smach_states.util.designators as ds
+    from robot_skills import Hero
+
+    rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
+    hero = Hero()
+    hero.reset()
+
+    TestDummy(hero).execute()
+
 
 
