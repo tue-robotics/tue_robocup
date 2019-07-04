@@ -23,7 +23,6 @@ class TakeOrder(smach.State):
         """ Constructor
 
         :param robot: robot object
-        :param location: string indicating the location
         :param orders: Python dict in which the orders will be stored
         :return:
         succeeded: understood correctly
