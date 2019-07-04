@@ -2,6 +2,9 @@
 # ROS
 import rospy
 
+# System
+import operator
+
 # TU/e Robotics
 from robot_smach_states.util.designators.core import Designator, VariableDesignator
 
@@ -89,6 +92,8 @@ class LockingDesignator(Designator):
 
 class AttrDesignator(Designator):
     """Get some attribute of the object a wrapped designator resolves to.
+    This can be recursive, so you can specify a chain of nested attributes like <resolved_object>.foo.bar
+
     For example:
     >>> d = Designator(object(), resolve_type=object)
     >>> #Get the __doc__ attribute of the object that d resolves to. d is an object and d.__doc__ is 'The most base type'
@@ -97,17 +102,40 @@ class AttrDesignator(Designator):
     True
 
     >>> assert(issubclass(wrapped.resolve_type, str))
+
+    >>> d2 = Designator("banana", resolve_type=str)
+    >>> wrapped2 = AttrDesignator(d2, '__class__.__class__', resolve_type=type)
+    >>> wrapped2.resolve()
+    <type 'type'>
+
+    >>> from collections import namedtuple
+    >>> A = namedtuple("A", ['foo'])
+    >>> B = namedtuple("B", ['bar'])
+    >>> a = A(foo=B(bar='banana'))
+    >>> d3 = Designator(a, resolve_type=A)
+    >>> wrapped3 = AttrDesignator(d3, 'foo.bar', resolve_type=str)
+    >>> wrapped3.resolve()
+    'banana'
+
+    >>> wrapped3 = AttrDesignator(d3, 'foo.not_bar', resolve_type=str)
+    >>> wrapped3.resolve() is None  # Will not resolve and return None
+    True
     """
 
     def __init__(self, orig, attribute, resolve_type=None, name=None):
         super(AttrDesignator, self).__init__(resolve_type=resolve_type, name=name)
         self.orig = orig
-        self.attribute = attribute
+
+        self._get_attr = operator.attrgetter(attribute)  # Generate a function that gives you '.your.attr.path' etc.
 
     def _resolve(self):
         orig = self.orig.resolve()
         if orig:
-            return orig.__getattribute__(self.attribute)
+            try:
+                return self._get_attr(orig)
+            except AttributeError as attr_err:
+                rospy.logerr(attr_err)
+                return None
         else:
             return None
 

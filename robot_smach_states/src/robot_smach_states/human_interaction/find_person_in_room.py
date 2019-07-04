@@ -15,6 +15,7 @@ import message_filters
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.util.designators import check_type
 from robot_skills.util import kdl_conversions
 
 # class CheckIfPersonInRoom(smach.State):
@@ -35,8 +36,8 @@ class FindPerson(smach.State):
     Smach state to find a person. The robot looks around and tries to recognize all faces in view.
     """
 
-    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
-                 discard_other_labels=True, found_entity_designator=None, room=None):
+    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
+                 discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True):
         """ Initialization method
         :param robot: robot api object
         :param person_label: (str) person label or a designator resolving to a str
@@ -49,7 +50,7 @@ class FindPerson(smach.State):
 
         self._robot = robot
 
-        ds.check_type(person_label, str)
+        check_type(person_label, str)
         self._person_label = person_label
 
         self._search_timeout = search_timeout
@@ -65,6 +66,8 @@ class FindPerson(smach.State):
         self._found_entity_designator = found_entity_designator
 
         self._room = room
+
+        self.speak_when_found = speak_when_found
 
     def execute(self, userdata=None):
         person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
@@ -98,9 +101,11 @@ class FindPerson(smach.State):
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
-            rospy.loginfo("Found {} people, but filtering still to be done".format(len(found_people)))
+
+            rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
             found_people = [p for p in found_people if p]
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
+
             found_names = {person.id: person for person in found_people}
 
             found_person = None
@@ -110,10 +115,9 @@ class FindPerson(smach.State):
             else:
                 # find which of those is closest
                 robot_pose = self._robot.base.get_location()
-                if found_people:
-                    found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
+                found_person = min(found_people, key=lambda person: person.pose.frame.p - robot_pose.frame.p)
 
-            if self._room and found_person:
+            if self._room:
                 room_entity = self._robot.ed.get_entity(id=self._room)
                 if not room_entity.in_volume(found_person.pose.extractVectorStamped(), 'in'):
                     # If the person is not in the room we are looking for, ignore the person
@@ -123,7 +127,8 @@ class FindPerson(smach.State):
 
             if found_person:
                 rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
+                if self.speak_when_found:
+                    self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
                 if self._found_entity_designator:
@@ -225,7 +230,7 @@ if __name__ == "__main__":
         _area = sys.argv[2]
         _name = sys.argv[3]
 
-        rospy.init_node('test_follow_operator')
+        rospy.init_node('test_find_person_in_room')
         _robot = get_robot(robot_name)
         sm = FindPersonInRoom(_robot, _area, _name)
         sm.execute()
