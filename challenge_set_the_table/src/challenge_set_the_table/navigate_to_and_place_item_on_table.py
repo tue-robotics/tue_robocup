@@ -45,14 +45,16 @@ def item_vector_to_item_frame(item_vector):
 def item_frame_to_pose(item_frame, frame_id):
     goal_pose = PoseStamped()
     goal_pose.header.stamp = rospy.Time.now()
+    goal_pose.header.frame_id = frame_id
     goal_pose.pose = toMsg(item_frame)
 
     return goal_pose
 
 class PlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id):
+    def __init__(self, robot, table_id, placement_height=0.64):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], input_keys=["item_picked"])
         arm = robot.get_arm()._arm
+        self.placement_height = placement_height
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
@@ -81,7 +83,7 @@ class PlaceItemOnTable(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def _place_and_retract(_):
-            send_joint_goal([0.64, -1.57, 0, -1.57, 0])
+            send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
             send_gripper_goal("open")
             send_joint_goal([0.69, 0, -1.57, 0, 0])
             send_gripper_goal("close")
@@ -111,7 +113,7 @@ class PlaceItemOnTable(StateMachine):
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
-    def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area):
+    def __init__(self, robot, table_id, table_navigation_area, table_close_navigation_area, placement_height=0.64):
         StateMachine.__init__(self, outcomes=["succeeded", "failed"], input_keys=["item_picked"])
 
         table = EdEntityDesignator(robot=robot, id=table_id)
@@ -146,7 +148,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
                              Say(robot, "Thank you darling"),
                              transitions={'spoken': 'NAVIGATE_TO_TABLE_CLOSE'})
 
-            StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id),
+            StateMachine.add("PLACE_ITEM_ON_TABLE", PlaceItemOnTable(robot, table_id, placement_height),
                              transitions={'succeeded': 'succeeded',
                                           'failed': 'failed'})
 
@@ -165,6 +167,7 @@ if __name__ == '__main__':
 
     hero = Hero()
     hero.reset()
-    state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close')
+    placement_height = float(sys.argv[2])
+    state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close', placement_height)
     state_machine.userdata['item_picked'] = sys.argv[1]
     state_machine.execute()
