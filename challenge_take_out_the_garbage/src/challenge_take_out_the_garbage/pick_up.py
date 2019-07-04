@@ -128,7 +128,7 @@ class GrabTrash(smach.State):
 
             # This opening and closing is to make sure that the gripper is empty and closed before measuring the forces
             # It is necessary to close the gripper since the gripper is also closed at the final measurement
-            
+
             # arm.send_gripper_goal('open')
             # arm.wait_for_motion_done()
             # arm.send_gripper_goal('close', max_torque=1.0)
@@ -168,7 +168,7 @@ class GrabTrash(smach.State):
         self._robot.head.wait_for_motion_done()
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
-        self._robot.base.force_drive(-0.1, 0, 0, 2.0)
+        self._robot.base.force_drive(-0.5, 0, 0, 2.0)
         self._robot.head.look_up()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
