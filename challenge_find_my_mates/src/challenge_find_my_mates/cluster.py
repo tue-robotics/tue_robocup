@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 
 
-def cluster_people(people_dicts, plot=False):
+def cluster_people(people_dicts, room_center, plot=False):
     xs = [person['map_ps'].point.x for person in people_dicts]
     ys = [person['map_ps'].point.y for person in people_dicts]
 
@@ -32,8 +32,6 @@ def cluster_people(people_dicts, plot=False):
     for hashable, label in sorted(hashable_dicts2label.items()):
         label2hashable_dicts[label].append(dict(hashable))  # And here we create a normal dict again
     # label2hashable_dicts maps cluster labels to a list of {'rgb':..., 'person_detection':..., 'map_ps':...}
-
-    room_center = np.array([6, 0])
 
     # Now we need to select wich element of the cluster is closest to the room_center
     persons_closest_to_room_center = {}
@@ -65,7 +63,7 @@ if __name__ == "__main__":
     ppl_dicts = pickle.load(open('/home/loy/kmeans.pickle'))
     # ppl_dicts is a list of dicts {'rgb':..., 'person_detection':..., 'map_ps':...}
 
-    clustered_ppl = cluster_people(ppl_dicts, plot=True)
+    clustered_ppl = cluster_people(ppl_dicts, room_center = np.array([6, 0]), plot=True)
 
     xs2 = [person['map_ps'].point.x for person in clustered_ppl]
     ys2 = [person['map_ps'].point.y for person in clustered_ppl]
