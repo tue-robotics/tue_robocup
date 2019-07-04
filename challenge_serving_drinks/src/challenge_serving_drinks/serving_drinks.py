@@ -1,5 +1,6 @@
 # ROS
 import smach
+import rospy
 
 # TU/e Robotics
 import robot_smach_states as states
@@ -74,6 +75,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
         classification_list = set([classification.type for classification in classification_list])
 
         if not classification_list:
+            rospy.loginfo("Classification list empty")
             return "failed"
 
         unavailable_drinks_count = 0
@@ -82,6 +84,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
             if drink not in classification_list:
                 # TODO: Convert unavailable_drink to list because this becomes a bug if max_unavailable_drinks > 1
                 unavailable_drink = drink
+                rospy.loginfo("Found unavailable drink: {}".format(unavailable_drink))
                 unavailable_drinks_count += 1
 
         if unavailable_drinks_count == self._max_unavailable_drinks:
@@ -89,6 +92,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
             return "done"
         else:
             # Even if no unavailable drink is found, return failed
+            rospy.loginfo("Unavailable drinks count: {}".format(unavailable_drinks_count))
             return "failed"
 
 
