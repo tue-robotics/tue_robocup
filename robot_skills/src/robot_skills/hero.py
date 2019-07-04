@@ -1,4 +1,5 @@
 from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from .simulation import is_sim_mode, SimEButton
 
 import rospy
 
@@ -34,7 +35,8 @@ class Hero(robot.Robot):
                                              lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                              lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
-        self.add_body_part('ebutton', ebutton.EButton(self.robot_name, self.tf_listener))
+        ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
+        self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_listener, topic="/hero/runstop_button"))
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
