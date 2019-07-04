@@ -179,8 +179,8 @@ class AskTakeTheOrder(smach.State):
 
     def execute(self, userdata):
         cgrammar = """
-        C['yes'] -> amigo take the order
-        C['wait'] -> amigo wait
+        C['yes'] -> hero take the order
+        C['wait'] -> hero wait
         """
         for i in range(3):
             try:

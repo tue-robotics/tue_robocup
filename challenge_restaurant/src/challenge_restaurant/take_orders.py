@@ -11,13 +11,15 @@ from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
 
 # Knowledge
+from robot_skills.util.kdl_conversions import VectorStamped
+
 knowledge = knowledge_loader.load_knowledge("challenge_restaurant")
 
 
 class TakeOrder(smach.State):
     """ Take an order """
 
-    def __init__(self, robot, location, orders):
+    def __init__(self, robot, entity_designator, orders):
         """ Constructor
 
         :param robot: robot object
@@ -31,16 +33,11 @@ class TakeOrder(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self._robot = robot
-        self._location = location
+        self._entity_designator = entity_designator
         self._orders = orders
         self._max_tries = 5
 
     def _confirm(self):
-        cgrammar = """
-        C[P] -> A[P]
-        A['yes'] -> yes
-        A['no'] -> no
-        """
         try:
             speech_result = self._robot.hmi.query(description="Is this correct?", grammar="T[True] -> yes;"
                                                                                           "T[False] -> no", target="T")
@@ -50,7 +47,14 @@ class TakeOrder(smach.State):
         return speech_result.semantics
 
     def execute(self, userdata=None):
-        self._robot.head.look_at_ground_in_front_of_robot(3)
+        person = self._entity_designator.resolve()
+        if person:
+            self._robot.head.look_at_point(VectorStamped(vector=person.pose.frame.p, frame_id="/map"), timeout=0.0)
+        else:
+            rospy.logwarn("Could not resolve person, looking down ..")
+            self._robot.head.look_at_ground_in_front_of_robot(3)
+
+        self._robot.head.wait_for_motion_done()
 
         nr_tries = 0
         while nr_tries < self._max_tries and not rospy.is_shutdown():
@@ -81,11 +85,11 @@ class TakeOrder(smach.State):
                 # Now: confirm
                 if "beverage" in speech_result.semantics:
                     self._robot.speech.speak("I understood that you would like {}, "
-                                            "is this correct?".format(speech_result.semantics['beverage']))
+                                             "is this correct?".format(speech_result.semantics['beverage']))
                 elif "food1" in speech_result.semantics and "food2" in speech_result.semantics:
                     self._robot.speech.speak("I understood that you would like {} and {}, "
-                                            "is this correct?".format(speech_result.semantics['food1'],
-                                                                    speech_result.semantics['food2']))
+                                             "is this correct?".format(speech_result.semantics['food1'],
+                                                                       speech_result.semantics['food2']))
             except:
                 continue
 
@@ -104,6 +108,7 @@ class TakeOrder(smach.State):
 
 class ReciteOrders(smach.State):
     """ Recites the received order """
+
     def __init__(self, robot, orders):
         """ Constructor
 
@@ -125,7 +130,7 @@ class ReciteOrders(smach.State):
             sentence = "Table 1 would like to have {}".format(self._orders["beverage"])
         if "food1" in self._orders:
             sentence = "Table 1 wants the combo {} and {}".format(self._orders["food1"],
-                                                                        self._orders["food2"])
+                                                                  self._orders["food2"])
 
         self._robot.speech.speak(sentence)
 

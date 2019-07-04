@@ -34,8 +34,12 @@ class Restaurant(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'STORE_KITCHEN',
+                                   transitions={'initialized': 'SAY_START',
                                                 'abort': 'STOP'})
+
+            smach.StateMachine.add('SAY_START',
+                                   states.Say(robot, 'Starting restaurant challenge'),
+                                   transitions={"spoken": 'STORE_KITCHEN'})
 
             smach.StateMachine.add('STORE_KITCHEN',
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
@@ -50,7 +54,7 @@ class Restaurant(smach.StateMachine):
                                    states.FindFirstPerson(robot, customer_designator.writeable,
                                                           properties={'tags': ['LWave', 'RWave']}, nearest=True),
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
-                                                'failed': 'STOP'})
+                                                'failed': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
                                    states.Say(robot, 'I have seen a waving person, should I continue?'),
@@ -88,7 +92,7 @@ class Restaurant(smach.StateMachine):
                                                 'goal_not_defined': 'RETURN_TO_START'})
 
             smach.StateMachine.add('TAKE_ORDER',
-                                   TakeOrder(robot=robot, location=customer_id, orders=orders),
+                                   TakeOrder(robot=robot, entity_designator=customer_designator, orders=orders),
                                    transitions={'succeeded': 'NAVIGATE_TO_KITCHEN',
                                                 'failed': 'RETURN_TO_START'})
 
