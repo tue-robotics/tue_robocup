@@ -56,7 +56,9 @@ class UpdateUnavailableDrinkList(smach.State):
 
 
 class IdentifyUnavailableDrinkFromRecognitions(smach.State):
-    def __init__(self, objects, classification_list_designator, unavailable_drink_designator):
+    def __init__(self, objects, classification_list_designator, unavailable_drink_designator, max_unavailable_drinks):
+        # TODO: Change unavailable_drink_designator resolve type to list to make the implementation more generalized as
+        # this state becomes a bug when max_unavailable_drinks > 1
         super(IdentifyUnavailableDrinkFromRecognitions, self).__init__(outcomes=["done", "failed"])
         ds.is_writeable(unavailable_drink_designator)
         ds.check_type(unavailable_drink_designator, str)
@@ -65,6 +67,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
         self._drinks_list = [obj["name"] for obj in objects if obj["category"] == "drink"]
         self._classification_list_designator = classification_list_designator
         self._unavailable_drink_designator = unavailable_drink_designator
+        self._max_unavailable_drinks = max_unavailable_drinks
 
     def execute(self, userdata=None):
         classification_list = self._classification_list_designator.resolve() if hasattr(self._classification_list_designator, "resolve") else self._classification_list_designator
@@ -73,15 +76,20 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
         if not classification_list:
             return "failed"
 
+        unavailable_drinks_count = 0
+        unavailable_drink = None
         for drink in self._drinks_list:
             if drink not in classification_list:
-                # TODO: Generalize selection of unavailable drink better
-                # Write the first unavailable drink and return
-                self._unavailable_drink_designator.write(drink)
-                return "done"
+                # TODO: Convert unavailable_drink to list because this becomes a bug if max_unavailable_drinks > 1
+                unavailable_drink = drink
+                unavailable_drinks_count += 1
 
-        # Even if no unavailable drink is found, return failed
-        return "failed"
+        if unavailable_drinks_count == self._max_unavailable_drinks:
+            self._unavailable_drink_designator.write(unavailable_drink)
+            return "done"
+        else:
+            # Even if no unavailable drink is found, return failed
+            return "failed"
 
 
 class ServingDrinks(smach.StateMachine):
@@ -137,7 +145,8 @@ class ServingDrinks(smach.StateMachine):
             smach.StateMachine.add("IDENTIFY_UNAVAILABLE_DRINK",
                                    IdentifyUnavailableDrinkFromRecognitions(objects=common_knowledge.objects,
                                                                             classification_list_designator=objects_list_des,
-                                                                            unavailable_drink_designator=unav_drink_des.writeable),
+                                                                            unavailable_drink_designator=unav_drink_des.writeable,
+                                                                            max_unavailable_drinks=challenge_knowledge.MAX_UNAVAILABLE_DRINKS),
                                    transitions={"done": "NAVIGATE_TO_ROOM",
                                                 "failed": "INSPECT_FALLBACK"})
 
