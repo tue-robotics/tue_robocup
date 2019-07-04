@@ -34,13 +34,13 @@ class DropTrash(smach.StateMachine):
         self._robot.torso.reset()
 
         # Arm to position in a safe way
-        arm.send_joint_goal('handover')
+        arm.send_joint_goal('handover_pose')
         arm.wait_for_motion_done()
         arm.send_gripper_goal('open')
         arm.wait_for_motion_done()
         arm._arm._send_joint_trajectory(
-            [[0.40, -0.3, 0.0, -1.37, 0.0],[0.40, -0.4, 0.0, -1.37, 0.0], [0.40, -0.3, 0.0, -1.37, 0.0],
-             [0.40, -0.4, 0.0, -1.37, 0.0]])
+            [[0.4, -1.0, 0.0, -1.0, 0.0],[0.4, -1.0, 0.0, -1.57, 0.0], [0.4, -1.0, 0.0, -1.0, 0.0],
+             [0.4, -1.0, 0.0, -1.57, 0.0]])
         arm.wait_for_motion_done()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
@@ -95,6 +95,23 @@ class DropDownTrash(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
+                                   states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=drop_zone_id),
+                                                             radius=0.5),
+
+                                   transitions={"arrived": "DROP_TRASH",
+                                                "goal_not_defined": "aborted",
+                                                "unreachable": "OPEN_DOOR_PLEASE"})
+
+            smach.StateMachine.add("OPEN_DOOR_PLEASE",
+                                   states.Say(robot, "Can you please open the door for me? It seems blocked!"),
+                                   transitions={"spoken": "WAIT_FOR_DOOR_OPEN"})
+
+            smach.StateMachine.add("WAIT_FOR_DOOR_OPEN",
+                                   states.WaitTime(robot=robot, waittime=5),
+                                   transitions={"waited": "GO_TO_COLLECTION_ZONE2",
+                                                "preempted": "GO_TO_COLLECTION_ZONE2"})
+
+            smach.StateMachine.add("GO_TO_COLLECTION_ZONE2",
                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=drop_zone_id),
                                                              radius=0.5),
 
