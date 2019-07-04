@@ -141,7 +141,6 @@ class ServingDrinks(smach.StateMachine):
                                    transitions={"true": "IDENTIFY_UNAVAILABLE_DRINK",
                                                 "false": "INSPECT_FALLBACK"})
 
-
             smach.StateMachine.add("IDENTIFY_UNAVAILABLE_DRINK",
                                    IdentifyUnavailableDrinkFromRecognitions(objects=common_knowledge.objects,
                                                                             classification_list_designator=objects_list_des,
