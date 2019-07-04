@@ -5,7 +5,7 @@ import rospy
 import tf
 import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
 
 # TU/e
@@ -13,6 +13,8 @@ from robot_skills import arms
 from robot_skills.util import decorators
 
 from collections import OrderedDict, Sequence
+
+CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 
 
 class Robot(object):
@@ -46,6 +48,10 @@ class Robot(object):
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
+    def get_joint_states(self):
+        msg = rospy.wait_for_message("/{}/joint_states".format(self.robot_name), JointState)
+        return dict(zip(msg.name, msg.position))
+
     def add_body_part(self, partname, bodypart):
         """
         Add a bodypart to the robot. This is added to the parts dict and set as an attribute
@@ -69,11 +75,28 @@ class Robot(object):
         This should be run at the end of the constructor of a child class.
         """
         # Wait for connections
+        connected = False
         s = rospy.Time.now()
-        for partname, bodypart in self.parts.iteritems():
-            bodypart.wait_for_connections(0.5)
-        e = rospy.Time.now()
-        rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+        r = rospy.Rate(1.0)
+        rospy.loginfo("Waiting for ROS connections")
+        while not connected and (rospy.Time.now() - s).to_sec() < CONNECTION_TIMEOUT:
+            connected_hypot = True
+            for bodypart in self.parts.itervalues():
+                connected_hypot = connected_hypot and bodypart.wait_for_connections(0.1, log_failing_connections=False)
+            if connected_hypot:
+                connected = True
+                break
+            r.sleep()
+            rospy.loginfo("Will wait for another {} seconds".format(
+                CONNECTION_TIMEOUT - (rospy.Time.now() - s).to_sec()))
+
+        # If connected: log how low it took
+        if connected:
+            e = rospy.Time.now()
+            rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+        else:  # Else: check again but now do log the errors
+            for bodypart in self.parts.itervalues():
+                bodypart.wait_for_connections(0.1, log_failing_connections=True)
 
         if not self.operational:
             not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
@@ -93,7 +116,10 @@ class Robot(object):
         results = {}
         for partname, bodypart in self.parts.iteritems():
             rospy.logdebug("Resetting {}".format(partname))
-            bodypart.reset()
+            if self.robot_name == 'hero' and partname == 'torso':
+                rospy.logwarn("Skipping reset of %s", partname)
+            else:
+                bodypart.reset()
         return all(results.values())
 
     def standby(self):
