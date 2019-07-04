@@ -41,6 +41,7 @@ class TakeOutGarbage(smach.StateMachine):
 
         # drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
         helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.helper_waypoint)
+        end_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.end_waypoint)
         arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
 
         with self:
@@ -97,11 +98,18 @@ class TakeOutGarbage(smach.StateMachine):
                                        states.Say(robot, "Second bag has been dropped at the collection zone."
                                                          "All the thrash has been taken care of",
                                                   block=False),
-                                       transitions={'spoken': 'succeeded'})
+                                       transitions={'spoken': 'ANNOUNCE_END'})
 
             smach.StateMachine.add("ANNOUNCE_END",
                                    states.Say(robot, "I have finished taking out the trash.",
                                               block=False),
-                                   transitions={'spoken': 'succeeded'})
+                                   transitions={'spoken': 'NAVIGATE_OUT'})
+
+            smach.StateMachine.add("NAVIGATE_OUT",
+                                   states.NavigateToWaypoint(robot=robot,
+                                                             waypoint_designator=end_waypoint_designator),
+                                   transitions={"arrived": "succeeded",
+                                                "goal_not_defined": "succeeded",
+                                                "unreachable": "succeeded"})
 
 

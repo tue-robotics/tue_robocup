@@ -46,7 +46,7 @@ class IntroduceGuest(smach.StateMachine):
             smach.StateMachine.add('SAY_INTRO',
                                    states.SayFormatted(robot,
                                                        ["Hi {name}, let me introduce you our new guest {guest_name}. I'll show you in a bit"],
-                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.AttrDesignator(current_old_guest, "person_properties.name", resolve_type=str),
+                                                       name=ds.Designator(challenge_knowledge.operator_name) if assume_john else ds.Designator("folks"),
                                                        guest_name=guest_name_des,
                                                        block=False),
                                    transitions={'spoken': 'FIND_OLD_GUESTS'})

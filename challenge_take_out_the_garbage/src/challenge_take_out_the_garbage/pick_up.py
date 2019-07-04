@@ -88,7 +88,7 @@ class GrabTrash(smach.State):
     Set the arm in the prepare grasp position so it can safely go to the grasp position
     """
 
-    def __init__(self, robot, arm_designator, try_num=3, minimal_weight=0.1):
+    def __init__(self, robot, arm_designator, try_num=1, minimal_weight=0.1):
         """
         :param robot: robot object
         :param arm_designator: arm designator resolving to the arm with which to grab
@@ -168,9 +168,9 @@ class GrabTrash(smach.State):
         self._robot.base.force_drive(-0.1, 0, 0, 2.0)
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
-
-        if weight_object < self._minimal_weight:
-            return "failed"
+        #
+        # if weight_object < self._minimal_weight:
+        #     return "failed"
 
         self._robot.speech.speak("Look at this I can pick up the trash!")
         handed_entity = EntityInfo(id="trash")
@@ -252,35 +252,69 @@ class PickUpTrash(smach.StateMachine):
         place_pose_designator = ds.EmptySpotDesignator(robot, trashbin_designator)
 
         with self:
-            @cb_interface(outcomes=['done'])
-            def _joint_goal(_):
-                arm = arm_designator.resolve()
-                if not arm:
-                    rospy.logerr("Could not resolve arm")
-                    return "failed"
-                # Send to grab trash pose
-                arm.send_joint_goal('grab_trash_bag')
-                arm.wait_for_motion_done()
-                return 'done'
-
-            smach.StateMachine.add("JOINT_GOAL",
-                                   CBState(_joint_goal),
-                                   transitions={'done': 'GO_BIN'})
+            # @cb_interface(outcomes=['done'])
+            # def _joint_goal(_):
+            #     arm = arm_designator.resolve()
+            #     if not arm:
+            #         rospy.logerr("Could not resolve arm")
+            #         return "failed"
+            #     # Send to grab trash pose
+            #     arm.send_joint_goal('grab_trash_bag')
+            #     arm.wait_for_motion_done()
+            #     return 'done'
+            #
+            # smach.StateMachine.add("JOINT_GOAL",
+            #                        CBState(_joint_goal),
+            #                        transitions={'done': 'GO_BIN'})
 
             smach.StateMachine.add("GO_BIN",
                                    states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
                                                           arm_designator=arm_designator),
                                    transitions={"arrived": "GET_BIN_POSITION",
                                                 "goal_not_defined": "aborted",
-                                                "unreachable": "failed"})
+                                                "unreachable": "OPEN_DOOR_PLEASE"})
 
             smach.StateMachine.add("OPEN_DOOR_PLEASE",
                                    states.Say(robot, "Can you please open the door for me? It seems blocked!"),
-                                   transitions={"spoken": "GET_BIN_POSITION"})
+                                   transitions={"spoken": "WAIT_FOR_DOOR_OPEN"})
+
+            smach.StateMachine.add("WAIT_FOR_DOOR_OPEN",
+                                   states.WaitTime(robot=robot, waittime=5),
+                                   transitions={"waited": "GO_BIN2",
+                                                "preempted": "GO_BIN2"})
+
+            smach.StateMachine.add("GO_BIN2",
+                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
+                                                          arm_designator=arm_designator),
+                                   transitions={"arrived": "GET_BIN_POSITION",
+                                                "goal_not_defined": "aborted",
+                                                "unreachable": "failed"})
 
             smach.StateMachine.add("GET_BIN_POSITION", GetTrashBin(robot=robot, trashbin=trashbin_designator),
-                                   transitions={"succeeded": "GO_TO_NEW_BIN",
+                                   transitions={"succeeded": "JOINT_PATH",
                                                 "failed": "failed"})
+
+            @cb_interface(outcomes=['done'])
+            def _joint_path(_):
+                robot.head.cancel_goal()
+                arm = arm_designator.resolve()
+                if not arm:
+                    rospy.logerr("Could not resolve arm")
+                    return "failed"  # ToDo: fix
+                # Send to grab trash pose
+                arm._arm._send_joint_trajectory(
+                    [[0.01, 0.0, -1.57, -1.57, 0.0],
+                     [0.69, 0.0, -1.57, -1.57, 0.0],
+                     [0.65, -2.2, -1.57, -1.57, 0.],
+                     [0.65, -2.2, 0.0, -0.85, 0.]
+                     ]
+                )
+                arm.wait_for_motion_done()
+                return 'done'
+
+            smach.StateMachine.add("JOINT_PATH",
+                                   CBState(_joint_path),
+                                   transitions={'done': 'GO_TO_NEW_BIN'})
 
             smach.StateMachine.add("GO_TO_NEW_BIN",
                                    ControlToTrashBin(robot=robot, trashbin_id=trashbin_designator.id, radius=0.4,

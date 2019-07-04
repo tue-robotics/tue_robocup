@@ -133,7 +133,7 @@ class FindPeople(smach.State):
             success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
             found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
 
-            rospy.loginfo("Found {} people".format(len(found_people)))
+            rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
             found_people = [p for p in found_people if p]
             rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
