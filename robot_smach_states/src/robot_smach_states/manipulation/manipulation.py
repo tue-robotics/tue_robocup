@@ -80,11 +80,12 @@ class HandOver(smach.State):
         if not object_in_arm:
             rospy.logerr("Unoccupied arm sent to HandOverToHuman, arm should be occupied when entering this state.")
         else:
-            self.robot.speech.speak("I will open my gripper now.", block=False)
-            arm.send_gripper_goal('open')
             arm.wait_for_motion_done()
             self.robot.ed.update_entity(id=object_in_arm.id, action='remove')
 
+        # ToDo: Refactor this after RWC2019, gripper should not really open if arm is not occupied
+        self.robot.speech.speak("I will open my gripper now.", block=False)
+        arm.send_gripper_goal('open')
         arm.reset()
         arm.wait_for_motion_done()
 
