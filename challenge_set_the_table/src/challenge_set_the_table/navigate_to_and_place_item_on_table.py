@@ -87,13 +87,18 @@ class PlaceItemOnTable(StateMachine):
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
             return 'done'
 
-        @cb_interface(outcomes=['done'])
-        def _place_and_retract(_):
+        @cb_interface(outcomes=['done'], input_keys=["item_picked"])
+        def _place_and_retract(user_data):
             send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
             send_gripper_goal("open")
             robot.head.look_up()
             robot.head.wait_for_motion_done()
-            send_joint_goal([0.69, 0, -1.57, 0, 0])
+
+            item_name = user_data["item_picked"]
+            if item_name == 'plate':
+                send_joint_goal([0.69, 0, -1.57, 0, 0]) # TODO: Do a different joint goal/trajectory
+            else:
+                send_joint_goal([0.69, 0, -1.57, 0, 0])
             send_gripper_goal("close")
             robot.base.force_drive(-0.1, 0, 0, 1)  # Drive backwards at 0.1m/s for 1s, so 10cm
             arm.send_joint_goal("carrying_pose")
