@@ -222,7 +222,7 @@ def is_known_object(obj):
 
 def get_objects(category=None):
     return [obj["name"] for obj in objects
-                if category == None or category == obj["category"]]
+        if category == None or category == obj["category"]]
 
 
 def get_object_category(obj):
