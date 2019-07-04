@@ -368,3 +368,26 @@ class Turn(smach.State):
         self.robot.base.force_drive(0, 0, self.vth, self.radians / self.vth)
 
         return "turned"
+
+
+class ForceDrive(smach.State):
+    """ Force drives... """
+    def __init__(self, robot, vx, vy, vth, duration):
+        """ Constructor
+        :param robot: robot object
+        :param vx: velocity in x-direction
+        :param vy: velocity in y-direction
+        :param vth: yaw-velocity
+        :param duration: float indicating how long to drive
+        """
+        smach.State.__init__(self, outcomes=['done'])
+        self._robot = robot
+        self._vx = vx
+        self._vy = vy
+        self._vth = vth
+        self._duration = duration
+
+    def execute(self, userdata=None):
+        """ Executes the state """
+        self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
+        return 'done'
