@@ -60,10 +60,11 @@ def cluster_people(people_dicts, room_center, plot=False):
     return persons_closest_to_room_center.values()
 
 if __name__ == "__main__":
-    ppl_dicts = pickle.load(open('/home/loy/kmeans.pickle'))
+    import sys
+    ppl_dicts = pickle.load(open(sys.argv[1]))
     # ppl_dicts is a list of dicts {'rgb':..., 'person_detection':..., 'map_ps':...}
 
-    clustered_ppl = cluster_people(ppl_dicts, room_center = np.array([6, 0]), plot=True)
+    clustered_ppl = cluster_people(ppl_dicts, room_center=np.array([6, 0]), plot=True)
 
     xs2 = [person['map_ps'].point.x for person in clustered_ppl]
     ys2 = [person['map_ps'].point.y for person in clustered_ppl]
