@@ -18,7 +18,7 @@ class CheckAvailability(smach.State):
     """
 
     def __init__(self, robot, drink_designator, available_drinks_designator, unavailable_drink_designator,
-                 objects, max_tries=3, max_queries_per_try=3):
+                 objects, max_tries=6, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
@@ -199,7 +199,7 @@ class AskDrink(smach.StateMachine):
             # Tell the operator to stop fucking around!
             smach.StateMachine.add("SAY_BAD_OPERATOR",
                                    states.Say(robot=robot,
-                                              sentence="I'm not going to ask you again as I have already informed you twice that your request is unavailable",
+                                              sentence="I'm not going to ask you again as I have already informed you multiple times that your request is unavailable",
                                               look_at_standing_person=True),
                                    transitions={"spoken": "aborted"})
 
