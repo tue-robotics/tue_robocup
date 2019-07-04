@@ -23,7 +23,9 @@ item_vector_dict = {
     "cup": PyKDL.Vector(0.2, -0.2, 0),
     "knife": PyKDL.Vector(0, -0.2, 0),
     "fork": PyKDL.Vector(0, 0.2, 0),
-    "spoon": PyKDL.Vector(0, -0.25, 0)
+    "spoon": PyKDL.Vector(0, -0.25, 0),
+    "bowl": PyKDL.Vector(0, 0, 0),  # Must go on top of the dish
+    "napkin": PyKDL.Vector(0, 0.25, 0)  # besides the fork
 }
 
 def item_vector_to_item_frame(item_vector):
