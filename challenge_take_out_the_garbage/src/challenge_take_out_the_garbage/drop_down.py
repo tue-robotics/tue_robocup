@@ -38,10 +38,14 @@ class DropTrash(smach.StateMachine):
         arm.wait_for_motion_done()
         arm.send_gripper_goal('open')
         arm.wait_for_motion_done()
+        arm._arm._send_joint_trajectory(
+            [[0.40, -0.3, 0.0, -1.37, 0.0],[0.40, -0.4, 0.0, -1.37, 0.0], [0.40, -0.3, 0.0, -1.37, 0.0],
+             [0.40, -0.4, 0.0, -1.37, 0.0]])
+        arm.wait_for_motion_done()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
-        arm.send_gripper_goal('close')
-        arm.wait_for_motion_done()
+        # arm.send_gripper_goal('close')
+        # arm.wait_for_motion_done()
         return "succeeded"
 
 
