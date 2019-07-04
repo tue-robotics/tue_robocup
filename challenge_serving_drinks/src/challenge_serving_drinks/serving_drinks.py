@@ -94,6 +94,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
             return "done"
         elif unavailable_drinks_count == self._max_unavailable_drinks:
             self._unavailable_drink_designator.write(unavailable_drink[0])
+            return "done"
         else:
             # Even if no unavailable drink is found, return failed
             rospy.loginfo("Unavailable drinks count: {}".format(unavailable_drinks_count))
