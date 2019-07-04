@@ -6,11 +6,24 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from robot_skills.util.entity import Entity
-from robot_skills.robot import Robot
 
 # Serving drinks
 from .sd_states import DescriptionStrDesignator
 from .get_order import GetOrder
+
+
+class CheckBool(smach.State):
+    def __init__(self, check_designator):
+        super(CheckBool, self).__init__(outcomes=["true", "false"])
+        ds.check_type(check_designator, bool)
+        self._check_designator = check_designator
+
+    def execute(self, userdata=None):
+        val = self._check_designator.resolve() if hasattr(self._check_designator, "resolve") else self._check_designator
+        if val:
+            return "true"
+        else:
+            return "false"
 
 
 class ServeOneDrink(smach.StateMachine):
@@ -19,7 +32,6 @@ class ServeOneDrink(smach.StateMachine):
     """
     def __init__(self, robot, bar_designator, room_id, room_designator,
                  objects_list_des, unav_drink_des, name_options, objects):
-        # type: (Robot, int) -> str
         """
         Initialization method
         :param robot: robot api object
@@ -35,15 +47,23 @@ class ServeOneDrink(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
         # Designators
-        arm_designator = ds.UnoccupiedArmDesignator(robot=robot, arm_properties={}, name='arm_des')
+        arm_designator = ds.UnoccupiedArmDesignator(robot=robot,
+                                                    arm_properties={},
+                                                    name='arm_des').lockable()
 
         drink_str_designator = ds.VariableDesignator(resolve_type=str, name='drink_str_des')
         drink_designator = ds.EdEntityDesignator(robot=robot, type_designator=drink_str_designator, name='drink_des')
 
         operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
         operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
+        learn_check_designator = ds.VariableDesignator(initial_value=True, resolve_type=bool, name='learn_check_des')
 
         with self:
+
+            # Lock the arm_designator
+            smach.StateMachine.add("LOCK_ARM",
+                                   states.LockDesignator(arm_designator),
+                                   transitions={'locked': "GET_ORDER"})
 
             # Get order
             smach.StateMachine.add("GET_ORDER",
@@ -53,9 +73,12 @@ class ServeOneDrink(smach.StateMachine):
                                             available_drinks_designator=objects_list_des,
                                             unavailable_drink_designator=unav_drink_des,
                                             name_options=name_options,
-                                            objects=objects),
+                                            objects=objects,
+                                            learn_check_designator=learn_check_designator.writeable,
+                                            target_room_designator=room_designator),
                                    transitions={"succeeded": "INSPECT_BAR",
-                                                "failed": "failed"})  # ToDo: fallback?
+                                                "failed": "failed",
+                                                "aborted": "aborted"})
 
             # Inspect bar
             smach.StateMachine.add("INSPECT_BAR",
@@ -81,21 +104,35 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add("HANDOVER_FROM_HUMAN",
                                    states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                             grabbed_entity_designator=drink_designator),
-                                   transitions={"succeeded": "FIND_OPERATOR",
-                                                "failed": "FIND_OPERATOR",  # ToDo: fallback?
-                                                "timeout": "FIND_OPERATOR"})  # ToDo: fallback?
+                                   transitions={"succeeded": "CHECK_LEARN_OPERATOR",
+                                                "failed": "CHECK_LEARN_OPERATOR",
+                                                "timeout": "CHECK_LEARN_OPERATOR"})
 
+            smach.StateMachine.add("CHECK_LEARN_OPERATOR",
+                                   CheckBool(learn_check_designator),
+                                   transitions={"true": "FIND_OPERATOR",
+                                                "false": "GO_TO_ROOM"})
+
+            smach.StateMachine.add("GO_TO_ROOM",
+                                   states.NavigateToRoom(robot=robot,
+                                                         entity_designator_room=room_designator),
+                                   transitions={"arrived": "SAY_NOT_FOUND",
+                                                "unreachable": "failed",
+                                                "goal_not_defined": "aborted"})
             # Find operator
             smach.StateMachine.add("FIND_OPERATOR",
-                                   states.FindPersonInRoom(robot=robot, area=room_id,
-                                                           name=operator_name, discard_other_labels=True,
+                                   states.FindPersonInRoom(robot=robot,
+                                                           area=room_id,
+                                                           name=operator_name,
+                                                           discard_other_labels=True,
                                                            found_entity_designator=operator_designator.writeable),
                                    transitions={"found": "GOTO_OPERATOR",
                                                 "not_found": "SAY_NOT_FOUND"})
 
             # Move to this person
             smach.StateMachine.add("GOTO_OPERATOR",
-                                   states.NavigateToObserve(robot=robot, entity_designator=operator_designator),
+                                   states.NavigateToObserve(robot=robot,
+                                                            entity_designator=operator_designator),
                                    transitions={"arrived": "SAY_THE_NAME",
                                                 "unreachable": "SAY_NOT_FOUND",
                                                 "goal_not_defined": "SAY_NOT_FOUND"})
@@ -104,25 +141,34 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add("SAY_NOT_FOUND",
                                    states.Say(robot=robot,
                                               sentence=DescriptionStrDesignator("not_found_operator",
-                                                                                drink_str_designator, operator_name),
+                                                                                drink_str_designator,
+                                                                                operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "HAND_OVER"})
 
             # Say the name
             smach.StateMachine.add("SAY_THE_NAME",
                                    states.Say(robot=robot,
-                                              sentence=DescriptionStrDesignator("found_operator", drink_str_designator,
+                                              sentence=DescriptionStrDesignator("found_operator",
+                                                                                drink_str_designator,
                                                                                 operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "HAND_OVER"})
 
             # Hand over the drink to the operator
             smach.StateMachine.add("HAND_OVER",
-                                   states.HandoverToHuman(robot=robot, arm_designator=arm_designator),
-                                   transitions={"succeeded": "RETURN_TO_ROOM","failed": "RETURN_TO_ROOM"})
+                                   states.HandoverToHuman(robot=robot,
+                                                          arm_designator=arm_designator),
+                                   transitions={"succeeded": "UNLOCK_ARM",
+                                                "failed": "UNLOCK_ARM"})
+
+            smach.StateMachine.add("UNLOCK_ARM",
+                                   states.UnlockDesignator(arm_designator),
+                                   transitions={'unlocked': "RETURN_TO_ROOM"})
 
             smach.StateMachine.add("RETURN_TO_ROOM",
-                                   states.NavigateToRoom(robot=robot, entity_designator_room=room_designator),
+                                   states.NavigateToRoom(robot=robot,
+                                                         entity_designator_room=room_designator),
                                    transitions={"arrived": "succeeded",
                                                 "unreachable": "failed",
                                                 "goal_not_defined": "aborted"})
