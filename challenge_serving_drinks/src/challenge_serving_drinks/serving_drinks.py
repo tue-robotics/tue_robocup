@@ -68,7 +68,7 @@ class IdentifyUnavailableDrinkFromRecognitions(smach.State):
 
     def execute(self, userdata=None):
         classification_list = self._classification_list_designator.resolve() if hasattr(self._classification_list_designator, "resolve") else self._classification_list_designator
-        classification_list = [classification.id for classification in classification_list]
+        classification_list = set([classification.type for classification in classification_list])
 
         if not classification_list:
             return "failed"
@@ -130,7 +130,7 @@ class ServingDrinks(smach.StateMachine):
             smach.StateMachine.add("CHECK_INSPECT_RESULT",
                                    CheckInspect(objects_list_des,
                                                 [ClassificationResult]),
-                                   transitions={"true": "NAVIGATE_TO_ROOM",
+                                   transitions={"true": "IDENTIFY_UNAVAILABLE_DRINK",
                                                 "false": "INSPECT_FALLBACK"})
 
 
