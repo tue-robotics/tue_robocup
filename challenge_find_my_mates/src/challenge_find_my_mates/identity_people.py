@@ -24,7 +24,7 @@ class IdentifyPeople(smach.State):
         """
         :param robot:
         :param found_people_designator: People to identify
-        :type found_people_designator: ds.VariableDesignator
+        :type found_people_designator: ds.Designator
         :param identified_people_designator:
         :type identified_people_designator: ds.VariableWriter
         """
@@ -124,8 +124,20 @@ if __name__ == "__main__":
         rospy.init_node('test_find_emtpy_seat')
         robot = get_robot(robot_name)
 
-        sm = IdentifyPeople(robot)
-        sm.execute()
+        image_data = robot.perception.get_rgb_depth_caminfo()
+        success, found_people_ids = robot.ed.detect_people(*image_data)
+
+        rospy.loginfo("ED reports these people found: {}".format(found_people_ids))
+        entities = [robot.ed.get_entity(i) for i in found_people_ids]
+
+        found_people = ds.Designator([e for e in entities if e])
+        identified_ppl = ds.VariableDesignator(resolve_type=[Entity])
+
+        sm = IdentifyPeople(robot, found_people, identified_ppl.writeable)
+        sm.execute(None)
+
+        for person in identified_ppl.resolve():
+            rospy.loginfo("{} = {}".format(person.id, person.person_prooperties.name))
     else:
         print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
         exit(1)
