@@ -1,7 +1,15 @@
-# WHERE IS THIS KNOWLEDGE FILE ROBOTICS TESTLABS
+# System
+from collections import namedtuple
 
 # TU/e Robotics
 from robocup_knowledge import knowledge_loader
+
+BackupScenario = namedtuple("BackupScenario", ["entity_id", "sentence"])
+backup_scenarios = [
+    BackupScenario("fridge", "I will take you to the fridge for a cold beer"),
+    BackupScenario("bed", "You look tired, I will take you to the bed"),
+    BackupScenario("desk", "I'll have you sit down at the desk so you can work on my speech recognition skills"),
+]
 
 # Common knowledge
 common = knowledge_loader.load_knowledge("common")
