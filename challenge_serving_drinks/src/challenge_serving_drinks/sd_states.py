@@ -1,6 +1,5 @@
 # System
 import random
-import math
 
 # ROS
 import rospy
@@ -11,9 +10,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from hmi import TimeoutException
-from robocup_knowledge import knowledge_loader
-from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from Queue import Queue, Empty
 
 
 class CheckAvailability(smach.State):
@@ -206,6 +202,7 @@ class AskDrink(smach.StateMachine):
                                               sentence="I'm not going to ask you again as I have already informed you twice that your request is unavailable",
                                               look_at_standing_person=True),
                                    transitions={"spoken": "aborted"})
+
 
 class AskAvailability(smach.State):
     """ Asks the bartender which is the unavailable drink.
