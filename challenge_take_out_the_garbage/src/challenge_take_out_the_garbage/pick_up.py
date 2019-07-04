@@ -301,7 +301,7 @@ class PickUpTrash(smach.StateMachine):
                     rospy.logerr("Could not resolve arm")
                     return "failed"  # ToDo: fix
                 # Send to grab trash pose
-                arm._send_joint_trajectory(
+                arm._arm._send_joint_trajectory(
                     [[0.01, 0.0, -1.57, -1.57, 0.0],
                      [0.69, 0.0, -1.57, -1.57, 0.0],
                      [0.65, -2.2, -1.57, -1.57, 0.],
