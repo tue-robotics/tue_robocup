@@ -56,21 +56,32 @@ class UpdateUnavailableDrinkList(smach.State):
 
 
 class IdentifyUnavailableDrinkFromRecognitions(smach.State):
-    def __init__(self, objects, objects_list_des, unavailable_drink_designator):
+    def __init__(self, objects, classification_list_designator, unavailable_drink_designator):
         super(IdentifyUnavailableDrinkFromRecognitions, self).__init__(outcomes=["done", "failed"])
         ds.is_writable(unavailable_drink_designator)
         ds.check_type(unavailable_drink_designator, str)
-        ds.check_type(objects_list_des, [ClassificationResult])
+        ds.check_type(classification_list_designator, [ClassificationResult])
 
-        self._objects = objects
-        self._objects_list_des = objects_list_des
+        self._drinks_list = [obj["name"] for obj in objects if obj["category"] == "drink"]
+        self._classification_list_designator = classification_list_designator
         self._unavailable_drink_designator = unavailable_drink_designator
 
     def execute(self, userdata=None):
-        objects_classification_list = self._objects_list_des.resolve() if hasattr(self._objects_list_des, "resolve") else self._objects_list_des
+        classification_list = self._classification_list_designator.resolve() if hasattr(self._classification_list_designator, "resolve") else self._classification_list_designator
+        classification_list = [classification.id for classification in classification_list]
 
-        for common_object in self._objects:
-            pass
+        if not classification_list:
+            return "failed"
+
+        for drink in self._drinks_list:
+            if drink not in classification_list:
+                # TODO: Generalize selection of unavailable drink better
+                # Write the first unavailable drink and return
+                self._unavailable_drink_designator.write(drink)
+                return "done"
+
+        # Even if no unavailable drink is found, return done
+        return "done"
 
 
 class ServingDrinks(smach.StateMachine):
