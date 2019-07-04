@@ -6,6 +6,6 @@ from challenge_serving_drinks import ServingDrinks
 
 
 if __name__ == '__main__':
-    rospy.init_node('state_machine')
+    rospy.init_node('challenge_serving_drink')
 
     startup(ServingDrinks)
