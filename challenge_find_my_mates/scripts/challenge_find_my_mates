@@ -13,7 +13,7 @@ challenge_knowledge = load_knowledge('challenge_find_my_mates')
 STARTING_POINT = challenge_knowledge.starting_point
 ROOM_ID = challenge_knowledge.room
 SEARCH_POINT = challenge_knowledge.search_point
-OPERATOR_POINT = challenge_knowledge.starting_point
+OPERATOR_POINT = challenge_knowledge.operator_point
 
 
 def setup_statemachine(robot):
