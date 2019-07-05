@@ -4,6 +4,7 @@
 import rospy
 import tf
 import geometry_msgs
+import visualization_msgs.msg
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
@@ -42,6 +43,12 @@ class Robot(object):
 
         self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
         self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
+
+        self.marker_array_pub = rospy.Publisher(
+            "/" + self.robot_name + "/visualization_marker_array",
+            visualization_msgs.msg.MarkerArray,
+            queue_size=1,
+        )
 
         # Check hardware status
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
