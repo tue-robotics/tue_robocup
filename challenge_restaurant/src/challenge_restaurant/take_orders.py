@@ -83,7 +83,7 @@ class TakeOrder(smach.State):
             try:
                 order_string = " and a ".join(speech_result.semantics)
                 self._robot.speech.speak("I understood that you would like a {}, "
-                                         "is this correct?)".format(order_string), block=True)
+                                         "is this correct?".format(order_string), block=True)
             except:
                 continue
 

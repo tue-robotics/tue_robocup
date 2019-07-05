@@ -57,7 +57,7 @@ class Restaurant(smach.StateMachine):
                                                           speak=True,
                                                           look_range=(-np.pi/4, np.pi/4),
                                                           look_steps=4,
-                                                          search_timeout=600), # 10 minutes
+                                                          search_timeout=600),  # 10 minutes
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
 
@@ -84,7 +84,7 @@ class Restaurant(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
                                    states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
-                                                            radius=1.1),
+                                                            radius=0.8),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
@@ -145,7 +145,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
-                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   states.WaitTime(robot=robot, waittime=10.0),
                                    transitions={'waited': 'BRING_OBJECTS',
                                                 'preempted': 'STOP'})
 
@@ -177,7 +177,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
-                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   states.WaitTime(robot=robot, waittime=10.0),
                                    transitions={'waited': 'RETURN_TO_START',
                                                 'preempted': 'STOP'})
 
