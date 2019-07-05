@@ -15,7 +15,7 @@ knowledge = load_knowledge("challenge_where_is_this")
 INFORMATION_POINT_ID = knowledge.information_point_id
 INITIAL_POSE_ID = knowledge.initial_pose_id
 
-START_ROBUST = True  # Set this flag to False if you don"t want to use StartChallengeRobust
+START_ROBUST = False  # Set this flag to False if you don"t want to use StartChallengeRobust
 
 
 class WhereIsThis(smach.StateMachine):
