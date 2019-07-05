@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>challenge_hand_me_that</name>
+  <version>0.0.0</version>
+  <description>
+    A guest at the party speaks English, but with only a limited vocabulary. The robot will assist them in obtaining things that they gesture for.
+  </description>
+
+  <maintainer email="reinzor@gmail.com">Rein Appeldoorn</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>robot_skills</exec_depend>
+  <exec_depend>robot_smach_states</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>smach</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>tf_conversions</exec_depend>
+</package>

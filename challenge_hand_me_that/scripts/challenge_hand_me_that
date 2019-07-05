@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2019, TU/e Robotics, Netherlands
+# All rights reserved.
+#
+# \author Rein Appeldoorn
+
+from __future__ import print_function
+
+import os
+
+import rospy
+import smach
+from robot_smach_states import StartChallengeRobust, Say, VariableDesignator, Entity, startup
+from smach import StateMachine
+
+from challenge_hand_me_that.get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
+from robocup_knowledge import load_knowledge
+
+challenge_knowledge = load_knowledge('challenge_hand_me_that')
+
+STARTING_POINT = challenge_knowledge.starting_point
+
+
+def setup_state_machine(robot):
+    state_machine = StateMachine(outcomes=['done'])
+
+    furniture_designator = VariableDesignator(resolve_type=Entity)
+
+    with state_machine:
+        # Intro
+        smach.StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
+                               transitions={'Done': 'GO_TO_SEARCH_POSE',
+                                            'Aborted': 'aborted',
+                                            'Failed': 'GO_TO_SEARCH_POSE'})
+
+        StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
+                         transitions={'spoken': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
+
+        # The pre-work
+        StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
+                         GetFurnitureFromOperatorPose(robot, furniture_designator.writeable),
+                         transitions={'done': 'JANNO'})
+
+        StateMachine.add('JANNO',
+                         Say(robot, "Janno, you are up!"),
+                         transitions={'spoken': 'done'})
+
+    return state_machine
+
+
+if __name__ == '__main__':
+    challenge_name = os.path.basename(__file__)
+    rospy.init_node(challenge_name)
+    startup(setup_state_machine, challenge_name=challenge_name)
