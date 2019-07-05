@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import math
-
+import numpy as np
 import robot_smach_states as states
 import smach
 
@@ -53,7 +53,9 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    states.FindFirstPerson(robot, customer_designator.writeable,
                                                           properties={'tags': ['LWave', 'RWave']},
-                                   strict=False, nearest=True),
+                                                          strict=False, nearest=True,
+                                                          look_range=(-np.pi/4, np.pi/4),
+                                                          look_steps=4),
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
 
