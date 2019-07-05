@@ -35,7 +35,7 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     base_pose = robot.base.get_location()
     expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
 
-    rospy.loginfo("\n\tBase pos, expected person pos: {}, {}".format(base_pose.p, expected_person_pos))
+    rospy.loginfo("\n\tBase pos, expected person pos: {}, {}".format(base_pose.frame.p, expected_person_pos))
     for person in found_people:
         rospy.loginfo("\n\tPerson at {}, distance: {} (radius = {})".format(
             person.pose.frame.p,
