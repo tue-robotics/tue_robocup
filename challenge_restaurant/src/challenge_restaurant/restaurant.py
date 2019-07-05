@@ -52,7 +52,8 @@ class Restaurant(smach.StateMachine):
             # Implement new find state to detect nearest waving person
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
                                    states.FindFirstPerson(robot, customer_designator.writeable,
-                                                          properties={'tags': ['LWave', 'RWave']}, nearest=True),
+                                                          properties={'tags': ['LWave', 'RWave']},
+                                   strict=False, nearest=True),
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
 
