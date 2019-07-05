@@ -57,8 +57,9 @@ class EntityFromHmiResults(ds.Designator):
 
         :return: entity in the <area_description> of the <surface_designator> that is closest to the robot
         """
-        sem = self._hmi_result_des.resolve().semantics
-        entity_id = sem["target-location"]["id"]
+        entity_id = self._hmi_result_des.resolve().semantics
+        if entity_id is None:
+            return None
 
         entities = self._robot.ed.get_entities(id=entity_id, parse=self.parse)
         if entities:
@@ -237,7 +238,7 @@ class InformMachine(smach.StateMachine):
                     backup = BACKUP_SCENARIOS.pop(0)
                     robot.speech.speak("I am sorry but I did not hear you", mood="sad", block=False)
                     robot.speech.speak(backup.sentence, block=False)
-                    self.answer_des.writeable.write(HMIResult("", {"target-location": {"id": backup.entity_id}}))
+                    self.answer_des.writeable.write(HMIResult("", backup.entity_id))
                     return "fallback"
 
                 rospy.loginfo("HMI failed for the {} time out of {}, retrying".format(
