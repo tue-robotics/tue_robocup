@@ -18,6 +18,7 @@ from .inform_machine import InformMachine
 knowledge = load_knowledge("challenge_where_is_this")
 INFORMATION_POINT_ID = knowledge.information_point_id
 INITIAL_POSE_ID = knowledge.initial_pose_id
+START_GRAMMAR = knowledge.starting_point_grammar
 GRAMMAR = knowledge.location_grammar
 
 START_ROBUST = True  # Set this flag to False if you don"t want to use StartChallengeRobust
@@ -50,7 +51,7 @@ class WhereIsThis(smach.StateMachine):
                 smach.StateMachine.add("WAIT_WHERE_TO_GO",
                                        states.HearOptionsExtra(
                                            robot=robot,
-                                           spec_designator=ds.Designator(initial_value=GRAMMAR),
+                                           spec_designator=ds.Designator(initial_value=START_GRAMMAR),
                                            speech_result_designator=hmi_result_des.writeable),
                                        transitions={"heard": "NAV_TO_START",
                                                     "no_result": "STORE_STARTING_POSE"})  # ToDo: add fallbacks
