@@ -54,6 +54,7 @@ class Restaurant(smach.StateMachine):
                                    states.FindFirstPerson(robot, customer_designator.writeable,
                                                           properties={'tags': ['LWave', 'RWave']},
                                                           strict=False, nearest=True,
+                                                          speak=True,
                                                           look_range=(-np.pi/4, np.pi/4),
                                                           look_steps=4),
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
