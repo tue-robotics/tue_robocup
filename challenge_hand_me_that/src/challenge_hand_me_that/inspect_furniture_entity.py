@@ -26,19 +26,21 @@ RATIO_LIMIT = 4.0
 
 
 class InspectFurniture(smach.StateMachine):
-    def __init__(self, robot, furniture_designator):
+    def __init__(self, robot, furniture_designator, entity_designator):
         # type: (Robot, object) -> None
         """
         Drives to the designated furniture object, inspects this and selects the entity that will be pointed to
 
         :param robot: (Robot) robot API object
         :param furniture_designator: (EdEntityDesignator) designates the furniture object that was pointed to.
+        :param entity_designator: (EdEntityDesignator) writeable EdEntityDesignator
         """
         # ToDo: we need to add userdata
         smach.StateMachine.__init__(self,
                                     outcomes=["succeeded", "failed"],
                                     input_keys=["laser_dot"])
 
+        assert ds.is_writeable(entity_designator), "Entity designator must be writeable for this purpose"
         object_ids_des = ds.VariableDesignator([], resolve_type=[states.ClassificationResult])
 
         with self:
@@ -73,7 +75,8 @@ class InspectFurniture(smach.StateMachine):
                 :param userdata: (dict)
                 :return: (srt) outcome
                 """
-                # ToDo: check frame ids
+                assert userdata.laser_dot.header.frame_id.endswith("map"), "Provide your laser  dot in map frame"
+
                 # Extract classification results
                 entity_ids = [cr.id for cr in object_ids_des.resolve()]
                 rospy.loginfo("Segmented entities: {}".format(entity_ids))
@@ -110,6 +113,7 @@ class InspectFurniture(smach.StateMachine):
                 closest_tuple = (None, None)
                 x_ref = userdata.laser_dot.point.x
                 y_ref = userdata.laser_dot.point.y
+                # ToDo: use sorting for this...
                 for e in candidates:  # type: Entity
                     x_e = e.pose.frame.p.x()
                     y_e = e.pose.frame.p.y()
@@ -120,6 +124,7 @@ class InspectFurniture(smach.StateMachine):
                         closest_tuple = (e, distance_2d)
 
                 rospy.loginfo("Best entity: {} at {}".format(closest_tuple[0].id, closest_tuple[1]))
+                entity_designator.write(closest_tuple[0])
 
                 return "succeeded"
 
