@@ -126,12 +126,13 @@ class PlaceItemOnTable(StateMachine):
             if item_name in ['plate', 'napkin']:
                 # TODO: Do a different joint goal/trajectory
                 send_joint_goal(pleg)
-                send_joint_goal(pweg)
+ #               send_joint_goal(pweg)
             else:
                 send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
 
             rospy.loginfo("Dropping...")
             send_gripper_goal("open")
+            send_joint_goal(pweg)
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
