@@ -110,7 +110,7 @@ class EnterArena(smach.StateMachine):
             print("TODO: IMPLEMENT THIS STATE")
             return "no_goal"
 
-    class ForceDrive(smach.State):
+    class ForceDrive(smach.State):  # ToDo: remove and use navigation.ForceDrive. Put ed.reset somewhere else
         def __init__(self, robot):
             """
             Force drive through the door
