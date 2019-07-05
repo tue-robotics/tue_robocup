@@ -22,7 +22,7 @@ from std_msgs.msg import ColorRGBA
 from tf_conversions import toMsg
 
 item_vector_dict = {
-    "plate": PyKDL.Vector(0, -0.1, 0),
+    "plate": PyKDL.Vector(0, 0.2, 0),
     "cup": PyKDL.Vector(0.2, -0.2, 0),
     "knife": PyKDL.Vector(0, -0.2, 0),
     "fork": PyKDL.Vector(0, 0.15, 0),
