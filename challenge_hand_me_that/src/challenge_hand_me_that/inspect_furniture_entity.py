@@ -19,6 +19,11 @@ from robot_skills import get_robot_from_argv
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
 
+# Items with x- or y-dimension larger than this value will be filtered out
+SIZE_LIMIT = 0.2
+# Items with a ratio between x- and y-dimensions outside this value are considered 'faulty' segmentations
+RATIO_LIMIT = 4.0
+
 
 class InspectFurniture(smach.StateMachine):
     def __init__(self, robot, furniture_designator):
@@ -77,9 +82,27 @@ class InspectFurniture(smach.StateMachine):
                 all_entities = robot.ed.get_entities()
                 segmented_entities = [e for e in all_entities if e.id in entity_ids]
 
-                # ToDo: filter out 'unprobable' entities
+                # Filter out 'unprobable' entities
+                candidates = []
+                for entity in segmented_entities:  # type: Entity
 
-                if not segmented_entities:
+                    # The following filtering has been 'copied' from the cleanup challenge
+                    # It can be considered a first step but does not take the orientation of the convex hull into
+                    # account
+                    shape = entity.shape
+                    size_x = max(shape.x_max - shape.x_min, 0.001)
+                    size_y = max(shape.y_max - shape.y_min, 0.001)
+
+                    if size_x > SIZE_LIMIT or size_y > SIZE_LIMIT:
+                        continue
+
+                    if not 1 / min(RATIO_LIMIT, 1000) <= size_x / size_y <= min(RATIO_LIMIT, 1000):
+                        continue
+
+                    candidates.append(entity)
+
+                # If no entities left: don't bother continuing
+                if not candidates:
                     rospy.logwarn("No 'probable' entities left")
                     return "no_entities"
 
@@ -87,7 +110,7 @@ class InspectFurniture(smach.StateMachine):
                 closest_tuple = (None, None)
                 x_ref = userdata.laser_dot.point.x
                 y_ref = userdata.laser_dot.point.y
-                for e in segmented_entities:  # type: Entity
+                for e in candidates:  # type: Entity
                     x_e = e.pose.frame.p.x()
                     y_e = e.pose.frame.p.y()
                     distance_2d = math.hypot(x_ref - x_e, y_ref - y_e)
