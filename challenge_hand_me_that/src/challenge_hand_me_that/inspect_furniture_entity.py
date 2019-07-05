@@ -73,7 +73,7 @@ class InspectFurniture(smach.StateMachine):
                 at.
 
                 :param userdata: (dict)
-                :return: (srt) outcome
+                :return: (str) outcome
                 """
                 assert userdata.laser_dot.header.frame_id.endswith("map"), "Provide your laser  dot in map frame"
 
