@@ -31,6 +31,10 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     success, found_people_ids = robot.ed.detect_people(*image_data)
     found_people = [robot.ed.get_entity(id_) for id_ in found_people_ids]
 
+    rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
+    found_people = [p for p in found_people if p]
+    rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
+
     # Assume the operator is around 1.0 m behind the robot
     base_pose = robot.base.get_location()
     expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
@@ -169,7 +173,7 @@ class TourGuide(object):
 
 class ExecutePlanGuidance(smach.State):
     """
-    Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
+    Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for
     operator" is returned.
     """
     def __init__(self, robot):
@@ -181,7 +185,7 @@ class ExecutePlanGuidance(smach.State):
         # self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
         # defined by the follow distance
         self._tourguide = TourGuide(robot)
-        
+
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
