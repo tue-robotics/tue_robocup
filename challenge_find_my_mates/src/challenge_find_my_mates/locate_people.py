@@ -80,13 +80,13 @@ class LocatePeople(StateMachine):
 
             sentences = deque([
                 "Hi there mates, where are you, please look at me!",
-                "You are all looking great today! Keep looking at my camera",
-                "I am looking for my mates, lalalalaa!"
+                "I am looking for my mates! Dippi dee doo! Pew pew!",
+                "You are all looking great today! Keep looking at my camera. I like it when everybody is staring at me!"
             ])
             while len(PERSON_DETECTIONS) < 4 and not rospy.is_shutdown():
-                sentences.rotate(1)
-                robot.speech.speak(sentences[0], block=False)
                 for _ in range(NUM_LOOKS):
+                    sentences.rotate(1)
+                    robot.speech.speak(sentences[0], block=False)
                     for head_goal in head_goals:
                         robot.head.look_at_point(head_goal)
                         robot.head.wait_for_motion_done()
