@@ -240,7 +240,9 @@ class FindFirstPerson(smach.StateMachine):
                  strict=True,
                  nearest=False,
                  attempts=1,
-                 search_timeout=60):
+                 search_timeout=60,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Initialization method
         :param robot: robot api object
         :param properties: (dict) keyvalue pair of the properties a person must
@@ -257,6 +259,8 @@ class FindFirstPerson(smach.StateMachine):
         :param nearest: (bool) If True, selects the person nearest to the robot
         :param attempts: (int) Max number of search attempts
         :param search_timeout: (float) maximum time the robot is allowed to search
+        :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
+        :param look_steps: How many steps does it take in that range (default = 8)
         """
         super(FindFirstPerson, self).__init__(outcomes=["found", "failed"])
         ds.is_writeable(found_person_designator)
@@ -276,7 +280,9 @@ class FindFirstPerson(smach.StateMachine):
                          strict=strict,
                          nearest=nearest,
                          attempts=attempts,
-                         search_timeout=search_timeout),
+                         search_timeout=search_timeout,
+                         look_range=look_range,
+                         look_steps=look_steps),
                      transitions={
                          'found': 'GET_FIRST_ITERATE',
                          'failed': 'failed'
@@ -396,7 +402,9 @@ class FindPeopleInRoom(smach.StateMachine):
     in that room.
     """
 
-    def __init__(self, robot, room, found_people_designator):
+    def __init__(self, robot, room, found_people_designator,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
@@ -438,7 +446,9 @@ class FindPeopleInRoom(smach.StateMachine):
                                    FindPeople(robot=robot,
                                               query_entity_designator=room_designator,
                                               found_people_designator=found_people_designator,
-                                              speak=True),
+                                              speak=True,
+                                              look_range=look_range,
+                                              look_steps=look_steps),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
