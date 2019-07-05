@@ -22,7 +22,7 @@ from std_msgs.msg import ColorRGBA
 from tf_conversions import toMsg
 
 item_vector_dict = {
-    "plate": PyKDL.Vector(0, 0, 0),
+    "plate": PyKDL.Vector(0, -0.1, 0),
     "cup": PyKDL.Vector(0.2, -0.2, 0),
     "knife": PyKDL.Vector(0, -0.2, 0),
     "fork": PyKDL.Vector(0, 0.2, 0),
@@ -47,7 +47,7 @@ pleg = [0.69, -1.2, 0, -1.57, 0]  # TODO Henk
 def item_vector_to_item_frame(item_vector):
     frame = PyKDL.Frame(
         PyKDL.Rotation.RPY(0, 0, -math.pi / 2),
-        PyKDL.Vector(0, 0.75, 0)
+        PyKDL.Vector(0, 0.55, 0)
     )
 
     item_placement_vector = item_vector
