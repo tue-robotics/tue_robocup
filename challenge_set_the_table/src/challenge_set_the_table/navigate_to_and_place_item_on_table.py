@@ -43,6 +43,8 @@ color_dict = {
 
 pboven = [0.69, -1.5, -1.4, -1.5, -0.3]
 pleg = [0.58, -1.75, -1.4, -1.5, 0.3]
+pweg = [0.69, -1.75, -1.0, -1.5, 0.3]
+
 
 def item_vector_to_item_frame(item_vector):
     frame = PyKDL.Frame(
@@ -60,6 +62,7 @@ def item_vector_to_item_frame(item_vector):
 
     return item_frame
 
+
 def item_frame_to_pose(item_frame, frame_id):
     goal_pose = PoseStamped()
     goal_pose.header.stamp = rospy.Time.now()
@@ -67,6 +70,7 @@ def item_frame_to_pose(item_frame, frame_id):
     goal_pose.pose = toMsg(item_frame)
 
     return goal_pose
+
 
 class PlaceItemOnTable(StateMachine):
     def __init__(self, robot, table_id, placement_height):
@@ -121,7 +125,8 @@ class PlaceItemOnTable(StateMachine):
             item_name = user_data["item_picked"]
             if item_name in ['plate', 'napkin']:
                 # TODO: Do a different joint goal/trajectory
-                send_joint_trajectory([pleg])
+                send_joint_goal(pleg)
+                send_joint_goal(pweg)
             else:
                 send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
 
