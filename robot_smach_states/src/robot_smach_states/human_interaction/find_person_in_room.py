@@ -38,7 +38,8 @@ class FindPerson(smach.State):
     """
 
     def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
-                 discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True):
+                 discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True,
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Initialization method
         :param robot: robot api object
         :param person_label: (str) person label or a designator resolving to a str
@@ -46,6 +47,8 @@ class FindPerson(smach.State):
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
         :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
+        :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
+        :param look_steps: How many steps does it take in that range (default = 8)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -68,6 +71,8 @@ class FindPerson(smach.State):
 
         self._room = room
 
+        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+
         self.speak_when_found = speak_when_found
 
     def execute(self, userdata=None):
@@ -80,11 +85,10 @@ class FindPerson(smach.State):
         start_time = rospy.Time.now()
 
         look_distance = 2.0  # magic number 4
-        look_angles = np.linspace(-np.pi/2, np.pi/2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
                                                     y=look_distance * math.sin(angle), z=1.3,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
-                      for angle in look_angles]
+                      for angle in self._look_angles]
 
         i = 0
 

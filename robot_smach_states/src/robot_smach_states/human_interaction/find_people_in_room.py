@@ -40,7 +40,8 @@ class FindPeople(smach.State):
 
     def __init__(self, robot, properties=None, query_entity_designator=None,
                  found_people_designator=None, look_distance=10.0, speak=False,
-                 strict=True, nearest=False, attempts=1, search_timeout=60):
+                 strict=True, nearest=False, attempts=1, search_timeout=60,
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Initialization method
         :param robot: robot api object
         :param properties: (dict) keyvalue pair of the properties a person must
@@ -58,6 +59,8 @@ class FindPeople(smach.State):
         :param nearest: (bool) If True, selects the person nearest to the robot
         :param attempts: (int) Max number of search attempts
         :param search_timeout: (float) maximum time the robot is allowed to search
+        :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
+        :param look_steps: How many steps does it take in that range (default = 8)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -72,6 +75,8 @@ class FindPeople(smach.State):
 
         self._search_timeout = search_timeout
 
+        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+
         if found_people_designator:
             ds.is_writeable(found_people_designator)
             ds.check_type(found_people_designator, [Entity])
@@ -84,8 +89,6 @@ class FindPeople(smach.State):
     def execute(self, userdata=None):
         look_angles = None
         person_label = None
-
-        look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
 
         if self._properties:
             try:
@@ -111,7 +114,7 @@ class FindPeople(smach.State):
                                                     y=self._look_distance * math.sin(angle),
                                                     z=1.5,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
-                      for angle in look_angles]
+                      for angle in self._look_angles]
 
         i = 0
         attempts = 0
