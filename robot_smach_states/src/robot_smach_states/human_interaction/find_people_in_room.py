@@ -111,16 +111,17 @@ class FindPeople(smach.State):
                 person_label = person_label.resolve() if hasattr(person_label, 'resolve') else person_label
 
                 rospy.loginfo("Trying to find {}".format(person_label))
-                if self._speak:
-                    self._robot.speech.speak(
-                            "{}, please look at me while I am looking for you".format(
-                            person_label),
-                        block=False)
             except:
                 # The try except is to check if a named person is queried for
                 # in the properties. If there is none then exception is raised
                 # and nothing is to be done with it
                 pass
+
+        if self._speak:
+            self._robot.speech.speak(
+                "{}please look at me while I am looking for you".format(
+                    person_label+', ' if person_label else ''),
+                block=False)
 
         start_time = rospy.Time.now()
 
