@@ -27,10 +27,10 @@ COURTESY_PREFIX -> robot please | could you | could you please | please
 """
 
 for loc in common.location_rooms:
-    location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
+    location_grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
 for loc in common.location_names:
-    location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (loc, loc)
+    location_grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
 
 for loc in common.object_names:
     category = common.get_object_category(loc)
@@ -39,14 +39,14 @@ for loc in common.object_names:
 
     entity_id = common.get_object_category_location(category)[0]
 
-    location_grammar += '\nLOCATION[{"id": "%s"}] -> %s' % (entity_id, loc)
+    location_grammar += '\nLOCATION[%s] -> %s' % (entity_id, loc)
 
 location_grammar += '\nDET_LOCATION[Y] -> LOCATION[Y] | the LOCATION[Y]'
 
 location_grammar += """
 V_GUIDE -> guide | bring | lead
 
-VP[{"target-location": Y}] -> DET_LOCATION[Y] | V_GUIDE me to DET_LOCATION[Y] | i want to go to DET_LOCATION[Y] | i would like to go to DET_LOCATION[Y] | i like to go to DET_LOCATION[Y] | tell me how to go to DET_LOCATION[Y] | tell me how to reach DET_LOCATION[Y]
+VP[Y] -> DET_LOCATION[Y] | V_GUIDE me to DET_LOCATION[Y] | i want to go to DET_LOCATION[Y] | i would like to go to DET_LOCATION[Y] | i like to go to DET_LOCATION[Y] | tell me how to go to DET_LOCATION[Y] | tell me how to reach DET_LOCATION[Y]
 
 """
 
@@ -58,3 +58,8 @@ if __name__ == "__main__":
     grammar_parser = CFGParser.fromstring(location_grammar)
     grammar_parser.verify()
     grammar_parser.check_rules()
+    print("Random Sentence:")
+    sentence = grammar_parser.get_random_sentence("T")
+    print(sentence)
+    print("Resulting Semantics:")
+    print(grammar_parser.parse("T", sentence))
