@@ -218,6 +218,7 @@ def _publish_item_poses(robot, items):
         marker_msg.type = visualization_msgs.msg.Marker.SPHERE
         marker_msg.action = 0
         marker_msg.pose = posestamped.pose
+        marker_msg.pose.position.z += 1.0
         marker_msg.scale = Vector3(0.05, 0.05, 0.05)
         marker_msg.color = color_dict[k]
         marker_msg.lifetime = rospy.Duration(30.0)
