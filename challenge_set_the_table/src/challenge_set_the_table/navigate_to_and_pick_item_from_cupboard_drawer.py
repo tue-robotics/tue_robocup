@@ -61,7 +61,7 @@ class PickItemFromCupboardDrawer(StateMachine):
 
             item_name = leftover_items[0]
 
-            if item_name == 'plate':
+            if item_name == 'plate':  # TODO Henk
                 send_joint_goal([0.01, -0.1, 0, 0, 0.0])
             else:
                 arm.send_joint_goal("carrying_pose")
