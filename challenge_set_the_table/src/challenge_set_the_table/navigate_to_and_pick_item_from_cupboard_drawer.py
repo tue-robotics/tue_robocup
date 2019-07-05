@@ -23,6 +23,7 @@ item_img_dict = {
     "spoon": 'images/spoon.jpg'
 }
 
+plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
 
 class PickItemFromCupboardDrawer(StateMachine):
     def __init__(self, robot, cupboard_id, required_items):
@@ -61,8 +62,8 @@ class PickItemFromCupboardDrawer(StateMachine):
 
             item_name = leftover_items[0]
 
-            if item_name == 'plate':  # TODO Henk
-                send_joint_goal([0.01, -0.1, 0, 0, 0.0])
+            if item_name == 'plate':
+                send_joint_goal(plate_handover)
             else:
                 arm.send_joint_goal("carrying_pose")
             picked_items.append(item_name)

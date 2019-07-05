@@ -41,8 +41,8 @@ color_dict = {
     "napkin": ColorRGBA(0.5, 0, 0.5, 1)
 }
 
-pboven = [0.69, -1.2, 0, -1.57, 0]  # TODO Henk
-pleg = [0.69, -1.2, 0, -1.57, 0]  # TODO Henk
+pboven = [0.69, -1.5, -1.4, -1.5, -0.3]
+pleg = [0.58, -1.75, -1.4, -1.5, 0.3]
 
 def item_vector_to_item_frame(item_vector):
     frame = PyKDL.Frame(
