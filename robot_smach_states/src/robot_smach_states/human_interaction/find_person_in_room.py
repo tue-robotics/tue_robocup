@@ -183,7 +183,9 @@ class FindPersonInRoom(smach.StateMachine):
     in that room.
     """
 
-    def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None):
+    def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
@@ -221,7 +223,9 @@ class FindPersonInRoom(smach.StateMachine):
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name,
                                                              discard_other_labels=discard_other_labels,
-                                                             found_entity_designator=found_entity_designator),
+                                                             found_entity_designator=found_entity_designator,
+                                                             look_range=look_range,
+                                                             look_steps=look_steps),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
