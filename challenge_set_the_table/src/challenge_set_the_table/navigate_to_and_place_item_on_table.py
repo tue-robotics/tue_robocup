@@ -22,7 +22,7 @@ from std_msgs.msg import ColorRGBA
 from tf_conversions import toMsg
 
 item_vector_dict = {
-    "plate": PyKDL.Vector(0, -0.1, 0),
+    "plate": PyKDL.Vector(0, 0.2, 0),
     "cup": PyKDL.Vector(0.2, -0.2, 0),
     "knife": PyKDL.Vector(0, -0.2, 0),
     "fork": PyKDL.Vector(0, 0.15, 0),
@@ -126,12 +126,13 @@ class PlaceItemOnTable(StateMachine):
             if item_name in ['plate', 'napkin']:
                 # TODO: Do a different joint goal/trajectory
                 send_joint_goal(pleg)
-                send_joint_goal(pweg)
+ #               send_joint_goal(pweg)
             else:
                 send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
 
             rospy.loginfo("Dropping...")
             send_gripper_goal("open")
+            send_joint_goal(pweg)
             robot.head.look_up()
             robot.head.wait_for_motion_done()
 
