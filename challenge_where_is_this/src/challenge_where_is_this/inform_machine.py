@@ -96,7 +96,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_ROOM_BACKUP",
                                                 "goal_not_defined": "goal_not_defined",
-                                                "lost_operator": "lost_operator",
+                                                "lost_operator": "ROOM_NAV_BACKUP",
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("WAIT_ROOM_BACKUP",
@@ -109,7 +109,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
-                                                "lost_operator": "lost_operator",
+                                                "lost_operator": "ROOM_NAV_BACKUP",
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_TO_FURNITURE",
@@ -117,7 +117,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_FURNITURE_BACKUP",  # Something is blocking
                                                 "goal_not_defined": "GUIDE_NEAR_FURNITURE",  # in_front_of not defined
-                                                "lost_operator": "lost_operator",
+                                                "lost_operator": "FURNITURE_NAV_BACKUP",
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_NEAR_FURNITURE",
@@ -125,7 +125,7 @@ class GuideToRoomOrObject(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_FURNITURE_BACKUP",
                                                 "goal_not_defined": "goal_not_defined",
-                                                "lost_operator": "lost_operator",
+                                                "lost_operator": "FURNITURE_NAV_BACKUP",
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("WAIT_FURNITURE_BACKUP",
@@ -138,8 +138,24 @@ class GuideToRoomOrObject(smach.StateMachine):
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
-                                                "lost_operator": "lost_operator",
+                                                "lost_operator": "FURNITURE_NAV_BACKUP",
                                                 "preempted": "preempted"})
+
+            smach.StateMachine.add("ROOM_NAV_BACKUP",
+                                   states.NavigateToSymbolic(robot, {entity_des: "in"}, entity_des),
+                                   transitions={"arrived": "SAY_ARRIVED",
+                                                "unreachable": "unreachable",
+                                                "goal_not_defined": "goal_not_defined",})
+
+            smach.StateMachine.add("FURNITURE_NAV_BACKUP",
+                                   states.NavigateToSymbolic(robot, {entity_des: "near"}, entity_des),
+                                   transitions={"arrived": "SAY_ARRIVED",
+                                                "unreachable": "unreachable",
+                                                "goal_not_defined": "goal_not_defined",})
+
+            smach.StateMachine.add("SAY_ARRIVED",
+                                   states.Say(robot, "We have arrived. I'll go back to the meeting point"),
+                                   transitions={"spoken": "arrived"})
 
 
 class InformMachine(smach.StateMachine):
