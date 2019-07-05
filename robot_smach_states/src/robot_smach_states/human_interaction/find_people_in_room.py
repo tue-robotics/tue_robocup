@@ -149,7 +149,7 @@ class FindPeople(smach.State):
             self._robot.head.wait_for_motion_done()
 
             found_people_ids = []
-            for i in range(3):  # TODO: parametrize
+            for _ in range(2):  # TODO: parametrize
                 self._image_data = self._robot.perception.get_rgb_depth_caminfo()
                 if self._image_data:
                     success, found_ids = self._robot.ed.detect_people(*self._image_data)
