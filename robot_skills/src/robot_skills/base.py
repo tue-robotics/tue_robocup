@@ -104,7 +104,8 @@ class GlobalPlanner(RobotPart):
         """
 
         :param position_constraint: (PositionConstraint)
-        :return: list(PoseStamped)
+        :return: list(PoseStamped). N.B.: If No path was found, this list is empty. If the planner service fails,
+        'None' is returned.
         """
 
         self._position_constraint = position_constraint
