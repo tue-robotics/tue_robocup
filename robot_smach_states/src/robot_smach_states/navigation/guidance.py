@@ -247,17 +247,21 @@ class ExecutePlanGuidance(smach.State):
 
 
 class WaitForOperator(smach.State):
-    def __init__(self, robot, timeout=10.0):
-        # type: (Robot, float) -> None
+    def __init__(self, robot, timeout=10.0, distance=1.0, radius=0.5):
+        # type: (Robot, float, float, float) -> None
         """
         Smach state to check if the operator is still following the robot.
 
         :param robot: (Robot) robot api object
         :param timeout: (float) if the operator has not been detected for this period, "is_lost" will be returned
+        :param distance: (float) check for the operator to be within this range of the robot
+        :param radius: (float) from the point behind the robt defined by `distance`, the person must be within this radius
         """
         smach.State.__init__(self, outcomes=["is_following", "is_lost", "preempted"])
         self._robot = robot
         self._timeout = timeout
+        self._distance = distance
+        self._radius = radius
 
     def execute(self, ud):
 
@@ -268,7 +272,7 @@ class WaitForOperator(smach.State):
         while not rospy.is_shutdown():
 
             # Check if the operator is there
-            if _detect_operator_behind_robot(self._robot):
+            if _detect_operator_behind_robot(self._robot, self._distance, self._radius):
                 self._robot.speech.speak("There you are", block=False)
                 return "is_following"
 
