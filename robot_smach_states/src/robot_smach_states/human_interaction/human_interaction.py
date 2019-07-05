@@ -332,11 +332,14 @@ class AskYesNo(HearOptions):
 
 
 class WaitForPersonInFront(smach.State):
-    """
-    Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
-    """
+    def __init__(self, robot, attempts=1, sleep_interval=1.0):
+        """
+        Waits for a person to be found in front of the robot. Attempts to wait a number of times with a sleep interval
 
-    def __init__(self, robot, attempts=1, sleep_interval=1):
+        :param robot: (Robot) robot api object
+        :param attempts: (int) number of attempts the robot will take
+        :param sleep_interval: (float) time the robot waits between checking for an operator
+        """
         smach.State.__init__(self, outcomes=["success", "failed"])
         self.robot = robot
         self.attempts = attempts
@@ -349,9 +352,12 @@ class WaitForPersonInFront(smach.State):
             image_data = self.robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self.robot.ed.detect_people(*image_data)
             if any(found_people_ids):
-                rospy.loginfo("There are {} people in front of me (1 is enough): {}".format(len(found_people_ids), found_people_ids))
+                rospy.loginfo("There are {} people in front of me (1 is enough): {}".format(
+                    len(found_people_ids),
+                    found_people_ids)
+                )
                 return 'success'
-            rospy.sleep(rospy.Duration(self.sleep_interval))
+            rospy.sleep(self.sleep_interval)
         return 'failed'
 
 ########################################################################################################################
