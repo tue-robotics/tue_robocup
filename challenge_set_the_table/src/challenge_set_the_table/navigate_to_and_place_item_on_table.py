@@ -87,13 +87,19 @@ class PlaceItemOnTable(StateMachine):
             arm.send_gripper_goal(open_close_string)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
-        @cb_interface(outcomes=['done'])
-        def _pre_place(_):
+        @cb_interface(outcomes=['done'], input_keys=["item_picked"])
+        def _pre_place(user_data):
             rospy.loginfo("Preplacing...")
             robot.head.look_up()
             robot.head.wait_for_motion_done()
+
+            item_name = user_data["item_picked"]
             send_joint_goal([0.69, 0, 0, 0, 0])
-            send_joint_goal([0.69, -1.2, 0, -1.57, 0])
+
+            if item_name == 'plate':
+                send_joint_goal([0.69, -1.2, 0, -1.57, 0])
+            else:
+                send_joint_goal([0.69, -1.2, 0, -1.57, 0])
             return 'done'
 
         @cb_interface(outcomes=['done'], input_keys=["item_picked"])
@@ -128,7 +134,7 @@ class PlaceItemOnTable(StateMachine):
             rospy.loginfo("Retract...")
             send_joint_goal([0.69, 0, -1.57, 0, 0])
             send_gripper_goal("close")
-            robot.base.force_drive(-0.1, 0, 0, 1)  # Drive backwards at 0.1m/s for 1s, so 10cm
+            robot.base.force_drive(-0.1, 0, 0, 3)  # Drive backwards at 0.1m/s for 3s, so 30cm
             arm.send_joint_goal("carrying_pose")
             return 'done'
 
