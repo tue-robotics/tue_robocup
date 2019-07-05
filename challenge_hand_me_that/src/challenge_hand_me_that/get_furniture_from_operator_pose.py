@@ -104,11 +104,12 @@ class GetFurnitureFromOperatorPose(StateMachine):
                         OPERATOR = person
                         break
 
-            robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
+            # robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
+            rospy.loginfo("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
 
             return 'done'
 
-        @cb_interface(outcomes=['done'], output_keys=['laser_dot'])
+        @cb_interface(outcomes=['done', 'failed'], output_keys=['laser_dot'])
         def _get_furniture(user_data):
             global OPERATOR
 
@@ -131,20 +132,25 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
                 # result.intersection_point type: PointStamped
                 # result.entity_id: string
-                rospy.loginfo("There is a ray intersection with {i} at ({p.x:.4}, {p.y:.4}, {p.z:.4})".format(i=result.entity_id, p=result.intersection_point))
+                rospy.loginfo("There is a ray intersection with {i} at ({p.x:.4}, {p.y:.4}, {p.z:.4})".format(i=result.entity_id, p=result.intersection_point.point))
 
                 if result.entity_id in all_possible_furniture:
                     final_result = result
+                else:
+                    rospy.loginfo("{} is not furniture".format(result.entity_id))
+                    robot.speech.speak("That's not furniture, you dummy.")
+                    rospy.Time.sleep(3)
+                    return 'failed'
 
-                    # fill the designator and user data for Janno
-                    furniture_designator.write(final_result)
-                    user_data['laser_dot'] = result.intersection_point
+            # fill the designator and user data for Janno
+            furniture_designator.write(robot.ed.get_entity(final_result.entity_id))
+            user_data['laser_dot'] = result.intersection_point
             return 'done'
 
         with self:
             self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'GET_OPERATOR'})
             self.add('GET_OPERATOR', CBState(_get_operator), transitions={'done': 'GET_FURNITURE'})
-            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'done'})
+            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'done', 'failed': 'GET_OPERATOR'})
 
 
 if __name__ == '__main__':
