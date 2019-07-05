@@ -14,7 +14,7 @@ import smach
 from robot_smach_states import StartChallengeRobust, Say, VariableDesignator, Entity, startup
 from smach import StateMachine
 
-from challenge_hand_me_that.get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
+from challenge_hand_me_that import GetFurnitureFromOperatorPose, InspectFurniture
 from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_hand_me_that')
@@ -40,11 +40,12 @@ def setup_state_machine(robot):
         # The pre-work
         StateMachine.add('GET_FURNITURE_FROM_OPERATOR_POSE',
                          GetFurnitureFromOperatorPose(robot, furniture_designator.writeable),
-                         transitions={'done': 'JANNO'})
+                         transitions={'done': 'INSPECT_FURNITURE'})
 
-        StateMachine.add('JANNO',
-                         Say(robot, "Janno, you are up!"),
-                         transitions={'spoken': 'done'})
+        StateMachine.add('INSPECT_FURNITURE',
+                         InspectFurniture(robot, furniture_designator),
+                         transitions={"succeeded": "done",  # ToDo: hook up to next state
+                                      "no_entities": "GET_FURNITURE_FROM_OPERATOR_POSE"})  # If no entities, try again
 
     return state_machine
 
