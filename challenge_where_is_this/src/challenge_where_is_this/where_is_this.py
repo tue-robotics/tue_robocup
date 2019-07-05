@@ -16,7 +16,7 @@ from .inform_machine import InformMachine
 
 # Load and extract knowledge here so that stuff fails on startup if not defined
 knowledge = load_knowledge("challenge_where_is_this")
-INFORMATION_POINT_ID = knowledge.information_point_id  # ToDo: remove (is deprecated)
+INFORMATION_POINT_ID = knowledge.information_point_id
 INITIAL_POSE_ID = knowledge.initial_pose_id
 GRAMMAR = knowledge.location_grammar
 
@@ -89,7 +89,7 @@ class WhereIsThis(smach.StateMachine):
 
                 smach.StateMachine.add("TURN_AROUND",
                                        smach.CBState(_turn_around),
-                                       transitions={"done": "RANGE_ITERATOR"})
+                                       transitions={"done": "STORE_STARTING_POSE"})
 
                 smach.StateMachine.add("SAY_CANNOT_REACH_WAYPOINT",
                                        states.Say(robot, "I am not able to reach the {}."
