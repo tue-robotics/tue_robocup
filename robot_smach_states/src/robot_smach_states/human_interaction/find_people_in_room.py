@@ -44,23 +44,37 @@ class FindPeople(smach.State):
                  look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Initialization method
         :param robot: robot api object
-        :param properties: (dict) keyvalue pair of the properties a person must
+        :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
             values of the property.
-        :param query_entity_designator: An entity designator to match all found
+        :param query_entity_designator: (default: None) An entity designator to match all found
             people to
-        :param found_people_designator: A designator to write the search result to.
+        :param found_people_designator: (default: None) A designator to write the search result to.
             The designator always has a list of found people written to it.
-        :param look_distance: (float) The distance (radius) which the robot must look at
-        :param speak: (bool) If True, the robot will speak while trying to find
+        :param look_distance: (float) (default: 10.0) The distance (radius) which the robot must look at
+        :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
-        :param strict: (bool) If True then only people with all specified
-            properties is returned else all people with at least one true property
-        :param nearest: (bool) If True, selects the person nearest to the robot
-        :param attempts: (int) Max number of search attempts
-        :param search_timeout: (float) maximum time the robot is allowed to search
-        :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
-        :param look_steps: How many steps does it take in that range (default = 8)
+        :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
+        property has non None values.
+            If set to True then only people with all specified
+            properties are returned, else all people with at least one true property.
+            Example:
+                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                strict = True
+                    This will return a list of people who have the tags:
+                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+
+                strict = False
+                    This will return a list of people who have the tags:
+                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+
+        :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
+            requirements posed using the properties, query_entity_designator, look distance and strict arguments
+        :param attempts: (int) (default: 1) Max number of search attempts
+        :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
+        :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
+        robot search
+        :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -249,22 +263,36 @@ class FindFirstPerson(smach.StateMachine):
                  look_steps=8):
         """ Initialization method
         :param robot: robot api object
-        :param properties: (dict) keyvalue pair of the properties a person must
+        :param found_person_designator: A designator to write the search result to.
+        :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
             values of the property.
-        :param query_entity_designator: An entity designator to match all found
+        :param query_entity_designator: (default: None) An entity designator to match all found
             people to
-        :param found_person_designator: A designator to write the search result to.
-        :param look_distance: (float) The distance (radius) which the robot must look at
-        :param speak: (bool) If True, the robot will speak while trying to find
+        :param look_distance: (float) (default: 10.0) The distance (radius) which the robot must look at
+        :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
-        :param strict: (bool) If True then only people with all specified
-            properties is returned else all people with at least one true property
-        :param nearest: (bool) If True, selects the person nearest to the robot
-        :param attempts: (int) Max number of search attempts
-        :param search_timeout: (float) maximum time the robot is allowed to search
-        :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
-        :param look_steps: How many steps does it take in that range (default = 8)
+        :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
+        property has non None values.
+            If set to True then only people with all specified
+            properties are returned, else all people with at least one true property.
+            Example:
+                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                strict = True
+                    This will return a list of people who have the tags:
+                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+
+                strict = False
+                    This will return a list of people who have the tags:
+                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+
+        :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
+            requirements posed using the properties, query_entity_designator, look distance and strict arguments
+        :param attempts: (int) (default: 1) Max number of search attempts
+        :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
+        :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
+        robot search
+        :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         super(FindFirstPerson, self).__init__(outcomes=["found", "failed"])
         ds.is_writeable(found_person_designator)
@@ -316,25 +344,43 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                  strict=True,
                  nearest=False,
                  attempts=1,
-                 search_timeout=60):
+                 search_timeout=60,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Initialization method
         :param robot: robot api object
-        :param found_person_designator: A designator to write the search result to.
         :param dst_entity_designator: A designator of an Entity whose pose must be updated.
-        :param dst_entity_type: Type of the destination entity
-        :param properties: (dict) keyvalue pair of the properties a person must
+        :param dst_entity_type: (str) (default: waypoint) Type of the destination entity
+        :param found_person_designator: (default: None) A designator to write the search result to.
+        :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
             values of the property.
-        :param query_entity_designator: An entity designator to match all found
+        :param query_entity_designator: (default: None) An entity designator to match all found
             people to
-        :param look_distance: (float) The distance (radius) which the robot must look at
-        :param speak: (bool) If True, the robot will speak while trying to find
+        :param look_distance: (float) (default: 10.0) The distance (radius) which the robot must look at
+        :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
-        :param strict: (bool) If True then only people with all specified
-            properties is returned else all people with at least one true property
-        :param nearest: (bool) If True, selects the person nearest to the robot
-        :param attempts: (int) Max number of search attempts
-        :param search_timeout: (float) maximum time the robot is allowed to search
+        :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
+        property has non None values.
+            If set to True then only people with all specified
+            properties are returned, else all people with at least one true property.
+            Example:
+                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                strict = True
+                    This will return a list of people who have the tags:
+                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+
+                strict = False
+                    This will return a list of people who have the tags:
+                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+
+        :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
+            requirements posed using the properties, query_entity_designator, look distance and strict arguments
+        :param attempts: (int) (default: 1) Max number of search attempts
+        :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
+        :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
+        robot search
+        :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         super(SetPoseFirstFoundPersonToEntity,
               self).__init__(outcomes=["done", "failed"])
@@ -354,7 +400,9 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                          strict=strict,
                          nearest=nearest,
                          attempts=attempts,
-                         search_timeout=search_timeout),
+                         search_timeout=search_timeout,
+                         look_range=look_range,
+                         look_steps=look_steps),
                      transitions={
                          'found': 'UPDATE_POSE',
                          'failed': 'failed'
