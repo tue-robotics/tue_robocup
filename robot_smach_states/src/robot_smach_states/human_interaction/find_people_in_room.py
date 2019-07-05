@@ -134,7 +134,11 @@ class FindPeople(smach.State):
             self._robot.head.wait_for_motion_done()
 
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
-            success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
+            if self._image_data:
+                success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
+            else:
+                rospy.logwarn("Could not get_rgb_depth_caminfo")
+                success, found_people_ids = False, []
             found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
 
             rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
