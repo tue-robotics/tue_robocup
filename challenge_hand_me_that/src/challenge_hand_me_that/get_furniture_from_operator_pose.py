@@ -14,8 +14,31 @@ from robot_smach_states.util.designators import is_writeable
 from rospy import ServiceException
 from smach import StateMachine, cb_interface, CBState
 from std_msgs.msg import Header
+from ed_sensor_integration.srv import RayTraceResponse
+
 
 OPERATOR = None
+all_possible_furniture = [  'bedroom_chest', # TODO: Get from knowledge
+                            'bed',
+                            'sidetable',
+                            'shelf',
+                            'trash_bin',
+                            'kitchen_cabinet',
+                            'kitchen_table',
+                            'island',
+                            'sink',
+                            'dishwasher',
+                            'fridge',
+                            'shoe_rack',
+                            'safe',
+                            'desk',
+                            'coat_hanger',  # TODO: maybe delete this?
+                            'coffee_table',
+                            'couch',
+                            'armchair',
+                            'display_cabinet',
+                            'trash_bin1',
+                            'sideboard']
 
 
 class GetFurnitureFromOperatorPose(StateMachine):
@@ -85,8 +108,8 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
             return 'done'
 
-        @cb_interface(outcomes=['done'])
-        def _get_furniture(_):
+        @cb_interface(outcomes=['done'], output_keys=['laser_dot'])
+        def _get_furniture(user_data):
             global OPERATOR
 
             final_result = None
@@ -101,21 +124,21 @@ class GetFurnitureFromOperatorPose(StateMachine):
                             ),
                             pose=OPERATOR.pointing_pose
                         ))
-                        result = robot.ed.ray_trace(map_pose)
+                        result = robot.ed.ray_trace(map_pose)  # type: RayTraceResponse
                     except Exception as e:
                         rospy.logerr("Could not get ray trace from closest person: {}".format(e))
                     rospy.sleep(1.)
 
-                # TODO: LOY
                 # result.intersection_point type: PointStamped
                 # result.entity_id: string
+                rospy.loginfo("There is a ray intersection with {i} at ({p.x:.4}, {p.y:.4}, {p.z:.4})".format(i=result.entity_id, p=result.intersection_point))
 
-                if result.entity_id in ["cabinet", "etc", "even", "invullen", "aub"]:
+                if result.entity_id in all_possible_furniture:
                     final_result = result
 
-            # TODO: LOY
-            # fill the designator and user data for Janno
-
+                    # fill the designator and user data for Janno
+                    furniture_designator.write(final_result)
+                    user_data['laser_dot'] = result.intersection_point
             return 'done'
 
         with self:
