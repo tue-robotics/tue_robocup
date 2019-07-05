@@ -98,7 +98,10 @@ class PlaceItemOnTable(StateMachine):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
             if item_name == 'plate':
-                send_joint_trajectory([[0.69,-1.75,1.4,-1.5,-.3]]) # TODO: Do a different joint goal/trajectory
+                # TODO: Do a different joint goal/trajectory
+                send_joint_trajectory([[0.69, -1.5, 0, 0, 0],
+                                       [0.69, -1.5, 1.4, -1.5, -0.3],
+                                       [0.6, -1.75, 1.4, -1.5, -0.3]])
             else:
                 send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
 
