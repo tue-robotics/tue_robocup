@@ -49,9 +49,19 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
 
 class TourGuide(object):
     def __init__(self, robot, x_threshold=0.75, y_threshold=1.5):
+
         self._robot = robot
+
+        # Properties
         self._x_threshold = x_threshold
         self._y_threshold = y_threshold
+
+        # State
+        self._furniture_entities = []
+        self._room_entities = []
+        self._furniture_entities_room = {}  # map room entities to furniture entities
+        self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
+        self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
 
         self.initialize()
 
@@ -132,6 +142,13 @@ class TourGuide(object):
             self._passed_furniture_ids.append(entity.id)
         rospy.loginfo("reset TourGuide: passed rooms: {}.\t passed entities {}"
                       .format(self._passed_room_ids, self._passed_furniture_ids))
+
+    def reset(self):
+        """
+        Resets the passed room ids and the passed furniture ids
+        """
+        self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
+        self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
 
     def in_room(self, room, position):
         # type: (Entity, kdl.Vector) -> bool
@@ -222,6 +239,13 @@ class ExecutePlanGuidance(smach.State):
 
             rate.sleep()
 
+    def reset_tourguide(self):
+        """
+        Resets the internal state of the tourguide so that all operators get complete information if this guide state
+        is used more than once.
+        """
+        self._tourguide.reset()
+
     def _check_operator(self):
         """
         Checks if the operator is still sufficiently close
@@ -289,14 +313,28 @@ class Guide(smach.StateMachine):
         smach.StateMachine.__init__(
             self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
         self.robot = robot
+        self.execute_plan = ExecutePlanGuidance(self.robot)
 
         with self:
+            @smach.cb_interface(outcomes=["done"])
+            def _reset_mentioned_entities(userdata=None):
+                """
+                Resets the entities that have been mentioned so that the robot will mention all entities to all
+                 operators
+                 """
+                self.execute_plan.reset_tourguide()
+                return "done"
+
+            smach.StateMachine.add("RESET_MENTIONED_ENTITIES",
+                                   smach.CBState(_reset_mentioned_entities),
+                                   transitions={"done": "GET_PLAN"})
+
             smach.StateMachine.add("GET_PLAN", navigation.getPlan(self.robot, self.generate_constraint),
                                    transitions={"unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
                                                 "goal_ok": "EXECUTE_PLAN"})
 
-            smach.StateMachine.add("EXECUTE_PLAN", ExecutePlanGuidance(self.robot),
+            smach.StateMachine.add("EXECUTE_PLAN", self.execute_plan,
                                    transitions={"arrived": "arrived",
                                                 "blocked": "PLAN_BLOCKED",
                                                 "preempted": "preempted",
