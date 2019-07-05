@@ -11,10 +11,10 @@ import os
 
 import rospy
 import smach
-from robot_smach_states import StartChallengeRobust, Say, VariableDesignator, Entity, startup
+from robot_smach_states import StartChallengeRobust, Say, VariableDesignator, Entity, startup, UnoccupiedArmDesignator
 from smach import StateMachine
 
-from challenge_hand_me_that import GetFurnitureFromOperatorPose, InspectFurniture
+from challenge_hand_me_that import GetFurnitureFromOperatorPose, IdentifyObject, InspectFurniture
 from robocup_knowledge import load_knowledge
 
 challenge_knowledge = load_knowledge('challenge_hand_me_that')
@@ -26,15 +26,22 @@ def setup_state_machine(robot):
     state_machine = StateMachine(outcomes=['done'])
 
     furniture_designator = VariableDesignator(resolve_type=Entity)
+    entity_designator = VariableDesignator(resolve_type=Entity)
+    arm_designator = UnoccupiedArmDesignator(robot, {})
 
     with state_machine:
         # Intro
-        smach.StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
-                               transitions={'Done': 'GO_TO_SEARCH_POSE',
-                                            'Aborted': 'aborted',
-                                            'Failed': 'GO_TO_SEARCH_POSE'})
+        StateMachine.add('START_CHALLENGE_ROBUST', StartChallengeRobust(robot, STARTING_POINT),
+                         transitions={'Done': 'GO_TO_SEARCH_POSE',
+                                      'Aborted': 'aborted',
+                                      'Failed': 'GO_TO_SEARCH_POSE'})
 
+        # Say we're gonna start
         StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
+                         transitions={'spoken': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
+
+        # Drive to the start location
+        StateMachine.add('NAVIGATE_TO_START', Say(robot, "This should be a navigate state", block=False),
                          transitions={'spoken': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
 
         # The pre-work
@@ -42,10 +49,17 @@ def setup_state_machine(robot):
                          GetFurnitureFromOperatorPose(robot, furniture_designator.writeable),
                          transitions={'done': 'INSPECT_FURNITURE'})
 
+        # Go to the furniture object that was pointing to see what's there
         StateMachine.add('INSPECT_FURNITURE',
-                         InspectFurniture(robot, furniture_designator),
+                         InspectFurniture(robot, furniture_designator, entity_designator.writeable),
                          transitions={"succeeded": "done",  # ToDo: hook up to next state
                                       "no_entities": "GET_FURNITURE_FROM_OPERATOR_POSE"})  # If no entities, try again
+
+        # Point at the object
+        StateMachine.add('IDENTIFY_OBJECT',
+                         IdentifyObject(robot, entity_designator, arm_designator),
+                         transitions={'done': 'NAVIGATE_TO_START',  # Just keep on going
+                                      'failed': 'NAVIGATE_TO_START'})  # Just keep on going
 
     return state_machine
 
