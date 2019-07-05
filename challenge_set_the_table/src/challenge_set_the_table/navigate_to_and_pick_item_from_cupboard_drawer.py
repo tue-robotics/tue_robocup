@@ -14,13 +14,13 @@ from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 
 item_img_dict = {
-    "plate": 'images/plate.png',
-    "cup": 'images/cup.png',
-    "bowl": 'images/bowl.png',
-    "napkin": 'images/napkin.png',
-    "knife": 'images/knife.png',
-    "fork": 'images/fork.png',
-    "spoon": 'images/spoon.png'
+    "plate": 'images/plate.jpg',
+    "cup": 'images/cup.jpg',
+    "bowl": 'images/bowl.jpg',
+    "napkin": 'images/napkin.jpg',
+    "knife": 'images/knife.jpg',
+    "fork": 'images/fork.jpg',
+    "spoon": 'images/spoon.jpg'
 }
 
 
