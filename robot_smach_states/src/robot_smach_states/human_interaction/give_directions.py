@@ -72,10 +72,10 @@ class GiveDirections(smach.State):
         path = None
         for name, nav_con in nav_constraints.iteritems():
             path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
-            if path is not None:
+            if path:
                 break
 
-        if path is None:
+        if not path:
             rospy.logerr("No path to {}".format(goal_entity.id))
             self._robot.speech.speak("I'm sorry but I don't know how to get to the {}".format(goal_entity.id))
             return "failed"
