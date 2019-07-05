@@ -73,7 +73,7 @@ def setup_state_machine(robot):
                              block=False),
                          transitions={'spoken': 'ASK_CONTINUE'})
 
-        StateMachine.add('ASK_CONTINUE', AskContinue(robot, timeout=rospy.Duration(20)),
+        StateMachine.add('ASK_CONTINUE', AskContinue(robot, timeout=rospy.Duration(10)),
                          transitions={'continue': 'CUSTOM_INSPECT',
                                       'no_response': 'CUSTOM_INSPECT'})
 
