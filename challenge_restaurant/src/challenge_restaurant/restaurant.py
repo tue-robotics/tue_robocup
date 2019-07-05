@@ -116,7 +116,7 @@ class Restaurant(smach.StateMachine):
                                                 'goal_not_defined': 'SAY_NAVIGATE_TO_KITCHEN_FALLBACK'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_KITCHEN_FALLBACK',
-                                   states.Say(robot, "Help, how do I get there?"),
+                                   states.Say(robot, "Help, how do I get there?", block=False),
                                    transitions={'spoken': 'TURN_AROUND_KITCHEN_FALLBACK'})
 
             smach.StateMachine.add('TURN_AROUND_KITCHEN_FALLBACK',
@@ -127,8 +127,8 @@ class Restaurant(smach.StateMachine):
                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
                                                              radius=0.20),
                                    transitions={'arrived': 'RECITE_ORDER',
-                                                'unreachable': 'RECITE_ORDER',
-                                                'goal_not_defined': 'RECITE_ORDER'})
+                                                'unreachable': 'SAY_NAVIGATE_TO_KITCHEN_FALLBACK',
+                                                'goal_not_defined': 'SAY_NAVIGATE_TO_KITCHEN_FALLBACK'})
 
             smach.StateMachine.add('RECITE_ORDER',
                                    ReciteOrders(robot=robot, orders=orders),
