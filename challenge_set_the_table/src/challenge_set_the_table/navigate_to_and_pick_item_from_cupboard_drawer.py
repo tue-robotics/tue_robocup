@@ -58,9 +58,13 @@ class PickItemFromCupboardDrawer(StateMachine):
                 robot.speech.speak("We picked 'm all apparently")
                 return 'failed'
 
-            arm.send_joint_goal("carrying_pose")
 
             item_name = leftover_items[0]
+
+            if item_name == 'plate':
+                send_joint_goal([0.01, -0.1, 0, 0, 0.0])
+            else:
+                arm.send_joint_goal("carrying_pose")
             picked_items.append(item_name)
 
             robot.speech.speak("Please put the {} in my gripper, like this".format(item_name), block=False)
