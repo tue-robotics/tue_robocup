@@ -16,6 +16,7 @@ Options:
 import ast
 from docopt import docopt
 import sys
+import time
 
 # ROS
 import rospy
@@ -34,7 +35,7 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
     :param initial_state the state to start the state machine in.
         Can be supplied as command line argument
     :param robot_name name of the robot to pass to the state machine'''
-
+    t_start = time.time()
     if initial_state or robot_name:
         rospy.logwarn(  "Setting initial_state and robot_name via the startup"
                         " is not needed and deprecated. "
@@ -87,3 +88,11 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
 
         if introserver:
             introserver.stop()
+
+    t_end = time.time()
+    duration = t_end - t_start
+    rospy.loginfo("Execution of {} took {} minutes and {} seconds".format(
+        executioner.__class__.__name__,
+        int(duration // 60),
+        int(duration % 60),
+    ))
