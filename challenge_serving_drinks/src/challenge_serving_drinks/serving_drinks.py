@@ -122,6 +122,8 @@ class ServingDrinks(smach.StateMachine):
         objects_list_des = ds.VariableDesignator(resolve_type=[ClassificationResult], name='objects_list_des')
         unav_drink_des = ds.VariableDesignator(resolve_type=str, name='unav_drink_str_des')
 
+        hacky_arm_des = ds.VariableDesignator(initial_value=robot.get_arm(), name='hacky_arm')
+
         with self:
             smach.StateMachine.add("INITIALIZE",
                                    states.Initialize(robot=robot),
@@ -141,7 +143,7 @@ class ServingDrinks(smach.StateMachine):
                                                   entityDes=bar_designator,
                                                   navigation_area="in_front_of",
                                                   objectIDsDes=objects_list_des),
-                                   transitions={"done": "CHECK_INSPECT_RESULT",
+                                   transitions={"done": "INSPECT_FALLBACK", #TODO: Change to CHECK_INSPECT_RESULT after RWC2019
                                                 "failed": "INSPECT_FALLBACK"})
 
             smach.StateMachine.add("CHECK_INSPECT_RESULT",
@@ -163,8 +165,15 @@ class ServingDrinks(smach.StateMachine):
                                    AskAvailability(robot=robot,
                                                    unavailable_drink_designator=unav_drink_des.writeable,
                                                    objects=common_knowledge.objects),
-                                   transitions={"succeeded": "NAVIGATE_TO_ROOM",
-                                                "failed": "NAVIGATE_TO_ROOM"})
+                                   transitions={"succeeded": "RESET_ROBOT",
+                                                "failed": "RESET_ROBOT"})
+
+            smach.StateMachine.add("RESET_ROBOT",
+                                   states.ArmToJointConfig(robot=robot,
+                                                           arm_designator=hacky_arm_des,
+                                                           configuration="reset"),
+                                   transitions={'succeeded': "NAVIGATE_TO_ROOM",
+                                                'failed': "NAVIGATE_TO_ROOM"})
 
             # Navigate to the predefined room
             smach.StateMachine.add("NAVIGATE_TO_ROOM",

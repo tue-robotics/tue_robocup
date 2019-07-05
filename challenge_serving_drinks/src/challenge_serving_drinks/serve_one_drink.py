@@ -57,6 +57,7 @@ class ServeOneDrink(smach.StateMachine):
         operator_name = ds.VariableDesignator(resolve_type=str, name='name_des')
         operator_designator = ds.VariableDesignator(resolve_type=Entity, name='operator_des')
         learn_check_designator = ds.VariableDesignator(initial_value=True, resolve_type=bool, name='learn_check_des')
+        hacky_arm_des = ds.VariableDesignator(initial_value=robot.get_arm(), name='hacky_arm_2')
 
         with self:
 
@@ -104,9 +105,16 @@ class ServeOneDrink(smach.StateMachine):
             smach.StateMachine.add("HANDOVER_FROM_HUMAN",
                                    states.HandoverFromHuman(robot=robot, arm_designator=arm_designator,
                                                             grabbed_entity_designator=drink_designator),
-                                   transitions={"succeeded": "CHECK_LEARN_OPERATOR",
-                                                "failed": "CHECK_LEARN_OPERATOR",
-                                                "timeout": "CHECK_LEARN_OPERATOR"})
+                                   transitions={"succeeded": "RESET_ROBOT_2",
+                                                "failed": "RESET_ROBOT_2",
+                                                "timeout": "RESET_ROBOT_2"})
+
+            smach.StateMachine.add("RESET_ROBOT_2",
+                                   states.ArmToJointConfig(robot=robot,
+                                                           arm_designator=hacky_arm_des,
+                                                           configuration="reset"),
+                                   transitions={'succeeded': "CHECK_LEARN_OPERATOR",
+                                                'failed': "CHECK_LEARN_OPERATOR"})
 
             smach.StateMachine.add("CHECK_LEARN_OPERATOR",
                                    CheckBool(learn_check_designator),
@@ -144,7 +152,7 @@ class ServeOneDrink(smach.StateMachine):
                                                                                 drink_str_designator,
                                                                                 operator_name),
                                               look_at_standing_person=True),
-                                   transitions={"spoken": "HAND_OVER"})
+                                   transitions={"spoken": "RISE_FOR_HMI_2"})
 
             # Say the name
             smach.StateMachine.add("SAY_THE_NAME",
@@ -153,7 +161,12 @@ class ServeOneDrink(smach.StateMachine):
                                                                                 drink_str_designator,
                                                                                 operator_name),
                                               look_at_standing_person=True),
-                                   transitions={"spoken": "HAND_OVER"})
+                                   transitions={"spoken": "RISE_FOR_HMI_2"})
+
+            smach.StateMachine.add("RISE_FOR_HMI_2",
+                                   states.RiseForHMI(robot=robot),
+                                   transitions={"succeeded": "HAND_OVER",
+                                                "failed": "HAND_OVER"})
 
             # Hand over the drink to the operator
             smach.StateMachine.add("HAND_OVER",
@@ -164,7 +177,14 @@ class ServeOneDrink(smach.StateMachine):
 
             smach.StateMachine.add("UNLOCK_ARM",
                                    states.UnlockDesignator(arm_designator),
-                                   transitions={'unlocked': "RETURN_TO_ROOM"})
+                                   transitions={'unlocked': "RESET_ROBOT_3"})
+
+            smach.StateMachine.add("RESET_ROBOT_3",
+                                   states.ArmToJointConfig(robot=robot,
+                                                           arm_designator=hacky_arm_des,
+                                                           configuration="reset"),
+                                   transitions={'succeeded': "RETURN_TO_ROOM",
+                                                'failed': "RETURN_TO_ROOM"})
 
             smach.StateMachine.add("RETURN_TO_ROOM",
                                    states.NavigateToRoom(robot=robot,
