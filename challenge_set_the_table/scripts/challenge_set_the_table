@@ -15,8 +15,10 @@ from challenge_set_the_table.navigate_to_and_open_cupboard_drawer import Navigat
 from challenge_set_the_table.navigate_to_and_pick_item_from_cupboard_drawer import \
     NavigateToAndPickItemFromCupboardDrawer
 from challenge_set_the_table.navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
-from robot_smach_states import Say, WaitTime, Initialize, StartChallengeRobust
+from challenge_set_the_table.custom_inspect import CustomInspect
+from robot_smach_states import Say, WaitTime, Initialize, StartChallengeRobust, AskContinue
 from robot_smach_states.util import startup
+import robot_smach_states.util.designators as ds
 from smach import StateMachine, cb_interface, CBState
 
 items_picked = []
@@ -67,9 +69,17 @@ def setup_state_machine(robot):
 
         StateMachine.add('SAY_START',
                          Say(robot,
-                             "Let's set the table baby! If there are any chairs near the kitchen_table, please remove them",
+                             "Let's set the table baby! If there are any chairs near the kitchen_table, please remove them. Please Say Continue if you are done",
                              block=False),
-                         transitions={'spoken': 'NAVIGATE_AND_OPEN_CUPBOARD'})
+                         transitions={'spoken': 'ASK_CONTINUE'})
+
+        StateMachine.add('ASK_CONTINUE', AskContinue(robot, timeout=rospy.Duration(20)),
+                         transitions={'continue': 'CUSTOM_INSPECT',
+                                      'no_response': 'CUSTOM_INSPECT'})
+
+        StateMachine.add("CUSTOM_INSPECT", CustomInspect(robot, ds.EntityByIdDesignator(robot, id="kitchen_table"),
+                                                         ds.EntityByIdDesignator(robot, id="set_the_table_inspect")),
+                         transitions={"done": "NAVIGATE_AND_OPEN_CUPBOARD"})
 
         # The pre-work
         StateMachine.add('NAVIGATE_AND_OPEN_CUPBOARD',
