@@ -176,13 +176,18 @@ class ExecutePlanGuidance(smach.State):
     Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for
     operator" is returned.
     """
-    def __init__(self, robot):
-        # type: (Robot) -> None
+    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
+        # type: (Robot, float, float) -> None
+        """
+        :param robot: (Robot) robot api object
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
+        """
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
-        self._distance_threshold = 1.0  # Only check if the operator is there once we've drived for this distance
-        # self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
-        # self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
+        self._distance_threshold = 1.0  # Only check if the operator is there once we've driven for this distance
+        self._operator_distance = operator_distance  # Operator is expected to follow the robot approximately this distance
+        self._operator_radius = operator_radius  # Operator is expected to be within this radius around the position
         # defined by the follow distance
         self._tourguide = TourGuide(robot)
 
@@ -233,7 +238,7 @@ class ExecutePlanGuidance(smach.State):
         :return: (bool)
         """
         # ToDo: make robust (use time stamp?)
-        return _detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
+        return _detect_operator_behind_robot(self.robot, self._operator_distance, self._operator_radius)
 
     def _get_base_position(self):
         # type: () -> kdl.Vector
@@ -255,7 +260,7 @@ class WaitForOperator(smach.State):
         :param robot: (Robot) robot api object
         :param timeout: (float) if the operator has not been detected for this period, "is_lost" will be returned
         :param distance: (float) check for the operator to be within this range of the robot
-        :param radius: (float) from the point behind the robt defined by `distance`, the person must be within this radius
+        :param radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         smach.State.__init__(self, outcomes=["is_following", "is_lost", "preempted"])
         self._robot = robot
