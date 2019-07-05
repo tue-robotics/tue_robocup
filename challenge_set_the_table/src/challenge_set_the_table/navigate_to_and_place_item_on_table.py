@@ -25,10 +25,10 @@ item_vector_dict = {
     "plate": PyKDL.Vector(0, -0.1, 0),
     "cup": PyKDL.Vector(0.2, -0.2, 0),
     "knife": PyKDL.Vector(0, -0.2, 0),
-    "fork": PyKDL.Vector(0, 0.2, 0),
+    "fork": PyKDL.Vector(0, 0.15, 0),
     "spoon": PyKDL.Vector(0, -0.25, 0),
     "bowl": PyKDL.Vector(0, 0, 0),  # Must go on top of the dish
-    "napkin": PyKDL.Vector(0, 0.25, 0)  # besides the fork
+    "napkin": PyKDL.Vector(0, 0.2, 0)  # besides the fork
 }
 
 color_dict = {
@@ -47,7 +47,7 @@ pleg = [0.58, -1.75, -1.4, -1.5, 0.3]
 def item_vector_to_item_frame(item_vector):
     frame = PyKDL.Frame(
         PyKDL.Rotation.RPY(0, 0, -math.pi / 2),
-        PyKDL.Vector(0, 0.55, 0)
+        PyKDL.Vector(-0.05, 0.75, 0)
     )
 
     item_placement_vector = item_vector
@@ -177,7 +177,7 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
             StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",
                              NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
                              transitions={'arrived': 'PLACE_ITEM_ON_TABLE',
-                                          'unreachable': 'FORCE_DRIVE',
+                                          'unreachable': 'SAY_PICK_AWAY_THE_CHAIR',
                                           'goal_not_defined': 'failed'})
 
             StateMachine.add("FORCE_DRIVE",
