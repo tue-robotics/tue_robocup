@@ -4,13 +4,15 @@
 #
 # \author Rein Appeldoorn
 
+import copy
 import math
 import os
 import sys
 
 import PyKDL
 import rospy
-from geometry_msgs.msg import PoseStamped
+import visualization_msgs.msg
+from geometry_msgs.msg import PoseStamped, Vector3
 from robot_skills import Hero
 from robot_smach_states import NavigateToSymbolic, Say, WaitTime, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
@@ -182,6 +184,45 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
                                           'failed': 'failed'})
 
 
+def _publish_item_poses(robot, items):
+    """
+    Publishes item poses as a visualization marker array
+
+    :param robot: (Robot) robot API object
+    :param items: (dict) ...
+    """
+    array_msg = visualization_msgs.msg.MarkerArray()
+
+    marker_id = 1234
+    for k, posestamped in items.iteritems():
+        posestamped = posestamped  # type: PoseStamped
+
+        marker_id += 1
+        marker_msg = visualization_msgs.msg.Marker()
+        marker_msg.header.frame_id = posestamped.header.frame_id
+        marker_msg.header.stamp = rospy.Time.now()
+        marker_msg.id = marker_id
+        marker_msg.type = visualization_msgs.msg.Marker.SPHERE
+        marker_msg.action = 0
+        marker_msg.pose = posestamped.pose
+        marker_msg.scale = Vector3(0.05, 0.05, 0.05)
+        marker_msg.color.r = 1.0
+        marker_msg.color.g = 0.0
+        marker_msg.color.b = 0.0
+        marker_msg.color.a = 1.0
+        marker_msg.lifetime = rospy.Duration(30.0)
+        array_msg.markers.append(marker_msg)
+
+        marker_id += 1
+        marker_msg2 = copy.deepcopy(marker_msg)
+        marker_msg2.id = marker_id
+        marker_msg2.type = visualization_msgs.msg.Marker.TEXT_VIEW_FACING
+        marker_msg2.text = k
+        array_msg.markers.append(marker_msg2)
+
+    robot.marker_array_pub.publish(array_msg)
+
+
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
 
@@ -195,6 +236,7 @@ if __name__ == '__main__':
     pprint.pprint(item_poses)
 
     hero = Hero()
+    _publish_item_poses(hero, item_poses)
     hero.reset()
     try:
         placement_height = float(sys.argv[2])
