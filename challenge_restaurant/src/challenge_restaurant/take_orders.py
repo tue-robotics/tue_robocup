@@ -9,6 +9,8 @@ import smach
 # TU/e Robotics
 from hmi import TimeoutException
 from robocup_knowledge import knowledge_loader
+import robot_smach_states.util.designators as ds
+from robot_skills.util.entity import Entity
 
 # Knowledge
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -32,6 +34,7 @@ class TakeOrder(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self._robot = robot
+        ds.check_type(entity_designator, Entity)
         self._entity_designator = entity_designator
         self._orders = orders
         self._max_tries = 5
@@ -151,3 +154,34 @@ class ClearOrders(smach.State):
         while self.orders:
             self.orders.pop()
         return 'succeeded'
+
+
+if __name__ == '__main__':
+    import sys
+    from robot_skills import get_robot
+    from geometry_msgs.msg import Pose
+
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+
+        rospy.init_node('test_take_orders')
+        _robot = get_robot(robot_name)
+
+
+        pose = Pose()
+        pose.position.x = 1.0
+        pose.position.y = 1.0
+        pose.position.z = 1.6
+        customer_entity = Entity('random_id', 'person',
+                                 '/map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
+                                 'dummy', # Only pose and frame_id are used
+                                 'shape', 'volumes', 'super_types', 'last_update_time')
+        customer_entity.pose = pose  # This takes care of the conversion to KDL for us
+        orders = []
+        sm = TakeOrder(_robot, ds.Designator(customer_entity), orders=orders)
+        sm.execute()
+
+        rospy.loginfo("Orders {}".format(orders))
+    else:
+        print("Please provide robot name as argument.")
+        exit(1)
