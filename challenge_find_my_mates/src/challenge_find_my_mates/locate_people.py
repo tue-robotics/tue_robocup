@@ -65,9 +65,10 @@ class LocatePeople(StateMachine):
             global PERSON_DETECTIONS
             global NUM_LOOKS
 
-            # with open('/home/rein/mates/floorplan-2019-07-05-08-32-30.pickle', 'r') as f:
+            # with open('/home/rein/mates/floorplan-2019-07-05-11-06-52.pickle', 'r') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
             #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
+            # 
             #
             # return "done"
 
@@ -88,6 +89,7 @@ class LocatePeople(StateMachine):
                     sentences.rotate(1)
                     robot.speech.speak(sentences[0], block=False)
                     for head_goal in head_goals:
+                        robot.speech.speak("please look at me", block=False)
                         robot.head.look_at_point(head_goal)
                         robot.head.wait_for_motion_done()
                         now = time.time()
@@ -134,9 +136,10 @@ class LocatePeople(StateMachine):
             min_corner = room_entity.pose.frame * room_volume.min_corner
             max_corner = room_entity.pose.frame * room_volume.max_corner
 
-            shrink = 0.25
-            min_corner_shrinked = PyKDL.Vector(min_corner.x() + shrink, min_corner.y() + shrink, 0)
-            max_corner_shrinked = PyKDL.Vector(max_corner.x() - shrink, max_corner.y() - shrink, 0)
+            shrink_x = 0.5
+            shrink_y = 0.3
+            min_corner_shrinked = PyKDL.Vector(min_corner.x() + shrink_x, min_corner.y() + shrink_y, 0)
+            max_corner_shrinked = PyKDL.Vector(max_corner.x() - shrink_x, max_corner.y() - shrink_y, 0)
 
             rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
 
@@ -208,6 +211,8 @@ class LocatePeople(StateMachine):
                 label = "female" if person_detection['person_detection'].gender else "male"
                 label += ", " + str(person_detection['person_detection'].age)
                 cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
+
+                # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
             filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
             cv2.imwrite(filename, floorplan)
