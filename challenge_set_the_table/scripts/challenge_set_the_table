@@ -88,7 +88,7 @@ def setup_state_machine(robot):
                                       'failed': 'SAY_OPEN_FAILED'})
 
         StateMachine.add('SAY_OPEN_FAILED',
-                         Say(robot, "I failed to open the cupboard drawer, can somebody open it for me?"),
+                         Say(robot, "I failed to open the cupboard drawer"),
                          transitions={'spoken': 'WAIT_OPEN'})
 
         StateMachine.add('WAIT_OPEN',
