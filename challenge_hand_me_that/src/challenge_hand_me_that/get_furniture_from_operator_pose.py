@@ -65,6 +65,20 @@ class GetFurnitureFromOperatorPose(StateMachine):
             _show_view(timeout=2)
             rospy.sleep(0.4)
             _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
+            rospy.sleep(0.4)
+            _show_view(timeout=2)
             robot.speech.speak("Please point at the object you want me to hand you", block=False)  # hmm, weird sentence
             rospy.sleep(0.4)
             _show_view(timeout=2)
@@ -86,23 +100,27 @@ class GetFurnitureFromOperatorPose(StateMachine):
             global OPERATOR
 
             def _is_operator(person):
-                if "is_pointing" not in person.tags:
+                if person.position.z > 2.5:
+                    robot.speech.speak("Please stand in my view with your full body")
                     return False
 
-                if person.position.z > 2.5:
-                    return False
                 if person.position.z < 1.5:
-                    robot.speech.speak("You are too close")
+                    robot.speech.speak("Please stand in my view with your full body")
+                    return False
+
+                if "is_pointing" not in person.tags:
+                    robot.speech.speak("Please point")
                     return False
 
                 return True
 
             while not rospy.is_shutdown() and OPERATOR is None:
                 persons = robot.perception.detect_person_3d(*_show_view())
-                for person in persons:
+                if persons:
+                    persons = sorted(persons, key=lambda x: x.position.z)
+                    person = persons[0]
                     if _is_operator(person):
                         OPERATOR = person
-                        break
 
             # robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
             rospy.loginfo("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
@@ -139,7 +157,8 @@ class GetFurnitureFromOperatorPose(StateMachine):
                 else:
                     rospy.loginfo("{} is not furniture".format(result.entity_id))
                     robot.speech.speak("That's not furniture, you dummy.")
-                    rospy.Time.sleep(3)
+                    rospy.sleep(3)
+                    OPERATOR = None
                     return 'failed'
 
             # fill the designator and user data for Janno
