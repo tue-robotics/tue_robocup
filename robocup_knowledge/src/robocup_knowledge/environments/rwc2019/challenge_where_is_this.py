@@ -20,6 +20,13 @@ common = knowledge_loader.load_knowledge("common")
 
 grammar_target = "T"
 
+starting_point_grammar = """
+T[A] -> LOCATION[A]
+"""
+
+for loc in common.location_names:
+    starting_point_grammar += '\nLOCATION[%s] -> %s' % (loc, loc)
+
 location_grammar = """
 T[A] -> COURTESY_PREFIX VP[A] | VP[A]
 
@@ -55,7 +62,18 @@ if __name__ == "__main__":
 
     from grammar_parser.cfgparser import CFGParser
 
+    print("Location Grammar")
     grammar_parser = CFGParser.fromstring(location_grammar)
+    grammar_parser.verify()
+    grammar_parser.check_rules()
+    print("Random Sentence:")
+    sentence = grammar_parser.get_random_sentence("T")
+    print(sentence)
+    print("Resulting Semantics:")
+    print(grammar_parser.parse("T", sentence))
+
+    print("\n\nStarting Point Grammar")
+    grammar_parser = CFGParser.fromstring(starting_point_grammar)
     grammar_parser.verify()
     grammar_parser.check_rules()
     print("Random Sentence:")
