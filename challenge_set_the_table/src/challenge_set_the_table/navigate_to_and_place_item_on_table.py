@@ -31,7 +31,6 @@ item_vector_dict = {
     "napkin": PyKDL.Vector(0, 0.25, 0)  # besides the fork
 }
 
-
 color_dict = {
     "plate": ColorRGBA(1, 0, 0, 1),
     "cup": ColorRGBA(0, 1, 0, 1),
@@ -42,6 +41,8 @@ color_dict = {
     "napkin": ColorRGBA(0.5, 0, 0.5, 1)
 }
 
+pboven = [0.69, -1.2, 0, -1.57, 0]  # TODO Henk
+pleg = [0.69, -1.2, 0, -1.57, 0]  # TODO Henk
 
 def item_vector_to_item_frame(item_vector):
     frame = PyKDL.Frame(
@@ -96,8 +97,8 @@ class PlaceItemOnTable(StateMachine):
             item_name = user_data["item_picked"]
             send_joint_goal([0.69, 0, 0, 0, 0])
 
-            if item_name == 'plate':
-                send_joint_goal([0.69, -1.2, 0, -1.57, 0])
+            if item_name in ['plate', 'napkin']:
+                send_joint_goal(pboven)
             else:
                 send_joint_goal([0.69, -1.2, 0, -1.57, 0])
             return 'done'
@@ -118,11 +119,9 @@ class PlaceItemOnTable(StateMachine):
         def _place_and_retract(user_data):
             rospy.loginfo("Placing...")
             item_name = user_data["item_picked"]
-            if item_name == 'plate':
+            if item_name in ['plate', 'napkin']:
                 # TODO: Do a different joint goal/trajectory
-                send_joint_trajectory([[0.69, -1.5, 0, 0, 0],
-                                       [0.69, -1.5, 1.4, -1.5, -0.3],
-                                       [0.6, -1.75, 1.4, -1.5, -0.3]])
+                send_joint_trajectory([pleg])
             else:
                 send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
 
