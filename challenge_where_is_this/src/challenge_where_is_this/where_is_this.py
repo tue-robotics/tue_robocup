@@ -1,9 +1,13 @@
+# System
+import math
+
 # ROS
 import smach
 
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from hmi import HMIResult
 from robocup_knowledge import load_knowledge
 from robot_skills.util.kdl_conversions import FrameStamped
 
@@ -12,15 +16,21 @@ from .inform_machine import InformMachine
 
 # Load and extract knowledge here so that stuff fails on startup if not defined
 knowledge = load_knowledge("challenge_where_is_this")
-INFORMATION_POINT_ID = knowledge.information_point_id
+INFORMATION_POINT_ID = knowledge.information_point_id  # ToDo: remove (is deprecated)
 INITIAL_POSE_ID = knowledge.initial_pose_id
+GRAMMAR = knowledge.location_grammar
 
-START_ROBUST = False  # Set this flag to False if you don"t want to use StartChallengeRobust
+START_ROBUST = True  # Set this flag to False if you don"t want to use StartChallengeRobust
 
 
 class WhereIsThis(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted"])
+
+        hmi_result_des = ds.VariableDesignator(resolve_type=HMIResult)
+        information_point_id_designator = ds.FuncDesignator(
+            ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode), str, resolve_type=str)
+        information_point_designator = ds.EdEntityDesignator(robot, id_designator=information_point_id_designator)
 
         with self:
             single_item = InformMachine(robot)
@@ -28,16 +38,30 @@ class WhereIsThis(smach.StateMachine):
             if START_ROBUST:
                 smach.StateMachine.add("START_CHALLENGE",
                                        states.StartChallengeRobust(robot, INITIAL_POSE_ID),
-                                       transitions={"Done": "NAV_TO_START",
+                                       transitions={"Done": "ASK_WHERE_TO_GO",
                                                     "Aborted": "Aborted",
                                                     "Failed": "Aborted"})
 
+                smach.StateMachine.add(
+                    "ASK_WHERE_TO_GO",
+                    states.Say(robot, "Near which furniture object should I go to start guiding people?"),
+                    transitions={"spoken": "WAIT_WHERE_TO_GO"})
+
+                smach.StateMachine.add("WAIT_WHERE_TO_GO",
+                                       states.HearOptionsExtra(
+                                           robot=robot,
+                                           spec_designator=ds.Designator(initial_value=GRAMMAR),
+                                           speech_result_designator=hmi_result_des.writeable),
+                                       transitions={"heard": "NAV_TO_START",
+                                                    "no_result": "STORE_STARTING_POSE"})  # ToDo: add fallbacks
+
                 smach.StateMachine.add("NAV_TO_START",
-                                       states.NavigateToWaypoint(
-                                           robot,
-                                           ds.EdEntityDesignator(robot, id=INFORMATION_POINT_ID)
+                                       states.NavigateToSymbolic(
+                                           robot=robot,
+                                           entity_designator_area_name_map={information_point_designator: "near"},
+                                           entity_lookat_designator=information_point_designator
                                        ),
-                                       transitions={"arrived": "RANGE_ITERATOR",
+                                       transitions={"arrived": "TURN_AROUND",
                                                     "unreachable": "WAIT_NAV_BACKUP",
                                                     "goal_not_defined": "Aborted"})  # If this happens: never mind
 
@@ -47,14 +71,25 @@ class WhereIsThis(smach.StateMachine):
                                                     "preempted": "Aborted"})
 
                 smach.StateMachine.add("NAV_TO_START_BACKUP",
-                                       states.NavigateToWaypoint(
-                                           robot,
-                                           ds.EdEntityDesignator(robot, id=INFORMATION_POINT_ID),
-                                           radius=0.5,
+                                       states.NavigateToSymbolic(
+                                           robot=robot,
+                                           entity_designator_area_name_map={information_point_designator: "near"},
+                                           entity_lookat_designator=information_point_designator
                                        ),
-                                       transitions={"arrived": "RANGE_ITERATOR",
+                                       transitions={"arrived": "TURN_AROUND",
                                                     "unreachable": "SAY_CANNOT_REACH_WAYPOINT",  # Current pose backup
                                                     "goal_not_defined": "Aborted"})  # If this happens: never mind
+
+                @smach.cb_interface(outcomes=["done"])
+                def _turn_around(userdata=None):
+                    """ Turns the robot approximately 180 degrees around """
+                    v_th = 0.5
+                    robot.base.force_drive(vx=0.0, vy=0.0, vth=v_th, timeout=math.pi / v_th)
+                    return "done"
+
+                smach.StateMachine.add("TURN_AROUND",
+                                       smach.CBState(_turn_around),
+                                       transitions={"done": "RANGE_ITERATOR"})
 
                 smach.StateMachine.add("SAY_CANNOT_REACH_WAYPOINT",
                                        states.Say(robot, "I am not able to reach the {}."
