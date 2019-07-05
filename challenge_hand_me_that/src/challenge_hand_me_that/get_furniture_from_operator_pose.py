@@ -7,10 +7,13 @@
 import os
 
 import rospy
+from geometry_msgs.msg import PoseStamped
 from robot_skills import Hero
 from robot_smach_states import Entity, VariableDesignator
-from robot_smach_states.util.designators import is_writeable, check_type
+from robot_smach_states.util.designators import is_writeable
+from rospy import ServiceException
 from smach import StateMachine, cb_interface, CBState
+from std_msgs.msg import Header
 
 OPERATOR = None
 
@@ -33,12 +36,13 @@ class GetFurnitureFromOperatorPose(StateMachine):
             OPERATOR = None
 
             robot.head.reset()
-            robot.speech.speak("Let's point, please stand in front of me!")
+            robot.speech.speak("Let's point, please stand in front of me!", block=False)
             _show_view(timeout=2)
             rospy.sleep(0.4)
             _show_view(timeout=2)
             rospy.sleep(0.4)
             _show_view(timeout=2)
+            robot.speech.speak("Please point at the object you want me to hand you", block=False)  # hmm, weird sentence
             rospy.sleep(0.4)
             _show_view(timeout=2)
             rospy.sleep(0.4)
@@ -67,7 +71,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                 if person.position.z < 1.5:
                     robot.speech.speak("You are too close")
                     return False
-                
+
                 return True
 
             while not rospy.is_shutdown() and OPERATOR is None:
@@ -77,13 +81,47 @@ class GetFurnitureFromOperatorPose(StateMachine):
                         OPERATOR = person
                         break
 
-            print "Found operator", OPERATOR
+            robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
+
+            return 'done'
+
+        @cb_interface(outcomes=['done'])
+        def _get_furniture(_):
+            global OPERATOR
+
+            final_result = None
+            while not rospy.is_shutdown() and final_result is None:
+                result = None
+                while not rospy.is_shutdown() and result is None:
+                    try:
+                        map_pose = robot.tf_listener.transformPose("map", PoseStamped(
+                            header=Header(
+                                frame_id=OPERATOR.header.frame_id,
+                                stamp=rospy.Time.now() - rospy.Duration.from_sec(0.5)
+                            ),
+                            pose=OPERATOR.pointing_pose
+                        ))
+                        result = robot.ed.ray_trace(map_pose)
+                    except Exception as e:
+                        rospy.logerr("Could not get ray trace from closest person: {}".format(e))
+                    rospy.sleep(1.)
+
+                # TODO: LOY
+                # result.intersection_point type: PointStamped
+                # result.entity_id: string
+
+                if result.entity_id in ["cabinet", "etc", "even", "invullen", "aub"]:
+                    final_result = result
+
+            # TODO: LOY
+            # fill the designator and user data for Janno
 
             return 'done'
 
         with self:
-            self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'GET_OPERATOR_POSE'})
-            self.add('GET_OPERATOR_POSE', CBState(_get_operator), transitions={'done': 'done'})
+            self.add('PREPARE_OPERATOR', CBState(_prepare_operator), transitions={'done': 'GET_OPERATOR'})
+            self.add('GET_OPERATOR', CBState(_get_operator), transitions={'done': 'GET_FURNITURE'})
+            self.add('GET_FURNITURE', CBState(_get_furniture), transitions={'done': 'done'})
 
 
 if __name__ == '__main__':
