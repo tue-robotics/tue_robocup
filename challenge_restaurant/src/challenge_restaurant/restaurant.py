@@ -34,12 +34,19 @@ class Restaurant(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'SAY_START',
+                                   transitions={'initialized': 'SAY_WAVING',
                                                 'abort': 'STOP'})
 
-            smach.StateMachine.add('SAY_START',
-                                   states.Say(robot, 'Starting restaurant challenge, I will starting looking for waving customers'),
-                                   transitions={"spoken": 'STORE_KITCHEN'})
+            smach.StateMachine.add('SAY_WAVING', states.Say(robot, "Mr. Barman, please make sure that the people wave "
+                                                                   "slowly and put their arm up high. Like is shown "
+                                                                   "on my screen", block=True),
+                                   transitions={'spoken': 'SHOW_IMAGE'})
+
+            smach.StateMachine.add('SHOW_IMAGE', states.ShowImageState(robot,
+                                                                       "challenge_restaurant",
+                                                                       "images/waving.jpg", seconds=10),
+                                   transitions={'succeeded': 'STORE_KITCHEN',
+                                                'failed': 'STORE_KITCHEN'})
 
             smach.StateMachine.add('STORE_KITCHEN',
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
@@ -69,7 +76,8 @@ class Restaurant(smach.StateMachine):
 
             # Asking for confirmation
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
-                                   states.Say(robot, 'I have seen a waving person, should I continue?'),
+                                   states.Say(robot, 'I have seen a waving person, should I take the order? '
+                                                     'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
                                    transitions={"spoken": 'WAIT_FOR_START'})
 
             smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
