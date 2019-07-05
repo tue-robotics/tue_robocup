@@ -50,14 +50,21 @@ class GetOrder(smach.StateMachine):
             to be searched for getting an order
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
+        hacky_arm_des = ds.VariableDesignator(initial_value=robot.get_arm(), name='hacky_arm_3')
 
         with self:
 
             # Operator id
             caller_id = "operator"
             caller_designator = ds.EdEntityDesignator(robot=robot, id=caller_id, name="caller_des", none_resolve=True)
+            smach.StateMachine.add("RESET_ROBOT_GET_ORDER",
+                                   states.ArmToJointConfig(robot=robot,
+                                                           arm_designator=hacky_arm_des,
+                                                           configuration="reset"),
+                                   transitions={'succeeded': "SAY_PEOPLE_WITHOUT_DRINKS",
+                                                'failed': "SAY_PEOPLE_WITHOUT_DRINKS"})
 
-            # Detect - people holding drinks and people without drinks  #ToDo: implement!
+            # Detect - people holding drinks and people without drinks
             smach.StateMachine.add("SAY_PEOPLE_WITHOUT_DRINKS",
                                    states.Say(robot=robot, sentence="Trying to find people without a drink",
                                               look_at_standing_person=True,
