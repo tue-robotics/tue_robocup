@@ -1,1 +1,2 @@
+from .get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
 from .inspect_furniture_entity import InspectFurniture
