@@ -56,7 +56,8 @@ class Restaurant(smach.StateMachine):
                                                           strict=False, nearest=True,
                                                           speak=True,
                                                           look_range=(-np.pi/4, np.pi/4),
-                                                          look_steps=4),
+                                                          look_steps=4,
+                                                          search_timeout=600), # 10 minutes
                                    transitions={'found': 'SAY_I_HAVE_SEEN',
                                                 'failed': 'WAIT_FOR_CUSTOMER'})
 
