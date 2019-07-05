@@ -18,6 +18,7 @@ from robot_smach_states import NavigateToSymbolic, Say, WaitTime, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
+from std_msgs.msg import ColorRGBA
 from tf_conversions import toMsg
 
 item_vector_dict = {
@@ -29,6 +30,18 @@ item_vector_dict = {
     "bowl": PyKDL.Vector(0, 0, 0),  # Must go on top of the dish
     "napkin": PyKDL.Vector(0, 0.25, 0)  # besides the fork
 }
+
+
+color_dict = {
+    "plate": ColorRGBA(1, 0, 0, 1),
+    "cup": ColorRGBA(0, 1, 0, 1),
+    "knife": ColorRGBA(0, 0, 1, 1),
+    "fork": ColorRGBA(1, 1, 0, 1),
+    "spoon": ColorRGBA(1, 0, 1, 1),
+    "bowl": ColorRGBA(0, 1, 1, 1),
+    "napkin": ColorRGBA(0.5, 0, 0.5, 1)
+}
+
 
 def item_vector_to_item_frame(item_vector):
     frame = PyKDL.Frame(
@@ -206,10 +219,7 @@ def _publish_item_poses(robot, items):
         marker_msg.action = 0
         marker_msg.pose = posestamped.pose
         marker_msg.scale = Vector3(0.05, 0.05, 0.05)
-        marker_msg.color.r = 1.0
-        marker_msg.color.g = 0.0
-        marker_msg.color.b = 0.0
-        marker_msg.color.a = 1.0
+        marker_msg.color = color_dict[k]
         marker_msg.lifetime = rospy.Duration(30.0)
         array_msg.markers.append(marker_msg)
 
