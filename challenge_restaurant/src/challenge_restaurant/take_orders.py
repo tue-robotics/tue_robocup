@@ -120,7 +120,7 @@ class ReciteOrders(smach.State):
         self._orders = orders
 
     def execute(self, userdata=None):
-        self._robot.head.look_at_standing_person()
+        self._robot.head.look_up()
         self._robot.speech.speak("Mr. Barman I have some orders.")
 
         sentence = ""
