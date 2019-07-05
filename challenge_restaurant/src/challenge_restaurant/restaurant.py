@@ -29,7 +29,7 @@ class Restaurant(smach.StateMachine):
                                                                                        id=kitchen_id)
         customer_id = 'current_customer'
         customer_designator = states.util.designators.VariableDesignator(resolve_type=Entity, name=customer_id)
-        orders = {}
+        orders = []
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -140,7 +140,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'succeeded': 'SAY_CANNOT_GRASP'})
 
             smach.StateMachine.add('SAY_CANNOT_GRASP',
-                                   states.Say(robot, "I am unable to grasp my own order,"
+                                   states.Say(robot, "I am unable to grasp my own order, "
                                                      "could you please put it in my basket"),
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 

@@ -60,7 +60,7 @@ class TakeOrder(smach.State):
             nr_tries += 1
             rospy.loginfo('nr_tries: %d', nr_tries)
 
-            self._robot.speech.speak("Which combo or beverage do you want?")
+            self._robot.speech.speak("What would you like to order?")
             count = 0
             while not rospy.is_shutdown():
                 count += 1
@@ -81,21 +81,16 @@ class TakeOrder(smach.State):
                         return "failed"
 
             try:
-                # Now: confirm
-                if "beverage" in speech_result.semantics:
-                    self._robot.speech.speak("I understood that you would like {}, "
-                                             "is this correct?".format(speech_result.semantics['beverage']))
-                elif "food1" in speech_result.semantics and "food2" in speech_result.semantics:
-                    self._robot.speech.speak("I understood that you would like {} and {}, "
-                                             "is this correct?".format(speech_result.semantics['food1'],
-                                                                       speech_result.semantics['food2']))
+                order_string = " and a ".join(speech_result.semantics)
+                self._robot.speech.speak("I understood that you would like a {}, "
+                                         "is this correct?)".format(order_string), block=True)
             except:
                 continue
 
             if self._confirm():
                 # DO NOT ASSIGN self._orders OR OTHER STATES WILL NOT HAVE THE CORRECT REFERENCE
-                for k, v in speech_result.semantics.iteritems():
-                    self._orders[k] = v
+                for item in speech_result.semantics:
+                    self._orders.append(item)
                 self._robot.head.cancel_goal()
                 self._robot.speech.speak("Ok, I will get your order", block=False)
                 return "succeeded"
@@ -123,13 +118,15 @@ class ReciteOrders(smach.State):
         self._robot.head.look_up()
         self._robot.speech.speak("Mr. Barman I have some orders.")
 
-        sentence = ""
+        order_string = " and a ".join(self._orders)
 
-        if "beverage" in self._orders:
-            sentence = "Table 1 would like to have {}".format(self._orders["beverage"])
-        if "food1" in self._orders:
-            sentence = "Table 1 wants the combo {} and {}".format(self._orders["food1"],
-                                                                  self._orders["food2"])
+        sentence = "Table 1 would like to have a {}".format(order_string)
+
+        # if "beverage" in self._orders:
+        #     sentence = "Table 1 would like to have {}".format(self._orders["beverage"])
+        # if "food1" in self._orders:
+        #     sentence = "Table 1 wants the combo {} and {}".format(self._orders["food1"],
+        #                                                           self._orders["food2"])
 
         self._robot.speech.speak(sentence)
 
@@ -151,5 +148,6 @@ class ClearOrders(smach.State):
         self.orders = orders
 
     def execute(self, userdata=None):
-        self.orders.clear()
+        while self.orders:
+            self.orders.pop()
         return 'succeeded'
