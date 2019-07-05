@@ -1,5 +1,32 @@
 #!/usr/bin/python
 
+""" This challenge is described in the RoboCup@Home 2019 rulebook, around page 48.
+
+Main goal
+Upon entrance, the robot asks the operator which room shall be cleaned. All misplaced known objects
+found in this room must be taken to their predefined locations and unknown objects thrown in the trash bin.
+
+Number of objects: 5..10
+
+Time limit: 5 minutes
+
+Objects can be anywhere, including the floor, seats, and on furniture. All objects are visible from
+at least 1.0 m distance (no occlusions) and have the following distributions:
+
+Known objects: Any two regular and two alike objects
+
+Unknown objects: One unknown object at grasping distance (i.e. no decorations)
+
+Reward: 1000 pts (100 pts per object),
+Bonus: max 500 pts
+
+In this implementation object recognition is only partly used, and the floor is not scanned for objects.
+Small and/or large objects are not used.
+After grasping an object the operator is asked to state the category of the object so the robot knows
+from the local knowledge where to place the object.
+If the operator states 'Trash' as the category the object will be placed in the trash_bin.
+
+"""
 import rospy
 import smach
 
@@ -78,10 +105,11 @@ class RoomToCleanUpLocations(smach.State):
 
 
 class AskWhichRoomToClean(smach.StateMachine):
-    # Logic in this code is still flawed. No correct repetition.....
-    # EXAMINE challenge_restaurant->take_orders.py for information about structure if interaction
     def __init__(self, robot, room_grammar, roomw, cleanup_locationsw):
         smach.StateMachine.__init__(self, outcomes=["done"])
+        """
+        Ask the operator which room has to be cleaned
+        """
 
         hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
         room_name_des = ds.FuncDesignator(ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode),
@@ -120,7 +148,7 @@ class AskWhichRoomToClean(smach.StateMachine):
 
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    # The probability number must be determined experimentally
+
     # Designators
     # Room to search through
     roomr = ds.VariableDesignator(resolve_type=str)
@@ -154,16 +182,6 @@ def setup_statemachine(robot):
             transitions={"arrived": "INQUIRE_ROOM",
                          "unreachable": "INQUIRE_ROOM",
                          "goal_not_defined": "INQUIRE_ROOM"})
-
-        # smach.StateMachine.add("INITIALIZE",
-        #                        robot_smach_states.Initialize(robot),
-        #                        transitions={"initialized": "SET_INITIAL_POSE",
-        #                                     "abort": "Aborted"})
-        # smach.StateMachine.add("SET_INITIAL_POSE",
-        #                        robot_smach_states.SetInitialPose(robot,challenge_knowledge.starting_point),
-        #                        transitions={"done":    "INQUIRE_ROOM",
-        #                                     "preempted": "Aborted",
-        #                                     "error":  "INQUIRE_ROOM"})
 
         smach.StateMachine.add("INQUIRE_ROOM",
                                AskWhichRoomToClean(robot, ds.Designator(challenge_knowledge.grammar), roomw,
