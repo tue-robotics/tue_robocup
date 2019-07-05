@@ -40,7 +40,7 @@ def setup_state_machine(robot):
 
         # Say we're gonna start
         StateMachine.add('SAY_START', Say(robot, "Hand me that it is!", block=False),
-                         transitions={'spoken': 'GET_FURNITURE_FROM_OPERATOR_POSE'})
+                         transitions={'spoken': 'NAVIGATE_TO_START'})
 
         # Drive to the start location
         StateMachine.add('NAVIGATE_TO_START',
