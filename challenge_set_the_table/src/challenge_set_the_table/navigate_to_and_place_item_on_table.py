@@ -227,6 +227,7 @@ def _publish_item_poses(robot, items):
         marker_msg2 = copy.deepcopy(marker_msg)
         marker_msg2.id = marker_id
         marker_msg2.type = visualization_msgs.msg.Marker.TEXT_VIEW_FACING
+        marker_msg2.pose.position.z += 0.1
         marker_msg2.text = k
         array_msg.markers.append(marker_msg2)
 
