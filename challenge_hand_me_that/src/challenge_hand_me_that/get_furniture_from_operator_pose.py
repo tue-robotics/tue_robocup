@@ -58,6 +58,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
             global OPERATOR
             OPERATOR = None
 
+            robot.move_to_hmi_pose()
             robot.head.reset()
             robot.speech.speak("Let's point, please stand in front of me!", block=False)
             _show_view(timeout=2)
@@ -159,9 +160,11 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     robot.speech.speak("That's not furniture, you dummy.")
                     rospy.sleep(3)
                     OPERATOR = None
+                    robot.get_arm().send_joint_goal("reset")
                     return 'failed'
 
-            # fill the designator and user data for Janno
+            # Fill the designator and user data the furniture inspection
+            robot.get_arm().send_joint_goal("reset")
             furniture_designator.write(robot.ed.get_entity(final_result.entity_id))
             user_data['laser_dot'] = result.intersection_point
             return 'done'
