@@ -4,6 +4,9 @@ import smach
 # TU/e Robotics
 import robot_smach_states as states
 
+# Challenge final
+from .get_orders import GetOrders
+
 
 class Final(smach.StateMachine):
     def __init__(self, robot):
@@ -16,6 +19,8 @@ class Final(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add("SAY_YEEHAH",
-                                   states.Say(robot, "Yeehah"),
-                                   transitions={"spoken": "done"})
+            # ToDo: awesome people detection stuff
+
+            smach.StateMachine.add("GET_ORDERS",
+                                   GetOrders(robot),
+                                   transitions={"done": "done"})
