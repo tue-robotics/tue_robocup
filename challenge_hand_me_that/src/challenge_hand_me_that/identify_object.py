@@ -1,4 +1,4 @@
-# ROS
+ ROS
 import PyKDL as kdl
 import rospy
 import smach
@@ -17,7 +17,7 @@ class PointAt(smach.State):
     def __init__(self, robot, arm, point_entity_designator):
         """
         Points at an item, similar to picking it up.
-        
+
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to point at the entity with. E.g. UnoccupiedArmDesignator
         :param point_entity_designator: Designator that resolves to the entity to point at. e.g EntityByIdDesignator
@@ -84,7 +84,7 @@ class PointAt(smach.State):
 
         # Grasp
         rospy.loginfo('Start pointing')
-        for x_offset in [-0.1, 0.0]:  # Hack because Hero does not pre-grasp reliably
+        for x_offset in [-0.15, 0.0]:  # Hack because Hero does not pre-grasp reliably
             _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), goal_bl.frame_id)
             if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.id]):
                 self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
