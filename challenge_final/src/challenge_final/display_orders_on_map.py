@@ -59,7 +59,7 @@ class DisplayOrdersOnMap(smach.State):
 
     def execute(self, ud):
         floorplan = cv2.imread(
-            os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
+            os.path.join(rospkg.RosPack().get_path('challenge_final'), 'img/floorplan.png'))
         floorplan_height, floorplan_width, _ = floorplan.shape
 
         person_detection_clusters = ud['detected_people']
