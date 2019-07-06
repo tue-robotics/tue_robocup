@@ -1,12 +1,21 @@
 # System
+import datetime
 import math
+import os
+import pickle
+
+import cv2
+import rospkg
+
 import numpy as np
 import time
 from collections import deque
 
 # ROS
+import PyKDL as kdl
 import rospy
 import smach
+from cv_bridge import CvBridge
 from geometry_msgs.msg import PointStamped
 
 # TU/e Robotics
@@ -15,12 +24,46 @@ import robot_smach_states.util.designators as ds
 from robot_skills import get_robot_from_argv
 from robot_skills.util import kdl_conversions
 
+from .clustering import cluster_people
+
 WAYPOINT_ID = "find_people_waypoint"
+ROOM_ID = "living_room"
 NUM_LOOKS = 2
+MAX_NUMBER_OF_PEOPLE_EXPECTED = 10
+SHRINK_X = 0.5
+SHRINK_Y = 0.3
+
+
+def color_map(N=256, normalized=False):
+    """
+    Generate an RGB color map of N different colors
+    :param N : int amount of colors to generate
+    :param normalized: bool indicating range of each channel: float32 in [0, 1] or int in [0, 255]
+    :return a numpy.array of shape (N, 3) with a row for each color and each row is [R,G,B]
+    """
+
+    def bitget(byteval, idx):
+        return ((byteval & (1 << idx)) != 0)
+
+    dtype = 'float32' if normalized else 'uint8'
+    cmap = np.zeros((N, 3), dtype=dtype)
+    for i in range(N):
+        r = g = b = 0
+        c = i + 1  # skip the first color (black)
+        for j in range(8):
+            r |= bitget(c, 0) << 7 - j
+            g |= bitget(c, 1) << 7 - j
+            b |= bitget(c, 2) << 7 - j
+            c >>= 3
+
+        cmap[i] = np.array([r, g, b])
+
+    cmap = cmap / 255 if normalized else cmap
+    return cmap
 
 
 class FindPeople(smach.StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, room_id=ROOM_ID):
         """
         Finds the people in the living room and takes pictures of them. Put then in a data struct and put this in
         output keys.
@@ -29,6 +72,7 @@ class FindPeople(smach.StateMachine):
         * detected_people: same datastruct as was used in find my mates. Ask Rein for a pickled example
 
         :param robot: (Robot) api object
+        :param room_id: (str) identifies the room in which the people are detected
         """
         smach.StateMachine.__init__(self, outcomes=["done"], output_keys=["detected_people"])
 
@@ -43,7 +87,7 @@ class FindPeople(smach.StateMachine):
                                                 "unreachable": "DETECT_PEOPLE",
                                                 "goal_not_defined": "DETECT_PEOPLE"})
 
-            @smach.cb_interface(outcomes=["done"], output_keys=["detected_people"])
+            @smach.cb_interface(outcomes=["done"], output_keys=["raw_detections"])
             def detect_people(user_data):
 
                 person_detections = []
@@ -113,7 +157,121 @@ class FindPeople(smach.StateMachine):
                                    smach.CBState(detect_people),
                                    transitions={"done": "done"})
 
-            # ToDo: add state: filter and cluster images
+            # Filter and cluster images
+            @smach.cb_interface(
+                outcomes=["done", "failed"],
+                input_keys=["raw_detections"],
+                output_keys=["detected_people"])
+            def _filter_and_cluster_images(user_data):
+                """
+                Filters the raw detections so that only people within the room maintain. Next, it clusters the images
+                so that only one image per person remains. This is stored in the user data
+
+                :param user_data: (smach.UserData)
+                :return: (str) Done
+                """
+                raw_person_detections = user_data.raw_detections
+
+                try:
+                    with open(os.path.expanduser(
+                        '~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+                                                ), 'w') as f:
+                        pickle.dump(raw_person_detections, f)
+                except:
+                    pass
+
+                room_entity = robot.ed.get_entity(id=room_id)  # type: Entity
+                room_volume = room_entity.volumes["in"]
+                min_corner = room_entity.pose.frame * room_volume.min_corner
+                max_corner = room_entity.pose.frame * room_volume.max_corner
+
+                shrink_x = SHRINK_X
+                shrink_y = SHRINK_Y
+                min_corner_shrinked = kdl.Vector(min_corner.x() + shrink_x, min_corner.y() + shrink_y, 0)
+                max_corner_shrinked = kdl.Vector(max_corner.x() - shrink_x, max_corner.y() - shrink_y, 0)
+
+                rospy.loginfo('Start filtering from %d raw detections', len(raw_person_detections))
+
+                def _get_clusters():
+                    def _in_room(p):
+                        return (min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and
+                                min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
+                                )
+
+                    in_room_detections = [d for d in raw_person_detections if _in_room(d['map_ps'].point)]
+
+                    rospy.loginfo("%d in room before clustering", len(in_room_detections))
+
+                    clusters = cluster_people(in_room_detections, np.array([6, 0]))
+
+                    return clusters
+
+                # filter in room and perform clustering until we have 4 options
+                try:
+                    person_detection_clusters = _get_clusters()
+                except ValueError as e:
+                    rospy.logerr(e)
+                    robot.speech.speak("Mates, where are you?", block=False)
+                    return "failed"
+
+                floorplan = cv2.imread(
+                    os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
+                floorplan_height, floorplan_width, _ = floorplan.shape
+
+                bridge = CvBridge()
+                c_map = color_map(N=len(person_detection_clusters), normalized=True)
+                for i, person_detection in enumerate(person_detection_clusters):
+                    image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
+                    roi = person_detection['person_detection'].face.roi
+                    roi_image = image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
+
+                    desired_height = 150
+                    height, width, channel = roi_image.shape
+                    ratio = float(height) / float(desired_height)
+                    calculated_width = int(float(width) / ratio)
+                    resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
+
+                    x = person_detection['map_ps'].point.x
+                    y = person_detection['map_ps'].point.y
+
+                    x_image_frame = 9.04 - x
+                    y_image_frame = 1.58 + y
+
+                    pixels_per_meter = 158
+
+                    px = int(pixels_per_meter * x_image_frame)
+                    py = int(pixels_per_meter * y_image_frame)
+
+                    cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+
+                    try:
+                        px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width - 1)
+                        py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height - 1)
+
+                        if px_image >= 0 and py_image >= 0:
+                            # could not broadcast input array from shape (150,150,3) into shape (106,150,3)
+                            floorplan[py_image:py_image + desired_height,
+                            px_image:px_image + calculated_width] = resized_roi_image
+                            cv2.rectangle(floorplan, (px_image, py_image),
+                                          (px_image + calculated_width, py_image + desired_height),
+                                          (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
+                        else:
+                            rospy.logerr("bound error")
+                    except Exception as e:
+                        rospy.logerr("Drawing image roi failed: {}".format(e))
+
+                    label = "female" if person_detection['person_detection'].gender else "male"
+                    label += ", " + str(person_detection['person_detection'].age)
+                    cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255),
+                                2, cv2.LINE_AA)
+
+                    # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+
+                filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+                cv2.imwrite(filename, floorplan)
+                robot.hmi.show_image(filename, 120)
+
+                return "done"
 
 
 if __name__ == "__main__":
@@ -124,13 +282,13 @@ if __name__ == "__main__":
     _robot = get_robot_from_argv(index=1)
 
     # Test data
-    user_data = smach.UserData()
+    user_data_ = smach.UserData()
 
-    sm = FindPeople(robot=_robot)
-    sm.execute(user_data)
+    sm = FindPeople(robot=_robot, room_id=ROOM_ID)
+    sm.execute(user_data_)
 
     # Check output
     # noinspection PyProtectedMember
-    rospy.loginfo("User data: {}".format(user_data._data))
+    rospy.loginfo("User data: {}".format(user_data_._data))
 
     rospy.loginfo("Please check output above")
