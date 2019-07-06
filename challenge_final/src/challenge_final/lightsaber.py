@@ -7,7 +7,12 @@ import smach
 import std_msgs.msg
 from sensor_msgs.msg import CameraInfo, Image
 
+# TU/e Robotics
+import robot_smach_states as states
+import robot_smach_states.util.designators as ds
+
 TRIGGER_TOPIC = "/trigger"
+LIGHTSABER_WAYPOINT_ID = "hand_that_home_location"
 
 
 class LightSaber(smach.State):
@@ -97,3 +102,26 @@ class LightSaber(smach.State):
         self._ts.callbacks.clear()
         del self._ts, self._depth_info_sub, self._depth_sub, self._rgb_sub
         rospy.loginfo("Deregistration done")
+
+
+class DriveAndSwordFight(smach.StateMachine):
+    def __init__(self, robot):
+        """
+        Drives to the lightsaber pose and starts the lightsaber state.
+        """
+        smach.StateMachine.__init__(self, outcomes=["done"])
+
+        with self:
+
+            smach.StateMachine.add("NAVIGATE_TO_START",
+                                   states.NavigateToWaypoint(
+                                       robot=robot,
+                                       waypoint_designator=ds.EntityByIdDesignator(robot, id=LIGHTSABER_WAYPOINT_ID),
+                                   ),
+                                   transitions={"arrived": "SWORDFIGHT",
+                                                "unreachable": "SWORDFIGHT",  # Just take it from here
+                                                "goal_not_defined": "SWORDFIGHT"})  # Just take it from here
+
+            smach.StateMachine.add("SWORDFIGHT",
+                                   LightSaber(robot),
+                                   transitions={"done": "done"})
