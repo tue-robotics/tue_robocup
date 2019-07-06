@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 from datetime import datetime
+import traceback
 
 # ROS
 import rospy
@@ -57,97 +58,103 @@ class DisplayOrdersOnMap(smach.State):
         self.robot = robot
 
     def execute(self, ud):
-        floorplan = cv2.imread(
-            os.path.join(rospkg.RosPack().get_path('challenge_final'), 'img/floorplan.png'))
-        floorplan_height, floorplan_width, _ = floorplan.shape
-
         try:
-            person_detection_clusters = ud['detected_people']
-            assert isinstance(person_detection_clusters, list), "Person detection clusters is not a list"
-            assert all([isinstance(cluster, dict) for cluster in person_detection_clusters]),\
-                "Not all clusters are dicts"
-        except Exception as e:
-            rospy.logerr("Cannot show people on floor plan: {}".format(e))
-            person_detection_clusters = []
-
-        bridge = cv_bridge.CvBridge()
-        c_map = color_map(N=len(person_detection_clusters), normalized=True)
-        for i, person_detection in enumerate(person_detection_clusters):
-            image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
-            roi = person_detection['person_detection'].face.roi
-            roi_image = image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
-
-            desired_height = 150
-            height, width, channel = roi_image.shape
-            ratio = float(height) / float(desired_height)
-            calculated_width = int(float(width) / ratio)
-            resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
-
-            x = person_detection['map_ps'].point.x
-            y = person_detection['map_ps'].point.y
-
-            x_image_frame = 9.04 - x
-            y_image_frame = 1.58 + y
-
-            pixels_per_meter = 158
-
-            px = int(pixels_per_meter * x_image_frame)
-            py = int(pixels_per_meter * y_image_frame)
-
-            cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
-
-            px_image = 0
-            py_image = 0
+            floorplan = cv2.imread(
+                os.path.join(rospkg.RosPack().get_path('challenge_final'), 'img/floorplan.png'))
+            floorplan_height, floorplan_width, _ = floorplan.shape
 
             try:
-                px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width - 1)
-                py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height - 1)
-
-                if px_image >= 0 and py_image >= 0:
-                    # could not broadcast input array from shape (150,150,3) into shape (106,150,3)
-                    floorplan[py_image:py_image + desired_height,
-                    px_image:px_image + calculated_width] = resized_roi_image
-                    cv2.rectangle(floorplan, (px_image, py_image),
-                                  (px_image + calculated_width, py_image + desired_height),
-                                  (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
-                else:
-                    rospy.logerr("bound error")
+                person_detection_clusters = ud['detected_people']
+                assert isinstance(person_detection_clusters, list), "Person detection clusters is not a list"
+                assert all([isinstance(cluster, dict) for cluster in person_detection_clusters]),\
+                    "Not all clusters are dicts"
             except Exception as e:
-                rospy.logerr("Drawing image roi failed: {}".format(e))
+                rospy.logerr("Cannot show people on floor plan: {}".format(e))
+                person_detection_clusters = []
 
-            label = "female" if person_detection['person_detection'].gender else "male"
-            label += ", " + str(person_detection['person_detection'].age)
+            bridge = cv_bridge.CvBridge()
+            c_map = color_map(N=len(person_detection_clusters), normalized=True)
+            for i, person_detection in enumerate(person_detection_clusters):
+                image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
+                roi = person_detection['person_detection'].face.roi
+                roi_image = image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
 
-            cv2.putText(img=floorplan, text=label,
-                        org=(px_image, py_image + 20),
-                        fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.7,
-                        color=(0, 0, 255), thickness=2,
-                        lineType=cv2.LINE_AA)
+                desired_height = 150
+                height, width, channel = roi_image.shape
+                ratio = float(height) / float(desired_height)
+                calculated_width = int(float(width) / ratio)
+                resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
 
-            try:
-                cv2.putText(img=floorplan,
-                            text=person_detection['selection'],
-                            org=(px_image, py_image + 40),
-                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                            fontScale=0.7,
-                            color=(0, 255, 0),
-                            thickness=2,
+                x = person_detection['map_ps'].point.x
+                y = person_detection['map_ps'].point.y
+
+                x_image_frame = 9.04 - x
+                y_image_frame = 1.58 + y
+
+                pixels_per_meter = 158
+
+                px = int(pixels_per_meter * x_image_frame)
+                py = int(pixels_per_meter * y_image_frame)
+
+                cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+
+                px_image = 0
+                py_image = 0
+
+                try:
+                    px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width - 1)
+                    py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height - 1)
+
+                    if px_image >= 0 and py_image >= 0:
+                        # could not broadcast input array from shape (150,150,3) into shape (106,150,3)
+                        floorplan[py_image:py_image + desired_height,
+                        px_image:px_image + calculated_width] = resized_roi_image
+                        cv2.rectangle(floorplan, (px_image, py_image),
+                                      (px_image + calculated_width, py_image + desired_height),
+                                      (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
+                    else:
+                        rospy.logerr("bound error")
+                except Exception as e:
+                    rospy.logerr("Drawing image roi failed: {}".format(e))
+
+                label = "female" if person_detection['person_detection'].gender else "male"
+                label += ", " + str(person_detection['person_detection'].age)
+
+                cv2.putText(img=floorplan, text=label,
+                            org=(px_image, py_image + 20),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.7,
+                            color=(0, 0, 255), thickness=2,
                             lineType=cv2.LINE_AA)
-            except KeyError as key_err:
-                rospy.logerr(key_err)
 
-            # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+                try:
+                    cv2.putText(img=floorplan,
+                                text=person_detection['selection'],
+                                org=(px_image, py_image + 40),
+                                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale=0.7,
+                                color=(0, 255, 0),
+                                thickness=2,
+                                lineType=cv2.LINE_AA)
+                except KeyError as key_err:
+                    rospy.logerr(key_err)
 
-        filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
-        cv2.imwrite(filename, floorplan)
-        rospy.loginfo('Dumped image to {}'.format(filename))
+                # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
-        if self.robot:
-            self.robot.hmi.show_image(filename, 120)
-        else:
-            cv2.imshow('floorplan', floorplan)
+            filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+            cv2.imwrite(filename, floorplan)
+            rospy.loginfo('Dumped image to {}'.format(filename))
 
-        return "succeeded"
+            if self.robot:
+                self.robot.hmi.show_image(filename, 120)
+            else:
+                cv2.imshow('floorplan', floorplan)
+
+            return "succeeded"
+        except Exception as ex:
+            rospy.logerr("Could not plot orders on map, sorry!")
+            traceback.print_exc(file=sys.stdout)
+            rospy.logerr(traceback.format_exc())
+            return 'failed'
 
 
 if __name__ == "__main__":
