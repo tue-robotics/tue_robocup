@@ -11,12 +11,13 @@ class GetOrders(smach.StateMachine):
     def __init__(self, robot):
         """
         Gets the orders of the detected people using the Telegram interface.
+
         * Telegram interaction
         * Drive to operator
         * Display order on screen
-        
+
         Input keys:
-        * detected_people: same datastruct as was used in find my mates. Ask Rein for a pickled example
+        * detected_people: a list of {'rgb':..., 'person_detection':..., 'map_ps':...}-dictionaries
 
         Output keys:
         * orders: ToDo: Loy: define this
