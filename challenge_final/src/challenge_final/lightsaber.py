@@ -51,7 +51,9 @@ class LightSaber(smach.State):
             rospy.logdebug('Received rgb, depth, cam_info')
             image_data = (rgb, depth, depth_info)
             if any(image_data):
+                t_start = rospy.Time.now()
                 self._robot.perception.detect_person_3d(rgb, depth, depth_info)
+                rospy.loginfo("Calling detect person 3d took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
         except Exception as e:
             rospy.logerr(e)
 
