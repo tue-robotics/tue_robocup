@@ -69,13 +69,18 @@ class EntityFromHmiResults(ds.Designator):
 
 
 class GuideToRoomOrObject(smach.StateMachine):
-    def __init__(self, robot, entity_des):
+    def __init__(self, robot, entity_des, operator_distance=1.5, operator_radius=0.5):
         """ Constructor
         :param robot: robot object
         :param entity_des: designator resolving to a room or a piece of furniture
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         smach.StateMachine.__init__(
             self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
+
+        self.operator_distance = operator_distance
+        self.operator_radius = operator_radius
 
         with self:
             @smach.cb_interface(outcomes=["room", "object"])
@@ -93,7 +98,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "object": "GUIDE_TO_FURNITURE"})
 
             smach.StateMachine.add("GUIDE_TO_ROOM",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_ROOM_BACKUP",
                                                 "goal_not_defined": "goal_not_defined",
@@ -106,7 +112,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_TO_ROOM_BACKUP",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
@@ -114,7 +121,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_TO_FURNITURE",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "in_front_of"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "in_front_of"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_FURNITURE_BACKUP",  # Something is blocking
                                                 "goal_not_defined": "GUIDE_NEAR_FURNITURE",  # in_front_of not defined
@@ -122,7 +130,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_NEAR_FURNITURE",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_FURNITURE_BACKUP",
                                                 "goal_not_defined": "goal_not_defined",
@@ -135,7 +144,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_NEAR_FURNITURE_BACKUP",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
