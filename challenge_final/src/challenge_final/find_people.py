@@ -22,9 +22,9 @@ NUM_LOOKS = 2
 class FindPeople(smach.StateMachine):
     def __init__(self, robot):
         """
-        Finds the people in the living room and takes pictures of them. Put then in a data struct and put this in 
+        Finds the people in the living room and takes pictures of them. Put then in a data struct and put this in
         output keys.
-        
+
         Output keys:
         * detected_people: same datastruct as was used in find my mates. Ask Rein for a pickled example
 
@@ -37,21 +37,21 @@ class FindPeople(smach.StateMachine):
             # Move to start location
             smach.StateMachine.add("NAVIGATE_TO_START",
                                    states.NavigateToWaypoint(
-                                       robot=robot, 
+                                       robot=robot,
                                        waypoint_designator=ds.EntityByIdDesignator(robot, WAYPOINT_ID), radius=0.3),
                                    transitions={"arrived": "DETECT_PEOPLE",
                                                 "unreachable": "DETECT_PEOPLE",
                                                 "goal_not_defined": "DETECT_PEOPLE"})
 
             @smach.cb_interface(outcomes=["done"], output_keys=["detected_people"])
-            def detect_persons(user_data):
+            def detect_people(user_data):
 
                 person_detections = []
 
                 # with open('/home/rein/mates/floorplan-2019-07-05-11-06-52.pickle', 'r') as f:
                 #     person_detections = pickle.load(f)
                 #     rospy.loginfo("Loaded %d persons", len(person_detections))
-                # 
+                #
                 #
                 # return "done"
 
@@ -68,40 +68,40 @@ class FindPeople(smach.StateMachine):
                     "You are all looking great today! Keep looking at my camera.",
                     "I like it when everybody is staring at me!"
                 ])
-                while len(person_detections) < 4 and not rospy.is_shutdown():
-                    for _ in range(NUM_LOOKS):
-                        sentences.rotate(1)
-                        robot.speech.speak(sentences[0], block=False)
-                        for head_goal in head_goals:
-                            robot.speech.speak("please look at me", block=False)
-                            robot.head.look_at_point(head_goal)
-                            robot.head.wait_for_motion_done()
-                            now = time.time()
-                            rgb, depth, depth_info = robot.perception.get_rgb_depth_caminfo()
 
-                            try:
-                                persons = robot.perception.detect_person_3d(rgb, depth, depth_info)
-                            except Exception as e:
-                                rospy.logerr(e)
-                                rospy.sleep(2.0)
-                            else:
-                                for person in persons:
-                                    if person.face.roi.width > 0 and person.face.roi.height > 0:
-                                        try:
-                                            person_detections.append({
-                                                "map_ps": robot.tf_listener.transformPoint("map", PointStamped(
-                                                    header=rgb.header,
-                                                    point=person.position
-                                                )),
-                                                "person_detection": person,
-                                                "rgb": rgb
-                                            })
-                                        except Exception as e:
-                                            rospy.logerr(
-                                                "Failed to transform valid person detection to map frame: {}".format(e))
+                for _ in range(NUM_LOOKS):
+                    sentences.rotate(1)
+                    robot.speech.speak(sentences[0], block=False)
+                    for head_goal in head_goals:
+                        robot.speech.speak("please look at me", block=False)
+                        robot.head.look_at_point(head_goal)
+                        robot.head.wait_for_motion_done()
+                        now = time.time()
+                        rgb, depth, depth_info = robot.perception.get_rgb_depth_caminfo()
 
-                            rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now,
-                                          len(person_detections))
+                        try:
+                            persons = robot.perception.detect_person_3d(rgb, depth, depth_info)
+                        except Exception as e:
+                            rospy.logerr(e)
+                            rospy.sleep(2.0)
+                        else:
+                            for person in persons:
+                                if person.face.roi.width > 0 and person.face.roi.height > 0:
+                                    try:
+                                        person_detections.append({
+                                            "map_ps": robot.tf_listener.transformPoint("map", PointStamped(
+                                                header=rgb.header,
+                                                point=person.position
+                                            )),
+                                            "person_detection": person,
+                                            "rgb": rgb
+                                        })
+                                    except Exception as e:
+                                        rospy.logerr(
+                                            "Failed to transform valid person detection to map frame: {}".format(e))
+
+                        rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now,
+                                      len(person_detections))
 
                 rospy.loginfo("Detected %d persons", len(person_detections))
 
@@ -109,8 +109,8 @@ class FindPeople(smach.StateMachine):
 
                 return 'done'
 
-            smach.StateMachine.add('DETECT_PERSONS',
-                                   smach.CBState(detect_persons),
+            smach.StateMachine.add('DETECT_PEOPLE',
+                                   smach.CBState(detect_people),
                                    transitions={"done": "done"})
 
             # ToDo: add state: filter and cluster images
