@@ -297,7 +297,7 @@ class Perception(RobotPart):
         rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
 
         ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
-                                                         queue_size=1,
+                                                         queue_size=10,
                                                          slop=10)
         ts.registerCallback(callback)
         event.wait(timeout)
