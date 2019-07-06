@@ -1,108 +1,206 @@
-import sys
+#
+# Copyright (c) 2019, TU/e Robotics, Netherlands
+# All rights reserved.
+#
+# \author Rein Appeldoorn
+
+import math
+import os
+import pickle
+import random
+import time
+from collections import deque
+from datetime import datetime
+
+import PyKDL
 import cv2
-from threading import Event
-from collections import OrderedDict
-
-# ROS
+import numpy as np
+import rospkg
 import rospy
-import smach
-import cv_bridge
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
-from telegram_ros.msg import LabeledImage
+from cv_bridge import CvBridge
+from geometry_msgs.msg import PointStamped
+from robot_skills import Hero
+from robot_skills.util import kdl_conversions
+from smach import StateMachine, cb_interface, CBState
+from challenge_find_my_mates.cluster import cluster_people
 
-# Robot skills
-from robot_smach_states import WaitTime
-from robot_smach_states.util.designators import EdEntityDesignator
-import robot_smach_states as states
+NUM_LOOKS = 2
+PERSON_DETECTIONS = []
 
 
-class SelectImageByLetter(smach.State):
-    def __init__(self, robot, question='Which do you want?', timeout=60):
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'],
-                             input_keys=['label2image'],
-                             output_keys=['selected_label'])
 
-        self._timeout = timeout
-        self._received = Event()
-        self._selection = ''
+class LocatePeople(StateMachine):
+    def __init__(self, robot, room_id):
+        StateMachine.__init__(self, outcomes=['done'])
 
-        self._question = question
+        @cb_interface(outcomes=['done'])
+        def detect_persons(_):
+            global PERSON_DETECTIONS
+            global NUM_LOOKS
 
-        self._labeled_image_pub = rospy.Publisher('labeled_image_from_ros', LabeledImage, queue_size=10)
-        self._text_pub = rospy.Publisher('message_from_ros', String, queue_size=10)
-        self._text_sub = rospy.Subscriber('message_to_ros', String, self._handle_reply)
+            # with open('/home/rein/mates/floorplan-2019-07-05-11-06-52.pickle', 'r') as f:
+            #     PERSON_DETECTIONS = pickle.load(f)
+            #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
+            #
+            #
+            # return "done"
 
-    def execute(self, user_data):
-        # Get a dict {str: Image}
-        # Publish these to telegram:
-        #   image 1
-        #   text 1
-        #   image 2
-        #   text 2
-        # Please select a picture by it's label
-        #  Receive the desired label
-        # Return the label to the next state
+            look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
+            head_goals = [kdl_conversions.VectorStamped(x=100 * math.cos(angle),
+                                                        y=100 * math.sin(angle),
+                                                        z=1.5,
+                                                        frame_id="/%s/base_link" % robot.robot_name)
+                          for angle in look_angles]
 
-        self._received = Event()
-        self._selection = None
+            sentences = deque([
+                "Hi there mates, where are you, please look at me!",
+                "I am looking for my mates! Dippi dee doo! Pew pew!",
+                "You are all looking great today! Keep looking at my camera. I like it when everybody is staring at me!"
+            ])
+            while len(PERSON_DETECTIONS) < 4 and not rospy.is_shutdown():
+                for _ in range(NUM_LOOKS):
+                    sentences.rotate(1)
+                    robot.speech.speak(sentences[0], block=False)
+                    for head_goal in head_goals:
+                        robot.speech.speak("please look at me", block=False)
+                        robot.head.look_at_point(head_goal)
+                        robot.head.wait_for_motion_done()
+                        now = time.time()
+                        rgb, depth, depth_info = robot.perception.get_rgb_depth_caminfo()
 
-        rate = rospy.Rate(2)
+                        try:
+                            persons = robot.perception.detect_person_3d(rgb, depth, depth_info)
+                        except Exception as e:
+                            rospy.logerr(e)
+                            rospy.sleep(2.0)
+                        else:
+                            for person in persons:
+                                if person.face.roi.width > 0 and person.face.roi.height > 0:
+                                    try:
+                                        PERSON_DETECTIONS.append({
+                                            "map_ps": robot.tf_listener.transformPoint("map", PointStamped(
+                                                header=rgb.header,
+                                                point=person.position
+                                            )),
+                                            "person_detection": person,
+                                            "rgb": rgb
+                                        })
+                                    except Exception as e:
+                                        rospy.logerr("Failed to transform valid person detection to map frame")
 
-        self._text_pub.publish(self._question)
-        for label, image_msg in user_data['label2image'].items():
-            # The order in which these images are received matters! text should be below the
-            self._labeled_image_pub.publish(LabeledImage(image=image_msg, label=label))
+                        rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now, len(PERSON_DETECTIONS))
 
-        self._text_pub.publish("Please pick something from one of the pictures and send me it's caption")
+            rospy.loginfo("Detected %d persons", len(PERSON_DETECTIONS))
 
-        if self._received.wait(self._timeout):
-            user_data['selected_label'] = self._selection
-            return 'succeeded'
+            return 'done'
 
-        return 'failed'
+        @cb_interface(outcomes=['done', 'failed'])
+        def _data_association_persons_and_show_image_on_screen(_):
+            global PERSON_DETECTIONS
 
-    def _handle_reply(self, msg):
-        # type: (String) -> None
-        rospy.loginfo('Got answer from user: {}'.format(msg.data))
-        self._selection = msg.data
+            try:
+                with open(os.path.expanduser('~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))), 'w') as f:
+                    pickle.dump(PERSON_DETECTIONS, f)
+            except:
+                pass
 
-        self._received.set()
+            room_entity = robot.ed.get_entity(id=room_id)  # type: Entity
+            room_volume = room_entity.volumes["in"]
+            min_corner = room_entity.pose.frame * room_volume.min_corner
+            max_corner = room_entity.pose.frame * room_volume.max_corner
+
+            shrink_x = 0.5
+            shrink_y = 0.3
+            min_corner_shrinked = PyKDL.Vector(min_corner.x() + shrink_x, min_corner.y() + shrink_y, 0)
+            max_corner_shrinked = PyKDL.Vector(max_corner.x() - shrink_x, max_corner.y() - shrink_y, 0)
+
+            rospy.loginfo('Found %d person detections', len(PERSON_DETECTIONS))
+
+            def _get_clusters():
+                def _in_room(p):
+                    return min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
+
+                in_room_detections = [d for d in PERSON_DETECTIONS if _in_room(d['map_ps'].point)]
+
+                rospy.loginfo("%d in room before clustering", len(in_room_detections))
+
+                clusters = cluster_people(in_room_detections, np.array([6, 0]))
+
+                return clusters
+
+            # filter in room and perform clustering until we have 4 options
+            try:
+                person_detection_clusters = _get_clusters()
+            except ValueError as e:
+                rospy.logerr(e)
+                robot.speech.speak("Mates, where are you?", block=False)
+                return "failed"
+
+            floorplan = cv2.imread(
+                os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
+            floorplan_height, floorplan_width, _ = floorplan.shape
+
+            bridge = CvBridge()
+            c_map = color_map(N=len(person_detection_clusters), normalized=True)
+            for i, person_detection in enumerate(person_detection_clusters):
+                image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
+                roi = person_detection['person_detection'].face.roi
+                roi_image = image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
+
+                desired_height = 150
+                height, width, channel = roi_image.shape
+                ratio = float(height) / float(desired_height)
+                calculated_width = int(float(width) / ratio)
+                resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
+
+                x = person_detection['map_ps'].point.x
+                y = person_detection['map_ps'].point.y
+
+                x_image_frame = 9.04 - x
+                y_image_frame = 1.58 + y
+
+                pixels_per_meter = 158
+
+                px = int(pixels_per_meter * x_image_frame)
+                py = int(pixels_per_meter * y_image_frame)
+
+                cv2.circle(floorplan, (px, py), 3, (0,0,255), 5)
+
+                try:
+                    px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width - 1)
+                    py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height - 1)
+
+                    if px_image >= 0 and py_image >= 0:
+                        #could not broadcast input array from shape (150,150,3) into shape (106,150,3)
+                        floorplan[py_image:py_image + desired_height, px_image:px_image + calculated_width] = resized_roi_image
+                        cv2.rectangle(floorplan, (px_image, py_image),
+                                      (px_image + calculated_width, py_image + desired_height),
+                                      (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
+                    else:
+                        rospy.logerr("bound error")
+                except Exception as e:
+                    rospy.logerr("Drawing image roi failed: {}".format(e))
+
+                label = "female" if person_detection['person_detection'].gender else "male"
+                label += ", " + str(person_detection['person_detection'].age)
+                cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
+
+                # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
+
+            filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+            cv2.imwrite(filename, floorplan)
+            robot.hmi.show_image(filename, 120)
+
+            return "done"
+
+        with self:
+            self.add_auto('DETECT_PERSONS', CBState(detect_persons), ['done'])
+            self.add('DATA_ASSOCIATION_AND_SHOW_IMAGE_ON_SCREEN',
+                     CBState(_data_association_persons_and_show_image_on_screen), transitions={'done': 'done', 'failed': 'DETECT_PERSONS'})
+
 
 if __name__ == '__main__':
-    from robot_skills import get_robot
-
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-
-        rospy.init_node('test_find_person_in_room')
-        _robot = None # get_robot(robot_name)
-
-        bridge = cv_bridge.CvBridge()
-
-        sm = SelectImageByLetter(_robot)
-
-        image_paths = sys.argv[2:]
-        labels = ['a', 'b', 'c', 'd', 'e']
-
-        ud = {'label2image': OrderedDict()}
-
-        for label, image_path in zip(labels, image_paths):
-            rospy.loginfo("Loading image for {}: {}".format(label, image_path))
-            try:
-                cv_image = cv2.imread(image_path)
-
-                ros_image = bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
-                ud['label2image'][label] = ros_image
-            except TypeError as type_err:
-                rospy.logerr("Could not load {}".format(image_path))
-
-        print(sm.execute(ud))
-
-        rospy.loginfo(ud['selected_label'])
-    else:
-        print "Please provide robot name as argument."
-        exit(1)
-
-
+    rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
+    hero = Hero()
+    hero.reset()
+    LocatePeople(hero, 'living_room').execute()
