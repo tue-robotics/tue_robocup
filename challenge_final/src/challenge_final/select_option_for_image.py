@@ -61,6 +61,8 @@ class SelectOptionForImage(smach.State):
         self._text_pub = rospy.Publisher('message_from_ros', String, queue_size=10)
         self._text_sub = rospy.Subscriber('message_to_ros', String, self._handle_reply)
 
+        self._text_pub.publish("Hello, I',m HERO")
+
     def execute(self, user_data):
         # Get a dict {'rgb':..., 'person_detection':..., 'map_ps':...}
         # Publish this image to telegram
@@ -114,7 +116,7 @@ if __name__ == '__main__':
         image_path = sys.argv[2]
 
         rospy.init_node('test_select_option_for_image')
-        _robot = None # get_robot(robot_name)
+        _robot = get_robot(robot_name)
 
         bridge = cv_bridge.CvBridge()
 
