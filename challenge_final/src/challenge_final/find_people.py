@@ -4,9 +4,6 @@ import math
 import os
 import pickle
 
-import cv2
-import rospkg
-
 import numpy as np
 import time
 from collections import deque
@@ -15,13 +12,11 @@ from collections import deque
 import PyKDL as kdl
 import rospy
 import smach
-from cv_bridge import CvBridge
 from geometry_msgs.msg import PointStamped
 
 # TU/e Robotics
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills import get_robot_from_argv
 from robot_skills.util import kdl_conversions
 
 from .clustering import cluster_people
@@ -62,6 +57,59 @@ def color_map(N=256, normalized=False):
     return cmap
 
 
+def _filter_and_cluster_images(robot, raw_person_detections, room_id):
+    """
+    Filters the raw detections so that only people within the room maintain. Next, it clusters the images
+    so that only one image per person remains. This is stored in the user data
+
+    :param raw_person_detections: raw detections
+    :return: clusters
+    """
+    try:
+        with open(os.path.expanduser(
+            '~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+        ), 'w') as f:
+            pickle.dump(raw_person_detections, f)
+    except:
+        pass
+
+    room_entity = robot.ed.get_entity(id=room_id)  # type: Entity
+    room_volume = room_entity.volumes["in"]
+    min_corner = room_entity.pose.frame * room_volume.min_corner
+    max_corner = room_entity.pose.frame * room_volume.max_corner
+
+    shrink_x = SHRINK_X
+    shrink_y = SHRINK_Y
+    min_corner_shrinked = kdl.Vector(min_corner.x() + shrink_x, min_corner.y() + shrink_y, 0)
+    max_corner_shrinked = kdl.Vector(max_corner.x() - shrink_x, max_corner.y() - shrink_y, 0)
+
+    rospy.loginfo('Start filtering from %d raw detections', len(raw_person_detections))
+
+    def _get_clusters():
+        def _in_room(p):
+            return (min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and
+                    min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
+                    )
+
+        in_room_detections = [d for d in raw_person_detections if _in_room(d['map_ps'].point)]
+
+        rospy.loginfo("%d in room before clustering", len(in_room_detections))
+
+        clusters = cluster_people(in_room_detections, np.array([6, 0]))
+
+        return clusters
+
+    # filter in room and perform clustering until we have 4 options
+    try:
+        person_detection_clusters = _get_clusters()
+    except ValueError as e:
+        rospy.logerr(e)
+        robot.speech.speak("Mates, where are you?", block=False)
+        raise
+
+    return person_detection_clusters
+
+
 class FindPeople(smach.StateMachine):
     def __init__(self, robot, room_id=ROOM_ID):
         """
@@ -91,13 +139,6 @@ class FindPeople(smach.StateMachine):
             def detect_people(user_data):
 
                 person_detections = []
-
-                # with open('/home/rein/mates/floorplan-2019-07-05-11-06-52.pickle', 'r') as f:
-                #     person_detections = pickle.load(f)
-                #     rospy.loginfo("Loaded %d persons", len(person_detections))
-                #
-                #
-                # return "done"
 
                 look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
                 head_goals = [kdl_conversions.VectorStamped(x=100 * math.cos(angle),
@@ -155,7 +196,7 @@ class FindPeople(smach.StateMachine):
 
             smach.StateMachine.add('DETECT_PEOPLE',
                                    smach.CBState(detect_people),
-                                   transitions={"done": "done"})
+                                   transitions={"done": "FILTER_AND_CLUSTER"})
 
             # Filter and cluster images
             @smach.cb_interface(
@@ -170,70 +211,14 @@ class FindPeople(smach.StateMachine):
                 :param user_data: (smach.UserData)
                 :return: (str) Done
                 """
-                raw_person_detections = user_data.raw_detections
-
                 try:
-                    with open(os.path.expanduser(
-                        '~/floorplan-{}.pickle'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
-                                                ), 'w') as f:
-                        pickle.dump(raw_person_detections, f)
+                    user_data.detected_people = _filter_and_cluster_images(
+                        robot, user_data.raw_person_detections, room_id)
+                    return "done"
                 except:
-                    pass
-
-                room_entity = robot.ed.get_entity(id=room_id)  # type: Entity
-                room_volume = room_entity.volumes["in"]
-                min_corner = room_entity.pose.frame * room_volume.min_corner
-                max_corner = room_entity.pose.frame * room_volume.max_corner
-
-                shrink_x = SHRINK_X
-                shrink_y = SHRINK_Y
-                min_corner_shrinked = kdl.Vector(min_corner.x() + shrink_x, min_corner.y() + shrink_y, 0)
-                max_corner_shrinked = kdl.Vector(max_corner.x() - shrink_x, max_corner.y() - shrink_y, 0)
-
-                rospy.loginfo('Start filtering from %d raw detections', len(raw_person_detections))
-
-                def _get_clusters():
-                    def _in_room(p):
-                        return (min_corner_shrinked.x() < p.x < max_corner_shrinked.x() and
-                                min_corner_shrinked.y() < p.y < max_corner_shrinked.y()
-                                )
-
-                    in_room_detections = [d for d in raw_person_detections if _in_room(d['map_ps'].point)]
-
-                    rospy.loginfo("%d in room before clustering", len(in_room_detections))
-
-                    clusters = cluster_people(in_room_detections, np.array([6, 0]))
-
-                    return clusters
-
-                # filter in room and perform clustering until we have 4 options
-                try:
-                    person_detection_clusters = _get_clusters()
-                except ValueError as e:
-                    rospy.logerr(e)
-                    robot.speech.speak("Mates, where are you?", block=False)
                     return "failed"
 
-                user_data.detected_people = person_detection_clusters
-
-                return "done"
-
-
-if __name__ == "__main__":
-
-    rospy.init_node("test_furniture_inspection")
-
-    # Robot
-    _robot = get_robot_from_argv(index=1)
-
-    # Test data
-    user_data_ = smach.UserData()
-
-    sm = FindPeople(robot=_robot, room_id=ROOM_ID)
-    sm.execute(user_data_)
-
-    # Check output
-    # noinspection PyProtectedMember
-    rospy.loginfo("User data: {}".format(user_data_._data))
-
-    rospy.loginfo("Please check output above")
+            smach.StateMachine.add('FILTER_AND_CLUSTER',
+                                   smach.CBState(_filter_and_cluster_images),
+                                   transitions={"done": "done",
+                                                "failed": "done"})  # ToDo: fallback
