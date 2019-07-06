@@ -52,6 +52,20 @@ class Perception(RobotPart):
         self._person_recognition_3d_srv = \
             self.create_service_client('/' + robot_name + '/people_recognition/detect_people_3d', RecognizePeople3D)
 
+        # camera topics
+        self.depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns), CameraInfo)
+        self.depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
+        self.rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
+
+        ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub, self.depth_info_sub],
+                                                         queue_size=10,
+                                                         slop=10)
+        ts.registerCallback(self._callback)
+
+    def _callback(self, rgb, depth, depth_info):
+        rospy.logdebug('Received rgb, depth, cam_info')
+        self._image_data = (rgb, depth, depth_info)
+
     def close(self):
         pass
 
@@ -284,30 +298,10 @@ class Perception(RobotPart):
         :param timeout: How long to wait until the images are all collected.
         :return: tuple(rgb, depth, depth_info) or a None if no images could be gathered.
         """
-        event = Event()
-
-        def callback(rgb, depth, depth_info):
-            rospy.loginfo('Received rgb, depth, cam_info')
-            self._image_data = (rgb, depth, depth_info)
-            event.set()
-
-        # camera topics
-        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns), CameraInfo)
-        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
-        rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
-
-        ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
-                                                         queue_size=10,
-                                                         slop=10)
-        ts.registerCallback(callback)
-        event.wait(timeout)
-        ts.callbacks.clear()
-        del ts, depth_info_sub, depth_sub, rgb_sub, callback
-
         if any(self._image_data):
             return self._image_data
         else:
-            return None
+            return None, None, None
 
     def detect_person_3d(self, rgb, depth, depth_info):
         return self._person_recognition_3d_srv(image_rgb=rgb, image_depth=depth, camera_info_depth=depth_info).people
