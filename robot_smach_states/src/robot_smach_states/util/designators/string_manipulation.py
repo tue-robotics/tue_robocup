@@ -48,6 +48,7 @@ class FieldOfHMIResult(Designator):
             try:
                 path = self.semantics_path.resolve() if hasattr(self.semantics_path, 'resolve') else self.semantics_path
                 semantics = self.query_result_des.resolve().semantics # type: dict, nested
+                rospy.loginfo("Going to traverse path: {} into semantics: {}".format(path, semantics))
                 level = dict(semantics)  # Make a copy
                 if path:
                     for step in path:
