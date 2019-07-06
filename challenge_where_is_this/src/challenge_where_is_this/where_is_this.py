@@ -109,7 +109,7 @@ class WhereIsThis(smach.StateMachine):
 
                 smach.StateMachine.add("SAY_CANNOT_REACH_WAYPOINT",
                                        states.Say(robot, "I am not able to reach the starting point."
-                                                         "I'll use this as starting point if that's okay"),
+                                                         "I'll use this as starting point"),
                                        transitions={"spoken": "STORE_STARTING_POSE"})
             else:
                 smach.StateMachine.add("INITIALIZE",
