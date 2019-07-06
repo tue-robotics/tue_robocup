@@ -14,6 +14,7 @@ import robot_smach_states.util.designators as ds
 
 TRIGGER_TOPIC = "/trigger"
 LIGHTSABER_WAYPOINT_ID = "hand_that_home_location"
+SPEECH_TIMEOUT = 1.0  # Minimum duration between robot saying to which furniture object the operator is pointing
 
 
 all_possible_furniture = ['kitchen_cabinet',
@@ -44,6 +45,7 @@ class LightSaber(smach.State):
         self._event = Event()
         self._camera_base_ns = "{}/head_rgbd_sensor".format(robot.robot_name)
         self._trigger_sub = rospy.Subscriber(TRIGGER_TOPIC, std_msgs.msg.Empty, self._trigger_callback, queue_size=1)
+        self._speech_cache = ("", rospy.Time.now())  # Keeps track of when the entity has changed for the last time
 
     def execute(self, ud=None):
 
@@ -77,7 +79,13 @@ class LightSaber(smach.State):
                             rospy.logerr("Could not get ray trace from closest person: {}".format(e))
                         else:
                             if result.entity_id in all_possible_furniture:
-                                rospy.loginfo("Pointing at %s", result.entity_id)
+
+                                if (result.entity_id != self._speech_cache[0] and
+                                      (rospy.Time.now() - self._speech_cache[1]).to_sec() > 1.0):
+                                    self._robot.speech.speak("You are now pointing at the {}".format(result.entity_id))
+                                    self._speech_cache = (result.entity_id, rospy.Time.now())
+                                else:
+                                    rospy.loginfo("Pointing at %s but not saying", result.entity_id)
 
         return "done"
 
