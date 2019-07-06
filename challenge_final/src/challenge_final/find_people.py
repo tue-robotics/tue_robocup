@@ -214,62 +214,7 @@ class FindPeople(smach.StateMachine):
                     robot.speech.speak("Mates, where are you?", block=False)
                     return "failed"
 
-                floorplan = cv2.imread(
-                    os.path.join(rospkg.RosPack().get_path('challenge_find_my_mates'), 'img/floorplan.png'))
-                floorplan_height, floorplan_width, _ = floorplan.shape
-
-                bridge = CvBridge()
-                c_map = color_map(N=len(person_detection_clusters), normalized=True)
-                for i, person_detection in enumerate(person_detection_clusters):
-                    image = bridge.imgmsg_to_cv2(person_detection['rgb'], "bgr8")
-                    roi = person_detection['person_detection'].face.roi
-                    roi_image = image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
-
-                    desired_height = 150
-                    height, width, channel = roi_image.shape
-                    ratio = float(height) / float(desired_height)
-                    calculated_width = int(float(width) / ratio)
-                    resized_roi_image = cv2.resize(roi_image, (calculated_width, desired_height))
-
-                    x = person_detection['map_ps'].point.x
-                    y = person_detection['map_ps'].point.y
-
-                    x_image_frame = 9.04 - x
-                    y_image_frame = 1.58 + y
-
-                    pixels_per_meter = 158
-
-                    px = int(pixels_per_meter * x_image_frame)
-                    py = int(pixels_per_meter * y_image_frame)
-
-                    cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
-
-                    try:
-                        px_image = min(max(0, px - calculated_width / 2), floorplan_width - calculated_width - 1)
-                        py_image = min(max(0, py - desired_height / 2), floorplan_height - desired_height - 1)
-
-                        if px_image >= 0 and py_image >= 0:
-                            # could not broadcast input array from shape (150,150,3) into shape (106,150,3)
-                            floorplan[py_image:py_image + desired_height,
-                            px_image:px_image + calculated_width] = resized_roi_image
-                            cv2.rectangle(floorplan, (px_image, py_image),
-                                          (px_image + calculated_width, py_image + desired_height),
-                                          (c_map[i, 2] * 255, c_map[i, 1] * 255, c_map[i, 0] * 255), 10)
-                        else:
-                            rospy.logerr("bound error")
-                    except Exception as e:
-                        rospy.logerr("Drawing image roi failed: {}".format(e))
-
-                    label = "female" if person_detection['person_detection'].gender else "male"
-                    label += ", " + str(person_detection['person_detection'].age)
-                    cv2.putText(floorplan, label, (px_image, py_image + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255),
-                                2, cv2.LINE_AA)
-
-                    # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
-
-                filename = os.path.expanduser('~/floorplan-{}.png'.format(datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
-                cv2.imwrite(filename, floorplan)
-                robot.hmi.show_image(filename, 120)
+                user_data.detected_people = person_detection_clusters
 
                 return "done"
 
