@@ -64,6 +64,16 @@ class Api(RobotPart):
         compressed_image_msg.header.stamp = rospy.Time.from_sec(seconds)
         self._image_from_ros_publisher.publish(compressed_image_msg)
 
+    def show_image_from_msg(self, msg, seconds=5.0):
+        """
+        Show an image on the HMI display interface
+        :param msg: rgb msg
+        :param seconds: How many seconds you would like to display the image on the screen
+        """
+        compressed_image_msg = CvBridge().cv2_to_compressed_imgmsg(CvBridge().imgmsg_to_cv2(msg))
+        compressed_image_msg.header.stamp = rospy.Time.from_sec(seconds)
+        self._image_from_ros_publisher.publish(compressed_image_msg)
+
     @property
     def last_talker_id(self):
         return self._client.last_talker_id

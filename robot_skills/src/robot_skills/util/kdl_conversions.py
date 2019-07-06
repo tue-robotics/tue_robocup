@@ -24,6 +24,13 @@ class FrameStamped(object):
         return "FrameStamped(pos:{pos}, rot:{rot} @ {fid})".format(pos=xyz, rot=rpy, fid=self.frame_id)
 
     def projectToFrame(self, frame_id, tf_listener):
+        """
+        Computes a new FrameStamped from this frame in the requested frame ID
+
+        :param frame_id: (str) frame id of the new FrameStamped
+        :param tf_listener: (TF Listener) tf listener used for the computation of the transformation
+        :return: (FrameStamped) with provided frame id
+        """
         tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
         transformed_pose = tf_listener.transformPose(frame_id, kdl_frame_stamped_to_pose_stamped_msg(self))
         return kdl_frame_stamped_from_pose_stamped_msg(transformed_pose)
