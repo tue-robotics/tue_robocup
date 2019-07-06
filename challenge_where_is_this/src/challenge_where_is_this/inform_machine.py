@@ -33,7 +33,7 @@ class WaitMode(enum.Enum):
 
 
 # Defines whether speech recognition or (visual) person recognition is used to determine when to proceed
-WAIT_MODE = WaitMode.VISUAL
+WAIT_MODE = WaitMode.SPEECH
 
 
 class EntityFromHmiResults(ds.Designator):
@@ -181,7 +181,7 @@ class InformMachine(smach.StateMachine):
             self.answer_des = ds.VariableDesignator(resolve_type=HMIResult)
             self.entity_des = EntityFromHmiResults(robot, self.answer_des)
             self._location_hmi_attempt = 0
-            self._max_hmi_attempts = 5  # ToDo: parameterize?
+            self._max_hmi_attempts = 3  # ToDo: parameterize?
 
             @smach.cb_interface(outcomes=["reset"])
             def _reset_location_hmi_attempt(userdata=None):
@@ -230,9 +230,24 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add("LISTEN_FOR_LOCATION",
                                    states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable,
-                                                           rospy.Duration(15)),
-                                   transitions={"heard": "INSTRUCT_FOR_WAIT",
+                                                           rospy.Duration(6)),
+                                   transitions={"heard": "ASK_CONFIRMATION",
                                                 "no_result": "HANDLE_FAILED_HMI"})
+
+            smach.StateMachine.add("ASK_CONFIRMATION",
+                                   states.SayFormatted(robot, ["I hear that you would like to go to the {place},"
+                                                               "is this correct?"],
+                                                       place=ds.FieldOfHMIResult(self.answer_des,
+                                                                                 semantics_field=[] ),
+                                                       block=True),
+
+                                   transitions={"spoken": "CONFIRM_LOCATION"})
+
+            smach.StateMachine.add("CONFIRM_LOCATION",
+                                   states.HearOptions(robot=robot, options=["yes", "no"]),
+                                                      transitions={"yes": "INSTRUCT_FOR_WAIT",
+                                                                   "no": "INSTRUCT",
+                                                                   "no_result": "HANDLE_FAILED_HMI"})
 
             @smach.cb_interface(outcomes=["retry", "fallback", "failed"])
             def _handle_failed_hmi(userdata=None):
