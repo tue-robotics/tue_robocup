@@ -10,10 +10,12 @@ import PyKDL as kdl
 
 # Robot skills
 from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
+from robot_smach_states import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
 
 # robot_smach_states.navigation
 import navigation
+from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 
 
@@ -340,7 +342,16 @@ class Guide(smach.StateMachine):
 
             smach.StateMachine.add("RESET_MENTIONED_ENTITIES",
                                    smach.CBState(_reset_mentioned_entities),
-                                   transitions={"done": "GET_PLAN"})
+                                   transitions={"done": "SAY_BEHIND"})
+
+            smach.StateMachine.add("SAY_BEHIND",
+                                   Say(robot, "Please stand behind me", block=True),
+                                   transitions={"spoken": "WAIT"})
+
+            smach.StateMachine.add("WAIT",
+                                   WaitTime(robot, waittime=3.0),
+                                   transitions={"waited": "GET_PLAN",
+                                                "preempted": "preempted"})
 
             smach.StateMachine.add("GET_PLAN", navigation.getPlan(self.robot, self.generate_constraint),
                                    transitions={"unreachable": "unreachable",
