@@ -35,6 +35,7 @@ class Final(smach.StateMachine):
 
             smach.StateMachine.add("GET_DRINKS",
                                    GetDrinks(robot=robot),
-                                   transitions={"done": "done"})
+                                   transitions={"done": "done",
+                                                "failed": "done"})
 
             # ToDo: move head to audience. People find this awesome
