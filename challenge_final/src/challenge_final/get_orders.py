@@ -7,6 +7,8 @@ import robot_smach_states as states
 from robot_skills import get_robot_from_argv
 from challenge_final.select_option_for_image import SelectOptionForImage
 
+DRINK_OPTIONS = ['beer', 'coke', 'water', 'energy']
+
 detected_person_index = 0
 
 class GetOrders(smach.StateMachine):
@@ -53,8 +55,8 @@ class GetOrders(smach.StateMachine):
             smach.StateMachine.add("SELECT_ORDER_FOR_IMAGE",
                                    SelectOptionForImage(robot,
                                                         question='What do you want to drink?',
-                                                        options=['options', 'must', 'be', 'filled', 'in'],
-                                                        instruction='If you are in the image, please pick an option'),
+                                                        options=DRINK_OPTIONS,
+                                                        instruction='If you are in the image, please pick an option from: '),
                                    transitions={"succeeded": "STORE_ORDER",
                                                 "failed": 'SAY_ORDERED_TOO_LATE'})
 
