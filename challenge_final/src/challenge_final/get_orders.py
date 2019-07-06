@@ -70,7 +70,9 @@ class GetOrders(smach.StateMachine):
                                                 "failed": 'SAY_ORDERED_TOO_LATE'})
 
             smach.StateMachine.add('SAY_ORDERED_TOO_LATE',
-                                   states.Say(robot, ['']),
+                                   states.Say(robot, ['Someone ordered too late, too bad',
+                                                      'Someone is getting no drink, sorry. I have to hurry for this gold medal I want'],
+                                              block=False),
                                    transitions={'spoken': 'ITERATE_NEXT_PERSON'})
 
             # Here comes Loys stuff (stuff is passed)
