@@ -70,7 +70,7 @@ class Api(RobotPart):
         :param msg: rgb msg
         :param seconds: How many seconds you would like to display the image on the screen
         """
-        compressed_image_msg = CvBridge().cv2_to_compressed_imgmsg(CvBridge().imgmsg_to_cv2(msg))
+        compressed_image_msg = CvBridge().cv2_to_compressed_imgmsg(CvBridge().imgmsg_to_cv2(msg, "bgr8"))
         compressed_image_msg.header.stamp = rospy.Time.from_sec(seconds)
         self._image_from_ros_publisher.publish(compressed_image_msg)
 
