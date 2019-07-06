@@ -1,15 +1,24 @@
+import os
+import cv2
+import numpy as np
+from datetime import datetime
+
 # ROS
 import rospy
 import smach
+import cv_bridge
+import rospkg
 
 # TU/e Robotics
 import robot_smach_states as states
 from robot_skills import get_robot_from_argv
 from challenge_final.select_option_for_image import SelectOptionForImage
+from challenge_final.display_orders_on_map import DisplayOrdersOnMap
 
 DRINK_OPTIONS = ['beer', 'coke', 'water', 'energy']
 
 detected_person_index = 0
+
 
 class GetOrders(smach.StateMachine):
     def __init__(self, robot):
@@ -31,7 +40,7 @@ class GetOrders(smach.StateMachine):
         smach.StateMachine.__init__(self,
                                     outcomes=["done"],
                                     input_keys=["detected_people"],
-                                    output_keys=["orders"])
+                                    output_keys=["detected_people"])
 
         with self:
             @smach.cb_interface(outcomes=["next", "stop_iteration"],
@@ -50,7 +59,7 @@ class GetOrders(smach.StateMachine):
             smach.StateMachine.add('ITERATE_NEXT_PERSON',
                                    smach.CBState(iterate_next_person),
                                    transitions={'next': 'SELECT_ORDER_FOR_IMAGE',
-                                                'stop_iteration': 'done'})
+                                                'stop_iteration': 'DRAW_ORDERS_ON_MAP'})
 
             smach.StateMachine.add("SELECT_ORDER_FOR_IMAGE",
                                    SelectOptionForImage(robot,
@@ -69,6 +78,11 @@ class GetOrders(smach.StateMachine):
                                 input_keys=['detected_people', 'selection'],
                                 output_keys=['detected_people'])
             def store_current_person_order(user_data):
+                """
+                Edits user_data['detected_people'] elements (which are dicts) and adds a new 'selection'-key
+                :param user_data:
+                :return:
+                """
                 global detected_person_index
                 # import ipdb; ipdb.set_trace()
                 try:
@@ -85,14 +99,19 @@ class GetOrders(smach.StateMachine):
             smach.StateMachine.add('STORE_ORDER',
                                    smach.CBState(store_current_person_order),
                                    transitions={'done': 'ITERATE_NEXT_PERSON',
-                                                'failed': 'done'})
+                                                'failed': 'DRAW_ORDERS_ON_MAP'})
 
             # Fuse people and orders  # ToDo: Janno
+
+            smach.StateMachine.add("DRAW_ORDERS_ON_MAP",
+                                   DisplayOrdersOnMap(robot),
+                                   transitions={"succeeded": "done",
+                                                "failed": 'done'})
 
 
 if __name__ == "__main__":
 
-    rospy.init_node("test_furniture_inspection")
+    rospy.init_node("test_get_orders")
 
     # Robot
     # _robot = get_robot_from_argv(index=1)
