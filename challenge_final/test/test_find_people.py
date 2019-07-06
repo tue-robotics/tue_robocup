@@ -27,3 +27,6 @@ if __name__ == "__main__":
         rospy.loginfo("Loaded %d persons", len(raw_detections))
 
     detected_people = _filter_and_cluster_images(robot, raw_detections, args.room_id)
+
+    for idx, person in enumerate(detected_people):
+        rospy.loginfo("Person {} at \n{}".format(idx, person["map_ps"].point))
