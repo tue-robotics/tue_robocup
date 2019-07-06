@@ -61,7 +61,14 @@ class DisplayOrdersOnMap(smach.State):
             os.path.join(rospkg.RosPack().get_path('challenge_final'), 'img/floorplan.png'))
         floorplan_height, floorplan_width, _ = floorplan.shape
 
-        person_detection_clusters = ud['detected_people']
+        try:
+            person_detection_clusters = ud['detected_people']
+            assert isinstance(person_detection_clusters, list), "Person detection clusters is not a list"
+            assert all([isinstance(cluster, dict) for cluster in person_detection_clusters]),\
+                "Not all clusters are dicts"
+        except Exception as e:
+            rospy.logerr("Cannot show people on floor plan: {}".format(e))
+            person_detection_clusters = []
 
         bridge = cv_bridge.CvBridge()
         c_map = color_map(N=len(person_detection_clusters), normalized=True)
