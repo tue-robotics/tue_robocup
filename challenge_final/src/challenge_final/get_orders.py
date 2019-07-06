@@ -34,6 +34,10 @@ class GetOrders(smach.StateMachine):
                                    states.Say(robot, "Loy will make sure I will do something useful here"),
                                    transitions={"spoken": "done"})
 
+            # Here comes Loys stuff (stuff is passed)
+
+            # Fuse people and orders  # ToDo: Janno
+
 
 if __name__ == "__main__":
 

@@ -113,6 +113,8 @@ class FindPeople(smach.StateMachine):
                                    smach.CBState(detect_persons),
                                    transitions={"done": "done"})
 
+            # ToDo: add state: filter and cluster images
+
 
 if __name__ == "__main__":
 
