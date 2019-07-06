@@ -8,6 +8,7 @@ import robot_smach_states as states
 from .find_people import FindPeople
 from .get_drinks import GetDrinks
 from .get_orders import GetOrders
+from .lightsaber import DriveAndSwordFight
 
 
 class Final(smach.StateMachine):
@@ -21,7 +22,11 @@ class Final(smach.StateMachine):
 
         with self:
 
-            # ToDo: awesome people detection stuff
+            # ToDo: some initialization???
+
+            smach.StateMachine.add("LASER_POINTING",
+                                   DriveAndSwordFight(robot),
+                                   transitions={"done": "FIND_PEOPLE"})
 
             smach.StateMachine.add("FIND_PEOPLE",
                                    FindPeople(robot),
