@@ -1,6 +1,7 @@
 import sys
 import cv2
 from threading import Event
+from collections import OrderedDict
 
 # ROS
 import rospy
@@ -66,6 +67,7 @@ class SelectImageByLetter(smach.State):
 
     def _handle_reply(self, msg):
         # type: (String) -> None
+        rospy.loginfo('Got answer from user: {}'.format(msg.data))
         self._selection = msg.data
 
         self._received.set()
@@ -86,7 +88,7 @@ if __name__ == '__main__':
         image_paths = sys.argv[2:]
         labels = ['a', 'b', 'c', 'd', 'e']
 
-        ud = {'label2image': {}}
+        ud = {'label2image': OrderedDict()}
 
         for label, image_path in zip(labels, image_paths):
             rospy.loginfo("Loading image for {}: {}".format(label, image_path))
@@ -98,9 +100,9 @@ if __name__ == '__main__':
             except TypeError as type_err:
                 rospy.logerr("Could not load {}".format(image_path))
 
-        sm.execute(ud)
+        print(sm.execute(ud))
 
-        _robot.speech.speak(ud['selected_label'])
+        rospy.loginfo(ud['selected_label'])
     else:
         print "Please provide robot name as argument."
         exit(1)
