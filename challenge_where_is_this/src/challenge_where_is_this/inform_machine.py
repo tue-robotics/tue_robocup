@@ -33,7 +33,7 @@ class WaitMode(enum.Enum):
 
 
 # Defines whether speech recognition or (visual) person recognition is used to determine when to proceed
-WAIT_MODE = WaitMode.VISUAL
+WAIT_MODE = WaitMode.SPEECH
 
 
 class EntityFromHmiResults(ds.Designator):
@@ -69,13 +69,18 @@ class EntityFromHmiResults(ds.Designator):
 
 
 class GuideToRoomOrObject(smach.StateMachine):
-    def __init__(self, robot, entity_des):
+    def __init__(self, robot, entity_des, operator_distance=1.5, operator_radius=0.5):
         """ Constructor
         :param robot: robot object
         :param entity_des: designator resolving to a room or a piece of furniture
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         smach.StateMachine.__init__(
             self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
+
+        self.operator_distance = operator_distance
+        self.operator_radius = operator_radius
 
         with self:
             @smach.cb_interface(outcomes=["room", "object"])
@@ -93,7 +98,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "object": "GUIDE_TO_FURNITURE"})
 
             smach.StateMachine.add("GUIDE_TO_ROOM",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_ROOM_BACKUP",
                                                 "goal_not_defined": "goal_not_defined",
@@ -106,7 +112,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_TO_ROOM_BACKUP",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "in"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
@@ -114,7 +121,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_TO_FURNITURE",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "in_front_of"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "in_front_of"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_FURNITURE_BACKUP",  # Something is blocking
                                                 "goal_not_defined": "GUIDE_NEAR_FURNITURE",  # in_front_of not defined
@@ -122,7 +130,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_NEAR_FURNITURE",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "WAIT_FURNITURE_BACKUP",
                                                 "goal_not_defined": "goal_not_defined",
@@ -135,7 +144,8 @@ class GuideToRoomOrObject(smach.StateMachine):
                                                 "preempted": "preempted"})
 
             smach.StateMachine.add("GUIDE_NEAR_FURNITURE_BACKUP",
-                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des),
+                                   guidance.GuideToSymbolic(robot, {entity_des: "near"}, entity_des,
+                                       operator_distance=self.operator_distance, operator_radius=self.operator_radius),
                                    transitions={"arrived": "arrived",
                                                 "unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
@@ -171,7 +181,7 @@ class InformMachine(smach.StateMachine):
             self.answer_des = ds.VariableDesignator(resolve_type=HMIResult)
             self.entity_des = EntityFromHmiResults(robot, self.answer_des)
             self._location_hmi_attempt = 0
-            self._max_hmi_attempts = 5  # ToDo: parameterize?
+            self._max_hmi_attempts = 3  # ToDo: parameterize?
 
             @smach.cb_interface(outcomes=["reset"])
             def _reset_location_hmi_attempt(userdata=None):
@@ -220,9 +230,24 @@ class InformMachine(smach.StateMachine):
 
             smach.StateMachine.add("LISTEN_FOR_LOCATION",
                                    states.HearOptionsExtra(robot, self.spec_des, self.answer_des.writeable,
-                                                           rospy.Duration(15)),
-                                   transitions={"heard": "INSTRUCT_FOR_WAIT",
+                                                           rospy.Duration(6)),
+                                   transitions={"heard": "ASK_CONFIRMATION",
                                                 "no_result": "HANDLE_FAILED_HMI"})
+
+            smach.StateMachine.add("ASK_CONFIRMATION",
+                                   states.SayFormatted(robot, ["I hear that you would like to go to the {place},"
+                                                               "is this correct?"],
+                                                       place=ds.FieldOfHMIResult(self.answer_des,
+                                                                                 semantics_field=[] ),
+                                                       block=True),
+
+                                   transitions={"spoken": "CONFIRM_LOCATION"})
+
+            smach.StateMachine.add("CONFIRM_LOCATION",
+                                   states.HearOptions(robot=robot, options=["yes", "no"]),
+                                                      transitions={"yes": "INSTRUCT_FOR_WAIT",
+                                                                   "no": "INSTRUCT",
+                                                                   "no_result": "HANDLE_FAILED_HMI"})
 
             @smach.cb_interface(outcomes=["retry", "fallback", "failed"])
             def _handle_failed_hmi(userdata=None):

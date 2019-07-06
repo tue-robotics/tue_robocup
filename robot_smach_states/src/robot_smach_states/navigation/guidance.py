@@ -12,6 +12,7 @@ import PyKDL as kdl
 from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 from robot_smach_states import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
+import robot_smach_states as states
 
 # robot_smach_states.navigation
 import navigation
@@ -318,17 +319,23 @@ class WaitForOperator(smach.State):
 
 
 class Guide(smach.StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
         # type: (robot) -> None
         """
         Base Smach state to guide an operator to a designated position
 
         :param robot: (Robot) robot api object
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         smach.StateMachine.__init__(
             self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
         self.robot = robot
-        self.execute_plan = ExecutePlanGuidance(self.robot)
+        self.operator_distance = operator_distance
+        self.operator_radius = operator_radius
+        self.execute_plan = ExecutePlanGuidance(robot=self.robot,
+                                                operator_distance=self.operator_distance,
+                                                operator_radius=self.operator_radius)
 
         with self:
             @smach.cb_interface(outcomes=["done"])
@@ -345,7 +352,7 @@ class Guide(smach.StateMachine):
                                    transitions={"done": "SAY_BEHIND"})
 
             smach.StateMachine.add("SAY_BEHIND",
-                                   Say(robot, "Please stand behind me", block=True),
+                                   Say(robot, "Please stand behind me and look at my butt", block=True),
                                    transitions={"spoken": "WAIT"})
 
             smach.StateMachine.add("WAIT",
@@ -364,8 +371,12 @@ class Guide(smach.StateMachine):
                                                 "preempted": "preempted",
                                                 "lost_operator": "WAIT_FOR_OPERATOR"})
 
-            smach.StateMachine.add("WAIT_FOR_OPERATOR", WaitForOperator(self.robot),
+            smach.StateMachine.add("WAIT_FOR_OPERATOR",
+                                   WaitForOperator(robot=self.robot,
+                                                   distance=self.operator_distance,
+                                                   radius=self.operator_radius),
                                    transitions={"is_following": "GET_PLAN",
+
                                                 "is_lost": "lost_operator"})
 
             smach.StateMachine.add("PLAN_BLOCKED", navigation.planBlocked(self.robot),
@@ -381,7 +392,8 @@ class Guide(smach.StateMachine):
 class GuideToSymbolic(Guide):
     """ Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
-    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
+    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
+                 operator_radius=0.5):
         # type: (Robot, dict, EdEntityDesignator) -> None
         """ Constructor
 
@@ -390,8 +402,13 @@ class GuideToSymbolic(Guide):
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
-        super(GuideToSymbolic, self).__init__(robot)
+        super(GuideToSymbolic, self).__init__(robot=robot,
+                                              operator_distance=operator_distance,
+                                              operator_radius=operator_radius)
+
         self._entity_designator_area_name_map = entity_designator_area_name_map
         self._entity_lookat_designator = entity_lookat_designator
 
