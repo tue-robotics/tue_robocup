@@ -54,7 +54,6 @@ class GetFurnitureFromOperatorPose(StateMachine):
             global OPERATOR
             OPERATOR = None
 
-            robot.move_to_hmi_pose()
             robot.head.reset()
             robot.speech.speak("Let's point, please stand in front of me!", block=False)
             _show_view(timeout=2)
@@ -106,7 +105,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     return False
 
                 if "is_pointing" not in person.tags:
-                    robot.speech.speak("Please point")
+                    robot.speech.speak("Please point with your arm stretched")
                     return False
 
                 return True
