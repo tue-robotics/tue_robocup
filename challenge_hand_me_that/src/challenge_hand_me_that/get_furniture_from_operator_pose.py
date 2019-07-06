@@ -18,17 +18,11 @@ from ed_sensor_integration.srv import RayTraceResponse
 
 
 OPERATOR = None
-all_possible_furniture = ['bedroom_chest',  # TODO: Get from knowledge
-                          'bed',
-                          'sidetable',
-                          'shelf',
-                          'kitchen_cabinet',
+all_possible_furniture = ['kitchen_cabinet',
                           'kitchen_table',
                           'island',
                           'sink',
                           'dishwasher',
-                          'shoe_rack',
-                          'safe',
                           'desk',
                           'coffee_table',
                           # 'couch',
