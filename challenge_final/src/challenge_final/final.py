@@ -8,7 +8,7 @@ import robot_smach_states as states
 from .find_people import FindPeople
 from .get_drinks import GetDrinks
 from .get_orders import GetOrders
-from .lightsaber import DriveAndSwordFight
+from .lightsaber import DriveAndSwordFight, LightSaber
 
 
 class Final(smach.StateMachine):
@@ -41,4 +41,6 @@ class Final(smach.StateMachine):
                                    transitions={"done": "done",
                                                 "failed": "done"})
 
-            # ToDo: move head to audience. People find this awesome
+            smach.StateMachine.add("SHOW_PEOPLE_DETECTION",
+                                   LightSaber(robot),
+                                   transitions={"done": "done"})
