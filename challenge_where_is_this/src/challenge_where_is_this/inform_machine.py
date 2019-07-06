@@ -238,7 +238,7 @@ class InformMachine(smach.StateMachine):
                                    states.SayFormatted(robot, ["I hear that you would like to go to the {place},"
                                                                "is this correct?"],
                                                        place=ds.AttrDesignator(self.entity_des, "id",
-                                                                                   resolve_type=str),
+                                                                                   resolve_type=str)),
                                    transitions={"spoken": "CONFIRM_LOCATION"})
 
             smach.StateMachine.add("CONFIRM_LOCATION",
