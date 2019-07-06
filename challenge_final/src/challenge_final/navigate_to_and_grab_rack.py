@@ -63,14 +63,15 @@ class GrabRack(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def _align(_):
+            robot.head.look_down()
             robot.speech.speak("Let's see what I can do with this")
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = rack_id
             goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
-            goal_pose.pose.position.x = 0.85
-            goal_pose.pose.position.y = 0
-            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
+            goal_pose.pose.position.x = 0.45
+            goal_pose.pose.position.y = 0.09
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.05)).execute({})
             return 'done'
 
         @cb_interface(outcomes=['done'])
@@ -86,13 +87,28 @@ class GrabRack(StateMachine):
                               [0.00969874858856, 0.260340631008]]
             local_client.update_configuration({"footprint": base_footprint})
             global_client.update_configuration({"footprint": base_footprint})
+            robot.head.cancel_goal()
 
             return 'done'
 
+        @cb_interface(outcomes=['done'])
+        def _retract(_):
+            robot.head.look_down()
+            robot.speech.speak("I've got a rack!")
+            goal_pose = PoseStamped()
+            goal_pose.header.stamp = rospy.Time.now()
+            goal_pose.header.frame_id = rack_id
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, - math.pi / 2))
+            goal_pose.pose.position.x = 0.55
+            goal_pose.pose.position.y = -0.1
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
+            return 'done'
+
         with self:
-            self.add('PRE_GRAB', CBState(_pre_grab), transitions={'done': 'GRAB'})
-            self.add('ALIGN_GRAB', CBState(_align), transitions={'done': 'done'})
-            self.add('GRAB', CBState(_grab), transitions={'done': 'done'})
+            self.add('PRE_GRAB', CBState(_pre_grab), transitions={'done': 'ALIGN_GRAB'})
+            self.add('ALIGN_GRAB', CBState(_align), transitions={'done': 'GRAB'})
+            self.add('GRAB', CBState(_grab), transitions={'done': 'RETRACT'})
+            self.add('RETRACT', CBState(_retract), transitions={'done': 'done'})
 
 
 class NavigateToAndGrabRack(StateMachine):
@@ -116,4 +132,4 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
-    NavigateToAndGrabRack(hero, "island", "in_front_of").execute()
+    NavigateToAndGrabRack(hero, "rack", "in_front_of").execute()
