@@ -31,6 +31,10 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     success, found_people_ids = robot.ed.detect_people(*image_data)
     found_people = [robot.ed.get_entity(id_) for id_ in found_people_ids]
 
+    rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
+    found_people = [p for p in found_people if p]
+    rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
+
     # Assume the operator is around 1.0 m behind the robot
     base_pose = robot.base.get_location()
     expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
@@ -186,19 +190,24 @@ class TourGuide(object):
 
 class ExecutePlanGuidance(smach.State):
     """
-    Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for 
+    Similar to the "executePlan" smach state. The only difference is that after driving for x meters, "check for
     operator" is returned.
     """
-    def __init__(self, robot):
-        # type: (Robot) -> None
+    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
+        # type: (Robot, float, float) -> None
+        """
+        :param robot: (Robot) robot api object
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
+        """
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
-        self._distance_threshold = 1.0  # Only check if the operator is there once we've drived for this distance
-        # self._follow_distance = 1.0  # Operator is expected to follow the robot approximately this distance
-        # self._operator_radius_threshold = 0.5  # Operator is expected to be within this radius around the position
+        self._distance_threshold = 1.0  # Only check if the operator is there once we've driven for this distance
+        self._operator_distance = operator_distance  # Operator is expected to follow the robot approximately this distance
+        self._operator_radius = operator_radius  # Operator is expected to be within this radius around the position
         # defined by the follow distance
         self._tourguide = TourGuide(robot)
-        
+
     def execute(self, userdata=None):
 
         # Look backwards to have the operator in view
@@ -253,7 +262,7 @@ class ExecutePlanGuidance(smach.State):
         :return: (bool)
         """
         # ToDo: make robust (use time stamp?)
-        return _detect_operator_behind_robot(self.robot)  # , self._follow_distance, self._operator_radius_threshold)
+        return _detect_operator_behind_robot(self.robot, self._operator_distance, self._operator_radius)
 
     def _get_base_position(self):
         # type: () -> kdl.Vector
@@ -267,17 +276,21 @@ class ExecutePlanGuidance(smach.State):
 
 
 class WaitForOperator(smach.State):
-    def __init__(self, robot, timeout=10.0):
-        # type: (Robot, float) -> None
+    def __init__(self, robot, timeout=10.0, distance=1.0, radius=0.5):
+        # type: (Robot, float, float, float) -> None
         """
         Smach state to check if the operator is still following the robot.
 
         :param robot: (Robot) robot api object
         :param timeout: (float) if the operator has not been detected for this period, "is_lost" will be returned
+        :param distance: (float) check for the operator to be within this range of the robot
+        :param radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         smach.State.__init__(self, outcomes=["is_following", "is_lost", "preempted"])
         self._robot = robot
         self._timeout = timeout
+        self._distance = distance
+        self._radius = radius
 
     def execute(self, ud):
 
@@ -288,7 +301,7 @@ class WaitForOperator(smach.State):
         while not rospy.is_shutdown():
 
             # Check if the operator is there
-            if _detect_operator_behind_robot(self._robot):
+            if _detect_operator_behind_robot(self._robot, self._distance, self._radius):
                 self._robot.speech.speak("There you are", block=False)
                 return "is_following"
 
