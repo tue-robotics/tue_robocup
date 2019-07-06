@@ -161,6 +161,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     OPERATOR = None
                     return 'failed'
 
+            robot.speech.speak("You pointed at %s" % final_result.entity_id)
             # fill the designator and user data for Janno
             furniture_designator.write(robot.ed.get_entity(final_result.entity_id))
             user_data['laser_dot'] = result.intersection_point
@@ -177,6 +178,5 @@ if __name__ == '__main__':
     furniture_designator = VariableDesignator(resolve_type=Entity)
     hero = Hero()
     hero.reset()
-    GetFurnitureFromOperatorPose(hero, furniture_designator.writeable).execute()
-
-    print(furniture_designator.resolve())
+    while not rospy.is_shutdown():
+        GetFurnitureFromOperatorPose(hero, furniture_designator.writeable).execute()
