@@ -65,9 +65,19 @@ class WhereIsThis(smach.StateMachine):
 
                 smach.StateMachine.add("CONFIRM_LOCATION",
                                        states.HearOptions(robot=robot, options=["yes", "no"]),
-                                       transitions={"yes": "NAV_TO_START",
+                                       transitions={"yes": "MOVE_OUT_OF_MY_WAY",
                                                     "no": "ASK_WHERE_TO_GO",
                                                     "no_result": "ASK_WHERE_TO_GO"})
+
+                smach.StateMachine.add("MOVE_OUT_OF_MY_WAY",
+                                       states.Say(robot, "Please move your ass so I can get going!"),
+                                       transitions={"spoken": "TC_MOVE_TIME"})
+
+                smach.StateMachine.add("TC_MOVE_TIME",
+                                       states.WaitTime(robot=robot, waittime=3),
+                                       transitions={"waited": "NAV_TO_START",
+                                                    "preempted": "Aborted"}
+                                       )
 
                 smach.StateMachine.add("NAV_TO_START",
                                        states.NavigateToSymbolic(

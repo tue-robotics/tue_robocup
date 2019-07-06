@@ -237,10 +237,8 @@ class InformMachine(smach.StateMachine):
             smach.StateMachine.add("ASK_CONFIRMATION",
                                    states.SayFormatted(robot, ["I hear that you would like to go to the {place},"
                                                                "is this correct?"],
-                                                       place=ds.FieldOfHMIResult(self.answer_des,
-                                                                                 semantics_field=[] ),
-                                                       block=True),
-
+                                                       place=ds.AttrDesignator(self.entity_des, "id",
+                                                                                   resolve_type=str),
                                    transitions={"spoken": "CONFIRM_LOCATION"})
 
             smach.StateMachine.add("CONFIRM_LOCATION",
