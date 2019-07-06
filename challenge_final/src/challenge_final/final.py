@@ -5,6 +5,7 @@ import smach
 import robot_smach_states as states
 
 # Challenge final
+from .find_people import FindPeople
 from .get_orders import GetOrders
 
 
@@ -20,6 +21,10 @@ class Final(smach.StateMachine):
         with self:
 
             # ToDo: awesome people detection stuff
+
+            smach.StateMachine.add("FIND_PEOPLE",
+                                   FindPeople(robot),
+                                   transitions={"done": "GET_ORDERS"})
 
             smach.StateMachine.add("GET_ORDERS",
                                    GetOrders(robot),
