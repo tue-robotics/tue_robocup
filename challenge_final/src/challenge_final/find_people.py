@@ -205,7 +205,7 @@ class FindPeople(smach.StateMachine):
 
                 rospy.loginfo("Detected %d persons", len(person_detections))
 
-                user_data.raw_detections = person_detections
+                user_data.detected_people = person_detections
 
                 return 'done'
 
