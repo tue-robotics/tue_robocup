@@ -271,8 +271,14 @@ class Inspect(smach.StateMachine):
                                    transitions={'succeeded': 'SEGMENT',
                                                 'failed': 'SEGMENT'})
 
-            smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
-                                                             unknown_threshold=unknown_threshold, filter_threshold=filter_threshold),
+            smach.StateMachine.add('SEGMENT',
+                                   SegmentObjects(robot,
+                                                  objectIDsDes.writeable,
+                                                  entityDes,
+                                                  searchArea,
+                                                  unknown_threshold=unknown_threshold,
+                                                  filter_threshold=filter_threshold
+                                                  ),
                                    transitions={'done': 'done'})
 
 
