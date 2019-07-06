@@ -124,14 +124,17 @@ class DisplayOrdersOnMap(smach.State):
                         color=(0, 0, 255), thickness=2,
                         lineType=cv2.LINE_AA)
 
-            cv2.putText(img=floorplan,
-                        text=person_detection['selection'],
-                        org=(px_image, py_image + 40),
-                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                        fontScale=0.7,
-                        color=(0, 255, 0),
-                        thickness=2,
-                        lineType=cv2.LINE_AA)
+            try:
+                cv2.putText(img=floorplan,
+                            text=person_detection['selection'],
+                            org=(px_image, py_image + 40),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=0.7,
+                            color=(0, 255, 0),
+                            thickness=2,
+                            lineType=cv2.LINE_AA)
+            except KeyError as key_err:
+                rospy.logerr(key_err)
 
             # cv2.circle(floorplan, (px, py), 3, (0, 0, 255), 5)
 
@@ -166,9 +169,9 @@ if __name__ == "__main__":
 
     random.shuffle(ppl_dicts)
     user_data['detected_people'] = ppl_dicts[:4]
-    user_data['detected_people'][0]['selection'] = 'beer'
+    user_data['detected_people'][0]['selection'] = None
     user_data['detected_people'][1]['selection'] = 'coke'
-    user_data['detected_people'][2]['selection'] = 'water'
+    # user_data['detected_people'][2]['selection'] = 'water'
     user_data['detected_people'][3]['selection'] = 'energy'
 
     sm = DisplayOrdersOnMap(robot=_robot)
