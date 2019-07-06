@@ -61,7 +61,7 @@ class GetDrinks(smach.StateMachine):
                                        "Hey bartender, have a look at my screen. "
                                        "You can see the orders of the people in the living room",
                                        block=False),
-                                   transitions={"spoken": "WAIT_FOR_DRINKS"}
+                                   transitions={"spoken": "DRAW_ORDERS_ON_MAP"}
                                    )
 
             # Display these on the map
@@ -72,7 +72,7 @@ class GetDrinks(smach.StateMachine):
 
             # Wait for bartender to put drinks in rack
             smach.StateMachine.add("WAIT_FOR_DRINKS",
-                                   states.WaitTime(robot, 5.0),
+                                   states.WaitTime(robot, 20.0),
                                    transitions={"waited": "SAY_DRINKS_COMING",
                                                 "preempted": "SAY_DRINKS_COMING"})
 
