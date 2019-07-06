@@ -57,7 +57,7 @@ class LightSaber(smach.State):
         rate = rospy.Rate(10.0)
         rospy.loginfo("Starting main loop")
         while not rospy.is_shutdown() and not self._event.is_set():
-            rgb, depth, depth_info = self._robot.get_rgb_depth_caminfo()
+            rgb, depth, depth_info = self._robot.perception.get_rgb_depth_caminfo()
             if rgb:
                 persons = self._robot.perception.detect_person_3d(rgb, depth, depth_info)
                 persons = sorted(persons, key=lambda x: x.position.z)
