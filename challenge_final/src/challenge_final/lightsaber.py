@@ -85,6 +85,7 @@ class LightSaber(smach.State):
         """
         Callback for the trigger topic. Sets the event to signal the main loop to stop.
         """
+        rospy.loginfo("Trigger received")
         self._event.set()
 
 

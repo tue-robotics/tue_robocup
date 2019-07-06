@@ -59,7 +59,7 @@ class GetOrders(smach.StateMachine):
             smach.StateMachine.add('ITERATE_NEXT_PERSON',
                                    smach.CBState(iterate_next_person),
                                    transitions={'next': 'SELECT_ORDER_FOR_IMAGE',
-                                                'stop_iteration': 'DRAW_ORDERS_ON_MAP'})
+                                                'stop_iteration': 'done'})
 
             smach.StateMachine.add("SELECT_ORDER_FOR_IMAGE",
                                    SelectOptionForImage(robot,

@@ -156,7 +156,7 @@ class FindPeople(smach.StateMachine):
                 person_detections = []
 
                 #look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
-                look_angles = np.linspace(-np.pi / 4, np.pi / 4, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
+                look_angles = np.linspace(-np.pi / 4, np.pi / 4, 4)  # From -pi/2 to +pi/2 to scan 180 degrees wide
                 head_goals = [kdl_conversions.VectorStamped(x=100 * math.cos(angle),
                                                             y=100 * math.sin(angle),
                                                             z=1.5,
@@ -208,7 +208,7 @@ class FindPeople(smach.StateMachine):
 
                 rospy.loginfo("Detected %d persons", len(person_detections))
 
-                user_data.detected_people = person_detections
+                user_data.raw_detections = person_detections
 
                 return 'done'
 
@@ -231,7 +231,7 @@ class FindPeople(smach.StateMachine):
                 """
                 try:
                     user_data.detected_people = _filter_and_cluster_images(
-                        robot, user_data.raw_person_detections, room_id)
+                        robot, user_data.raw_detections, room_id)
                     return "done"
                 except:
                     return "failed"
