@@ -16,7 +16,7 @@ from robot_smach_states.util.designators import EdEntityDesignator
 import robot_smach_states as states
 
 
-class SelectOptionByImage(smach.State):
+class SelectOptionForImage(smach.State):
     def __init__(self, robot, options,
                  question='Which do you want?',
                  instruction='Please let me know your selection',
@@ -73,6 +73,7 @@ class SelectOptionByImage(smach.State):
         self._text_pub.publish(self._option_str)
 
         try:
+            # import ipdb; ipdb.set_trace()
             ros_image = user_data['person_dict']['rgb']
             self._image_pub.publish(ros_image)
 
@@ -108,22 +109,6 @@ class SelectOptionByImage(smach.State):
             self._received.set()
 
 
-class SelectOptionForEachImage(smach.StateMachine):
-
-    # For each people_dicts in people_dicts:
-    #   1. Send picture to telegram
-    #   2. Get reply
-    #   3. Store current ppl dict with its reply
-
-    def __init__(self, robot, question='Which do you want?', timeout=60):
-        smach.StateMachine.__init__(self,
-                             outcomes=['succeeded', 'failed'],
-                             input_keys=['people_dicts'],
-                             output_keys=['selections'])
-
-        pass
-
-
 if __name__ == '__main__':
     from robot_skills import get_robot
 
@@ -131,12 +116,12 @@ if __name__ == '__main__':
         robot_name = sys.argv[1]
         image_path = sys.argv[2]
 
-        rospy.init_node('test_find_person_in_room')
+        rospy.init_node('test_select_option_for_image')
         _robot = None # get_robot(robot_name)
 
         bridge = cv_bridge.CvBridge()
 
-        sm = SelectOptionByImage(_robot, options=['banana', 'widget', 'gadget'])
+        sm = SelectOptionForImage(_robot, options=['banana', 'widget', 'gadget'])
 
         ud = {}
 
