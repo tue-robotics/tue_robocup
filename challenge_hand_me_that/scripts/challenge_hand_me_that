@@ -44,7 +44,7 @@ def setup_state_machine(robot):
 
         # Drive to the start location
         StateMachine.add('NAVIGATE_TO_START',
-                         NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, HOME_LOCATION)),
+                         NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=HOME_LOCATION)),
                          transitions={'arrived': 'GET_FURNITURE_FROM_OPERATOR_POSE',
                                       'unreachable': 'NAVIGATE_TO_START',  # ToDo: other fallback
                                       'goal_not_defined': 'done'})  # I'm not even going to fill this in

@@ -40,7 +40,7 @@ all_possible_furniture = ['bedroom_chest',  # TODO: Get from knowledge
 class GetFurnitureFromOperatorPose(StateMachine):
     def __init__(self, robot, furniture_designator):
         # type: (Hero, VariableDesignator) -> None
-        StateMachine.__init__(self, outcomes=['done'])
+        StateMachine.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
 
         is_writeable(furniture_designator)
 
