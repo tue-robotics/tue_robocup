@@ -18,27 +18,23 @@ from ed_sensor_integration.srv import RayTraceResponse
 
 
 OPERATOR = None
-all_possible_furniture = [  'bedroom_chest', # TODO: Get from knowledge
-                            'bed',
-                            'sidetable',
-                            'shelf',
-                            'trash_bin',
-                            'kitchen_cabinet',
-                            'kitchen_table',
-                            'island',
-                            'sink',
-                            'dishwasher',
-                            'fridge',
-                            'shoe_rack',
-                            'safe',
-                            'desk',
-                            'coat_hanger',  # TODO: maybe delete this?
-                            'coffee_table',
-                            'couch',
-                            'armchair',
-                            'display_cabinet',
-                            'trash_bin1',
-                            'sideboard']
+all_possible_furniture = ['bedroom_chest',  # TODO: Get from knowledge
+                          'bed',
+                          'sidetable',
+                          'shelf',
+                          'kitchen_cabinet',
+                          'kitchen_table',
+                          'island',
+                          'sink',
+                          'dishwasher',
+                          'shoe_rack',
+                          'safe',
+                          'desk',
+                          'coffee_table',
+                          # 'couch',
+                          # 'armchair',
+                          'display_cabinet',
+                          'sideboard']
 
 
 class GetFurnitureFromOperatorPose(StateMachine):
@@ -58,6 +54,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
             global OPERATOR
             OPERATOR = None
 
+            robot.move_to_hmi_pose()
             robot.head.reset()
             robot.speech.speak("Let's point, please stand in front of me!", block=False)
             _show_view(timeout=2)
@@ -159,10 +156,12 @@ class GetFurnitureFromOperatorPose(StateMachine):
                     robot.speech.speak("That's not furniture, you dummy.")
                     rospy.sleep(3)
                     OPERATOR = None
+                    robot.get_arm().send_joint_goal("reset")
                     return 'failed'
 
             robot.speech.speak("You pointed at %s" % final_result.entity_id)
-            # fill the designator and user data for Janno
+            robot.get_arm().send_joint_goal("reset")
+            # Fill the designator and user data the furniture inspection
             furniture_designator.write(robot.ed.get_entity(final_result.entity_id))
             user_data['laser_dot'] = result.intersection_point
             return 'done'

@@ -39,6 +39,13 @@ location_names = list(set([ o["name"] for o in locations ]))
 manipulation_locations = list(set([ o["name"] for o in locations if o["manipulation"] == "yes" ]))
 
 objects = [
+    {'category': 'candies',             'name': 'biscuit',         'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'candies',             'name': 'frosty_fruits',   'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'candies',             'name': 'snakes',          'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'cleaning_stuff',      'name': 'cloth',           'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'cleaning_stuff',      'name': 'dishwasher_tab',  'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'cleaning_stuff',      'name': 'sponge',          'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'cleaning_stuff',      'name': 'trash_bags',      'color': 'blue',        'volume': 100,      'weight': 200},
     {'category': 'drink',               'name': 'beer',            'color': 'brown',       'volume': 270,      'weight': 222},
     {'category': 'drink',               'name': 'chocolate_milk',  'color': 'brownish',    'volume': 404,      'weight': 325},
     {'category': 'drink',               'name': 'coke',            'color': 'red',         'volume': 270,      'weight': 222},
@@ -50,7 +57,17 @@ objects = [
     {'category': 'food',                'name': 'cereals',         'color': 'blue',        'volume': 100,      'weight': 200},
     {'category': 'food',                'name': 'noodles',         'color': 'blue',        'volume': 100,      'weight': 200},
     {'category': 'food',                'name': 'onion',           'color': 'blue',        'volume': 100,      'weight': 200},
-    {'category': 'food',                'name': 'vegemite',        'color': 'blue',        'volume': 100,      'weight': 200}
+    {'category': 'food',                'name': 'vegemite',        'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'fruits',              'name': 'apple',           'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'fruits',              'name': 'kiwi',            'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'fruits',              'name': 'lemon',           'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'fruits',              'name': 'orange',          'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'fruits',              'name': 'pear',            'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'snacks',              'name': 'cheetos',         'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'snacks',              'name': 'doritos',         'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'snacks',              'name': 'shapes_chicken',  'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'snacks',              'name': 'shapes_pizza',    'color': 'blue',        'volume': 100,      'weight': 200},
+    {'category': 'snacks',              'name': 'twisties',        'color': 'blue',        'volume': 100,      'weight': 200}
 ]
 
 object_names = list(set([ o["name"] for o in objects ]))
