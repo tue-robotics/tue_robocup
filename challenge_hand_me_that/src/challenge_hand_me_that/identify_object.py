@@ -84,12 +84,13 @@ class PointAt(smach.State):
 
         # Grasp
         rospy.loginfo('Start pointing')
-        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[point_entity.id]):
-            self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
-            rospy.logerr('Grasp failed')
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=0.0)
-            return 'failed'
+        for x_offset in [-0.1, 0.0]:  # Hack because Hero does not pre-grasp reliably
+            _goal_bl = FrameStamped(goal_bl.frame * kdl.Frame(kdl.Vector(x_offset, 0.0, 0.0)), goal_bl.frame_id)
+            if not arm.send_goal(_goal_bl, timeout=20, pre_grasp=False, allowed_touch_objects=[point_entity.id]):
+                self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
+                rospy.logerr('Grasp failed')
+                arm.reset()
+                return 'failed'
 
         # Retract
         rospy.loginfo('Start retracting')
@@ -105,7 +106,6 @@ class PointAt(smach.State):
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
 
         # Close gripper
-        arm.send_gripper_goal('close')
         arm.wait_for_motion_done(cancel=True)
 
         # Carrying pose
