@@ -64,12 +64,13 @@ class LightSaber(smach.State):
                 self._robot.perception.detect_person_3d(rgb, depth, depth_info)
                 rospy.loginfo("Calling detect person 3d took {} seconds".format((rospy.Time.now() - t_start).to_sec()))
         except Exception as e:
-            rospy.logerr(e)
+            rospy.logerr("{}".format(e))
 
     def _trigger_callback(self, _):
         """
         Callback for the trigger topic. Sets the event to signal the main loop to stop.
         """
+        rospy.loginfo("Trigger received")
         self._event.set()
 
     def _register_subscribers(self):
