@@ -38,6 +38,7 @@ class Api(RobotPart):
         :param target: string identifying the target of the grammar to recognize
         :param timeout: timeout in seconds (float)
         """
+        rospy.sleep(1.0)  # Check if this reduces the speech bug
         if callable(self._pre_hook):
             self._pre_hook()
 
