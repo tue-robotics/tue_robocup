@@ -24,7 +24,7 @@ from .clustering import cluster_people
 WAYPOINT_ID = "find_people_waypoint"
 ROOM_ID = "living_room"
 NUM_LOOKS = 2
-MAX_PEOPLE = 10
+MAX_PEOPLE = 6
 SHRINK_X = 0.5
 SHRINK_Y = 0.3
 
@@ -95,7 +95,7 @@ def _filter_and_cluster_images(robot, raw_person_detections, room_id):
 
         rospy.loginfo("%d in room before clustering", len(in_room_detections))
 
-        clusters = cluster_people(in_room_detections, np.array([6, 0]))
+        clusters = cluster_people(in_room_detections, np.array([6, 0]), n_clusters=MAX_PEOPLE)
 
         return clusters
 
@@ -107,20 +107,20 @@ def _filter_and_cluster_images(robot, raw_person_detections, room_id):
         robot.speech.speak("Mates, where are you?", block=False)
         raise
 
-    # Filter clusters to get the N best ones
-    def _score_cluster(cluster):
-        """
-        Scores the cluster based on an heuristic. It is desired that the cluster is as far in the room as is possible,
-        assuming people are close to the far edge (x_max) and the right edge (y_min) of the room.
-
-        :param cluster: (dict)
-        :return: (float) score
-        """
-        x_score = abs(max_corner_shrinked.x() - cluster["map_ps"].point.x)
-        y_score = abs(- min_corner_shrinked.y() + cluster["map_ps"].point.y)
-        return x_score if x_score < y_score else y_score
-    if len(person_detection_clusters) > MAX_PEOPLE:
-        person_detection_clusters = sorted(person_detection_clusters, key=_score_cluster, reverse=True)[:MAX_PEOPLE]
+    # Filter clusters to get the N best ones (not necessary if KMeans clustering algorithm is used)
+    # def _score_cluster(cluster):
+    #     """
+    #     Scores the cluster based on an heuristic. It is desired that the cluster is as far in the room as is possible,
+    #     assuming people are close to the far edge (x_max) and the right edge (y_min) of the room.
+    #
+    #     :param cluster: (dict)
+    #     :return: (float) score
+    #     """
+    #     x_score = abs(max_corner_shrinked.x() - cluster["map_ps"].point.x)
+    #     y_score = abs(- min_corner_shrinked.y() + cluster["map_ps"].point.y)
+    #     return x_score if x_score < y_score else y_score
+    # if len(person_detection_clusters) > MAX_PEOPLE:
+    #     person_detection_clusters = sorted(person_detection_clusters, key=_score_cluster, reverse=True)[:MAX_PEOPLE]
 
     return person_detection_clusters
 
