@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import rospy
+import copy
 from robot_smach_states.util.designators.checks import check_type
 from robot_smach_states.util.designators.core import Designator
 from hmi import HMIResult
@@ -9,11 +10,17 @@ class FieldOfHMIResult(Designator):
     """
     Extract a field of a QueryResult
 
-    >>> query_result = HMIResult(sentence='ignored', semantics={'widget': {'gadget': {'bla': 'foo', 'bar': 'buzz'}}})
+    >>> query_result = HMIResult(sentence='ignored', semantics={u'widget': {u'gadget': {u'bla': u'foo', u'bar': u'buzz'}}})
     >>> query_des = Designator(query_result)
     >>> field_des = FieldOfHMIResult(query_des, semantics_path=['widget', 'gadget', 'bar'])
     >>> field_des.resolve()
     'buzz'
+
+    >>> query_result2 = HMIResult(sentence='ignored', semantics=u'dinges')
+    >>> query_des2 = Designator(query_result2)
+    >>> field_des2 = FieldOfHMIResult(query_des2, semantics_path=[])
+    >>> field_des2.resolve()
+    'dinges'
     """
     def __init__(self, query_result_des, semantics_field=None, semantics_path=None, name=None):
         """
@@ -29,8 +36,13 @@ class FieldOfHMIResult(Designator):
         if semantics_field:
             check_type(semantics_field, str)
 
-        if semantics_path:
-            check_type(semantics_path, [str])
+        if semantics_path is not None:
+            if semantics_path != []:
+                check_type(semantics_path, [str])
+            if semantics_path == []:
+                # In this case, the path is just empty and apparently we do not want to traverse a
+                # path into a dict but have the thing itself?
+                pass
 
         self.query_result_des = query_result_des
         self.semantics_field = semantics_field
@@ -44,14 +56,15 @@ class FieldOfHMIResult(Designator):
             except Exception as e:
                 rospy.logerr(e)
                 return None
-        elif self.semantics_path:
+        elif self.semantics_path is not None:
             try:
                 path = self.semantics_path.resolve() if hasattr(self.semantics_path, 'resolve') else self.semantics_path
                 semantics = self.query_result_des.resolve().semantics # type: dict, nested
                 rospy.loginfo("Going to traverse path: {} into semantics: {}".format(path, semantics))
-                level = dict(semantics)  # Make a copy
-                if path:
+                level = copy.deepcopy(semantics)  # Make a copy
+                if path is not None:
                     for step in path:
+                        # print('Getting {} from {}'.format(step, level))
                         level = level[step]
                 return str(level)
             except Exception as e:
