@@ -6,6 +6,7 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 # Challenge final
+from .display_orders_on_map import DisplayOrdersOnMap
 from .navigate_to_and_grab_rack import NavigateToAndGrabRack
 
 RACK_ID = "rack"
@@ -21,7 +22,7 @@ class GetDrinks(smach.StateMachine):
 
         :param robot: (Robot) api object
         """
-        smach.StateMachine.__init__(self, outcomes=["done", "failed"])
+        smach.StateMachine.__init__(self, outcomes=["done", "failed"], input_keys=["detected_people"])
 
         with self:
 
@@ -57,10 +58,17 @@ class GetDrinks(smach.StateMachine):
             smach.StateMachine.add("SAY_PUT_DRINKS",
                                    states.Say(
                                        robot,
-                                       "Please put the drinks in my awesome cart",
+                                       "Hey bartender, have a look at my screen. "
+                                       "You can see the orders of the people in the living room",
                                        block=False),
                                    transitions={"spoken": "WAIT_FOR_DRINKS"}
                                    )
+
+            # Display these on the map
+            smach.StateMachine.add("DRAW_ORDERS_ON_MAP",
+                                   DisplayOrdersOnMap(robot),
+                                   transitions={"succeeded": "WAIT_FOR_DRINKS",
+                                                "failed": 'WAIT_FOR_DRINKS'})
 
             # Wait for bartender to put drinks in rack
             smach.StateMachine.add("WAIT_FOR_DRINKS",
