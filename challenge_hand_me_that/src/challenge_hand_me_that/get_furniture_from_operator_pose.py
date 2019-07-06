@@ -18,27 +18,23 @@ from ed_sensor_integration.srv import RayTraceResponse
 
 
 OPERATOR = None
-all_possible_furniture = [  'bedroom_chest', # TODO: Get from knowledge
-                            'bed',
-                            'sidetable',
-                            'shelf',
-                            'trash_bin',
-                            'kitchen_cabinet',
-                            'kitchen_table',
-                            'island',
-                            'sink',
-                            'dishwasher',
-                            'fridge',
-                            'shoe_rack',
-                            'safe',
-                            'desk',
-                            'coat_hanger',  # TODO: maybe delete this?
-                            'coffee_table',
-                            'couch',
-                            'armchair',
-                            'display_cabinet',
-                            'trash_bin1',
-                            'sideboard']
+all_possible_furniture = ['bedroom_chest',  # TODO: Get from knowledge
+                          'bed',
+                          'sidetable',
+                          'shelf',
+                          'kitchen_cabinet',
+                          'kitchen_table',
+                          'island',
+                          'sink',
+                          'dishwasher',
+                          'shoe_rack',
+                          'safe',
+                          'desk',
+                          'coffee_table',
+                          # 'couch',
+                          # 'armchair',
+                          'display_cabinet',
+                          'sideboard']
 
 
 class GetFurnitureFromOperatorPose(StateMachine):
