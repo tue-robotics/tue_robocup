@@ -68,7 +68,7 @@ class LocatePeople(StateMachine):
             # with open('/home/rein/mates/floorplan-2019-07-05-11-06-52.pickle', 'r') as f:
             #     PERSON_DETECTIONS = pickle.load(f)
             #     rospy.loginfo("Loaded %d persons", len(PERSON_DETECTIONS))
-            # 
+            #
             #
             # return "done"
 
