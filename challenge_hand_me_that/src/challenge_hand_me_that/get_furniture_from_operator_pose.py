@@ -54,6 +54,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
             global OPERATOR
             OPERATOR = None
 
+            robot.ed.reset()
             robot.head.reset()
             robot.speech.speak("Let's point, please stand in front of me!", block=False)
             _show_view(timeout=2)
