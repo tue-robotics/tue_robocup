@@ -60,7 +60,15 @@ class InspectFurniture(smach.StateMachine):
                                                   navigation_area="in_front_of",
                                                   ),
                                    transitions={"done": "SELECT_ENTITY",
-                                                "failed": "failed"})  # ToDo: fallback?
+                                                "failed": "SAY_INSPECTION_FAILED"})  # ToDo: fallback?
+
+            smach.StateMachine.add("SAY_INSPECTION_FAILED",
+                                   states.SayFormatted(
+                                       robot,
+                                       "I am sorry but I was not able to reach the {furniture_object}",
+                                       furniture_object=ds.AttrDesignator(furniture_designator, "id", resolve_type=str),
+                                   ),
+                                   transitions={"spoken": "failed"})
 
             @smach.cb_interface(outcomes=["succeeded", "no_entities"],
                                 input_keys=["laser_dot"])
@@ -143,6 +151,7 @@ if __name__ == "__main__":
 
     # Test data
     furniture = ds.EdEntityDesignator(robot=_robot, id="desk")
+    entity_designator = ds.VariableDesignator(resolve_type=Entity)
 
     ps = geometry_msgs.msg.PointStamped()
     ps.header.frame_id = "/map"
@@ -152,5 +161,5 @@ if __name__ == "__main__":
     user_data = smach.UserData()
     user_data["laser_dot"] = ps
 
-    sm = InspectFurniture(robot=_robot, furniture_designator=furniture)
+    sm = InspectFurniture(robot=_robot, furniture_designator=furniture, entity_designator=entity_designator.writeable)
     sm.execute(user_data)
