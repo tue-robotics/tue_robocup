@@ -69,20 +69,17 @@ class SelectOptionForImage(smach.State):
         self._received = Event()
         self._selection = None
 
-        self._text_pub.publish(self._question)
-        self._text_pub.publish(self._option_str)
-
         try:
             # import ipdb; ipdb.set_trace()
-            ros_image = user_data['person_dict']['rgb']
+            ros_image = user_data['person_dict']['rgb']  # Image
+            ros_image.header.frame_id = self._question + '\n' + self._instruction + '\n' + self._option_str
             self._image_pub.publish(ros_image)
-
-            self._text_pub.publish(self._instruction)
 
             start = rospy.Time.now()
             while not rospy.is_shutdown() and rospy.Time.now() < start + rospy.Duration(self._timeout):
                 if self._received.wait(1):
                     user_data['selection'] = self._selection
+                    self._text_pub.publish("OK, gotcha")
                     return 'succeeded'
                 else:
                     rospy.logwarn_throttle(10, "No reply received yet")
@@ -100,7 +97,7 @@ class SelectOptionForImage(smach.State):
         if self._strict:
             if msg.data.lower().strip() not in self._options:
                 self._text_pub.publish("{} is not on my list, please select something else, like {}"
-                                       .format(msg.data, self._options))
+                                       .format(msg.data, '\n'.join(self._options)))
             else:
                 self._selection = msg.data
                 self._received.set()
