@@ -12,6 +12,7 @@ import PyKDL as kdl
 from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 from robot_smach_states import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
+import robot_smach_states as states
 
 # robot_smach_states.navigation
 import navigation
@@ -351,7 +352,7 @@ class Guide(smach.StateMachine):
                                    transitions={"done": "SAY_BEHIND"})
 
             smach.StateMachine.add("SAY_BEHIND",
-                                   Say(robot, "Please stand behind me", block=True),
+                                   Say(robot, "Please stand behind me and look at my butt", block=True),
                                    transitions={"spoken": "WAIT"})
 
             smach.StateMachine.add("WAIT",
@@ -375,6 +376,7 @@ class Guide(smach.StateMachine):
                                                    distance=self.operator_distance,
                                                    radius=self.operator_radius),
                                    transitions={"is_following": "GET_PLAN",
+
                                                 "is_lost": "lost_operator"})
 
             smach.StateMachine.add("PLAN_BLOCKED", navigation.planBlocked(self.robot),
