@@ -15,7 +15,7 @@ class ReportPeople(smach.State):
 
     def execute(self, ud):
         self._robot.speech.speak(
-            "Look at my screen to see where you're mates are at and you can have a beer with them",
+            "Look at my screen to see where your mates are at so you can have a beer with them",
             mood="excited",
             block=False
         )
