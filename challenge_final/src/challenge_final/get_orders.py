@@ -16,6 +16,7 @@ from challenge_final.select_option_for_image import SelectOptionForImage
 from challenge_final.display_orders_on_map import DisplayOrdersOnMap
 
 DRINK_OPTIONS = ['beer', 'coke', 'water', 'energy']
+DEFAULT_ORDER = 'beer'
 
 detected_person_index = 0
 
@@ -70,10 +71,38 @@ class GetOrders(smach.StateMachine):
                                                 "failed": 'SAY_ORDERED_TOO_LATE'})
 
             smach.StateMachine.add('SAY_ORDERED_TOO_LATE',
-                                   states.Say(robot, ['Someone ordered too late, too bad',
-                                                      'Someone is getting no drink, sorry. I have to hurry for this gold medal I want'],
+                                   states.Say(robot, ["I didn't get an order in time. "
+                                                      "Probably can't get online, so I'll just try to get you all a {}".format(DEFAULT_ORDER)],
                                               block=False),
-                                   transitions={'spoken': 'ITERATE_NEXT_PERSON'})
+                                   transitions={'spoken': 'ASSIGN_RANDOM_DRINKS'})
+
+            # Here comes Loys stuff (stuff is passed)
+            @smach.cb_interface(outcomes=["done"],
+                                input_keys=['detected_people', 'selection'],
+                                output_keys=['detected_people'])
+            def assign_random_drinks(user_data):
+                """
+                Edits user_data['detected_people'] elements (which are dicts) and adds a new 'selection'-key
+                :param user_data:
+                :return:
+                """
+                global detected_person_index
+                # import ipdb; ipdb.set_trace()
+                selection = DEFAULT_ORDER
+                for i, elem in enumerate(user_data['detected_people']):
+                    try:
+                        if 'selection' not in user_data['detected_people'][i]:
+                            rospy.loginfo("Storing order for person {}/{}: {}".format(i,
+                                                                                      len(user_data['detected_people']),
+                                                                                      selection))
+                            user_data['detected_people'][i]['selection'] = selection
+                    except Exception as e:
+                        rospy.logerr('Cannot store order somehow'.format(e))
+
+                return 'done'
+            smach.StateMachine.add('ASSIGN_RANDOM_DRINKS',
+                                   smach.CBState(assign_random_drinks),
+                                   transitions={'done': 'done'})
 
             # Here comes Loys stuff (stuff is passed)
             @smach.cb_interface(outcomes=["done", 'failed'],
@@ -93,15 +122,28 @@ class GetOrders(smach.StateMachine):
                                           len(user_data['detected_people']),
                                           user_data['selection']))
                     user_data['detected_people'][detected_person_index]['selection'] = user_data['selection']
-                    detected_person_index += 1
                     return 'done'
                 except Exception as e:
                     rospy.logerr('Cannot store order somehow'.format(e))
                     return 'failed'
             smach.StateMachine.add('STORE_ORDER',
                                    smach.CBState(store_current_person_order),
-                                   transitions={'done': 'ITERATE_NEXT_PERSON',
+                                   transitions={'done': 'INCREASE',
                                                 'failed': 'done'})
+
+            @smach.cb_interface(outcomes=["done"])
+            def increase_ppl_counter(user_data):
+                """
+                Edits user_data['detected_people'] elements (which are dicts) and adds a new 'selection'-key
+                :param user_data:
+                :return:
+                """
+                global detected_person_index
+                detected_person_index += 1
+                return 'done'
+            smach.StateMachine.add('INCREASE',
+                                   smach.CBState(increase_ppl_counter),
+                                   transitions={'done': 'ITERATE_NEXT_PERSON'})
 
             # smach.StateMachine.add("DRAW_ORDERS_ON_MAP",
             #                        DisplayOrdersOnMap(robot),
@@ -113,9 +155,14 @@ if __name__ == "__main__":
 
     rospy.init_node("test_get_orders")
 
+    import mock
     # Robot
     # _robot = get_robot_from_argv(index=1)
-    _robot = None
+    _robot = mock.MagicMock()
+    _robot.speech = mock.MagicMock()
+    def speak(*args, **kwargs):
+        print(args, kwargs)
+    _robot.speech.speak = speak
     import sys
     import pickle
     import random
