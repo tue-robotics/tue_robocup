@@ -1,13 +1,16 @@
 #! /usr/bin/env python
 
 # ROS
+import copy
+
 import rospy
 import tf
 import geometry_msgs
 import visualization_msgs.msg
 from diagnostic_msgs.msg import DiagnosticArray
+from geometry_msgs.msg import Pose, Quaternion, Point, Vector3
 from sensor_msgs.msg import Image, JointState
-from std_msgs.msg import String
+from std_msgs.msg import String, ColorRGBA, Header
 
 # TU/e
 from robot_skills import arms
@@ -54,6 +57,58 @@ class Robot(object):
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
+
+    def publish_rack(self):
+        arr = visualization_msgs.msg.MarkerArray()
+        marker = visualization_msgs.msg.Marker(
+            header=Header(
+                frame_id="/"+self.robot_name+"/base_link",
+                stamp=rospy.Time.now()
+            ),
+            type=visualization_msgs.msg.Marker.CUBE,
+            ns="checkmyawesomerack",
+            frame_locked=True,
+            color=ColorRGBA(r=1, a=1),
+            pose=Pose(
+                orientation=Quaternion(w=1)
+            )
+        )
+
+        x_offset = 0.35
+
+        m1 = copy.deepcopy(marker)
+        m1.pose.position = Point(x=x_offset, z=0.65)
+        m1.scale = Vector3(x=0.26, y=0.48, z=0.05)
+        m1.id=0
+        m2 = copy.deepcopy(marker)
+        m2.pose.position = Point(x=x_offset, z=0.3)
+        m2.scale = Vector3(x=0.26, y=0.48, z=0.05)
+        m2.id = 1
+        pole_size = 0.02
+        m3 = copy.deepcopy(marker)
+        m3.pose.position = Point(x=x_offset + 0.13, y=0.24, z=0.385)
+        m3.scale = Vector3(x=pole_size, y=pole_size, z=0.77)
+        m3.id = 2
+        m4 = copy.deepcopy(marker)
+        m4.pose.position = Point(x=x_offset - 0.13, y=0.24, z=0.385)
+        m4.scale = Vector3(x=pole_size, y=pole_size, z=0.77)
+        m4.id = 3
+        m5 = copy.deepcopy(marker)
+        m5.pose.position = Point(x=x_offset + 0.13, y=-0.24, z=0.385)
+        m5.scale = Vector3(x=pole_size, y=pole_size, z=0.77)
+        m5.id = 4
+        m6 = copy.deepcopy(marker)
+        m6.pose.position = Point(x=x_offset - 0.13, y=-0.24, z=0.385)
+        m6.scale = Vector3(x=pole_size, y=pole_size, z=0.77)
+        m6.id = 5
+        m7 = copy.deepcopy(marker)
+        m7.pose.position = Point(x=x_offset, z=0.1)
+        m7.scale = Vector3(x=0.26, y=0.48, z=0.05)
+        m7.id = 99
+
+        self.marker_array_pub.publish(visualization_msgs.msg.MarkerArray(
+            markers=[m1, m2, m3, m4, m5, m6, m7]
+        ))
 
     def get_joint_states(self):
         msg = rospy.wait_for_message("/{}/joint_states".format(self.robot_name), JointState)
