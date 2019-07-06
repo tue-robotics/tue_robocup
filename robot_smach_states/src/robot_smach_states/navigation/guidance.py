@@ -324,6 +324,8 @@ class Guide(smach.StateMachine):
         Base Smach state to guide an operator to a designated position
 
         :param robot: (Robot) robot api object
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         smach.StateMachine.__init__(
             self, outcomes=["arrived", "unreachable", "goal_not_defined", "lost_operator", "preempted"])
@@ -398,6 +400,8 @@ class GuideToSymbolic(Guide):
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
+        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
         """
         super(GuideToSymbolic, self).__init__(robot=robot,
                                               operator_distance=operator_distance,
