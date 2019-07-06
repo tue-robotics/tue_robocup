@@ -36,8 +36,6 @@ class Final(smach.StateMachine):
                                    GetOrders(robot),
                                    transitions={"done": "GET_DRINKS"})
 
-            # ToDo: don't forget to include bartender interaction (in Loys state)
-
             smach.StateMachine.add("GET_DRINKS",
                                    GetDrinks(robot=robot),
                                    transitions={"done": "done",

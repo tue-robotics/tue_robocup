@@ -33,7 +33,7 @@ class GetOrders(smach.StateMachine):
         * detected_people: a list of {'rgb':..., 'person_detection':..., 'map_ps':...}-dictionaries
 
         Output keys:
-        * orders: ToDo: Loy: define this
+        * orders: detected people: list with updated dicts (orders have been added)
 
         :param robot: (Robot) api object
         """
@@ -101,14 +101,12 @@ class GetOrders(smach.StateMachine):
             smach.StateMachine.add('STORE_ORDER',
                                    smach.CBState(store_current_person_order),
                                    transitions={'done': 'ITERATE_NEXT_PERSON',
-                                                'failed': 'DRAW_ORDERS_ON_MAP'})
+                                                'failed': 'done'})
 
-            # Fuse people and orders  # ToDo: Janno
-
-            smach.StateMachine.add("DRAW_ORDERS_ON_MAP",
-                                   DisplayOrdersOnMap(robot),
-                                   transitions={"succeeded": "done",
-                                                "failed": 'done'})
+            # smach.StateMachine.add("DRAW_ORDERS_ON_MAP",
+            #                        DisplayOrdersOnMap(robot),
+            #                        transitions={"succeeded": "done",
+            #                                     "failed": 'done'})
 
 
 if __name__ == "__main__":

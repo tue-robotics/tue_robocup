@@ -56,7 +56,6 @@ class DisplayOrdersOnMap(smach.State):
                              input_keys=['detected_people'])
         self.robot = robot
 
-
     def execute(self, ud):
         floorplan = cv2.imread(
             os.path.join(rospkg.RosPack().get_path('challenge_final'), 'img/floorplan.png'))
