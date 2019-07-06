@@ -27,6 +27,9 @@ class LightSaber(smach.State):
 
     def execute(self, ud=None):
 
+        rospy.logwarn("To break out of the LightSaber execute hook, enter:"
+                      "\n\n\trostopic pub --once trigger std_msgs/Empty '{}'\n\nin your terminal")
+
         self._robot.head.reset()
 
         self._robot.speech.speak("Let's show what I can do")
@@ -38,6 +41,7 @@ class LightSaber(smach.State):
             rate.sleep()
 
         self._deregister_subscribers()
+        return "done"
 
     def _image_callback(self, rgb, depth, depth_info):
         """
