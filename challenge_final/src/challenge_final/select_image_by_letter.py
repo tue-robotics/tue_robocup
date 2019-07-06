@@ -9,6 +9,7 @@ import smach
 import cv_bridge
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
+from telegram_ros.msg import LabeledImage
 
 # Robot skills
 from robot_smach_states import WaitTime
@@ -29,7 +30,7 @@ class SelectImageByLetter(smach.State):
 
         self._question = question
 
-        self._image_pub = rospy.Publisher('image_from_ros', Image, queue_size=10)
+        self._labeled_image_pub = rospy.Publisher('labeled_image_from_ros', LabeledImage, queue_size=10)
         self._text_pub = rospy.Publisher('message_from_ros', String, queue_size=10)
         self._text_sub = rospy.Subscriber('message_to_ros', String, self._handle_reply)
 
@@ -52,12 +53,9 @@ class SelectImageByLetter(smach.State):
         self._text_pub.publish(self._question)
         for label, image_msg in user_data['label2image'].items():
             # The order in which these images are received matters! text should be below the
-            self._image_pub.publish(image_msg)
-            rate.sleep()
-            self._text_pub.publish(label)
-            rate.sleep()
+            self._labeled_image_pub.publish(LabeledImage(image=image_msg, label=label))
 
-        self._text_pub.publish("Please pick something from one of the pictures and send me the label below")
+        self._text_pub.publish("Please pick something from one of the pictures and send me it's caption")
 
         if self._received.wait(self._timeout):
             user_data['selected_label'] = self._selection
