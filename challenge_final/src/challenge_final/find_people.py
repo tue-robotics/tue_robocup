@@ -180,29 +180,31 @@ class FindPeople(smach.StateMachine):
                         now = time.time()
                         rgb, depth, depth_info = robot.perception.get_rgb_depth_caminfo()
 
-                        try:
-                            persons = robot.perception.detect_person_3d(rgb, depth, depth_info)
-                        except Exception as e:
-                            rospy.logerr(e)
-                            rospy.sleep(2.0)
-                        else:
-                            for person in persons:
-                                if person.face.roi.width > 0 and person.face.roi.height > 0:
-                                    try:
-                                        person_detections.append({
-                                            "map_ps": robot.tf_listener.transformPoint("map", PointStamped(
-                                                header=rgb.header,
-                                                point=person.position
-                                            )),
-                                            "person_detection": person,
-                                            "rgb": rgb
-                                        })
-                                    except Exception as e:
-                                        rospy.logerr(
-                                            "Failed to transform valid person detection to map frame: {}".format(e))
+                        if rgb:
 
-                        rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now,
-                                      len(person_detections))
+                            try:
+                                persons = robot.perception.detect_person_3d(rgb, depth, depth_info)
+                            except Exception as e:
+                                rospy.logerr(e)
+                                rospy.sleep(2.0)
+                            else:
+                                for person in persons:
+                                    if person.face.roi.width > 0 and person.face.roi.height > 0:
+                                        try:
+                                            person_detections.append({
+                                                "map_ps": robot.tf_listener.transformPoint("map", PointStamped(
+                                                    header=rgb.header,
+                                                    point=person.position
+                                                )),
+                                                "person_detection": person,
+                                                "rgb": rgb
+                                            })
+                                        except Exception as e:
+                                            rospy.logerr(
+                                                "Failed to transform valid person detection to map frame: {}".format(e))
+
+                            rospy.loginfo("Took %.2f, we have %d person detections now", time.time() - now,
+                                          len(person_detections))
 
                 rospy.loginfo("Detected %d persons", len(person_detections))
 
