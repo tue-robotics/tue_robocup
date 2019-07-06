@@ -203,7 +203,7 @@ class FindPeople(smach.StateMachine):
                 outcomes=["done", "failed"],
                 input_keys=["raw_detections"],
                 output_keys=["detected_people"])
-            def _filter_and_cluster_images(user_data):
+            def filter_and_cluster_images(user_data):
                 """
                 Filters the raw detections so that only people within the room maintain. Next, it clusters the images
                 so that only one image per person remains. This is stored in the user data
@@ -219,6 +219,6 @@ class FindPeople(smach.StateMachine):
                     return "failed"
 
             smach.StateMachine.add('FILTER_AND_CLUSTER',
-                                   smach.CBState(_filter_and_cluster_images),
+                                   smach.CBState(filter_and_cluster_images),
                                    transitions={"done": "done",
                                                 "failed": "done"})  # ToDo: fallback
