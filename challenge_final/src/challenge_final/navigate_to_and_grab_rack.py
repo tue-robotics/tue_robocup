@@ -3,40 +3,38 @@
 # All rights reserved.
 #
 # \author Rein Appeldoorn
-
+import math
 import os
 
-import rospy
 import rospkg
+import rospy
+from dynamic_reconfigure.client import Client
+from geometry_msgs.msg import PoseStamped, Quaternion
 from robot_skills import Hero
 from robot_smach_states import NavigateToSymbolic
+from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
-
-item_img_dict = {
-    "plate": 'images/plate.jpg',
-    "cup": 'images/cup.jpg',
-    "bowl": 'images/bowl.jpg',
-    "napkin": 'images/napkin.jpg',
-    "knife": 'images/knife.jpg',
-    "fork": 'images/fork.jpg',
-    "spoon": 'images/spoon.jpg'
-}
-
-plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
+from tf.transformations import quaternion_from_euler
 
 
 class GrabRack(StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, rack_id):
         StateMachine.__init__(self, outcomes=['done'])
-        arm = robot.get_arm()._arm
+        public_arm = robot.get_arm()
+        arm = public_arm._arm
+
+        local_client = Client("/hero/local_planner/local_costmap")
+        local_client.update_configuration({"footprint": []})
+        global_client = Client("/hero/global_planner/global_costmap")
+        global_client.update_configuration({"footprint": []})
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
             arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
-        def send_gripper_goal(open_close_string, max_torque=0.1):
+        def send_gripper_goal(open_close_string, max_torque=1.0):
             arm.send_gripper_goal(open_close_string, max_torque=max_torque)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
@@ -53,11 +51,48 @@ class GrabRack(StateMachine):
             return 'succeeded'
 
         @cb_interface(outcomes=['done'])
-        def _ask_user(user_data):
+        def _pre_grab(_):
+            robot.speech.speak("Hey, I found myself a nice rack")
+            send_joint_goal([0, 0, 0, 0, 0])
+            send_joint_goal([0.69, 0, 0, 0, 0])
+            rospy.sleep(1.0)
+            send_gripper_goal("open")
+            send_joint_goal([0.69, -1.77, 0, -1.37, 1.57])
+
+            return 'done'
+
+        @cb_interface(outcomes=['done'])
+        def _align(_):
+            robot.speech.speak("Let's see what I can do with this")
+            goal_pose = PoseStamped()
+            goal_pose.header.stamp = rospy.Time.now()
+            goal_pose.header.frame_id = rack_id
+            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.position.x = 0.85
+            goal_pose.pose.position.y = 0
+            ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
+            return 'done'
+
+        @cb_interface(outcomes=['done'])
+        def _grab(_):
+            robot.speech.speak("Such a beautiful rack")
+            send_joint_goal([0.61, -1.77, 0, -1.37, 1.57])
+            send_gripper_goal("close")
+
+            base_footprint = [[0.491716563702, 0.284912616014], [0.504091262817, -0.264433205128],
+                              [0.00334876775742, -0.259195685387], [-0.17166364193, -0.19022783637],
+                              [-0.239429235458, -0.07719720155], [-0.237978458405, 0.0547728165984],
+                              [-0.180378556252, 0.164403796196], [-0.0865250825882, 0.221749901772],
+                              [0.00969874858856, 0.260340631008]]
+            local_client.update_configuration({"footprint": base_footprint})
+            global_client.update_configuration({"footprint": base_footprint})
+
             return 'done'
 
         with self:
-            self.add('ASK_USER', CBState(_ask_user), transitions={'succeeded': 'succeeded', 'failed': 'failed'})
+            self.add('PRE_GRAB', CBState(_pre_grab), transitions={'done': 'GRAB'})
+            self.add('ALIGN_GRAB', CBState(_align), transitions={'done': 'done'})
+            self.add('GRAB', CBState(_grab), transitions={'done': 'done'})
 
 
 class NavigateToAndGrabRack(StateMachine):
@@ -73,7 +108,7 @@ class NavigateToAndGrabRack(StateMachine):
                                           'unreachable': 'failed',
                                           'goal_not_defined': 'failed'})
 
-            StateMachine.add("GRAB_RACK", GrabRack(robot),
+            StateMachine.add("GRAB_RACK", GrabRack(robot, rack_id),
                              transitions={'done': 'succeeded'})
 
 
@@ -81,4 +116,4 @@ if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
-    GrabRack(hero).execute()
+    NavigateToAndGrabRack(hero, "island", "in_front_of").execute()
