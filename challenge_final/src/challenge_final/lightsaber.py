@@ -24,8 +24,9 @@ all_possible_furniture = ['kitchen_cabinet',
                           'dishwasher',
                           'desk',
                           'coffee_table',
-                          # 'couch',
-                          # 'armchair',
+                          'fridge',
+                          'couch',
+                          'armchair',
                           'display_cabinet',
                           'sideboard']
 
