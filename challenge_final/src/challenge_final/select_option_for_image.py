@@ -57,9 +57,9 @@ class SelectOptionForImage(smach.State):
         self._question = question
         self._instruction = instruction
 
-        self._image_pub = rospy.Publisher('image_from_ros', Image, queue_size=10)
-        self._text_pub = rospy.Publisher('message_from_ros', String, queue_size=10)
-        self._text_sub = rospy.Subscriber('message_to_ros', String, self._handle_reply)
+        self._image_pub = rospy.Publisher('/hero/image_from_ros', Image, queue_size=10)
+        self._text_pub = rospy.Publisher('/hero/message_from_ros', String, queue_size=10)
+        self._text_sub = rospy.Subscriber('/hero/message_to_ros', String, self._handle_reply)
 
         self._text_pub.publish("Hello, I',m HERO")
 
