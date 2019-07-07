@@ -59,9 +59,9 @@ class SelectOptionForImage(smach.State):
         self._question = question
         self._instruction = instruction
 
-        self._image_pub = rospy.Publisher('/hero/image_from_ros', Image, queue_size=10)
-        self._text_pub = rospy.Publisher('/hero/message_from_ros', String, queue_size=10)
-        self._options_pub = rospy.Publisher('/hero/options_from_ros', Options, queue_size=10)
+        self._image_pub = rospy.Publisher('/hero/image_from_ros', Image, queue_size=1)
+        self._text_pub = rospy.Publisher('/hero/message_from_ros', String, queue_size=1)
+        self._options_pub = rospy.Publisher('/hero/options_from_ros', Options, queue_size=1)
         self._text_sub = rospy.Subscriber('/hero/message_to_ros', String, self._handle_reply)
 
         self._text_pub.publish("Hello, I'm HERO")
@@ -73,6 +73,8 @@ class SelectOptionForImage(smach.State):
 
         self._received = Event()
         self._selection = None
+
+        self._options_pub.publish(Options('Test 1 2 3', ['OK', 'Nope']))
 
         try:
             ros_image = user_data['person_dict']['rgb']  # Image
@@ -129,7 +131,15 @@ if __name__ == '__main__':
         image_path = sys.argv[2]
 
         rospy.init_node('test_select_option_for_image')
-        _robot = get_robot(robot_name)
+        import mock
+
+        # Robot
+        # _robot = get_robot_from_argv(index=1)
+        _robot = mock.MagicMock()
+        _robot.speech = mock.MagicMock()
+        def speak(*args, **kwargs):
+            print(args, kwargs)
+        _robot.speech.speak = speak
 
         bridge = cv_bridge.CvBridge()
 
