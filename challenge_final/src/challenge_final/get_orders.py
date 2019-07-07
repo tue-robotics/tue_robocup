@@ -154,6 +154,7 @@ class GetOrders(smach.StateMachine):
 if __name__ == "__main__":
 
     rospy.init_node("test_get_orders")
+    rospy.sleep(3)
 
     import mock
     # Robot
@@ -163,6 +164,9 @@ if __name__ == "__main__":
     def speak(*args, **kwargs):
         print(args, kwargs)
     _robot.speech.speak = speak
+
+    sm = GetOrders(robot=_robot)
+
     import sys
     import pickle
     import random
@@ -175,8 +179,6 @@ if __name__ == "__main__":
 
     random.shuffle(ppl_dicts)
     user_data['detected_people'] = ppl_dicts[:4]
-
-    sm = GetOrders(robot=_robot)
     print(sm.execute(user_data))
 
     print([person_dict['selection'] for person_dict in user_data['detected_people']])
