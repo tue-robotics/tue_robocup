@@ -89,6 +89,7 @@ class GrabRack(StateMachine):
             local_client.update_configuration({"footprint": base_footprint})
             global_client.update_configuration({"footprint": base_footprint})
             robot.head.cancel_goal()
+            robot.publish_rack()
 
             return 'done'
 
