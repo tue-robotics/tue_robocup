@@ -22,7 +22,15 @@ class Final(smach.StateMachine):
 
         with self:
 
-            # ToDo: some initialization???
+            # smach.StateMachine.add("START_ROBUST",
+            #                        states.StartChallengeRobust(robot, "initial_pose"),
+            #                        transitions={"Done": "LASER_POINTING",
+            #                                     "Aborted": "LASER_POINTING",
+            #                                     "Failed": "LASER_POINTING"})
+
+            smach.StateMachine.add("INIT", states.Initialize(robot),
+                                   transitions={"initialized": "LASER_POINTING",
+                                                "abort": "LASER_POINTING"})
 
             smach.StateMachine.add("LASER_POINTING",
                                    DriveAndSwordFight(robot),
