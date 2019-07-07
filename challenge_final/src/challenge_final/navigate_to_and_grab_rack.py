@@ -76,6 +76,8 @@ class GrabRack(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def _grab(_):
+            robot.speech.speak("Grasping the trolley")
+            rospy.sleep(4.0)
             send_joint_goal([0.61, -1.77, 0, -1.37, 1.57])
             send_gripper_goal("close")
 
