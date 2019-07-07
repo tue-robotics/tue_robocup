@@ -72,7 +72,7 @@ class GetDrinks(smach.StateMachine):
 
             # Wait for bartender to put drinks in rack
             smach.StateMachine.add("WAIT_FOR_DRINKS",
-                                   states.WaitTime(robot, 20.0),
+                                   states.WaitTime(robot, 40.0),
                                    transitions={"waited": "SAY_DRINKS_COMING",
                                                 "preempted": "SAY_DRINKS_COMING"})
 
