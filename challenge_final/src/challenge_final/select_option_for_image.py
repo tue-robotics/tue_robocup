@@ -61,7 +61,7 @@ class SelectOptionForImage(smach.State):
         self._text_pub = rospy.Publisher('/hero/message_from_ros', String, queue_size=10)
         self._text_sub = rospy.Subscriber('/hero/message_to_ros', String, self._handle_reply)
 
-        self._text_pub.publish("Hello, I',m HERO")
+        self._text_pub.publish("Hello, I'm HERO")
 
     def execute(self, user_data):
         # Get a dict {'rgb':..., 'person_detection':..., 'map_ps':...}
@@ -73,9 +73,15 @@ class SelectOptionForImage(smach.State):
 
         try:
             ros_image = user_data['person_dict']['rgb']  # Image
-            ros_image.header.frame_id = self._question + '\n' + self._instruction + '\n' + self._option_str
-            rospy.loginfo("Sending image with header {}".format(ros_image.header.frame_id))
-            self._image_pub.publish(ros_image)
+
+            cv_image = self._cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
+            roi = user_data['person_dict']['person_detection'].face.roi
+            cropped_cv_image = cv_image[roi.y_offset:roi.y_offset + roi.height, roi.x_offset:roi.x_offset + roi.width]
+            # import ipdb; ipdb.set_trace()
+            cropped_ros_image = self._cv_bridge.cv2_to_imgmsg(cropped_cv_image, "bgr8")
+            cropped_ros_image.header.frame_id = self._question + '\n' + self._instruction + '\n' + self._option_str
+            rospy.loginfo("Sending image with header {}".format(cropped_ros_image.header.frame_id))
+            self._image_pub.publish(cropped_ros_image)
 
             start = rospy.Time.now()
             while not rospy.is_shutdown() and rospy.Time.now() < start + rospy.Duration(self._timeout):
