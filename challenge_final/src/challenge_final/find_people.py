@@ -170,11 +170,19 @@ class FindPeople(smach.StateMachine):
                     "I like it when everybody is staring at me!"
                 ])
 
+                look_at_me_sentences = deque([
+                    "Please look at me",
+                    "Let me check you out",
+                    "Your eyes are beautiful",
+                    "Try to look pretty, your face will pop up on the screen later!"
+                ])
+
                 for _ in range(NUM_LOOKS):
                     sentences.rotate(1)
                     robot.speech.speak(sentences[0], block=False)
                     for head_goal in head_goals:
-                        robot.speech.speak("please look at me", block=False)
+                        look_at_me_sentences.rotate(1)
+                        robot.speech.speak(look_at_me_sentences[0], block=False)
                         robot.head.look_at_point(head_goal)
                         robot.head.wait_for_motion_done()
                         now = time.time()
