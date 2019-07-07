@@ -72,9 +72,9 @@ class SelectOptionForImage(smach.State):
         self._selection = None
 
         try:
-            # import ipdb; ipdb.set_trace()
             ros_image = user_data['person_dict']['rgb']  # Image
             ros_image.header.frame_id = self._question + '\n' + self._instruction + '\n' + self._option_str
+            rospy.loginfo("Sending image with header {}".format(ros_image.header.frame_id))
             self._image_pub.publish(ros_image)
 
             start = rospy.Time.now()
