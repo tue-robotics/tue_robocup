@@ -76,7 +76,6 @@ class GrabRack(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def _grab(_):
-            robot.speech.speak("Such a beautiful rack")
             send_joint_goal([0.61, -1.77, 0, -1.37, 1.57])
             send_gripper_goal("close")
 
@@ -94,7 +93,6 @@ class GrabRack(StateMachine):
         @cb_interface(outcomes=['done'])
         def _retract(_):
             robot.head.look_down()
-            robot.speech.speak("I've got a rack!")
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = rack_id

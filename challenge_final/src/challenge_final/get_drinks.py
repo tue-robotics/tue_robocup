@@ -98,7 +98,7 @@ class GetDrinks(smach.StateMachine):
             smach.StateMachine.add("SAY_DRINKS_ARRIVED",
                                    states.Say(
                                        robot,
-                                       "Ladies and gentlemen, here are your drinks",
+                                       "Ladies and gentlemen,  I have brought you a nice full rack.",
                                        block=False),
                                    transitions={"spoken": "done"}
                                    )
