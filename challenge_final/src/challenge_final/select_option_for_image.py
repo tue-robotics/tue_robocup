@@ -10,6 +10,8 @@ import cv_bridge
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 
+from telegram_ros.msg import Options
+
 # Robot skills
 from robot_smach_states import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
@@ -59,6 +61,7 @@ class SelectOptionForImage(smach.State):
 
         self._image_pub = rospy.Publisher('/hero/image_from_ros', Image, queue_size=10)
         self._text_pub = rospy.Publisher('/hero/message_from_ros', String, queue_size=10)
+        self._options_pub = rospy.Publisher('/hero/options_from_ros', Options, queue_size=10)
         self._text_sub = rospy.Subscriber('/hero/message_to_ros', String, self._handle_reply)
 
         self._text_pub.publish("Hello, I'm HERO")
@@ -82,6 +85,10 @@ class SelectOptionForImage(smach.State):
             cropped_ros_image.header.frame_id = self._question + '\n' + self._instruction + '\n' + self._option_str
             rospy.loginfo("Sending image with header {}".format(cropped_ros_image.header.frame_id))
             self._image_pub.publish(cropped_ros_image)
+            options_msg = Options()
+            options_msg.question = self._question
+            options_msg.options = self._options
+            self._options_pub.publish(options_msg)
 
             start = rospy.Time.now()
             while not rospy.is_shutdown() and rospy.Time.now() < start + rospy.Duration(self._timeout):
