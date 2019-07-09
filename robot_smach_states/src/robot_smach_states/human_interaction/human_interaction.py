@@ -20,76 +20,6 @@ from hmi import HMIResult
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
-########################################################################################################################
-
-
-class Say(smach.State):
-    """
-    Say a sentence or pick a random one from a list.
-
-    >>> from mock import MagicMock
-    >>> robot = MagicMock()
-    >>> robot.speech = MagicMock()
-    >>> robot.speech.speak = MagicMock()
-    >>>
-    >>> say = Say(robot, ["a", "b", "c"])
-    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [say.execute() for i in range(50)]
-    >>> assert all(outcome == "spoken" for outcome in outcomes)
-    >>>
-    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
-    >>> say2.execute()
-    'spoken'
-    >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
-    >>>
-    >>> d1 = ds.VariableDesignator(resolve_type=str).writeable
-    >>> d1.write('banana')
-    >>> say3 = Say(robot, d1)
-    >>> say3.execute()
-    'spoken'
-    >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
-    """
-
-    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False):
-        smach.State.__init__(self, outcomes=["spoken"])
-        ds.check_type(sentence, str, list)
-        assert(isinstance(language, str) or isinstance(language, type(None)))
-        assert(isinstance(personality, str) or isinstance(personality, type(None)))
-        assert(isinstance(voice, str) or isinstance(voice, type(None)))
-        assert(isinstance(mood, str) or isinstance(mood, type(None)))
-        assert(isinstance(block, bool))
-
-        self.robot = robot
-        self.sentence = sentence
-        self.language = language
-        self.personality = personality
-        self.voice = voice
-        self.mood = mood
-        self.block = block
-        self.look_at_standing_person = look_at_standing_person
-
-    def execute(self, userdata=None):
-        # robot.head.look_at_standing_person()
-
-        if not self.sentence:
-            rospy.logerr("sentence = None, not saying anything...")
-            return "spoken"
-
-        if hasattr(self.sentence, "resolve"):
-            sentence = self.sentence.resolve()
-        else:
-            sentence = self.sentence
-
-        if not isinstance(sentence, str) and isinstance(sentence, list):
-            sentence = random.choice(sentence)
-
-        if self.look_at_standing_person:
-            self.robot.head.look_at_standing_person()
-        self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
-
-        return "spoken"
-
 
 class SayFormatted(smach.State):
     """
@@ -181,6 +111,45 @@ class SayFormatted(smach.State):
         if missing_ph:
             raise RuntimeError("Not all named place holders are provided, missing: {}".
                                format(", ".join(map(str, missing_ph))))
+
+
+class Say(SayFormatted):
+    """
+    Say a sentence or pick a random one from a list.
+
+    >>> from mock import MagicMock
+    >>> robot = MagicMock()
+    >>> robot.speech = MagicMock()
+    >>> robot.speech.speak = MagicMock()
+    >>>
+    >>> say = Say(robot, ["a", "b", "c"])
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes = [say.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>>
+    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
+    >>> say2.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
+    >>>
+    >>> d1 = ds.VariableDesignator(resolve_type=str).writeable
+    >>> d1.write('banana')
+    >>> say3 = Say(robot, d1)
+    >>> say3.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
+    """
+    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
+                 look_at_standing_person=False):
+        super(Say, self).__init__(robot=robot,
+                                  sentence=sentence,
+                                  language=language,
+                                  personality=personality,
+                                  voice=voice,
+                                  mood=mood,
+                                  block=block,
+                                  look_at_standing_person=look_at_standing_person
+                                  )
 
 
 class HearOptions(smach.State):
