@@ -118,7 +118,7 @@ class Presentation(smach.State):
                                      voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.arm._send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
+        function_list.append(partial(self.arm.send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
         function_list.append(partial(self.arm.send_gripper_goal, "open"))
         function_list.append(partial(self.arm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
