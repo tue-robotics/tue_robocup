@@ -10,11 +10,44 @@ before_install:
   - wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
   - wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
   # Determine packages modified in this commit
-  - source packages.sh
+  - source packages.sh # add all folders which need to be excluded as an argument
+
+env:
+  - PACKAGE=challenge_cleanup
+  - PACKAGE=challenge_demo
+  - PACKAGE=challenge_dishwasher
+  - PACKAGE=challenge_eegpsr
+  - PACKAGE=challenge_final
+  - PACKAGE=challenge_find_my_mates
+  - PACKAGE=challenge_following_and_guiding
+  - PACKAGE=challenge_gpsr
+  - PACKAGE=challenge_hand_me_that
+  - PACKAGE=challenge_help_me_carry
+  - PACKAGE=challenge_manipulation
+  - PACKAGE=challenge_navigation
+  - PACKAGE=challenge_person_recognition
+  - PACKAGE=challenge_presentation
+  - PACKAGE=challenge_receptionist
+  - PACKAGE=challenge_restaurant
+  - PACKAGE=challenge_rips
+  - PACKAGE=challenge_serving_drinks
+  - PACKAGE=challenge_set_a_table
+  - PACKAGE=challenge_set_the_table
+  - PACKAGE=challenge_speech_recognition
+  - PACKAGE=challenge_spr
+  - PACKAGE=challenge_storing_groceries
+  - PACKAGE=challenge_take_out_the_garbage
+  - PACKAGE=challenge_test
+  - PACKAGE=challenge_where_is_this
+  - PACKAGE=robocup_knowledge
+  - PACKAGE=robot_skills
+  - PACKAGE=robot_smach_states
+  - PACKAGE=test_tools
+  - PACKAGE=tue_robocup
+
+install:
+  - bash install-package.sh --package=$PACKAGE --branch=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} --commit=$TRAVIS_COMMIT --pullrequest=$TRAVIS_PULL_REQUEST
 
 script:
-  - 'for PACKAGE in $PACKAGES;
-     do
-     bash install-package.sh --package=$PACKAGE --branch=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} --commit=$TRAVIS_COMMIT --pullrequest=$TRAVIS_PULL_REQUEST &&
-     bash build-package.sh --package=$PACKAGE;
-     done'
+  - bash build-package.sh --package=$PACKAGE
+
