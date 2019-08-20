@@ -34,7 +34,7 @@ class DropTrash(smach.StateMachine):
         self._robot.torso.reset()
 
         # Arm to position in a safe way
-        arm.send_joint_goal('handover_pose')
+        arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
         arm.send_gripper_goal('open')
         arm.wait_for_motion_done()
