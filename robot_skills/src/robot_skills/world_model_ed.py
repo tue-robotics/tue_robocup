@@ -206,8 +206,6 @@ class ED(RobotPart):
             rospy.logerr("Could not reset ED: {0}".format(e))
             return False
 
-        rospy.sleep(.2)
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=[], remove_flags=[], action=None):
