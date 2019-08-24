@@ -126,7 +126,7 @@ class RobotPart(object):
         :param name: string with the name topic to subscribe
         :param args: other args passed to rospy.Subscriber
         :param kwargs: other keyword args passed to rospy.Subscriber
-        :return: the service client
+        :return: the Subscriber
         """
         sub = rospy.Subscriber(name, *args, **kwargs)
         self._add_connection(name, sub)
