@@ -136,7 +136,7 @@ class Perception(RobotPart):
         WIDTH_TRESHOLD = 88
         try:
             image = self.get_image()
-        except:
+        except Exception:
             rospy.logerr("Cannot get image")
             return False
 

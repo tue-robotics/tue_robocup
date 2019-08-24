@@ -134,7 +134,7 @@ class GlobalPlanner(RobotPart):
     def checkPlan(self, plan):
         try:
             resp = self._check_plan_client(plan)
-        except:
+        except Exception:
             rospy.logerr("Could not check plan, is the global planner running?")
             return False
 

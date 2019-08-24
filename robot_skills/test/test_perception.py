@@ -29,14 +29,14 @@ try:
     camera_center = perception.project_roi(center_unrect, "/" + robot_name + "/top_kinect/rgb_frame")
     if camera_center.vector.x() != 0.0 and camera_center.vector.y() != 0.0:
         failed_actions += ["Center pixel of sensor is not zero in camera frame"]
-except:
+except Exception:
     print("Projecting {} to /{}/top_kinect/rgb_frame didn't work".format(center_unrect, robot_name))
 
 try:
     camera_top_left = perception.project_roi(topleft_unrect, "/" + robot_name + "/top_kinect/rgb_frame")
     if camera_top_left.vector.x() != 0.0 and camera_top_left.vector.y() != 0.0:
         failed_actions += ["topleft pixel of sensor is not zero in camera frame"]
-except:
+except Exception:
     print("Projecting {} to /{}/top_kinect/rgb_frame didn't work".format(topleft_unrect, robot_name))
 
 for failed_item in failed_actions:
