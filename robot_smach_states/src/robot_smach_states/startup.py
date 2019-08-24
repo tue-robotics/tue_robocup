@@ -43,15 +43,15 @@ class StartChallengeRobust(smach.StateMachine):
 
             smach.StateMachine.add("INITIALIZE",
                                    utility.Initialize(robot),
-                                   transitions={"initialized": "INSTRUCT_WAIT_FOR_DOOR" if door else "WAIT_FOR_COMPONENTS",
+                                   transitions={"initialized": "INSTRUCT_WAIT_FOR_DOOR" if door else "WAIT_FOR_LOCAL_PLANNER",
                                                 "abort": "Aborted"})
 
-            # ToDo: HACK
-            # We wait a while before starting the challenge, otherwise some software is not initialised yet.
-            smach.StateMachine.add("WAIT_FOR_COMPONENTS",
-                                   utility.WaitTime(robot, 5),
-                                   transitions={"waited": "INIT_POSE",
-                                                "preempted": "Aborted"})
+            # We wait till the  local planner is ready before starting the challenge,
+            # otherwise the robot will not drive.
+            smach.StateMachine.add("WAIT_FOR_LOCAL_PLANNER",
+                                   WaitForLocalPlanner(robot, 10),
+                                   transitions={"ready": "INIT_POSE",
+                                                "timeout": "Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                    human_interaction.Say(robot, ["Hi there, I will now wait until the door is opened",
