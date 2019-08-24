@@ -3,7 +3,7 @@ import math
 from threading import Event
 
 # ROS
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Quaternion, PolygonStamped
 import rospy
 from sensor_msgs.msg import LaserScan
 import smach
@@ -239,3 +239,44 @@ class WaitForDoorOpen(smach.State):
 
         rospy.loginfo("Timed out with door still closed")
         return "closed"
+
+
+class WaitForLocalPlanner(smach.State):
+    def __init__(self, robot, timeout):
+        smach.State.__init__(self, outcomes=["ready", "timeout"])
+        self._robot = robot
+        self._timeout = timeout
+
+        self._local_planner_ready = Event()
+        self.footprint_sub = None
+
+    def msg_cb(self, msg):
+        # type: (PolygonStamped) -> None
+        try:
+            if len(msg.polygon.points) >= 3:
+                rospy.loginfo("Valid footprint received")
+                self._local_planner_ready.set()
+        except Exception as e:
+            rospy.logerr("Failed to receive footprint, so unsubscribing")
+            rospy.logerr(e)
+            self.footprint_sub.unregister()
+
+    def execute(self, userdate=None):
+        rospy.loginfo("Waiting for local planner footprint")
+        footprint_topic = "/{}/local_planner/local_costmap/robot_footprint/footprint_stamped".\
+            format(self._robot.robot_name)
+
+        self.footprint_sub = rospy.Subscriber(footprint_topic, PolygonStamped, self.msg_cb)
+
+        ready_before_timeout = self._local_planner_ready.wait(self._timeout)
+
+        rospy.loginfo("Unregistering footprint subscriber")
+        self.footprint_sub.unregister()
+        self._local_planner_ready.clear()
+
+        if ready_before_timeout:
+            rospy.loginfo("Local Planner is ready")
+            return "ready"
+
+        rospy.loginfo("Local Planner not ready during timeout")
+        return "timeout"
