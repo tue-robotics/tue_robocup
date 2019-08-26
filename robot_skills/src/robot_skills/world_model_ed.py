@@ -123,8 +123,9 @@ class ED(RobotPart):
         try:
             center_in_map = center_point.projectToFrame("/map", self._tf_listener)
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_in_map.vector))
-        except Exception:
+        except Exception as e:
             rospy.logerr("Failed to sort entities")
+            rospy.logerr(e)
             return None
 
         return entities[0]
@@ -178,8 +179,9 @@ class ED(RobotPart):
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(
                 center_point.projectToFrame("/%s/base_link" % self.robot_name,
                                             self._tf_listener).vector))  # TODO: adjust for robot
-        except Exception:
+        except Exception as e:
             print("Failed to sort entities")
+            rospy.logerr(e)
             return None
 
         return entities[0]
@@ -316,8 +318,9 @@ class ED(RobotPart):
         try:
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_point.vector))
             rospy.logdebug("entities sorted closest to robot = {}".format(entities))
-        except Exception:
+        except Exception as e:
             rospy.logerr("Failed to sort entities")
+            rospy.logerr(e)
             return None
 
         return entities[0]
