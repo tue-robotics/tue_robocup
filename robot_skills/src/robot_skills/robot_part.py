@@ -77,7 +77,8 @@ class RobotPart(object):
                     try:
                         connection.wait_for_service(timeout=0.01)
                         connected = True
-                    except Exception:
+                    except Exception as e:
+                        rospy.logerr(e)
                         connected = False
                 elif isinstance(connection, rospy.Subscriber):
                     connected = connection.get_num_connections() >= 1
