@@ -136,8 +136,9 @@ class Perception(RobotPart):
         WIDTH_TRESHOLD = 88
         try:
             image = self.get_image()
-        except Exception:
+        except Exception as e:
             rospy.logerr("Cannot get image")
+            rospy.logerr(e)
             return False
 
         raw_recognitions = self._get_faces(image).recognitions
