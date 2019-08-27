@@ -257,8 +257,7 @@ class WaitForLocalPlanner(smach.State):
                 rospy.loginfo("Valid footprint received")
                 self._local_planner_ready.set()
         except Exception as e:
-            rospy.logerr("Failed to receive footprint, so unsubscribing")
-            rospy.logerr(e)
+            rospy.logerr("Failed to receive footprint, so unsubscribing: {}".format(e))
             self.footprint_sub.unregister()
 
     def execute(self, userdate=None):
