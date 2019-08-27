@@ -242,7 +242,18 @@ class WaitForDoorOpen(smach.State):
 
 
 class WaitForLocalPlanner(smach.State):
+    """
+    Wait till a valid footprint message from the local planner is received. A footprint is valid if it contains at least
+    3 points. If no valid message is received within the timeout, "timeout" is returned.
+    """
     def __init__(self, robot, timeout):
+        """
+        Constructor
+        :param robot: robot object
+        :type robot: robot
+        :param timeout: timeout
+        :type timeout: (float, int)
+        """
         smach.State.__init__(self, outcomes=["ready", "timeout"])
         self._robot = robot
         self._timeout = timeout
@@ -252,6 +263,11 @@ class WaitForLocalPlanner(smach.State):
 
     def msg_cb(self, msg):
         # type: (PolygonStamped) -> None
+        """
+        Footprint message callback
+        :param msg: footprint message
+        :type msg: PolygonStamped
+        """
         try:
             if len(msg.polygon.points) >= 3:
                 rospy.loginfo("Valid footprint received")
