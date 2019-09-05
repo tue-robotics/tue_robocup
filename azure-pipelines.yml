@@ -18,13 +18,13 @@ steps:
   - task: Bash@3
     inputs:
       filePath: 'install-package.sh'
-      arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-$BUILD_SOURCEBRANCH}} --commit=${BUILD_SOURCEVERSION:-$(git rev-parse HEAD^2)} --pullrequest=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER'
-    displayName: 'build'
+      arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-$BUILD_SOURCEBRANCH}} --commit=${BUILD_SOURCEVERSION:-$(git rev-parse HEAD^2)} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
+    displayName: 'install'
   - task: Bash@3
     inputs:
       filePath: 'build-package.sh'
       arguments: '--package=$PACKAGE'
-    displayName: 'tests'
+    displayName: 'build & tests'
 
 strategy:
   matrix:
