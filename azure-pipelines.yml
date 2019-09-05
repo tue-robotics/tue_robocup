@@ -9,7 +9,7 @@ steps:
     displayName: 'wget CI scripts'
   - task: Bash@3
     inputs:
-      filePath: 'pacakges.sh'
+      filePath: 'packages.sh'
       arguments: 'tue_robocup'
     displayName: 'Determine packages to build'
   - script: bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-$BUILD_SOURCEBRANCH} --commit=$BUILD_SOURCEVERSION --pullrequest=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
