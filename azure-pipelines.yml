@@ -3,12 +3,17 @@ pool:
 
 steps:
   - script: |
-      wget https://raw.githubusercontent.com/tue robotics/tue env/master/ci/install_package.sh
-      wget https://raw.githubusercontent.com/tue robotics/tue env/master/ci/build_package.sh
-      wget https://raw.githubusercontent.com/tue robotics/tue env/master/ci/packages.sh
+      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install_package.sh
+      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build_package.sh
+      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
     displayName: 'wget CI scripts'
-  - script: source   package.sh
-    displayName: 'Determine   PACKAGEs to build'
+  - script: source package.sh
+    displayName: 'Determine packages to build'
+  - script: bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-$BUILD_SOURCEBRANCH} --commit=$BUILD_SOURCEVERSION --pullrequest=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+    displayName: 'build'
+  - script: bash build-package.sh --package=$PACKAGE
+    displayName: 'tests'
+
 
 strategy:
   matrix:
