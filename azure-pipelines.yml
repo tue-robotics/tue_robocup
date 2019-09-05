@@ -1,6 +1,9 @@
 pool:
   vmImage: 'ubuntu latest'
 
+variables:
+  CI: $(TF_BUILD)
+
 steps:
   - script: |
       wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
