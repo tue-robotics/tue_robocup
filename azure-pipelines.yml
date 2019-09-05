@@ -12,9 +12,15 @@ steps:
       filePath: 'packages.sh'
       arguments: 'tue_robocup'
     displayName: 'Determine packages to build'
-  - script: bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-$BUILD_SOURCEBRANCH} --commit=$BUILD_SOURCEVERSION --pullrequest=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+  - task: Bash@3
+    inputs:
+      filePath: 'install-package.sh'
+      arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-$BUILD_SOURCEBRANCH} --commit=$BUILD_SOURCEVERSION --pullrequest=$SYSTEM_PULLREQUEST_PULLREQUESTNUMBER'
     displayName: 'build'
-  - script: bash build-package.sh --package=$PACKAGE
+  - task: Bash@3
+    inputs:
+      filePath: 'build-package.sh'
+      arguments: '--package=$PACKAGE'
     displayName: 'tests'
 
 strategy:
