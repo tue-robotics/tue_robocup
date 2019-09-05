@@ -14,7 +14,7 @@ steps:
     inputs:
       filePath: 'packages.sh'
       arguments: 'tue_robocup'
-    displayName: 'Determine packages to build'
+    displayName: 'Determine packages to be build'
   - task: Bash@3
     inputs:
       filePath: 'install-package.sh'
