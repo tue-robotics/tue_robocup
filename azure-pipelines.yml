@@ -3,8 +3,8 @@ pool:
 
 steps:
   - script: |
-      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install_package.sh
-      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build_package.sh
+      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
+      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
       wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
     displayName: 'wget CI scripts'
   - task: Bash@3
