@@ -1,30 +1,29 @@
 variables:
   CI: true
-  matrix: "{'challenge_cleanup': {'PACKAGE': 'challenge_cleanup'}, 'challenge_demo': {'PACKAGE': 'challenge_demo'}}"
 
 jobs:
   - job: package_selection
+    displayName: 'Package selection'
     pool:
       vmImage: 'ubuntu latest'  
-    displayName: 'Determine packages to be build'
     steps:
       - task: Bash@3
+        displayName: 'Determine packages to be build'
         name: matrix
         inputs:
           targetType: 'inline'
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
             source ./packages.sh tue_robocup
-            echo $PACKAGES_DICT
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
     
   - job: install_build_test
+    displayName: 'Install, build & test'
     pool:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
     strategy:
       matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
-      #matrix: $[ variables.matrix ]
     steps:
     - script: |
         wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
