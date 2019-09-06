@@ -23,8 +23,8 @@ jobs:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
     strategy:
-      #matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
-      matrix: $[ variables.matrix ]
+      matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
+      #matrix: $[ variables.matrix ]
     steps:
     - script: |
         wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
