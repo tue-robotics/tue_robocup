@@ -1,5 +1,6 @@
 variables:
   CI: true
+  matrix: "{'challenge_cleanup': {'PACKAGE': 'challenge_cleanup'}, 'challenge_demo': {'PACKAGE': 'challenge_demo'}}"
 
 jobs:
   - job: package_selection
@@ -22,7 +23,8 @@ jobs:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
     strategy:
-      matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
+      #matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
+      matrix: $[ variables.matrix ]
     steps:
     - script: |
         wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
