@@ -3,6 +3,7 @@ pool:
 
 variables:
   CI: true
+  matrix: {'challenge_cleanup': {'PACKAGE': 'challenge_cleanup'}, 'challenge_demo': {'PACKAGE': 'challenge_demo'}}
 
 steps:
   - script: |
@@ -27,64 +28,4 @@ steps:
     displayName: 'build & tests'
 
 strategy:
-  matrix:
-    challenge_cleanup:
-      PACKAGE: challenge_cleanup
-    challenge_demo:
-      PACKAGE: challenge_demo
-    challenge_dishwasher:
-      PACKAGE: challenge_dishwasher
-    challenge_eegpsr:
-      PACKAGE: challenge_eegpsr
-    challenge_final:
-      PACKAGE: challenge_final
-    challenge_find_my_mates:
-      PACKAGE: challenge_find_my_mates
-    challenge_following_and_guiding:
-      PACKAGE: challenge_following_and_guiding
-    challenge_gpsr:
-      PACKAGE: challenge_gpsr
-    challenge_hand_me_that:
-      PACKAGE: challenge_hand_me_that
-    challenge_help_me_carry:
-      PACKAGE: challenge_help_me_carry
-    challenge_manipulation:
-      PACKAGE: challenge_manipulation
-    challenge_navigation:
-      PACKAGE: challenge_navigation
-    challenge_person_recognition:
-      PACKAGE: challenge_person_recognition
-    challenge_presentation:
-      PACKAGE: challenge_presentation
-    challenge_receptionist:
-      PACKAGE: challenge_receptionist
-    challenge_restaurant:
-      PACKAGE: challenge_restaurant
-    challenge_rips:
-      PACKAGE: challenge_rips
-    challenge_serving_drinks:
-      PACKAGE: challenge_serving_drinks
-    challenge_set_a_table:
-      PACKAGE: challenge_set_a_table
-    challenge_set_the_table:
-      PACKAGE: challenge_set_the_table
-    challenge_speech_recognition:
-      PACKAGE: challenge_speech_recognition
-    challenge_spr:
-      PACKAGE: challenge_spr
-    challenge_storing_groceries:
-      PACKAGE: challenge_storing_groceries
-    challenge_take_out_the_garbage:
-      PACKAGE: challenge_take_out_the_garbage
-    challenge_test:
-      PACKAGE: challenge_test
-    challenge_where_is_this:
-      PACKAGE: challenge_where_is_this
-    robocup_knowledge:
-      PACKAGE: robocup_knowledge
-    robot_skills:
-      PACKAGE: robot_skills
-    robot_smach_states:
-      PACKAGE: robot_smach_states
-    test_tools:
-      PACKAGE: test_tools
+  matrix: $[ variables.matrix ]
