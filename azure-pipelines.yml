@@ -2,20 +2,9 @@ variables:
   CI: true
 
 jobs:
-  - job: preperation
-    pool:
-      vmImage: 'ubuntu latest'
-    displayName: 'wget CI scripts'
-    steps:
-    - script: |
-        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
-        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
-        wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
-
   - job: package_selection
     pool:
       vmImage: 'ubuntu latest'  
-    dependsOn: preperation
     displayName: 'Determine packages to be build'
     steps:
       - task: Bash@3
@@ -23,6 +12,7 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
             source ./packages.sh tue_robocup
             echo $PACKAGES_DICT
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
@@ -34,6 +24,10 @@ jobs:
     strategy:
       matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
     steps:
+    - script: |
+        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
+        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+      displayName: 'wget CI scripts'
     - task: Bash@3
       inputs:
         filePath: 'install-package.sh'
