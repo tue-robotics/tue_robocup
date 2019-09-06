@@ -3,7 +3,7 @@ pool:
 
 variables:
   CI: true
-  matrix: {'challenge_cleanup': {'PACKAGE': 'challenge_cleanup'}, 'challenge_demo': {'PACKAGE': 'challenge_demo'}}
+  matrix: "{'challenge_cleanup': {'PACKAGE': 'challenge_cleanup'}, 'challenge_demo': {'PACKAGE': 'challenge_demo'}}"
 
 steps:
   - script: |
