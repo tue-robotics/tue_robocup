@@ -13,8 +13,8 @@ steps:
     displayName: 'wget CI scripts'
   - task: Bash@3
     inputs:
-      filePath: 'packages.sh'
-      arguments: 'tue_robocup'
+      targetType: 'inline'
+      script: 'source ./packages.sh tue_robocup'
     displayName: 'Determine packages to be build'
   - task: Bash@3
     inputs:
