@@ -3,31 +3,41 @@ pool:
 
 variables:
   CI: true
-  matrix: "{'challenge_cleanup': {'PACKAGE': 'challenge_cleanup'}, 'challenge_demo': {'PACKAGE': 'challenge_demo'}}"
 
-steps:
-  - script: |
-      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
-      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
-      wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
+jobs:
+  - job: preperation
     displayName: 'wget CI scripts'
-  - task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: |
-        source ./packages.sh tue_robocup
-        echo $PACKAGES_DICT
-    displayName: 'Determine packages to be build'
-  - task: Bash@3
-    inputs:
-      filePath: 'install-package.sh'
-      arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-$BUILD_SOURCEBRANCH}} --commit=${BUILD_SOURCEVERSION:-$(git rev-parse HEAD^2)} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
-    displayName: 'install'
-  - task: Bash@3
-    inputs:
-      filePath: 'build-package.sh'
-      arguments: '--package=$PACKAGE'
-    displayName: 'build & tests'
+    steps:
+    - script: |
+        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
+        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+        wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
 
-strategy:
-  matrix: $[ variables.matrix ]
+  - job: package_selection
+    dependsOn: preperation
+    displayName: 'Determine packages to be build'
+    steps:
+      - task: Bash@3
+        name: matrix
+        inputs:
+          targetType: 'inline'
+          script: |
+            source ./packages.sh tue_robocup
+            echo $PACKAGES_DICT
+            echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
+    
+  - job: install_build_test
+    dependsOn: package_selection
+    strategy:
+      matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
+    steps:
+    - task: Bash@3
+      inputs:
+        filePath: 'install-package.sh'
+        arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-$BUILD_SOURCEBRANCH}} --commit=${BUILD_SOURCEVERSION:-$(git rev-parse HEAD^2)} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
+      displayName: 'install'
+    - task: Bash@3
+      inputs:
+        filePath: 'build-package.sh'
+        arguments: '--package=$PACKAGE'
+      displayName: 'build & tests'
