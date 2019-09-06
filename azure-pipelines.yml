@@ -15,7 +15,6 @@ jobs:
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
             source ./packages.sh tue_robocup
             echo $PACKAGES_DICT
-            set +x
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
     
   - job: install_build_test
