@@ -18,7 +18,7 @@ jobs:
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
     
   - job: install_build_test
-    displayName: 'Install, build & test'
+    displayName: 'Install, build & test:'
     pool:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
