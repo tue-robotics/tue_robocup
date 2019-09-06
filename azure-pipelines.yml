@@ -9,12 +9,14 @@ steps:
   - script: |
       wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
       wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
-      wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
+      wget https://raw.githubusercontent.com/tue-robotics/tue-env/feature/azure_scripts/ci/packages.sh
     displayName: 'wget CI scripts'
   - task: Bash@3
     inputs:
       targetType: 'inline'
-      script: 'source ./packages.sh tue_robocup'
+      script: |
+        source ./packages.sh tue_robocup
+        echo $PACKAGES_DICT
     displayName: 'Determine packages to be build'
   - task: Bash@3
     inputs:
