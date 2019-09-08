@@ -25,17 +25,20 @@ jobs:
     strategy:
       matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
     steps:
-    - script: |
-        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
-        wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
-      displayName: 'wget CI scripts'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+      displayName: 'Get CI scripts'
     - task: Bash@3
       inputs:
         filePath: 'install-package.sh'
-        arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-$BUILD_SOURCEBRANCH}} --commit=${BUILD_SOURCEVERSION:-$(git rev-parse HEAD^2)} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
-      displayName: 'install'
+        arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-$BUILD_SOURCEBRANCHNAME}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
+      displayName: 'Install'
     - task: Bash@3
       inputs:
         filePath: 'build-package.sh'
         arguments: '--package=$PACKAGE'
-      displayName: 'build & tests'
+      displayName: 'Build & test'
