@@ -314,6 +314,25 @@ class Robot(object):
             if name not in self._ignored_parts:
                 part.process_hardware_status(diagnostic_dict)
 
+    def move_to_inspect_pose(self, inspection_position):
+        """
+        This poses the robot for an inspect.
+
+        :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        :return result: boolean, false if something went wrong.
+        """
+        rospy.logdebug("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
+        return True
+
+    def move_to_hmi_pose(self):
+        """
+        This poses the robot for conversations.
+
+        :return None
+        """
+        rospy.logdebug("move_to_hmi_pose() not implemented for {} object".format(self.robot_name))
+        pass
+
     def __enter__(self):
         pass
 
