@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/tue-robotics/tue_robocup.svg?branch=master)](https://travis-ci.com/tue-robotics/tue_robocup)
+[![Build Status](https://dev.azure.com/tue-robotics/tue-robotics/_apis/build/status/tue-robotics.tue_robocup?branchName=master)](https://dev.azure.com/tue-robotics/tue-robotics/_build/latest?definitionId=1&branchName=master)
 
 # tue_robocup
 RoboCup challenge implementations
