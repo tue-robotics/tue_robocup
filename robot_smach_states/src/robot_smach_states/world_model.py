@@ -272,13 +272,9 @@ class Inspect(smach.StateMachine):
                                                 'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
-                                   SegmentObjects(robot,
-                                                  objectIDsDes.writeable,
-                                                  entityDes,
-                                                  searchArea,
+                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
                                                   unknown_threshold=unknown_threshold,
-                                                  filter_threshold=filter_threshold
-                                                  ),
+                                                  filter_threshold=filter_threshold),
                                    transitions={'done': 'done'})
 
 
@@ -295,5 +291,6 @@ if __name__ == "__main__":
 
     robot = get_robot_from_argv(index=1)
 
-    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="display_cabinet"), navigation_area="in_front_of")
+    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="display_cabinet"),
+                 navigation_area="in_front_of")
     print(sm.execute())
