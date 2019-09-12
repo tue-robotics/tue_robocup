@@ -14,7 +14,7 @@ jobs:
           targetType: 'inline'
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
-            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} tue_robocup
+            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH tue_robocup
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
     
   - job: install_build_test
