@@ -16,6 +16,7 @@ jobs:
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/fix/ci/ci/packages.sh
             source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH tue_robocup
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
+            printenv
     
   - job: install_build_test
     displayName: 'Install, build & test:'
