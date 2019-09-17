@@ -21,7 +21,7 @@ from hmi import HMIResult
 # Ask: Interaction, say + hear
 
 
-class SayFormatted(smach.State):
+class Say(smach.State):
     """
     Say a sentence or pick a random one from a list, which then is formatted with designators which are resolved on
     runtime. The main sentence can be a str, [str] or a Designator to str or [str]
@@ -31,19 +31,30 @@ class SayFormatted(smach.State):
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
     >>>
-    >>> sayf = SayFormatted(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
+    >>> say = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [sayf.execute() for i in range(50)]
+    >>> outcomes = [say.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
-    >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"])
-    >>> sayf2 = SayFormatted(robot, des, a=ds.VariableDesignator("hero"))
+    >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"], resolve_type=[str])
+    >>> say2 = Say(robot, des, a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes2 = [sayf2.execute() for i in range(50)]
+    >>> outcomes2 = [say2.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes2)
     >>>
-    >>> sayf3 = SayFormatted(robot, des, b=ds.VariableDesignator("hero"))
-    >>> sayf3.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> des2 = ds.VariableDesignator(["Hey", "He", "Hoi"])
+    >>> say3 = Say(robot, des2, a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes3 = [say3.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes3)
+    >>>
+    >>> say4 = Say(robot, des2)
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes4 = [say4.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes4)
+    >>>
+    >>> say5 = Say(robot, des, b=ds.VariableDesignator("hero"))
+    >>> say5.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     RuntimeError: ...
@@ -135,45 +146,6 @@ class SayFormatted(smach.State):
         if missing_ph:
             raise RuntimeError("Not all named place holders are provided, missing: {}".
                                format(", ".join(map(str, missing_ph))))
-
-
-class Say(SayFormatted):
-    """
-    Say a sentence or pick a random one from a list.
-
-    >>> from mock import MagicMock
-    >>> robot = MagicMock()
-    >>> robot.speech = MagicMock()
-    >>> robot.speech.speak = MagicMock()
-    >>>
-    >>> say = Say(robot, ["a", "b", "c"])
-    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [say.execute() for i in range(50)]
-    >>> assert all(outcome == "spoken" for outcome in outcomes)
-    >>>
-    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
-    >>> say2.execute()
-    'spoken'
-    >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
-    >>>
-    >>> d1 = ds.VariableDesignator(resolve_type=str).writeable
-    >>> d1.write('banana')
-    >>> say3 = Say(robot, d1)
-    >>> say3.execute()
-    'spoken'
-    >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
-    """
-    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False):
-        super(Say, self).__init__(robot=robot,
-                                  sentence=sentence,
-                                  language=language,
-                                  personality=personality,
-                                  voice=voice,
-                                  mood=mood,
-                                  block=block,
-                                  look_at_standing_person=look_at_standing_person
-                                  )
 
 
 class HearOptions(smach.State):
