@@ -51,6 +51,30 @@ class SayFormatted(smach.State):
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
                  look_at_standing_person=False, **place_holders):
+        """
+        Constructor
+
+        :param robot: robot object
+        :type robot: Robot
+        :param sentence: Sentence to be spoken, can contain place holders to  be filled in at runtime
+        :type sentence: str, [str], designator to str or [str]
+        :param language: Language of speech module
+        :type language: str
+        :param personality: Personality of speech module
+        :type personality: str
+        :param voice: Voice of speech module
+        :type voice: str
+        :param mood: Mood of speech module
+        :type mood: str
+        :param block: Wait for talking to be completed before returning, if true
+        :type block: bool
+        :param look_at_standing_person: Look at standing person if true, otherwise keep current head pose
+        :type look_at_standing_person: bool
+        :param place_holders: place holders to be filled in at runtime
+        :type place_holders: designator to str
+        :return: spoken
+        :rtype: str
+        """
         smach.State.__init__(self, outcomes=["spoken"])
         ds.check_type(sentence, [str], str)
         assert(isinstance(language, str) or isinstance(language, type(None)))
