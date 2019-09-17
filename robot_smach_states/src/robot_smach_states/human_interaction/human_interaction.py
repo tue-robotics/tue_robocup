@@ -15,6 +15,10 @@ from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 
+
+__all__ = ["AskContinue", "AskPersonName", "HearOptions", "HearOptionsExtra", "LearnPerson", "Say",
+           "WaitForPersonDetection", "WaitForPersonEntity", "WaitForPersonInFront"]
+
 # Say: Immediate say
 # SayFormatted: Say with named placeholders for designators
 # Hear: Immediate hear
