@@ -66,6 +66,7 @@ class TestLookAtArea(unittest.TestCase):
 
         self.robot.head.look_at_point.assert_called_with(vs, timeout=0)
 
+
 class TestLookOnTopOfEntity(unittest.TestCase):
     def setUp(self):
         self.robot = Mockbot()
@@ -93,6 +94,7 @@ class TestLookOnTopOfEntity(unittest.TestCase):
                            "/12345")  # The ID
 
         self.robot.head.look_at_point.assert_called_with(vs)
+
 
 if __name__ == '__main__':
     unittest.main()
