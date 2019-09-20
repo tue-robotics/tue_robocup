@@ -437,11 +437,11 @@ class WaitForPersonEntity(smach.State):
         counter = 0
 
         while counter < self.attempts:
-            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
+            rospy.loginfo("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             detected_humans = detect_human_in_front(self.robot)
             if detected_humans:
-                print("[WaitForPersonDetection] Found a human!")
+                rospy.loginfo("[WaitForPersonDetection] Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -468,14 +468,14 @@ class WaitForPersonDetection(smach.State):
         counter = 0
 
         while counter < self.attempts:
-            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
+            rospy.loginfo("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             rospy.logerr(
                 "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
             rospy.logerr("I will return an empty detection list!")
             detections = []
             if detections:
-                print("[WaitForPersonDetection] Found a human!")
+                rospy.loginfo("[WaitForPersonDetection] Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -505,7 +505,7 @@ def detect_human_in_front(robot):
         x = pose_base_link.pose.frame.p.x()
         y = pose_base_link.pose.frame.p.y()
 
-        print("Detection (x,y) in base link: (%f,%f)" % (x, y))
+        rospy.loginfo("Detection (x,y) in base link: (%f,%f)" % (x, y))
 
         if 0.0 < x < 1.5 and -1.0 < y < 1.0:
             return True
@@ -542,17 +542,16 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
             if count == math.ceil(n_samples / 2):
                 robot.speech.speak("Almost done, keep looking.", block=False)
         else:
-            print ("[LearnPersonProcedure] " + "No person found.")
+            rospy.loginfo ("[LearnPersonProcedure] " + "No person found.")
             elapsed_time = time.time() - start_time
             if elapsed_time > timeout:
-                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                rospy.loginfo ("[LearnPersonProcedure] " + "Learn procedure timed out!")
                 return count
 
-        print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
+        rospy.loginfo ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
 
-    print ("[LearnPersonProcedure] " + "Learn procedure completed!")
+    rospy.loginfo ("[LearnPersonProcedure] " + "Learn procedure completed!")
 
-    # print robot.ed.classify_person(human_id)
     return count
 
 
