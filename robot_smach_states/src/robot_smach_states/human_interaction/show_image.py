@@ -6,7 +6,8 @@ import smach
 
 class ShowImageState(smach.State):
     """
-    This state allows images to be shown on the hero display the package and the path to the image in the package
+    This state allows images to be shown on the hero display given the package in which the image is located and the
+    path of the image within that package
     """
 
     def __init__(self, robot, package_name, path_to_image_in_package, seconds=5):
