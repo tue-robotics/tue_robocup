@@ -37,8 +37,7 @@ if __name__ == "__main__":
 
     with sm:
         sm.add('FOO',
-               DummyState(robot="arpit",
-                          result_designator="yay"),
+               DummyState("succeeded"),
                transitions={
                    'succeeded': 'outcome1',
                    'failed': 'outcome2',
