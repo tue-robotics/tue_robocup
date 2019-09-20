@@ -8,7 +8,7 @@ __all__ = ["DummyState"]
 
 class DummyState(smach.State):
     """
-    DummyState to which returns the input outcome
+    DummyState which returns the input as the outcome
     """
 
     def __init__(self, result_designator, *args, **kwargs):
