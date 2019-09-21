@@ -69,7 +69,7 @@ class IterateDesignator(smach.State):
 
         try:
             next_elem = next(self._current_elements)
-            rospy.loginfo("Iterate to next element {}".format(next_elem))
+            rospy.logdebug("Iterate to next element {}".format(next_elem))
             self.element_des.write(next_elem)
             return 'next'
         except StopIteration:
