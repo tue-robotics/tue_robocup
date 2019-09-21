@@ -2,6 +2,7 @@
 __author__ = 'loy'
 from deprecation_warnings import get_caller_info
 import unittest
+import rospy
 
 
 class Designator(object):
@@ -246,7 +247,7 @@ class VariableWriter(object):
                 self.variable_designator.resolve_type))
 
     def _set_current(self, value):
-        print("writable(VariableDesignator).current = ...  is deprecated, " \
+        rospy.loginfo("writable(VariableDesignator).current = ...  is deprecated, " \
               "use writable(VariableDesignator).write(...) instead")
         self.variable_designator._set_current_protected(value)
 
