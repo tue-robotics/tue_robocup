@@ -14,14 +14,6 @@ from robot_smach_states.util.designators import LockingDesignator
 from robot_smach_states.util.designators import check_type
 
 
-# TODO: poses to move to robot_description:
-# carrying_pose: 0.18, y_home, 0.75, 0, 0, 0, 60
-# handover_pose: 0.6, y_home, 0.966, 0, 0, 0, 30
-# handover_to_human: -0.2, -0.7, 0.2, 2.0, 0, 0.5, 0.3
-# prepare_grasp: -0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42
-# retract: -0.1, 0.0, 0.0, 0.0, 0.0, 0.0
-
-
 class ArmToJointConfig(smach.State):
     def __init__(self, robot, arm_designator, configuration):
         """
