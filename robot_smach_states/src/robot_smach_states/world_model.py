@@ -153,11 +153,9 @@ class SegmentObjects(smach.State):
         :param segmented_entity_ids_designator: designator that is used to store the segmented objects
         :param entity_to_inspect_designator: EdEntityDesignator indicating the (furniture) object to inspect
         :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param unknown_threshold: Entities whose classification score is lower are not marked with a type
-        :type unknown_threshold: float
-        :param filter_threshold: Entities whose classification score is lower are ignored
+        :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
+        :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
-        :type filter_threshold: float
         """
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
