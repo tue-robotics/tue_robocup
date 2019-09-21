@@ -28,7 +28,7 @@ class FieldOfHMIResult(Designator):
         (such as resulting from a HearOptionsExtra-state)
         :param query_result_des: A designator resolving to a QueryResult
         :param semantics_field: str (or string designator) used in query_result.semantics[semantics_field]
-        :param name: Name for this designator for debugging purposes
+        :param name: str naming for this designator for debugging purposes
         """
         super(FieldOfHMIResult, self).__init__(resolve_type=str, name=name)
 
