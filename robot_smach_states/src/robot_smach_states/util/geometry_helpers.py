@@ -7,6 +7,19 @@ import PyKDL as kdl
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
 
+def wrap_angle_pi(angle):
+    """
+    Wraps between -pi and +pi
+    :param angle: Input angle
+    :return: Wrapped angle
+    """
+    angle = angle % (2 * math.pi)
+    if angle > math.pi:
+        return angle - 2 * math.pi
+    elif angle < -math.pi:
+        return angle + 2 * math.pi
+    return angle
+
 
 def isLeftOfLine(p, l):
     """ Checks whether point p is left of line l

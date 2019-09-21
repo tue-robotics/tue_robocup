@@ -6,7 +6,7 @@
 
 import math
 from collections import namedtuple
-
+from robot_smach_states.util.geometry_helpers import wrap_angle_pi
 import rospy
 import tf2_geometry_msgs
 import tf2_ros
@@ -30,20 +30,6 @@ def _get_yaw_from_quaternion_msg(msg):
     orientation_list = [msg.x, msg.y, msg.z, msg.w]
     _, _, yaw = euler_from_quaternion(orientation_list)
     return yaw
-
-
-def _wrap_angle_pi(angle):
-    """
-    Wraps between -pi and +pi
-    :param angle: Input angle
-    :return: Wrapped angle
-    """
-    angle = angle % (2 * math.pi)
-    if angle > math.pi:
-        return angle - 2 * math.pi
-    elif angle < -math.pi:
-        return angle + 2 * math.pi
-    return angle
 
 
 ControlParameters = namedtuple('ControlParameters', [
@@ -101,7 +87,7 @@ class ControlToPose(State):
         goal_pose.header.stamp = rospy.Time.now()
         pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
-        return pose.pose.position.x, pose.pose.position.y, _wrap_angle_pi(yaw)
+        return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
     def _goal_reached(self, dx, dy, dyaw):
         return math.hypot(dx, dy) < self.params.goal_position_tolerance and abs(
