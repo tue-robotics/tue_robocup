@@ -1,4 +1,5 @@
 # System
+from functools import partial
 import math
 from threading import Event
 
@@ -258,36 +259,33 @@ class WaitForLocalPlanner(smach.State):
         self._robot = robot
         self._timeout = timeout
 
-        self._local_planner_ready = Event()
-        self.footprint_sub = None
-
-    def msg_cb(self, msg):
-        # type: (PolygonStamped) -> None
+        @staticmethod
+    def msg_cb(ready_event, msg):
+        # type: (Event, PolygonStamped) -> None
         """
         Footprint message callback
+        :param ready_event: Event to set when ready
+        :type ready_event: Event
         :param msg: footprint message
         :type msg: PolygonStamped
         """
-        try:
-            if len(msg.polygon.points) >= 3:
-                rospy.loginfo("Valid footprint received")
-                self._local_planner_ready.set()
-        except Exception as e:
-            rospy.logerr("Failed to receive footprint, so unsubscribing: {}".format(e))
-            self.footprint_sub.unregister()
+        if len(msg.polygon.points) >= 3:
+            rospy.loginfo("Valid footprint received")
+            ready_event.set()
 
     def execute(self, userdate=None):
         rospy.loginfo("Waiting for local planner footprint")
         footprint_topic = "/{}/local_planner/local_costmap/robot_footprint/footprint_stamped".\
             format(self._robot.robot_name)
 
-        self.footprint_sub = rospy.Subscriber(footprint_topic, PolygonStamped, self.msg_cb)
+        ready_event = Event()
+
+        footprint_sub = rospy.Subscriber(footprint_topic, PolygonStamped, partial(self.msg_cb, ready_event))
 
         ready_before_timeout = self._local_planner_ready.wait(self._timeout)
 
         rospy.loginfo("Unregistering footprint subscriber")
-        self.footprint_sub.unregister()
-        self._local_planner_ready.clear()
+        footprint_sub.unregister()
 
         if ready_before_timeout:
             rospy.loginfo("Local Planner is ready")
