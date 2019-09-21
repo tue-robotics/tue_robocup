@@ -11,13 +11,13 @@ class FieldOfHMIResult(Designator):
     Extract a field of a QueryResult
 
     >>> query_result = HMIResult(sentence='ignored', semantics={u'widget': {u'gadget': {u'bla': u'foo', u'bar': u'buzz'}}})
-    >>> query_des = Designator(query_result)
+    >>> query_des = Designator(query_result, name=d1)
     >>> field_des = FieldOfHMIResult(query_des, semantics_path=['widget', 'gadget', 'bar'])
     >>> field_des.resolve()
     'buzz'
 
     >>> query_result2 = HMIResult(sentence='ignored', semantics=u'dinges')
-    >>> query_des2 = Designator(query_result2)
+    >>> query_des2 = Designator(query_result2, name=d2)
     >>> field_des2 = FieldOfHMIResult(query_des2, semantics_path=[])
     >>> field_des2.resolve()
     'dinges'
