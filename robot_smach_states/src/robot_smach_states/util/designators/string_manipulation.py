@@ -64,7 +64,6 @@ class FieldOfHMIResult(Designator):
                 level = copy.deepcopy(semantics)  # Make a copy
                 if path is not None:
                     for step in path:
-                        # print('Getting {} from {}'.format(step, level))
                         level = level[step]
                 return str(level)
             except Exception as e:
