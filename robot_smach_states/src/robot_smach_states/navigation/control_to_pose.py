@@ -64,6 +64,9 @@ class ControlToPose(State):
         """
         State.__init__(self, outcomes=['succeeded', 'failed'])
 
+        for x in range(len(control_parameters)):
+            assert isinstance(ControlParameters[x], (float, int))
+
         self.robot = robot
         self.goal_pose = goal_pose
         self.params = control_parameters
