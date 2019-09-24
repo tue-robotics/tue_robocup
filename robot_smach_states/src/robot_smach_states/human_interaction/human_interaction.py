@@ -16,7 +16,6 @@ import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 
 # Say: Immediate say
-# SayFormatted: Say with named placeholders for designators
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
