@@ -343,19 +343,6 @@ class Navigate(smach.StateMachine):
 
 # ----------------------------------------------------------------------------------------------------
 
-################ TESTS ##################
-
-def navigate_with_constraints(robot=None, constraint="x^2+y^2<1", frame="/map"):
-    p = PositionConstraint()
-    p.constraint = constraint
-    p.frame = frame
-
-    o = OrientationConstraint()
-    o.frame = frame
-
-    nwc = NavigateWithConstraints(robot, p, o)
-    nwc.execute()
-
 class Turn(smach.State):  # ToDo: remove: this is just a force drive
     def __init__(self, robot, radians, vth=1):
         smach.State.__init__(self, outcomes=["turned"])
@@ -391,3 +378,17 @@ class ForceDrive(smach.State):
         """ Executes the state """
         self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
         return 'done'
+
+
+if __name__ == "__main__":
+    # TESTS
+    def navigate_with_constraints(robot=None, constraint="x^2+y^2<1", frame="/map"):
+        p = PositionConstraint()
+        p.constraint = constraint
+        p.frame = frame
+
+        o = OrientationConstraint()
+        o.frame = frame
+
+        nwc = NavigateWithConstraints(robot, p, o)
+        nwc.execute()
