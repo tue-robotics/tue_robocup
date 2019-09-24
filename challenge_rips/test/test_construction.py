@@ -6,7 +6,10 @@ from rips import setup_statemachine
 
 
 class TestChallengeConstruction(unittest.TestCase):
-    def test_something(self):
+    def test_construction(self):
+        """
+        If no exception is raised, this test will succeed
+        """
         robot = get_robot("mockbot")
         setup_statemachine(robot)
 
