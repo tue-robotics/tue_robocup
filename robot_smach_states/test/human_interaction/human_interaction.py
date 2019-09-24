@@ -12,9 +12,8 @@ from robot_smach_states.human_interaction.human_interaction import Say
 
 class TestSay(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.robot = Mockbot()
+    def setUp(self):
+        self.robot = Mockbot()
 
     def test_say_formatted(self):
         # Simple test
