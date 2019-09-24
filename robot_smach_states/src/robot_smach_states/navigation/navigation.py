@@ -296,53 +296,6 @@ class NavigateTo(smach.StateMachine):
 
         # return False
 
-# ----------------------------------------------------------------------------------------------------
-
-# ToDo: move up
-def generateWaypointConstraint(robot, entityId):
-    #robot.ed.do_useful_stuff
-
-    rospy.loginfo("Defaulting navigation to 1, 3, 0")
-
-    position_constraint = PositionConstraint
-
-    return position_constraint
-
-class constraintGenerator(smach.State):
-    def __init__(self):
-        smach.State.__init__(outcomes=['succeeded','failed'],
-                            input_keys=['position_constraint', 'orientation_constraint'],
-                            output_keys=['position_constraint', 'orientation_constraint'])
-
-    def execute(self, userdata=None):
-        return 'failed'
-
-class Navigate(smach.StateMachine):
-    """Look at an object. Depending on its geometry, several viewpoints are taken and iterated over"""
-
-    def __init__(self, robot, baseConstraintGenerator=None, finishedChecker=None):
-        """@param robot the robot with which to perform this action
-        @param entityId the entity or item to observe.
-        @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation.
-            entityInfo is a ed_msgs/EntityInfo message.
-        @param finishedChecker a function(robot) that checks whether the item if observed to your satisfaction. """
-        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
-
-# ----------------------------------------------------------------------------------------------------
-
-class Turn(smach.State):  # ToDo: remove: this is just a force drive
-    def __init__(self, robot, radians, vth=1):
-        smach.State.__init__(self, outcomes=["turned"])
-        self.robot = robot
-        self.radians = radians
-        self.vth = vth
-
-    def execute(self, userdata=None):
-        print "Turning %f radians with force drive at %f rad/s" % (self.radians, self.vth)
-        self.robot.base.force_drive(0, 0, self.vth, self.radians / self.vth)
-
-        return "turned"
-
 
 class ForceDrive(smach.State):
     """ Force drives... """
@@ -365,17 +318,3 @@ class ForceDrive(smach.State):
         """ Executes the state """
         self._robot.base.force_drive(self._vx, self._vy, self._vth, self._duration)
         return 'done'
-
-
-if __name__ == "__main__":
-    # TESTS
-    def navigate_with_constraints(robot=None, constraint="x^2+y^2<1", frame="/map"):
-        p = PositionConstraint()
-        p.constraint = constraint
-        p.frame = frame
-
-        o = OrientationConstraint()
-        o.frame = frame
-
-        nwc = NavigateWithConstraints(robot, p, o)
-        nwc.execute()
