@@ -321,11 +321,6 @@ class Mockbot(robot.Robot):
         self.close = mock.MagicMock()
         self.get_base_goal_poses = mock.MagicMock()
 
-        self.configure()
-
-    def configure(self):
-        self.configured = True
-
     def __enter__(self):
         pass
 
