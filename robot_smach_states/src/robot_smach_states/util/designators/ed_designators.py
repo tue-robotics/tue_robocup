@@ -266,7 +266,7 @@ class ReasonedEntityDesignator(Designator):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
-        print "first_answer is:", str(first_answer)
+        rospy.loginfo("first_answer is:", str(first_answer))
 
         entities = self.ed.get_entities(id=str(first_answer), parse=True)
         if entities:
