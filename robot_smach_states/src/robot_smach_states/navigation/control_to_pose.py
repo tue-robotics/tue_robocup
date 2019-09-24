@@ -32,7 +32,7 @@ def _get_yaw_from_quaternion_msg(msg):
     return yaw
 
 
-ControlParameters = namedtuple('ControlParameters', [
+class ControlParameters(namedtuple('ControlParameters', [
     'position_gain',
     'rotation_gain',
     'abs_vx',
@@ -40,12 +40,30 @@ ControlParameters = namedtuple('ControlParameters', [
     'abs_vyaw',
     'goal_position_tolerance',
     'goal_rotation_tolerance'
-])
+])):
+    """
+    position_gain: (float) Tunable parameter to increase or decrease the change in position per time
+    rotation_gain: (float) Tunable parameter to increase or decrease the change in yaw per time
+    abs_vx: (float) Absolute velocity in x
+    abs_vy: (flaot) Absolute velocity in y
+    abs_vyaw: (float) Absolute velocity in yaw
+    goal_position_tolerance: (float) Tolerance in position
+    goal_rotation_tolerance: (float) Tolerance in yaw
+    """
 
 
 class ControlToPose(State):
     def __init__(self, robot, goal_pose, control_parameters):
+        """
+        State that allows the tuning of robot navigation to a specific goal through custom speeds, gains and tolerances
+
+        :param robot: (Robot) api object
+        :param goal_pose: (PoseStamped) Position the robot needs to go to
+        :param control_parameters: (namedtuple, ControlParameters) Parameters that specify how the robot should reach
+        the goal_pose
+        """
         State.__init__(self, outcomes=['succeeded', 'failed'])
+
         self.robot = robot
         self.goal_pose = goal_pose
         self.params = control_parameters
@@ -84,11 +102,26 @@ class ControlToPose(State):
         rospy.loginfo("Goal reached")
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
+        """
+        Transfers the goal pose to robot frame
+
+        :param goal_pose: (PoseStamped) Position the robot needs to go to
+        :return: (float) x position of goal in robot frame, (float) y position of goal in robot frame,
+        (float) yaw of goal in robot frame
+        """
         goal_pose.header.stamp = rospy.Time.now()
         pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
     def _goal_reached(self, dx, dy, dyaw):
+        """
+        Checks if the goal pose is reached
+
+        :param dx: (float)[m] Margin between goal_pose and robot in x
+        :param dy: (float)[m] Margin between goal_pose and robot in y
+        :param dyaw: (float)[rad] Margin between goal_pose and robot in yaw
+        :return: (bool) Boolean indicating whether the margins are reached
+        """
         return math.hypot(dx, dy) < self.params.goal_position_tolerance and abs(
             dyaw) < self.params.goal_rotation_tolerance
