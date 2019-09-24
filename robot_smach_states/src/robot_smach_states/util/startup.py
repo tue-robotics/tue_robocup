@@ -84,7 +84,7 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
         if not no_execute:
             # Run the statemachine
             outcome = executioner.execute()
-            print "Final outcome: {0}".format(outcome)
+            rospy.loginfo("Final outcome: {0}".format(outcome))
 
         if introserver:
             introserver.stop()
