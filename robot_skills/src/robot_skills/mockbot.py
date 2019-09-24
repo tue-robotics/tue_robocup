@@ -283,9 +283,8 @@ class Mockbot(robot.Robot):
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"
 
-        super(Mockbot, self).__init__(robot_name="mockbot", wait_services=False)
+        super(Mockbot, self).__init__(robot_name="mockbot", wait_services=False, tf_listener=mock.MagicMock())
 
-        self.tf_listener = mock.MagicMock()
         self.add_body_part('hmi', mock.MagicMock())
 
         def mock_query(description, grammar, target, timeout):
@@ -325,6 +324,9 @@ class Mockbot(robot.Robot):
         self.get_base_goal_poses = mock.MagicMock()
 
         self.configure()
+
+    def configure(self):
+        self.configured = True
 
     def __enter__(self):
         pass
