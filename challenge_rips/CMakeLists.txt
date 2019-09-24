@@ -8,9 +8,12 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 include_directories(
-    include
     ${catkin_INCLUDE_DIRS}
 )
+
+catkin_python_setup()
+
+catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
   catkin_add_nosetests(test)

@@ -1,8 +1,8 @@
 import unittest
 
-from robot_skills.get_robot import get_robot
+from robot_skills.mockbot import Mockbot
 
-from rips import setup_statemachine
+from challenge_rips.rips import setup_statemachine
 
 
 class TestChallengeConstruction(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestChallengeConstruction(unittest.TestCase):
         """
         If no exception is raised, this test will succeed
         """
-        robot = get_robot("mockbot")
+        robot = Mockbot()
         setup_statemachine(robot)
 
 
