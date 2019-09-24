@@ -169,14 +169,12 @@ class Speech(MockedRobotPart):
     def __init__(self, *args, **kwargs):
         super(Speech, self).__init__(self)
         self.close = mock.MagicMock()
+        self.speak = mock.MagicMock()
         self.__speak = mock.MagicMock()
         self.speak_info = mock.MagicMock()
         self.get_info = mock.MagicMock()
         self.get_action = mock.MagicMock()
         self.buildList = mock.MagicMock()
-
-    def speak(self, sentence, *args, **kwargs):
-        rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m")
 
 
 class Torso(MockedRobotPart):
