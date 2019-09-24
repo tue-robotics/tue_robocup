@@ -237,9 +237,9 @@ if __name__ == "__main__":
                 position = kdl.Vector(x, y, 0)
                 try:
                     room = get_room(room_entities, position)
-                    print("Position {} is in the {}".format(position, room.id))
+                    rospy.loginfo("Position {} is in the {}".format(position, room.id))
                 except RuntimeError as e:
-                    print(e.message)
+                    rospy.logerr(e.message)
 
     rospy.init_node('give_directions')
 
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     elif robot_name == 'hero':
         from robot_skills.hero import Hero as Robot
     else:
-        print("unknown robot")
+        rospy.logerr("unknown robot")
         sys.exit()
 
     robot = Robot()
