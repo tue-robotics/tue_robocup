@@ -5,9 +5,9 @@ From:
 - http://stackoverflow.com/questions/2536307/decorators-in-the-python-standard-lib-deprecated-specifically
 """
 
-__author__ = 'Loy'
-
 from __future__ import print_function
+
+__author__ = 'Loy'
 
 import warnings
 import functools
