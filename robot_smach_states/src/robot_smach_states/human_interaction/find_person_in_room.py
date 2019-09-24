@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 # System
 import math
 import sys
@@ -31,6 +33,7 @@ from robot_skills.util import kdl_conversions
 #         self._room = room
 #
 #     def execute(self, userdata=None):
+
 
 class FindPerson(smach.State):
     """
@@ -248,7 +251,7 @@ if __name__ == "__main__":
         sm = FindPersonInRoom(_robot, _area, _name)
         sm.execute()
     else:
-        print "Please provide robot name as argument."
+        print("Please provide robot name as argument.")
         exit(1)
 
 
