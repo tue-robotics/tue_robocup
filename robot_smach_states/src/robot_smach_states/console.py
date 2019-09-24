@@ -12,6 +12,8 @@ Examples:
   robot-console amigo sergio
 """
 
+from __future__ import print_function
+
 # System
 from docopt import docopt, DocoptExit
 import importlib
