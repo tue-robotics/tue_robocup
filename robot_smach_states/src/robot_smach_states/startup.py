@@ -259,7 +259,7 @@ class WaitForLocalPlanner(smach.State):
         self._robot = robot
         self._timeout = timeout
 
-        @staticmethod
+    @staticmethod
     def msg_cb(ready_event, msg):
         # type: (Event, PolygonStamped) -> None
         """
@@ -282,7 +282,7 @@ class WaitForLocalPlanner(smach.State):
 
         footprint_sub = rospy.Subscriber(footprint_topic, PolygonStamped, partial(self.msg_cb, ready_event))
 
-        ready_before_timeout = self._local_planner_ready.wait(self._timeout)
+        ready_before_timeout = ready_event.wait(self._timeout)
 
         rospy.loginfo("Unregistering footprint subscriber")
         footprint_sub.unregister()
