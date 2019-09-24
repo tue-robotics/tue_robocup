@@ -274,7 +274,7 @@ class WaitForDesignator(smach.State):
         counter = 0
 
         while counter < self.attempts:
-            print "WaitForDesignator: waiting {0}/{1}".format(counter, self.attempts)
+            rospy.loginfo("WaitForDesignator: waiting {0}/{1}".format(counter, self.attempts))
 
             result = self.designator.resolve()
             if result:
