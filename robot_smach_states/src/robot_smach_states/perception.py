@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import print_function
+
 # System
 import sys
 
@@ -9,7 +11,7 @@ import smach
 # TU/e Robotics
 from robot_skills.util.entity import Entity
 
-from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_stamped_from_point_stamped_msg
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states.state import State
 import robot_smach_states.util.designators as ds
 
@@ -39,10 +41,12 @@ class LookAtEntity(State):
 
 
 class LookAtArea(State):
-    """ Class to look at the center point of a specific area of an entity
+    """
+    Class to look at the center point of a specific area of an entity
     """
     def __init__(self, robot, entity, area, waittime=2.0):
-        """ Constructor
+        """
+        Constructor
         :param robot: robot object
         :param entity: EdEntityDesignator with the area to look at
         :param area: string with the area to look at
@@ -92,9 +96,9 @@ class LookOnTopOfEntity(State):
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
         self._robot = robot
-	self._entity = entity
-	self._keep_following = keep_following
-	self._waittime = waittime
+        self._entity = entity
+        self._keep_following = keep_following
+        self._waittime = waittime
 
     def run(self):
         if self._keep_following:
@@ -116,9 +120,8 @@ class LookOnTopOfEntity(State):
         rospy.sleep(rospy.Duration(self._waittime))
         return "succeeded"
 
+
 # Testing
-
-
 def setup_statemachine(robot):
     entity = ds.EntityByIdDesignator(robot, id='hallway_couch')
 
@@ -137,7 +140,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
     else:
-        print "Please provide robot name as argument."
+        print("Please provide robot name as argument.")
         exit(1)
 
     rospy.init_node('manipulation_exec')
