@@ -5,11 +5,6 @@ from random import choice
 import rospy
 import smach
 
-# TU/e Robotics
-from cb_planner_msgs_srvs.msg import *
-
-
-# ----------------------------------------------------------------------------------------------------
 
 class StartAnalyzer(smach.State):
     def __init__(self, robot):
@@ -20,7 +15,6 @@ class StartAnalyzer(smach.State):
         self.robot.base.analyzer.start_measurement(self.robot.base.get_location().frame)
         return 'done'
 
-# ----------------------------------------------------------------------------------------------------
 
 class StopAnalyzer(smach.State):
     def __init__(self, robot, result):
@@ -32,7 +26,6 @@ class StopAnalyzer(smach.State):
         self.robot.base.analyzer.stop_measurement(self.robot.base.get_location().frame, self.result)
         return 'done'
 
-# ----------------------------------------------------------------------------------------------------
 
 class AbortAnalyzer(smach.State):
     def __init__(self, robot):
@@ -43,7 +36,6 @@ class AbortAnalyzer(smach.State):
         self.robot.base.analyzer.abort_measurement()
         return 'done'
 
-# ----------------------------------------------------------------------------------------------------
 
 class getPlan(smach.State):
     def __init__(self, robot, constraint_function, speak=True):
@@ -85,7 +77,6 @@ class getPlan(smach.State):
 
         return "goal_ok"
 
-# ----------------------------------------------------------------------------------------------------
 
 class executePlan(smach.State):
     def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_head=True):
@@ -97,12 +88,12 @@ class executePlan(smach.State):
         self.reset_head = reset_head
 
     def execute(self, userdata=None):
-        '''
+        """
         Possible outcomes (when overloading)
         - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
         - 'checking': the condition has not been met. Upon arrival at a goal, the statemachine will return to 'GetPlan' to get the next goal_not_defined
         - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded'
-        '''
+        """
 
         self.t_last_free = rospy.Time.now()
 
@@ -144,12 +135,12 @@ class executePlan(smach.State):
             plan = self.robot.base.global_planner.getPlan(pc)
 
         # Compare plan
-        if (plan and len(plan) > 0):
-            dtgcp = self.robot.base.local_planner.getDistanceToGoal()           # Distance To Goal Current Plan
-            if dtgcp == None:
+        if plan and len(plan) > 0:
+            dtgcp = self.robot.base.local_planner.getDistanceToGoal()  # Distance To Goal Current Plan
+            if dtgcp is None:
                 return
 
-            dtgap = self.robot.base.global_planner.computePathLength(plan)      # Distance To Goal Alternative Plan
+            dtgap = self.robot.base.global_planner.computePathLength(plan)  # Distance To Goal Alternative Plan
             rospy.logdebug('Distance original = {0}, distance alternative = {1}'.format(dtgcp, dtgap))
 
             # Path should be at least 20% and 1 m shorter
@@ -164,27 +155,24 @@ class executePlan(smach.State):
                     rospy.logerr("Cannot execute alternative plan due to absence of orientation constraint")
 
 
-# ----------------------------------------------------------------------------------------------------
-
 class planBlocked(smach.State):
-   def __init__(self, robot):
-       smach.State.__init__(self,outcomes=['blocked', 'free'])
-       self.robot = robot
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['blocked', 'free'])
+        self.robot = robot
 
-   def execute(self, userdata=None):
+    def execute(self, userdata=None):
 
-        rospy.loginfo("Plan blocked");
+        rospy.loginfo("Plan blocked")
 
         # Wait for 5 seconds but continue if the path is free
         wait_start = rospy.Time.now()
 
-        while ( (rospy.Time.now() - wait_start) < rospy.Duration(3.0) and not rospy.is_shutdown()):
+        while (rospy.Time.now() - wait_start) < rospy.Duration(3.0) and not rospy.is_shutdown():
             rospy.sleep(0.5)
 
             # Look at the entity
-            #ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
-            #self.robot.head.look_at_point(kdl_vector_stamped_from_point_stamped_msg(ps))
-
+            # ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
+            # self.robot.head.look_at_point(kdl_vector_stamped_from_point_stamped_msg(ps))
 
             if not self.robot.base.local_planner.getStatus() == "blocked":
                 self.robot.head.cancel_goal()
@@ -199,7 +187,7 @@ class planBlocked(smach.State):
         if pc and oc:
             plan = self.robot.base.global_planner.getPlan(pc)
 
-            if (plan and len(plan) > 0):
+            if plan and len(plan) > 0:
                 self.robot.base.local_planner.setPlan(plan, pc, oc)
 
                 # Give local planner time to get started; this shouldn't be neccesary
@@ -209,18 +197,18 @@ class planBlocked(smach.State):
 
         return 'blocked'
 
-# # ----------------------------------------------------------------------------------------------------
 
 class NavigateTo(smach.StateMachine):
     def __init__(self, robot, reset_head=True, speak=True, input_keys=[], output_keys=[]):
-        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','goal_not_defined'], input_keys=input_keys, output_keys=output_keys)
+        smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'],
+                                    input_keys=input_keys, output_keys=output_keys)
         self.robot = robot
         self.speak = speak
 
         with self:
 
             # Create the sub SMACH state machine
-            sm_nav = smach.StateMachine(outcomes=['arrived','unreachable','goal_not_defined','preempted'])
+            sm_nav = smach.StateMachine(outcomes=['arrived', 'unreachable', 'goal_not_defined', 'preempted'])
 
             with sm_nav:
 
@@ -262,7 +250,7 @@ class NavigateTo(smach.StateMachine):
         raise NotImplementedError("generateConstraint must be implemented by subclasses of NavigateTo")
 
     def breakOut(self):
-        '''
+        """
         Default breakout function: makes sure things go to 'succeeded' if robot arrives at goal
         DO NOT OVERLOAD THIS IF NOT NECESSARY
 
@@ -270,8 +258,7 @@ class NavigateTo(smach.StateMachine):
         - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
         - 'checking': the condition has not been met. Upon arrival at a goal, the statemachine will return to 'GetPlan' to get the next goal_not_defined
         - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded'
-
-        '''
+        """
 
         return 'passed'
 
