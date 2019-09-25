@@ -89,9 +89,14 @@ def check_type(designator_or_value, *allowed_types):
     if hasattr(designator_or_value, "resolve_type"):  # If its a designator: ...
         check_resolve_type(designator_or_value, *allowed_types)
     else:
-        if isinstance(designator_or_value, list) and isinstance(allowed_types[0], list):
-            if not type(designator_or_value[0]) in allowed_types[0]:
-                raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+        if isinstance(designator_or_value, list):
+            allowed_list_types = [allowed_type[0] for allowed_type in allowed_types if isinstance(allowed_type, list)]
+
+            if not type(designator_or_value[0]) in allowed_list_types:
+                allowed_list_types_string = ", ".join(map("[{}]".format, allowed_list_types))
+                raise TypeError("{0} is of type [{1}] but should be {2}".format(designator_or_value,
+                                                                                type(designator_or_value[0]),
+                                                                                allowed_list_types_string))
         else:
             if not type(designator_or_value) in allowed_types:
                 raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
