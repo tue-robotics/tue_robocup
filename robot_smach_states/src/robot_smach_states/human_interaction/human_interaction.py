@@ -53,7 +53,7 @@ class Say(smach.State):
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
                  look_at_standing_person=False):
         smach.State.__init__(self, outcomes=["spoken"])
-        ds.check_type(sentence, str, list)
+        ds.check_type(sentence, str, [str])
         assert(isinstance(language, str) or isinstance(language, type(None)))
         assert(isinstance(personality, str) or isinstance(personality, type(None)))
         assert(isinstance(voice, str) or isinstance(voice, type(None)))
