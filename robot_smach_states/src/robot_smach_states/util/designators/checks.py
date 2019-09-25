@@ -71,8 +71,12 @@ def check_type(designator_or_value, *allowed_types):
 
     >>> c3 = Designator(["a"], resolve_type=[str], name='c3')
     >>> check_type(c3, [str])
+    >>> check_type(c3, str, [str])
+    >>> check_type(c3, [str], str)
     >>> c4 = ["a"]
     >>> check_type(c4, [str])
+    >>> check_type(c4, str, [str])
+    >>> check_type(c4, [str], str)
     >>> check_type(c4, [int])  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
