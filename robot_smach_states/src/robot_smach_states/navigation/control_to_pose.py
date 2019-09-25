@@ -45,7 +45,7 @@ class ControlParameters(namedtuple('ControlParameters', [
     position_gain: (float) Tunable parameter to increase or decrease the change in position per time
     rotation_gain: (float) Tunable parameter to increase or decrease the change in yaw per time
     abs_vx: (float) Absolute velocity in x
-    abs_vy: (flaot) Absolute velocity in y
+    abs_vy: (float) Absolute velocity in y
     abs_vyaw: (float) Absolute velocity in yaw
     goal_position_tolerance: (float) Tolerance in position
     goal_rotation_tolerance: (float) Tolerance in yaw
@@ -64,8 +64,7 @@ class ControlToPose(State):
         """
         State.__init__(self, outcomes=['succeeded', 'failed'])
 
-        for x in range(len(control_parameters)):
-            assert isinstance(ControlParameters[x], (float, int))
+        assert all([isinstance(p, (float, int)) for p in control_parameters]), "This should be a meaningful message"
 
         self.robot = robot
         self.goal_pose = goal_pose
