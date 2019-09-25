@@ -99,7 +99,8 @@ def check_type(designator_or_value, *allowed_types):
                                                                                 allowed_list_types_string))
         else:
             if not type(designator_or_value) in allowed_types:
-                raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+                raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value,
+                                                                              type(designator_or_value), allowed_types))
 
 
 def is_writeable(variable_writer):
