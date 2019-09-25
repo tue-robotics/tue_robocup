@@ -92,7 +92,7 @@ def check_type(designator_or_value, *allowed_types):
         if isinstance(designator_or_value, list):
             allowed_list_types = [allowed_type[0] for allowed_type in allowed_types if isinstance(allowed_type, list)]
 
-            if not type(designator_or_value[0]) in allowed_list_types:
+            if type(designator_or_value[0]) not in allowed_list_types:
                 allowed_list_types_string = ", ".join(map("[{}]".format, allowed_list_types))
                 raise TypeError("{0} is of type [{1}] but should be {2}".format(designator_or_value,
                                                                                 type(designator_or_value[0]),
