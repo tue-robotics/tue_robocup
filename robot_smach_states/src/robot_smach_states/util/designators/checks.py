@@ -82,6 +82,10 @@ def check_type(designator_or_value, *allowed_types):
       ...
     TypeError: ...
     """
+    for allowed_type in allowed_types:
+        if isinstance(allowed_type, list):
+            assert len(allowed_type) == 1
+
     if hasattr(designator_or_value, "resolve_type"):  # If its a designator: ...
         check_resolve_type(designator_or_value, *allowed_types)
     else:
