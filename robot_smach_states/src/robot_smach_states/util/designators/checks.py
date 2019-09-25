@@ -47,7 +47,7 @@ def check_resolve_type(designator, *allowed_types):
         # allowed_types is a list (because of the *).
         real_allowed_types = [allowed_type[0] if isinstance(allowed_type, list) else allowed_type for allowed_type in allowed_types]
 
-        if not real_resolve_type in real_allowed_types:
+        if real_resolve_type not in real_allowed_types:
             raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
 
     if designator.resolve_type not in allowed_types:
