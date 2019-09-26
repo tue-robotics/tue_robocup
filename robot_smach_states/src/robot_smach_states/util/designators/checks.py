@@ -116,7 +116,7 @@ def check_type(designator_or_value, *allowed_types):
                                                                                 type(designator_or_value[0]),
                                                                                 allowed_list_types_string))
         else:
-            if not type(designator_or_value) in allowed_types:
+            if type(designator_or_value) not in allowed_types:
                 raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
 
 
