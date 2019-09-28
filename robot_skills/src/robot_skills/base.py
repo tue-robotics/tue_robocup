@@ -215,7 +215,7 @@ class Base(RobotPart):
 
         v = geometry_msgs.msg.Twist()        # Initialize velocity
         t_start = rospy.Time.now()
-        t_end = rospy.Time.now() + rospy.Duration.from_sec(timeout)
+        t_end = t_start + rospy.Duration.from_sec(timeout)
 
         def _abs_max(value, abs_max_value):
             if value == 0:
