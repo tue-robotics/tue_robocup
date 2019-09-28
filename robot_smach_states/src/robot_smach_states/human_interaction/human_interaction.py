@@ -15,8 +15,7 @@ from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 
-# Say: Immediate say
-# SayFormatted: Say with named placeholders for designators
+# Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
@@ -31,42 +30,46 @@ class Say(smach.State):
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
     >>>
-    >>> say = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
-    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [say.execute() for i in range(50)]
-    >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>> say = Say(robot, ["a", "b", "c"])
+    >>> say.execute()
+    'spoken'
     >>>
-    >>> say1 = Say(robot, ds.VariableDesignator('aap'))
-    >>> say1.execute()
+    >>> say1 = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes1 = [say.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes1)
+    >>>
+    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
+    >>> say2.execute()
     'spoken'
     >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
     >>>
     >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"], resolve_type=[str])
-    >>> say2 = Say(robot, des, a=ds.VariableDesignator("hero"))
-    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes2 = [say2.execute() for i in range(50)]
-    >>> assert all(outcome == "spoken" for outcome in outcomes2)
-    >>>
-    >>> des2 = ds.VariableDesignator(["Hey", "He", "Hoi"])
-    >>> say3 = Say(robot, des2, a=ds.VariableDesignator("hero"))
+    >>> say3 = Say(robot, des, a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes3 = [say3.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes3)
     >>>
-    >>> say4 = Say(robot, des2)
+    >>> des2 = ds.VariableDesignator(["Hey", "He", "Hoi"])
+    >>> say4 = Say(robot, des2, a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes4 = [say4.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes4)
     >>>
-    >>> say5 = Say(robot, des, b=ds.VariableDesignator("hero"))
-    >>> say5.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> say5 = Say(robot, des2)
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes5 = [say5.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes5)
+    >>>
+    >>> say6 = Say(robot, des, b=ds.VariableDesignator("hero"))
+    >>> say6.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     RuntimeError: ...
     >>>
-    >>> d1 = ds.VariableDesignator(resolve_type=str).writeable
-    >>> d1.write('banana')
-    >>> say6 = Say(robot, d1)
+    >>> des3 = ds.VariableDesignator(resolve_type=str).writeable
+    >>> des3.write('banana')
+    >>> say6 = Say(robot, des3)
     >>> say6.execute()
     'spoken'
     >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
