@@ -275,8 +275,6 @@ class HearOptionsExtra(smach.State):
 
         return "no_result"
 
-########################################################################################################################
-
 
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=rospy.Duration(10)):
@@ -301,8 +299,6 @@ class AskContinue(smach.StateMachine):
 class AskYesNo(HearOptions):
     def __init__(self, robot, timeout=rospy.Duration(10)):
         HearOptions.__init__(self, robot, ['yes', 'no'], timeout)
-
-########################################################################################################################
 
 
 class WaitForPersonInFront(smach.State):
@@ -333,8 +329,6 @@ class WaitForPersonInFront(smach.State):
                 return 'success'
             rospy.sleep(self.sleep_interval)
         return 'failed'
-
-########################################################################################################################
 
 
 class LearnPerson(smach.State):
@@ -392,9 +386,6 @@ class LearnPerson(smach.State):
         return "failed"
 
 
-########################################################################################################################
-
-
 class WaitForPersonEntity(smach.State):
     """
         Wait until a person is seen/scanned in front of the robot.
@@ -422,8 +413,6 @@ class WaitForPersonEntity(smach.State):
             rospy.sleep(self.sleep_interval)
 
         return 'failed'
-
-########################################################################################################################
 
 
 class WaitForPersonDetection(smach.State):
@@ -458,8 +447,6 @@ class WaitForPersonDetection(smach.State):
 
         return 'failed'
 
-########################################################################################################################
-
 
 def detect_human_in_front(robot):
     """
@@ -485,8 +472,6 @@ def detect_human_in_front(robot):
 
         if 0.0 < x < 1.5 and -1.0 < y < 1.0:
             return True
-
-########################################################################################################################
 
 
 def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
@@ -528,11 +513,8 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
 
     rospy.loginfo("[LearnPersonProcedure] " + "Learn procedure completed!")
 
-
     return count
 
-
-########################################################################################################################
 
 class AskPersonName(smach.State):
     """
