@@ -302,10 +302,10 @@ class ForceDrive(smach.State):
     def __init__(self, robot, vx, vy, vth, duration):
         """ Constructor
         :param robot: robot object
-        :param vx: velocity in x-direction
-        :param vy: velocity in y-direction
-        :param vth: yaw-velocity
-        :param duration: float indicating how long to drive
+        :param vx: velocity in x-direction (m/s)
+        :param vy: velocity in y-direction (m/s)
+        :param vth: yaw-velocity (rad/s)
+        :param duration: float indicating how long to drive (seconds)
         """
         smach.State.__init__(self, outcomes=['done'])
         self._robot = robot
