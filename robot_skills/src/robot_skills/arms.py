@@ -180,6 +180,13 @@ class PublicArm(object):
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
         # Provided gripper type currently ignored.
         return self._arm.wait_for_motion_done(timeout, cancel)
+    
+    def cancel_goals(self):
+        """
+        Cancels the currently active grasp-precompute and joint-trajectory-action goals
+        :return: no return
+        """
+        return self._arm.cancel_goals()
 
     def close(self):
         self._arm.close()
