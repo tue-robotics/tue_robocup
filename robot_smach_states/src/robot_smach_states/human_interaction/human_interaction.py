@@ -25,10 +25,8 @@ class Say(smach.State):
     Say a sentence or pick a random one from a list, which then is formatted with designators which are resolved on
     runtime. The main sentence can be a str, [str] or a Designator to str or [str]
 
-    >>> from mock import MagicMock
-    >>> robot = MagicMock()
-    >>> robot.speech = MagicMock()
-    >>> robot.speech.speak = MagicMock()
+    >>> from robot_skills.mockbot import Mockbot
+    >>> robot = Mockbot()
     >>>
     >>> say = Say(robot, ["a", "b", "c"])
     >>> say.execute()
