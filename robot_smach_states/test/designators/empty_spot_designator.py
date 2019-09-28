@@ -16,14 +16,14 @@ if __name__ == "__main__":
     def with_area():
         esd = ds.EmptySpotDesignator(robot=robot,
                                      place_location_designator=furniture_designator,
-                                     name=None,
+                                     name="with_area",
                                      area="on_top_of")
         print(esd.resolve())
 
     def without_area():
         esd = ds.EmptySpotDesignator(robot=robot,
                                      place_location_designator=furniture_designator,
-                                     name=None)
+                                     name="without_area")
         print(esd.resolve())
 
     with_area()
