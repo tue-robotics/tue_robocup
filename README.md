@@ -8,3 +8,4 @@ Most, if not all, challenges are implemented as (large) hierarchical state machi
 These states use the robot_skills robot abstraction layer.
 
 Bla1
+Bla2
