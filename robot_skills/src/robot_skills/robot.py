@@ -85,7 +85,7 @@ class Robot(object):
         rospy.loginfo("Waiting for ROS connections")
         while not connected and (rospy.Time.now() - s).to_sec() < CONNECTION_TIMEOUT:
             connected_hypot = True
-            for bodypart in self.parts.itervalues():
+            for bodypart in self.parts.values():
                 connected_hypot = connected_hypot and bodypart.wait_for_connections(0.1, log_failing_connections=False)
             if connected_hypot:
                 connected = True
@@ -99,11 +99,11 @@ class Robot(object):
             e = rospy.Time.now()
             rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
         else:  # Else: check again but now do log the errors
-            for bodypart in self.parts.itervalues():
+            for bodypart in self.parts.values():
                 bodypart.wait_for_connections(0.1, log_failing_connections=True)
 
         if not self.operational:
-            not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
+            not_operational_parts = [name for name, part in self.parts.items() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
         self.configured = True
@@ -118,7 +118,7 @@ class Robot(object):
 
     def reset(self):
         results = {}
-        for partname, bodypart in self.parts.iteritems():
+        for partname, bodypart in self.parts.items():
             rospy.logdebug("Resetting {}".format(partname))
             if self.robot_name == 'hero' and partname == 'torso':
                 rospy.logwarn("Skipping reset of %s", partname)
@@ -131,9 +131,9 @@ class Robot(object):
             rospy.logerr('Standby only works for amigo')
             return
 
-        for arm in self.arms.itervalues():
+        for arm in self.arms.values():
             arm.reset()
-        for arm in self.arms.itervalues():
+        for arm in self.arms.values():
             arm.send_gripper_goal('close')
 
         self.head.look_down()
@@ -203,7 +203,7 @@ class Robot(object):
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
-        for arm_name, arm in self.arms.iteritems():
+        for arm_name, arm in self.arms.items():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue
@@ -316,7 +316,7 @@ class Robot(object):
         return True
 
     def close(self):
-        for partname, bodypart in self.parts.iteritems():
+        for partname, bodypart in self.parts.items():
             try:
                 bodypart.close()
             except Exception:
@@ -337,7 +337,7 @@ class Robot(object):
 
         diagnostic_dict = {diagnostic_status.name:diagnostic_status for diagnostic_status in diagnostic_array.status}
 
-        for name, part in self.parts.iteritems():
+        for name, part in self.parts.items():
             # Pass a dict mapping the name to the item.
             # Bodypart.handle_hardware_status needs to find the element relevant to itself
             # iterating over the array would be done be each bodypart, but with a dict they can just look theirs up.
