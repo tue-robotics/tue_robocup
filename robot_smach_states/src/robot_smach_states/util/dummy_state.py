@@ -3,8 +3,6 @@ import rospy
 
 import robot_smach_states.util.designators as ds
 
-__all__ = ["DummyState"]
-
 
 class DummyState(smach.State):
     """
