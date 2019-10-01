@@ -34,14 +34,14 @@ class TestState(State):
     """
     >>> teststate = TestState("Yes", "this", "works")
     Using State in <class 'state.TestState'> is deprecated, use smach.State instead and implement \
-execute(self, userdata) instead of run(self, ...)
+    execute(self, userdata) instead of run(self, ...)
     >>> teststate.execute()
     Yes this works
     'yes'
 
     >>> teststate2 = TestState(Designator("Also"), "works", Designator("with designators"))
     Using State in <class 'state.TestState'> is deprecated, use smach.State instead and implement \
-execute(self, userdata) instead of run(self, ...)
+    execute(self, userdata) instead of run(self, ...)
     >>> teststate2.execute()
     Also works with designators
     'yes'"""
