@@ -103,7 +103,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> rightArm.occupied_by = "entity3"
 
     >>> entity_designator = Designator("entity3")
-    >>> holding_arm_designator = ArmHoldingEntityDesignator(robot, {'required_objects': entity_designator})
+    >>> holding_arm_designator = ArmHoldingEntityDesignator(robot, entity_designator, {})
     >>> arm_to_use_for_placing_entity3 = holding_arm_designator.resolve()
     >>> assert(arm_to_use_for_placing_entity3._arm == rightArm)
     >>>
