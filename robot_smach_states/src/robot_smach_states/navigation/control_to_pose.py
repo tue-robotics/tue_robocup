@@ -14,7 +14,7 @@ from geometry_msgs.msg import Twist, Vector3
 from smach import State
 from tf.transformations import euler_from_quaternion
 
-_ = tf2_geometry_msgs  # tf2_geometry_msgs must be declared here for it to be imported
+_ = tf2_geometry_msgs
 
 
 def _clamp(abs_value, value):
@@ -75,6 +75,7 @@ class ControlToPose(State):
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
         self._cmd_vel_publisher = rospy.Publisher("/" + self.robot.robot_name + "/base/references", Twist, queue_size=1)
+        rospy.sleep(0.5)
 
     def execute(self, userdata=None):
         if self._goal_reached(*self._get_target_delta_in_robot_frame(self.goal_pose)):
