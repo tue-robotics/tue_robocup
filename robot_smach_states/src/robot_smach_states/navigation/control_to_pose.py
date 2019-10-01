@@ -53,7 +53,7 @@ class ControlParameters(namedtuple('ControlParameters', [
 
 
 class ControlToPose(State):
-    def __init__(self, robot, goal_pose, control_parameters):
+    def __init__(self, robot, goal_pose, control_parameters, rate=10):
         """
         State that allows the tuning of robot navigation to a specific goal through custom speeds, gains and tolerances
 
@@ -70,7 +70,7 @@ class ControlToPose(State):
         self.goal_pose = goal_pose
         self.params = control_parameters
 
-        self._rate = rospy.Rate(10)
+        self._rate = rospy.Rate(rate)
 
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
