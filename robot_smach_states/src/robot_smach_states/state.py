@@ -30,15 +30,17 @@ class State(smach.State):
 
 class TestState(State):
     """
-    >>> teststate = TestState("Yes", "this", "works")
-    Using State in <class 'state.TestState'> is deprecated, use smach.State instead and implement \
+    >>> teststate = TestState("Yes", "this", "works")  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Using State in <class '...TestState'> is deprecated, use smach.State instead and implement \
     execute(self, userdata) instead of run(self, ...)
     >>> teststate.execute()
     Yes this works
     'yes'
 
-    >>> teststate2 = TestState(Designator("Also"), "works", Designator("with designators"))
-    Using State in <class 'state.TestState'> is deprecated, use smach.State instead and implement \
+    >>> teststate2 = TestState(
+    ...     Designator("Also"), "works", Designator("with designators")
+    ...     )  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Using State in <class '...TestState'> is deprecated, use smach.State instead and implement \
     execute(self, userdata) instead of run(self, ...)
     >>> teststate2.execute()
     Also works with designators
