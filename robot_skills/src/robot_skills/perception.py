@@ -57,10 +57,10 @@ class Perception(RobotPart):
         self.depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
         self.rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
 
-        ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub, self.depth_info_sub],
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub, self.depth_info_sub],
                                                          queue_size=10,
                                                          slop=10)
-        ts.registerCallback(self._callback)
+        self.ts.registerCallback(self._callback)
 
     def _callback(self, rgb, depth, depth_info):
         rospy.logdebug('Received rgb, depth, cam_info')
