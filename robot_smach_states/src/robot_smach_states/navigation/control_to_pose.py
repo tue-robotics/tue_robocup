@@ -64,7 +64,7 @@ class ControlToPose(State):
         """
         State.__init__(self, outcomes=['succeeded', 'failed'])
 
-        assert all([isinstance(p, (float, int)) for p in control_parameters]), "This should be a meaningful message"
+        assert all([isinstance(p, (float, int)) for p in control_parameters]), "Control parameters are invalid"
 
         self.robot = robot
         self.goal_pose = goal_pose
