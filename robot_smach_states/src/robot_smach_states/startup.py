@@ -13,6 +13,7 @@ import smach
 from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
 import check_ebutton
 import human_interaction
+from navigation import ForceDrive
 import utility
 
 
@@ -111,21 +112,6 @@ class EnterArena(smach.StateMachine):
             print("TODO: IMPLEMENT THIS STATE")
             return "no_goal"
 
-    class ForceDrive(smach.State):  # ToDo: remove and use navigation.ForceDrive. Put ed.reset somewhere else
-        def __init__(self, robot):
-            """
-            Force drive through the door
-            :param robot: robot object
-            """
-            smach.State.__init__(self, outcomes=["done"])
-            self.robot = robot
-
-        def execute(self, userdata=None):
-            rospy.loginfo("{} uses force drive as a back-up scenario!".format(self.robot.robot_name))
-            self.robot.base.force_drive(0.25, 0, 0, 5.0, 0.15)  # x, y, z, time in seconds
-            self.robot.ed.reset()
-            return "done"
-
     def __init__(self, robot, initial_pose, use_entry_points=False):
         """
         Enter the arena by force driving through the door
@@ -144,7 +130,7 @@ class EnterArena(smach.StateMachine):
                                    transitions={"spoken": "FORCE_DRIVE_THROUGH_DOOR"})
 
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
-                                   self.ForceDrive(robot),
+                                   ForceDrive(robot, 0.25, 0, 0, 5.0),
                                    transitions={"done": "GO_TO_ENTRY_POINT"})
 
             smach.StateMachine.add('GO_TO_ENTRY_POINT',
