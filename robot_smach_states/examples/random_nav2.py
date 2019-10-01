@@ -101,9 +101,6 @@ class RandomNavDesignator(Designator):
                 if entity.id != self.last_entity_id:
                     entity_id = entity.id
 
-            # Get rid of prefix + slash???
-            # index = entity_id.find("/")
-            # entity_id = entity_id[index+1:]
             rospy.loginfo("Entity:\n\tid = {0},\n\ttype = {1}".format(entity.id, entity.type))
 
             self.entity_id = entity_id
