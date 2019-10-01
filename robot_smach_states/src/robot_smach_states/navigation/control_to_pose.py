@@ -80,14 +80,15 @@ class ControlToPose(State):
     def execute(self, userdata=None):
         if self._goal_reached(*self._get_target_delta_in_robot_frame(self.goal_pose)):
             rospy.loginfo("We are already there")
-            return
+            return 'succeeded'
 
         rospy.loginfo("Starting alignment ....")
         while not rospy.is_shutdown():
             dx, dy, dyaw = self._get_target_delta_in_robot_frame(self.goal_pose)
 
             if self._goal_reached(dx, dy, dyaw):
-                break
+                rospy.loginfo("Goal reached")
+                return 'succeeded'
 
             rospy.logdebug_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
 
@@ -101,7 +102,7 @@ class ControlToPose(State):
 
             self._rate.sleep()
 
-        rospy.loginfo("Goal reached")
+        return 'failed'
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
         """
