@@ -5,6 +5,7 @@
 
 # System
 import math
+from numpy import sign
 
 # ROS
 from actionlib_msgs.msg import GoalStatus
@@ -220,7 +221,7 @@ class Base(RobotPart):
         def _abs_max(value, abs_max_value):
             if value == 0:
                 return 0
-            return (value / abs(value)) * min(abs_max_value, abs(value))
+            return sign(value) * min(abs_max_value, abs(value))
 
         # Drive
         while rospy.Time.now() < t_end:
