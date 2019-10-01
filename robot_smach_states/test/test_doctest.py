@@ -4,6 +4,7 @@ import doctest
 import importlib
 import os
 import rospkg
+import traceback
 import unittest
 
 
@@ -29,7 +30,6 @@ class TestDocTests(unittest.TestCase):
         path = rospkg.RosPack().get_path(base_module_name)
         path = os.path.join(path, "src", base_module_name)
 
-        failed = False
         for root, dirs, files in os.walk(path):
             for filename in files:
                 if filename.endswith(".py") and "__init__" not in filename:
@@ -45,15 +45,25 @@ class TestDocTests(unittest.TestCase):
                     # # print("Should check {}".format(filepath))
                     # module = importlib.import_module(module_name)
 
-                    doctest.testfile(filepath, raise_on_error=True, module_relative=False)
-                    try:
-                        # doctest.testmod(module, raise_on_error=True)
-                        doctest.testfile(filepath, raise_on_error=True, module_relative=False)
-                    except Exception as e:
-                        print("\n{}\n".format(e))
-                        failed = True
+                    # doctest.testfile(filepath, raise_on_error=True, module_relative=False)
+                    # try:
+                    #     # doctest.testmod(module, raise_on_error=True)
+                    #
+                    # except Exception as e:
+                    #     # print "foo"
+                    #     # traceback.print_exc()
+                    #     # print "bar"
+                    #     # print("\n{}\n".format(e))
+                    #     # print("Error:")
+                    #     # doctest.master.summarize()
+                    #     failed = True
+                    doctest.testfile(filepath, raise_on_error=False, module_relative=False, report=1)
 
-        self.assertFalse(failed)
+        # doctest.master.summarize(True)
+        # print("Summary:")
+        failed_count, attempted_count = doctest.master.summarize(True)
+        print("Attempted count: {}".format(attempted_count))
+        self.assertEqual(failed_count, 0, "{} out of {} tests failed".format(failed_count, attempted_count))
 
 
 if __name__ == '__main__':
