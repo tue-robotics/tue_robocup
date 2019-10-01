@@ -77,7 +77,7 @@ class ControlToPose(State):
         self._cmd_vel_publisher = rospy.Publisher("/" + self.robot.robot_name + "/base/references", Twist, queue_size=1)
         rospy.sleep(0.5)
 
-    def execute(self, ud):
+    def execute(self, userdata=None):
         if self._goal_reached(*self._get_target_delta_in_robot_frame(self.goal_pose)):
             rospy.loginfo("We are already there")
             return
