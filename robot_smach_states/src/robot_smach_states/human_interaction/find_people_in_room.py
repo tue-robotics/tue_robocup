@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 from __future__ import print_function
 
 # System
@@ -24,17 +23,15 @@ class FindPeople(smach.State):
     Smach state to find a person. The robot looks around and tries to find
     people in its view.
 
-    >>> # The requried imports on robot console
-    >>> import robot_smach_states as states
-    >>> import robot_smach_states.util.designators as ds
-    >>> from robot_skills.util.entity import Entity
-    >>>
+    >>> from robot_skills.mockbot import Mockbot
+    >>> robot = Mockbot()
     >>> # Designator to store the result
     >>> des = ds.VariableDesignator(resolve_type=[Entity])
     >>>
-    >>> sm = state.FindPeople(robot=robot, properties={'id': 'NAME'}, found_people_designator=des.writeable)
-    >>> sm.execute()
-    >>> des.resolve()
+    >>> sm = FindPeople(robot=robot, properties={'id': 'NAME'}, found_people_designator=des.writeable)
+    >>> # sm.execute()
+    >>> # des.resolve()
+
     Entity(id=something, )
 
     """
@@ -514,20 +511,23 @@ class FindPeopleInRoom(smach.StateMachine):
 
 if __name__ == "__main__":
 
-    from robot_skills import get_robot
+    import doctest
+    doctest.testmod()
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-        _area = sys.argv[2]
-
-        rospy.init_node('test_find_people_in_room')
-        _robot = get_robot(robot_name)
-
-        people = ds.VariableDesignator(resolve_type=[Entity])
-        sm = FindPeopleInRoom(_robot, _area, people.writeable)
-        sm.execute()
-
-        rospy.loginfo("Found {}".format(people.resolve()))
-    else:
-        print("Please provide robot name as argument.")
-        exit(1)
+    # from robot_skills import get_robot
+    #
+    # if len(sys.argv) > 1:
+    #     robot_name = sys.argv[1]
+    #     _area = sys.argv[2]
+    #
+    #     rospy.init_node('test_find_people_in_room')
+    #     _robot = get_robot(robot_name)
+    #
+    #     people = ds.VariableDesignator(resolve_type=[Entity])
+    #     sm = FindPeopleInRoom(_robot, _area, people.writeable)
+    #     sm.execute()
+    #
+    #     rospy.loginfo("Found {}".format(people.resolve()))
+    # else:
+    #     print("Please provide robot name as argument.")
+    #     exit(1)
