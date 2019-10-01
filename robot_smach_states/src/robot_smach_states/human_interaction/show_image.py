@@ -1,6 +1,7 @@
 #ROS
 import os
 import rospkg
+import rospy
 import smach
 
 
@@ -12,7 +13,6 @@ class ShowImageState(smach.State):
 
     def __init__(self, robot, package_name, path_to_image_in_package, seconds=5):
         """
-
         :param robot: the robot object
         :param package_name: string describing the package in which the image is located
         :param path_to_image_in_package: string describing the path to the image in the package specified before
@@ -26,6 +26,7 @@ class ShowImageState(smach.State):
 
     def execute(self, ud=None):
         if not self._path:
+            rospy.logdebug("Failed to display image")
             return 'failed'
         self._robot.hmi.show_image(self._path, self._seconds)
         return 'succeeded'
