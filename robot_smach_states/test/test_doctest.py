@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import doctest
+import importlib
 import os
 import rospkg
 import unittest
@@ -21,7 +22,11 @@ class TestDocTests(unittest.TestCase):
             for filename in files:
                 if filename.endswith(".py") and "__init__" not in filename:
                     filepath = os.path.join(root, filename)
-                    doctest.testfile(filepath, raise_on_error=False, module_relative=False, report=1)
+                    module_name = base_module_name + filepath.split(base_module_name)[-1]
+                    module_name = module_name[:-3]
+                    module_name = module_name.replace("/", ".")
+                    mod = importlib.import_module(module_name)
+                    doctest.testmod(mod, report=1)
 
         failed_count, attempted_count = doctest.master.summarize(True)
         print("Attempted count: {}".format(attempted_count))
