@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # ROS
 import rospy
 
@@ -17,8 +15,8 @@ class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
-    >>> a = ArmDesignator(robot, {required_arm_name: 'left'})
-    >>> assert a.resolve()._arm == robot._arms['left']
+    >>> a = ArmDesignator(robot, {'required_arm_name': 'left'})
+    >>> assert a.resolve()._arm == robot.arms['left']
     """
 
     def __init__(self, robot, arm_properties, name=None):
@@ -95,7 +93,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
 
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
-    >>> a = ArmDesignator(robot, {required_arm_name: 'left'})
+    >>> a = ArmDesignator(robot, {'required_arm_name': 'left'})
     >>> assert a.resolve()._arm == robot.arms['left']
 
     >>> leftArm = robot.arms['left']
@@ -105,7 +103,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> rightArm.occupied_by = "entity3"
 
     >>> entity_designator = Designator("entity3")
-    >>> holding_arm_designator = ArmHoldingEntityDesignator(robot, {required_objects: entity_designator})
+    >>> holding_arm_designator = ArmHoldingEntityDesignator(robot, {'required_objects': entity_designator})
     >>> arm_to_use_for_placing_entity3 = holding_arm_designator.resolve()
     >>> assert(arm_to_use_for_placing_entity3._arm == rightArm)
     >>>
@@ -127,7 +125,6 @@ class ArmHoldingEntityDesignator(ArmDesignator):
             return None
         self.arm_properties['required_objects'] = entity
         return super(ArmHoldingEntityDesignator, self).resolve()
-
 
 
 if __name__ == "__main__":
