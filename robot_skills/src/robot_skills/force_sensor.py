@@ -1,4 +1,5 @@
-import numpy as np
+from numpy import array as np_array
+from numpy.linalg import norm as np_norm
 import rospy
 from geometry_msgs.msg import WrenchStamped
 
@@ -24,7 +25,7 @@ class ForceSensor(object):
     def _wrench_callback(self, msg):
         def _detect_edge_up(calibrated_msg, msg):
             def _norm(v):
-                return np.linalg.norm(np.array([v.x, v.y, v.z]))
+                return np_norm(np_array([v.x, v.y, v.z]))
 
             calibrated_force_norm = _norm(calibrated_msg.wrench.force)
             force_norm = _norm(msg.wrench.force)
