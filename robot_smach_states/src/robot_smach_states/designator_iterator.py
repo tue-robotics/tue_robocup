@@ -61,7 +61,7 @@ class IterateDesignator(smach.State):
         if self._current_elements is None:
             collection = self.collection_des.resolve()
             if collection is None:
-                rospy.loginfo("Collection is None".format(collection))
+                rospy.logwarn("Collection is None".format(collection))
                 return 'stop_iteration'
 
             rospy.loginfo("Current elements: {}".format(collection))
