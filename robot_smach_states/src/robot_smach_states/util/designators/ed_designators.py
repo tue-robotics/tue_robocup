@@ -44,17 +44,18 @@ class EdEntityCollectionDesignator(Designator):
         @param id the ID of the object to get info about
         @param parse whether to parse the data string associated with the object model or entity
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
-        @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
+        @param center_point_designator same as center_point but dynamically resolved through a designator.
+                Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
         super(EdEntityCollectionDesignator, self).__init__(resolve_type=[Entity], name=name)
         self.ed = robot.ed
-        if type != "" and type_designator != None:
+        if type != "" and type_designator is not None:
             raise TypeError("Specify either type or type_designator, not both")
-        if center_point != None and center_point_designator != None:
+        if center_point is not None and center_point_designator is not None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
-        elif center_point == None and center_point_designator == None:
+        elif center_point is None and center_point_designator is None:
             center_point = VectorStamped()
-        if id != "" and id_designator != None:
+        if id != "" and id_designator is not None:
             raise TypeError("Specify either id or id_designator, not both")
 
         self.type = type
@@ -64,13 +65,16 @@ class EdEntityCollectionDesignator(Designator):
         self.parse = parse
         self.criteriafuncs = criteriafuncs or []
 
-        if type_designator: check_resolve_type(type_designator, str)
+        if type_designator:
+            check_resolve_type(type_designator, str)
         self.type_designator = type_designator
 
-        if center_point_designator: check_resolve_type(center_point_designator, VectorStamped)
+        if center_point_designator:
+            check_resolve_type(center_point_designator, VectorStamped)
         self.center_point_designator = center_point_designator
 
-        if id_designator: check_resolve_type(id_designator, str)
+        if id_designator:
+            check_resolve_type(id_designator, str)
         self.id_designator = id_designator
 
         self.debug = debug
@@ -105,9 +109,8 @@ class EdEntityDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
-                 weight_function=None,
-                 type_designator=None, center_point_designator=None,
-                 id_designator=None, debug=False, name=None, none_resolve=False):
+                 weight_function=None, type_designator=None, center_point_designator=None, id_designator=None,
+                 debug=False, name=None, none_resolve=False):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -152,7 +155,7 @@ class EdEntityDesignator(Designator):
             check_resolve_type(center_point_designator, VectorStamped)
         self.center_point_designator = center_point_designator
 
-        if id_designator: # the resolve type of id_designator must be str
+        if id_designator:  # the resolve type of id_designator must be str
             check_resolve_type(id_designator, str)
         self.id_designator = id_designator
 
@@ -290,7 +293,8 @@ class EmptySpotDesignator(Designator):
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
     cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
-    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF), name="place_position")
+    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF),
+     name="place_position")
     """
 
     def __init__(self, robot, place_location_designator, name=None, area=None):
@@ -507,7 +511,8 @@ class EmptySpotDesignator(Designator):
         return points
 
     def __repr__(self):
-        return "EmptySpotDesignator(place_location_designator={}, name='{}', area='{}')".format(self.place_location_designator, self._name, self._area)
+        return "EmptySpotDesignator(place_location_designator={}, name='{}', area='{}')"\
+            .format(self.place_location_designator, self._name, self._area)
 
 
 class LockToId(Designator):
