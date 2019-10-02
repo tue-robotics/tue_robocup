@@ -56,7 +56,7 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> robot.arms['right'].occupied_by = None
     >>> empty_arm_designator = UnoccupiedArmDesignator(robot, {})
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
-    >>> assert arm_to_use_for_first_grab._arm in robot.arms
+    >>> assert arm_to_use_for_first_grab._arm in robot.arms.values()
     >>>
     >>> # Grab the 1st item.
     >>> arm_to_use_for_first_grab.occupied_by = "entity1"
