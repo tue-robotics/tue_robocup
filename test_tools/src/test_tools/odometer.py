@@ -96,7 +96,11 @@ class Odometer:
 
                 if found_header:
                     # Going over all lines.(this is the only option to get the last line) Doing nothing with other lines
-                    for last_row in reader:
+                    last_row = None
+                    try:
+                        for row in reader:
+                            last_row = row
+                    except csv.Error:
                         pass
                     if last_row:
                         last_row = dict(zip(header, last_row))
