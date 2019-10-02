@@ -217,20 +217,3 @@ class Odometer:
         """
         self.sample()
         self.write()
-
-
-if __name__ == '__main__':
-    rospy.init_node("odometer")
-
-    r = float(rospy.get_param("~rate", 1/60.0))
-    length = int(rospy.get_param("~buffer_length", 1))
-    path = rospy.get_param("~path", DEFAULT_PATH)
-    filename = rospy.get_param("~filename", DEFAULT_FILENAME)
-
-    meter = Odometer(path, filename)
-    rate = rospy.Rate(max(r, 1e-3))
-
-    while not rospy.is_shutdown():
-        meter.sample()
-        meter.activate_write(length)
-        rate.sleep()
