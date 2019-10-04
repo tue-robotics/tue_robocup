@@ -31,4 +31,6 @@
   <run_depend>python_orocos_kdl</run_depend>
   <run_depend>tf2_geometry_msgs</run_depend>
 
+  <test_depend>test_tools</test_depend>
+
 </package>
