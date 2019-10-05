@@ -20,7 +20,7 @@ class NavigateToObserve(NavigateTo):
         :param robot: (Robot) object
         :param entity_designator: EdEntityDesignator for the object to observe
         :param radius: (float) desired distance to the pose of the entity
-        :param margin: (float) allowed margin w.r.t. specified radius
+        :param margin: (float) allowed margin w.r.t. specified radius on both sides
         """
         super(NavigateToObserve, self).__init__(robot)
 
