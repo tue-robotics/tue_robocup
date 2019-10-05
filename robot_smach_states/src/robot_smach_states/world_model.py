@@ -164,13 +164,13 @@ class SegmentObjects(smach.State):
         ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
 
+        ds.check_type(segmentation_area, str)
         if isinstance(segmentation_area, str):
             self.segmentation_area_des = ds.VariableDesignator(segmentation_area)
         elif isinstance(segmentation_area, ds.Designator):
-            # ds.check_resolve_type(segmentation_area, "str")
             self.segmentation_area_des = segmentation_area
         else:
-            raise RuntimeError("segmentation_area is not a str or Designator")
+            raise RuntimeError("This shoudln't happen. Wrong types should have raised an exception earlier")
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.is_writeable(segmented_entity_ids_designator)
