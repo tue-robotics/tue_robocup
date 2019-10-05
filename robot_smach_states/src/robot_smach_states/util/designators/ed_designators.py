@@ -109,8 +109,8 @@ class EdEntityDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
-                 weight_function=None, type_designator=None, center_point_designator=None, id_designator=None,
-                 debug=False, name=None, none_resolve=False):
+                 weight_function=None,
+                 type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -125,9 +125,7 @@ class EdEntityDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator.
         Mutually exclusive with center_point
-        @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id
-        @param none_resolve If true then None resolution will log a warning, if
-        False it will log as an error"""
+        @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
         super(EdEntityDesignator, self).__init__(resolve_type=Entity, name=name)
 
         assert not type or type_designator is None, "Specify either type or type_designator, not both"
@@ -160,7 +158,6 @@ class EdEntityDesignator(Designator):
         self.id_designator = id_designator
 
         self.debug = debug
-        self.none_resolve = none_resolve
 
     def lockable(self):
         return LockToId(self.robot, self)
@@ -215,13 +212,7 @@ class EdEntityDesignator(Designator):
                 else:
                     return entities[0]
 
-        # Should not be logged as error because when a None value check is
-        # implemented in the calling function, the log becomes misleading
-        if self.none_resolve:
-            rospy.logerr("No entities found in {0}".format(self))
-        else:
-            rospy.logwarn("No entities found in {0}".format(self))
-
+        rospy.logerr("No entities found in {0}".format(self))
         return None
 
 
