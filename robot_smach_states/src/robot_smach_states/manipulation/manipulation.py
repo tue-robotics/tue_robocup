@@ -179,9 +179,9 @@ class HandoverToHuman(smach.StateMachine):
             #             Say(robot, [ "If you don't want it, I will keep it"]),
             #             transitions={   'spoken'    :'RESET_ARM'})
 
-            # smach.StateMachine.add('RESET_ARM', ArmToJointConfig(robot, locked_arm, 'reset'),
-            #                        transitions={'succeeded': 'RESET_TORSO',
-            #                                     'failed': 'RESET_TORSO'})
+            smach.StateMachine.add('RESET_ARM', ArmToJointConfig(robot, locked_arm, 'reset'),
+                                   transitions={'succeeded': 'RESET_TORSO',
+                                                'failed': 'RESET_TORSO'})
             #
             # smach.StateMachine.add('RESET_TORSO', ResetPart(robot, robot.torso, timeout=5),
             #                        transitions={'done': 'UNLOCK_ARM'})
