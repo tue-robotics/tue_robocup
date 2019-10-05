@@ -15,7 +15,7 @@ def entities_from_description(robot, knowledge, entity_description, list_of_enti
     Query entities and return those that satisfy the given description
 
     @param robot: The robot object
-    @param knowledge: Common knowledge
+    @param knowledge: Knowledge object
     @param entity_description: A dict that contains a 'type' field
     @param list_of_entity_ids: A list of entity ids to choose from (for example a result of a segment)
 
