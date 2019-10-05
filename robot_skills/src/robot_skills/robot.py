@@ -383,7 +383,7 @@ def _collect_needs_desires(needs, desires, test_func):
     if needs is not None:
         founds.update(_collect_available(needs, test_func))
         if len(founds) != len(needs):  # All needs must be met.
-            return False
+            return None
 
     if desires is not None:
         founds.update(_collect_available(desires, test_func))
