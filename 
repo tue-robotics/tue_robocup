@@ -1,0 +1,45 @@
+[1mdiff --git a/robot_smach_states/src/robot_smach_states/count_objects_on_location.py b/robot_smach_states/src/robot_smach_states/count_objects_on_location.py[m
+[1mindex 409d8d6..593df0e 100644[m
+[1m--- a/robot_smach_states/src/robot_smach_states/count_objects_on_location.py[m
+[1m+++ b/robot_smach_states/src/robot_smach_states/count_objects_on_location.py[m
+[36m@@ -41,14 +41,14 @@[m [mclass CountObjectsOnLocation(smach.State):[m
+         if object_classifications:[m
+ [m
+             for idx, obj in enumerate(object_classifications):[m
+[31m-                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx,t=obj.type,[m
+[32m+[m[32m                rospy.loginfo("   - Object {i} is a '{t}' (prob: {p}, ID: {id})".format(i=idx, t=obj.type,[m
+                                                                                         id=obj.id, p=obj.probability))[m
+ [m
+             over_threshold = [obj for obj in object_classifications if obj.probability >= self.threshold][m
+ [m
+             dropped = {obj.id: obj.probability for obj in object_classifications if obj.probability < self.threshold}[m
+             rospy.debug("Dropping {l} entities due to low class. score (< {th}): {dropped}"[m
+[31m-                          .format(th=self.threshold, dropped=dropped, l=len(dropped)))[m
+[32m+[m[32m                        .format(th=self.threshold, dropped=dropped, l=len(dropped)))[m
+             object_classifications = over_threshold[m
+ [m
+             list_objects = [obj for obj in object_classifications if obj.type == self.object_type.resolve()][m
+[1mdiff --git a/robot_smach_states/src/robot_smach_states/human_interaction/find_person_in_room.py b/robot_smach_states/src/robot_smach_states/human_interaction/find_person_in_room.py[m
+[1mindex ebc01e4..ed68029 100755[m
+[1m--- a/robot_smach_states/src/robot_smach_states/human_interaction/find_person_in_room.py[m
+[1m+++ b/robot_smach_states/src/robot_smach_states/human_interaction/find_person_in_room.py[m
+[36m@@ -14,18 +14,7 @@[m [mimport smach[m
+ import robot_smach_states as states[m
+ import robot_smach_states.util.designators as ds[m
+ from robot_skills.util import kdl_conversions[m
+[31m-# class CheckIfPersonInRoom(smach.State):[m
+[31m-#     def __init__(self, robot, room):[m
+[31m-#         """[m
+[31m-#[m
+[31m-#         :param robot: robot api object[m
+[31m-#         :param room: room where person should be found[m
+[31m-#         """[m
+[31m-#         smach.State.__init__(self, outcomes=['true', 'false'])[m
+[31m-#         self._robot = robot[m
+[31m-#         self._room = room[m
+[31m-#[m
+[31m-#     def execute(self, userdata=None):[m
+[32m+[m
+ [m
+ class FindPerson(smach.State):[m
+     """ Smach state to find a person. The robot looks around and tries to recognize all faces in view.[m

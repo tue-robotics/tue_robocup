@@ -86,13 +86,13 @@ class HandOver(smach.State):
 
 
 class HandoverFromHuman(smach.StateMachine):
-    '''
+    """
     State that enables low level grab reflex. Besides a robot object, needs
     an arm and an entity to grab, which is either one from ed through the
     grabbed_entity_designator or it is made up in the
     CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
     as id.
-    '''
+    """
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=15, arm_configuration="handover_to_human"):
         """
         Hold up hand to accept an object and close hand once something is inserted
@@ -133,6 +133,12 @@ class HandoverFromHuman(smach.StateMachine):
 
 class HandoverToHuman(smach.StateMachine):
     def __init__(self, robot, arm_designator, timeout=10):
+        """
+        State to hand over the object in the arm to a human operator
+        :param robot: robot to execute state with
+        :param arm_designator: designator that resolves to arm holding the object
+        :param timeout: float amount of time the procedure may take
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         # A designator can resolve to a different item every time its resolved. We don't want that here, so lock
@@ -170,6 +176,16 @@ class HandoverToHuman(smach.StateMachine):
 
 class CloseGripperOnHandoverToRobot(smach.State):
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
+        """
+        State to wait until the operator pushes an object into the gripper
+        :param robot: robot to execute state with
+        :param arm_designator: designator that resolves to arm receiving the object
+        :param grabbed_entity_label: label to assign the dummy entity representing the received object
+                                    (use this ore grabbed_entity_designator)
+        :param grabbed_entity_designator: designator resolving to the entity which will be received
+                                    (use this ore grabbed_entity_designator)
+        :param timeout: float amount of time the procedure may take
+        """
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'timeout'])
         self.robot = robot
         self.arm_designator = arm_designator
@@ -206,6 +222,15 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
 class SetGripper(smach.State):
     def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, drop_from_frame=None, grab_entity_designator=None, timeout=10):
+        """
+        Instruct the gripper
+        :param robot: robot to execute state with
+        :param arm_designator: designator that resolves to arm corresponding to the gripper
+        :param gripperstate: desired state of the gripper
+        :param drop_from_frame: ???
+        :param grab_entity_designator: Designator resolving to the entity to be attached to the gripper
+        :param timeout: float amount of time the procedure may take
+        """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         check_type(arm_designator, PublicArm)
@@ -321,13 +346,19 @@ class ArmToQueryPoint(smach.State):
 
 class TorsoToUserPos(smach.State):
     def __init__(self, robot, torso_pos, time_out=0.0):
+        """
+        State to set the pose of the torso
+        :param robot: robot to execute state with
+        :param torso_pos: float desired position of the torso
+        :param time_out: float amount of time the procedure may take
+        """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
         self.torso_pos = torso_pos
         self.time_out = time_out
 
     def execute(self, userdata=None):
-        if self.robot.torso.send_goal(self.torso_pos,timeout=self.time_out):
+        if self.robot.torso.send_goal(self.torso_pos, timeout=self.time_out):
             return 'succeeded'
         else:
             return 'failed'
