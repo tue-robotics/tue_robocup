@@ -3,14 +3,19 @@ import unittest
 
 from grammar_parser.cfgparser import CFGParser
 from robocup_knowledge import load_knowledge
+from robot_skills.mockbot import Mockbot
+from action_server.actions.action import ConfigurationResult
+from action_server.task_manager import TaskManager
 
 
 class GrammarTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        import rospy; rospy.init_node("testnode")
         cls.knowledge = load_knowledge('challenge_demo')
         cls.parser = CFGParser.fromstring(cls.knowledge.grammar)
+        cls.task_manager = TaskManager(robot=Mockbot())
 
         # ToDo: Should we make everything recursive???
 
@@ -45,7 +50,10 @@ class GrammarTest(unittest.TestCase):
         for option in self.actions_rule.options:
 
             # Temp for test development
-            if "find" not in option.lsemantic:
+            # if "find" not in option.lsemantic:
+            # if "say" not in option.lsemantic:
+            if "hand-over" not in option.lsemantic:
+            # if "place" not in option.lsemantic:
                 continue
             # End of temp thingy
 
@@ -59,12 +67,26 @@ class GrammarTest(unittest.TestCase):
             print("Result string: <{}>".format(result_str))
 
             # Now, we can parse the result string to get the action description
-            action_definition = self.parser.parse_raw(
+            actions_definition = self.parser.parse_raw(
                 target=self.knowledge.grammar_target,
                 words=result_str,
             )
+            self.assertIn(
+                "actions",
+                actions_definition,
+                "'actions' not in actions definition, don't know what to do"
+            )
 
-            print("Action: {}".format(action_definition))
+            print("Action: {}".format(actions_definition))
+
+            # Test the action description with the task manager
+            config_result = self.task_manager.set_up_state_machine(
+                recipe=actions_definition["actions"],
+            )  # type: ConfigurationResult
+            self.assertTrue(
+                config_result.succeeded,
+                "Configuration of action {} failed".format(actions_definition),
+            )
 
         # knowledge = load_knowledge("challenge_demo")
         # parser = CFGParser.fromstring(knowledge.grammar)
@@ -80,18 +102,23 @@ class GrammarTest(unittest.TestCase):
         :param target: target to look for
         :return: option string
         """
-        result = ""
-        rule = cls.parser.rules[target]
-        # For now, take the first available option
-        option = rule.options[0]
+        try:  # ToDo: remove try except
+            if target not in cls.parser.rules:
+                return target + " "
 
-        for conjunct in option.conjuncts:
-            if not conjunct.is_variable:
-                result += conjunct.name
-                result += " "
-            else:
-                result += cls._resolve_conjunct(conjunct.name)
+            result = ""
+            rule = cls.parser.rules[target]
+            # For now, take the first available option
+            option = rule.options[0]
 
+            for conjunct in option.conjuncts:
+                if not conjunct.is_variable:
+                    result += conjunct.name
+                    result += " "
+                else:
+                    result += cls._resolve_conjunct(conjunct.name)
+        except:
+            raise
         return result
 
 
