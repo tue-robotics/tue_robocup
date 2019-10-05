@@ -117,9 +117,8 @@ class TourGuide(object):
         self._room_entities = [room for room in entities if room.type == "room"]
 
         # Match the furniture entities to rooms
-        self._furniture_entities_room = {room: [] for room in self._room_entities}  # map room entities to furniture entities
+        self._furniture_entities_room = {room: [] for room in self._room_entities}
         for item in self._furniture_entities:  # type: Entity
-
             try:
                 room = self.get_room(item._pose.p)
             except RuntimeError:
@@ -199,12 +198,13 @@ class ExecutePlanGuidance(smach.State):
         """
         :param robot: (Robot) robot api object
         :param operator_distance: (float) check for the operator to be within this range of the robot
-        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
+        this radius
         """
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
         self._distance_threshold = 1.0  # Only check if the operator is there once we've driven for this distance
-        self._operator_distance = operator_distance  # Operator is expected to follow the robot approximately this distance
+        self._operator_distance = operator_distance  # Operator is expected to follow the robot around this distance
         self._operator_radius = operator_radius  # Operator is expected to be within this radius around the position
         # defined by the follow distance
         self._tourguide = TourGuide(robot)
@@ -217,7 +217,6 @@ class ExecutePlanGuidance(smach.State):
         rate = rospy.Rate(10.0)  # Loop at 10 Hz
         distance = 0.0
         old_position = self._get_base_position()
-        operator_stamp = rospy.Time.now()  # Assume the operator is near if we start here
         while not rospy.is_shutdown():
 
             if self.preempt_requested():
@@ -401,7 +400,8 @@ class GuideToSymbolic(Guide):
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
         :param operator_distance: (float) check for the operator to be within this range of the robot
-        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
+        :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
+        this radius
         """
         super(GuideToSymbolic, self).__init__(robot=robot,
                                               operator_distance=operator_distance,
