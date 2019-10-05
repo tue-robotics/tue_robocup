@@ -16,7 +16,7 @@ class ForceSensor(RobotPart):
         :param robot_name: Which robot is this part of?
         :param tf_listener: tf_server.TFClient for  use in RobotPart
         :param topic: Topic to use for WrenchStamped measurement
-        :param force_norm_threshold: Edge up if norm exceeds this value (defaults to 2.5)
+        :param force_norm_threshold: Edge up if norm exceeds this value [N] (defaults to 2.5N)
         """
         super(ForceSensor, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._topic = topic
