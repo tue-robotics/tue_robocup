@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 # System
 import copy
 import math
@@ -219,7 +217,7 @@ class FollowOperator(smach.State):
 
         self._robot.head.close()
 
-        print("NOW!!!")
+        rospy.loginfo("NOW!!!")
         rospy.sleep(3)
 
         return True
