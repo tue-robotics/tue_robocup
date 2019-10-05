@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>test_tools</name>
   <version>0.0.0</version>
   <description>No description available</description>
@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>python-docopt</run_depend>
+  <exec_depend>python-docopt</exec_depend>
+  <exec_depend>python-rospkg</exec_depend>
 
 </package>
