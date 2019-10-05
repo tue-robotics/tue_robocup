@@ -35,10 +35,10 @@ class GrammarTest(unittest.TestCase):
 
         assert actions_list_target, "Cannot derive actions from grammar"
         actions_list_rule = cls.parser.rules[actions_list_target]
-        assert (len(actions_list_rule.options) == 1,
-                "Don't know how to continue if the actions list rule has multiple options")
-        assert (len(actions_list_rule.options[0].conjuncts) == 1,
-                "Don't know how to continue if the actions list rule has multiple options")
+        assert len(actions_list_rule.options) == 1, \
+            "Don't know how to continue if the actions list rule has multiple options"
+        assert len(actions_list_rule.options[0].conjuncts) == 1, \
+            "Don't know how to continue if the actions options list rule has multiple conjunctions"
 
         # Now, we need to get all separate options
         actions_target = actions_list_rule.options[0].conjuncts[0].name
@@ -47,6 +47,7 @@ class GrammarTest(unittest.TestCase):
 
     def test_grammar(self):
 
+        config_results = {}
         for option in self.actions_rule.options:
 
             # Temp for test development
@@ -80,19 +81,40 @@ class GrammarTest(unittest.TestCase):
             print("Action: {}".format(actions_definition))
 
             # Test the action description with the task manager
-            config_result = self.task_manager.set_up_state_machine(
-                recipe=actions_definition["actions"],
-            )  # type: ConfigurationResult
-            self.assertTrue(
-                config_result.succeeded,
-                "Configuration of action '{}' failed.\n\nSentence: '{}'\n\nRecipe: {}\n\nError: {}".format(
-                    actions_definition["actions"][0]["action"],
-                    result_str,
-                    actions_definition,
-                    config_result.message,
-                ),
-            )
+            try:
+                config_result = self.task_manager.set_up_state_machine(
+                    recipe=actions_definition["actions"],
+                )  # type: ConfigurationResult
+            except Exception as e:
+                config_result = ConfigurationResult()
+                config_result.message = "Configuration crashed: {}".format(e.message)
+            config_results[actions_definition["actions"][0]["action"]] = config_result
+            # self.assertTrue(
+            #     config_result.succeeded,
+            #     "Configuration of action '{}' failed.\n\nSentence: '{}'\n\nRecipe: {}\n\nError: {}".format(
+            #         actions_definition["actions"][0]["action"],
+            #         result_str,
+            #         actions_definition,
+            #         config_result.message,
+            #     ),
+            # )
 
+        failed_config_results = {}
+        for action, config_result in config_results.iteritems():
+            if config_result.succeeded:
+                print("Configuration of '{}' succeeded".format(action))
+            else:
+                failed_config_results[action] = config_result
+
+        error_str = ""
+        for action, config_result in failed_config_results.iteritems():
+            error_str += "\nConfiguration of action '{}' failed.\n\tSentence: '{}'\n\tRecipe: {}\n\tError: {}".format(
+                action,
+                result_str,
+                actions_definition,
+                config_result.message,
+            )
+        self.assertFalse(failed_config_results, error_str)
         # knowledge = load_knowledge("challenge_demo")
         # parser = CFGParser.fromstring(knowledge.grammar)
 
