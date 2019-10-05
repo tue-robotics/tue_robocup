@@ -12,7 +12,7 @@ class GrammarTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        import rospy; rospy.init_node("testnode")
+        # import rospy; rospy.init_node("testnode")
         cls.knowledge = load_knowledge('challenge_demo')
         cls.parser = CFGParser.fromstring(cls.knowledge.grammar)
         cls.task_manager = TaskManager(robot=Mockbot())
@@ -52,9 +52,9 @@ class GrammarTest(unittest.TestCase):
             # Temp for test development
             # if "find" not in option.lsemantic:
             # if "say" not in option.lsemantic:
-            if "hand-over" not in option.lsemantic:
+            # if "hand-over" not in option.lsemantic:
             # if "place" not in option.lsemantic:
-                continue
+            #     continue
             # End of temp thingy
 
             # option.lsemantic = "'action': 'find', 'object': {'type': X}, 'location': {'id': Y}"
@@ -85,7 +85,12 @@ class GrammarTest(unittest.TestCase):
             )  # type: ConfigurationResult
             self.assertTrue(
                 config_result.succeeded,
-                "Configuration of action {} failed".format(actions_definition),
+                "Configuration of action '{}' failed.\n\nSentence: '{}'\n\nRecipe: {}\n\nError: {}".format(
+                    actions_definition["actions"][0]["action"],
+                    result_str,
+                    actions_definition,
+                    config_result.message,
+                ),
             )
 
         # knowledge = load_knowledge("challenge_demo")
