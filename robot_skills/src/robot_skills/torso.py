@@ -120,6 +120,10 @@ class Torso(RobotPart):
         # Fill with required joint names (desired in hardware / gazebo impl)
         current_joint_state = self._get_joint_states()
         missing_joint_names = [n for n in self._arm_joint_names if n not in self.joint_names]
+        # This bit is needed because in some robots some joints are part of both arm(s) and torso.
+        # Thus both need to be controlled.
+        # In robots where these are disjoint sets (arm and torso joints do not overlap), missing_joint_names will be
+        # empty and thus no change is incurred.
         torso_goal.trajectory.joint_names += missing_joint_names
         torso_goal.trajectory.points[0].positions += [current_joint_state[n] for n in missing_joint_names]
         torso_goal.goal_tolerance += [control_msgs.msg.JointTolerance(
