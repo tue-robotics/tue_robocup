@@ -17,8 +17,6 @@ if __name__ == "__main__":
     e_id = sys.argv[2]
 
     # Instantiate GuideToSymbolic machine
-    s = give_directions.GiveDirections(r,
-                                    ds.EntityByIdDesignator(r, id=e_id)
-                                    )
+    s = give_directions.GiveDirections(r,ds.EntityByIdDesignator(r, id=e_id))
     # Execute the state
     s.execute()
