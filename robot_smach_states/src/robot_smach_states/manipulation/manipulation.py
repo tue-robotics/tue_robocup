@@ -151,40 +151,18 @@ class HandoverToHuman(smach.StateMachine):
                                    transitions={'succeeded': 'DETECT_HANDOVER',
                                                 'failed': 'DETECT_HANDOVER'})
 
-            # smach.StateMachine.add("SAY_DETECT_HANDOVER", Say(robot, ["I will handover the object now"
-            #                                                           "Please take it from my gripper."]),
-            #                        transitions={'spoken': 'DETECT_HANDOVER'})
-
             smach.StateMachine.add("DETECT_HANDOVER", HandOver(robot, locked_arm),
                                    transitions={'succeeded': 'CLOSE_GRIPPER_HANDOVER',
                                                 'failed': 'CLOSE_GRIPPER_HANDOVER'})
-
-            # smach.StateMachine.add("SAY_OPEN_GRIPPER", Say(robot, ["Watch out, I will open my gripper now."]),
-            #                        transitions={'spoken': 'OPEN_GRIPPER_HANDOVER'})
-            #
-            # smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm,
-            #                                                            gripperstate=GripperState.OPEN, timeout=2),
-            #                        transitions={'succeeded': 'SAY_CLOSE_NOW_GRIPPER',
-            #                                     'failed': 'SAY_CLOSE_NOW_GRIPPER'})
-            #
-            # smach.StateMachine.add("SAY_CLOSE_NOW_GRIPPER", Say(robot, [ "I will close my gripper now"]),
-            #                        transitions={'spoken': 'CLOSE_GRIPPER_HANDOVER'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm,
                                                                         gripperstate=GripperState.CLOSE, timeout=0),
                                    transitions={'succeeded': 'UNLOCK_ARM',
                                                 'failed': 'UNLOCK_ARM'})
 
-            # smach.StateMachine.add("SAY_I_WILL_KEEP_IT",
-            #             Say(robot, [ "If you don't want it, I will keep it"]),
-            #             transitions={   'spoken'    :'RESET_ARM'})
-
             smach.StateMachine.add('RESET_ARM', ArmToJointConfig(robot, locked_arm, 'reset'),
                                    transitions={'succeeded': 'RESET_TORSO',
                                                 'failed': 'RESET_TORSO'})
-            #
-            # smach.StateMachine.add('RESET_TORSO', ResetPart(robot, robot.torso, timeout=5),
-            #                        transitions={'done': 'UNLOCK_ARM'})
 
             smach.StateMachine.add("UNLOCK_ARM", UnlockDesignator(locked_arm),
                                    transitions={'unlocked': 'succeeded'})
