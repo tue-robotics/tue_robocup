@@ -40,17 +40,60 @@ class GrammarTest(unittest.TestCase):
 
         cls.actions_rule = cls.parser.rules[actions_target]
 
-
-        pass
-
     def test_grammar(self):
 
         for option in self.actions_rule.options:
-            print("Action: {}".format(option.conjuncts[0].name))
+
+            # Temp for test development
+            if "find" not in option.lsemantic:
+                continue
+            # End of temp thingy
+
+            # option.lsemantic = "'action': 'find', 'object': {'type': X}, 'location': {'id': Y}"
+            result_str = ""
+
+            # For each conjunct, we want to have a viable option
+            for conjunct in option.conjuncts:
+                result_str += self._resolve_conjunct(conjunct.name)
+            result_str = result_str.rstrip(" ")
+            print("Result string: <{}>".format(result_str))
+
+            # Now, we can parse the result string to get the action description
+            action_definition = self.parser.parse_raw(
+                target=self.knowledge.grammar_target,
+                words=result_str,
+            )
+
+            print("Action: {}".format(action_definition))
+
         # knowledge = load_knowledge("challenge_demo")
         # parser = CFGParser.fromstring(knowledge.grammar)
 
         print("Yeehah, my test has succeeded")
+
+    @classmethod
+    def _resolve_conjunct(cls, target):
+        # type: (str) -> str
+        """
+        Recursive method that tries to resolve a conjunct, i.e., to find an option
+
+        :param target: target to look for
+        :return: option string
+        """
+        result = ""
+        rule = cls.parser.rules[target]
+        # For now, take the first available option
+        option = rule.options[0]
+
+        for conjunct in option.conjuncts:
+            if not conjunct.is_variable:
+                result += conjunct.name
+                result += " "
+            else:
+                result += cls._resolve_conjunct(conjunct.name)
+
+        return result
+
 
 
 if __name__ == "__main__":
