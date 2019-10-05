@@ -125,21 +125,18 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
             self._dst_entity_designator,
             'resolve') else self._dst_entity_designator
 
-        if (not src_entity) or (not self._robot.ed.get_entity(
-                src_entity.id)) or (not dst_entity):
+        if (not src_entity) or (not self._robot.ed.get_entity(src_entity.id)) or (not dst_entity):
             return "failed"
+
+        if isinstance(dst_entity, Entity):
+            dst_id = dst_entity.id
         else:
-            dst_id = None
-            if isinstance(dst_entity, Entity):
-                dst_id = dst_entity.id
-            else:
-                dst_id = dst_entity
+            dst_id = dst_entity
 
-            self._robot.ed.update_entity(id=dst_id,
-                                         frame_stamped=src_entity.pose,
-                                         type=self._dst_entity_type)
+        self._robot.ed.update_entity(id=dst_id,
+                                     frame_stamped=src_entity.pose)
 
-            return "done"
+        return "done"
 
 
 class SegmentObjects(smach.State):
