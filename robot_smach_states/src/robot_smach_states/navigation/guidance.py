@@ -154,7 +154,8 @@ class TourGuide(object):
         self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
         self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
 
-    def in_room(self, room, position):
+    @staticmethod
+    def in_room(room, position):
         # type: (Entity, kdl.Vector) -> bool
         """
         Checks if the given position is in the given room
