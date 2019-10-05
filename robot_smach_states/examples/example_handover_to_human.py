@@ -1,5 +1,6 @@
 # ROS
 import rospy
+import sys
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot_from_argv
@@ -11,6 +12,8 @@ from robot_smach_states import LockDesignator
 
 
 if __name__ == "__main__":
+    assert len(sys.argv) == 2, "Please provide the robot name" \
+                               "e.g., 'python example_handover_to_human.py hero'"
 
     rospy.init_node("test_handover_stuff")
 

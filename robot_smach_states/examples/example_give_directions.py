@@ -9,7 +9,7 @@ from robot_smach_states.human_interaction import give_directions
 if __name__ == "__main__":
 
     assert len(sys.argv) == 3, "Please provide the robot name and the entity id of the object to give directions to," \
-                               "e.g., 'python guidance.py amigo bed'"
+                               "e.g., 'python example_give_directions.py hero bed'"
 
     # Create node, robot and toggle interface
     rospy.init_node("test_give_directions")
