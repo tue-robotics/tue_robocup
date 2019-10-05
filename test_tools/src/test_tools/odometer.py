@@ -95,13 +95,15 @@ class Odometer:
                         break
 
                 if found_header:
-                    # Going over all lines.(this is the only option to get the last line) Doing nothing with other lines
+                    # Iterate over all lines and get the last valid line. So it continues after an invalid line.
                     last_row = None
-                    try:
-                        for row in reader:
-                            last_row = row
-                    except csv.Error:
-                        pass
+                    while True:
+                        try:
+                            last_row = next(reader)
+                        except csv.Error:
+                            pass
+                        except StopIteration:
+                            break
                     if last_row:
                         last_row = dict(zip(header, last_row))
                         try:
