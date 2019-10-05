@@ -11,7 +11,7 @@ class DummyState(smach.State):
 
     def __init__(self, outcomes, result):
         """
-        :param result: (VDesignator) or (str) The result to be returned
+        :param result: (Designator) or (str) The result to be returned
         :param outcomes: str or [str] Possible outcomes
         """
         check_type(outcomes, str, [str])
