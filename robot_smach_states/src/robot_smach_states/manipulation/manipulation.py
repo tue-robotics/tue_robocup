@@ -42,10 +42,10 @@ class ArmToJointConfig(smach.State):
 class HandOver(smach.State):
     def __init__(self, robot, arm_designator, timeout=10):
         """
-        Put arm of robot in some joint configuration
+        Handover the object in arm to a human.
         :param robot: robot to execute state with
-        :param arm_designator: designator that resolves to arm to put in given configuration
-        :param configuration: joint configuration to put arm in
+        :param arm_designator: designator that resolves to arm holding an object
+        :param timeout: float time the operation may take
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
