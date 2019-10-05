@@ -26,8 +26,7 @@ class DummyState(smach.State):
         if result in self._outcomes:
             return result
         else:
-            rospy.loginfo("Outcome '{}' is invalid. Returning outcome {}.".format(result, self._outcomes[0]))
-            return self._outcomes[0]
+            raise RuntimeError("Incorrect outcome: {}. Possible outcomes: {}".format(result, self._outcomes))
 
 
 if __name__ == "__main__":
