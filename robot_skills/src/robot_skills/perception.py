@@ -89,7 +89,7 @@ class Perception(RobotPart):
         return image
 
     def project_roi(self, roi, frame_id=None):
-        """ Projects a region of interest of a depth image to a 3D Point. Hereto, a service is used
+        """ Projects a region of interest of a target_depth image to a 3D Point. Hereto, a service is used
 
         :param roi: sensor_msgs/RegionOfInterest
         :param frame_id: if specified, the result is transformed into this frame id
@@ -282,7 +282,7 @@ class Perception(RobotPart):
         event = Event()
 
         def callback(rgb, depth, depth_info):
-            rospy.loginfo('Received rgb, depth, cam_info')
+            rospy.loginfo('Received rgb, target_depth, cam_info')
             self._image_data = (rgb, depth, depth_info)
             event.set()
 

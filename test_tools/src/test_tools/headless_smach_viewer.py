@@ -177,8 +177,8 @@ class ContainerNode():
         
         @param selected_paths: The paths to nodes that are selected
         @closed paths: The paths that shouldn't be expanded
-        @param depth: The depth to start traversing the tree
-        @param max_depth: The depth to which we should traverse the tree
+        @param depth: The target_depth to start traversing the tree
+        @param max_depth: The target_depth to which we should traverse the tree
         @param containers: A dict of containers keyed by their paths
         @param show_all: True if implicit transitions should be shown
         @param label_wrapper: A text wrapper for wrapping element names
@@ -334,8 +334,8 @@ class ContainerNode():
         This function is called recursively to update an entire tree.
         
         @param selected_paths: A list of paths to nodes that are currently selected.
-        @param depth: The depth to start traversing the tree
-        @param max_depth: The depth to traverse into the tree
+        @param depth: The target_depth to start traversing the tree
+        @param max_depth: The target_depth to traverse into the tree
         @param items: A dict of all the graph items, keyed by url
         @param subgraph_shapes: A dictionary of shapes from the rendering engine
         @param containers: A dict of all the containers
@@ -343,7 +343,7 @@ class ContainerNode():
 
         # Color root container
         """
-        if depth == 0:
+        if target_depth == 0:
             container_shapes = subgraph_shapes['cluster_'+self._path]
             container_color = (0,0,0,0)
             container_fillcolor = (0,0,0,0)
@@ -631,7 +631,7 @@ class SmachViewerFrame(wx.Frame):
         self.update_graph()
 
     def set_depth(self, event):
-        """Event: Change the maximum depth and update the graph."""
+        """Event: Change the maximum target_depth and update the graph."""
         self._max_depth = self.depth_spinner.GetValue()
         self._needs_zoom = True
         self.update_graph()
