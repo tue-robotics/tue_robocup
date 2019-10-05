@@ -21,9 +21,8 @@ from robot_skills.robot_part import RobotPart
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
 
+
 # Specific types of gripper.
-
-
 class GripperTypes(object):
     # Concrete types of gripper.
     PINCH = "gripper-type-pinch"
