@@ -263,8 +263,6 @@ class ArmToUserPose(smach.State):
     def execute(self, userdata=None):
         if not self.delta:
             rospy.logwarn("Transforming to baselink, should become obsolete but this is not yet the case")
-            # target_position_bl = transformations.tf_transform(target_position, "/map","/base_link",
-            #                                                   tf_listener=self.robot.tf_listener)
             if self.side.send_goal(self.x, self.y, self.z, self.roll, self.pitch, self.yaw,
                                    timeout=self.time_out,
                                    pre_grasp=self.pre_grasp,
