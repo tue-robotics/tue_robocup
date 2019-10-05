@@ -2,10 +2,8 @@ from numpy import array as np_array
 from numpy.linalg import norm as np_norm
 import rospy
 from geometry_msgs.msg import WrenchStamped
+from .exceptions import TimeOutException
 
-
-class TimeOutException(Exception):
-    pass
 
 
 class ForceSensor(object):
