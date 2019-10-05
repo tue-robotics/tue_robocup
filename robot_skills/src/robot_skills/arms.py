@@ -22,6 +22,8 @@ from robot_skills.robot_part import RobotPart
 # it can be expressed by not imposing a requirement (set it to None).
 
 # Specific types of gripper.
+
+
 class GripperTypes(object):
     # Concrete types of gripper.
     PINCH = "gripper-type-pinch"
@@ -83,7 +85,8 @@ class PublicArm(object):
         Query the object currently held by the arm.
         """
         self._test_die(self._has_occupied_by, "occupied_by",
-                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
+                       "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         return self._arm.occupied_by
 
     @occupied_by.setter
@@ -92,7 +95,8 @@ class PublicArm(object):
         Set the object currently held by the arm,
         """
         self._test_die(self._has_occupied_by, "occupied_by",
-                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects=[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
+                       "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         self._arm.occupied_by = value
 
     # Joint goals
@@ -116,6 +120,7 @@ class PublicArm(object):
         return configuration in self._available_joint_trajectories
 
     def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7):
+        print()
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
@@ -485,7 +490,8 @@ class Arm(RobotPart):
         try:
             rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
         except AttributeError:
-            print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".format(self.side))
+            print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
+                  format(self.side))
 
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
@@ -598,9 +604,9 @@ class Arm(RobotPart):
     def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
-        :param configuration: name of configuration, configuration should be loaded as parameter
-        :param max_joint_vel: speed the robot can have when getting to the desired configuration
-        :param timeout: timeout in seconds
+        :param configuration:(str) name of configuration, configuration should be loaded as parameter
+        :param timeout:(secs) timeout in seconds
+        :param max_joint_vel:(int,float,[int]) speed the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_configurations:
@@ -615,9 +621,9 @@ class Arm(RobotPart):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to
         the arm
-        :param configuration: name of configuration, configuration should be loaded as parameter
-        :param timeout: timeout in seconds
-        :param max_joint_vel: speed the robot can have when getting to the desired configuration
+        :param configuration:(str) name of configuration, configuration should be loaded as parameter
+        :param timeout:(secs) timeout in seconds
+        :param max_joint_vel:(int,float,[int]) speed the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
         if configuration in self.default_trajectories:
@@ -733,39 +739,50 @@ class Arm(RobotPart):
             rospy.logerr(e)
             return False
 
-    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_names=None):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
         """
         Low level method that sends a array of joint references to the arm.
 
         If timeout is defined, it will wait for timeout*len(joints_reference) seconds for the
         completion of the actionlib goal. It will return True as soon as possible when the goal
         succeeded. On timeout, it will return False.
-        :param joints_references: list of joint configurations,
+        :param joints_references:[str] list of joint configurations,
         which should be a list of the length equal to the number of joints to be moved
-        :param max_joint_vel: speed the robot can have when getting to the desired configuration
-        :param timeout: timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not allowed
-        :param joint_names: joint names, which need to me moved
+        :param max_joint_vel:(int,float,[int], [float]) speed the robot can have when getting to the desired
+        configuration. A single value can be given, which will be used for all joints, or a list of values can be given
+        in which the order has to agree with the joints according to the joints_references.
+        :param timeout:(secs) timeout for each joint configuration in rospy.Duration(seconds); timeout of 0.0 is not
+         allowed
         :return: True or False
         """
         if not joints_references:
             return False
 
-        if not joint_names:
-            if len(joints_references[0]) == len(self.joint_names) + len(self.torso_joint_names):
-                joint_names = self.torso_joint_names + self.joint_names
-            else:
-                joint_names = self.joint_names
+        if len(joints_references[0]) == len(self.joint_names) + len(self.torso_joint_names):
+            joint_names = self.torso_joint_names + self.joint_names
+        else:
+            joint_names = self.joint_names
+
+        if isinstance(max_joint_vel, (float, int)):
+            max_joint_vel = [max_joint_vel]*len(joint_names)
+
+        if isinstance(max_joint_vel, list):
+            if isinstance(max_joint_vel[0], (int, float)):
+                if len(max_joint_vel) is not len(joint_names):
+                    rospy.logerr("The length of 'max_joint_vel' is {} and the length of 'joint_names' is {}. \n"
+                                 "Please give the velocities for the following joints (in the correct order!): {}"
+                                 .format(len(max_joint_vel), len(joint_names), joint_names))
 
         ps = []
         time_from_start = 0.0
         start_joint_state = self.get_joint_states()
         prev_joint_ref = [start_joint_state[jn] for jn in joint_names]
         for joints_reference in joints_references:
-            max_diff = sorted([abs(prev - new) for prev, new in zip(prev_joint_ref, joints_reference)])[-1]
+            max_diff = [abs(prev - new) for prev, new in zip(prev_joint_ref, joints_reference)]
             if len(joints_reference) != len(joint_names):
-                rospy.logwarn('Please use the correct %d number of joint references (current = %d'
-                              % (len(joint_names), len(joints_references)))
-            time_from_start += max_diff/max_joint_vel
+                rospy.logwarn('Please use the correct {} number of joint references (current = {})'
+                              .format(len(joint_names), len(joints_references)))
+            time_from_start += max(x/y for x, y in zip(max_diff, max_joint_vel))
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
                 time_from_start=rospy.Duration.from_sec(time_from_start)))
@@ -945,7 +962,7 @@ class FakeArm(RobotPart):
     def send_joint_trajectory(self, configuration, max_joint_vel=0.7, timeout=5):
         return False
 
-    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5), joint_names = None):
+    def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
         rospy.logwarn("_send_joint_trajectory called on FakeArm.")
         return False
 
