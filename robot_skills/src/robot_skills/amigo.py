@@ -1,5 +1,5 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, ssl, torso,\
-    world_model_ed
+from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, \
+    sound_source_localisation, torso, world_model_ed
 from .simulation import is_sim_mode, SimEButton
 
 
@@ -18,7 +18,7 @@ class Amigo(robot.Robot):
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))
-        self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
+        self.add_body_part('ssl', sound_source_localisation.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
         self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
