@@ -6,7 +6,7 @@ import rospy
 from std_msgs.msg import Header
 from tf import TransformListener
 
-rospy.init_node('dsada')
+rospy.init_node('ray_trace_example')
 
 p = perception.Perception("hero", None, None, camera_base_ns="hero/head_rgbd_sensor")
 
