@@ -1,7 +1,5 @@
-import os
 import rospy
 import sys
-import std_srvs.srv
 import robot_smach_states.util.designators as ds
 
 from robot_skills.get_robot import get_robot_from_argv
