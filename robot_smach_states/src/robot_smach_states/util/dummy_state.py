@@ -17,7 +17,6 @@ class DummyState(smach.State):
         check_type(outcomes, str, [str])
         outcomes = list(outcomes)
         assert len(outcomes) >= 1, "Minimal one outcome should be specified"
-        outcomes.append("invalid_outcome")
         smach.State.__init__(self, outcomes=outcomes)
         check_type(result, str)
         self.result = result
@@ -27,21 +26,20 @@ class DummyState(smach.State):
         if result in self._outcomes:
             return result
         else:
-            rospy.loginfo("Outcome '{}' is invalid. Aborting.".format(result))
-            return "invalid_outcome"
+            rospy.loginfo("Outcome '{}' is invalid. Returning outcome {}.".format(result, self._outcomes[0]))
+            return self._outcomes[0]
 
 
 if __name__ == "__main__":
     rospy.init_node('dummy_state_machine')
 
-    sm = smach.StateMachine(outcomes=['outcome1', 'outcome2', 'outcome3', 'invalid_outcome'])
+    sm = smach.StateMachine(outcomes=['outcome1', 'outcome2', 'outcome3'])
 
     with sm:
         sm.add('FOO',
                DummyState(outcomes=['succeeded', 'failed', 'aborted'], result="succeeded"),
                transitions={'succeeded': 'outcome1',
                             'failed': 'outcome2',
-                            'aborted': 'outcome3',
-                            'invalid_outcome': 'invalid_outcome'})
+                            'aborted': 'outcome3'})
 
     sm.execute()
