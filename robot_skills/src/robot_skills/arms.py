@@ -149,7 +149,7 @@ class PublicArm(object):
         :type timeout: float
         :param gripper_type: Optional type of gripper to perform the action.
         :type gripper_type: str
-        :param max_torque: How much force to apply, range between 0 and 1, only applied if closing the gripper
+        :param max_torque: How much torque [Nm] to apply
         :return: succes
         :rtype: bool
         """
@@ -180,7 +180,7 @@ class PublicArm(object):
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
         # Provided gripper type currently ignored.
         return self._arm.wait_for_motion_done(timeout, cancel)
-    
+
     def cancel_goals(self):
         """
         Cancels the currently active grasp-precompute and joint-trajectory-action goals
@@ -661,7 +661,7 @@ class Arm(RobotPart):
         :type state: str (GripperState)
         :param timeout: timeout in seconds; timeout of 0.0 is not allowed
         :type timeout: float
-        :param max_torque: How much force to apply, range between 0 and 1, only applied if closing the gripper
+        :param max_torque: How much torque [Nm] to apply, only applied when closing the gripper
         :return: True of False
         :rtype: bool
         """
