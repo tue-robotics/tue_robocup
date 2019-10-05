@@ -266,6 +266,7 @@ class ArmToUserPose(smach.State):
             # target_position_bl = transformations.tf_transform(target_position, "/map","/base_link",
             #                                                   tf_listener=self.robot.tf_listener)
             if self.side.send_goal(self.x, self.y, self.z, self.roll, self.pitch, self.yaw,
+                                   timeout=self.time_out,
                                    pre_grasp=self.pre_grasp,
                                    frame_id=self.frame_id):
                 return 'succeeded'
