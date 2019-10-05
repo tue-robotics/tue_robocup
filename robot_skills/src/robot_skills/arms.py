@@ -414,7 +414,7 @@ class Arm(RobotPart):
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
 
-        self.force_sensor = ForceSensor("/" + robot_name + "/wrist_wrench/raw")
+        self.force_sensor = ForceSensor(robot_name, tf_listener, "/" + robot_name + "/wrist_wrench/raw")
         self.get_joint_states = get_joint_states
 
     def collect_gripper_types(self, gripper_type):

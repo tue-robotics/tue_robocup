@@ -4,16 +4,21 @@ import rospy
 from geometry_msgs.msg import WrenchStamped
 from .exceptions import TimeOutException
 
+# TU/e Robotics
+from robot_skills.robot_part import RobotPart
 
 
-class ForceSensor(object):
-    def __init__(self, topic, force_norm_threshold=2.5):
+class ForceSensor(RobotPart):
+    def __init__(self, robot_name, tf_listener, topic, force_norm_threshold=2.5):
         """
         Class for conveniently using a force sensor
 
+        :param robot_name: Which robot is this part of?
+        :param tf_listener: tf_server.TFClient for  use in RobotPart
         :param topic: Topic to use for WrenchStamped measurement
         :param force_norm_threshold: Edge up if norm exceeds this value (defaults to 2.5)
         """
+        super(ForceSensor, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._topic = topic
 
         self._calibrated_msg = None
