@@ -146,25 +146,30 @@ class Odometer:
         Writing all data in self.data to the data file and closing it again. This should prevent file corruption.
         :return: no return
         """
-        # Create today's file if not already there
-        if os.path.exists(self.newfilepath):
-            new_file = open(self.newfilepath, "a", 1)  # 1=line-buffered
-            rospy.logdebug("Today's file already exists")
-        else:
-            new_file = open(self.newfilepath, "w+", 1)  # 1=line-buffered
-            rospy.logdebug("First time writing in today's file")
+        try:
+            # Create today's file if not already there
+            if os.path.exists(self.newfilepath):
+                new_file = open(self.newfilepath, "a", 1)  # 1=line-buffered
+                rospy.logdebug("Today's file already exists")
+            else:
+                new_file = open(self.newfilepath, "w+", 1)  # 1=line-buffered
+                rospy.logdebug("First time writing in today's file")
 
-        writer = csv.DictWriter(new_file, fieldnames=['timestamp', 'distance', 'rotation', 'time'])
-        if not self.file_has_header:
-            rospy.logdebug("Printing header of csv file")
-            writer.writeheader()
-            self.file_has_header = True
-        if self.data:
-            rospy.logdebug("Writing data to csv file")
-            writer.writerows(self.data)
-            self.data = []
+            writer = csv.DictWriter(new_file, fieldnames=['timestamp', 'distance', 'rotation', 'time'])
+            if not self.file_has_header:
+                rospy.logdebug("Printing header of csv file")
+                writer.writeheader()
+                self.file_has_header = True
+            if self.data:
+                rospy.logdebug("Writing data to csv file")
+                writer.writerows(self.data)
+                self.data = []
 
-        new_file.close()
+        except Exception as e:
+            rospy.logerr(e)
+
+        finally:
+            new_file.close()
 
     def callback(self, msg):
         """
