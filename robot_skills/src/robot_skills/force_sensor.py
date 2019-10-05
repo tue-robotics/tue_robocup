@@ -26,7 +26,19 @@ class ForceSensor(RobotPart):
         self._force_norm_threshold = force_norm_threshold
 
     def _wrench_callback(self, msg):
+        # type: (WrenchStamped) -> None
+        """
+        Process a WrenchStamped-message to determine if the norm(force) goes over the limit
+        :param msg: WrenchStamped to see if it goes over self.force_norm_threshold
+        :return: None but sets self.edge_up
+        """
         def _detect_edge_up(calibrated_msg, msg):
+            """
+            Determine if the difference between calibrated_msg and msg is larger than self._force_norm_threshold
+            :param calibrated_msg: Reference message
+            :param msg: Comparision message, to be compared with the reference message
+            :return: bool if the difference is larger than the threshold.
+            """
             def _norm(v):
                 return np_norm(np_array([v.x, v.y, v.z]))
 
