@@ -4,6 +4,7 @@
 from collections import defaultdict
 import mock
 import random
+import os
 
 # ROS
 import geometry_msgs
@@ -393,7 +394,6 @@ if __name__ == "__main__":
         Let mockbot say a sentence and them move the generated speech file to a separate file that will not be overwritten
         """
         speak(sentence)
-        import os
         path = sentence.replace(" ", "_")
         path += ".wav"
         os.system("mv /tmp/speech.wav /tmp/{0}".format(path))
