@@ -7,10 +7,10 @@ import rospkg
 import unittest
 
 
-class TestDocTests(unittest.TestCase):
+class _TestDocTests(unittest.TestCase):
 
-    def __init__(self, module_name):
-        super(TestDocTests, self).__init__("test_doctests")
+    def __init__(self, module_name, method_name="test_doctests"):
+        super(_TestDocTests, self).__init__(method_name)
         self.module_name = module_name
 
     def test_doctests(self):
