@@ -218,9 +218,9 @@ class EdEntityDesignator(Designator):
         # Should not be logged as error because when a None value check is
         # implemented in the calling function, the log becomes misleading
         if self.none_resolve:
-            rospy.logwarn("No entities found in {0}".format(self))
-        else:
             rospy.logerr("No entities found in {0}".format(self))
+        else:
+            rospy.logwarn("No entities found in {0}".format(self))
 
         return None
 
