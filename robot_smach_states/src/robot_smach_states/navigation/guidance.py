@@ -9,12 +9,10 @@ import smach
 import PyKDL as kdl
 
 # Robot skills
-from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
-import robot_smach_states as states
 
-# robot_smach_states.navigation
 import navigation
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
