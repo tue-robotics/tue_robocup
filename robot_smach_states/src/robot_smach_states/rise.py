@@ -1,6 +1,4 @@
-#! /usr/bin/env python
 # ROS
-
 import smach
 
 import PyKDL as kdl

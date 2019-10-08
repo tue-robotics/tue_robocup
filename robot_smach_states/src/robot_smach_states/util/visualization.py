@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """Plot a smach state machine"""
 
 from __future__ import print_function

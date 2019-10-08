@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 __author__ = 'loy'
 from deprecation_warnings import get_caller_info
 import rospy

@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 import rospy
 import copy
 from robot_smach_states.util.designators.checks import check_type

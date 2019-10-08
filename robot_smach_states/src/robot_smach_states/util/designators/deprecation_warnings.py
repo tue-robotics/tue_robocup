@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """Deprecation warnings.
 From:
 - https://wiki.python.org/moin/PythonDecoratorLibrary#Generating_Deprecation_Warnings

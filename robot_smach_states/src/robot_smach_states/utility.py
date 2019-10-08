@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # ROS
 import rospy
 import smach

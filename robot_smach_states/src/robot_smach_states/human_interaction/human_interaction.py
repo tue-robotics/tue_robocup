@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # System
 import math
 import random
