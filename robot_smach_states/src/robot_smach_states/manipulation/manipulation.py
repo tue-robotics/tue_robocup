@@ -249,7 +249,7 @@ class SetGripper(smach.State):
         if self.grab_entity_designator:
             entity = self.grab_entity_designator.resolve()
             if not entity:
-                rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator))
+                rospy.logerr("Could not resolve {0}".format(self.grab_entity_designator))
 
             arm.occupied_by = entity
 
