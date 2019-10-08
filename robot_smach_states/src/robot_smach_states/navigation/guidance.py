@@ -383,7 +383,6 @@ class Guide(smach.StateMachine):
                                                    distance=self.operator_distance,
                                                    radius=self.operator_radius),
                                    transitions={"is_following": "GET_PLAN",
-
                                                 "is_lost": "lost_operator"})
 
             smach.StateMachine.add("PLAN_BLOCKED", navigation.planBlocked(self.robot),
