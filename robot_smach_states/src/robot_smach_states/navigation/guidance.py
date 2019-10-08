@@ -88,8 +88,8 @@ class TourGuide(object):
 
         try:
             room = self.get_room(position.frame.p)
-        except RuntimeError:
-            # position is not in any room
+        except RuntimeError as e:
+            rospy.logwarn(e)
             return ""
 
         if room.id not in self._passed_room_ids:
