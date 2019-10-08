@@ -8,8 +8,29 @@ import unittest
 
 
 class _TestDocTests(unittest.TestCase):
+    """
+    Parent class, which runs all doctests in a python module. As rospkg is used to locate the module, this test only
+    can be applied to catkin packages.
+    To create your own test:
+    from test_tools.doctest_unittest import _TestDocTests
+
+    class DocTestsModuleA(_TestDocTests):
+        def __init__(self, method_name="test_doctests"):
+        super(DocTestsModuleA, self).__init__(module_name="ModuleA", method_name=method_name)
+
+    if __name__ == '__main__':
+        suite = unittest.TestSuite()
+        suite.addTest(DocTestsModuleA())
+        unittest.TextTestRunner(verbosity=2).run(suite)
+
+    """
 
     def __init__(self, module_name, method_name="test_doctests"):
+        """
+        Constructor
+        :param module_name: (str) Name of the python module
+        :param method_name: (str) Name of the member variable to run
+        """
         super(_TestDocTests, self).__init__(method_name)
         self.module_name = module_name
 
