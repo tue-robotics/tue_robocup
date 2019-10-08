@@ -1,12 +1,10 @@
-#! /usr/bin/env python
-
 import unittest
 
 # datatypes
 import PyKDL as kdl
 from robot_skills.util.kdl_conversions import VectorStamped
 
-#Robot Skills
+# Robot Skills
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume

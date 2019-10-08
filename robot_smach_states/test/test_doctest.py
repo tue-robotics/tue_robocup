@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 from test_tools.doctest_unittest import _TestDocTests
 import unittest
 
