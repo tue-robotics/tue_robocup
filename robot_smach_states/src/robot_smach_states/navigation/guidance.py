@@ -108,11 +108,13 @@ class TourGuide(object):
             entity_relative_pose = position.frame.Inverse() * entity.pose.frame
 
             # Check the distance
-            if abs(entity_relative_pose.p.x()) < self._x_threshold and abs(entity_relative_pose.p.y()) < self._y_threshold:
+            if abs(entity_relative_pose.p.x()) < self._x_threshold and \
+                    abs(entity_relative_pose.p.y()) < self._y_threshold:
                 self._passed_furniture_ids.append(entity.id)
                 side = "left" if entity_relative_pose.p.y() >= 0.0 else "right"
                 rospy.logdebug(
-                    "describe passing entity: {}.\t passed entities is now {}".format(room.id, self._passed_room_ids))
+                    "describe passing entity: {}.\t passed entities is now {}".format(entity.id,
+                                                                                      self._passed_furniture_ids))
                 return "On our {} you can see the {}".format(side, entity.id)
 
         # no furniture passed, nothing of interest
