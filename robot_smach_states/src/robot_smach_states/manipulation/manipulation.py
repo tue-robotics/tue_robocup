@@ -305,45 +305,6 @@ class ArmToUserPose(smach.State):
                 return 'failed'
 
 
-class ArmToQueryPoint(smach.State):
-    def __init__(self, robot, side, point_designator, time_out=20, pre_grasp=False, first_joint_pos_only=False):
-        """Move the arm to de designated point
-        @param point_designator resolves to a PointStamped the gripper should move to"""
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.robot = robot
-        self.side = side
-        self.point_designator = point_designator
-        self.time_out = time_out
-        self.pre_grasp = pre_grasp
-        self.first_joint_pos_only = first_joint_pos_only
-
-    def execute(self, userdata=None):
-        # ToDo: check point_designator?
-        goal = self.point_designator.resolve()
-        if not goal:
-            rospy.loginfo("point_designator {0} cannot be resolved.".format(self.point_designator))
-            return 'failed'
-
-        rospy.loginfo("ArmToQueryPoint: goal = {0}".format(goal))
-
-        # Note: answers are typically in "map"frame, check whether this works out
-        rospy.logwarn("Transforming to base_link frame for amigo_arm_navigation")
-        goal_bl = transformations.tf_transform(goal.point, goal.header.frame_id, "/amigo/base_link",
-                                               tf_listener=self.robot.tf_listener)
-        if goal_bl is None:
-            return 'failed'
-
-        if self.side.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-                               frame_id="/amigo/base_link",
-                               timeout=self.time_out,
-                               pre_grasp=self.pre_grasp,
-                               first_joint_pos_only=self.first_joint_pos_only):
-            return 'succeeded'
-        else:
-            rospy.logwarn("Goal unreachable: {0}".format(goal_bl).replace("\n", " "))
-            return 'failed'
-
-
 class TorsoToUserPos(smach.State):
     def __init__(self, robot, torso_pos, time_out=0.0):
         """
