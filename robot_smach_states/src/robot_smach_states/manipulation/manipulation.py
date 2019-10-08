@@ -221,13 +221,12 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
 
 class SetGripper(smach.State):
-    def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, drop_from_frame=None, grab_entity_designator=None, timeout=10):
+    def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, grab_entity_designator=None, timeout=10):
         """
         Instruct the gripper
         :param robot: robot to execute state with
         :param arm_designator: designator that resolves to arm corresponding to the gripper
         :param gripperstate: desired state of the gripper
-        :param drop_from_frame: ???
         :param grab_entity_designator: Designator resolving to the entity to be attached to the gripper
         :param timeout: float amount of time the procedure may take
         """
