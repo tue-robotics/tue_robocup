@@ -88,8 +88,10 @@ VP["action": "find", "object": {"type": X}] -> V_FIND DET NAMED_OBJECT[X]
 grammar += """
 V_GOPL -> go to | navigate to | drive to
 
-VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the LOCATION[X]
+VP["action": "navigate-to", "target-location": {"id": X}] -> V_GOPL the LOCATION[X]
 """
+# VP["action": "navigate-to", "object": {"id": X}] -> V_GOPL the NAMED_OBJECT[X]
+
 
 ###############################################################################
 #
