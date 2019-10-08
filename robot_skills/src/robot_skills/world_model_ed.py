@@ -332,7 +332,7 @@ class ED(RobotPart):
 
     def update_kinect(self, area_description="", background_padding=0):
         """
-        Update ED based on kinect (target_depth) images
+        Update ED based on kinect (depth) images
 
         :param area_description An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
         :param background_padding The maximum distance to which kinect data points are associated to existing objects (in meters).
