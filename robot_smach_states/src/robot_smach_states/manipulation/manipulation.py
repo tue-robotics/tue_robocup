@@ -262,7 +262,6 @@ class SetGripper(smach.State):
         if self.gripperstate == GripperState.OPEN:
             arm.occupied_by = None
 
-        # ToDo: check for failed in other states
         if result:
             return 'succeeded'
         else:
