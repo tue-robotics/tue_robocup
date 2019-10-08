@@ -93,7 +93,8 @@ class HandoverFromHuman(smach.StateMachine):
     CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
     as id.
     """
-    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=15, arm_configuration="handover_to_human"):
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=15,
+                 arm_configuration="handover_to_human"):
         """
         Hold up hand to accept an object and close hand once something is inserted
         :param robot: Robot with which to execute this behavior
@@ -115,10 +116,10 @@ class HandoverFromHuman(smach.StateMachine):
 
             smach.StateMachine.add('OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator,
                                                                     gripperstate=GripperState.OPEN),
-                                   transitions={'succeeded': 'SAY1',
-                                                'failed': 'SAY1'})
+                                   transitions={'succeeded': 'SAY',
+                                                'failed': 'SAY'})
 
-            smach.StateMachine.add('SAY1', Say(robot, 'Please hand over the object by pushing it gently in my gripper'),
+            smach.StateMachine.add('SAY', Say(robot, 'Please hand over the object by pushing it gently in my gripper'),
                                    transitions={'spoken': 'CLOSE_AFTER_INSERT'})
 
             smach.StateMachine.add('CLOSE_AFTER_INSERT',
