@@ -60,7 +60,7 @@ class Torso(RobotPart):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def _send_goal(self, torso_pos, timeout=0.0, tolerance=[]):
+    def _send_goal(self, torso_pos, timeout=0.0, tolerance=[], start_time=1.5):
         """
         Send a joint goal to the torso
         :param torso_pos: list of joint positions with the length equal to the number of joints
@@ -93,7 +93,7 @@ class Torso(RobotPart):
         torso_goal_point = trajectory_msgs.msg.JointTrajectoryPoint()
         torso_goal.trajectory.joint_names = list(self.joint_names)
         torso_goal_point.positions = torso_pos
-        torso_goal_point.time_from_start = rospy.Duration.from_sec(1.5)
+        torso_goal_point.time_from_start = rospy.Duration.from_sec(start_time)
         torso_goal.trajectory.points.append(torso_goal_point)
 
         for i in range(0, len(self.joint_names)):
