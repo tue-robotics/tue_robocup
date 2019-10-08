@@ -146,30 +146,26 @@ class Odometer:
         Writing all data in self.data to the data file and closing it again. This should prevent file corruption.
         :return: no return
         """
-        try:
-            # Create today's file if not already there
-            if os.path.exists(self.newfilepath):
-                new_file = open(self.newfilepath, "a", 1)  # 1=line-buffered
-                rospy.logdebug("Today's file already exists")
-            else:
-                new_file = open(self.newfilepath, "w+", 1)  # 1=line-buffered
-                rospy.logdebug("First time writing in today's file")
+        # Create today's file if not already there
+        if os.path.exists(self.newfilepath):
+            rospy.logdebug("Today's file already exists")
+        else:
+            rospy.logdebug("First time writing in today's file")
 
-            writer = csv.DictWriter(new_file, fieldnames=['timestamp', 'distance', 'rotation', 'time'])
-            if not self.file_has_header:
-                rospy.logdebug("Printing header of csv file")
-                writer.writeheader()
-                self.file_has_header = True
-            if self.data:
-                rospy.logdebug("Writing data to csv file")
-                writer.writerows(self.data)
-                self.data = []
+        with open(self.newfilepath, "a", 1) as new_file:  # 1=line-buffered
+            try:
+                writer = csv.DictWriter(new_file, fieldnames=['timestamp', 'distance', 'rotation', 'time'])
+                if not self.file_has_header:
+                    rospy.logdebug("Printing header of csv file")
+                    writer.writeheader()
+                    self.file_has_header = True
+                if self.data:
+                    rospy.logdebug("Writing data to csv file")
+                    writer.writerows(self.data)
+                    self.data = []
 
-        except Exception as e:
-            rospy.logerr(e)
-
-        finally:
-            new_file.close()
+            except Exception as e:
+                rospy.logerr(e)
 
     def callback(self, msg):
         """
