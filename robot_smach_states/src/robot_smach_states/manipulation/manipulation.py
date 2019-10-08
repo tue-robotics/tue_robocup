@@ -39,7 +39,7 @@ class ArmToJointConfig(smach.State):
         return "failed"
 
 
-class HandOver(smach.State):
+class HandOverTo(smach.State):
     def __init__(self, robot, arm_designator, timeout=10):
         """
         Handover the object in arm to a human.
@@ -158,7 +158,7 @@ class HandoverToHuman(smach.StateMachine):
                                    transitions={'succeeded': 'DETECT_HANDOVER',
                                                 'failed': 'DETECT_HANDOVER'})
 
-            smach.StateMachine.add("DETECT_HANDOVER", HandOver(robot, locked_arm),
+            smach.StateMachine.add("DETECT_HANDOVER", HandOverTo(robot, locked_arm),
                                    transitions={'succeeded': 'CLOSE_GRIPPER_HANDOVER',
                                                 'failed': 'CLOSE_GRIPPER_HANDOVER'})
 
