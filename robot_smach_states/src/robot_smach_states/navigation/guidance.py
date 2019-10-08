@@ -148,7 +148,7 @@ class TourGuide(object):
             rospy.logwarn("position ({}) not in any room".format(position.frame.p))
 
         # get initial entities
-        r = math.sqrt(self._x_threshold*self._x_threshold + self._y_threshold*self._y_threshold)
+        r = math.hypot(self._x_threshold, self._y_threshold)
         close_entities = self._robot.ed.get_entities(center_point=position.extractVectorStamped(), radius=r)
         close_furniture_entities = [entity for entity in close_entities if entity.is_a("furniture")]
         for entity in close_furniture_entities:
