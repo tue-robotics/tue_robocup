@@ -30,6 +30,8 @@ class _TestDocTests(unittest.TestCase):
         :param method_name: (str) Name of the member variable to run, this should be "test_doctests" and shouldn't
         be changed.
         """
+        assert method_name == "test_doctests", "The method_name should be 'test_doctests'. This is the function which" \
+                                               "implements the functionality of this TestCase."
         super(_TestDocTests, self).__init__(method_name)
         self.module_name = module_name
 
