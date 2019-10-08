@@ -270,41 +270,6 @@ class SetGripper(smach.State):
             return 'failed'
 
 
-class ArmToUserPose(smach.State):
-    def __init__(self, side, x, y, z, roll=0, pitch=0, yaw=0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.side = side
-        self.x = x
-        self.y = y
-        self.z = z
-        self.roll = roll
-        self.pitch = pitch
-        self.yaw = yaw
-        self.time_out = time_out
-        self.pre_grasp = pre_grasp
-        self.frame_id = frame_id
-        self.delta = delta
-
-    def execute(self, userdata=None):
-        if not self.delta:
-            rospy.logwarn("Transforming to baselink, should become obsolete but this is not yet the case")
-            if self.side.send_goal(self.x, self.y, self.z, self.roll, self.pitch, self.yaw,
-                                   timeout=self.time_out,
-                                   pre_grasp=self.pre_grasp,
-                                   frame_id=self.frame_id):
-                return 'succeeded'
-            else:
-                return 'failed'
-        else:
-            if self.side.send_delta_goal(self.x, self.y, self.z, self.roll, self.pitch, self.yaw,
-                                         timeout=self.time_out,
-                                         pre_grasp=self.pre_grasp,
-                                         frame_id=self.frame_id):
-                return 'succeeded'
-            else:
-                return 'failed'
-
-
 class TorsoToUserPos(smach.State):
     def __init__(self, robot, torso_pos, time_out=0.0):
         """
