@@ -27,7 +27,8 @@ class _TestDocTests(unittest.TestCase):
         """
         Constructor
         :param module_name: (str) Name of the python module
-        :param method_name: (str) Name of the member variable to run
+        :param method_name: (str) Name of the member variable to run, this should be "test_doctests" and shouldn't
+        be changed.
         """
         super(_TestDocTests, self).__init__(method_name)
         self.module_name = module_name
