@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import doctest
 import importlib
 import os
