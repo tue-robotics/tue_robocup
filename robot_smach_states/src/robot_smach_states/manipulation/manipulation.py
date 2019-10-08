@@ -252,18 +252,10 @@ class SetGripper(smach.State):
             if not entity:
                 rospy.logerr("Could not resolve {0}".format(self.grab_entity_designator))
 
-            arm.occupied_by = entity
+            if self.gripperstate != GripperState.OPEN:
+                arm.occupied_by = entity
 
         if arm.send_gripper_goal(self.gripperstate, timeout=self.timeout):
-            result = True
-        else:
-            result = False
-
-        # ToDo: make sure things can get attached to the gripper in this state. Use userdata?
-        if self.gripperstate == GripperState.OPEN:
-            arm.occupied_by = None
-
-        if result:
             return 'succeeded'
         else:
             return 'failed'
