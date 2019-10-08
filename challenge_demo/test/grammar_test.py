@@ -15,7 +15,6 @@ class GrammarTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # import rospy; rospy.init_node("testnode")
         cls.knowledge = load_knowledge('challenge_demo')
         cls.parser = CFGParser.fromstring(cls.knowledge.grammar)
         cls.task_manager = TaskManager(robot=Mockbot())
@@ -53,22 +52,12 @@ class GrammarTest(unittest.TestCase):
         test_results = {}
         for option in self.actions_rule.options:
 
-            # Temp for test development
-            # if "find" not in option.lsemantic:
-            # if "say" not in option.lsemantic:
-            # if "hand-over" not in option.lsemantic:
-            # if "place" not in option.lsemantic:
-            #     continue
-            # End of temp thingy
-
-            # option.lsemantic = "'action': 'find', 'object': {'type': X}, 'location': {'id': Y}"
             result_str = ""
 
             # For each conjunct, we want to have a viable option
             for conjunct in option.conjuncts:
                 result_str += self._resolve_conjunct(conjunct.name)
             result_str = result_str.rstrip(" ")
-            # print("Result string: <{}>".format(result_str))
 
             # Now, we can parse the result string to get the action description
             actions_definition = self.parser.parse_raw(
@@ -81,8 +70,6 @@ class GrammarTest(unittest.TestCase):
                 "'actions' not in actions definition, don't know what to do"
             )
 
-            # print("Action: {}".format(actions_definition))
-
             # Test the action description with the task manager
             try:
                 test_result = self.task_manager.set_up_state_machine(
@@ -92,15 +79,6 @@ class GrammarTest(unittest.TestCase):
                 test_result = ConfigurationResult()
                 test_result.message = "Configuration crashed: {}".format(e.message)
             test_results[result_str] = TMTestResult(actions_definition["actions"], test_result)
-            # self.assertTrue(
-            #     config_result.succeeded,
-            #     "Configuration of action '{}' failed.\n\nSentence: '{}'\n\nRecipe: {}\n\nError: {}".format(
-            #         actions_definition["actions"][0]["action"],
-            #         result_str,
-            #         actions_definition,
-            #         config_result.message,
-            #     ),
-            # )
 
         failed_test_results = {}
         for action, test_result in test_results.iteritems():
@@ -121,10 +99,6 @@ class GrammarTest(unittest.TestCase):
                 test_result.config_result.message,
             )
         self.assertFalse(failed_test_results, error_str)
-        # knowledge = load_knowledge("challenge_demo")
-        # parser = CFGParser.fromstring(knowledge.grammar)
-
-        print("Yeehah, my test has succeeded")
 
     @classmethod
     def _resolve_conjunct(cls, target):
@@ -135,25 +109,21 @@ class GrammarTest(unittest.TestCase):
         :param target: target to look for
         :return: option string
         """
-        try:  # ToDo: remove try except
-            if target not in cls.parser.rules:
-                return target + " "
+        if target not in cls.parser.rules:
+            return target + " "
 
-            result = ""
-            rule = cls.parser.rules[target]
-            # For now, take the first available option
-            option = rule.options[0]
+        result = ""
+        rule = cls.parser.rules[target]
+        # For now, take the first available option
+        option = rule.options[0]
 
-            for conjunct in option.conjuncts:
-                if not conjunct.is_variable:
-                    result += conjunct.name
-                    result += " "
-                else:
-                    result += cls._resolve_conjunct(conjunct.name)
-        except:
-            raise
+        for conjunct in option.conjuncts:
+            if not conjunct.is_variable:
+                result += conjunct.name
+                result += " "
+            else:
+                result += cls._resolve_conjunct(conjunct.name)
         return result
-
 
 
 if __name__ == "__main__":
