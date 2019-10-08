@@ -1,4 +1,5 @@
 from __future__ import print_function
+import collections
 import unittest
 
 from grammar_parser.cfgparser import CFGParser
@@ -6,6 +7,8 @@ from robocup_knowledge import load_knowledge
 from robot_skills.mockbot import Mockbot
 from action_server.actions.action import ConfigurationResult
 from action_server.task_manager import TaskManager
+
+TMTestResult = collections.namedtuple("TMTestResult", ["recipe", "config_result"])
 
 
 class GrammarTest(unittest.TestCase):
@@ -47,7 +50,7 @@ class GrammarTest(unittest.TestCase):
 
     def test_grammar(self):
 
-        config_results = {}
+        test_results = {}
         for option in self.actions_rule.options:
 
             # Temp for test development
@@ -65,7 +68,7 @@ class GrammarTest(unittest.TestCase):
             for conjunct in option.conjuncts:
                 result_str += self._resolve_conjunct(conjunct.name)
             result_str = result_str.rstrip(" ")
-            print("Result string: <{}>".format(result_str))
+            # print("Result string: <{}>".format(result_str))
 
             # Now, we can parse the result string to get the action description
             actions_definition = self.parser.parse_raw(
@@ -78,17 +81,17 @@ class GrammarTest(unittest.TestCase):
                 "'actions' not in actions definition, don't know what to do"
             )
 
-            print("Action: {}".format(actions_definition))
+            # print("Action: {}".format(actions_definition))
 
             # Test the action description with the task manager
             try:
-                config_result = self.task_manager.set_up_state_machine(
+                test_result = self.task_manager.set_up_state_machine(
                     recipe=actions_definition["actions"],
                 )  # type: ConfigurationResult
             except Exception as e:
-                config_result = ConfigurationResult()
-                config_result.message = "Configuration crashed: {}".format(e.message)
-            config_results[actions_definition["actions"][0]["action"]] = config_result
+                test_result = ConfigurationResult()
+                test_result.message = "Configuration crashed: {}".format(e.message)
+            test_results[result_str] = TMTestResult(actions_definition["actions"], test_result)
             # self.assertTrue(
             #     config_result.succeeded,
             #     "Configuration of action '{}' failed.\n\nSentence: '{}'\n\nRecipe: {}\n\nError: {}".format(
@@ -99,22 +102,21 @@ class GrammarTest(unittest.TestCase):
             #     ),
             # )
 
-        failed_config_results = {}
-        for action, config_result in config_results.iteritems():
-            if config_result.succeeded:
+        failed_test_results = {}
+        for action, test_result in test_results.iteritems():
+            if test_result.config_result.succeeded:
                 print("Configuration of '{}' succeeded".format(action))
             else:
-                failed_config_results[action] = config_result
+                failed_test_results[action] = test_result
 
-        error_str = ""
-        for action, config_result in failed_config_results.iteritems():
-            error_str += "\nConfiguration of action '{}' failed.\n\tSentence: '{}'\n\tRecipe: {}\n\tError: {}".format(
+        error_str = "\n"
+        for action, test_result in failed_test_results.iteritems():
+            error_str += "\nConfiguration of action '{}' failed.\n\tRecipe: {}\n\tError: {}".format(
                 action,
-                result_str,
-                actions_definition,
-                config_result.message,
+                test_result.recipe,
+                test_result.config_result.message,
             )
-        self.assertFalse(failed_config_results, error_str)
+        self.assertFalse(failed_test_results, error_str)
         # knowledge = load_knowledge("challenge_demo")
         # parser = CFGParser.fromstring(knowledge.grammar)
 
