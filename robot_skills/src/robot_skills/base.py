@@ -218,10 +218,8 @@ class Base(RobotPart):
         t_start = rospy.Time.now()
         t_end = t_start + rospy.Duration.from_sec(timeout)
 
-        def _abs_max(value, abs_max_value):
-            if value == 0:
-                return 0
-            return sign(value) * min(abs_max_value, abs(value))
+        def _abs_max(value, max_value):
+            return sign(value) * min(abs(max_value), abs(value))
 
         # Drive
         while rospy.Time.now() < t_end:
