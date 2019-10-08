@@ -106,6 +106,10 @@ class GrammarTest(unittest.TestCase):
         for action, test_result in test_results.iteritems():
             if test_result.config_result.succeeded:
                 print("Configuration of '{}' succeeded".format(action))
+            elif test_result.config_result.message and test_result.config_result.missing_field:
+                print("Configuration of '{}' did not succeed due to missing information ({}): {}".format(
+                    action, test_result.config_result.missing_field, test_result.config_result.message
+                ))
             else:
                 failed_test_results[action] = test_result
 
