@@ -61,6 +61,7 @@ class PublicArm(object):
 
     :ivar _available_joint_trajectories: Joint trajectories that may be used.
     :vartype _available_joint_trajectories: set of str
+
     """
     def __init__(self, arm, available_gripper_types, default_gripper_type,
                  has_occupied_by, available_joint_goals, available_joint_trajectories):
@@ -149,7 +150,7 @@ class PublicArm(object):
         Tell the gripper to perform a motion.
         :param state: New state of the gripper.
         :type state: str (GripperState)
-        :param timeout: Amount of time availble to reach the goal, default is 5
+        :param timeout: Amount of time available to reach the goal, default is 5
         :type timeout: float
         :param gripper_type: Optional type of gripper to perform the action.
         :type gripper_type: str
@@ -164,6 +165,15 @@ class PublicArm(object):
                        "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         # Specified type of gripper currently not used.
         return self._arm.send_gripper_goal(state, timeout, max_torque=max_torque)
+
+    @property
+    def has_force_sensor(self):
+        return hasattr(self._arm, "force_sensor")
+
+    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
+        self._test_die(self.has_force_sensor, 'available_force_sensor=' + str(self.has_force_sensor),
+                       "Specify get_arm(..., available_force_sensor=True")
+        return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
 
     def handover_to_human(self, timeout=10, gripper_type=None):
         if gripper_type is None:
@@ -208,44 +218,6 @@ class PublicArm(object):
         :rtype: kdl Vector
         """
         return self._arm.base_offset
-
-    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
-        """
-        Move down the arm (hero specific, only joint arm_lift_joint) until the force sensor detects an edge up
-
-        A force_sensor.TimeOutException will be raised if no edge up is detected within timeout
-
-        :param timeout: Max duration for edge up detection
-        :param retract_distance: How much to retract if we have reached a surface
-        """
-        # Fill with required joint names (desired in hardware / gazebo impl)
-        current_joint_state = self._arm.get_joint_states()
-        current_joint_state['arm_lift_joint'] = 0
-
-        self._arm._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
-            trajectory=JointTrajectory(
-                joint_names=self._arm.joint_names,
-                points=[JointTrajectoryPoint(
-                    positions=[current_joint_state[n] for n in self._arm.joint_names],
-                    time_from_start=rospy.Duration.from_sec(timeout)
-                )]
-            )
-        ))
-
-        self._arm.force_sensor.wait_for_edge_up(timeout)
-        self._arm.cancel_goals()
-
-        current_joint_state = self._arm.get_joint_states()
-        current_joint_state['arm_lift_joint'] += retract_distance
-        self._arm._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
-            trajectory=JointTrajectory(
-                joint_names=self._arm.joint_names,
-                points=[JointTrajectoryPoint(
-                    positions=[current_joint_state[n] for n in self._arm.joint_names],
-                    time_from_start=rospy.Duration.from_sec(0.5)
-                )]
-            )
-        ))
 
     def _test_die(self, cond, feature, hint=''):
         """
@@ -418,7 +390,6 @@ class Arm(RobotPart):
             "/" + robot_name + "/" + self.side + "_arm/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
 
-        self.force_sensor = ForceSensor(robot_name, tf_listener, "/" + robot_name + "/wrist_wrench/raw")
         self.get_joint_states = get_joint_states
 
     def collect_gripper_types(self, gripper_type):
@@ -914,6 +885,60 @@ class Arm(RobotPart):
 
     def __repr__(self):
         return "Arm(side='{side}')".format(side=self.side)
+
+
+class ForceSensingArm(Arm):
+    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+        """
+        :todo: Make the Arm class similar to the robot, such that it can be composed from parts
+
+        constructor
+        :param robot_name: robot_name
+        :param tf_listener: tf_server.TFClient()
+        :param get_joint_states: get_joint_states function for getting the last joint states
+        :param side: left or right
+        """
+        super(ForceSensingArm, self).__init__(robot_name, tf_listener, get_joint_states, side)
+
+        self.force_sensor = ForceSensor(robot_name, tf_listener, "/" + robot_name + "/wrist_wrench/raw")
+
+    def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
+        """
+        Move down the arm (hero specific, only joint arm_lift_joint) until the force sensor detects an edge up
+
+        A force_sensor.TimeOutException will be raised if no edge up is detected within timeout
+
+        :param timeout: Max duration for edge up detection
+        :param retract_distance: How much to retract if we have reached a surface
+        """
+        # Fill with required joint names (desired in hardware / gazebo impl)
+        current_joint_state = self.get_joint_states()
+        current_joint_state['arm_lift_joint'] = 0
+
+        self._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
+            trajectory=JointTrajectory(
+                joint_names=self.joint_names,
+                points=[JointTrajectoryPoint(
+                    positions=[current_joint_state[n] for n in self.joint_names],
+                    time_from_start=rospy.Duration.from_sec(timeout)
+                )]
+            )
+        ))
+
+        self.force_sensor.wait_for_edge_up(timeout)
+        self.cancel_goals()
+
+        current_joint_state = self.get_joint_states()
+        current_joint_state['arm_lift_joint'] += retract_distance
+        self._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
+            trajectory=JointTrajectory(
+                joint_names=self.joint_names,
+                points=[JointTrajectoryPoint(
+                    positions=[current_joint_state[n] for n in self.joint_names],
+                    time_from_start=rospy.Duration.from_sec(0.5)
+                )]
+            )
+        ))
 
 
 class FakeArm(RobotPart):

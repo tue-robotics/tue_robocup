@@ -150,10 +150,11 @@ class Robot(object):
         return output_pose
 
     def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
-                      required_goals=None, desired_goals=None,
-                      required_trajectories=None, desired_trajectories=None,
-                      required_arm_name=None,
-                      required_objects=None, desired_objects=None):
+                required_goals=None, desired_goals=None,
+                required_trajectories=None, desired_trajectories=None,
+                required_arm_name=None,
+                force_sensor_required=False,
+                required_objects=None, desired_objects=None):
         """
         Find an arm that has the needed and hopefully the desired properties.
         Does not give an arm if all needed properties cannot be satisfied. An
@@ -178,6 +179,8 @@ class Robot(object):
         :param required_arm_name: Name of the arm that is needed. If set, no
                 other arm will be considered. None means any arm will do.
 
+        :param force_sensor_required: Bool specifying whether a force_sensor is available or not.
+
         :param required_objects: Collection of objects that the arm must have. Special
                 pseudo-objects PseudoObjects.ANY and PseudoObjects.EMPTY may be used
                 too in the collection, although they do not make much sense when used
@@ -200,6 +203,7 @@ class Robot(object):
         assert seq_or_none(desired_goals)
         assert seq_or_none(required_trajectories)
         assert seq_or_none(desired_trajectories)
+        assert isinstance(force_sensor_required, bool)
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
@@ -261,6 +265,11 @@ class Robot(object):
                 discarded_reasons.append((arm_name, "required trajectories failed"))
                 continue
 
+            # Force sensor availability
+            if force_sensor_required and not hasattr(arm, "force_sensor"):
+                discarded_reasons.append((arm_name, "should have a force sensor but hasn't"))
+                continue
+
             # Objects
             if not self._check_required_obj(arm, required_objects):
                 discarded_reasons.append((arm_name, "required objects failed"))
@@ -274,7 +283,7 @@ class Robot(object):
 
             # ToDO: HACK for not specifying any requirements:
             # We often want to use the arm for object manipulation, so this is always needed
-            uses_objects = True # (required_objects is not None or desired_objects is not None)
+            uses_objects = True  # (required_objects is not None or desired_objects is not None)
 
             # Success!
             if not matching_grippers:
