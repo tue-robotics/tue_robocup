@@ -153,7 +153,7 @@ class TourGuide(object):
         close_furniture_entities = [entity for entity in close_entities if entity.is_a("furniture")]
         for entity in close_furniture_entities:
             self._passed_furniture_ids.append(entity.id)
-        rospy.loginfo("reset TourGuide: passed rooms: {}.\t passed entities {}"
+        rospy.loginfo("TourGuide: passed rooms: {}.\t passed entities {}"
                       .format(self._passed_room_ids, self._passed_furniture_ids))
 
     def reset(self):
