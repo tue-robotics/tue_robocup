@@ -1,9 +1,10 @@
 # System
+from functools import partial
 import math
 from threading import Event
 
 # ROS
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Quaternion, PolygonStamped
 import rospy
 from sensor_msgs.msg import LaserScan
 import smach
@@ -43,15 +44,15 @@ class StartChallengeRobust(smach.StateMachine):
 
             smach.StateMachine.add("INITIALIZE",
                                    utility.Initialize(robot),
-                                   transitions={"initialized": "INSTRUCT_WAIT_FOR_DOOR" if door else "WAIT_FOR_COMPONENTS",
+                                   transitions={"initialized": "INSTRUCT_WAIT_FOR_DOOR" if door else "WAIT_FOR_LOCAL_PLANNER",
                                                 "abort": "Aborted"})
 
-            # ToDo: HACK
-            # We wait a while before starting the challenge, otherwise some software is not initialised yet.
-            smach.StateMachine.add("WAIT_FOR_COMPONENTS",
-                                   utility.WaitTime(robot, 5),
-                                   transitions={"waited": "INIT_POSE",
-                                                "preempted": "Aborted"})
+            # We wait till the  local planner is ready before starting the challenge,
+            # otherwise the robot will not drive.
+            smach.StateMachine.add("WAIT_FOR_LOCAL_PLANNER",
+                                   WaitForLocalPlanner(robot, 10),
+                                   transitions={"ready": "INIT_POSE",
+                                                "timeout": "Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                    human_interaction.Say(robot, ["Hi there, I will now wait until the door is opened",
@@ -239,3 +240,56 @@ class WaitForDoorOpen(smach.State):
 
         rospy.loginfo("Timed out with door still closed")
         return "closed"
+
+
+class WaitForLocalPlanner(smach.State):
+    """
+    Wait till a valid footprint message from the local planner is received. A footprint is valid if it contains at least
+    3 points. If no valid message is received within the timeout, "timeout" is returned.
+    """
+    def __init__(self, robot, timeout):
+        """
+        Constructor
+        :param robot: robot object
+        :type robot: robot
+        :param timeout: timeout
+        :type timeout: (float, int)
+        """
+        smach.State.__init__(self, outcomes=["ready", "timeout"])
+        self._robot = robot
+        self._timeout = timeout
+
+    @staticmethod
+    def msg_cb(ready_event, msg):
+        # type: (Event, PolygonStamped) -> None
+        """
+        Footprint message callback
+        :param ready_event: Event to set when ready
+        :type ready_event: Event
+        :param msg: footprint message
+        :type msg: PolygonStamped
+        """
+        if len(msg.polygon.points) >= 3:
+            rospy.loginfo("Valid footprint received")
+            ready_event.set()
+
+    def execute(self, userdate=None):
+        rospy.loginfo("Waiting for local planner footprint")
+        footprint_topic = "/{}/local_planner/local_costmap/robot_footprint/footprint_stamped".\
+            format(self._robot.robot_name)
+
+        ready_event = Event()
+
+        footprint_sub = rospy.Subscriber(footprint_topic, PolygonStamped, partial(self.msg_cb, ready_event))
+
+        ready_before_timeout = ready_event.wait(self._timeout)
+
+        rospy.loginfo("Unregistering footprint subscriber")
+        footprint_sub.unregister()
+
+        if ready_before_timeout:
+            rospy.loginfo("Local Planner is ready")
+            return "ready"
+
+        rospy.loginfo("Local Planner not ready during timeout")
+        return "timeout"

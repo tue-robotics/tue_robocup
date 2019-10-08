@@ -118,12 +118,11 @@ class GlobalPlanner(RobotPart):
         try:
             resp = self._get_plan_client(pcs)
         except Exception as e:
-            rospy.logerr("Could not get plan from global planner via service call, is the global planner running?")
-            rospy.logerr(e)
+            rospy.logerr("Could not get plan from global planner via service call: {}}".format(e))
             return None
 
         if not resp.succes:
-            rospy.logerr("Global planner couldn't plan a path to the specified constraints. Are the constraints you specified valid?")
+            rospy.logerr("Global planner couldn't plan a path to the specified constraints. Are the constraints you specified valid?: {}".format(pcs))
             return None
 
         end_time = rospy.Time.now()
@@ -136,8 +135,8 @@ class GlobalPlanner(RobotPart):
     def checkPlan(self, plan):
         try:
             resp = self._check_plan_client(plan)
-        except:
-            rospy.logerr("Could not check plan, is the global planner running?")
+        except Exception as e:
+            rospy.logerr("Could not check plan: {}".format(e))
             return False
 
         return resp.valid
@@ -318,8 +317,8 @@ def get_location(robot_name, tf_listener):
         target_pose.header.stamp = time
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
-    except (tf.LookupException, tf.ConnectivityException):
-        rospy.logerr("tf request failed!!!")
+    except (tf.LookupException, tf.ConnectivityException) as e:
+        rospy.logerr("tf request failed!, {}".format(e))
         target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
         target_pose.header.frame_id = "/map"
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)

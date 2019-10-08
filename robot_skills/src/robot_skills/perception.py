@@ -120,7 +120,7 @@ class Perception(RobotPart):
 
         # If necessary, transform the point
         if frame_id is not None:
-            print("Transforming roi to {}".format(frame_id))
+            rospy.loginfo("Transforming roi to {}".format(frame_id))
             result = result.projectToFrame(frame_id=frame_id, tf_listener=self.tf_listener)
 
         # Return the result
@@ -142,10 +142,12 @@ class Perception(RobotPart):
             image = self.get_image()
         try:
             r = self._recognize_srv(image=image)
-            rospy.loginfo('found %d face(s) in the image', len(r.recognitions))
+            rospy.loginfo('Found %d face(s) in the image', len(r.recognitions))
         except rospy.ServiceException as e:
-            rospy.logerr(e.message)
+            rospy.logerr("Can't connect to face recognition service: {}".format(e))
             r = RecognizeResponse()
+        except Exception as e:
+            rospy.logerr("Can't detect faces: {}".format(e))
         return r
 
     def learn_person(self, name='operator'):
@@ -153,13 +155,13 @@ class Perception(RobotPart):
         WIDTH_TRESHOLD = 88
         try:
             image = self.get_image()
-        except:
-            rospy.logerr("Cannot get image")
+        except Exception as e:
+            rospy.logerr("Can't get image: {}".format(e))
             return False
 
         raw_recognitions = self._get_faces(image).recognitions
         recognitions = [r for r in raw_recognitions if r.roi.height > HEIGHT_TRESHOLD and r.roi.width > WIDTH_TRESHOLD]
-        rospy.loginfo('found %d valid face(s)', len(recognitions))
+        rospy.loginfo('Found %d valid face(s)', len(recognitions))
 
         if len(recognitions) != 1:
             rospy.loginfo("Too many faces: {}".format(len(recognitions)))
@@ -171,7 +173,10 @@ class Perception(RobotPart):
         try:
             self._annotate_srv(image=image, annotations=[Annotation(label=name, roi=recognition.roi)])
         except rospy.ServiceException as e:
-            rospy.logerr('annotate failed: {}'.format(e))
+            rospy.logerr("Can't connect to person learning service: {}".format(e))
+            return False
+        except Exception as e:
+            rospy.logerr("Can't learn a person: {}".format(e))
             return False
 
         return True
@@ -283,7 +288,7 @@ class Perception(RobotPart):
             face_properties_response = self._face_properties_srv(faces)
             face_properties = face_properties_response.properties_array
         except Exception as e:
-            rospy.logerr(str(e))
+            rospy.logerr(e)
             return [None] * len(faces)
 
         face_log = '\n - '.join([''] + [repr(s) for s in face_properties])

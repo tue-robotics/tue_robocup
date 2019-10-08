@@ -80,7 +80,8 @@ class RobotPart(object):
                     try:
                         connection.wait_for_service(timeout=0.01)
                         connected = True
-                    except:
+                    except Exception as e:
+                        rospy.logerr(e)
                         connected = False
                 elif isinstance(connection, rospy.Subscriber):
                     connected = connection.get_num_connections() >= 1
@@ -130,7 +131,7 @@ class RobotPart(object):
         :param name: string with the name topic to subscribe
         :param args: other args passed to rospy.Subscriber
         :param kwargs: other keyword args passed to rospy.Subscriber
-        :return: the service client
+        :return: the Subscriber
         """
         sub = rospy.Subscriber(name, *args, **kwargs)
         self._add_connection(name, sub)

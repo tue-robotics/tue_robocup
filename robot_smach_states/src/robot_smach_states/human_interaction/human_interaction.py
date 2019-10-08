@@ -4,6 +4,7 @@
 import math
 import random
 import time
+from string import Formatter
 
 # ROS
 import rospy
@@ -18,36 +19,86 @@ from hmi import HMIResult
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
 
-########################################################################################################################
-
 
 class Say(smach.State):
-    """Say a sentence or pick a random one from a list.
+    """
+    Say a sentence or pick a random one from a list, which then is formatted with designators which are resolved on
+    runtime. The main sentence can be a str, [str] or a Designator to str or [str]
 
     >>> from mock import MagicMock
     >>> robot = MagicMock()
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
     >>>
-    >>> sf = Say(robot, ["a", "b", "c"])
+    >>> say = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [sf.execute() for i in range(50)]
+    >>> outcomes = [say.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
-    >>> #After many calls, all options in the list will very likely have been called at least one.
-    >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"], resolve_type=[str])
+    >>> say2 = Say(robot, des, a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes2 = [say2.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes2)
+    >>>
+    >>> des2 = ds.VariableDesignator(["Hey", "He", "Hoi"])
+    >>> say3 = Say(robot, des2, a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes3 = [say3.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes3)
+    >>>
+    >>> say4 = Say(robot, des2)
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes4 = [say4.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes4)
+    >>>
+    >>> say5 = Say(robot, des, b=ds.VariableDesignator("hero"))
+    >>> say5.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    RuntimeError: ...
+    """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False):
+                 look_at_standing_person=False, **place_holders):
+        """
+        Constructor
+
+        :param robot: robot object
+        :type robot: Robot
+        :param sentence: Sentence to be spoken, can contain place holders to  be filled in at runtime
+        :type sentence: str, [str], designator to str or [str]
+        :param language: Language of speech module
+        :type language: str
+        :param personality: Personality of speech module
+        :type personality: str
+        :param voice: Voice of speech module
+        :type voice: str
+        :param mood: Mood of speech module
+        :type mood: str
+        :param block: Wait for talking to be completed before returning, if true
+        :type block: bool
+        :param look_at_standing_person: Look at standing person if true, otherwise keep current head pose
+        :type look_at_standing_person: bool
+        :param place_holders: place holders to be filled in at runtime
+        :type place_holders: designator to str
+        :return: spoken
+        :rtype: str
+        """
         smach.State.__init__(self, outcomes=["spoken"])
-        ds.check_type(sentence, str, list)
-        # ds.check_type(language, str)
-        # ds.check_type(personality, str)
-        # ds.check_type(voice, str)
-        # ds.check_type(mood, str)
-        ds.check_type(block, bool)
+        ds.check_type(sentence, [str], str)
+        assert(isinstance(language, str) or isinstance(language, type(None)))
+        assert(isinstance(personality, str) or isinstance(personality, type(None)))
+        assert(isinstance(voice, str) or isinstance(voice, type(None)))
+        assert(isinstance(mood, str) or isinstance(mood, type(None)))
+        assert(isinstance(block, bool))
+
+        assert(all(isinstance(v, ds.Designator) for v in place_holders.values()))
+
+        self.ph_designators = place_holders
+
+        if isinstance(sentence, str) or isinstance(sentence, list):
+            self._check_place_holders(sentence)
 
         self.robot = robot
         self.sentence = sentence
@@ -65,20 +116,35 @@ class Say(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
-            self.sentence = random.choice(self.sentence)
+        if hasattr(self.sentence, "resolve"):
+            sentence = self.sentence.resolve()
+            self._check_place_holders(sentence)
+        else:
+            sentence = self.sentence
 
-        sentence = str(self.sentence.resolve() if hasattr(self.sentence, "resolve") else self.sentence)
+        if not isinstance(sentence, str) and isinstance(sentence, list):
+            sentence = random.choice(sentence)
+
+        resolved_ph = {k: v.resolve() for k, v in self.ph_designators.items()}
+        sentence = sentence.format(**resolved_ph)
 
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
-        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
-
-        # robot.head.cancel_goal()
-        # ToDo: hack
-        rospy.sleep(len(sentence)*0.05)
+        self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
 
         return "spoken"
+
+    def _check_place_holders(self, sentence):
+        if isinstance(sentence, list):
+            for sen in sentence:
+                self._check_place_holders(sen)
+            return
+
+        place_holders = set(x[1] for x in Formatter().parse(sentence) if x[1] is not None)
+        missing_ph = place_holders - set(self.ph_designators.keys())
+        if missing_ph:
+            raise RuntimeError("Not all named place holders are provided, missing: {}".
+                               format(", ".join(map(str, missing_ph))))
 
 
 class HearOptions(smach.State):
@@ -102,12 +168,7 @@ class HearOptions(smach.State):
             answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T',
                                            timeout=self._timeout.to_sec())
         except TimeoutException:
-           # self._robot.speech.speak("Something is wrong with my ears, please take a look!")
             return 'no_result'
-        # except Exception as e:
-        #     rospy.logfatal(
-        #         e.message)  # This should be a temp addition. If this exception is thrown that means that there is a bug to be fixed
-        #     return 'no_result'  # for now this exception is thrown for Hero since speech recognition (meaning his Ears) is not even launched, we don't want it to crash on this
 
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
@@ -321,14 +382,13 @@ class WaitForPersonEntity(smach.State):
 
     def execute(self, userdata=None):
         counter = 0
-        detected_humans = None
 
         while counter < self.attempts:
-            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
+            rospy.loginfo("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             detected_humans = detect_human_in_front(self.robot)
             if detected_humans:
-                print "[WaitForPerson] " + "Found a human!"
+                rospy.loginfo("[WaitForPersonDetection] Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -341,8 +401,8 @@ class WaitForPersonEntity(smach.State):
 
 class WaitForPersonDetection(smach.State):
     """
-        Wait until a person is seen/scanned in front of the robot.
-            Use paramaterers to costumize number of retries and sleep between retries
+    Wait until a person is seen/scanned in front of the robot.
+    Use parameters to customize number of retries and sleep between retries
     """
 
     def __init__(self, robot, attempts=1, sleep_interval=1):
@@ -353,17 +413,17 @@ class WaitForPersonDetection(smach.State):
 
     def execute(self, userdata=None):
         counter = 0
-        desgnResult = None
 
         while counter < self.attempts:
-            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
+            rospy.loginfo("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
 
             rospy.logerr(
-                "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+                "ed.detect _persons() method disappeared!"
+                "This was only calling the face recognition module and we are using a new one now!")
             rospy.logerr("I will return an empty detection list!")
             detections = []
             if detections:
-                print("[WaitForPersonDetection] " + "Found a human!")
+                rospy.loginfo("[WaitForPersonDetection] Found a human!")
                 return 'succeeded'
 
             counter += 1
@@ -376,13 +436,14 @@ class WaitForPersonDetection(smach.State):
 
 def detect_human_in_front(robot):
     """
-        Scan for humans in the robots field of view. Return person detections if any
+    Scan for humans in the robots field of view. Return person detections if any
     """
 
     rospy.logerr(
-        "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
+        "ed.detect _persons() method disappeared!"
+        "This was only calling the face recognition module and we are using a new one now!")
     rospy.logerr("I will return an empty detection list!")
-    detections = []
+    result = []
 
     if not result:
         return False
@@ -393,7 +454,7 @@ def detect_human_in_front(robot):
         x = pose_base_link.pose.frame.p.x()
         y = pose_base_link.pose.frame.p.y()
 
-        print("Detection (x,y) in base link: (%f,%f)" % (x, y))
+        rospy.loginfo("Detection (x,y) in base link: (%f,%f)" % (x, y))
 
         if 0.0 < x < 1.5 and -1.0 < y < 1.0:
             return True
@@ -430,17 +491,16 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
             if count == math.ceil(n_samples / 2):
                 robot.speech.speak("Almost done, keep looking.", block=False)
         else:
-            print ("[LearnPersonProcedure] " + "No person found.")
+            rospy.loginfo ("[LearnPersonProcedure] " + "No person found.")
             elapsed_time = time.time() - start_time
             if elapsed_time > timeout:
-                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                rospy.loginfo ("[LearnPersonProcedure] " + "Learn procedure timed out!")
                 return count
 
-        print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
+        rospy.loginfo("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
 
-    print ("[LearnPersonProcedure] " + "Learn procedure completed!")
+    rospy.loginfo("[LearnPersonProcedure] " + "Learn procedure completed!")
 
-    # print robot.ed.classify_person(human_id)
     return count
 
 
