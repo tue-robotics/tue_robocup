@@ -359,7 +359,7 @@ class Guide(smach.StateMachine):
                                    transitions={"done": "SAY_BEHIND"})
 
             smach.StateMachine.add("SAY_BEHIND",
-                                   Say(robot, "Please stand behind me and look at my butt", block=True),
+                                   Say(robot, "Please stand behind me and look at me", block=True),
                                    transitions={"spoken": "WAIT"})
 
             smach.StateMachine.add("WAIT",
