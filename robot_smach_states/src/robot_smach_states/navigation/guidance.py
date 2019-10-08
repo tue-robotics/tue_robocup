@@ -54,7 +54,14 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
 
 class TourGuide(object):
     def __init__(self, robot, x_threshold=0.75, y_threshold=1.5):
+        # type: (Robot, float, float) -> ()
+        """
+        # Class to describe furniture near the robot.
 
+        :param robot: (Robot) api object
+        :param x_threshold: (float) threshold determining when a piece of furniture is close enough to be described
+        :param y_threshold: (float) threshold determining when a piece of furniture is close enough to be described
+        """
         self._robot = robot
 
         # Properties
