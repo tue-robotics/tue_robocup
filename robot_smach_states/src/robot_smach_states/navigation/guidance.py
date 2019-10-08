@@ -36,7 +36,7 @@ def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
     found_people = [p for p in found_people if p]
     rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
 
-    # Assume the operator is around 1.0 m behind the robot
+    # Assume the operator is a set distance behind the robot
     base_pose = robot.base.get_location()
     expected_person_pos = base_pose.frame * kdl.Vector(-distance, 0.0, 0.0)
 
