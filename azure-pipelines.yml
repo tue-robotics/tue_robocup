@@ -17,7 +17,9 @@ jobs:
           targetType: 'inline'
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
-            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH tue_robocup
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/batched_ci/ci/azure_commit_range.py
+            COMMIT_RANGE=$(python azure_commit_range.py)
+            source ./packages.sh --commit-range=$COMMIT_RANGE tue_robocup
             printenv
             echo $PACKAGES_DICT
             PACKAGES_DICT=""
