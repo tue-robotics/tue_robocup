@@ -1,9 +1,6 @@
 variables:
   CI: true
 
-trigger:
-  batch: true
-
 jobs:
   - job: package_selection
     displayName: 'Package selection'
