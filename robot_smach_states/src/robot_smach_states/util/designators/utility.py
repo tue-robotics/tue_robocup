@@ -176,6 +176,9 @@ class ValueByKeyDesignator(Designator):
         :param name: Name of the designator for introspection purposes
         """
         super(ValueByKeyDesignator, self).__init__(resolve_type=resolve_type, name=name)
+        container_type = container.resolve_type if hasattr(container, "resolve") else container
+        assert hasattr(container_type, "__getitem__"), "Container should have '__getitem__' method"
+        
         self._container = container
         self._key = key
 
