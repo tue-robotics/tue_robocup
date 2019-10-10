@@ -21,11 +21,9 @@ class TestForceDrive(unittest.TestCase):
 
         state = states.ForceDrive(self.robot, vx, vy, vth, duration)
 
-        state.execute()
+        assert state.execute() == 'done'
 
-        v = [vx, vy, vth, duration]
-
-        self.robot.base.force_drive.assert_called_with(v)
+        self.robot.base.force_drive.assert_called_with(vx, vy, vth, duration)
 
 
 if __name__ == '__main__':
