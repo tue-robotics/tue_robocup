@@ -23,9 +23,9 @@ class TestForceDrive(unittest.TestCase):
 
         state.execute()
 
-        v = [vx, vy, vth]
+        v = [vx, vy, vth, duration]
 
-        self._cmd_vel.publish.assert_called_with(v)
+        self.robot.base.force_drive.assert_called_with(v)
 
 
 if __name__ == '__main__':
