@@ -49,8 +49,10 @@ class IterateDesignator(smach.State):
 
         is_writeable(element_des)
 
-        assert hasattr(collection_des.resolve_type, '__iter__')
-        assert collection_des.resolve_type[0] == element_des.resolve_type
+        assert hasattr(collection_des, 'resolve'), "collection_des should have attribute 'resolve'"
+        assert hasattr(collection_des.resolve_type, '__iter__'), "collection_des should resolve to an interable type"
+        assert collection_des.resolve_type[0] == element_des.resolve_type, "Resolve type of collection and element" \
+                                                                           "don't match"
 
         self.collection_des = collection_des
         self.element_des = element_des
