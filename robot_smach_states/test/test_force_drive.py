@@ -8,8 +8,10 @@ import robot_smach_states as states
 
 
 class TestForceDrive(unittest.TestCase):
-    def setUp(self):
-        self.robot = Mockbot()
+    
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
 
     def test_force_drive(self):
         vx = 1
@@ -17,7 +19,7 @@ class TestForceDrive(unittest.TestCase):
         vth = 1
         duration = 2
 
-        state = states.ForceDrive(self, self.robot, vx, vy, vth, duration)
+        state = states.ForceDrive(self.robot, vx, vy, vth, duration)
 
         state.execute()
 
