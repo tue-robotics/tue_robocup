@@ -107,8 +107,8 @@ class EdEntityDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
-                 weight_function=None,
-                 type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
+                 weight_function=None, type_designator=None, center_point_designator=None, id_designator=None,
+                 debug=False, name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
