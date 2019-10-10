@@ -4,31 +4,44 @@ from robot_smach_states.designator_iterator import IterateDesignator
 import robot_smach_states.util.designators as ds
 
 
+class IterateDesignatorTest(unittest.TestCase):
 
-collection_des = ds.Designator(['a', 'b', 'c'])
-element_des = ds.VariableDesignator(resolve_type=str)
+    @classmethod
+    def setUpClass(cls):
+        cls.collection_des = ds.Designator(['a', 'b', 'c'])
+        cls.element_des = ds.VariableDesignator(resolve_type=str).writeable
+        cls.iterator = IterateDesignator(cls.collection_des, cls.element_des)
 
-iterator = IterateDesignator(collection_des, element_des.writeable)
+    def test_first_run(self):
+        self.iterator._current_elements = None
+        assert self.iterator.execute() == 'next'
+        assert self.element_des.resolve() == 'a'
 
-assert iterator.execute() == 'next'
-assert element_des.resolve() == 'a'
+    def test_stopiteration_and_second_run(self):
+        collection = self.collection_des.resolve()
+        self.iterator._current_elements = iter(collection)
+        for i in range(len(collection)):
+            next(self.iterator._current_elements)
+        assert self.iterator.execute() == 'stop_iteration'
+        assert self.iterator.execute() == 'next'
+        assert self.element_des.resolve() == 'a'
 
-assert iterator.execute() == 'next'
-assert element_des.resolve() == 'b'
+    def test_collection_non_designator(self):
+        self.assertRaises(AssertionError, IterateDesignator, ['a', 'b', 'c'],
+                          ds.VariableDesignator(resolve_type=str).writeable)
 
-assert iterator.execute() == 'next'
-assert element_des.resolve() == 'c'
+    def test_collection_non_iterable(self):
+        self.assertRaises(AssertionError, IterateDesignator, ds.Designator('a'),
+                          ds.VariableDesignator(resolve_type=str).writeable)
 
-assert iterator.execute() == 'stop_iteration'
-assert element_des.resolve() == 'c'
+    def test_element_non_writeable(self):
+        self.assertRaises(TypeError, IterateDesignator, self.collection_des,
+                          ds.VariableDesignator(resolve_type=str))
 
-assert iterator.execute() == 'next'
-assert element_des.resolve() == 'a'
+    def test_mismachting_resolve_type(self):
+        self.assertRaises(AssertionError, IterateDesignator, self.collection_des,
+                          ds.VariableDesignator(resolve_type=unicode).writeable)
 
-assert iterator.execute() == 'next'
-assert element_des.resolve() == 'b'
 
-assert iterator.execute() == 'next'
-assert element_des.resolve() == 'c'
-
-assert iterator.execute() == 'stop_iteration'
+if __name__ == "__main__":
+    unittest.main()
