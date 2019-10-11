@@ -16,8 +16,10 @@ import robot_smach_states.util.designators as ds
 
 
 class TestLookAtEntity(unittest.TestCase):
-    def setUp(self):
-        self.robot = Mockbot()
+    
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
 
         self.entity = Entity("12345", "dummy", "/map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
@@ -38,8 +40,10 @@ class TestLookAtEntity(unittest.TestCase):
 
 
 class TestLookAtArea(unittest.TestCase):
-    def setUp(self):
-        self.robot = Mockbot()
+
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
 
         box = BoxVolume(kdl.Vector(0, 0, 0),
                         kdl.Vector(1, 1, 1))
