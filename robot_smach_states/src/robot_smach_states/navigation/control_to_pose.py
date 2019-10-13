@@ -11,7 +11,7 @@ import rospy
 import tf2_geometry_msgs
 import tf2_ros
 from geometry_msgs.msg import Twist, Vector3
-from smach import State
+import smach
 from tf.transformations import euler_from_quaternion
 
 _ = tf2_geometry_msgs  # tf2_geometry_msgs must be declared here for it to be imported
@@ -52,7 +52,7 @@ class ControlParameters(namedtuple('ControlParameters', [
     """
 
 
-class ControlToPose(State):
+class ControlToPose(smach.State):
     def __init__(self, robot, goal_pose, control_parameters, rate=10):
         """
         State that allows the tuning of robot navigation to a specific goal through custom speeds, gains and tolerances
@@ -62,7 +62,7 @@ class ControlToPose(State):
         :param control_parameters: (namedtuple, ControlParameters) Parameters that specify how the robot should reach
         the goal_pose
         """
-        State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         assert all([isinstance(p, (float, int)) for p in control_parameters]), "Control parameters are invalid"
 
