@@ -28,47 +28,50 @@ class State(smach.State):
         return self.run(**resolved_arguments)
 
 
-class TestState(State):
-    """
-    >>> teststate = TestState("Yes", "this", "works")  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    Using State in <class '...TestState'> is deprecated, use smach.State instead and implement \
-    execute(self, userdata) instead of run(self, ...)
-    >>> teststate.execute()
-    Yes this works
-    'yes'
-
-    >>> teststate2 = TestState(
-    ...     Designator("Also"), "works", Designator("with designators")
-    ...     )  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    Using State in <class '...TestState'> is deprecated, use smach.State instead and implement \
-    execute(self, userdata) instead of run(self, ...)
-    >>> teststate2.execute()
-    Also works with designators
-    'yes'"""
-    def __init__(self, robot, sentence, blaat):
-        State.__init__(self, locals(), outcomes=['yes', 'no'])
-
-    def run(self, robot, sentence, blaat):
-        print(robot, sentence, blaat)
-        return "yes"
-
-
-class Test(smach.StateMachine):
-    def __init__(self):
-        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
-
-        with self:
-            smach.StateMachine.add('TEST_STATE1',
-                                   TestState("Yes", "this", "works"),
-                                   transitions={'yes': 'TEST_STATE2', 'no': 'failed'})
-
-            smach.StateMachine.add('TEST_STATE2',
-                                   TestState(Designator("Also"), "works", Designator("with designators")),
-                                   transitions={'yes': 'succeeded', 'no': 'failed'})
-
-
 if __name__ == "__main__":
     import doctest
+
+
+    class TestState(State):
+        """
+        >>> teststate = TestState("Yes", "this", "works")  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        Using State in <class '...TestState'> is deprecated, use smach.State instead and implement \
+        execute(self, userdata) instead of run(self, ...)
+        >>> teststate.execute()
+        Yes this works
+        'yes'
+
+        >>> teststate2 = TestState(
+        ...     Designator("Also"), "works", Designator("with designators")
+        ...     )  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        Using State in <class '...TestState'> is deprecated, use smach.State instead and implement \
+        execute(self, userdata) instead of run(self, ...)
+        >>> teststate2.execute()
+        Also works with designators
+        'yes'"""
+
+        def __init__(self, robot, sentence, blaat):
+            State.__init__(self, locals(), outcomes=['yes', 'no'])
+
+        @staticmethod
+        def run(robot, sentence, blaat):
+            print(robot, sentence, blaat)
+            return "yes"
+
+
+    class Test(smach.StateMachine):
+        def __init__(self):
+            smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+            with self:
+                smach.StateMachine.add('TEST_STATE1',
+                                       TestState("Yes", "this", "works"),
+                                       transitions={'yes': 'TEST_STATE2', 'no': 'failed'})
+
+                smach.StateMachine.add('TEST_STATE2',
+                                       TestState(Designator("Also"), "works", Designator("with designators")),
+                                       transitions={'yes': 'succeeded', 'no': 'failed'})
+
     doctest.testmod()
 
     sm = Test()
