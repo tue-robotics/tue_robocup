@@ -6,13 +6,18 @@
 
 import math
 from collections import namedtuple
-from robot_smach_states.util.geometry_helpers import wrap_angle_pi
+
+# ROS
+from geometry_msgs.msg import PoseStamped, Twist, Vector3
 import rospy
+import smach
 import tf2_geometry_msgs
 import tf2_ros
-from geometry_msgs.msg import Twist, Vector3
-import smach
 from tf.transformations import euler_from_quaternion
+
+# TU/e Robotics
+from robot_smach_states.util.geometry_helpers import wrap_angle_pi
+from robot_smach_states.util.designators.checks import check_type
 
 _ = tf2_geometry_msgs  # tf2_geometry_msgs must be declared here for it to be imported
 
@@ -67,6 +72,7 @@ class ControlToPose(smach.State):
         assert all([isinstance(p, (float, int)) for p in control_parameters]), "Control parameters are invalid"
 
         self.robot = robot
+        check_type(goal_pose, PoseStamped)
         self.goal_pose = goal_pose
         self.params = control_parameters
 
@@ -77,13 +83,14 @@ class ControlToPose(smach.State):
         self._cmd_vel_publisher = rospy.Publisher("/" + self.robot.robot_name + "/base/references", Twist, queue_size=1)
 
     def execute(self, userdata=None):
-        if self._goal_reached(*self._get_target_delta_in_robot_frame(self.goal_pose)):
+        goal_pose = self.goal_pose.resolve() if hasattr(self.goal_pose, "resolve") else self.goal_pose
+        if self._goal_reached(*self._get_target_delta_in_robot_frame(goal_pose)):
             rospy.loginfo("We are already there")
             return 'succeeded'
 
         rospy.loginfo("Starting alignment ....")
         while not rospy.is_shutdown():
-            dx, dy, dyaw = self._get_target_delta_in_robot_frame(self.goal_pose)
+            dx, dy, dyaw = self._get_target_delta_in_robot_frame(goal_pose)
 
             if self._goal_reached(dx, dy, dyaw):
                 rospy.loginfo("Goal reached")
