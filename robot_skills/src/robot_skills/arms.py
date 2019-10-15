@@ -120,7 +120,6 @@ class PublicArm(object):
         return configuration in self._available_joint_trajectories
 
     def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7):
-        print()
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
@@ -460,8 +459,8 @@ class Arm(RobotPart):
         try:
             rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
         except AttributeError:
-            print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
-                  format(self.side))
+            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
+                          format(self.side))
 
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
