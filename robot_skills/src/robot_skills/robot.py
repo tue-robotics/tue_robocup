@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 
 # ROS
-import copy
-
 import rospy
 import tf
 import geometry_msgs
