@@ -63,7 +63,7 @@ class ControlToPose(smach.State):
         State that allows the tuning of robot navigation to a specific goal through custom speeds, gains and tolerances
 
         :param robot: (Robot) api object
-        :param goal_pose: (PoseStamped) Position the robot needs to go to
+        :param goal_pose: (PoseStamped or Designator to PoseStamped) Position the robot needs to go to
         :param control_parameters: (namedtuple, ControlParameters) Parameters that specify how the robot should reach
         the goal_pose
         """
