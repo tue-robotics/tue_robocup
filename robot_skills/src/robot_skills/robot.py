@@ -6,9 +6,7 @@ import copy
 import rospy
 import tf
 import geometry_msgs
-import visualization_msgs.msg
 from diagnostic_msgs.msg import DiagnosticArray
-from geometry_msgs.msg import Pose, Quaternion, Point, Vector3
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String, ColorRGBA, Header
 
