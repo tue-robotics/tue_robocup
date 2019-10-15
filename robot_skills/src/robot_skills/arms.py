@@ -459,8 +459,8 @@ class Arm(RobotPart):
         try:
             rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
         except AttributeError:
-            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
-                          format(self.side))
+            print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
+                  format(self.side))
 
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
