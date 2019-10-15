@@ -4,6 +4,7 @@
 from collections import defaultdict
 import mock
 import random
+import os
 
 # ROS
 import geometry_msgs
@@ -45,8 +46,8 @@ class MockedRobotPart(object):
 
 
 class Arm(arms.Arm):
-    def __init__(self, robot_name, side, tf_listener):
-        self.side = side
+    def __init__(self, robot_name, tf_listener, side):
+        super(Arm, self).__init__(self, robot_name, tf_listener, side)
 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
@@ -84,8 +85,8 @@ class Base(MockedRobotPart):
         self.analyzer = mock.MagicMock()
         self.global_planner = mock.MagicMock()
         self.local_planner = mock.MagicMock()
-        self.local_planner.getStatus = mock.MagicMock(return_value="arrived") #always arrive for now
-        self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"]) #always arrive for now
+        self.local_planner.getStatus = mock.MagicMock(return_value="arrived")  # always arrive for now
+        self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"])  # always arrive for now
 
 
 class Ears(MockedRobotPart):
@@ -107,8 +108,6 @@ class Ears(MockedRobotPart):
         answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
 
         return answer
-
-        # self.recognize = lambda spec, choices, time_out=None: answer
 
 
 class EButton(MockedRobotPart):
@@ -134,7 +133,7 @@ class Head(MockedRobotPart):
         self.atGoal = mock.MagicMock()
         self.look_at_standing_person = mock.MagicMock()
         self.look_at_point = mock.MagicMock()
-        self.look_at_ground_in_front_of_robot = mock.MagicMock() #TODO: Must return a EntityInfo
+        self.look_at_ground_in_front_of_robot = mock.MagicMock()  # TODO: Must return a EntityInfo
         self.setPanTiltGoal = mock.MagicMock()
         self.setLookAtGoal = mock.MagicMock()
         self.cancelGoal = mock.MagicMock()
@@ -190,7 +189,7 @@ class Torso(MockedRobotPart):
         self.wait = mock.MagicMock()
         self.cancel_goal = mock.MagicMock()
         self._receive_torso_measurement = mock.MagicMock()
-        self.get_position    = mock.MagicMock()
+        self.get_position = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
 
 
@@ -254,9 +253,9 @@ class ED(MockedRobotPart):
         res.deleted_ids = []
         return res
 
-    def classify(self, ids, types=None):
+    def classify(self, ids, types=None, unknown_threshold=0.0):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
-        return [ClassificationResult(e.id, e.type, random.uniform(0,1), None ) for e in entities]
+        return [ClassificationResult(e.id, e.type, random.uniform(0, 1), None) for e in entities]
 
     def detect_people(self, rgb, depth, cam_info):
         return True, [self._dynamic_entities['operator'].id]
@@ -312,8 +311,8 @@ class Mockbot(robot.Robot):
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"base_link"
 
-        #Grasp offsets
-        #TODO: Don't hardcode, load from parameter server to make robot independent.
+        # Grasp offsets
+        # TODO: Don't hardcode, load from parameter server to make robot independent.
         self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
 
         self.publish_target = mock.MagicMock()
@@ -331,28 +330,27 @@ class Mockbot(robot.Robot):
 
 
 if __name__ == "__main__":
-    print "     _              __"
-    print "    / `\\  (~._    ./  )"
-    print "    \\__/ __`-_\\__/ ./"
-    print "   _ \\ \\/  \\  \\ |_   __"
-    print " (   )  \\__/ -^    \\ /  \\"
-    print "  \\_/ \"  \\  | o  o  |.. /  __"
-    print "       \\\\. --' ====  /  || /  \\"
-    print "         \\   .  .  |---__.\\__/"
-    print "         /  :     /   |   |"
-    print "         /   :   /     \\_/"
-    print "      --/ ::    ("
-    print "     (  |     (  (____"
-    print "   .--  .. ----**.____)"
-    print "   \\___/          "
+    print("     _              __")
+    print("    / `\\  (~._    ./  )")
+    print("    \\__/ __`-_\\__/ ./")
+    print("   _ \\ \\/  \\  \\ |_   __")
+    print(" (   )  \\__/ -^    \\ /  \\")
+    print("  \\_/ \"  \\  | o  o  |.. /  __")
+    print("       \\\\. --' ====  /  || /  \\")
+    print("         \\   .  .  |---__.\\__/")
+    print("         /  :     /   |   |")
+    print("         /   :   /     \\_/")
+    print("      --/ ::    (")
+    print("     (  |     (  (____")
+    print("   .--  .. ----**.____)")
+    print("   \\___/          ")
     import atexit
-    from robot_skills.util import msg_constructors as msgs
 
     rospy.init_node("mockbot_executioner", anonymous=True)
     mockbot = Mockbot(wait_services=False)
-    robot = mockbot #All state machines use robot. ..., this makes copy/pasting easier.
+    robot = mockbot  # All state machines use robot. ..., this makes copy/pasting easier.
 
-    atexit.register(mockbot.close) #When exiting the interpreter, call mockbot.close(), which cancels all action goals etc.
+    atexit.register(mockbot.close)  # When exiting the interpreter, call mockbot.close(), which cancels all action goals etc.
 
     head_reset = lambda: mockbot.head.reset()
     head_down  = lambda: mockbot.head.reset()
@@ -374,13 +372,13 @@ if __name__ == "__main__":
         wf = WorldFaker()
         wf.insert({"position":(x,y,z)})
 
-    #Useful for making location-files
+    # Useful for making location-files
     def get_pose_2d():
        posestamped = mockbot.base.location
        loc,rot = posestamped.pose.point, posestamped.pose.orientation
        rot_array = [rot.w, rot.x, rot.y, rot.z]
        rot3 = tf.transformations.euler_from_quaternion(rot_array)
-       print 'x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0])
+       print('x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0]))
        return loc.x, loc.y, rot3[0]
 
     def hear(text):
@@ -389,9 +387,10 @@ if __name__ == "__main__":
         pub.publish(std_msgs.msg.String(text))
 
     def save_sentence(sentence):
-        """Let mockbot say a sentence and them move the generated speech file to a separate file that will not be overwritten"""
+        """
+        Let mockbot say a sentence and them move the generated speech file to a separate file that will not be overwritten
+        """
         speak(sentence)
-        import os
         path = sentence.replace(" ", "_")
         path += ".wav"
         os.system("mv /tmp/speech.wav /tmp/{0}".format(path))
@@ -412,7 +411,7 @@ if __name__ == "__main__":
             mockbot.speech.speak("Nope, my ears are clogged", block=False)
 
 
-    print """\033[1;33m You can now command mockbot from the python REPL.
+    print("""\033[1;33m You can now command mockbot from the python REPL.
     Type e.g. help(mockbot) for help on objects and functions,
     or type 'mockbot.' <TAB> to see what methods are available.
     Also, try 'dir()'
@@ -425,4 +424,4 @@ if __name__ == "__main__":
         - head_down, head_reset, left/right_close/open, look_at_point(x,y,z),
         - get_pose_2d()
         - test_audio()
-    Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m"""
+    Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m""")
