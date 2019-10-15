@@ -43,10 +43,13 @@ class RobotPart(object):
         else:
             return rospy.get_param('/' + self.robot_name + '/' + param_name, default)
 
-    def wait_for_connections(self, timeout):
+    def wait_for_connections(self, timeout, log_failing_connections=True):
         """
         Waits for the connections until they are connected
+
         :param timeout: timeout in seconds
+        :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
+        multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
         start = rospy.Time.now()
@@ -65,7 +68,7 @@ class RobotPart(object):
                 return True
             # Check all connections
             new_connections = {}
-            for name, connection in self.__ros_connections.iteritems():
+            for name, connection in self.__ros_connections.items():
                 rospy.logdebug("Checking {}".format(name))
                 connected = False
                 # Check actionlib connection
@@ -88,15 +91,16 @@ class RobotPart(object):
                 if connected:
                     rospy.logdebug("Connected to {}".format(name))
                     # self.__ros_connections = {name: connection
-                    #                           for name, connection in self.__ros_connections.iteritems() if name != k}
+                    #                           for name, connection in self.__ros_connections.items() if name != k}
                 else:
                     new_connections[name] = connection
 
             self.__ros_connections = new_connections
             r.sleep()
 
-        for name, connection in self.__ros_connections.iteritems():
-            rospy.logerr("{} not connected timely".format(name))
+        if log_failing_connections:
+            for name, connection in self.__ros_connections.items():
+                rospy.logerr("{} not connected timely".format(name))
         return False
 
     def create_simple_action_client(self, name, action_type):

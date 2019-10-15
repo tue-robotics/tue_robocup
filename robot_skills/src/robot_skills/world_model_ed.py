@@ -78,12 +78,17 @@ class ED(RobotPart):
 
         self.robot_name = robot_name
 
-    def wait_for_connections(self, timeout):
+    def wait_for_connections(self, timeout, log_failing_connections=True):
         """ Waits for the connections until they are connected
+
         :param timeout: timeout in seconds
+        :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
+        multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
-        return super(ED, self).wait_for_connections(timeout) and self.navigation.wait_for_connections(timeout)
+        return (super(ED, self).wait_for_connections(timeout, log_failing_connections) and
+                self.navigation.wait_for_connections(timeout, log_failing_connections)
+                )
 
     # ----------------------------------------------------------------------------------------------------
     #                                             QUERYING
@@ -354,17 +359,21 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def classify(self, ids, types=None):
-        """ Classifies the entities with the given IDs
-        Args:
-            ids: list with IDs
-            types: list with types to identify
-
-        Returns: list with ClassificationResults, which is a named tuple with id, type and probability
-
+    def classify(self, ids, types=None, unknown_threshold=0.0):
+        # type: (List[str], List[str], float) -> List[ClassificationResult]
+        """
+        Classifies the entities with the given IDs
+        :param ids: list with IDs
+        :type ids: List[str]
+        :param types: list with types to identify
+        :type: types: List[str]
+        :param unknown_threshold: objects with a probability lower than this unknown_threshold are not set as a type
+        :type unknown_threshold: float
+        :return: List of classification results
+        :rtype: List[ClassificationResult]
         """
 
-        res = self._ed_classify_srv(ids=ids, unknown_probability=0.3)
+        res = self._ed_classify_srv(ids=ids, unknown_probability=unknown_threshold)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
@@ -502,5 +511,20 @@ class ED(RobotPart):
             yaml.dump(file_data, f)
 
     def detect_people(self, rgb, depth, cam_info):
-        result = self._ed_detect_people_srv(rgb, depth, cam_info)
-        return result.success, result.detected_person_ids
+        """
+        Detect people in the given color message, depth image aided by the depth camera's camera info
+        :param rgb: Color image
+        :type rgb: sensor_msgs/Image
+        :param depth: Depth image
+        :type depth: sensor_msgs/Image
+        :param cam_info: CamInfo for the camera that recorded the depth image.
+        :type cam_info: sensor_msgs/CamInfo
+        :return: bool success and a list strings with the IDs of the detected persons
+        :rtype: (bool, [str])
+        """
+        try:
+            result = self._ed_detect_people_srv(rgb, depth, cam_info)
+            return result.success, result.detected_person_ids
+        except Exception as e:
+            rospy.logerr('_ed_detect_people_srv failed!: {}'.format(e))
+            return False, []
