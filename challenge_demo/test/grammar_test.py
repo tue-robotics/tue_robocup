@@ -61,6 +61,11 @@ class GrammarTest(unittest.TestCase):
         """
 
         test_results = {}
+        self.assertTrue(
+            self.actions_rule.options,
+            "There are no options in the actions rule. "
+            "Therefore, there doesn't seem anything to test: that can't be right"
+        )
         for option in self.actions_rule.options:  # type: Option
 
             result_str = ""
