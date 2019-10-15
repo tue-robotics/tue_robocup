@@ -124,7 +124,6 @@ class Torso(RobotPart):
         # Thus both need to be controlled.
         # In robots where these are disjoint sets (arm and torso joints do not overlap), missing_joint_names will be
         # empty and thus no change is incurred.
-        # To fix this the entire concept of separate joint groups should be kicked out
         torso_goal.trajectory.joint_names += missing_joint_names
         torso_goal.trajectory.points[0].positions += [current_joint_state[n] for n in missing_joint_names]
         torso_goal.goal_tolerance += [control_msgs.msg.JointTolerance(

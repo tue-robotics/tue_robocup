@@ -1,12 +1,16 @@
 #! /usr/bin/env python
 
 # ROS
+import copy
+
 import rospy
 import tf
 import geometry_msgs
+import visualization_msgs.msg
 from diagnostic_msgs.msg import DiagnosticArray
-from sensor_msgs.msg import Image
-from std_msgs.msg import String
+from geometry_msgs.msg import Pose, Quaternion, Point, Vector3
+from sensor_msgs.msg import Image, JointState
+from std_msgs.msg import String, ColorRGBA, Header
 
 # TU/e
 from robot_skills import arms
@@ -14,15 +18,17 @@ from robot_skills.util import decorators
 
 from collections import OrderedDict, Sequence
 
+CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
+
 
 class Robot(object):
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", wait_services=False):
+    def __init__(self, robot_name="", wait_services=False, tf_listener=None):
 
         self.robot_name = robot_name
-        self.tf_listener = tf.TransformListener()
+        self.tf_listener = tf.TransformListener() if tf_listener is None else tf_listener
 
         self.configured = False
 
@@ -45,6 +51,10 @@ class Robot(object):
         self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
+
+    def get_joint_states(self):
+        msg = rospy.wait_for_message("/{}/joint_states".format(self.robot_name), JointState)
+        return dict(zip(msg.name, msg.position))
 
     def add_body_part(self, partname, bodypart):
         """
@@ -69,14 +79,31 @@ class Robot(object):
         This should be run at the end of the constructor of a child class.
         """
         # Wait for connections
+        connected = False
         s = rospy.Time.now()
-        for partname, bodypart in self.parts.iteritems():
-            bodypart.wait_for_connections(0.5)
-        e = rospy.Time.now()
-        rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+        r = rospy.Rate(1.0)
+        rospy.loginfo("Waiting for ROS connections")
+        while not connected and (rospy.Time.now() - s).to_sec() < CONNECTION_TIMEOUT:
+            connected_hypot = True
+            for bodypart in self.parts.values():
+                connected_hypot = connected_hypot and bodypart.wait_for_connections(0.1, log_failing_connections=False)
+            if connected_hypot:
+                connected = True
+                break
+            r.sleep()
+            rospy.loginfo("Will wait for another {} seconds".format(
+                CONNECTION_TIMEOUT - (rospy.Time.now() - s).to_sec()))
+
+        # If connected: log how low it took
+        if connected:
+            e = rospy.Time.now()
+            rospy.logdebug("Connecting took {} seconds".format((e-s).to_sec()))
+        else:  # Else: check again but now do log the errors
+            for bodypart in self.parts.values():
+                bodypart.wait_for_connections(0.1, log_failing_connections=True)
 
         if not self.operational:
-            not_operational_parts = [name for name, part in self.parts.iteritems() if not part.operational]
+            not_operational_parts = [name for name, part in self.parts.items() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
         self.configured = True
@@ -91,9 +118,12 @@ class Robot(object):
 
     def reset(self):
         results = {}
-        for partname, bodypart in self.parts.iteritems():
+        for partname, bodypart in self.parts.items():
             rospy.logdebug("Resetting {}".format(partname))
-            bodypart.reset()
+            if self.robot_name == 'hero' and partname == 'torso':
+                rospy.logwarn("Skipping reset of %s", partname)
+            else:
+                bodypart.reset()
         return all(results.values())
 
     def standby(self):
@@ -101,9 +131,9 @@ class Robot(object):
             rospy.logerr('Standby only works for amigo')
             return
 
-        for arm in self.arms.itervalues():
+        for arm in self.arms.values():
             arm.reset()
-        for arm in self.arms.itervalues():
+        for arm in self.arms.values():
             arm.send_gripper_goal('close')
 
         self.head.look_down()
@@ -120,10 +150,11 @@ class Robot(object):
         return output_pose
 
     def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
-                      required_goals=None, desired_goals=None,
-                      required_trajectories=None, desired_trajectories=None,
-                      required_arm_name=None,
-                      required_objects=None, desired_objects=None):
+                required_goals=None, desired_goals=None,
+                required_trajectories=None, desired_trajectories=None,
+                required_arm_name=None,
+                force_sensor_required=False,
+                required_objects=None, desired_objects=None):
         """
         Find an arm that has the needed and hopefully the desired properties.
         Does not give an arm if all needed properties cannot be satisfied. An
@@ -148,6 +179,8 @@ class Robot(object):
         :param required_arm_name: Name of the arm that is needed. If set, no
                 other arm will be considered. None means any arm will do.
 
+        :param force_sensor_required: Bool specifying whether a force_sensor is available or not.
+
         :param required_objects: Collection of objects that the arm must have. Special
                 pseudo-objects PseudoObjects.ANY and PseudoObjects.EMPTY may be used
                 too in the collection, although they do not make much sense when used
@@ -170,10 +203,11 @@ class Robot(object):
         assert seq_or_none(desired_goals)
         assert seq_or_none(required_trajectories)
         assert seq_or_none(desired_trajectories)
+        assert isinstance(force_sensor_required, bool)
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
-        for arm_name, arm in self.arms.iteritems():
+        for arm_name, arm in self.arms.items():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue
@@ -231,6 +265,11 @@ class Robot(object):
                 discarded_reasons.append((arm_name, "required trajectories failed"))
                 continue
 
+            # Force sensor availability
+            if force_sensor_required and not hasattr(arm, "force_sensor"):
+                discarded_reasons.append((arm_name, "should have a force sensor but hasn't"))
+                continue
+
             # Objects
             if not self._check_required_obj(arm, required_objects):
                 discarded_reasons.append((arm_name, "required objects failed"))
@@ -244,7 +283,7 @@ class Robot(object):
 
             # ToDO: HACK for not specifying any requirements:
             # We often want to use the arm for object manipulation, so this is always needed
-            uses_objects = True # (required_objects is not None or desired_objects is not None)
+            uses_objects = True  # (required_objects is not None or desired_objects is not None)
 
             # Success!
             if not matching_grippers:
@@ -286,7 +325,7 @@ class Robot(object):
         return True
 
     def close(self):
-        for partname, bodypart in self.parts.iteritems():
+        for partname, bodypart in self.parts.items():
             try:
                 bodypart.close()
             except Exception:
@@ -307,7 +346,7 @@ class Robot(object):
 
         diagnostic_dict = {diagnostic_status.name:diagnostic_status for diagnostic_status in diagnostic_array.status}
 
-        for name, part in self.parts.iteritems():
+        for name, part in self.parts.items():
             # Pass a dict mapping the name to the item.
             # Bodypart.handle_hardware_status needs to find the element relevant to itself
             # iterating over the array would be done be each bodypart, but with a dict they can just look theirs up.
@@ -353,7 +392,7 @@ def _collect_needs_desires(needs, desires, test_func):
     if needs is not None:
         founds.update(_collect_available(needs, test_func))
         if len(founds) != len(needs):  # All needs must be met.
-            return False
+            return None
 
     if desires is not None:
         founds.update(_collect_available(desires, test_func))
