@@ -161,6 +161,8 @@ class Entity(object):
 class PersonProperties(object):
     def __init__(self, name, age, emotion, gender, gender_confidence, pointing_pose, posture, reliability, shirt_colors,
                  tags, tagnames, velocity, parent_entity):
+        #ToDo: "In the legacy message definition a field named tagnames was defined but never used. Only tags is used.
+        # Once the message definition in people_recognition is cleaned up then tagnames should be removed completely."
         """
         Container for several properties related to a person
         :param name: the person's name. This is separate from the entity, which is unique while this doesn't have to be
