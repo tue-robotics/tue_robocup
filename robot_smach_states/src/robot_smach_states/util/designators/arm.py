@@ -15,8 +15,8 @@ class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
-    >>> a = ArmDesignator(robot, {'required_arm_name': 'left'})
-    >>> assert a.resolve()._arm == robot.arms['left']
+    >>> a = ArmDesignator(robot, {'required_arm_name': 'leftArm'})
+    >>> assert a.resolve()._arm == robot.arms['leftArm']
     """
 
     def __init__(self, robot, arm_properties, name=None):
@@ -52,8 +52,8 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>>
-    >>> robot.arms['left'].occupied_by = None
-    >>> robot.arms['right'].occupied_by = None
+    >>> robot.arms['leftArm'].occupied_by = None
+    >>> robot.arms['rightArm'].occupied_by = None
     >>> empty_arm_designator = UnoccupiedArmDesignator(robot, {})
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
     >>> assert arm_to_use_for_first_grab._arm in robot.arms.values()
@@ -93,13 +93,13 @@ class ArmHoldingEntityDesignator(ArmDesignator):
 
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
-    >>> a = ArmDesignator(robot, {'required_arm_name': 'left'})
-    >>> assert a.resolve()._arm == robot.arms['left']
+    >>> a = ArmDesignator(robot, {'required_arm_name': 'leftArm'})
+    >>> assert a.resolve()._arm == robot.arms['leftArm']
 
-    >>> leftArm = robot.arms['left']
+    >>> leftArm = robot.arms['leftArm']
     >>> leftArm.occupied_by = None
 
-    >>> rightArm = robot.arms['right']
+    >>> rightArm = robot.arms['rightArm']
     >>> rightArm.occupied_by = "entity3"
 
     >>> entity_designator = Designator("entity3")
