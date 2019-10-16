@@ -31,7 +31,7 @@ def random_kdl_vector():
 
 def random_kdl_frame():
     return kdl.Frame(kdl.Rotation.RPY(random.random(), random.random(), random.random()),
-                     random_kdl_vector)
+                     random_kdl_vector())
 
 
 def mock_query(description, grammar, target, timeout):
