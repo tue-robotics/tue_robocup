@@ -46,8 +46,8 @@ class MockedRobotPart(object):
 
 
 class Arm(arms.Arm):
-    def __init__(self, robot_name, tf_listener, side):
-        super(Arm, self).__init__(self, robot_name, tf_listener, side)
+    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+        super(Arm, self).__init__(robot_name, tf_listener, get_joint_states, side)
 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
@@ -282,6 +282,11 @@ class Mockbot(robot.Robot):
 
         super(Mockbot, self).__init__(robot_name="mockbot", wait_services=False, tf_listener=mock.MagicMock())
 
+        self.publish_target = mock.MagicMock()
+        self.tf_transform_pose = mock.MagicMock()
+        self.close = mock.MagicMock()
+        self.get_joint_states = mock.MagicMock()
+
         self.add_body_part('hmi', mock.MagicMock())
 
         def mock_query(description, grammar, target, timeout):
@@ -293,8 +298,8 @@ class Mockbot(robot.Robot):
         # Body parts
         self.add_body_part('base', Base())
         self.add_body_part('torso', Torso())
-        self.leftArm = Arm(self.robot_name, self.tf_listener, "left")
-        self.rightArm = Arm(self.robot_name, self.tf_listener, "right")
+        self.leftArm = Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        self.rightArm = Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
         self.arms = {"left":self.leftArm, "right":self.rightArm}
         self.add_body_part('head', Head())
 
@@ -314,11 +319,6 @@ class Mockbot(robot.Robot):
         # Grasp offsets
         # TODO: Don't hardcode, load from parameter server to make robot independent.
         self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
-
-        self.publish_target = mock.MagicMock()
-        self.tf_transform_pose = mock.MagicMock()
-        self.close = mock.MagicMock()
-        self.get_base_goal_poses = mock.MagicMock()
 
     def __enter__(self):
         pass
