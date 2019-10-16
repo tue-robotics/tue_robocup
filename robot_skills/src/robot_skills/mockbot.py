@@ -224,7 +224,7 @@ class ED(MockedRobotPart):
 
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(ED, self).__init__(robot_name, tf_listener)
-        self._dynamic_entities = defaultdict(ED.generate_random_entity,
+        self._dynamic_entities = defaultdict(self.generate_random_entity,
                                      {e.id:e for e in [self.generate_random_entity() for _ in range(5)]})
 
         self._dynamic_entities['john'] = self.generate_random_entity(id='john', type='person')
