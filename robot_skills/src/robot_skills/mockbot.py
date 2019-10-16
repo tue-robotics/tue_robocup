@@ -25,9 +25,13 @@ from hmi import HMIResult
 from hmi.common import random_sentence, parse_sentence
 
 
+def random_kdl_vector():
+    return kdl.Vector(random.random(), random.random(), random.random())
+
+
 def random_kdl_frame():
     return kdl.Frame(kdl.Rotation.RPY(random.random(), random.random(), random.random()),
-                     kdl.Vector(random.random(), random.random(), random.random()))
+                     random_kdl_vector)
 
 
 def mock_query(description, grammar, target, timeout):
@@ -64,28 +68,29 @@ class Arm(MockedRobotPart):
 
         self.side = side
         self.get_joint_states = get_joint_states
+        
+        self.occupied_by = None
+        self._operational = True
+        
+        self._base_offset = random_kdl_vector()
                 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
-        self.load_param = mock.MagicMock()
+        self.collect_gripper_types = mock.MagicMock()
+        self.has_joint_goal = mock.MagicMock()
+        self.has_joint_trajectory = mock.MagicMock()
+        self.cancel_goals = mock.MagicMock()
         self.close = mock.MagicMock()
         self.send_goal = mock.MagicMock()
-        self.to = mock.MagicMock()
         self.send_joint_goal = mock.MagicMock()
-        self.configuration = mock.MagicMock()
-        self.default_configurations = mock.MagicMock()
         self.send_joint_trajectory = mock.MagicMock()
-        self.configuration = mock.MagicMock()
-        self.self = mock.MagicMock()
         self.reset = mock.MagicMock()
         self.send_gripper_goal = mock.MagicMock()
+        self.handover_to_human = mock.MagicMock()
+        self.handover_to_robot = mock.MagicMock()
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
-        self.occupied_by = None
-        self._operational = True
         self.wait_for_motion_done = mock.MagicMock()
-        self.has_joint_goal = lambda goal: True
-        self.has_joint_trajectory = lambda goal: True
 
 
 class Base(MockedRobotPart):
