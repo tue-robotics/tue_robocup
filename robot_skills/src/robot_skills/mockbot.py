@@ -291,7 +291,7 @@ class Mockbot(robot.Robot):
 
         # Body parts
         self.add_body_part('base', Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', Torso(self.robot_name, self.tf_listener))
+        self.add_body_part('torso', Torso(self.robot_name, self.tf_listener, self.get_joint_states))
         self.add_arm_part(Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left"))
         self.add_arm_part(Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right"))
         self.add_body_part('head', Head(self.robot_name, self.tf_listener))
