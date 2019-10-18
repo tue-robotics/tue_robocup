@@ -65,6 +65,7 @@ class ControlToPose(smach.State):
         :param robot: (Robot) api object
         :param goal_pose: (PoseStamped or Designator to PoseStamped) Position the robot needs to go to
         :param control_parameters: (namedtuple, ControlParameters) Parameters that specify how the robot should reach
+        :param rate: (float, int) Control rate [Hz]
         the goal_pose
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -76,11 +77,10 @@ class ControlToPose(smach.State):
         self.goal_pose = goal_pose
         self.params = control_parameters
 
-        self._rate = rospy.Rate(rate)
+        self._rate = rate
 
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
-        self._cmd_vel_publisher = rospy.Publisher("/" + self.robot.robot_name + "/base/references", Twist, queue_size=1)
 
     def execute(self, userdata=None):
         goal_pose = self.goal_pose.resolve() if hasattr(self.goal_pose, "resolve") else self.goal_pose
@@ -88,6 +88,7 @@ class ControlToPose(smach.State):
             rospy.loginfo("We are already there")
             return 'succeeded'
 
+        rate = rospy.Rate(self._rate)
         rospy.loginfo("Starting alignment ....")
         while not rospy.is_shutdown():
             dx, dy, dyaw = self._get_target_delta_in_robot_frame(goal_pose)
@@ -98,15 +99,14 @@ class ControlToPose(smach.State):
 
             rospy.logdebug_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
 
-            self._cmd_vel_publisher.publish(Twist(
-                linear=Vector3(
-                    x=_clamp(self.params.abs_vx, self.params.position_gain * dx),
-                    y=_clamp(self.params.abs_vy, self.params.position_gain * dy)
-                ),
-                angular=Vector3(z=_clamp(self.params.abs_vyaw, self.params.rotation_gain * dyaw))
-            ))
+            self.robot.base.force_drive(vx=_clamp(self.params.abs_vx, self.params.position_gain * dx),
+                                        vy=_clamp(self.params.abs_vy, self.params.position_gain * dy),
+                                        vth=_clamp(self.params.abs_vyaw, self.params.rotation_gain * dyaw),
+                                        timeout=1/float(self._rate), loop_rate=self._rate, stop=False)
 
-            self._rate.sleep()
+            rate.sleep()
+
+        self.robot.base.force_drive(vx=0, vy=0, vth=0, timeout=0, stop=True)
 
         return 'failed'
 
