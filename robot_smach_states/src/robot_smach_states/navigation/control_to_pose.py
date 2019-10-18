@@ -119,7 +119,7 @@ class ControlToPose(smach.State):
         (float) yaw of goal in robot frame
         """
         goal_pose.header.stamp = rospy.Time.now()
-        pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
+        pose = self._tf_buffer.transform(goal_pose, self.robot.base_link_frame, rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
