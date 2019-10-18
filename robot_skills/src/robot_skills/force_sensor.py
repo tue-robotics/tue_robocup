@@ -2,7 +2,7 @@ from numpy import array as np_array
 from numpy.linalg import norm as np_norm
 import rospy
 from geometry_msgs.msg import WrenchStamped
-from .exceptions import TimeOutException
+from util.exceptions import TimeOutException
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
