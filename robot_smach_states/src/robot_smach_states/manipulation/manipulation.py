@@ -155,12 +155,19 @@ class HandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL", ArmToJointConfig(robot, locked_arm,
                                                                                       'handover_to_human'),
-                                   transitions={'succeeded': 'DETECT_HANDOVER',
-                                                'failed': 'DETECT_HANDOVER'})
+                                   transitions={'succeeded': 'SAY_DETECT_HANDOVER',
+                                                'failed': 'SAY_DETECT_HANDOVER'})
+
+            smach.StateMachine.add("SAY_DETECT_HANDOVER", Say(robot, ["I will handover the object now"
+                                                                      "Please take it from my gripper."]),
+                                   transitions={'spoken': 'DETECT_HANDOVER'})
 
             smach.StateMachine.add("DETECT_HANDOVER", HandOverTo(robot, locked_arm),
-                                   transitions={'succeeded': 'CLOSE_GRIPPER_HANDOVER',
-                                                'failed': 'CLOSE_GRIPPER_HANDOVER'})
+                                   transitions={'succeeded': 'SAY_CLOSE_NOW_GRIPPER',
+                                                'failed': 'SAY_CLOSE_NOW_GRIPPER'})
+
+            smach.StateMachine.add("SAY_CLOSE_NOW_GRIPPER", Say(robot, ["I will close my gripper now"]),
+                                   transitions={'spoken': 'CLOSE_GRIPPER_HANDOVER'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm,
                                                                         gripperstate=GripperState.CLOSE, timeout=0),
