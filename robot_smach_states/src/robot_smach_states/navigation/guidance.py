@@ -163,24 +163,6 @@ class TourGuide(object):
         self._passed_room_ids = []  # Will contain the ids of the rooms that are passed
         self._passed_furniture_ids = []  # Will contain the ids of the furniture that is passed
 
-    @staticmethod
-    def in_room(room, position):
-        # type: (Entity, kdl.Vector) -> bool
-        """
-        Checks if the given position is in the given room
-
-        :param room: Room entity
-        :type room: Entity
-        :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
-        entities
-        :type position: kdl.Vector
-        :return: whether or not the position is in the room
-        :rtype: bool
-        """
-        if room.in_volume(VectorStamped(vector=position), "in"):
-            return True
-        return False
-
     def get_room(self, position):
         # type: (kdl.Vector) -> Entity
         """
@@ -193,7 +175,7 @@ class TourGuide(object):
         :raises: (RuntimeError)
         """
         for room in self._room_entities:
-            if self.in_room(room, position):
+            if room.in_volume(VectorStamped(vector=position), "in"):
                 return room
         raise RuntimeError("Position {} is not in any room".format(position))
 
