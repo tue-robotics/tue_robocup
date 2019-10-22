@@ -290,6 +290,13 @@ class Base(RobotPart):
         rospy.logwarn("[base.py] Function 'cancel_goal' of 'Base' is obsolete.")
         return True
 
+    def __del__(self):
+        v = geometry_msgs.msg.Twist()  # Initialize velocity
+        # Stop driving
+        v.linear.x = 0.0
+        v.linear.y = 0.0
+        v.angular.z = 0.0
+        self._cmd_vel.publish(v)
     ########################################################
     ########################################################
     ########################################################
