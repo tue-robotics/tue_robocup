@@ -156,10 +156,6 @@ class WaitForDoorOpen(smach.State):
         self.distances = []
         self.door_open = Event()
 
-        self.laser_upside_down = None
-        self.laser_yaw = None
-        self.laser_sub = None
-
     @staticmethod
     def avg(lst):
         """
@@ -170,36 +166,32 @@ class WaitForDoorOpen(smach.State):
         lst = [point for point in lst if not math.isnan(point)]
         return sum(lst) / max(len(lst), 1)
 
-    def process_scan(self, scan_msg):
+    def process_scan(self, laser_upside_down, laser_yaw, door_open, scan_msg):
         """
         callback function checking the distance of the laser points in front of the robot.
+        :param laser_upside_down: (int) 1 as normal, -1 as upside down
+        :param laser_yaw: yaw angle of the laser
+        :param door_open: Event to be set when ready
         :param scan_msg: sensor_msgs.msg.LaserScan
         :return: no return
         """
-        try:
-            number_beams = len(scan_msg.ranges)
-            front_index = int(
-                math.floor((self.laser_upside_down*self.laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment,
-                                                                                              1e-10)))
+        number_beams = len(scan_msg.ranges)
+        front_index = int(
+            math.floor((laser_upside_down*laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
 
-            if front_index < 2 or front_index > number_beams - 2:
-                rospy.logerr("Base laser can't see in front of the robot")
-                self.laser_sub.unregister()
-                raise IndexError()  # TODO Matthijs: very ugly
+        if front_index < 2 or front_index > number_beams - 2:
+            raise IndexError("Base laser can't see in front of the robot")
 
-            ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
-            distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
-            rospy.logdebug("AVG distance: {}".format(distance_to_door))
-            self.distances += [distance_to_door]  # store all distances
+        ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
+        distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
+        rospy.logdebug("AVG distance: {}".format(distance_to_door))
+        self.distances += [distance_to_door]  # store all distances
 
-            avg_distance_now = self.avg(self.distances[-5:])  # And the latest 5
+        avg_distance_now = self.avg(self.distances[-5:])  # And the latest 5
 
-            if avg_distance_now > 1.0:
-                rospy.loginfo("Distance to door is more than a meter")
-                self.door_open.set()  # Then set a threading Event that execute is waiting for.
-        except Exception as e:
-            rospy.logerr("Receiving laser failed so unsubscribing: {0}".format(e))
-            self.laser_sub.unregister()
+        if avg_distance_now > 1.0:
+            rospy.loginfo("Distance to door is more than a meter")
+            door_open.set()  # Then set a threading Event that execute is waiting for.
 
     def execute(self, userdata=None):
         rospy.loginfo("Waiting for door...")
@@ -208,18 +200,19 @@ class WaitForDoorOpen(smach.State):
                                                                           self._robot.robot_name + '/base_laser',
                                                                           rospy.Time(0))
         laser_rotation = quaternion_msg_to_kdl_rotation(r)
-        self.laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
-        self.laser_yaw = laser_rotation.GetRPY()[2]
-        self.laser_sub = rospy.Subscriber(self._robot.laser_topic, LaserScan,
-                                          self.process_scan)
+        laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
+        laser_yaw = laser_rotation.GetRPY()[2]
 
-        opened_before_timout = self.door_open.wait(self.timeout)
+        door_open = Event()
+        laser_sub = rospy.Subscriber(self._robot.laser_topic, LaserScan,
+                                     partial(self.process_scan, laser_upside_down, laser_yaw, door_open))
+
+        opened_before_timout = door_open.wait(self.timeout)
 
         rospy.loginfo("Unregistering laser listener and clearing data")
-        self.laser_sub.unregister()
+        laser_sub.unregister()
         self.distances = []
 
-        self.door_open.clear()
         if opened_before_timout:
             rospy.loginfo("Door is open")
             return "open"
