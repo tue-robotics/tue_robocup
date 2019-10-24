@@ -38,14 +38,14 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
     """
     t_start = time.time()
     if initial_state or robot_name:
-        rospy.logwarn(  "Setting initial_state and robot_name via the startup"
-                        " is not needed and deprecated. "
-                        "This is inferred by startup from the command line")
+        rospy.logwarn("Setting initial_state and robot_name via the startup"
+                      "is not needed and deprecated. "
+                      "This is inferred by startup from the command line")
 
     available_robots = ['amigo', 'sergio', 'hero', 'mockbot']
     arguments = docopt(__doc__.format(robot='|'.join(available_robots),
                                       challenge_name=challenge_name if challenge_name else "xxx"),
-                                      argv=[v for v in argv[1:] if not v.startswith("_")],
+                       argv=[v for v in argv[1:] if not v.startswith("_")],
                        version='robot_smach_states startup 2.0')
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
