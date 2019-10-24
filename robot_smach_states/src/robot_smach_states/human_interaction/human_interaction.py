@@ -123,8 +123,6 @@ class Say(smach.State):
         self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
-        # robot.head.look_at_standing_person()
-
         if not self.sentence:
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
