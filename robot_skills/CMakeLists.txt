@@ -6,10 +6,12 @@ find_package(catkin REQUIRED COMPONENTS
     amigo_msgs
     cb_planner_msgs_srvs
     control_msgs
+    cv_bridge
     dragonfly_speech_recognition
     ed_msgs
     ed_gui_server
     ed_navigation
+    ed_people_recognition_msgs
     ed_perception
     geometry_msgs
     head_ref
