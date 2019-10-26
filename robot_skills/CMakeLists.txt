@@ -14,7 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
     ed_people_recognition_msgs
     ed_perception_msgs
     geometry_msgs
-    head_ref
+    head_ref_msgs
+    people_recognition_msgs
     rgbd_msgs
     rospy
     smach

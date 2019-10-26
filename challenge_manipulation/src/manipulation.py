@@ -24,7 +24,8 @@ import smach
 import random
 
 # ED
-from ed_robocup.srv import FitEntityInImageRequest
+from ed_robocup_msgs.srv import FitEntityInImage
+from ed_robocup_msgs.srv import FitEntityInImageRequest
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
@@ -202,7 +203,6 @@ class FitEntity(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self._robot = robot
-        from ed_robocup.srv import FitEntityInImage
         self._srv = rospy.ServiceProxy(robot.robot_name + '/ed/fit_entity_in_image', FitEntityInImage)
         self._entity_str = entity_str
 
