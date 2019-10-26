@@ -9,10 +9,10 @@ find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     dragonfly_speech_recognition
     ed_msgs
-    ed_gui_server
-    ed_navigation
+    ed_gui_server_msgs
+    ed_navigation_msgs
     ed_people_recognition_msgs
-    ed_perception
+    ed_perception_msgs
     geometry_msgs
     head_ref
     rgbd_msgs
