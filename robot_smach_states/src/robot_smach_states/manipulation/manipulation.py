@@ -171,12 +171,12 @@ class HandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm,
                                                                         gripperstate=GripperState.CLOSE, timeout=0),
-                                   transitions={'succeeded': 'UNLOCK_ARM',
-                                                'failed': 'UNLOCK_ARM'})
+                                   transitions={'succeeded': 'RESET_ARM',
+                                                'failed': 'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM', ArmToJointConfig(robot, locked_arm, 'reset'),
-                                   transitions={'succeeded': 'RESET_TORSO',
-                                                'failed': 'RESET_TORSO'})
+                                   transitions={'succeeded': 'UNLOCK_ARM',
+                                                'failed': 'UNLOCK_ARM'})
 
             smach.StateMachine.add("UNLOCK_ARM", UnlockDesignator(locked_arm),
                                    transitions={'unlocked': 'succeeded'})
