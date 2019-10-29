@@ -16,6 +16,7 @@ from hmi import HMIResult
 # Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
+from robot_skills.robot import Robot
 
 
 class Say(smach.State):
@@ -159,10 +160,18 @@ class Say(smach.State):
 
 
 class HearOptions(smach.State):
-    """Hear one of the options
     """
-
+    Hear one of the options
+    """
     def __init__(self, robot, options, timeout=rospy.Duration(10), look_at_standing_person=True):
+        # type:(Robot, list, int, bool) -> None
+        """
+
+        :param robot: (Robot) robot api object
+        :param options: List of strings with the options the robot can hear
+        :param timeout: integer indicating when the robot has to timeout
+        :param look_at_standing_person: bool indicating whether the robot should look at the person giving the command
+        """
         outcomes = list(options)  # make a copy
         outcomes.append("no_result")
         smach.State.__init__(self, outcomes=outcomes)
@@ -191,7 +200,8 @@ class HearOptions(smach.State):
 
 
 class HearOptionsExtra(smach.State):
-    """Listen to what the user said, based on a pre-constructed sentence
+    """
+    Listen to what the user said, based on a pre-constructed sentence
 
     Keyword arguments:
     spec_designator -- sentence that is supposed to be heard
