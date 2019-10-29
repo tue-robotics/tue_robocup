@@ -2,11 +2,12 @@
 import unittest
 
 # TU/e Robotics
+from hmi import TimeoutException
 from robot_skills.mockbot import Mockbot
 
 # Robot smach states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.human_interaction.human_interaction import Say
+from robot_smach_states.human_interaction.human_interaction import Say, HearOptions
 
 
 class TestSay(unittest.TestCase):
@@ -51,3 +52,25 @@ class TestSay(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             say.execute()
             self.assertIn("Not all named place holders are provided", cm.exception)
+
+
+class TestHearOptions(unittest.TestCase):
+
+    def setUp(self):
+        self.robot = Mockbot()
+
+    def test_hear_options_success(self):
+        options = ["apple"]
+        hear = HearOptions(self.robot, options)
+        self.assertEqual(hear.execute(), "apple")
+
+    def test_hear_options_fail(self):
+        class HMIMock(object):
+            def query(self, description, target, grammar, timeout):
+                raise TimeoutException
+
+        options = ["apple"]
+        self.robot.hmi = HMIMock()
+        hear = HearOptions(self.robot, options)
+        self.assertEqual(hear.execute(), "no_result")
+
