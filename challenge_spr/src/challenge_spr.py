@@ -4,8 +4,8 @@ import rospy
 import smach
 import math
 
-from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, WaitTime
 from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
+from robot_smach_states import Initialize, Say, WaitForPersonInFront, ForceDrive, WaitTime
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
@@ -37,7 +37,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
                                                 "preempted": "TURN"})
 
             smach.StateMachine.add("TURN",
-                                   Turn(robot, math.pi),
+                                   ForceDrive(robot, vx=0.0, vy=0.0, vth=1.0, duration=math.pi),
                                    transitions={"turned": "DETECT_CROWD"})
 
             smach.StateMachine.add("DETECT_CROWD",
@@ -84,6 +84,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "person_recognition")
+
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
