@@ -3,50 +3,32 @@ import random
 import rospy
 import smach
 
-from hmi import TimeoutException
-from robocup_knowledge import load_knowledge
-
-DEFAULT_HEAR_TIME = 20.0
-
-knowledge = load_knowledge('challenge_spr')
-common_knowledge = load_knowledge('common')
+from hmi import HMIResult, TimeoutException
+from robot_skills.robot import Robot
 
 
-def hear(robot, hear_time):
-    """
-    Robots hears a question
-
-    Output:
-        question, if understood, else None
-    """
-    try:
-        return robot.hmi.query('Question?', knowledge.grammar, 'T', timeout=hear_time)
-    except TimeoutException:
-        return None
-
-
-def answer(robot, res, crowd_data):
+def answer(robot, knowledge, res, crowd_data):
+    # type: (Robot, object, HMIResult, dict) -> bool
     """
     Robot answers the heard question
 
-    Arguments:
-        robot: robot api object
-        res: question or None
-        crowd_data: data about the crowd
+    :param robot: robot api object
+    :param knowledge: common knowledge data struct
+    :param res: HMIResult what has been understood
+    :param crowd_data: data about the crowd
 
-    Outputs:
-        True: if successfully answered the question, else False
+    :return: if successfully answered the question, else False
     """
-    if not res:
-        return False
-
     if 'actions' not in res.semantics:
         robot.speech.speak("Your question was '%s' but I don't know the answer" % res.sentence)
         return False
 
     # Pass on the provided crowd_data to the real answering function.
-    def answer_crowd_questions(_action):
-        return answer_count_people(_action, crowd_data)
+    def answer_crowd_questions(_action, _knowledge):
+        if not crowd_data:
+            robot.speech.speak("I'm sorry but I don't know anything about a crowd.")
+            return False
+        return answer_count_people(_action, _knowledge, crowd_data)
 
     assignments = {'random_gender':     answer_random_gender,
                    'answer':            answer_predefined_questions,
@@ -72,7 +54,7 @@ def answer(robot, res, crowd_data):
 
             func = assignments.get(action['action'])
             if func is not None:
-                ans = func(action)
+                ans = func(action, knowledge)
 
         except Exception as e:
             rospy.logerr(e)
@@ -86,16 +68,15 @@ def answer(robot, res, crowd_data):
         return True
 
 
-# noinspection PyUnusedLocal
-def answer_random_gender(action):
+def answer_random_gender(_, __):
     return random.choice(["A male", "A female"])
 
 
-def answer_predefined_questions(action):
+def answer_predefined_questions(action, _):
     return action['solution']
 
 
-def answer_count_people(action, crowd_data):
+def answer_count_people(action, _, crowd_data):
     crowd_properties = [('people', 'crowd_size'),
                         ('children', 'children'),
                         ('adults', 'adults'),
@@ -120,7 +101,7 @@ def answer_count_people(action, crowd_data):
     return 'I dont know'
 
 
-def answer_placement_location(action):
+def answer_placement_location(action, common_knowledge):
     entity = action['entity']
     locations = [loc for loc in common_knowledge.locations if loc['name'] == entity]
     if len(locations) == 1:
@@ -130,7 +111,7 @@ def answer_placement_location(action):
         return 'I dont know that object'
 
 
-def answer_count_placement(action):
+def answer_count_placement(action, common_knowledge):
     entity = action['entity']
 
     locations = [loc for loc in common_knowledge.locations if loc['name'] == entity]
@@ -144,7 +125,7 @@ def answer_count_placement(action):
         return 'I should count but I dont know that object %s' % entity
 
 
-def answer_find_objects(action):
+def answer_find_objects(action, common_knowledge):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
@@ -155,13 +136,13 @@ def answer_find_objects(action):
         return 'I should find %s but I dont know %s' % entity
 
 
-def answer_find_category(action):
+def answer_find_category(action, common_knowledge):
     entity = action['entity']
     loc, area_name = common_knowledge.get_object_category_location(entity)
     return 'You can find the %s on the %s' % (entity, loc)
 
 
-def answer_object_category(action):
+def answer_object_category(action, common_knowledge):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
@@ -171,7 +152,7 @@ def answer_object_category(action):
         return 'I should name a category but I dont know what is %s' % entity
 
 
-def answer_object_color(action):
+def answer_object_color(action, common_knowledge):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['name'] == entity]
     if len(objects) == 1:
@@ -181,7 +162,7 @@ def answer_object_color(action):
         return 'I should name the color but I dont know %s' % entity
 
 
-def answer_compare_objects_sizes(action):
+def answer_compare_objects_sizes(action, common_knowledge):
     entity_a = action['entity_a']
     entity_b = action['entity_b']
     objects_a = [obj for obj in common_knowledge.objects if obj['name'] == entity_a]
@@ -199,7 +180,7 @@ def answer_compare_objects_sizes(action):
         return 'I dont know these objects'
 
 
-def answer_compare_objects_weight(action):
+def answer_compare_objects_weight(action, common_knowledge):
     entity_a = action['entity_a']
     entity_b = action['entity_b']
     objects_a = [obj for obj in common_knowledge.objects if obj['name'] == entity_a]
@@ -217,7 +198,7 @@ def answer_compare_objects_weight(action):
         return 'I dont know these objects'
 
 
-def answer_compare_objects_categories(action):
+def answer_compare_objects_categories(action, common_knowledge):
     entity_a = action['entity_a']
     entity_b = action['entity_b']
     objects_a = [obj for obj in common_knowledge.objects if obj['name'] == entity_a]
@@ -233,7 +214,7 @@ def answer_compare_objects_categories(action):
         return 'I dont know these objects'
 
 
-def answer_count_objects_in_category(action):
+def answer_count_objects_in_category(action, common_knowledge):
     entity = action['entity']
     objects = [obj for obj in common_knowledge.objects if obj['category'] == entity]
     if len(objects) > 0:
@@ -242,31 +223,43 @@ def answer_count_objects_in_category(action):
 
 
 class HearAndAnswerQuestions(smach.State):
-    """
-    Robot hears and answers questions from the riddle game in SPR challenge.
+    def __init__(self, robot, grammar, knowledge, num_questions=1, hear_time=20.0):
+        # type: (Robot, str, object, int, float) -> str
+        """
+        Robot hears and answers questions.
 
-    Variables:
-        num_questions: number of questions to be heard and answered
-
-    Outputs:
-        done: answered all questions
-    """
-    def __init__(self, robot, num_questions=1, hear_time=DEFAULT_HEAR_TIME):
+        :param robot: robot api object
+        :param grammar: grammar for speech to text
+        :param knowledge: knowledge data struct
+        :param num_questions: number of questions to be heard and answered
+        :param hear_time: timeout for speech to text
+        :return: "done"
+        """
         smach.State.__init__(self, outcomes=["done"], input_keys=['crowd_data'])
         self.robot = robot
         self.num_questions = num_questions
         self.hear_time = hear_time
+        self.grammar = grammar
+        self.knowledge = knowledge
 
     def execute(self, userdata):
-        crowd_data = userdata.crowd_data
+        try:
+            crowd_data = userdata.crowd_data
+        except AttributeError:
+            rospy.logwarn("No crowd data in userdata")
+            crowd_data = {}
 
         self.robot.head.look_at_standing_person()
 
         for _ in xrange(self.num_questions):
 
-            res = hear(self.robot, hear_time=self.hear_time)
+            try:
+                res = self.robot.hmi.query('Question?', self.grammar, 'T', timeout=self.hear_time)
+            except TimeoutException:
+                self.robot.speech.speak("I did not hear you. Please ask me the next question!")
+                continue
 
-            if not answer(self.robot, res, crowd_data):
+            if not answer(self.robot, self.knowledge, res, crowd_data):
                 self.robot.speech.speak("Please ask me the next question!")
 
         return "done"

@@ -2,9 +2,6 @@
 
 import rospy
 import smach
-import time
-import os
-import datetime
 import math
 
 from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, WaitTime
@@ -14,7 +11,10 @@ import robot_smach_states.util.designators as ds
 
 from challenge_spr_states import detect
 from challenge_spr_states import bluff_game
-from challenge_spr_states import riddle_game
+
+from robocup_knowledge import load_knowledge
+knowledge = load_knowledge('challenge_spr')
+common_knowledge = load_knowledge('common')
 
 
 class ChallengeSpeechPersonRecognition(smach.StateMachine):
@@ -58,7 +58,12 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             # Riddle Game
 
             smach.StateMachine.add('RIDDLE_GAME',
-                                   HearAndAnswerQuestions(robot, num_questions=5),
+                                   HearAndAnswerQuestions(
+                                       robot,
+                                       grammar=knowledge.grammar,
+                                       knowledge=common_knowledge,
+                                       num_questions=5,
+                                   ),
                                    transitions={'done':'TRANSITION'})
 
             # Transition:

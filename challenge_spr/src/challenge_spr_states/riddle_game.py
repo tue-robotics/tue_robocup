@@ -8,6 +8,9 @@ import smach
 import robot_smach_states as states
 from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
 from robot_smach_states.util.startup import startup
+from robocup_knowledge import load_knowledge
+knowledge = load_knowledge('challenge_spr')
+common_knowledge = load_knowledge('common')
 
 
 class TestRiddleGame(smach.StateMachine):
@@ -34,7 +37,12 @@ class TestRiddleGame(smach.StateMachine):
                                                 'abort': 'Aborted'})
 
             smach.StateMachine.add("RIDDLE_GAME",
-                                   HearAndAnswerQuestions(robot, num_questions=3),
+                                   HearAndAnswerQuestions(
+                                       robot,
+                                       grammar=knowledge.grammar,
+                                       knowledge=common_knowledge,
+                                       num_questions=3,
+                                   ),
                                    transitions={'done': 'Done'},
                                    remapping={'crowd_data':'crowd_data'})
 
