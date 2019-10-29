@@ -8,12 +8,14 @@ import datetime
 import math
 
 from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, WaitTime
+from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
 from challenge_spr_states import detect
 from challenge_spr_states import bluff_game
 from challenge_spr_states import riddle_game
+
 
 class ChallengeSpeechPersonRecognition(smach.StateMachine):
     def __init__(self, robot):
@@ -56,7 +58,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             # Riddle Game
 
             smach.StateMachine.add('RIDDLE_GAME',
-                                   riddle_game.HearAndAnswerQuestions(robot, num_questions=5),
+                                   HearAndAnswerQuestions(robot, num_questions=5),
                                    transitions={'done':'TRANSITION'})
 
             # Transition:
