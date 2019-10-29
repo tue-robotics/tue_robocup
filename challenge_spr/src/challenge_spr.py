@@ -7,13 +7,14 @@ import os
 import datetime
 import math
 
-from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, WaitTime
+from robot_smach_states import Initialize, Say, WaitForPersonInFront, ForceDrive, WaitTime
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
 from challenge_spr_states import detect
 from challenge_spr_states import bluff_game
 from challenge_spr_states import riddle_game
+
 
 class ChallengeSpeechPersonRecognition(smach.StateMachine):
     def __init__(self, robot):
@@ -35,7 +36,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
                                                 "preempted": "TURN"})
 
             smach.StateMachine.add("TURN",
-                                   Turn(robot, math.pi),
+                                   ForceDrive(robot, vx=0.0, vy=0.0, vth=1.0, duration=math.pi),
                                    transitions={"turned": "DETECT_CROWD"})
 
             smach.StateMachine.add("DETECT_CROWD",
