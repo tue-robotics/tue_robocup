@@ -6,3 +6,6 @@ This is to high-level code that TU Eindhoven's AMIGO robot uses to perform RoboC
 
 Most, if not all, challenges are implemented as (large) hierarchical state machines, using the robot_smach_states library of states/state machines.
 These states use the robot_skills robot abstraction layer.
+
+
+Bla
