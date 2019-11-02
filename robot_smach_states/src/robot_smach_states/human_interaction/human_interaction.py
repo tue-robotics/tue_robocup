@@ -169,7 +169,7 @@ class HearOptions(smach.State):
 
         :param robot: (Robot) robot api object
         :param options: List of strings with the options the robot can hear
-        :param timeout: integer indicating when the robot has to timeout
+        :param timeout: rospy.rostime.Duration indicating when the robot has to timeout
         :param look_at_standing_person: bool indicating whether the robot should look at the person giving the command
         """
         outcomes = list(options)  # make a copy
