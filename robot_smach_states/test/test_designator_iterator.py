@@ -38,7 +38,7 @@ class IterateDesignatorTest(unittest.TestCase):
         self.assertRaises(TypeError, IterateDesignator, self.collection_des,
                           ds.VariableDesignator(resolve_type=str))
 
-    def test_mismatchting_resolve_type(self):
+    def test_mismatching_resolve_type(self):
         self.assertRaises(AssertionError, IterateDesignator, self.collection_des,
                           ds.VariableDesignator(resolve_type=unicode).writeable)
 
