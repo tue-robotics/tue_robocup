@@ -68,12 +68,12 @@ class Arm(MockedRobotPart):
 
         self.side = side
         self.get_joint_states = get_joint_states
-        
+
         self.occupied_by = None
         self._operational = True
-        
+
         self._base_offset = random_kdl_vector()
-                
+
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
         self.collect_gripper_types = mock.MagicMock()
@@ -113,7 +113,7 @@ class Base(MockedRobotPart):
 class Hmi(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Hmi, self).__init__(robot_name, tf_listener)
-        
+
         self.query = mock_query
         self.show_image = mock.MagicMock()
         self.show_image_from_msg = mock.MagicMock()
@@ -160,9 +160,10 @@ class Perception(MockedRobotPart):
         super(Perception, self).__init__(robot_name, tf_listener)
         self.reset = mock.MagicMock()
         self.close = mock.MagicMock()
-        self.learn_person= mock.MagicMock()
-        self.detect_faces= mock.MagicMock()
-        self.get_best_face_recognition= mock.MagicMock()
+        self.learn_person = mock.MagicMock()
+        self.detect_faces = mock.MagicMock()
+        self.get_best_face_recognition = mock.MagicMock()
+        self.get_rgb_depth_caminfo = mock.MagicMock()
         self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "/map")
 
 
@@ -186,9 +187,9 @@ class Speech(MockedRobotPart):
 class Torso(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, get_joint_states, *args, **kwargs):
         super(Torso, self).__init__(robot_name, tf_listener)
-        
+
         self.get_joint_states = get_joint_states
-        
+
         self.close = mock.MagicMock()
         self.send_goal = mock.MagicMock()
         self._send_goal = mock.MagicMock()
