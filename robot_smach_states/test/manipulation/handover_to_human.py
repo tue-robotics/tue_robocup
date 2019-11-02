@@ -37,6 +37,7 @@ class TestHandOverToHuman(unittest.TestCase):
         self.robot.arms["leftArm"].send_joint_goal.assert_any_call('reset', max_joint_vel=mock.ANY, timeout=mock.ANY)
 
         self.robot.arms["leftArm"].send_gripper_goal.assert_any_call('open', mock.ANY, max_torque=mock.ANY)
+        self.assertIsNone(self.robot.arms["leftArm"].occupied_by)
 
 
 if __name__ == '__main__':
