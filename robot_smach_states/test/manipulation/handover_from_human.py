@@ -42,5 +42,34 @@ class TestHandOverFromHuman(unittest.TestCase):
         self.assertEqual(self.robot.arms["rightArm"].occupied_by, self.entity)
 
 
+class TestOpenGripper(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
+
+    def setUp(self):
+        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+        self.entity_label = "entity_label"
+
+    def test_open_gripper(self):
+        state = states.CloseGripperOnHandoverToRobot(self.robot, self.arm_ds, self.entity_label)
+        self.assertEqual(state.execute(), "succeeded")
+        self.robot.arms["leftArm"].handover_to_robot.assert_called_once()
+        self.assertEqual(self.robot.arms["leftArm"].occupied_by.id, self.entity_label)
+
+
+class TestOpenGripperFail(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
+
+    def setUp(self):
+        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+
+    def test_missing_input(self):
+        state = states.CloseGripperOnHandoverToRobot(self.robot, self.arm_ds) # no entity label or entity designator
+        self.assertEqual(state.execute(), "failed")
+        self.robot.arms["leftArm"].handover_to_robot.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main()
