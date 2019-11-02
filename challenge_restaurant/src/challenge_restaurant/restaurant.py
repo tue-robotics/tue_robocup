@@ -1,5 +1,8 @@
 #!/usr/bin/python
 import math
+import os
+import rospkg
+
 import numpy as np
 import robot_smach_states as states
 import smach
@@ -42,11 +45,18 @@ class Restaurant(smach.StateMachine):
                                                                    "on my screen", block=True),
                                    transitions={'spoken': 'SHOW_IMAGE'})
 
-            smach.StateMachine.add('SHOW_IMAGE', states.ShowImageState(robot,
-                                                                       "challenge_restaurant",
-                                                                       "images/waving.jpg", seconds=10),
-                                   transitions={'succeeded': 'STORE_KITCHEN',
-                                                'failed': 'STORE_KITCHEN'})
+            smach.StateMachine.add(
+                'SHOW_IMAGE',
+                states.ShowImageState(
+                    robot=robot,
+                    image_filename=os.path.join(
+                        rospkg.RosPack().get_path("challenge_restaurant"),
+                        "images/waving.jpg"
+                        ),
+                    seconds=10),
+                transitions={'succeeded': 'STORE_KITCHEN',
+                             'failed': 'STORE_KITCHEN'}
+            )
 
             smach.StateMachine.add('STORE_KITCHEN',
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
