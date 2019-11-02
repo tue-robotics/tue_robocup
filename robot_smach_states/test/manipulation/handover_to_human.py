@@ -1,9 +1,6 @@
 import unittest
 import mock
 
-# datatypes
-import PyKDL as kdl
-
 # Robot Skills
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
@@ -28,7 +25,7 @@ class TestHandOverToHuman(unittest.TestCase):
     def test_handover_to_human(self):
         state = states.HandoverToHuman(self.robot, self.arm_ds)
         state.check_consistency()
-        self.assertIsNotNone(state.execute(), "Execute returned None, is container consistent?")
+        self.assertEqual(state.execute(), "succeeded")
 
         self.robot.arms["rightArm"].send_joint_goal.assert_not_called()
         self.robot.arms["rightArm"].send_gripper_goal.assert_not_called()
