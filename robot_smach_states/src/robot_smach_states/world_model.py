@@ -169,7 +169,7 @@ class SegmentObjects(smach.State):
         elif isinstance(segmentation_area, ds.Designator):
             self.segmentation_area_des = segmentation_area
         else:
-            raise RuntimeError("This shoudln't happen. Wrong types should have raised an exception earlier")
+            raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.is_writeable(segmented_entity_ids_designator)
