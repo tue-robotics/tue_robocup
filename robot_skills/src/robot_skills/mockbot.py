@@ -76,7 +76,6 @@ class Arm(MockedRobotPart):
 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
-        self.collect_gripper_types = mock.MagicMock()
         self.has_joint_goal = mock.MagicMock()
         self.has_joint_trajectory = mock.MagicMock()
         self.cancel_goals = mock.MagicMock()
@@ -91,6 +90,9 @@ class Arm(MockedRobotPart):
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
+
+    def collect_gripper_types(self, gripper_type):
+        return gripper_type
 
 
 class Base(MockedRobotPart):
