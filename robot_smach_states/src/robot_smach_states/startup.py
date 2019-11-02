@@ -89,7 +89,7 @@ class StartChallengeRobust(smach.StateMachine):
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
-                                   EnterArena(robot, initial_pose, use_entry_points),
+                                   EnterArena(robot),
                                    transitions={"done": "Done"})
 
 
