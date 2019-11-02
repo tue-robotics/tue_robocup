@@ -283,7 +283,7 @@ class EmptySpotDesignator(Designator):
     PLACE_SHELF = "shelf2"
     cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
     place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF),
-     name="place_position")
+                                          name="place_position")
     """
 
     def __init__(self, robot, place_location_designator, name=None, area=None):
@@ -501,7 +501,7 @@ class EmptySpotDesignator(Designator):
 
     def __repr__(self):
         return "EmptySpotDesignator(place_location_designator={}, name='{}', area='{}')"\
-            .format(self.place_location_designator, self._name, self._area)
+                    .format(self.place_location_designator, self._name, self._area)
 
 
 class LockToId(Designator):
