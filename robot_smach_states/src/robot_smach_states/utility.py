@@ -231,8 +231,7 @@ class WaitCondition(smach.State):
     def execute(self, userdata):
         starttime = rospy.Time.now()
 
-        while (rospy.Time.now() - starttime) < rospy.Duration(self.timeout)\
-            and not rospy.is_shutdown():
+        while (rospy.Time.now() - starttime) < rospy.Duration(self.timeout) and not rospy.is_shutdown():
             cb_output = self.condition_callback(userdata, self.robot)
             if cb_output:
                 userdata.trigger_value = cb_output
