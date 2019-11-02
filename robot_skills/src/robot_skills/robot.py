@@ -295,7 +295,7 @@ class Robot(object):
             else:
                 default_gripper = next(iter(matching_grippers))
             return arms.PublicArm(arm, matching_grippers, default_gripper, uses_objects,
-                                  matching_goals, matching_trajectories)
+                                  force_sensor_required, matching_goals, matching_trajectories)
 
         # No arm matched. Dump why.
         msg = ("Failed to find a matching arm, reasons: " +
