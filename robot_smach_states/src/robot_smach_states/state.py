@@ -48,7 +48,8 @@ if __name__ == "__main__":
         execute(self, userdata) instead of run(self, ...)
         >>> teststate2.execute()
         Also works with designators
-        'yes'"""
+        'yes'
+        """
 
         def __init__(self, robot, sentence, blaat):
             State.__init__(self, locals(), outcomes=['yes', 'no'])
