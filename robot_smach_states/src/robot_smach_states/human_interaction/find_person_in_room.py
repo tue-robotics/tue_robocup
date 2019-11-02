@@ -48,6 +48,7 @@ class FindPerson(smach.State):
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
         :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
+        :param speak_when_found: bool indicating whether or not the robot should speak upon finding a person
         :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
         :param look_steps: How many steps does it take in that range (default = 8)
         """
