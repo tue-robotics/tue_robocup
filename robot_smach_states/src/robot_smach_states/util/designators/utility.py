@@ -1,8 +1,6 @@
+#! /usr/bin/env python
 # ROS
 import rospy
-
-# System
-import operator
 
 # TU/e Robotics
 from robot_smach_states.util.designators.core import Designator, VariableDesignator
@@ -71,7 +69,7 @@ class LockingDesignator(Designator):
         self._current = None
         self._locked = False
 
-    def _resolve(self):
+    def resolve(self):
         if self._locked:
             if self._current == None:
                 self._current = self.to_be_locked.resolve()
@@ -90,9 +88,8 @@ class LockingDesignator(Designator):
 
 
 class AttrDesignator(Designator):
-    """Get some attribute of the object a wrapped designator resolves to.
-    This can be recursive, so you can specify a chain of nested attributes like <resolved_object>.foo.bar
 
+    """Get some attribute of the object a wrapped designator resolves to.
     For example:
     >>> d = Designator(object(), resolve_type=object)
     >>> #Get the __doc__ attribute of the object that d resolves to. d is an object and d.__doc__ is 'The most base type'
@@ -101,92 +98,17 @@ class AttrDesignator(Designator):
     True
 
     >>> assert(issubclass(wrapped.resolve_type, str))
-
-    >>> d2 = Designator("banana", resolve_type=str)
-    >>> wrapped2 = AttrDesignator(d2, '__class__.__class__', resolve_type=type)
-    >>> wrapped2.resolve()
-    <type 'type'>
-
-    >>> from collections import namedtuple
-    >>> A = namedtuple("A", ['foo'])
-    >>> B = namedtuple("B", ['bar'])
-    >>> a = A(foo=B(bar='banana'))
-    >>> d3 = Designator(a, resolve_type=A)
-    >>> wrapped3 = AttrDesignator(d3, 'foo.bar', resolve_type=str)
-    >>> wrapped3.resolve()
-    'banana'
-
-    >>> wrapped3 = AttrDesignator(d3, 'foo.not_bar', resolve_type=str)
-    >>> wrapped3.resolve() is None  # Will not resolve and return None
-    True
     """
 
     def __init__(self, orig, attribute, resolve_type=None, name=None):
         super(AttrDesignator, self).__init__(resolve_type=resolve_type, name=name)
         self.orig = orig
+        self.attribute = attribute
 
-        self._get_attr = operator.attrgetter(attribute)  # Generate a function that gives you '.your.attr.path' etc.
-
-    def _resolve(self):
+    def resolve(self):
         orig = self.orig.resolve()
         if orig:
-            try:
-                return self._get_attr(orig)
-            except AttributeError as attr_err:
-                rospy.logerr(attr_err)
-                return None
-        else:
-            return None
-
-
-class ValueByKeyDesignator(Designator):
-    """
-    List
-    >>> container1 = ["a", "b", "c"]
-    >>> keys1 = range(len(container1))
-    >>> des1 = [ValueByKeyDesignator(container1, key, str, name="des1_" + str(key)) for key in keys1]
-    >>> outcomes1 = map(lambda x: x.resolve(), des1)
-    >>> assert outcomes1 == container1
-
-    >>> keys2 = [VariableDesignator(initial_value=key, resolve_type=int) for key in range(len(container1))]
-    >>> des2 = [ValueByKeyDesignator(container1, key, str, name="des2_" + str(key)) for key in keys2]
-    >>> outcomes2 = map(lambda x: x.resolve(), des2)
-    >>> assert outcomes2 == container1
-
-    Dictionary
-    >>> container3 = {"a": "A", "b": "B", "c": "C"}
-    >>> keys3 = container3.keys()
-    >>> des3 = [ValueByKeyDesignator(container3, key, str, name="des3_" + str(key)) for key in keys3]
-    >>> outcomes3 = map(lambda x: x.resolve(), des3)
-    >>> outcomes3 = dict(zip(keys3, outcomes3))
-    >>> assert outcomes3 == container3
-
-    >>> keys4 = [VariableDesignator(initial_value=key) for key in container3.keys()]
-    >>> des4 = [ValueByKeyDesignator(container3, key, str, name="des4_" + str(key)) for key in keys4]
-    >>> outcomes4 = map(lambda x: x.resolve(), des4)
-    >>> outcomes4 = dict(zip(keys3, outcomes4))
-    >>> assert outcomes4 == container3
-    """
-    def __init__(self, container, key, resolve_type, name=None):
-        """
-        Get a value from a container by it's key
-        :param container: any object with a __getitem__ method or a designator that resolves to it
-        :param key: key of the item in the container or designator to it
-        :param resolve_type: resolve type of the item in the container
-        :param name: Name of the designator for introspection purposes
-        """
-        super(ValueByKeyDesignator, self).__init__(resolve_type=resolve_type, name=name)
-        container_type = container.resolve_type if hasattr(container, "resolve") else container
-        assert hasattr(container_type, "__getitem__"), "Container should have '__getitem__' method"
-        
-        self._container = container
-        self._key = key
-
-    def _resolve(self):
-        container = self._container.resolve() if hasattr(self._container, "resolve") else self._container
-        key = self._key.resolve() if hasattr(self._key, "resolve") else self._key
-        if container:
-            return container[key]
+            return orig.__getattribute__(self.attribute)
         else:
             return None
 
@@ -208,12 +130,12 @@ class FuncDesignator(Designator):
         self.orig = orig
         self.func = func
 
-    def _resolve(self):
+    def resolve(self):
         orig = self.orig.resolve()
         if orig:
             try:
                 return self.func(orig)
-            except Exception as e:
+            except Exception, e:
                 rospy.logerr("Cannot apply function {0} on {1}: {2}".format(self.func, orig, e))
                 return None
         else:
@@ -235,7 +157,7 @@ class DeferToRuntime(Designator):
         super(DeferToRuntime, self).__init__(resolve_type=resolve_type, name=name)
         self.func = func
 
-    def _resolve(self):
+    def resolve(self):
         return self.func()
 
 
