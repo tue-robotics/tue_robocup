@@ -49,11 +49,11 @@ class ControlParameters(namedtuple('ControlParameters', [
     """
     position_gain: (float) Tunable parameter to increase or decrease the change in position per time
     rotation_gain: (float) Tunable parameter to increase or decrease the change in yaw per time
-    abs_vx: (float) Absolute velocity in x
-    abs_vy: (float) Absolute velocity in y
-    abs_vyaw: (float) Absolute velocity in yaw
-    goal_position_tolerance: (float) Tolerance in position
-    goal_rotation_tolerance: (float) Tolerance in yaw
+    abs_vx: (float) Absolute velocity in x [m/s]
+    abs_vy: (float) Absolute velocity in y [m/s]
+    abs_vyaw: (float) Absolute velocity in yaw [rad/s]
+    goal_position_tolerance: (float) Tolerance in position [m]
+    goal_rotation_tolerance: (float) Tolerance in yaw [rad]
     """
 
 
@@ -66,7 +66,6 @@ class ControlToPose(smach.State):
         :param goal_pose: (PoseStamped or Designator to PoseStamped) Position the robot needs to go to
         :param control_parameters: (namedtuple, ControlParameters) Parameters that specify how the robot should reach
         :param rate: (float, int) Control rate [Hz]
-        the goal_pose
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
