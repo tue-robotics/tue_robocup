@@ -2,12 +2,12 @@
 import unittest
 
 # TU/e Robotics
-from hmi import TimeoutException
+from hmi import TimeoutException, HMIResult
 from robot_skills.mockbot import Mockbot
 
 # Robot smach states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.human_interaction.human_interaction import Say, HearOptions, WaitForPersonInFront
+from robot_smach_states.human_interaction.human_interaction import Say, HearOptions, WaitForPersonInFront, AskYesNo
 
 
 class TestSay(unittest.TestCase):
@@ -73,6 +73,14 @@ class TestHearOptions(unittest.TestCase):
         self.robot.hmi = HMIMock()
         hear = HearOptions(self.robot, options)
         self.assertEqual(hear.execute(), "no_result")
+
+    def test_ask_yes_no(self):
+        robot = Mockbot()
+        state = AskYesNo(self.robot)
+
+        for option in ["yes", "no"]:
+            robot.hmi.query = lambda _: HMIResult(sentence=option)
+            self.assertEqual(state.execute(), option)
 
 
 class TestWaitForPerson(unittest.TestCase):
