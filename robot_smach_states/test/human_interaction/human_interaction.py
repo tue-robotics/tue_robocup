@@ -7,7 +7,7 @@ from robot_skills.mockbot import Mockbot
 
 # Robot smach states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.human_interaction.human_interaction import Say, HearOptions
+from robot_smach_states.human_interaction.human_interaction import Say, HearOptions, WaitForPersonInFront
 
 
 class TestSay(unittest.TestCase):
@@ -73,4 +73,32 @@ class TestHearOptions(unittest.TestCase):
         self.robot.hmi = HMIMock()
         hear = HearOptions(self.robot, options)
         self.assertEqual(hear.execute(), "no_result")
+
+
+class TestWaitForPerson(unittest.TestCase):
+    def test_wait_for_person(self):
+        robot = Mockbot()
+
+        def _detect_people_fail(*args, **kwargs):
+            return False, []
+
+        def _detect_people_success(*args, **kwargs):
+            return True, ["abc", "def"]
+
+        nr_attempts = 2
+        state = WaitForPersonInFront(robot, attempts=nr_attempts, sleep_interval=0.01)
+
+        # Check failing
+        robot.ed.detect_people = _detect_people_fail
+        result = state.execute()
+        self.assertEqual(result, "failed", "WaitForPersonInFront succeeded while it should have failed")
+        nr_calls = robot.perception.get_rgb_depth_caminfo.call_count
+        self.assertEqual(nr_calls, nr_attempts,
+                         "Perception only called {} instead of {}".format(nr_calls, nr_attempts),
+                         )
+
+        # Check succeeding
+        robot.ed.detect_people = _detect_people_success
+        result = state.execute()
+        self.assertEqual(result, "success", "WaitForPersonInFront failed while it should have succeeded")
 
