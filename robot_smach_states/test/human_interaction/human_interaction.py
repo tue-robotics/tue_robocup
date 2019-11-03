@@ -75,11 +75,11 @@ class TestHearOptions(unittest.TestCase):
         self.assertEqual(hear.execute(), "no_result")
 
     def test_ask_yes_no(self):
-        robot = Mockbot()
         state = AskYesNo(self.robot)
 
         for option in ["yes", "no"]:
-            robot.hmi.query = lambda _: HMIResult(sentence=option)
+            self.robot.hmi.query = lambda description, grammar, target, timeout: HMIResult(sentence=option,
+                                                                                           semantics=option)
             self.assertEqual(state.execute(), option)
 
 
