@@ -285,19 +285,17 @@ class HearOptionsExtra(smach.State):
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=rospy.Duration(10)):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
-        self.robot = robot
-        self.timeout = timeout
 
         with self:
             smach.StateMachine.add('SAY',
-                                   Say(self.robot,
+                                   Say(robot,
                                        random.choice(["I will continue my task if you say continue.",
                                                       "Please say continue so that I can continue my task.",
                                                       "I will wait until you say continue."])),
                                    transitions={'spoken': 'HEAR'})
 
             smach.StateMachine.add('HEAR',
-                                   HearOptions(self.robot, ['continue'], self.timeout),
+                                   HearOptions(robot, ['continue'], timeout),
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
 
