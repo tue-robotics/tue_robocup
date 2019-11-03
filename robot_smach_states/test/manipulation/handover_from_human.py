@@ -42,7 +42,7 @@ class TestHandOverFromHuman(unittest.TestCase):
         self.assertEqual(self.robot.arms["rightArm"].occupied_by, self.entity)
 
 
-class TestOpenGripper(unittest.TestCase):
+class TestCloseGripper(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.robot = Mockbot()
@@ -58,7 +58,7 @@ class TestOpenGripper(unittest.TestCase):
         self.assertEqual(self.robot.arms["leftArm"].occupied_by.id, self.entity_label)
 
 
-class TestOpenGripperFail(unittest.TestCase):
+class TestCloseGripperFail(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.robot = Mockbot()
@@ -70,6 +70,7 @@ class TestOpenGripperFail(unittest.TestCase):
         state = states.CloseGripperOnHandoverToRobot(self.robot, self.arm_ds) # no entity label or entity designator
         self.assertEqual(state.execute(), "failed")
         self.robot.arms["leftArm"].handover_to_robot.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()
