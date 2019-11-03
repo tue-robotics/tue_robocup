@@ -93,3 +93,7 @@ class TestSegmentObjects(unittest.TestCase):
             0,
             "Writeable designator was not written to empty when nothing was detected"
         )
+
+
+if __name__ == '__main__':
+    unittest.main()

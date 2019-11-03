@@ -110,3 +110,6 @@ class TestWaitForPerson(unittest.TestCase):
         result = state.execute()
         self.assertEqual(result, "success", "WaitForPersonInFront failed while it should have succeeded")
 
+
+if __name__ == '__main__':
+    unittest.main()
