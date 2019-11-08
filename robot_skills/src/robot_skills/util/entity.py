@@ -34,7 +34,7 @@ class Entity(object):
         self._pose = pose
         self.shape = shape
         self._volumes = volumes if volumes else {}
-        self.super_types = super_types
+        self.super_types = super_types if super_types else []
         self._last_update_time = last_update_time
 
         self._person_properties = person_properties
