@@ -227,9 +227,9 @@ class Base(RobotPart):
         while rospy.Time.now() < t_end:
             seconds_from_start = rospy.Time.now().to_sec() - t_start.to_sec()
 
-            v.linear.x = _abs_max(vx, ax * seconds_from_start)
-            v.linear.y = _abs_max(vy, ay * seconds_from_start)
-            v.angular.z = _abs_max(vth, ath * seconds_from_start)
+            v.linear.x = _abs_max(vx, ax * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            v.linear.y = _abs_max(vy, ay * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            v.angular.z = _abs_max(vth, ath * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
             self._cmd_vel.publish(v)
             rate.sleep()
 
