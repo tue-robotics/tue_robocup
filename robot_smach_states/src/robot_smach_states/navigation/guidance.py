@@ -310,7 +310,7 @@ class WaitForOperator(smach.State):
 
 class Guide(smach.StateMachine):
     def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
-        # type: (robot) -> None
+        # type: (Robot, float, float) -> None
         """
         Base Smach state to guide an operator to a designated position
 
@@ -383,7 +383,7 @@ class GuideToSymbolic(Guide):
     """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
                  operator_radius=0.5):
-        # type: (Robot, dict, EdEntityDesignator) -> None
+        # type: (Robot, dict, EdEntityDesignator, float, float) -> None
         """ Constructor
 
         :param robot: robot object
