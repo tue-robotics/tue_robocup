@@ -37,7 +37,7 @@ class TestTourGuide(unittest.TestCase):
                               None, {"on_top_off": box2}, ["furniture"], 0)
         cls._bookcase = Entity("bookcase", "furniture", "/map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                                                          kdl.Vector(8, 1, 0)),
-                              None, {"on_top_off": box2}, ["furniture"], 0)
+                               None, {"on_top_off": box2}, ["furniture"], 0)
 
         cls.robot.ed._static_entities = {e.id: e for e in [cls._kitchen, cls._bedroom, cls._cabinet, cls._bookcase]}
 
