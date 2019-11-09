@@ -36,7 +36,7 @@ class TestTourGuide(unittest.TestCase):
         cls._cabinet = Entity("cabinet", "furniture", "/map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(4, 4, 0)),
                               None, {"on_top_off": box2}, ["furniture"], 0)
         cls._bookcase = Entity("bookcase", "furniture", "/map", kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
-                                                                         kdl.Vector(8, 1, 0)),
+                                                                          kdl.Vector(8, 1, 0)),
                                None, {"on_top_off": box2}, ["furniture"], 0)
 
         cls.robot.ed._static_entities = {e.id: e for e in [cls._kitchen, cls._bedroom, cls._cabinet, cls._bookcase]}
@@ -92,4 +92,23 @@ class TestTourGuide(unittest.TestCase):
                                                             "/map")
         self.tour_guide.initialize()
         self.assertListEqual(self.tour_guide._passed_room_ids, [])
+
+    def test_describe_near_objects(self):
+        self.tour_guide.reset()
+        self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(1, 1, 0)),
+                                                            "/map")
+        self.assertEqual(self.tour_guide.describe_near_objects(), "We now enter the kitchen")
+
+        self.tour_guide.initialize()
+        self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(6, 4, 0)),
+                                                            "/map")
+        self.assertEqual(self.tour_guide.describe_near_objects(), "We now enter the bedroom")
+        self.assertEqual(self.tour_guide.describe_near_objects(), '')
+
+        self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(7.5, 2, 0)),
+                                                            "/map")
+        #ik snap niet helemaal waarom dit right moet zijn
+        self.assertEqual(self.tour_guide.describe_near_objects(), 'On our right you can see the bookcase')
+
+
 
