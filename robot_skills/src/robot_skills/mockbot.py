@@ -287,6 +287,20 @@ class ED(MockedRobotPart):
         return True, [self._dynamic_entities['operator'].id]
 
 
+class MockedTfListener(mock.MagicMock):
+    def __init__(self):
+        super(MockedTfListener, self).__init__()
+
+    @staticmethod
+    def waitForTransform(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def transformPoint(frame_id, point_stamped):
+        point_stamped.header.frame_id = frame_id
+        return point_stamped
+
+
 class Mockbot(robot.Robot):
     """
     Interface to all parts of Mockbot. When initializing Mockbot, you can choose a list of components
@@ -301,7 +315,7 @@ class Mockbot(robot.Robot):
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"
 
-        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_listener=mock.MagicMock())
+        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_listener=MockedTfListener)
 
         self.publish_target = mock.MagicMock()
         self.tf_transform_pose = mock.MagicMock()
