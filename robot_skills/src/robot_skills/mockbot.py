@@ -234,7 +234,6 @@ class ED(MockedRobotPart):
         self._static_entities = defaultdict(self.generate_random_entity,
                                      {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
-        self.get_entities = lambda *args, **kwargs: self._entities.values()
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None, parse=True: self._entities[id]
         self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
@@ -247,6 +246,20 @@ class ED(MockedRobotPart):
         self.wait_for_connections = mock.MagicMock()
 
         self._person_names = []
+
+    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
+
+        center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
+
+        entities = self._entities.values()
+        if type:
+            entities = [e for e in entities if e.is_a(type)]
+        if radius:
+            entities = [e for e in entities if e.distance_to_2d(center_point_in_map.vector) <= radius]
+        if id:
+            entities = [e for e in entities if e.id == id]
+
+        return entities
 
     @property
     def _entities(self):
