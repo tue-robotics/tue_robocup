@@ -93,10 +93,3 @@ class TestTourGuide(unittest.TestCase):
         self.tour_guide.initialize()
         self.assertListEqual(self.tour_guide._passed_room_ids, [])
 
-
-# class TestGuide(unittest.TestCase):
-#     def setUp(self):
-#         self.robot = Mockbot()
-#
-#     def test_guide(self):
-#         test = Guide(self.robot)
