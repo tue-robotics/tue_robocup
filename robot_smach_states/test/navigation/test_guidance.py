@@ -44,6 +44,8 @@ class TestTourGuide(unittest.TestCase):
         cls.tour_guide = TourGuide(cls.robot)
 
     def setUp(self):
+        self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(-1, -1, 0)),
+                                                            "/map")
         self.tour_guide.initialize()
 
     def assertEqualEllipsis(self, first, second, ellipsis_marker='...', msg=None):
@@ -94,21 +96,23 @@ class TestTourGuide(unittest.TestCase):
         self.assertListEqual(self.tour_guide._passed_room_ids, [])
 
     def test_describe_near_objects(self):
-        self.tour_guide.reset()
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(1, 1, 0)),
                                                             "/map")
-        self.assertEqual(self.tour_guide.describe_near_objects(), "We now enter the kitchen")
+        self.assertEqual("We now enter the kitchen", self.tour_guide.describe_near_objects())
 
-        self.tour_guide.initialize()
+    def test_describe_near_objects2(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(6, 4, 0)),
                                                             "/map")
-        self.assertEqual(self.tour_guide.describe_near_objects(), "We now enter the bedroom")
-        self.assertEqual(self.tour_guide.describe_near_objects(), '')
+        self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
 
+    def test_describe_near_objects3(self):
+        self.assertEqual("", self.tour_guide.describe_near_objects())
+
+    def test_describe_near_objects4(self):
         self.robot.base.get_location = lambda: FrameStamped(kdl.Frame(kdl.Rotation().Identity(), kdl.Vector(7.5, 2, 0)),
                                                             "/map")
-        #ik snap niet helemaal waarom dit right moet zijn
-        self.assertEqual(self.tour_guide.describe_near_objects(), 'On our right you can see the bookcase')
-
+        self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
+        self.assertEqual("On our right you can see the bookcase", self.tour_guide.describe_near_objects())
+        self.assertEqual("", self.tour_guide.describe_near_objects())
 
 
