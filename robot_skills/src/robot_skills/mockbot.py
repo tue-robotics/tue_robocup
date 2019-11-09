@@ -228,11 +228,11 @@ class ED(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(ED, self).__init__(robot_name, tf_listener)
         self._dynamic_entities = defaultdict(self.generate_random_entity,
-                                     {e.id:e for e in [self.generate_random_entity() for _ in range(5)]})
+                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
         self._dynamic_entities['john'] = self.generate_random_entity(id='john', type='person')
         self._static_entities = defaultdict(self.generate_random_entity,
-                                     {e.id:e for e in [self.generate_random_entity() for _ in range(5)]})
+                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
         self.get_entities = lambda *args, **kwargs: self._entities.values()
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
@@ -253,7 +253,7 @@ class ED(MockedRobotPart):
         return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())
 
     def segment_kinect(self, *args, **kwargs):
-        self._dynamic_entities = {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]}
+        self._dynamic_entities = {e.id: e for e in [ED.generate_random_entity() for _ in range(5)]}
         return self._entities
 
     def update_kinect(self, *args, **kwargs):
