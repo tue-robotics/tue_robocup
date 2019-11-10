@@ -12,6 +12,8 @@ Examples:
   robot-console amigo sergio
 """
 
+from __future__ import print_function
+
 # System
 from docopt import docopt, DocoptExit
 import importlib
@@ -42,7 +44,7 @@ def load_robot(robot_name, parts=None):
     loaded = []
     for name in modules:
         try:
-            print bcolors.OKBLUE + '\tloading %s' % name + bcolors.ENDC
+            print(bcolors.OKBLUE + '\tloading %s' % name + bcolors.ENDC)
             module = importlib.import_module('robot_skills.' + name)
             constructor = module.__getattribute__(name.title())
 
@@ -54,10 +56,10 @@ def load_robot(robot_name, parts=None):
             loaded.append(instance)
             # register as global
             globals()[name] = instance
-            print bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC
+            print(bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC)
         except:
             msg = '\n"%s" could not be found!!!\n' % name
-            print bcolors.WARNING + msg + bcolors.ENDC
+            print(bcolors.WARNING + msg + bcolors.ENDC)
             traceback.print_exc()
 
     if not len(loaded):
@@ -69,15 +71,15 @@ if __name__ == '__main__':
         arguments = docopt(__doc__)
         rospy.init_node("robot_console", anonymous=True)
 
-        print """
+        print("""
         \033[1;33m-------------------------------------------------------------------
         | TU/e Robot Console - version 0.1                                |
-        -------------------------------------------------------------------\033[1;m"""
+        -------------------------------------------------------------------\033[1;m""")
 
-        print '\n\tTo load state machines or designators, enter:\n'
-        print '\t"import robot_skills.util.msg_constructors as msgs"'
-        print '\t"import robot_smach_states.util.designators as ds"'
-        print '\t"import robot_smach_states as states"\n'
+        print('\n\tTo load state machines or designators, enter:\n')
+        print('\t"import robot_skills.util.msg_constructors as msgs"')
+        print('\t"import robot_smach_states.util.designators as ds"')
+        print('\t"import robot_smach_states as states"\n')
 
         parts = arguments['--part']
         parts = parts.split(',') if parts else None
@@ -85,5 +87,5 @@ if __name__ == '__main__':
             load_robot(robot, parts=parts)
 
     except DocoptExit as e:
-        print bcolors.FAIL + str(e) + bcolors.ENDC
+        print(bcolors.FAIL + str(e) + bcolors.ENDC)
         exit() # quit ipython

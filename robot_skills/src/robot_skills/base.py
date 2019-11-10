@@ -198,17 +198,19 @@ class Base(RobotPart):
 
         return plan
 
-    def force_drive(self, vx, vy, vth, timeout, ax=float('inf'), ay=float('inf'), ath=float('inf')):
+    def force_drive(self, vx, vy, vth, timeout, loop_rate=10, stop=True, ax=float('inf'), ay=float('inf'), ath=float('inf')):
         """ Forces the robot to drive by sending a command velocity directly to the base controller. N.B.: all collision
         avoidance is bypassed.
 
-        :param vx: forward velocity in m/s
-        :param vy: sideways velocity in m/s
-        :param vth: rotational velocity in rad/s
-        :param ax: forward acceleration in m/s^2
-        :param ay: sideways acceleration in m/s^2
-        :param ath: rotational acceleration in rad/s^2
-        :param timeout: duration for this motion in seconds
+        :param vx: forward velocity [m/s]
+        :param vy: sideways velocity [m/s]
+        :param vth: rotational velocity in [rad/s]
+        :param timeout: duration for this motion [s]
+        :param loop_rate: Rate of sending twist messages [Hz]
+        :param stop: send stop message afterwards
+        :param ax: forward acceleration [m/s^2]
+        :param ay: sideways acceleration [m/s^2]
+        :param ath: rotational acceleration [rad/s^2]
         """
         # Cancel the local planner goal
         self.local_planner.cancelCurrentPlan()
@@ -221,20 +223,24 @@ class Base(RobotPart):
             return sign(value) * min(abs(max_value), abs(value))
 
         # Drive
+        rate = rospy.Rate(loop_rate)
         while rospy.Time.now() < t_end:
             seconds_from_start = rospy.Time.now().to_sec() - t_start.to_sec()
 
-            v.linear.x = _abs_max(vx, ax * seconds_from_start)
-            v.linear.y = _abs_max(vy, ay * seconds_from_start)
-            v.angular.z = _abs_max(vth, ath * seconds_from_start)
+            # 0 * inf =  NaN, so in case 'seconds_from_start' is close to zero, aka in the first loop iteration,
+            # use zero to prevent NaNs
+            v.linear.x = _abs_max(vx, ax * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            v.linear.y = _abs_max(vy, ay * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            v.angular.z = _abs_max(vth, ath * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
             self._cmd_vel.publish(v)
-            rospy.sleep(0.1)
+            rate.sleep()
 
-        # Stop driving
-        v.linear.x = 0.0
-        v.linear.y = 0.0
-        v.angular.z = 0.0
-        self._cmd_vel.publish(v)
+        if stop:
+            # Stop driving
+            v.linear.x = 0.0
+            v.linear.y = 0.0
+            v.angular.z = 0.0
+            self._cmd_vel.publish(v)
 
         return True
 

@@ -1,12 +1,10 @@
-#! /usr/bin/env python
-
 import unittest
 
 # datatypes
 import PyKDL as kdl
 from robot_skills.util.kdl_conversions import VectorStamped
 
-#Robot Skills
+# Robot Skills
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
@@ -18,9 +16,12 @@ import robot_smach_states.util.designators as ds
 
 
 class TestLookAtEntity(unittest.TestCase):
-    def setUp(self):
-        self.robot = Mockbot()
+    
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
 
+    def setUp(self):
         self.entity = Entity("12345", "dummy", "/map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
@@ -40,16 +41,19 @@ class TestLookAtEntity(unittest.TestCase):
 
 
 class TestLookAtArea(unittest.TestCase):
-    def setUp(self):
-        self.robot = Mockbot()
 
+    @classmethod
+    def setUpClass(cls):
+        cls.robot = Mockbot()
+
+    def setUp(self):
         box = BoxVolume(kdl.Vector(0, 0, 0),
                         kdl.Vector(1, 1, 1))
 
         self.entity = Entity("12345", "dummy", "/map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
-                             None, {"dummy_volume":box}, None, 0)
+                             None, {"dummy_volume": box}, None, 0)
 
         self.area = "dummy_volume"
 
