@@ -4,6 +4,9 @@ trigger:
 schedules:
   - cron: "0 2 * * *"
     displayName: "Nightly"
+    branches:
+      include:
+        - master
 
 variables:
   CI: true
