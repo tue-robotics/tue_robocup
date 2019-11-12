@@ -5,7 +5,7 @@ jobs:
   - job: package_selection
     displayName: 'Package selection'
     pool:
-      vmImage: 'ubuntu latest'  
+      vmImage: 'ubuntu latest'
     steps:
       - task: Bash@3
         displayName: 'Determine packages to be build'
@@ -16,12 +16,13 @@ jobs:
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
             source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH tue_robocup
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
-    
+
   - job: install_build_test
     displayName: 'Install, build & test:'
     pool:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
+    condition: ne(dependencies.package_selection.outputs['matrix.json_string'], '{}')
     strategy:
       matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
     steps:

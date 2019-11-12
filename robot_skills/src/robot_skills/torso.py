@@ -1,21 +1,18 @@
 # System
-import threading
 import time
 
 # ROS
 from actionlib_msgs.msg import GoalStatus
 import control_msgs.msg
 import rospy
-from sensor_msgs.msg import JointState
 import trajectory_msgs.msg
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
-from robot_skills.util import concurrent_util
 
 
 class Torso(RobotPart):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_listener, get_joint_states):
         """
         constructor
         :param robot_name: robot_name
@@ -24,6 +21,7 @@ class Torso(RobotPart):
         super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
         self.joint_names = self.load_param('skills/torso/joint_names')
+        self._arm_joint_names = self.load_param('skills/arm/joint_names')
         self.default_configurations = self.load_param('skills/torso/default_configurations')
         self.default_tolerance = self.load_param('/skills/torso/default_tolerance')
         self.lower_limit = self.default_configurations['lower_limit']
@@ -33,11 +31,8 @@ class Torso(RobotPart):
         self.ac_move_torso = self.create_simple_action_client('/' + self.robot_name + '/body/joint_trajectory_action',
                                                               control_msgs.msg.FollowJointTrajectoryAction)
 
-        # Init joint measurement subscriber
-        self.torso_sub = self.create_subscriber('/' + self.robot_name + '/torso/measurements',
-                                                JointState, self._receive_torso_measurement)
-
         self.subscribe_hardware_status('spindle')
+        self._get_joint_states = get_joint_states
 
     def close(self):
         """
@@ -65,7 +60,7 @@ class Torso(RobotPart):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def _send_goal(self, torso_pos, timeout=0.0, tolerance=[]):
+    def _send_goal(self, torso_pos, timeout=0.0, tolerance=[], start_time=1.5):
         """
         Send a joint goal to the torso
         :param torso_pos: list of joint positions with the length equal to the number of joints
@@ -73,6 +68,8 @@ class Torso(RobotPart):
         :param tolerance: list of position tolerances with the length equal to the number of joints
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
+        torso_pos = list(torso_pos)
+
         rospy.logdebug("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
         if len(torso_pos) != len(self.joint_names):
@@ -94,8 +91,9 @@ class Torso(RobotPart):
 
         torso_goal = control_msgs.msg.FollowJointTrajectoryGoal()
         torso_goal_point = trajectory_msgs.msg.JointTrajectoryPoint()
-        torso_goal.trajectory.joint_names = self.joint_names
+        torso_goal.trajectory.joint_names = list(self.joint_names)
         torso_goal_point.positions = torso_pos
+        torso_goal_point.time_from_start = rospy.Duration.from_sec(start_time)
         torso_goal.trajectory.points.append(torso_goal_point)
 
         for i in range(0, len(self.joint_names)):
@@ -118,6 +116,21 @@ class Torso(RobotPart):
         # goals probably won't make it. This sleep makes sure the
         # goals will always arrive in different update hooks in the
         # hardware TrajectoryActionLib server.
+
+        # Fill with required joint names (desired in hardware / gazebo impl)
+        current_joint_state = self._get_joint_states()
+        missing_joint_names = [n for n in self._arm_joint_names if n not in self.joint_names]
+        # This bit is needed because in some robots some joints are part of both arm(s) and torso.
+        # Thus both need to be controlled.
+        # In robots where these are disjoint sets (arm and torso joints do not overlap), missing_joint_names will be
+        # empty and thus no change is incurred.
+        # To fix this the entire concept of separate joint groups should be kicked out
+        torso_goal.trajectory.joint_names += missing_joint_names
+        torso_goal.trajectory.points[0].positions += [current_joint_state[n] for n in missing_joint_names]
+        torso_goal.goal_tolerance += [control_msgs.msg.JointTolerance(
+            name=n,
+            position=goal_tolerance.position
+        ) for n in missing_joint_names]
 
         self.ac_move_torso.send_goal(torso_goal)
 
@@ -191,20 +204,11 @@ class Torso(RobotPart):
         warnings.warn("Please use wait_for_motion_done instead", Warning)
         self.wait_for_motion_done(timeout)
 
-    _lock = threading.RLock()
-
-    @concurrent_util.synchronized(_lock)
-    def _receive_torso_measurement(self, jointstate):
-        """
-        Callback function of joint measurement subscriber
-        :param jointstate: JointState
-        :return: no return
-        """
-        self.current_position = jointstate
-
     def get_position(self):
         """
         Get the current joint positions
         :return: list of current positions
         """
-        return self.current_position.position
+        # return self.current_position.position
+        joint_states = self._get_joint_states()
+        return [joint_states[joint_name] for joint_name in self.joint_names]
