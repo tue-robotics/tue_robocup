@@ -1,6 +1,10 @@
 trigger:
   batch: true
 
+schedules:
+  - cron: "0 2 * * *"
+    displayName: "Nightly"
+
 variables:
   CI: true
 
