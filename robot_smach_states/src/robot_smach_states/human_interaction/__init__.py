@@ -5,3 +5,4 @@ from find_people_in_room import *
 from learn_operator import LearnOperator
 from sound_source_localization import *
 from show_image import *
+from entity_from_operator_pose import GetFurnitureFromOperatorPose
