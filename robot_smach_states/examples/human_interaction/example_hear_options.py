@@ -1,6 +1,6 @@
 #ROS
 import rospy
-import sys
+import argparse
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot_from_argv
@@ -10,8 +10,9 @@ from robot_smach_states.human_interaction import HearOptions
 
 if __name__ == "__main__":
 
-    assert len(sys.argv) == 2, "Please provide the robot name" \
-                               "e.g., 'python example_handover_to_human.py hero'"
+    parser = argparse.ArgumentParser(description="Test the HearOptions state with a sentence")
+    parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
+    args = parser.parse_args()
 
     rospy.init_node('test_hear_options')
 
