@@ -29,9 +29,9 @@ class Designator(object):
         :param initial_value: Initial value, should match the given resolve_type.
                               None is allowed if a resolve_type is provided.
         :param resolve_type: Type to which this designator should resolve.
-                             If None, use the type of the initial value, value
+                             If None, use the type of the initial value. Value
                              must be not None in that case.
-        :vartype result_type: type or a list with one type (the element type).
+        :vartype resolve_type: Type or a list with one type (the element type).
 
         :param name: name used for debugging purposes
         :vartype name: str
@@ -55,7 +55,7 @@ class Designator(object):
                 raise TypeError("resolve_type could not be inferred from None.")
 
             if isinstance(self.__initial_value, list):
-                if self.__initial_value: # Not an empty list.
+                if len(self.__initial_value) > 0:
                     self._resolve_type = [type(self.__initial_value[0])]
                 else:
                     raise TypeError("resolve_type could not be inferred from empty list.")
@@ -76,25 +76,25 @@ class Designator(object):
         if isinstance(self._resolve_type, list):
             # Not None, list expected instead.
             if not isinstance(result, list):
-                self.fail_with_type_error(result_type, resolve_type, result)
+                self.fail_with_type_error(result_type, resolve_type)
 
-            if not result: # Empty list, cannot check element type.
+            if len(result) == 0: # Empty list, cannot check element type.
                 return result
 
             if not isinstance(result[0], resolve_type[0]): # Element type check.
-                self.fail_with_type_error(result_type, resolve_type, result)
+                self.fail_with_type_error(result_type, resolve_type)
 
             return result
 
         # Normal type.
         if not issubclass(result_type, resolve_type):
-            self.fail_with_type_error(result_type, resolve_type, result)
+            self.fail_with_type_error(result_type, resolve_type)
 
         return result
 
-    def fail_with_type_error(self, result_type, resolve_type, result):
-            msg = "{} resolved to a '{}' instead of expected '{}'. Originals: result type: {}, resolve type: {}"
-            raise TypeError(msg.format(self, result_type, resolve_type, type(result), self.resolve_type))
+    def fail_with_type_error(self, result_type, resolve_type):
+            msg = "{} resolved to a '{}' instead of expected '{}'."
+            raise TypeError(msg.format(self, result_type, resolve_type))
 
     def _resolve(self):
         return self.__initial_value
