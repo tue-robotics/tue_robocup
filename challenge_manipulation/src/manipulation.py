@@ -24,8 +24,7 @@ import smach
 import random
 
 # ED
-from ed_robocup_msgs.srv import FitEntityInImage
-from ed_robocup_msgs.srv import FitEntityInImageRequest
+from ed_robocup_msgs.srv import FitEntityInImage, FitEntityInImageRequest
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
