@@ -1,8 +1,5 @@
-#! /usr/bin/env python
 # ROS
-
 import smach
-import rospy
 
 import PyKDL as kdl
 
@@ -18,7 +15,7 @@ class RiseForHMI(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
 
-    def execute(self, _):
+    def execute(self, userdata=None):
         # Get position to look at. Transform the position to map frame since taking the hmi pose may move base link
         goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self._robot.robot_name + "/base_link")
         tf_goal = goal.projectToFrame('/map', self._robot.tf_listener)
@@ -36,7 +33,7 @@ class RiseForInspect(smach.State):
     and his vision is unobstructed. (no arm in front of its face)
     :param robot: Robot to execute state with
     :param entity: entity which is to be inspected
-    :param volume: volume of the entity which is to be inspected
+    :param volume: volume of the entity which is to be inspected or Designator to it.
     """
     def __init__(self, robot, entity, volume=None):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -44,12 +41,13 @@ class RiseForInspect(smach.State):
         self._entity = entity
         self._volume = volume
 
-    def execute(self, _):
-
+    def execute(self, userdata=None):
         # Determine the height of the head target
         # Start with a default
         entity = self._entity.resolve()
-        volume = self._volume
+        if entity is None:
+            return "failed"
+        volume = self._volume.resolve() if hasattr(self._volume, "resolve") else self._volume
 
         # Check if we have areas: use these
         if volume in entity.volumes:

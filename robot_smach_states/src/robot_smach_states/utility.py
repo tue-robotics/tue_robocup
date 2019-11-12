@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # ROS
 import rospy
 import smach
@@ -233,8 +231,7 @@ class WaitCondition(smach.State):
     def execute(self, userdata):
         starttime = rospy.Time.now()
 
-        while (rospy.Time.now() - starttime) < rospy.Duration(self.timeout)\
-         and not rospy.is_shutdown():
+        while (rospy.Time.now() - starttime) < rospy.Duration(self.timeout) and not rospy.is_shutdown():
             cb_output = self.condition_callback(userdata, self.robot)
             if cb_output:
                 userdata.trigger_value = cb_output
@@ -274,7 +271,7 @@ class WaitForDesignator(smach.State):
         counter = 0
 
         while counter < self.attempts:
-            print "WaitForDesignator: waiting {0}/{1}".format(counter, self.attempts)
+            rospy.loginfo("WaitForDesignator: waiting {0}/{1}".format(counter, self.attempts))
 
             result = self.designator.resolve()
             if result:

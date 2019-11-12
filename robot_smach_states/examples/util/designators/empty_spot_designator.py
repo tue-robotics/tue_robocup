@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 import rospy
 import robot_smach_states.util.designators as ds
 from robot_skills import get_robot_from_argv
@@ -14,15 +16,15 @@ if __name__ == "__main__":
     def with_area():
         esd = ds.EmptySpotDesignator(robot=robot,
                                      place_location_designator=furniture_designator,
-                                     name=None,
+                                     name="with_area",
                                      area="on_top_of")
-        print esd.resolve()
+        print(esd.resolve())
 
     def without_area():
         esd = ds.EmptySpotDesignator(robot=robot,
                                      place_location_designator=furniture_designator,
-                                     name=None)
-        print esd.resolve()
+                                     name="without_area")
+        print(esd.resolve())
 
     with_area()
     without_area()
