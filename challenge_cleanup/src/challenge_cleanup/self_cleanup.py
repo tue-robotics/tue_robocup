@@ -152,9 +152,9 @@ class OperatorToCategory(smach.StateMachine):
                                                 "unreachable": "SAY_COME_TO_ME",
                                                 "goal_not_defined": "SAY_COME_TO_ME"})
 
-            smach.StateMachine.add("SAY_COME_TO_ME", robot_smach_states.SayFormatted(robot,
-                                                        "Operator, please come to me in the {room}",
-                                                                                     room=room_id_des, block=True),
+            smach.StateMachine.add("SAY_COME_TO_ME", robot_smach_states.Say(robot,
+                                                                            "Operator, please come to me in the {room}",
+                                                                            room=room_id_des, block=True),
                                    transitions={"spoken": "WAIT_FOR_OPERATOR"})
 
             smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.WaitTime(4),
@@ -219,7 +219,7 @@ class AskWhichCategory(smach.StateMachine):
                                                                                         ds.writeable(hmi_result_des)),
                                    transitions={"heard": "SAY_HEARD_CORRECT",
                                                 "no_result": "ASK_WHERE_TO_DROP"})
-            smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.SayFormatted(
+            smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.Say(
                 robot, "I understood that the object is of category {category}, is this correct?",
                 category=category_des,
                 block=True),
@@ -255,10 +255,10 @@ class SelfCleanup(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add("SPEAK", robot_smach_states.SayFormatted(robot, ["I will pick-up the {object}",
-                                                                                    "Let's move the {object}"],
-                                                                            object=selected_entity_type_des,
-                                                                            block=True),
+            smach.StateMachine.add("SPEAK", robot_smach_states.Say(robot, ["I will pick-up the {object}",
+                                                                           "Let's move the {object}"],
+                                                                   object=selected_entity_type_des,
+                                                                   block=True),
                                    transitions={"spoken": "GRAB"})
 
             smach.StateMachine.add("GRAB",
@@ -331,8 +331,8 @@ class SelfCleanup(smach.StateMachine):
                                                 "failed": "SAY_PLACE_FAILED"})
 
             smach.StateMachine.add('PLACE_IN_TRASH',
-                                   robot_smach_states.Place(robot, 
-                                                            selected_entity_designator, 
+                                   robot_smach_states.Place(robot,
+                                                            selected_entity_designator,
                                                             trash_place_pose,
                                                             ds.OccupiedArmDesignator(robot, {},
                                                                                   name="occupied_arm_designator")),

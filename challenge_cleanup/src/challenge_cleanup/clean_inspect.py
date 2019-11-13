@@ -45,7 +45,7 @@ class CleanInspect(smach.StateMachine):
                                                 'goal_not_defined': "SAY_UNREACHABLE"})
 
             smach.StateMachine.add("SEGMENT_SAY",
-                                   states.SayFormatted(robot, "Looking {area} the {entity}", area=segment_area,
+                                   states.Say(robot, "Looking {area} the {entity}", area=segment_area,
                                                        entity=location_id_des, block=False),
                                    transitions={"spoken": "RISE"})
 
@@ -60,8 +60,8 @@ class CleanInspect(smach.StateMachine):
             # Determine the next state, either it is the next iter or done
             # next_state = "NAVIGATE_%d" % (i + 1) if i + 1 < len(segment_areas) else "done"
 
-            smach.StateMachine.add("SAY_UNREACHABLE", states.SayFormatted(robot, "I failed to inspect the {furn}",
-                                                                          furn=location_id_des, block=True),
+            smach.StateMachine.add("SAY_UNREACHABLE", states.Say(robot, "I failed to inspect the {furn}",
+                                                                 furn=location_id_des, block=True),
                                    transitions={"spoken": "done"})
 
             smach.StateMachine.add("HANDLE_DETECTED_ENTITIES",
