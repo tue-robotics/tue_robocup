@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from robot_skills.mockbot import Mockbot
@@ -10,6 +11,7 @@ class TestChallengeConstruction(unittest.TestCase):
         """
         If no exception is raised, this test will succeed
         """
+        os.environ["ROBOT_ENV"] = "robotics_testlabs"
         robot = Mockbot()
         setup_statemachine(robot)
 
