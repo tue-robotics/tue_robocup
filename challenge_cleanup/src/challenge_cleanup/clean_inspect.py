@@ -46,7 +46,7 @@ class CleanInspect(smach.StateMachine):
 
             smach.StateMachine.add("SEGMENT_SAY",
                                    states.Say(robot, "Looking {area} the {entity}", area=segment_area,
-                                                       entity=location_id_des, block=False),
+                                              entity=location_id_des, block=False),
                                    transitions={"spoken": "RISE"})
 
             smach.StateMachine.add('RISE', states.RiseForInspect(robot, e_des, segment_area),
