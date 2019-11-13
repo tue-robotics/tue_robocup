@@ -57,9 +57,6 @@ class CleanInspect(smach.StateMachine):
                                                                     segment_area),
                                    transitions={'done': "HANDLE_DETECTED_ENTITIES"})
 
-            # Determine the next state, either it is the next iter or done
-            # next_state = "NAVIGATE_%d" % (i + 1) if i + 1 < len(segment_areas) else "done"
-
             smach.StateMachine.add("SAY_UNREACHABLE", states.Say(robot, "I failed to inspect the {furn}",
                                                                  furn=location_id_des, block=True),
                                    transitions={"spoken": "done"})
