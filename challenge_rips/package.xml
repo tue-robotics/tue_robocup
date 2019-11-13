@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>robocup_knowledge</depend>
   <depend>rospy</depend>
   <depend>robot_skills</depend>
   <depend>robot_smach_states</depend>
