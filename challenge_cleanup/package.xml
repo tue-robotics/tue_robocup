@@ -15,4 +15,6 @@
   <depend>robot_smach_states</depend>
   <depend>rospy</depend>
 
+  <test_depend>smach</test_depend>
+
 </package>

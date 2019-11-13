@@ -1,7 +1,7 @@
+from smach import StateMachine
 import unittest
 
 from robot_skills.mockbot import Mockbot
-
 from challenge_cleanup.cleanup import setup_statemachine
 
 
@@ -11,7 +11,7 @@ class TestChallengeConstruction(unittest.TestCase):
         If no exception is raised, this test will succeed
         """
         robot = Mockbot()
-        setup_statemachine(robot)
+        self.assertIsInstance(setup_statemachine(robot), StateMachine)
 
 
 if __name__ == '__main__':
