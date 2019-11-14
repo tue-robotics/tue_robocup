@@ -27,4 +27,4 @@ def load_knowledge(knowledge_item, print_knowledge=False):
         return knowledge
 
     except Exception as e:
-        raise LookupError("Knowledge item '%s' for environment '%s' is incorrect at path '%s'! [Error = %s]"%(knowledge_item, _robot_env, _knowledge_path, e))
+        raise RuntimeError("Knowledge item '%s' for environment '%s' is incorrect at path '%s'! [Error = %s]"%(knowledge_item, _robot_env, _knowledge_path, e))
