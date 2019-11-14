@@ -1,12 +1,11 @@
 # Resolve the environment variable $ROBOT_ENV
 
 def load_knowledge(knowledge_item, print_knowledge=False):
-    import os, sys, imp
+    import os, imp
     _robot_env = os.environ.get('ROBOT_ENV')
 
     if not _robot_env:
-        print "robocup_knowledge - load(): ROBOT_ENV environment variable is not set!"
-        sys.exit(1)
+        raise KeyError("robocup_knowledge - load(): ROBOT_ENV environment variable is not set!")
 
     # Look for the correct knowledge file
     try:
@@ -26,5 +25,4 @@ def load_knowledge(knowledge_item, print_knowledge=False):
         return knowledge
 
     except Exception as e:
-        print "Knowledge item '%s' for environment '%s' is incorrect at path '%s'! [Error = %s]"%(knowledge_item, _robot_env, _knowledge_path, e)
-        sys.exit(1)
+        raise LookupError("Knowledge item '%s' for environment '%s' is incorrect at path '%s'! [Error = %s]"%(knowledge_item, _robot_env, _knowledge_path, e))
