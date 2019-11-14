@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # Resolve the environment variable $ROBOT_ENV
 
 def load_knowledge(knowledge_item, print_knowledge=False):
@@ -15,12 +17,12 @@ def load_knowledge(knowledge_item, print_knowledge=False):
         knowledge_attrs = [attr for attr in dir(knowledge) if not callable(attr) and not attr.startswith("__")]
 
         if print_knowledge:
-            print "====================================="
-            print "==          KNOWLEDGE              =="
-            print "====================================="
+            print("=====================================")
+            print("==          KNOWLEDGE              ==")
+            print("=====================================")
             for attr in knowledge_attrs:
-                print "==> %s = %s" % (attr, str(getattr(knowledge, attr)))
-            print "====================================="
+                print("==> %s = %s" % (attr, str(getattr(knowledge, attr))))
+            print("=====================================")
 
         return knowledge
 
