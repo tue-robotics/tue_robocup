@@ -46,11 +46,9 @@ class InspectFurniture(smach.StateMachine):
         with self:
 
             smach.StateMachine.add("SAY_GO",
-                                   states.SayFormatted(
-                                       robot,
-                                       "Let's go to the {furniture_object}",
-                                       furniture_object=ds.AttrDesignator(furniture_designator, "id",
-                                                                          resolve_type=str)),
+                                   states.Say(robot, "Let's go to the {furniture_object}",
+                                              furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                                                                 resolve_type=str)),
                                    transitions={"spoken": "INSPECT_FURNITURE"})
 
             smach.StateMachine.add("INSPECT_FURNITURE",
@@ -63,11 +61,9 @@ class InspectFurniture(smach.StateMachine):
                                                 "failed": "SAY_INSPECTION_FAILED"})  # ToDo: fallback?
 
             smach.StateMachine.add("SAY_INSPECTION_FAILED",
-                                   states.SayFormatted(
-                                       robot,
-                                       "I am sorry but I was not able to reach the {furniture_object}",
-                                       furniture_object=ds.AttrDesignator(furniture_designator, "id", resolve_type=str),
-                                   ),
+                                   states.Say(robot, "I am sorry but I was not able to reach the {furniture_object}",
+                                              furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                                                                 resolve_type=str)),
                                    transitions={"spoken": "failed"})
 
             @smach.cb_interface(outcomes=["succeeded", "no_entities"],
