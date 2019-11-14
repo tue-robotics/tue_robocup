@@ -13,6 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>robocup_knowledge</exec_depend>
   <exec_depend>robot_skills</exec_depend>
   <exec_depend>robot_smach_states</exec_depend>
   <exec_depend>rospy</exec_depend>
