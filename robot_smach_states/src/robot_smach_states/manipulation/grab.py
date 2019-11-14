@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # ROS
 import PyKDL as kdl
 import rospy

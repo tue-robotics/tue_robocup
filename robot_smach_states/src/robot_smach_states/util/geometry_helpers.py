@@ -3,9 +3,24 @@ import math
 
 # ROS
 import PyKDL as kdl
+import rospy
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
+
+
+def wrap_angle_pi(angle):
+    """
+    Wraps between -pi and +pi
+    :param angle: Input angle
+    :return: Wrapped angle
+    """
+    angle = angle % (2 * math.pi)
+    if angle > math.pi:
+        return angle - 2 * math.pi
+    elif angle < -math.pi:
+        return angle + 2 * math.pi
+    return angle
 
 
 def isLeftOfLine(p, l):
@@ -51,7 +66,7 @@ def onTopOff(subject, container, ht=0.1):
     """
     ''' First: check if container actually has a convex hull '''
     if len(container.convex_hull) == 0:
-        print 'Error, entity {0} has no convex hull'.format(container.id)
+        rospy.logerr('Entity {0} has no convex hull'.format(container.id))
         return False
 
     ''' Second: turn points into KDL objects and offset '''

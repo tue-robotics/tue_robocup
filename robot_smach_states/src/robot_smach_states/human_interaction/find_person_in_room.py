@@ -1,8 +1,9 @@
-#! /usr/bin/env python
+from __future__ import print_function
 
 # System
 import math
 import sys
+import numpy as np
 
 # ROS
 import PyKDL as kdl
@@ -31,13 +32,15 @@ from robot_skills.util import kdl_conversions
 #
 #     def execute(self, userdata=None):
 
+
 class FindPerson(smach.State):
     """
     Smach state to find a person. The robot looks around and tries to recognize all faces in view.
     """
 
-    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=1.0, probability_threshold=1.5,
-                 discard_other_labels=True, found_entity_designator=None, room=None):
+    def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
+                 discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True,
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Initialization method
         :param robot: robot api object
         :param person_label: (str) person label or a designator resolving to a str
@@ -45,6 +48,9 @@ class FindPerson(smach.State):
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
         :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
+        :param speak_when_found: bool indicating whether or not the robot should speak upon finding a person
+        :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
+        :param look_steps: How many steps does it take in that range (default = 8)
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -67,6 +73,10 @@ class FindPerson(smach.State):
 
         self._room = room
 
+        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+
+        self.speak_when_found = speak_when_found
+
     def execute(self, userdata=None):
         person_label = self._person_label.resolve() if hasattr(self._person_label, 'resolve') else self._person_label
 
@@ -77,11 +87,10 @@ class FindPerson(smach.State):
         start_time = rospy.Time.now()
 
         look_distance = 2.0  # magic number 4
-        look_angles = [f * math.pi / d if d != 0 else 0.0 for f in [-1, 1] for d in [0, 6, 4, 2.3]]  # Magic numbers
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
                                                     y=look_distance * math.sin(angle), z=1.3,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
-                      for angle in look_angles]
+                      for angle in self._look_angles]
 
         i = 0
 
@@ -97,8 +106,17 @@ class FindPerson(smach.State):
             self._robot.head.wait_for_motion_done()
 
             self._image_data = self._robot.perception.get_rgb_depth_caminfo()
-            success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
+            if self._image_data:
+                success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
+            else:
+                rospy.logwarn("Could not get_rgb_depth_caminfo")
+                success, found_people_ids = False, []
             found_people = [self._robot.ed.get_entity(id) for id in found_people_ids]
+
+            rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
+            found_people = [p for p in found_people if p]
+            rospy.loginfo("{} people remaining after None-check".format(len(found_people)))
+
             found_names = {person.id: person for person in found_people}
 
             found_person = None
@@ -120,7 +138,8 @@ class FindPerson(smach.State):
 
             if found_person:
                 rospy.loginfo("I found {} who I assume is {} at {}".format(found_person.id, person_label, found_person.pose.extractVectorStamped(), block=False))
-                self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
+                if self.speak_when_found:
+                    self._robot.speech.speak("I think I found {}.".format(person_label, block=False))
                 self._robot.head.close()
 
                 if self._found_entity_designator:
@@ -170,7 +189,8 @@ class FindPersonInRoom(smach.StateMachine):
     in that room.
     """
 
-    def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None):
+    def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None,
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
@@ -208,7 +228,9 @@ class FindPersonInRoom(smach.StateMachine):
             # Wait for the operator to appear and detect what he's pointing at
             smach.StateMachine.add("FIND_PERSON", FindPerson(robot=robot, person_label=name,
                                                              discard_other_labels=discard_other_labels,
-                                                             found_entity_designator=found_entity_designator),
+                                                             found_entity_designator=found_entity_designator,
+                                                             look_range=look_range,
+                                                             look_steps=look_steps),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
@@ -222,12 +244,12 @@ if __name__ == "__main__":
         _area = sys.argv[2]
         _name = sys.argv[3]
 
-        rospy.init_node('test_follow_operator')
+        rospy.init_node('test_find_person_in_room')
         _robot = get_robot(robot_name)
         sm = FindPersonInRoom(_robot, _area, _name)
         sm.execute()
     else:
-        print "Please provide robot name as argument."
+        print("Please provide robot name as argument.")
         exit(1)
 
 

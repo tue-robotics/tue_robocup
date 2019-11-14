@@ -2,18 +2,20 @@
 
 import rospy
 import smach
-import time
-import os
-import datetime
 import math
 
-from robot_smach_states import Initialize, Say, WaitForPersonInFront, Turn, WaitTime
+from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
+from robot_smach_states import Initialize, Say, WaitForPersonInFront, ForceDrive, WaitTime
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 
 from challenge_spr_states import detect
 from challenge_spr_states import bluff_game
-from challenge_spr_states import riddle_game
+
+from robocup_knowledge import load_knowledge
+knowledge = load_knowledge('challenge_spr')
+common_knowledge = load_knowledge('common')
+
 
 class ChallengeSpeechPersonRecognition(smach.StateMachine):
     def __init__(self, robot):
@@ -35,7 +37,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
                                                 "preempted": "TURN"})
 
             smach.StateMachine.add("TURN",
-                                   Turn(robot, math.pi),
+                                   ForceDrive(robot, vx=0.0, vy=0.0, vth=1.0, duration=math.pi),
                                    transitions={"turned": "DETECT_CROWD"})
 
             smach.StateMachine.add("DETECT_CROWD",
@@ -56,7 +58,12 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
             # Riddle Game
 
             smach.StateMachine.add('RIDDLE_GAME',
-                                   riddle_game.HearAndAnswerQuestions(robot, num_questions=5),
+                                   HearAndAnswerQuestions(
+                                       robot,
+                                       grammar=knowledge.grammar,
+                                       knowledge=common_knowledge,
+                                       num_questions=5,
+                                   ),
                                    transitions={'done':'TRANSITION'})
 
             # Transition:
@@ -77,6 +84,7 @@ class ChallengeSpeechPersonRecognition(smach.StateMachine):
                                    transitions={'spoken': 'Done'})
 
             ds.analyse_designators(self, "person_recognition")
+
 
 if __name__ == "__main__":
     rospy.init_node('speech_person_recognition_exec')
