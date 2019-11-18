@@ -47,7 +47,7 @@ class PointAt(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.robot_name+'/base_link', tf_listener=self.robot.tf_listener)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_listener)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
