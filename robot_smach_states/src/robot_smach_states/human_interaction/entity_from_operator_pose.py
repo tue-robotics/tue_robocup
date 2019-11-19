@@ -12,7 +12,7 @@ from std_msgs.msg import Header
 from ed_sensor_integration.srv import RayTraceResponse
 
 all_possible_furniture = ['kitchen_cabinet',
-                          'kitchen_table',
+                          'dinner_table',
                           'island',
                           'sink',
                           'dishwasher',
@@ -45,8 +45,10 @@ class GetFurnitureFromOperatorPose(State):
         rospy.loginfo("I entered the execution state!")
         final_result = None
         while not rospy.is_shutdown() and final_result is None:
+            self._prep_operator()
+            self._get_operator()
             result = None
-            while not rospy.is_shutdown() and result is None:
+            while not rospy.is_shutdown() and result is None and self.operator is not None:
                 try:
                     map_pose = self._robot.tf_listener.transformPose("map", PoseStamped(
                         header=Header(
@@ -94,19 +96,23 @@ class GetFurnitureFromOperatorPose(State):
         self._robot.ed.reset()
         self._robot.head.reset()
         self._robot.speech.speak("Let's point, please stand in front of me!", block=False)
+        for x in range(0, 4):
+            self._show_image(timeout=2)
+            rospy.sleep(0.4)
 
-        self._show_view(timeout=1)
+        self._robot.speech.speak("Please point at a piece of furniture", block=False)
+        self._show_image(timeout=1)
         self._robot.speech.speak("Three")
-        self._show_view(timeout=1)
+        self._show_image(timeout=1)
         self._robot.speech.speak("Two")
-        self._show_view(timeout=1)
+        self._show_image(timeout=1)
         self._robot.speech.speak("One")
 
         return
 
     def _get_operator(self):
         while not rospy.is_shutdown() and self.operator is None:
-            persons = self._robot.perception.detect_person_3d(*self._show_view())
+            persons = self._robot.perception.detect_person_3d(*self._show_image())
             if persons:
                 persons = sorted(persons, key=lambda x: x.position.z)
                 person = persons[0]
@@ -116,15 +122,15 @@ class GetFurnitureFromOperatorPose(State):
         # robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
         rospy.loginfo("I see an operator at %.2f meter in front of me" % self.operator.position.z)
 
-        return 'done'
+        return
 
     def _is_operator(self, person):
         if person.position.z > 2.5:
-            self._robot.speech.speak("Please stand in my view with your full body")
+            self._robot.speech.speak("You're too close, please stand in my view with your full body")
             return False
 
         if person.position.z < 1.5:
-            self._robot.speech.speak("Please stand in my view with your full body")
+            self._robot.speech.speak("You're too far away, please get closer")
             return False
 
         if "is_pointing" not in person.tags:

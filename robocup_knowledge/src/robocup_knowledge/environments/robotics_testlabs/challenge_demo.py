@@ -73,8 +73,8 @@ VP["action": "demo-presentation", "language": X] -> V_PRESENT in LANGUAGE[X]
 ###############################################################################
 
 grammar += """
-V_POINT -> tell me what I am pointing at | watch me point at stuff | what is this
-VP["action": "point-detect"] -> V_POINT
+V_POINT -> tell me what i am pointing at | watch me point at stuff | what is this
+VP["action": "point-target"] -> V_POINT
 """
 
 ###############################################################################
