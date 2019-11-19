@@ -1,6 +1,6 @@
 import unittest
 import PyKDL as kdl
-from ed_sensor_integration.srv import UpdateResponse
+from ed_sensor_integration_msgs.srv import UpdateResponse
 
 from robot_skills import Mockbot
 from robot_skills.classification_result import ClassificationResult
