@@ -53,7 +53,7 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'ASK_CONTINUE'})
 
         smach.StateMachine.add("ASK_CONTINUE",
-                               states.AskContinue(robot, rospy.Duration(30)),
+                               states.AskContinue(robot, 30),
                                transitions={'continue': 'SAY_CONTINUEING',
                                             'no_response': 'SAY_CONTINUEING'})
 

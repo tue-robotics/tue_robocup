@@ -13,6 +13,7 @@ import smach
 from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
 import check_ebutton
 import human_interaction
+from navigation import ForceDrive
 import utility
 
 
@@ -88,50 +89,16 @@ class StartChallengeRobust(smach.StateMachine):
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
-                                   EnterArena(robot, initial_pose, use_entry_points),
+                                   EnterArena(robot),
                                    transitions={"done": "Done"})
 
 
 # Enter the arena with force drive as back-up
 class EnterArena(smach.StateMachine):
-    class GoToEntryPoint(smach.State):
-        def __init__(self, robot, initial_pose, use_entry_points=False):
-            """
-            not implemented
-            :param robot: robot object
-            :param initial_pose:
-            :param use_entry_points:
-            """
-            smach.State.__init__(self, outcomes=["no_goal", "found", "not_found", "all_unreachable"])
-            self.robot = robot
-            self.initial_pose = initial_pose
-            self.use_entry_points = use_entry_points
-
-        def execute(self, userdata=None):
-            print("TODO: IMPLEMENT THIS STATE")
-            return "no_goal"
-
-    class ForceDrive(smach.State):
-        def __init__(self, robot):
-            """
-            Force drive through the door
-            :param robot: robot object
-            """
-            smach.State.__init__(self, outcomes=["done"])
-            self.robot = robot
-
-        def execute(self, userdata=None):
-            rospy.loginfo("{} uses force drive as a back-up scenario!".format(self.robot.robot_name))
-            self.robot.base.force_drive(0.25, 0, 0, 5.0)  # x, y, z, time in seconds
-            self.robot.ed.reset()
-            return "done"
-
-    def __init__(self, robot, initial_pose, use_entry_points=False):
+    def __init__(self, robot):
         """
         Enter the arena by force driving through the door
         :param robot: robot object
-        :param initial_pose:
-        :param use_entry_points:
         """
         smach.StateMachine.__init__(self, outcomes=['done'])
         self.robot = robot
@@ -144,15 +111,8 @@ class EnterArena(smach.StateMachine):
                                    transitions={"spoken": "FORCE_DRIVE_THROUGH_DOOR"})
 
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
-                                   self.ForceDrive(robot),
-                                   transitions={"done": "GO_TO_ENTRY_POINT"})
-
-            smach.StateMachine.add('GO_TO_ENTRY_POINT',
-                                   self.GoToEntryPoint(robot, initial_pose, use_entry_points),
-                                   transitions={"found": "done",
-                                                "not_found": "GO_TO_ENTRY_POINT",
-                                                "no_goal": "done",
-                                                "all_unreachable": "done"})
+                                   ForceDrive(robot, 0.25, 0, 0, 5.0),
+                                   transitions={"done": "done"})
 
 
 class WaitForDoorOpen(smach.State):
@@ -170,10 +130,6 @@ class WaitForDoorOpen(smach.State):
         self.distances = []
         self.door_open = Event()
 
-        self.laser_upside_down = None
-        self.laser_yaw = None
-        self.laser_sub = None
-
     @staticmethod
     def avg(lst):
         """
@@ -184,36 +140,32 @@ class WaitForDoorOpen(smach.State):
         lst = [point for point in lst if not math.isnan(point)]
         return sum(lst) / max(len(lst), 1)
 
-    def process_scan(self, scan_msg):
+    def process_scan(self, laser_upside_down, laser_yaw, door_open, scan_msg):
         """
         callback function checking the distance of the laser points in front of the robot.
+        :param laser_upside_down: (int) 1 as normal, -1 as upside down
+        :param laser_yaw: yaw angle of the laser
+        :param door_open: Event to be set when ready
         :param scan_msg: sensor_msgs.msg.LaserScan
         :return: no return
         """
-        try:
-            number_beams = len(scan_msg.ranges)
-            front_index = int(
-                math.floor((self.laser_upside_down*self.laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment,
-                                                                                              1e-10)))
+        number_beams = len(scan_msg.ranges)
+        front_index = int(
+            math.floor((laser_upside_down*laser_yaw - scan_msg.angle_min) / max(scan_msg.angle_increment, 1e-10)))
 
-            if front_index < 2 or front_index > number_beams - 2:
-                rospy.logerr("Base laser can't see in front of the robot")
-                self.laser_sub.unregister()
-                raise IndexError()  # TODO Matthijs: very ugly
+        if front_index < 2 or front_index > number_beams - 2:
+            raise IndexError("Base laser can't see in front of the robot")
 
-            ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
-            distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
-            rospy.logdebug("AVG distance: {}".format(distance_to_door))
-            self.distances += [distance_to_door]  # store all distances
+        ranges_at_center = scan_msg.ranges[front_index - 2:front_index + 2]  # Get some points around the middle
+        distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range
+        rospy.logdebug("AVG distance: {}".format(distance_to_door))
+        self.distances += [distance_to_door]  # store all distances
 
-            avg_distance_now = self.avg(self.distances[-5:])  # And the latest 5
+        avg_distance_now = self.avg(self.distances[-5:])  # And the latest 5
 
-            if avg_distance_now > 1.0:
-                rospy.loginfo("Distance to door is more than a meter")
-                self.door_open.set()  # Then set a threading Event that execute is waiting for.
-        except Exception as e:
-            rospy.logerr("Receiving laser failed so unsubscribing: {0}".format(e))
-            self.laser_sub.unregister()
+        if avg_distance_now > 1.0:
+            rospy.loginfo("Distance to door is more than a meter")
+            door_open.set()  # Then set a threading Event that execute is waiting for.
 
     def execute(self, userdata=None):
         rospy.loginfo("Waiting for door...")
@@ -222,18 +174,19 @@ class WaitForDoorOpen(smach.State):
                                                                           self._robot.robot_name + '/base_laser',
                                                                           rospy.Time(0))
         laser_rotation = quaternion_msg_to_kdl_rotation(r)
-        self.laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
-        self.laser_yaw = laser_rotation.GetRPY()[2]
-        self.laser_sub = rospy.Subscriber(self._robot.laser_topic, LaserScan,
-                                          self.process_scan)
+        laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
+        laser_yaw = laser_rotation.GetRPY()[2]
 
-        opened_before_timout = self.door_open.wait(self.timeout)
+        door_open = Event()
+        laser_sub = rospy.Subscriber(self._robot.laser_topic, LaserScan,
+                                     partial(self.process_scan, laser_upside_down, laser_yaw, door_open))
+
+        opened_before_timout = door_open.wait(self.timeout)
 
         rospy.loginfo("Unregistering laser listener and clearing data")
-        self.laser_sub.unregister()
+        laser_sub.unregister()
         self.distances = []
 
-        self.door_open.clear()
         if opened_before_timout:
             rospy.loginfo("Door is open")
             return "open"

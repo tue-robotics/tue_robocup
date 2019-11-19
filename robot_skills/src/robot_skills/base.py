@@ -5,6 +5,7 @@
 
 # System
 import math
+from numpy import sign
 
 # ROS
 from actionlib_msgs.msg import GoalStatus
@@ -104,7 +105,8 @@ class GlobalPlanner(RobotPart):
         """
 
         :param position_constraint: (PositionConstraint)
-        :return: list(PoseStamped)
+        :return: list(PoseStamped). N.B.: If No path was found, this list is empty. If the planner service fails,
+        'None' is returned.
         """
 
         self._position_constraint = position_constraint
@@ -172,13 +174,17 @@ class Base(RobotPart):
 
         self.subscribe_hardware_status('base')
 
-    def wait_for_connections(self, timeout):
+    def wait_for_connections(self, timeout, log_failing_connections=True):
         """ Waits for the connections until they are connected
+
         :param timeout: timeout in seconds
+        :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
+        multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
-        return self.global_planner.wait_for_connections(timeout=timeout) and \
-            self.local_planner.wait_for_connections(timeout=timeout)
+        return self.global_planner.wait_for_connections(
+            timeout=timeout, log_failing_connections=log_failing_connections) and \
+            self.local_planner.wait_for_connections(timeout=timeout, log_failing_connections=log_failing_connections)
 
     def move(self, position_constraint_string, frame):
         p = PositionConstraint()
@@ -192,34 +198,49 @@ class Base(RobotPart):
 
         return plan
 
-    def force_drive(self, vx, vy, vth, timeout):
+    def force_drive(self, vx, vy, vth, timeout, loop_rate=10, stop=True, ax=float('inf'), ay=float('inf'), ath=float('inf')):
         """ Forces the robot to drive by sending a command velocity directly to the base controller. N.B.: all collision
         avoidance is bypassed.
 
-        :param vx: forward velocity in m/s
-        :param vy: sideways velocity in m/s
-        :param vth: rotational velocity in rad/s
-        :param timeout: duration for this motion in seconds
+        :param vx: forward velocity [m/s]
+        :param vy: sideways velocity [m/s]
+        :param vth: rotational velocity in [rad/s]
+        :param timeout: duration for this motion [s]
+        :param loop_rate: Rate of sending twist messages [Hz]
+        :param stop: send stop message afterwards
+        :param ax: forward acceleration [m/s^2]
+        :param ay: sideways acceleration [m/s^2]
+        :param ath: rotational acceleration [rad/s^2]
         """
         # Cancel the local planner goal
         self.local_planner.cancelCurrentPlan()
 
         v = geometry_msgs.msg.Twist()        # Initialize velocity
         t_start = rospy.Time.now()
+        t_end = t_start + rospy.Duration.from_sec(timeout)
+
+        def _abs_max(value, max_value):
+            return sign(value) * min(abs(max_value), abs(value))
 
         # Drive
-        v.linear.x = vx
-        v.linear.y = vy
-        v.angular.z= vth
-        while (rospy.Time.now() - t_start) < rospy.Duration(timeout):
-            self._cmd_vel.publish(v)
-            rospy.sleep(0.1)
+        rate = rospy.Rate(loop_rate)
+        while rospy.Time.now() < t_end:
+            seconds_from_start = rospy.Time.now().to_sec() - t_start.to_sec()
 
-        # Stop driving
-        v.linear.x = 0.0
-        v.linear.y = 0.0
-        v.angular.z = 0.0
-        self._cmd_vel.publish(v)
+            # 0 * inf =  NaN, so in case 'seconds_from_start' is close to zero, aka in the first loop iteration,
+            # use zero to prevent NaNs
+            v.linear.x = _abs_max(vx, ax * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            v.linear.y = _abs_max(vy, ay * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            v.angular.z = _abs_max(vth, ath * seconds_from_start if seconds_from_start > 1/loop_rate else 0)
+            self._cmd_vel.publish(v)
+            rate.sleep()
+
+        if stop:
+            # Stop driving
+            v.linear.x = 0.0
+            v.linear.y = 0.0
+            v.angular.z = 0.0
+            self._cmd_vel.publish(v)
 
         return True
 

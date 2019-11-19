@@ -160,6 +160,6 @@ include_directories(
 # endif()
 
 ## Add folders to be run by python nosetests
-if(CATKIN_ENABLE_TESTING)
+if (CATKIN_ENABLE_TESTING)
   catkin_add_nosetests(test)
 endif()

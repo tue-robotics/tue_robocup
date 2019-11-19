@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 __author__ = 'loy'
 import core
 
@@ -99,10 +98,14 @@ def check_type(designator_or_value, *allowed_types):
     Traceback (most recent call last):
       ...
     TypeError: ...
+    >>> check_type(c4, [str, int])  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    AssertionError: ...
     """
     for allowed_type in allowed_types:
         if isinstance(allowed_type, list):
-            assert len(allowed_type) == 1
+            assert len(allowed_type) == 1, "Allowed list type should contain one internal type, incorrect type: {}".format(allowed_type)
 
     if hasattr(designator_or_value, "resolve_type"):  # If its a designator: ...
         check_resolve_type(designator_or_value, *allowed_types)

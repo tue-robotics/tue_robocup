@@ -1,11 +1,12 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_smach_states')
-import rospy
+
+from __future__ import print_function
+
 import random
 
+import rospy
 import smach
 
-from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 
@@ -13,7 +14,8 @@ from robot_smach_states.util.startup import startup
 import std_msgs.msg
 
 from robot_smach_states.designators.designator import Designator
-from ed_msgs.srv import SimpleQuery, SimpleQueryRequest
+from ed_msgs.srv import SimpleQuery
+
 
 class RandomNavDesignator(Designator):
 
@@ -44,9 +46,8 @@ class RandomNavDesignator(Designator):
             return entities[0]
 
     def getRandomGoal(self):
-
         # If a goal is already defined by the used, return
-        if not self.entity_id == None:
+        if self.entity_id is not None:
             return self.entity_id
 
         # Get all entities
@@ -89,20 +90,17 @@ class RandomNavDesignator(Designator):
                 # Add entity
                 msg.data += entity.id
 
-                print "ID = {0}, type = {1}".format(entity.id, entity.type)
+                print("ID = {0}, type = {1}".format(entity.id, entity.type))
 
             self.locations_pub.publish(msg)
 
             # Select random object
             entity_id = None
-            while entity_id == None:
-                entity    = random.choice(entities)
+            while entity_id is None:
+                entity = random.choice(entities)
                 if entity.id != self.last_entity_id:
                     entity_id = entity.id
 
-            # Get rid of prefix + slash???
-            #index = entity_id.find("/")
-            #entity_id = entity_id[index+1:]
             rospy.loginfo("Entity:\n\tid = {0},\n\ttype = {1}".format(entity.id, entity.type))
 
             self.entity_id = entity_id
@@ -111,7 +109,6 @@ class RandomNavDesignator(Designator):
             raise Exception("No entities with convex hulls")
 
     def goalCallback(self, msg):
-
         # Check if already present
         if msg.data == self.entity_id:
             return
@@ -133,6 +130,7 @@ class RandomNavDesignator(Designator):
                                                 ]))
         return
 
+
 class SelectAction(smach.State):
     def __init__(self, outcomes=['continue', 'pause', 'stop']):
         self.outcomes= outcomes
@@ -140,7 +138,7 @@ class SelectAction(smach.State):
         self.outcome = 'continue'
 
         self.rate = float(rospy.get_param('~rate', '1.0'))
-        topic     = rospy.get_param('~topic', '/nav_test_control')
+        topic = rospy.get_param('~topic', '/nav_test_control')
 
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
@@ -156,6 +154,7 @@ class SelectAction(smach.State):
             self.outcome = msg.data
         else:
             rospy.logwarn("{0} is not a possible outcome for SelectAction, possibilities are{1}".format(msg.data, self.outcomes))
+
 
 class RandomNav(smach.StateMachine):
 
@@ -258,6 +257,7 @@ class RandomNav(smach.StateMachine):
         self.requested_location = msg.data
         self.robot.speech.speak("I got a request to go to location %"%self.requested_location)
         rospy.loginfo("Requested location is %s"%self.requested_location)
+
 
 if __name__ == "__main__":
     rospy.init_node('random_nav_exec')
