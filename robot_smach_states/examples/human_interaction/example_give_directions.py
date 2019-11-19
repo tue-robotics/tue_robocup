@@ -2,7 +2,6 @@ import rospy
 import argparse
 
 # TU/e Robotics
-from robot_skills.get_robot import get_robot_from_argv
 from robot_smach_states.human_interaction import give_directions
 import robot_smach_states.util.designators as ds
 from robot_skills.get_robot import get_robot
@@ -16,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("target_entity_id", type=str, help="Entity id of the target object")
     args = parser.parse_args()
 
-    # Create node, robot and toggle interface
+    # Create node
     rospy.init_node("test_give_directions")
     r = get_robot(args.robot)
     e_id = args.target_entity_id
