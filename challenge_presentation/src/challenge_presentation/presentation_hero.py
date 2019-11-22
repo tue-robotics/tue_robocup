@@ -66,9 +66,10 @@ class Presentation(smach.State):
 
         self.robot = robot
 
-        trajectories = ["wave_front", "show_gripper", "point_to_laser"]
+        trajectories = ["wave_front", "point_to_laser"]
+        goals = ['show_gripper']
         self.arm = self.robot.get_arm(required_gripper_types=[arms.GripperTypes.GRASPING],
-                                      required_trajectories=trajectories)
+                                      required_trajectories=trajectories, required_goals=goals)
 
         self.language = language
         self.trans = {"en": English, "nl": Dutch}[language]
@@ -118,7 +119,7 @@ class Presentation(smach.State):
                                      voice=self.voice, block=True))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
-        function_list.append(partial(self.arm._send_joint_trajectory, [[0.01, 0.0, 0.0, -1.57, 0.0]]))
+        function_list.append(partial(self.arm.send_joint_goal, "show_gripper"))
         function_list.append(partial(self.arm.send_gripper_goal, "open"))
         function_list.append(partial(self.arm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
