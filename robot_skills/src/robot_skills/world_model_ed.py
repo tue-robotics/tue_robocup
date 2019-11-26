@@ -11,11 +11,11 @@ import visualization_msgs.msg
 # TU/e
 import ed_msgs.srv
 from ed_msgs.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
-import ed_sensor_integration.srv
-from ed_people_recognition_msgs.srv import EdRecognizePeople, EdRecognizePeopleRequest
-from ed_perception.srv import Classify
-from ed_gui_server.srv import GetEntityInfo, GetEntityInfoResponse
-from ed_navigation.srv import GetGoalConstraint
+import ed_sensor_integration_msgs.srv as ed_sensor_srv
+from ed_people_recognition_msgs.srv import EdRecognizePeople
+from ed_perception_msgs.srv import Classify
+from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
+from ed_navigation_msgs.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
 # Robot skills
@@ -57,14 +57,14 @@ class ED(RobotPart):
                                                                     GetEntityInfo)
         self._ed_update_srv = self.create_service_client('/%s/ed/update' % robot_name, UpdateSrv)
         self._ed_kinect_update_srv = self.create_service_client('/%s/ed/kinect/update' % robot_name,
-                                                                ed_sensor_integration.srv.Update)
+                                                                ed_sensor_srv.Update)
         self._ed_classify_srv = self.create_service_client('/%s/ed/classify' % robot_name, Classify)
         self._ed_configure_srv = self.create_service_client('/%s/ed/configure' % robot_name, Configure)
         self._ed_reset_srv = self.create_service_client('/%s/ed/reset' % robot_name, ed_msgs.srv.Reset)
         self._ed_get_image_srv = self.create_service_client('/%s/ed/kinect/get_image' % robot_name,
-                                                            ed_sensor_integration.srv.GetImage)
+                                                            ed_sensor_srv.GetImage)
         self._ed_ray_trace_srv = self.create_service_client('/%s/ed/ray_trace' % robot_name,
-                                                            ed_sensor_integration.srv.RayTrace)
+                                                            ed_sensor_srv.RayTrace)
 
         self._ed_detect_people_srv = self.create_service_client('/%s/ed/people_recognition/detect_people' % robot_name,
                                                                 EdRecognizePeople)

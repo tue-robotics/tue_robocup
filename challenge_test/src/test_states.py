@@ -5,27 +5,13 @@
 # Date: October 2015
 ################################################
 
-import roslib
-import rospy
-import smach
-import subprocess
-import inspect
 import random
-import ed_perception.msg
-import math
-import robot_skills.util.msg_constructors as msgs
 
-from ed_msgs.msg import EntityInfo
-from smach_ros import SimpleActionState
-from collections import namedtuple
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from robot_smach_states import Grab
 from robocup_knowledge import load_knowledge
-from robot_skills.util import transformations
-from robot_skills.arms import Arm
-
 
 # ----------------------------------------------------------------------------------------------------
 
