@@ -19,13 +19,15 @@ if __name__ == "__main__":
 
     # Create node, robot and tour_guide instance
     rospy.init_node("example_tour_guide")
-    r = get_robot(args.robot)
-    s = guidance.TourGuide(r, args.x_threshold, args.y_threshold)
+    robot = get_robot(args.robot)
+    state = guidance.TourGuide(robot, args.x_threshold, args.y_threshold)
 
     # Initialize
-    s.initialize()
+    state.initialize()
 
+    rate = rospy.Rate(1)
     # Keep explaining the robot movement
     while not rospy.is_shutdown():
-        rospy.loginfo(s.describe_near_objects())
+        rospy.loginfo(state.describe_near_objects())
+        rate.sleep()
 
