@@ -23,4 +23,4 @@ if __name__ == "__main__":
     # Instantiate GuideToSymbolic machine
     state = give_directions.GiveDirections(r, ds.EntityByIdDesignator(r, id=e_id))
     # Execute the state
-    s.execute()
+    state.execute()
