@@ -13,8 +13,11 @@ from robot_smach_states.human_interaction import ShowImageState
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Show an image on the robot display.")
-    parser.add_argument("file_path", type=str, help="String describing the path to the image (absolute path incl. "
-                                                    "file extension)")
+    parser.add_argument(
+        "file_path",
+        type=str,
+        help="String describing the path to the image (absolute path incl. file extension)"
+    )
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     args = parser.parse_args()
 
