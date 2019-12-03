@@ -9,7 +9,7 @@ from robot_skills.get_robot import get_robot
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="While the robot is driving to a nav goal, this state tells the rooms"
-                                                 "and furniture the robot encounters")
+                                                 "and furniture objects the robot encounters")
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     parser.add_argument("--x_threshold", type=float, default=0.75, help="threshold determining when a piece of "
                                                                         "furniture is close enough to be described [m]")
