@@ -913,31 +913,21 @@ class ForceSensingArm(Arm):
         # Fill with required joint names (desired in hardware / gazebo impl)
         current_joint_state = self.get_joint_states()
         current_joint_state['arm_lift_joint'] = 0
-
-        self._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
-            trajectory=JointTrajectory(
-                joint_names=self.joint_names,
-                points=[JointTrajectoryPoint(
-                    positions=[current_joint_state[n] for n in self.joint_names],
-                    time_from_start=rospy.Duration.from_sec(timeout)
-                )]
-            )
-        ))
+        self._ac_joint_traj.send_goal(self._make_goal(current_joint_state, timeout))
 
         self.force_sensor.wait_for_edge_up(timeout)
         self.cancel_goals()
 
         current_joint_state = self.get_joint_states()
         current_joint_state['arm_lift_joint'] += retract_distance
-        self._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
-            trajectory=JointTrajectory(
-                joint_names=self.joint_names,
-                points=[JointTrajectoryPoint(
-                    positions=[current_joint_state[n] for n in self.joint_names],
-                    time_from_start=rospy.Duration.from_sec(0.5)
-                )]
-            )
-        ))
+        self._ac_joint_traj.send_goal(self._make_goal(current_joint_state, 0.5))
+
+    def _make_goal(self, current_joint_state, timeout):
+        positions = [current_joint_state[n] for n in self.joint_names]
+        points = [JointTrajectoryPoint(positions=positions,
+                                       time_from_start=rospy.Duration.from_sec(timeout))]
+        trajectory = JointTrajectory(joint_names=self.joint_names, points=points)
+        return FollowJointTrajectoryGoal(trajectory=trajectory)
 
 
 class FakeArm(RobotPart):
