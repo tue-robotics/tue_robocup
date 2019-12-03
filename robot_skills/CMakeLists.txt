@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     ed_navigation_msgs
     ed_people_recognition_msgs
     ed_perception_msgs
+    ed_sensor_integration_msgs
     geometry_msgs
     head_ref_msgs
     people_recognition_msgs
