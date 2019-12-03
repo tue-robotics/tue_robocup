@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     # Create node
     rospy.init_node("test_give_directions")
-    r = get_robot(args.robot)
+    robot = get_robot(args.robot)
     e_id = args.target_entity_id
 
     # Instantiate GuideToSymbolic machine
