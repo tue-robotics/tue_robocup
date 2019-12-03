@@ -18,25 +18,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rospy.init_node("Set_gripper_state")
-
     robot = get_robot(args.robot)
-
     arm = ds.UnoccupiedArmDesignator(robot, {})
 
-    gripper_state = GripperState.CLOSE
-
-    set_gripper_state = SetGripper(robot, arm, gripperstate=gripper_state)
-
-    set_gripper_state.execute()
-
-    rospy.loginfo("Closed gripper")
-
-    rospy.sleep(5)
-
-    gripper_state = GripperState.OPEN
-
-    set_gripper_state = SetGripper(robot, arm, gripperstate=gripper_state)
-
-    set_gripper_state.execute()
-
-    rospy.loginfo("Opened gripper")
+    for gripper_state in [GripperState.CLOSE, GripperState.OPEN]:
+        set_gripper_state = SetGripper(robot, arm, gripperstate=gripper_state)
+        outcome = set_gripper_state.execute()
+        rospy.loginfo("Set gripper state to {}, outcome: {}".format(gripper_state, outcome))
+        rospy.sleep(2.5)
