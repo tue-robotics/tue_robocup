@@ -16,7 +16,7 @@ import tf
 # TU/e Robotics
 import arms
 from ed_msgs.msg import EntityInfo
-from ed_sensor_integration.srv import UpdateResponse
+from ed_sensor_integration_msgs.srv import UpdateResponse
 from robot_skills import robot
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
