@@ -1,7 +1,7 @@
 # ROS
 import rospy
 from geometry_msgs.msg import PointStamped
-from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
+from head_ref_msgs.msg import HeadReferenceAction, HeadReferenceGoal
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart

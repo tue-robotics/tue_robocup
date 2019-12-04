@@ -1,4 +1,5 @@
 from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from .simulation import is_sim_mode, SimEButton
 
 import rospy
 
@@ -11,9 +12,12 @@ class Hero(robot.Robot):
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener))
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        self.add_arm_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, side="left"))
+        self.add_arm_part(
+            'leftArm',
+            arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        )
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
@@ -34,7 +38,8 @@ class Hero(robot.Robot):
                                              lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                              lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
-        self.add_body_part('ebutton', ebutton.EButton(self.robot_name, self.tf_listener))
+        ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
+        self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_listener, topic="/hero/runstop_button"))
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
@@ -58,23 +63,23 @@ class Hero(robot.Robot):
         """
         This poses the robot for an inspect.
 
-        :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
+        :param inspect_target: kdl.Frame with the pose of the entity to be inspected.
         :return result: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
-        z_over = 0.3  # height the robot should look over the surface
+        z_over = 0.4  # height the robot should look over the surface
         z_hh = 0.9  # height of the robots head at z_arm=0
         torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
         z_head = inspect_target.z() + z_over
 
         # check whether moving the arm is necessary
-        if z_head < 1.2:
-            rospy.logdebug('Entity is low enough. we dont need to move the arm')
+        if z_head < 1.1:
+            rospy.logdebug("Entity is low enough. we don't need to move the arm")
             return True
 
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
-        z_arm = min(0.69, max(z_arm, 0.0)) # arm_lift_joint limit
+        z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
         arm = self.parts['leftArm']
 

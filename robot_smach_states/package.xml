@@ -19,8 +19,6 @@
   <run_depend>python-docopt</run_depend>
   <run_depend>python-mock</run_depend>
   <run_depend>ipython</run_depend>
-  <run_depend>ed_perception</run_depend>
-  <run_depend>ed_navigation</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>cb_planner_msgs_srvs</run_depend>
@@ -29,5 +27,8 @@
   <run_depend>python-numpy</run_depend>
   <run_depend>orocos_kdl</run_depend>
   <run_depend>python_orocos_kdl</run_depend>
+  <run_depend>tf2_geometry_msgs</run_depend>
+
+  <test_depend>test_tools</test_depend>
 
 </package>

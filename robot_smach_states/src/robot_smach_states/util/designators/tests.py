@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+from __future__ import print_function
 
 __author__ = 'loy'
 
@@ -31,19 +31,19 @@ class MyTestCase(unittest.TestCase):
 
         for target in target_list:
             if target not in unreachable.resolve() and target not in visited.resolve():
-                print "Processing target {0}".format(target)
+                print("Processing target {0}".format(target))
                 if success(target):
                     visited.resolve().add(target)  # This is a set so no += [...]
-                    print "Target {0} was successfull, its visited".format(target)
+                    print("Target {0} was successfull, its visited".format(target))
                 else:
                     unreachable.resolve().add(target)  # This is a set so no += [...]
-                    print "Target {0} failed, its unreachable".format(target)
+                    print("Target {0} failed, its unreachable".format(target))
             else:
-                print "NOT processing target {0}: its unreachable or already visited".format(target)
+                print("NOT processing target {0}: its unreachable or already visited".format(target))
 
-        print "##### Done #####"
-        print "These are unreachable: {0}".format(unreachable.resolve())
-        print "These are visited: {0}".format(visited.resolve())
+        print("##### Done #####")
+        print("These are unreachable: {0}".format(unreachable.resolve()))
+        print("These are visited: {0}".format(visited.resolve()))
 
         self.assertEqual(len(unreachable.resolve()), 5)
         self.assertEqual(len(visited.resolve()), 5)
