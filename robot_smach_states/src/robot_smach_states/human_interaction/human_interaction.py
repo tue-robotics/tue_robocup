@@ -113,6 +113,7 @@ class Say(smach.State):
 
         if isinstance(sentence, str) or isinstance(sentence, list):
             self._check_place_holders(sentence)
+            sentence = ds.Designator(initial_value=sentence, name="sentence")
 
         self.robot = robot
         self.sentence = sentence
@@ -128,11 +129,8 @@ class Say(smach.State):
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if hasattr(self.sentence, "resolve"):
-            sentence = self.sentence.resolve()
-            self._check_place_holders(sentence)
-        else:
-            sentence = self.sentence
+        sentence = self.sentence.resolve()
+        self._check_place_holders(sentence)
 
         if not isinstance(sentence, str) and isinstance(sentence, list):
             sentence = random.choice(sentence)
