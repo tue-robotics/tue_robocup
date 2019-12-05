@@ -46,7 +46,8 @@ class GetFurnitureFromOperatorPose(State):
         final_result = None
         while not rospy.is_shutdown() and final_result is None:
             self._prep_operator()
-            self._get_operator()
+            if self._get_operator() is not None:
+                return 'failed'
             result = None
             while not rospy.is_shutdown() and result is None and self.operator is not None:
                 try:
@@ -112,7 +113,10 @@ class GetFurnitureFromOperatorPose(State):
 
     def _get_operator(self):
         while not rospy.is_shutdown() and self.operator is None:
-            persons = self._robot.perception.detect_person_3d(*self._show_image())
+            try:
+                persons = self._robot.perception.detect_person_3d(*self._show_image())
+            except:
+                return 'failed'
             if persons:
                 persons = sorted(persons, key=lambda x: x.position.z)
                 person = persons[0]
