@@ -1,9 +1,9 @@
 # ROS
 import rospy
-import sys
+import argparse
 
 # TU/e Robotics
-from robot_skills.get_robot import get_robot_from_argv
+from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 from robot_smach_states.util import designators as ds
@@ -13,13 +13,16 @@ from robot_skills.classification_result import ClassificationResult
 
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 3, "Please provide the robot name and the entity on which to segment objects" \
-                               "e.g., 'python example_something.py hero dinner_table'"
+
+    parser = argparse.ArgumentParser(description="Test if it can segment objects")
+    parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
+    parser.add_argument("entity", default="dinner_table", help="Name of the entity on which to segment objects")
+    args = parser.parse_args()
 
     rospy.init_node("example_segment_objects")
 
-    robot = get_robot_from_argv(index=1)
-    location_name = sys.argv[2]
+    robot = get_robot(args.robot)
+    location_name = args.entity
 
     rospy.loginfo("Creating location designator")
     location_designator = ds.EntityByIdDesignator(robot, location_name)
