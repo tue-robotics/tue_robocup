@@ -15,9 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rospy.init_node('test_hear_options')
-
     robot = get_robot(args.robot)
 
     hear_option_state = HearOptions(robot, ['no', 'yes'])
-
     hear_option_state.execute()

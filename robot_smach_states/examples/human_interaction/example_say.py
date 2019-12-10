@@ -15,11 +15,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     rospy.init_node('test_say')
-
     robot = get_robot(args.robot)
-
     sentence = 'I have said something useful'
 
     say_state = Say(robot, sentence)
-
     say_state.execute()

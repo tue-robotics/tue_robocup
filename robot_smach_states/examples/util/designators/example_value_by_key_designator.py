@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Test the value by key designator")
     args = parser.parse_args()
-    rospy.init_node("value by key designator")
+    rospy.init_node("value_by_key_designator")
 
     random_dict = {'foo': 'bar', ' hello': 'bye'}
     container = Designator(random_dict, name='des1')
