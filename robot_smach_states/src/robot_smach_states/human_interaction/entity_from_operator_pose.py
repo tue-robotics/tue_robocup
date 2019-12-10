@@ -25,7 +25,7 @@ class GetFurnitureFromOperatorPose(State):
         State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
         self.operator = None
-        self.all_possible_furniture = knowledge.locations['name']
+        self.all_possible_furniture = [sub['name'] for sub in knowledge.locations]
         # def __init__(self, robot, furniture_designator):
         # State.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
         # is_writeable(furniture_designator)
