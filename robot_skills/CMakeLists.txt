@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
     cb_planner_msgs_srvs
     control_msgs
     cv_bridge
-    dragonfly_speech_recognition
     ed_msgs
     ed_gui_server_msgs
     ed_navigation_msgs
