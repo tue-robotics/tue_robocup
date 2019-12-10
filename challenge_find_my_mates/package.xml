@@ -12,6 +12,7 @@
 
   <depend>geometry_msgs</depend>
   <depend>rospy</depend>
+  <depend>python-matplotlib</depend>
   <depend>smach</depend>
   <depend>tf</depend>
 
