@@ -11,25 +11,13 @@ from smach import State
 from std_msgs.msg import Header
 from ed_sensor_integration.srv import RayTraceResponse
 
-all_possible_furniture = ['kitchen_cabinet',
-                          'dinner_table',
-                          'island',
-                          'sink',
-                          'dishwasher',
-                          'desk',
-                          'coffee_table',
-                          # 'couch',
-                          # 'armchair',
-                          'display_cabinet',
-                          'sideboard']  # get from knowledge?
-
 
 class GetFurnitureFromOperatorPose(State):
     """
-    Smach state to detect to what piece of furniture an operator
+    Smach state to detect to what piece of furniture an operator is pointing at
     """
 
-    def __init__(self, robot):
+    def __init__(self, robot, knowledge):
         """ Initialization
 
         :param robot: Robot API object
@@ -37,6 +25,7 @@ class GetFurnitureFromOperatorPose(State):
         State.__init__(self, outcomes=['succeeded', 'failed'])
         self._robot = robot
         self.operator = None
+        self.all_possible_furniture = knowledge.locations['name']
         # def __init__(self, robot, furniture_designator):
         # State.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
         # is_writeable(furniture_designator)
@@ -45,8 +34,8 @@ class GetFurnitureFromOperatorPose(State):
         rospy.loginfo("I entered the execution state!")
         final_result = None
         while not rospy.is_shutdown() and final_result is None:
-            self._prep_operator()
-            if self._get_operator() is not None:
+            self._prep_operator() # output should be checked
+            if self._get_operator() is not None: # output should be checked
                 return 'failed'
             result = None
             while not rospy.is_shutdown() and result is None and self.operator is not None:
@@ -69,7 +58,7 @@ class GetFurnitureFromOperatorPose(State):
                 "There is a ray intersection with {i} at ({p.x:.4}, {p.y:.4}, {p.z:.4})".format(i=result.entity_id,
                                                                                                 p=result.intersection_point.point))
 
-            if result.entity_id in all_possible_furniture:
+            if result.entity_id in self.all_possible_furniture:
                 final_result = result
             else:
                 rospy.loginfo("{} is not furniture".format(result.entity_id))
@@ -117,6 +106,7 @@ class GetFurnitureFromOperatorPose(State):
                 persons = self._robot.perception.detect_person_3d(*self._show_image())
             except:
                 return 'failed'
+                # failures should be caught
             if persons:
                 persons = sorted(persons, key=lambda x: x.position.z)
                 person = persons[0]
