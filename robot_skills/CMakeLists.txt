@@ -32,24 +32,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_python_setup()
 
-# ------------------------------------------------------------------------------------------------
-#                                          CATKIN EXPORT
-# ------------------------------------------------------------------------------------------------
-
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES bla
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
-)
-
-# ------------------------------------------------------------------------------------------------
-#                                              BUILD
-# ------------------------------------------------------------------------------------------------
-
-include_directories(
-    ${catkin_INCLUDE_DIRS}
-)
+catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
   catkin_add_nosetests(test)
