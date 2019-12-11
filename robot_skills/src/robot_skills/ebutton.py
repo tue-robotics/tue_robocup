@@ -7,16 +7,21 @@ from robot_skills.robot_part import RobotPart
 
 
 class EButton(RobotPart):
-    """
-    Interface to amigo emergency switch. Listens to /emergency_switch topic
-    """
+    def __init__(self, robot_name, tf_listener, topic=None):
+        """
+        Interface to amigo emergency switch. Listens to /emergency_switch topic
 
-    def __init__(self, robot_name, tf_listener):
+        :param robot_name: (str) string indicates the robot name
+        :param tf_listener: (tf.Listener) (default argument for robot parts)
+        :param topic: (str) fully qualified topic (optional).
+        If not provided, "/<robot_name>/emergency_switch" will be used.
+        """
         super(EButton, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
         rospy.logdebug("Initializing ebutton listener")
         self._ebuttonstatus = True
-        self._topic = self.create_subscriber("/{}/emergency_switch".format(robot_name), Bool, self._listen)
+        topic = topic or "/{}/emergency_switch".format(robot_name)
+        self._topic = self.create_subscriber(topic, Bool, self._listen)
 
     def close(self):
         pass

@@ -1,0 +1,58 @@
+trigger:
+  batch: true
+
+schedules:
+  - cron: "0 1 * * *"
+    displayName: "Nightly"
+    branches:
+      include:
+        - master
+
+variables:
+  CI: true
+
+jobs:
+  - job: package_selection
+    displayName: 'Package selection'
+    pool:
+      vmImage: 'ubuntu latest'
+    steps:
+      - task: Bash@3
+        displayName: 'Determine packages to be build'
+        name: matrix
+        inputs:
+          targetType: 'inline'
+          script: |
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/azure_commit_range.py
+            export COMMIT_RANGE=$(python azure_commit_range.py)
+            ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
+            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL tue_robocup challenge_following_and_guiding challenge_manipulation challenge_navigation challenge_person_recognition challenge_spr challenge_speech_recognition
+            echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
+
+  - job: install_build_test
+    displayName: 'Install, build & test:'
+    pool:
+      vmImage: 'ubuntu latest'
+    dependsOn: package_selection
+    condition: ne(dependencies.package_selection.outputs['matrix.json_string'], '{}')
+    strategy:
+      matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
+    steps:
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+      displayName: 'Get CI scripts'
+    - task: Bash@3
+      inputs:
+        filePath: 'install-package.sh'
+        arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
+      displayName: 'Install'
+    - task: Bash@3
+      inputs:
+        filePath: 'build-package.sh'
+        arguments: '--package=$PACKAGE'
+      displayName: 'Build & test'
