@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
     hmi
     hmi_msgs
     people_recognition_msgs
+    python_orocos_kdl
     rgbd_msgs
     rospy
     smach
