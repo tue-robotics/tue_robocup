@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     ed_sensor_integration_msgs
     geometry_msgs
     head_ref_msgs
+    hmi
     hmi_msgs
     people_recognition_msgs
     rgbd_msgs
