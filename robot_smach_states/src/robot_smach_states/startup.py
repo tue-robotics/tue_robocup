@@ -89,35 +89,16 @@ class StartChallengeRobust(smach.StateMachine):
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
-                                   EnterArena(robot, initial_pose, use_entry_points),
+                                   EnterArena(robot),
                                    transitions={"done": "Done"})
 
 
 # Enter the arena with force drive as back-up
 class EnterArena(smach.StateMachine):
-    class GoToEntryPoint(smach.State):
-        def __init__(self, robot, initial_pose, use_entry_points=False):
-            """
-            not implemented
-            :param robot: robot object
-            :param initial_pose:
-            :param use_entry_points:
-            """
-            smach.State.__init__(self, outcomes=["no_goal", "found", "not_found", "all_unreachable"])
-            self.robot = robot
-            self.initial_pose = initial_pose
-            self.use_entry_points = use_entry_points
-
-        def execute(self, userdata=None):
-            print("TODO: IMPLEMENT THIS STATE")
-            return "no_goal"
-
-    def __init__(self, robot, initial_pose, use_entry_points=False):
+    def __init__(self, robot):
         """
         Enter the arena by force driving through the door
         :param robot: robot object
-        :param initial_pose:
-        :param use_entry_points:
         """
         smach.StateMachine.__init__(self, outcomes=['done'])
         self.robot = robot
@@ -131,14 +112,7 @@ class EnterArena(smach.StateMachine):
 
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
                                    ForceDrive(robot, 0.25, 0, 0, 5.0),
-                                   transitions={"done": "GO_TO_ENTRY_POINT"})
-
-            smach.StateMachine.add('GO_TO_ENTRY_POINT',
-                                   self.GoToEntryPoint(robot, initial_pose, use_entry_points),
-                                   transitions={"found": "done",
-                                                "not_found": "GO_TO_ENTRY_POINT",
-                                                "no_goal": "done",
-                                                "all_unreachable": "done"})
+                                   transitions={"done": "done"})
 
 
 class WaitForDoorOpen(smach.State):

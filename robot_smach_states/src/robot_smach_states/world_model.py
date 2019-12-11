@@ -116,13 +116,11 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
 
     def execute(self, userdata=None):
         """ Looks at the entity and updates its pose using the update kinect service """
-        src_entity = self._src_entity_designator.resolve() if hasattr(
-            self._src_entity_designator,
-            'resolve') else self._src_entity_designator
+        src_entity = self._src_entity_designator.resolve() if hasattr(self._src_entity_designator, 'resolve') else \
+            self._src_entity_designator
 
-        dst_entity = self._dst_entity_designator.resolve() if hasattr(
-            self._dst_entity_designator,
-            'resolve') else self._dst_entity_designator
+        dst_entity = self._dst_entity_designator.resolve() if hasattr(self._dst_entity_designator, 'resolve') else \
+            self._dst_entity_designator
 
         if (not src_entity) or (not self._robot.ed.get_entity(src_entity.id)) or (not dst_entity):
             return "failed"
@@ -169,7 +167,7 @@ class SegmentObjects(smach.State):
         elif isinstance(segmentation_area, ds.Designator):
             self.segmentation_area_des = segmentation_area
         else:
-            raise RuntimeError("This shoudln't happen. Wrong types should have raised an exception earlier")
+            raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.is_writeable(segmented_entity_ids_designator)

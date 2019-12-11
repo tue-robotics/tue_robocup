@@ -163,13 +163,13 @@ class HearOptions(smach.State):
     """
     Hear one of the options
     """
-    def __init__(self, robot, options, timeout=rospy.Duration(10), look_at_standing_person=True):
-        # type:(Robot, list, int, bool) -> None
+    def __init__(self, robot, options, timeout=10, look_at_standing_person=True):
+        # type:(Robot, list, (float, int), bool) -> None
         """
 
         :param robot: (Robot) robot api object
         :param options: List of strings with the options the robot can hear
-        :param timeout: integer indicating when the robot has to timeout
+        :param timeout: (float, int) indicating when the robot has to timeout
         :param look_at_standing_person: bool indicating whether the robot should look at the person giving the command
         """
         outcomes = list(options)  # make a copy
@@ -177,6 +177,7 @@ class HearOptions(smach.State):
         smach.State.__init__(self, outcomes=outcomes)
         self._options = options
         self._robot = robot
+        assert(isinstance(timeout, (float, int)))
         self._timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
@@ -186,7 +187,7 @@ class HearOptions(smach.State):
 
         try:
             answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T',
-                                           timeout=self._timeout.to_sec())
+                                           timeout=self._timeout)
         except TimeoutException:
             return 'no_result'
 
@@ -238,7 +239,7 @@ class HearOptionsExtra(smach.State):
     def __init__(self, robot,
                  spec_designator,
                  speech_result_designator,
-                 time_out=rospy.Duration(10),
+                 timeout=10,
                  look_at_standing_person=True):
         smach.State.__init__(self, outcomes=["heard", "no_result"])
 
@@ -250,7 +251,7 @@ class HearOptionsExtra(smach.State):
 
         self.spec_designator = spec_designator
         self.speech_result_designator = speech_result_designator
-        self.time_out = time_out
+        self.timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
@@ -264,8 +265,8 @@ class HearOptionsExtra(smach.State):
             self.robot.head.look_at_standing_person()
 
         try:
-            answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configable
-                                          timeout=self.time_out.to_sec())
+            answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configurable
+                                          timeout=self.timeout)
 
             if self.look_at_standing_person:
                 self.robot.head.cancel_goal()
@@ -283,27 +284,25 @@ class HearOptionsExtra(smach.State):
 
 
 class AskContinue(smach.StateMachine):
-    def __init__(self, robot, timeout=rospy.Duration(10)):
+    def __init__(self, robot, timeout=10):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
-        self.robot = robot
-        self.timeout = timeout
 
         with self:
             smach.StateMachine.add('SAY',
-                                   Say(self.robot,
+                                   Say(robot,
                                        random.choice(["I will continue my task if you say continue.",
                                                       "Please say continue so that I can continue my task.",
                                                       "I will wait until you say continue."])),
                                    transitions={'spoken': 'HEAR'})
 
             smach.StateMachine.add('HEAR',
-                                   HearOptions(self.robot, ['continue'], self.timeout),
+                                   HearOptions(robot, ['continue'], timeout),
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
 
 
 class AskYesNo(HearOptions):
-    def __init__(self, robot, timeout=rospy.Duration(10)):
+    def __init__(self, robot, timeout=10):
         HearOptions.__init__(self, robot, ['yes', 'no'], timeout)
 
 

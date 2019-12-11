@@ -30,3 +30,7 @@ class TestHearAnswerQuestions(unittest.TestCase):
         )
         state.execute({})
         self.assertIn("tech united", self.robot.speech.speak.mock_calls[0].args[0].lower())
+
+
+if __name__ == '__main__':
+    unittest.main()

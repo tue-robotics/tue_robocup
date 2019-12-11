@@ -19,3 +19,7 @@ class TestShowImage(unittest.TestCase):
         # Test if state returns failed if file does not exist
         state = ShowImageState(robot, "/tmp/bar")
         self.assertEqual(state.execute(), "failed")
+
+
+if __name__ == '__main__':
+    unittest.main()

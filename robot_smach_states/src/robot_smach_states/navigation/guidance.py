@@ -59,8 +59,8 @@ class TourGuide(object):
         # Class to describe furniture near the robot.
 
         :param robot: (Robot) api object
-        :param x_threshold: (float) threshold determining when a piece of furniture is close enough to be described
-        :param y_threshold: (float) threshold determining when a piece of furniture is close enough to be described
+        :param x_threshold: (float) threshold determining when a piece of furniture is close enough to be described [m]
+        :param y_threshold: (float) threshold determining when a piece of furniture is close enough to be described [m]
         """
         self._robot = robot
 
@@ -275,8 +275,9 @@ class WaitForOperator(smach.State):
 
         :param robot: (Robot) robot api object
         :param timeout: (float) if the operator has not been detected for this period, "is_lost" will be returned
-        :param distance: (float) check for the operator to be within this range of the robot
-        :param radius: (float) from the point behind the robot defined by `distance`, the person must be within this radius
+        :param distance: (float) check for the operator to be within this range of the robot [m]
+        :param radius: (float) from the point behind the robot defined by `distance`, the person must be within this
+        radius [m]
         """
         smach.State.__init__(self, outcomes=["is_following", "is_lost", "preempted"])
         self._robot = robot
@@ -309,7 +310,7 @@ class WaitForOperator(smach.State):
 
 class Guide(smach.StateMachine):
     def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
-        # type: (robot) -> None
+        # type: (Robot, float, float) -> None
         """
         Base Smach state to guide an operator to a designated position
 
@@ -382,7 +383,7 @@ class GuideToSymbolic(Guide):
     """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
                  operator_radius=0.5):
-        # type: (Robot, dict, EdEntityDesignator) -> None
+        # type: (Robot, dict, EdEntityDesignator, float, float) -> None
         """ Constructor
 
         :param robot: robot object
@@ -390,9 +391,9 @@ class GuideToSymbolic(Guide):
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
         to compute the orientation constraint.
-        :param operator_distance: (float) check for the operator to be within this range of the robot
+        :param operator_distance: (float) check for the operator to be within this range of the robot [m]
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
-        this radius
+        this radius [m]
         """
         super(GuideToSymbolic, self).__init__(robot=robot,
                                               operator_distance=operator_distance,

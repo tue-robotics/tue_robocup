@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # ROS
 import rospy
 
@@ -140,53 +141,23 @@ class AttrDesignator(Designator):
 
 
 class ValueByKeyDesignator(Designator):
-    """
-    List
-    >>> container1 = ["a", "b", "c"]
-    >>> keys1 = range(len(container1))
-    >>> des1 = [ValueByKeyDesignator(container1, key, str, name="des1_" + str(key)) for key in keys1]
-    >>> outcomes1 = map(lambda x: x.resolve(), des1)
-    >>> assert outcomes1 == container1
-
-    >>> keys2 = [VariableDesignator(initial_value=key, resolve_type=int) for key in range(len(container1))]
-    >>> des2 = [ValueByKeyDesignator(container1, key, str, name="des2_" + str(key)) for key in keys2]
-    >>> outcomes2 = map(lambda x: x.resolve(), des2)
-    >>> assert outcomes2 == container1
-
-    Dictionary
-    >>> container3 = {"a": "A", "b": "B", "c": "C"}
-    >>> keys3 = container3.keys()
-    >>> des3 = [ValueByKeyDesignator(container3, key, str, name="des3_" + str(key)) for key in keys3]
-    >>> outcomes3 = map(lambda x: x.resolve(), des3)
-    >>> outcomes3 = dict(zip(keys3, outcomes3))
-    >>> assert outcomes3 == container3
-
-    >>> keys4 = [VariableDesignator(initial_value=key) for key in container3.keys()]
-    >>> des4 = [ValueByKeyDesignator(container3, key, str, name="des4_" + str(key)) for key in keys4]
-    >>> outcomes4 = map(lambda x: x.resolve(), des4)
-    >>> outcomes4 = dict(zip(keys3, outcomes4))
-    >>> assert outcomes4 == container3
-    """
     def __init__(self, container, key, resolve_type, name=None):
         """
-        Get a value from a container by it's key
+        Get a value from a dictionary by it's key
         :param container: any object with a __getitem__ method or a designator that resolves to it
-        :param key: key of the item in the container or designator to it
-        :param resolve_type: resolve type of the item in the container
         :param name: Name of the designator for introspection purposes
         """
         super(ValueByKeyDesignator, self).__init__(resolve_type=resolve_type, name=name)
-        container_type = container.resolve_type if hasattr(container, "resolve") else container
-        assert hasattr(container_type, "__getitem__"), "Container should have '__getitem__' method"
-        
+        # TODO: Add type checks to make sure that we can do container[key]
+        # OR container.resolve[key]
         self._container = container
         self._key = key
 
     def _resolve(self):
-        container = self._container.resolve() if hasattr(self._container, "resolve") else self._container
-        key = self._key.resolve() if hasattr(self._key, "resolve") else self._key
+        # ToDo: possible cases: container=None, Missing key
+        container = self._container.resolve()
         if container:
-            return container[key]
+            return container[self._key]
         else:
             return None
 

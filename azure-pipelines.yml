@@ -1,3 +1,13 @@
+trigger:
+  batch: true
+
+schedules:
+  - cron: "0 1 * * *"
+    displayName: "Nightly"
+    branches:
+      include:
+        - master
+
 variables:
   CI: true
 
@@ -14,7 +24,10 @@ jobs:
           targetType: 'inline'
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
-            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH tue_robocup
+            wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/azure_commit_range.py
+            export COMMIT_RANGE=$(python azure_commit_range.py)
+            ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
+            source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL tue_robocup challenge_following_and_guiding challenge_manipulation challenge_navigation challenge_person_recognition challenge_spr challenge_speech_recognition
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
 
   - job: install_build_test
@@ -22,6 +35,7 @@ jobs:
     pool:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
+    condition: ne(dependencies.package_selection.outputs['matrix.json_string'], '{}')
     strategy:
       matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
     steps:

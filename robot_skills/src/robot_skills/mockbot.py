@@ -16,7 +16,7 @@ import tf
 # TU/e Robotics
 import arms
 from ed_msgs.msg import EntityInfo
-from ed_sensor_integration.srv import UpdateResponse
+from ed_sensor_integration_msgs.srv import UpdateResponse
 from robot_skills import robot
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
@@ -76,7 +76,6 @@ class Arm(MockedRobotPart):
 
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
-        self.collect_gripper_types = mock.MagicMock()
         self.has_joint_goal = mock.MagicMock()
         self.has_joint_trajectory = mock.MagicMock()
         self.cancel_goals = mock.MagicMock()
@@ -91,6 +90,9 @@ class Arm(MockedRobotPart):
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
+
+    def collect_gripper_types(self, gripper_type):
+        return gripper_type
 
 
 class Base(MockedRobotPart):
@@ -226,13 +228,12 @@ class ED(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(ED, self).__init__(robot_name, tf_listener)
         self._dynamic_entities = defaultdict(self.generate_random_entity,
-                                     {e.id:e for e in [self.generate_random_entity() for _ in range(5)]})
+                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
         self._dynamic_entities['john'] = self.generate_random_entity(id='john', type='person')
         self._static_entities = defaultdict(self.generate_random_entity,
-                                     {e.id:e for e in [self.generate_random_entity() for _ in range(5)]})
+                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
-        self.get_entities = lambda *args, **kwargs: self._entities.values()
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None, parse=True: self._entities[id]
         self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
@@ -246,12 +247,26 @@ class ED(MockedRobotPart):
 
         self._person_names = []
 
+    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
+
+        center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
+
+        entities = self._entities.values()
+        if type:
+            entities = [e for e in entities if e.is_a(type)]
+        if radius:
+            entities = [e for e in entities if e.distance_to_2d(center_point_in_map.vector) <= radius]
+        if id:
+            entities = [e for e in entities if e.id == id]
+
+        return entities
+
     @property
     def _entities(self):
         return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())
 
     def segment_kinect(self, *args, **kwargs):
-        self._dynamic_entities = {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]}
+        self._dynamic_entities = {e.id: e for e in [ED.generate_random_entity() for _ in range(5)]}
         return self._entities
 
     def update_kinect(self, *args, **kwargs):
@@ -272,6 +287,20 @@ class ED(MockedRobotPart):
         return True, [self._dynamic_entities['operator'].id]
 
 
+class MockedTfListener(mock.MagicMock):
+    def __init__(self):
+        super(MockedTfListener, self).__init__()
+
+    @staticmethod
+    def waitForTransform(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def transformPoint(frame_id, point_stamped):
+        point_stamped.header.frame_id = frame_id
+        return point_stamped
+
+
 class Mockbot(robot.Robot):
     """
     Interface to all parts of Mockbot. When initializing Mockbot, you can choose a list of components
@@ -286,7 +315,7 @@ class Mockbot(robot.Robot):
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"
 
-        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_listener=mock.MagicMock())
+        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_listener=MockedTfListener)
 
         self.publish_target = mock.MagicMock()
         self.tf_transform_pose = mock.MagicMock()

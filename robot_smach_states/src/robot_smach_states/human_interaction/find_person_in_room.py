@@ -48,6 +48,7 @@ class FindPerson(smach.State):
         :param look_distance: (float) robot only considers laser entities within this radius
         :param discard_other_labels: (bool) whether or not to discard recognitions based on the label
         :param room: has to be the id of a room type in the knowledge (f.e. bedroom)
+        :param speak_when_found: bool indicating whether or not the robot should speak upon finding a person
         :param look_range: from what to what head angle should the robot search (defaults to -90 to +90 deg)
         :param look_steps: How many steps does it take in that range (default = 8)
         """
@@ -189,8 +190,7 @@ class FindPersonInRoom(smach.StateMachine):
     """
 
     def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None,
-                 look_range=(-np.pi/2, np.pi/2),
-                 look_steps=8):
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
