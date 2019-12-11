@@ -26,6 +26,7 @@
   <depend>hmi</depend>
   <depend>hmi_msgs</depend>
   <depend>people_recognition_msgs</depend>
+  <depend>python_orocos_kdl</depend>
   <depend>rgbd_msgs</depend>
   <depend>rospy</depend>
   <depend>smach</depend>
