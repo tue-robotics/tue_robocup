@@ -15,7 +15,6 @@
   <depend>cb_planner_msgs_srvs</depend>
   <depend>control_msgs</depend>
   <depend>cv_bridge</depend>
-  <depend>dragonfly_speech_recognition</depend>
   <depend>ed_msgs</depend>
   <depend>ed_gui_server_msgs</depend>
   <depend>ed_navigation_msgs</depend>
@@ -24,6 +23,8 @@
   <depend>ed_sensor_integration_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>head_ref_msgs</depend>
+  <depend>hmi</depend>
+  <depend>hmi_msgs</depend>
   <depend>people_recognition_msgs</depend>
   <depend>rgbd_msgs</depend>
   <depend>rospy</depend>
