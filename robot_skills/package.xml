@@ -23,6 +23,7 @@
   <depend>ed_sensor_integration_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>head_ref_msgs</depend>
+  <depend>hmi_msgs</depend>
   <depend>people_recognition_msgs</depend>
   <depend>rgbd_msgs</depend>
   <depend>rospy</depend>
