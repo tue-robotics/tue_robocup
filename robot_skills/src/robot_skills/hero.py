@@ -111,10 +111,3 @@ class Hero(robot.Robot):
             arm.send_joint_goal('arm_out_of_way', 0.0)
             self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
-
-
-if __name__ == "__main__":
-    rospy.init_node("hero")
-
-    import doctest
-    doctest.testmod()
