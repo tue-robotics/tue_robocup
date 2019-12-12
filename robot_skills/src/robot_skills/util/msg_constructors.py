@@ -61,7 +61,7 @@ def Quaternion(x=0, y=0, z=0, w=0, roll=0, pitch=0, yaw=0):
 def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
     """
     >>> pose = Pose(yaw=0.5)
-    >>> pose
+    >>> pose  # doctest: +NORMALIZE_WHITESPACE
     position:
       x: 0
       y: 0
