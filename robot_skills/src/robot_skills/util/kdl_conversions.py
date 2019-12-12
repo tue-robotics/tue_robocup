@@ -268,6 +268,7 @@ def kdl_vector_stamped_to_point_stamped(vector_stamped):
                         vector_stamped.vector.z())
     return ps
 
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
