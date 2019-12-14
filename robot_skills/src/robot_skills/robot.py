@@ -407,10 +407,3 @@ def _collect_available(values, test_func):
         if test_func(value):
             founds.add(value)
     return founds
-
-
-if __name__ == "__main__":
-    rospy.init_node("robot")
-
-    import doctest
-    doctest.testmod()

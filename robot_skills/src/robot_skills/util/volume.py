@@ -279,5 +279,4 @@ def volumes_from_entity_volumes_msg(msg):
 
 if __name__ == "__main__":
     import doctest
-
     doctest.testmod()

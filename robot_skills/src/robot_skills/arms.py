@@ -324,12 +324,12 @@ class Arm(RobotPart):
     Use left or right to get arm while running from the python console
 
     Examples:
-    >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)
+    >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)  # doctest: +SKIP
     or Equivalently:
-    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')
+    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')  # doctest: +SKIP
 
     #To open left gripper
-    >>> left.send_gripper_goal_open(10)
+    >>> left.send_gripper_goal_open(10)  # doctest: +SKIP
     """
     def __init__(self, robot_name, tf_listener, get_joint_states, side):
         """
