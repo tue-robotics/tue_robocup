@@ -1,4 +1,3 @@
-import sys
 import rospy
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
@@ -122,29 +121,29 @@ class IntroduceGuest(smach.StateMachine):
 
 
 if __name__ == "__main__":
+    import sys
     from robot_skills import get_robot
 
-    if len(sys.argv) > 3:
-        robot_name = sys.argv[1]
-        room = sys.argv[2]
-        seats_to_inspect = sys.argv[3:]
+    if len(sys.argv) < 3:
+        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable")
+        sys.exit(1)
 
-        rospy.init_node('test_find_emtpy_seat')
-        robot = get_robot(robot_name)
+    robot_name = sys.argv[1]
+    room = sys.argv[2]
+    seats_to_inspect = sys.argv[3:]
 
-        guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
-        guest_name_des = ds.VariableDesignator('dummy_guest', name='guest_name')
-        guest_drinkname_des = ds.VariableDesignator('dummy_drink', name='guest_drinkname')
+    rospy.init_node('test_find_emtpy_seat')
+    robot = get_robot(robot_name)
 
-        sm = IntroduceGuest(robot,
-                            guest_entity_des,
-                            guest_name_des,
-                            guest_drinkname_des)
+    guest_entity_des = ds.VariableDesignator(resolve_type=Entity, name='guest_entity')
+    guest_name_des = ds.VariableDesignator('dummy_guest', name='guest_name')
+    guest_drinkname_des = ds.VariableDesignator('dummy_drink', name='guest_drinkname')
 
-        sm.execute()
+    sm = IntroduceGuest(robot,
+                        guest_entity_des,
+                        guest_name_des,
+                        guest_drinkname_des)
 
-        rospy.loginfo("Guest is {}".format(guest_entity_des.resolve()))
-    else:
-        print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
-        exit(1)
+    sm.execute()
 
+    rospy.loginfo("Guest is {}".format(guest_entity_des.resolve()))
