@@ -1,10 +1,12 @@
-#ROS
 import rospy
 import argparse
 
 # Robot Smach States
 from robot_smach_states.util.designators.utility import AttrDesignator
 from robot_smach_states.util.designators.core import Designator
+
+from collections import namedtuple
+
 
 if __name__ == "__main__":
 
@@ -26,7 +28,7 @@ if __name__ == "__main__":
     rospy.loginfo(wrapped2.resolve())
 
     # Example 3 from docstrings
-    from collections import namedtuple
+
     A = namedtuple("A", ['foo'])
     B = namedtuple("B", ['bar'])
     a = A(foo=B(bar='banana'))

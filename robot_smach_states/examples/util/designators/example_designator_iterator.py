@@ -1,4 +1,4 @@
-from __future__ import print_function
+import rospy
 
 from robot_smach_states.designator_iterator import IterateDesignator
 import robot_smach_states.util.designators as ds
@@ -12,5 +12,5 @@ if __name__ == "__main__":
     iterator = IterateDesignator(collection_des, element_des.writeable)
 
     for i in range(8):
-        print("iterator.execute() \n {}".format(iterator.execute()))
-        print("element_des.resolve() \n {} \n".format(element_des.resolve()))
+        rospy.loginfo("iterator.execute() \n {}".format(iterator.execute()))
+        rospy.loginfo("element_des.resolve() \n {} \n".format(element_des.resolve()))
