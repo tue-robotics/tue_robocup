@@ -178,7 +178,7 @@ class CheckEmpty(smach.State):
     """
     Check whether a volume of an entity is filled
     """
-    def __init__(self, segmented_entity_ids_designator, entity_designator, volume, threshold=None):
+    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold=None):
         """ Constructor
         :param segmented_entity_ids_designator: designator containing the segmented objects
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
@@ -187,6 +187,7 @@ class CheckEmpty(smach.State):
             (None means any entities filling the volume will result in 'occupied')
         """
         smach.State.__init__(self, outcomes=["occupied", "partially_occupied", "empty"])
+        self.robot = robot
         self.seen_entities_des = segmented_entity_ids_designator
         self.entity_des = entity_designator
         self.volume = volume
@@ -198,7 +199,8 @@ class CheckEmpty(smach.State):
         if seen_entities:
             if self.threshold:
                 vol = entity.volumes[self.volume]  # type: Volume
-                occupied_space = sum(seen_entity.size for seen_entity in seen_entities)
+                entities = [self.robot.ed.get_entity(id=seen_entity.id) for seen_entity in seen_entities]
+                occupied_space = sum(entity.shape.size() for entity in entities)
                 remaining_space = vol.size - occupied_space
                 rospy.loginfo('Occupied space is {}, remaining space is {}'.format(occupied_space, remaining_space))
                 if remaining_space > self.threshold:
@@ -275,7 +277,7 @@ class CheckVolumeEmpty(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add('CHECK',
-                                   CheckEmpty(seen_entities_des, entity_des, volume, volume_threshold),
+                                   CheckEmpty(robot, seen_entities_des, entity_des, volume, volume_threshold),
                                    transitions={'empty': 'empty',
                                                 'partially_occupied': 'partially_occupied',
                                                 'occupied': 'occupied'})
