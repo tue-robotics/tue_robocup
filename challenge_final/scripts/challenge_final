@@ -1,0 +1,16 @@
+#!/usr/bin/python
+
+# System
+import rospy
+
+# TU/e Robotics
+from robot_smach_states.util.startup import startup
+
+# Challenge where is this
+from challenge_final import Final
+
+
+if __name__ == '__main__':
+    rospy.init_node('state_machine_rwc2019')
+
+    startup(Final)
