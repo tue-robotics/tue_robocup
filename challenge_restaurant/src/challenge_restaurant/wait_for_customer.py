@@ -177,7 +177,7 @@ class AskTakeTheOrder(smach.State):
 
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         cgrammar = """
         C['yes'] -> {robot} take the order
         C['wait'] -> {robot} wait
