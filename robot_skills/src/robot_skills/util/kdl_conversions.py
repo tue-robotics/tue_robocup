@@ -40,7 +40,7 @@ class FrameStamped(object):
         :returns VectorStamped
         >>> fs = FrameStamped(kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3)), "/map")
         >>> fs.extractVectorStamped()
-        [           1,           2,           3] @ /map
+        VectorStamped([           1,           2,           3] @ /map)
         """
         return deepcopy(VectorStamped(frame_id=self.frame_id, vector=self.frame.p))
 
@@ -267,6 +267,7 @@ def kdl_vector_stamped_to_point_stamped(vector_stamped):
                         vector_stamped.vector.y(),
                         vector_stamped.vector.z())
     return ps
+
 
 if __name__ == "__main__":
     import doctest

@@ -307,10 +307,10 @@ class Mockbot(robot.Robot):
     which wont be needed
 
     # I want a blind and mute Mockbot!
-    >>> Mockbot(['perception', 'speech'])
+    >>> Mockbot(['perception', 'speech'])  # doctest: +SKIP
 
     # I want a full fledged, awesome Mockbot
-    >>> Mockbot()
+    >>> Mockbot()  # doctest: +SKIP
     """
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"

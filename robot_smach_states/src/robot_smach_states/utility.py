@@ -307,6 +307,49 @@ class UnlockDesignator(smach.State):
         return 'unlocked'
 
 
+class CheckBool(smach.State):
+    """
+    Provide a different transition based on a boolean designator.
+    """
+    def __init__(self, check_designator):
+        """
+        :param check_designator: designator resolving to True or False
+        """
+        super(CheckBool, self).__init__(outcomes=["true", "false"])
+        ds.check_type(check_designator, bool)
+        self._check_designator = check_designator
+
+    def execute(self, userdata=None):
+        val = self._check_designator.resolve() if hasattr(self._check_designator, "resolve") else self._check_designator
+        if val:
+            return "true"
+        else:
+            return "false"
+
+
+class ToggleBool(smach.State):
+    """
+    Toggle a boolean designator from True to False and from False to True
+    """
+    def __init__(self, check_designator):
+        """
+        :param check_designator: boolean designator to be toggled
+        """
+        super(ToggleBool, self).__init__(outcomes=["done"])
+        ds.is_writeable(check_designator)
+        ds.check_type(check_designator, bool)
+        self._check_designator = check_designator
+
+    def execute(self, userdata=None):
+        val = self._check_designator.resolve()
+        if val:
+            self._check_designator.write(False)
+        else:
+            self._check_designator.write(True)
+
+        return "done"
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

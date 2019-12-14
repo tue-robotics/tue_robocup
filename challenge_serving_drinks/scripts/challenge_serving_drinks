@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+
+import rospy
+from robot_smach_states.util.startup import startup
+from challenge_serving_drinks import ServingDrinks
+
+
+if __name__ == '__main__':
+    rospy.init_node('challenge_serving_drink')
+
+    startup(ServingDrinks)
