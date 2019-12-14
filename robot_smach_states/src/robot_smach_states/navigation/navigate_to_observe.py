@@ -14,12 +14,13 @@ class NavigateToObserve(NavigateTo):
     to the convex hull is used. Otherwise, the distance to the pose of the entity is used
 
     """
-    def __init__(self, robot, entity_designator, radius=0.7):
+    def __init__(self, robot, entity_designator, radius=0.7, margin=0.075):
         """
 
         :param robot: (Robot) object
         :param entity_designator: EdEntityDesignator for the object to observe
-        :param radius: (float) desired distance to the pose of the entity
+        :param radius: (float) desired distance to the pose of the entity [m]
+        :param margin: (float) allowed margin w.r.t. specified radius on both sides [m]
         """
         super(NavigateToObserve, self).__init__(robot)
 
@@ -27,12 +28,13 @@ class NavigateToObserve(NavigateTo):
         check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
         self.radius = radius
+        self.margin = margin
 
     def generateConstraint(self):
         e = self.entity_designator.resolve()
 
         if not e:
-            rospy.logerr("No such entity")
+            rospy.logerr("No entity from {}".format(self.entity_designator))
             return None
 
         rospy.logdebug("Navigating to grasp entity '{}'".format(e.id))
@@ -71,8 +73,11 @@ class NavigateToObserve(NavigateTo):
                 pci = pci + "-(x-%f)*%f+(y-%f)*%f > 0.0 " % (xs, dy, ys, dx)
 
         else:  # If not, simply use the x and y position
-            ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, self.radius+0.075)
-            ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, self.radius-0.075)
+            outer_radius = max(0., self.radius + self.margin)
+            inner_radius = max(0., self.radius - self.margin)
+
+            ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, outer_radius)
+            ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, inner_radius)
             pci = ri+" and "+ro
 
         pc = PositionConstraint(constraint=pci, frame="/map")  # Create the position constraint from the string

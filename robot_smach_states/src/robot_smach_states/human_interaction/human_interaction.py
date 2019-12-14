@@ -1,9 +1,8 @@
-#! /usr/bin/env python
-
 # System
 import math
 import random
 import time
+from string import Formatter
 
 # ROS
 import rospy
@@ -14,40 +13,106 @@ from hmi import TimeoutException
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 
-# Say: Immediate say
+# Say: Immediate Say with optional named placeholders for designators
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
-
-########################################################################################################################
+from robot_skills.robot import Robot
 
 
 class Say(smach.State):
-    """Say a sentence or pick a random one from a list.
+    """
+    Say a sentence or pick a random one from a list, which then is formatted with designators which are resolved on
+    runtime. The main sentence can be a str, [str] or a Designator to str or [str]
 
-    >>> from mock import MagicMock
-    >>> robot = MagicMock()
-    >>> robot.speech = MagicMock()
-    >>> robot.speech.speak = MagicMock()
+    >>> from robot_skills.mockbot import Mockbot
+    >>> robot = Mockbot()
     >>>
-    >>> sf = Say(robot, ["a", "b", "c"])
+    >>> say = Say(robot, ["a", "b", "c"])
+    >>> say.execute()
+    'spoken'
+    >>>
+    >>> say1 = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
-    >>> outcomes = [sf.execute() for i in range(50)]
-    >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>> outcomes1 = [say.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes1)
     >>>
-    >>> #After many calls, all options in the list will very likely have been called at least one.
-    >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
+    >>> say2.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
+    >>>
+    >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"], resolve_type=[str])
+    >>> say3 = Say(robot, des, a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes3 = [say3.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes3)
+    >>>
+    >>> des2 = ds.VariableDesignator(["Hey", "He", "Hoi"])
+    >>> say4 = Say(robot, des2, a=ds.VariableDesignator("hero"))
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes4 = [say4.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes4)
+    >>>
+    >>> say5 = Say(robot, des2)
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes5 = [say5.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes5)
+    >>>
+    >>> say6 = Say(robot, des, b=ds.VariableDesignator("hero"))
+    >>> say6.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    RuntimeError: ...
+    >>>
+    >>> des3 = ds.VariableDesignator(resolve_type=str).writeable
+    >>> des3.write('banana')
+    >>> say6 = Say(robot, des3)
+    >>> say6.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_called_with('banana', None, None, None, None, True)
+    """
 
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True,
-                 look_at_standing_person=False):
+                 look_at_standing_person=False, **place_holders):
+        """
+        Constructor
+
+        :param robot: robot object
+        :type robot: Robot
+        :param sentence: Sentence to be spoken, can contain place holders to  be filled in at runtime
+        :type sentence: str, [str], designator to str or [str]
+        :param language: Language of speech module
+        :type language: str
+        :param personality: Personality of speech module
+        :type personality: str
+        :param voice: Voice of speech module
+        :type voice: str
+        :param mood: Mood of speech module
+        :type mood: str
+        :param block: Wait for talking to be completed before returning, if true
+        :type block: bool
+        :param look_at_standing_person: Look at standing person if true, otherwise keep current head pose
+        :type look_at_standing_person: bool
+        :param place_holders: place holders to be filled in at runtime
+        :type place_holders: designator to str
+        :return: spoken
+        :rtype: str
+        """
         smach.State.__init__(self, outcomes=["spoken"])
-        ds.check_type(sentence, str, list)
-        # ds.check_type(language, str)
-        # ds.check_type(personality, str)
-        # ds.check_type(voice, str)
-        # ds.check_type(mood, str)
-        ds.check_type(block, bool)
+
+        ds.check_type(sentence, [str], str)
+        assert(isinstance(language, str) or isinstance(language, type(None)))
+        assert(isinstance(personality, str) or isinstance(personality, type(None)))
+        assert(isinstance(voice, str) or isinstance(voice, type(None)))
+        assert(isinstance(mood, str) or isinstance(mood, type(None)))
+        assert(isinstance(block, bool))
+
+        assert(all(isinstance(v, ds.Designator) for v in place_holders.values()))
+
+        self.ph_designators = place_holders
+
+        if isinstance(sentence, str) or isinstance(sentence, list):
+            self._check_place_holders(sentence)
 
         self.robot = robot
         self.sentence = sentence
@@ -59,38 +124,60 @@ class Say(smach.State):
         self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
-        # robot.head.look_at_standing_person()
-
         if not self.sentence:
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
-            self.sentence = random.choice(self.sentence)
+        if hasattr(self.sentence, "resolve"):
+            sentence = self.sentence.resolve()
+            self._check_place_holders(sentence)
+        else:
+            sentence = self.sentence
 
-        sentence = str(self.sentence.resolve() if hasattr(self.sentence, "resolve") else self.sentence)
+        if not isinstance(sentence, str) and isinstance(sentence, list):
+            sentence = random.choice(sentence)
+
+        resolved_ph = {k: v.resolve() for k, v in self.ph_designators.items()}
+        sentence = sentence.format(**resolved_ph)
 
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
-        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
-
-        # robot.head.cancel_goal()
-        # ToDo: hack
-        rospy.sleep(len(sentence)*0.05)
+        self.robot.speech.speak(str(sentence), self.language, self.personality, self.voice, self.mood, self.block)
 
         return "spoken"
 
+    def _check_place_holders(self, sentence):
+        if isinstance(sentence, list):
+            for sen in sentence:
+                self._check_place_holders(sen)
+            return
+
+        place_holders = set(x[1] for x in Formatter().parse(sentence) if x[1] is not None)
+        missing_ph = place_holders - set(self.ph_designators.keys())
+        if missing_ph:
+            raise RuntimeError("Not all named place holders are provided, missing: {}".
+                               format(", ".join(map(str, missing_ph))))
+
 
 class HearOptions(smach.State):
-    """Hear one of the options
     """
+    Hear one of the options
+    """
+    def __init__(self, robot, options, timeout=10, look_at_standing_person=True):
+        # type:(Robot, list, (float, int), bool) -> None
+        """
 
-    def __init__(self, robot, options, timeout=rospy.Duration(10), look_at_standing_person=True):
+        :param robot: (Robot) robot api object
+        :param options: List of strings with the options the robot can hear
+        :param timeout: (float, int) indicating when the robot has to timeout
+        :param look_at_standing_person: bool indicating whether the robot should look at the person giving the command
+        """
         outcomes = list(options)  # make a copy
         outcomes.append("no_result")
         smach.State.__init__(self, outcomes=outcomes)
         self._options = options
         self._robot = robot
+        assert(isinstance(timeout, (float, int)))
         self._timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
@@ -100,14 +187,9 @@ class HearOptions(smach.State):
 
         try:
             answer = self._robot.hmi.query('Which option?', 'T -> ' + ' | '.join(self._options), 'T',
-                                           timeout=self._timeout.to_sec())
+                                           timeout=self._timeout)
         except TimeoutException:
-           # self._robot.speech.speak("Something is wrong with my ears, please take a look!")
             return 'no_result'
-        # except Exception as e:
-        #     rospy.logfatal(
-        #         e.message)  # This should be a temp addition. If this exception is thrown that means that there is a bug to be fixed
-        #     return 'no_result'  # for now this exception is thrown for Hero since speech recognition (meaning his Ears) is not even launched, we don't want it to crash on this
 
         if self.look_at_standing_person:
             self._robot.head.cancel_goal()
@@ -119,7 +201,8 @@ class HearOptions(smach.State):
 
 
 class HearOptionsExtra(smach.State):
-    """Listen to what the user said, based on a pre-constructed sentence
+    """
+    Listen to what the user said, based on a pre-constructed sentence
 
     Keyword arguments:
     spec_designator -- sentence that is supposed to be heard
@@ -156,7 +239,7 @@ class HearOptionsExtra(smach.State):
     def __init__(self, robot,
                  spec_designator,
                  speech_result_designator,
-                 time_out=rospy.Duration(10),
+                 timeout=10,
                  look_at_standing_person=True):
         smach.State.__init__(self, outcomes=["heard", "no_result"])
 
@@ -168,7 +251,7 @@ class HearOptionsExtra(smach.State):
 
         self.spec_designator = spec_designator
         self.speech_result_designator = speech_result_designator
-        self.time_out = time_out
+        self.timeout = timeout
         self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
@@ -182,8 +265,8 @@ class HearOptionsExtra(smach.State):
             self.robot.head.look_at_standing_person()
 
         try:
-            answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configable
-                                          timeout=self.time_out.to_sec())
+            answer = self.robot.hmi.query('Which option?', spec, 'T',  # TODO: T needs to also be configurable
+                                          timeout=self.timeout)
 
             if self.look_at_standing_person:
                 self.robot.head.cancel_goal()
@@ -199,37 +282,39 @@ class HearOptionsExtra(smach.State):
 
         return "no_result"
 
-########################################################################################################################
-
 
 class AskContinue(smach.StateMachine):
-    def __init__(self, robot, timeout=rospy.Duration(10)):
+    def __init__(self, robot, timeout=10):
         smach.StateMachine.__init__(self, outcomes=['continue', 'no_response'])
-        self.robot = robot
-        self.timeout = timeout
 
         with self:
             smach.StateMachine.add('SAY',
-                                   Say(self.robot,
+                                   Say(robot,
                                        random.choice(["I will continue my task if you say continue.",
                                                       "Please say continue so that I can continue my task.",
                                                       "I will wait until you say continue."])),
                                    transitions={'spoken': 'HEAR'})
 
             smach.StateMachine.add('HEAR',
-                                   HearOptions(self.robot, ['continue'], self.timeout),
+                                   HearOptions(robot, ['continue'], timeout),
                                    transitions={'continue': 'continue',
                                                 'no_result': 'no_response'})
 
-########################################################################################################################
+
+class AskYesNo(HearOptions):
+    def __init__(self, robot, timeout=10):
+        HearOptions.__init__(self, robot, ['yes', 'no'], timeout)
 
 
 class WaitForPersonInFront(smach.State):
-    """
-    Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
-    """
+    def __init__(self, robot, attempts=1, sleep_interval=1.0):
+        """
+        Waits for a person to be found in front of the robot. Attempts to wait a number of times with a sleep interval
 
-    def __init__(self, robot, attempts=1, sleep_interval=1):
+        :param robot: (Robot) robot api object
+        :param attempts: (int) number of attempts the robot will take
+        :param sleep_interval: (float) time the robot waits between checking for an operator
+        """
         smach.State.__init__(self, outcomes=["success", "failed"])
         self.robot = robot
         self.attempts = attempts
@@ -242,11 +327,13 @@ class WaitForPersonInFront(smach.State):
             image_data = self.robot.perception.get_rgb_depth_caminfo()
             success, found_people_ids = self.robot.ed.detect_people(*image_data)
             if any(found_people_ids):
+                rospy.loginfo("There are {} people in front of me (1 is enough): {}".format(
+                    len(found_people_ids),
+                    found_people_ids)
+                )
                 return 'success'
-            rospy.sleep(rospy.Duration(self.sleep_interval))
+            rospy.sleep(self.sleep_interval)
         return 'failed'
-
-########################################################################################################################
 
 
 class LearnPerson(smach.State):
@@ -304,103 +391,6 @@ class LearnPerson(smach.State):
         return "failed"
 
 
-########################################################################################################################
-
-
-class WaitForPersonEntity(smach.State):
-    """
-        Wait until a person is seen/scanned in front of the robot.
-            Use paramaterers to costumize number of retries and sleep between retries
-    """
-
-    def __init__(self, robot, attempts=1, sleep_interval=1):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.robot = robot
-        self.attempts = attempts
-        self.sleep_interval = sleep_interval
-
-    def execute(self, userdata=None):
-        counter = 0
-        detected_humans = None
-
-        while counter < self.attempts:
-            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
-
-            detected_humans = detect_human_in_front(self.robot)
-            if detected_humans:
-                print "[WaitForPerson] " + "Found a human!"
-                return 'succeeded'
-
-            counter += 1
-            rospy.sleep(self.sleep_interval)
-
-        return 'failed'
-
-########################################################################################################################
-
-
-class WaitForPersonDetection(smach.State):
-    """
-        Wait until a person is seen/scanned in front of the robot.
-            Use paramaterers to costumize number of retries and sleep between retries
-    """
-
-    def __init__(self, robot, attempts=1, sleep_interval=1):
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
-        self.robot = robot
-        self.attempts = attempts
-        self.sleep_interval = sleep_interval
-
-    def execute(self, userdata=None):
-        counter = 0
-        desgnResult = None
-
-        while counter < self.attempts:
-            print("WaitForPerson: waiting {0}/{1}".format(counter, self.attempts))
-
-            rospy.logerr(
-                "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-            rospy.logerr("I will return an empty detection list!")
-            detections = []
-            if detections:
-                print("[WaitForPersonDetection] " + "Found a human!")
-                return 'succeeded'
-
-            counter += 1
-            rospy.sleep(self.sleep_interval)
-
-        return 'failed'
-
-########################################################################################################################
-
-
-def detect_human_in_front(robot):
-    """
-        Scan for humans in the robots field of view. Return person detections if any
-    """
-
-    rospy.logerr(
-        "ed.detect _persons() method disappeared! This was only calling the face recognition module and we are using a new one now!")
-    rospy.logerr("I will return an empty detection list!")
-    detections = []
-
-    if not result:
-        return False
-
-    for detection in result:
-        pose_base_link = detection.pose.projectToFrame(robot.robot_name + '/base_link', robot.tf_listener)
-
-        x = pose_base_link.pose.frame.p.x()
-        y = pose_base_link.pose.frame.p.y()
-
-        print("Detection (x,y) in base link: (%f,%f)" % (x, y))
-
-        if 0.0 < x < 1.5 and -1.0 < y < 1.0:
-            return True
-
-########################################################################################################################
-
-
 def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
     """
     Starts the learning process that will save n_samples of the closest person's face.
@@ -430,21 +420,18 @@ def learn_person_procedure(robot, person_name="", n_samples=5, timeout=5.0):
             if count == math.ceil(n_samples / 2):
                 robot.speech.speak("Almost done, keep looking.", block=False)
         else:
-            print ("[LearnPersonProcedure] " + "No person found.")
+            rospy.loginfo ("[LearnPersonProcedure] " + "No person found.")
             elapsed_time = time.time() - start_time
             if elapsed_time > timeout:
-                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                rospy.loginfo ("[LearnPersonProcedure] " + "Learn procedure timed out!")
                 return count
 
-        print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
+        rospy.loginfo("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
 
-    print ("[LearnPersonProcedure] " + "Learn procedure completed!")
+    rospy.loginfo("[LearnPersonProcedure] " + "Learn procedure completed!")
 
-    # print robot.ed.classify_person(human_id)
     return count
 
-
-########################################################################################################################
 
 class AskPersonName(smach.State):
     """
