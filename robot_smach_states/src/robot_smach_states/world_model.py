@@ -246,7 +246,7 @@ class CheckEmpty(smach.State):
             if self.threshold:
                 vol = entity.volumes[self.volume]  # type: Volume
                 entities = [self.robot.ed.get_entity(id=seen_entity.id) for seen_entity in seen_entities]
-                occupied_space = sum(entity.shape.size() for entity in entities)
+                occupied_space = sum(entity.shape.size for entity in entities)
                 remaining_space = vol.size - occupied_space
                 rospy.loginfo('Occupied space is {}, remaining space is {}'.format(occupied_space, remaining_space))
                 if remaining_space > self.threshold:
