@@ -1,10 +1,10 @@
 import os
 import rospy
-import sys
+import argparse
 import std_srvs.srv
 import robot_smach_states.util.designators as ds
 
-from robot_skills.get_robot import get_robot_from_argv
+from robot_skills.get_robot import get_robot
 from robot_smach_states.navigation import guidance
 
 OPERATOR_AVAILABLE = True
@@ -24,13 +24,15 @@ def toggle_operator(_):
 
 if __name__ == "__main__":
 
-    assert len(sys.argv) == 3, "Please provide the robot name and the entity id of the object to guide to," \
-                               "e.g., 'python guidance.py amigo bed'"
+    parser = argparse.ArgumentParser(description="Test the guidance state")
+    parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
+    parser.add_argument("entity", help="Entity name of the object to guide to, for example dinner_table")
+    args = parser.parse_args()
 
     # Create node, robot and toggle interface
     rospy.init_node("test_guidance")
-    r = get_robot_from_argv(1)
-    e_id = sys.argv[2]
+    r = get_robot(args.robot)
+    e_id = args.entity
 
     # Instantiate GuideToSymbolic machine
     s = guidance.GuideToSymbolic(r,

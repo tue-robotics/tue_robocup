@@ -3,13 +3,17 @@
 from __future__ import print_function
 
 import rospy
+import argparse
 import robot_smach_states.util.designators as ds
-from robot_skills import get_robot_from_argv
+from robot_skills import get_robot
 
 if __name__ == "__main__":
     rospy.init_node("testdesignator")
+    parser = argparse.ArgumentParser(description="Test the empty spot designator")
+    parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
+    args = parser.parse_args()
 
-    robot = get_robot_from_argv(index=1)
+    robot = get_robot(args.robot)
 
     furniture_designator = ds.EdEntityDesignator(robot, id="dinner_table")
 

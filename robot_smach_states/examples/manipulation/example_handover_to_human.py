@@ -1,9 +1,9 @@
 # ROS
 import rospy
-import sys
+import argparse
 
 # TU/e Robotics
-from robot_skills.get_robot import get_robot_from_argv
+from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
@@ -12,12 +12,12 @@ from robot_smach_states import LockDesignator
 
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 2, "Please provide the robot name" \
-                               "e.g., 'python example_handover_to_human.py hero'"
+    parser = argparse.ArgumentParser(description="Test handover to human state")
+    parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
+    args = parser.parse_args()
 
     rospy.init_node("test_handover_stuff")
-
-    robot = get_robot_from_argv(index=1)
+    robot = get_robot(args.robot)
 
     rospy.loginfo("Creating arm designator")
     arm_designator = ds.UnoccupiedArmDesignator(robot=robot,
