@@ -311,7 +311,13 @@ class UnlockDesignator(smach.State):
 
 
 class CheckBool(smach.State):
+    """
+    Provide a different transition based on a boolean designator.
+    """
     def __init__(self, check_designator):
+        """
+        :param check_designator: designator resolving to True or False
+        """
         super(CheckBool, self).__init__(outcomes=["true", "false"])
         ds.check_type(check_designator, bool)
         self._check_designator = check_designator
@@ -325,7 +331,13 @@ class CheckBool(smach.State):
 
 
 class ToggleBool(smach.State):
+    """
+    Toggle a boolean designator from True to False and from False to True
+    """
     def __init__(self, check_designator):
+        """
+        :param check_designator: boolean designator to be toggled
+        """
         super(ToggleBool, self).__init__(outcomes=["done"])
         ds.is_writeable(check_designator)
         ds.check_type(check_designator, bool)
