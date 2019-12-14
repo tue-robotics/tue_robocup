@@ -24,7 +24,7 @@ from robot_skills.util.decorators import deprecated
 from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from robot_skills.robot_part import RobotPart
+from robot_skills.core.robot_part import RobotPart
 
 
 class Navigation(RobotPart):

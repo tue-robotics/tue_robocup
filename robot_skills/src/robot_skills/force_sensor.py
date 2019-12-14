@@ -5,7 +5,7 @@ from geometry_msgs.msg import WrenchStamped
 from util.exceptions import TimeOutException
 
 # TU/e Robotics
-from robot_skills.robot_part import RobotPart
+from robot_skills.core.robot_part import RobotPart
 
 
 class ForceSensor(RobotPart):

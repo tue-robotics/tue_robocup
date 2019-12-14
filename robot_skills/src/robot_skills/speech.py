@@ -2,7 +2,7 @@
 import rospy
 
 # TU/e Robotics
-from robot_skills.robot_part import RobotPart
+from robot_skills.core.robot_part import RobotPart
 from text_to_speech.srv import Speak, SpeakRequest
 
 

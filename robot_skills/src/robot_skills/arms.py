@@ -16,7 +16,7 @@ from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
-from robot_skills.robot_part import RobotPart
+from robot_skills.core.robot_part import RobotPart
 
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
