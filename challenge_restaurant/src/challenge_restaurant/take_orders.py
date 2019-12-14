@@ -161,27 +161,27 @@ if __name__ == '__main__':
     from robot_skills import get_robot
     from geometry_msgs.msg import Pose
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-
-        rospy.init_node('test_take_orders')
-        _robot = get_robot(robot_name)
-
-
-        pose = Pose()
-        pose.position.x = 1.0
-        pose.position.y = 1.0
-        pose.position.z = 1.6
-        customer_entity = Entity('random_id', 'person',
-                                 '/map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
-                                 'dummy', # Only pose and frame_id are used
-                                 'shape', 'volumes', 'super_types', 'last_update_time')
-        customer_entity.pose = pose  # This takes care of the conversion to KDL for us
-        orders = []
-        sm = TakeOrder(_robot, ds.Designator(customer_entity), orders=orders)
-        sm.execute()
-
-        rospy.loginfo("Orders {}".format(orders))
-    else:
+    if len(sys.argv) < 2:
         print("Please provide robot name as argument.")
-        exit(1)
+        sys.exit(1)
+    
+    robot_name = sys.argv[1]
+
+    rospy.init_node('test_take_orders')
+    robot = get_robot(robot_name)
+
+    pose = Pose()
+    pose.position.x = 1.0
+    pose.position.y = 1.0
+    pose.position.z = 1.6
+    customer_entity = Entity('random_id', 'person',
+                             '/map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
+                             'dummy', # Only pose and frame_id are used
+                             'shape', 'volumes', 'super_types', 'last_update_time')
+    customer_entity.pose = pose  # This takes care of the conversion to KDL for us
+    orders = []
+    sm = TakeOrder(robot, ds.Designator(customer_entity), orders=orders)
+    sm.execute()
+
+    rospy.loginfo("Orders {}".format(orders))
+  
