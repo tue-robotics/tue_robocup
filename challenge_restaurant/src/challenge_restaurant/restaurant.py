@@ -1,12 +1,13 @@
 #!/usr/bin/python
 import math
-
+import numpy as np
 import robot_smach_states as states
 import smach
 
 from store_waypoint import StoreWaypoint
 from take_orders import TakeOrder, ReciteOrders, ClearOrders
-from wait_for_customer import WaitForCustomer, AskTakeTheOrder
+from wait_for_customer import AskTakeTheOrder
+from robot_skills.util.entity import Entity
 
 
 class Restaurant(smach.StateMachine):
@@ -26,30 +27,57 @@ class Restaurant(smach.StateMachine):
         kitchen_id = "kitchen"
         kitchen_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
                                                                                        id=kitchen_id)
-
-        caller_id = "customer"
-        caller_designator = states.util.designators.ed_designators.EdEntityDesignator(robot=robot,
-                                                                                      id=caller_id)
-
-        orders = {}
+        customer_id = 'current_customer'
+        customer_designator = states.util.designators.VariableDesignator(resolve_type=Entity, name=customer_id)
+        orders = []
 
         with self:
             smach.StateMachine.add('INITIALIZE',
                                    states.Initialize(robot),
-                                   transitions={'initialized': 'STORE_KITCHEN',
+                                   transitions={'initialized': 'SAY_WAVING',
                                                 'abort': 'STOP'})
+
+            smach.StateMachine.add('SAY_WAVING', states.Say(robot, "Mr. Barman, please make sure that the people wave "
+                                                                   "slowly and put their arm up high. Like is shown "
+                                                                   "on my screen", block=True),
+                                   transitions={'spoken': 'SHOW_IMAGE'})
+
+            smach.StateMachine.add('SHOW_IMAGE', states.ShowImageState(robot,
+                                                                       "~/ros/kinetic/system/src/challenge_restaurant/"
+                                                                       "images/waving.jpg", seconds=10),
+                                   transitions={'succeeded': 'STORE_KITCHEN',
+                                                'failed': 'STORE_KITCHEN'})
 
             smach.StateMachine.add('STORE_KITCHEN',
                                    StoreWaypoint(robot=robot, location_id=kitchen_id),
                                    transitions={'done': 'WAIT_FOR_CUSTOMER'})
 
+            # smach.StateMachine.add('WAIT_FOR_CUSTOMER',
+            #                        WaitForCustomer(robot, caller_id, kitchen_designator),
+            #                        transitions={'succeeded': 'SAY_I_HAVE_SEEN',
+            #                                     'aborted': 'STOP'})
+            # Implement new find state to detect nearest waving person
             smach.StateMachine.add('WAIT_FOR_CUSTOMER',
-                                   WaitForCustomer(robot, caller_id, kitchen_designator),
-                                   transitions={'succeeded': 'SAY_I_HAVE_SEEN',
-                                                'aborted': 'STOP'})
+                                   states.FindFirstPerson(robot, customer_designator.writeable,
+                                                          properties={'tags': ['LWave', 'RWave']},
+                                                          strict=False, nearest=True,
+                                                          speak=True,
+                                                          look_range=(-np.pi/4, np.pi/4),
+                                                          look_steps=4,
+                                                          search_timeout=600),  # 10 minutes
+                                   transitions={'found': 'SAY_I_HAVE_SEEN',
+                                                'failed': 'WAIT_FOR_CUSTOMER'})
 
+            # No Asking
+            # smach.StateMachine.add('SAY_I_HAVE_SEEN',
+            #                        states.Say(robot, 'I have seen a waving person, I will take the order, I will be there shortly! Coming your way my amigo!'),
+            #                        transitions={"spoken": 'NAVIGATE_TO_CUSTOMER'})
+            # End No Asking
+
+            # Asking for confirmation
             smach.StateMachine.add('SAY_I_HAVE_SEEN',
-                                   states.Say(robot, 'I have seen a waving person, should I continue?'),
+                                   states.Say(robot, 'I have seen a waving person, should I take the order? '
+                                                     'Please say "{0} take the order" or "{0} wait"'.format(robot.robot_name)),
                                    transitions={"spoken": 'WAIT_FOR_START'})
 
             smach.StateMachine.add('WAIT_FOR_START', AskTakeTheOrder(robot),
@@ -60,16 +88,17 @@ class Restaurant(smach.StateMachine):
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER',
                                    states.Say(robot, "I am at your service, I will be there shortly! Coming your way my amigo!", block=True),
                                    transitions={'spoken': 'NAVIGATE_TO_CUSTOMER'})
+            # End Asking for confirmation
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER',
-                                   states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
-                                                            radius=1.1),
+                                   states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
+                                                            radius=0.8),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
                                                 'goal_not_defined': 'WAIT_FOR_CUSTOMER'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_CUSTOMER_FALLBACK',
-                                   states.Say(robot, "Help, how do I get there?"),
+                                   states.Say(robot, "Help, lets try it another way"),
                                    transitions={'spoken': 'TURN_AROUND'})
 
             smach.StateMachine.add('TURN_AROUND',
@@ -77,14 +106,14 @@ class Restaurant(smach.StateMachine):
                                    transitions={'turned': 'NAVIGATE_TO_CUSTOMER_FALLBACK'})
 
             smach.StateMachine.add('NAVIGATE_TO_CUSTOMER_FALLBACK',
-                                   states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                   states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
                                                             radius=1.1),
                                    transitions={'arrived': 'TAKE_ORDER',
                                                 'unreachable': 'RETURN_TO_START',
                                                 'goal_not_defined': 'RETURN_TO_START'})
 
             smach.StateMachine.add('TAKE_ORDER',
-                                   TakeOrder(robot=robot, location=caller_id, orders=orders),
+                                   TakeOrder(robot=robot, entity_designator=customer_designator, orders=orders),
                                    transitions={'succeeded': 'NAVIGATE_TO_KITCHEN',
                                                 'failed': 'RETURN_TO_START'})
 
@@ -96,7 +125,7 @@ class Restaurant(smach.StateMachine):
                                                 'goal_not_defined': 'SAY_NAVIGATE_TO_KITCHEN_FALLBACK'})
 
             smach.StateMachine.add('SAY_NAVIGATE_TO_KITCHEN_FALLBACK',
-                                   states.Say(robot, "Help, how do I get there?"),
+                                   states.Say(robot, "Help, how do I get there?", block=False),
                                    transitions={'spoken': 'TURN_AROUND_KITCHEN_FALLBACK'})
 
             smach.StateMachine.add('TURN_AROUND_KITCHEN_FALLBACK',
@@ -107,8 +136,8 @@ class Restaurant(smach.StateMachine):
                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=kitchen_designator,
                                                              radius=0.20),
                                    transitions={'arrived': 'RECITE_ORDER',
-                                                'unreachable': 'RECITE_ORDER',
-                                                'goal_not_defined': 'RECITE_ORDER'})
+                                                'unreachable': 'SAY_NAVIGATE_TO_KITCHEN_FALLBACK',
+                                                'goal_not_defined': 'SAY_NAVIGATE_TO_KITCHEN_FALLBACK'})
 
             smach.StateMachine.add('RECITE_ORDER',
                                    ReciteOrders(robot=robot, orders=orders),
@@ -119,17 +148,17 @@ class Restaurant(smach.StateMachine):
                                    transitions={'succeeded': 'SAY_CANNOT_GRASP'})
 
             smach.StateMachine.add('SAY_CANNOT_GRASP',
-                                   states.Say(robot, "I am unable to grasp my own order,"
+                                   states.Say(robot, "I am unable to grasp my own order, "
                                                      "could you please put it in my basket"),
                                    transitions={'spoken': 'WAIT_FOR_OBJECTS'})
 
             smach.StateMachine.add('WAIT_FOR_OBJECTS',
-                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   states.WaitTime(robot=robot, waittime=10.0),
                                    transitions={'waited': 'BRING_OBJECTS',
                                                 'preempted': 'STOP'})
 
             smach.StateMachine.add('BRING_OBJECTS',
-                                   states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                   states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
                                                             radius=1.1),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_BRING_OBJECTS_FALLBACK',
@@ -144,7 +173,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'turned': 'BRING_OBJECTS_FALLBACK'})
 
             smach.StateMachine.add('BRING_OBJECTS_FALLBACK',
-                                   states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                   states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
                                                             radius=1.1),
                                    transitions={'arrived': 'SAY_OBJECTS',
                                                 'unreachable': 'SAY_OBJECTS',
@@ -156,7 +185,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'WAIT_TO_TAKE_OBJECTS'})
 
             smach.StateMachine.add('WAIT_TO_TAKE_OBJECTS',
-                                   states.WaitTime(robot=robot, waittime=5.0),
+                                   states.WaitTime(robot=robot, waittime=10.0),
                                    transitions={'waited': 'RETURN_TO_START',
                                                 'preempted': 'STOP'})
 
@@ -175,7 +204,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'turned': 'RETURN_TO_START_FALLBACK'})
 
             smach.StateMachine.add('RETURN_TO_START_FALLBACK',
-                                   states.NavigateToObserve(robot=robot, entity_designator=caller_designator,
+                                   states.NavigateToObserve(robot=robot, entity_designator=customer_designator,
                                                             radius=0.7),
                                    transitions={'arrived': 'WAIT_FOR_CUSTOMER',
                                                 'unreachable': 'WAIT_FOR_CUSTOMER',
