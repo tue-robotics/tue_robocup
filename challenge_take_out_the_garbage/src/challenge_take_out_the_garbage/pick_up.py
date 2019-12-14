@@ -26,7 +26,9 @@ class MeasureForce(object):
 
     def __init__(self, robot):
         """
+        Constructor
 
+        :param robot: robot object
         """
         self._robot = robot
 
