@@ -16,10 +16,11 @@
   <depend>python-sklearn</depend>
   <depend>smach</depend>
   <depend>tf</depend>
+  <depend>cv_bridge</depend>
 
   <!-- TU/e Robotics -->
   <depend>cb_planner_msgs_srvs</depend>
   <depend>robot_skills</depend>
   <depend>robot_smach_states</depend>
-
+  <depend>robocup_knowledge</depend>
 </package>
