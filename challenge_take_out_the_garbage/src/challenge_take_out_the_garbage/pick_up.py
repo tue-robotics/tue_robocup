@@ -236,11 +236,12 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                         seconds=5),
                                    transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
 
-            smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(robot,
-                                                                                                    arm_designator,
-                                                                                                    grabbed_entity_label=grabbed_entity_label,
-                                                                                                    grabbed_entity_designator=grabbed_entity_designator,
-                                                                                                    timeout=timeout),
+            smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(
+                robot,
+                arm_designator,
+                grabbed_entity_label=grabbed_entity_label,
+                grabbed_entity_designator=grabbed_entity_designator,
+                timeout=timeout),
                                    transitions={'succeeded': 'succeeded',
                                                 'timeout': 'failed',
                                                 'failed': 'failed'})
