@@ -311,7 +311,7 @@ class CheckVolumeEmpty(smach.StateMachine):
 
         :param robot: robot object
         :param entity_des: EdEntityDesignator indicating the (furniture) object to check
-        :param volume: string defining of the entity to be checked, default = on_top_of
+        :param volume: string defining volume of the entity to be checked, default = on_top_of
         :param volume_threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
             (None means any entities filling the volume will result in 'occupied')
         """
