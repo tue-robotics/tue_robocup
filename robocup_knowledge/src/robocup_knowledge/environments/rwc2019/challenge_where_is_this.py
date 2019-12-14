@@ -1,5 +1,3 @@
-# WHERE IS THIS KNOWLEDGE FILE ROBOTICS TESTLABS
-
 # System
 from collections import namedtuple
 
