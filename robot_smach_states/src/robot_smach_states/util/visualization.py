@@ -1,5 +1,6 @@
-#! /usr/bin/env python
 """Plot a smach state machine"""
+
+from __future__ import print_function
 
 # System
 from functools import wraps
@@ -32,12 +33,12 @@ class StateViz(object):
         graph.node(self.get_node_identifier(), label=self.get_name())
 
     def get_name(self):
-        names = {v:k for k,v  in self.parent.smach_obj.get_children().iteritems()}
+        names = {v: k for k, v in self.parent.smach_obj.get_children().iteritems()}
         name = names[self.smach_obj]
         return name
 
     def get_node_identifier(self):
-        return str(id(self.smach_obj)) #"{}_{}".format(self.get_name(), gv_safe(self.smach_obj))
+        return str(id(self.smach_obj))  # "{}_{}".format(self.get_name(), gv_safe(self.smach_obj))
 
     def __eq__(self, other):
         return self.smach_obj == other.smach_obj
@@ -47,6 +48,7 @@ class StateViz(object):
 
     def __hash__(self):
         return hash(self.smach_obj) + hash(self.parent)
+
 
 class TransitionViz(object):
     def __init__(self, from_, to, label):
@@ -58,18 +60,19 @@ class TransitionViz(object):
 
         to_identifier = self.to.get_node_identifier()
 
-        #Link external transition to state machine to state machine's internal first state
+        # Link external transition to state machine to state machine's internal first state
         if isinstance(self.to, StateMachineViz):
             to_identifier = self.to.make_childviz(self.to.smach_obj.get_children()[
                 self.to.smach_obj._initial_state_label]).get_node_identifier()
 
         if isinstance(self.from_, StateMachineViz):
-            #If we're coming from a state machine, don't draw from the state machine directly but from the internal Container outcome that is linked to this external
+            # If we're coming from a state machine, don't draw from the state machine directly but from the internal
+            # Container outcome that is linked to this external
             outcome = ContainerOutcomeViz(self.label, self.from_)
             graph.edge(outcome.get_node_identifier(), self.to.get_node_identifier())
             return
 
-        # print "TransitionViz: graph.edge({},{}, label={})".format(self.from_.get_node_identifier(), to_identifier, self.label)
+        # print("TransitionViz: graph.edge({},{}, label={})".format(self.from_.get_node_identifier(), to_identifier, self.label))
         graph.node(self.from_.get_node_identifier(), label=self.from_.get_name())
         graph.node(self.to.get_node_identifier(), label=self.to.get_name())
 
@@ -85,6 +88,7 @@ class TransitionViz(object):
 
     def __hash__(self):
         return hash(self.from_) + hash(self.to)
+
 
 class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
@@ -102,6 +106,7 @@ class ContainerOutcomeViz(object):
     def get_node_identifier(self):
         return "{}_{}".format(gv_safe(self.name), gv_safe(self.parent.get_node_identifier()))
 
+
 class ContainerViz(StateViz):
     def make_childviz(self, child):
         if isinstance(child, smach.Iterator):
@@ -111,6 +116,7 @@ class ContainerViz(StateViz):
         else:
             childviz = StateViz(child, self)
         return childviz
+
 
 class StateMachineViz(ContainerViz):
     def __init__(self, smach_obj, parent, name="CHILD"):
@@ -122,7 +128,7 @@ class StateMachineViz(ContainerViz):
 
     def add_to_graph(self, graph, level=0):
         my_subgraph = Digraph(self.get_name())
-        print level*'\t' + "StateMachineViz.add_to_graph({}) adding my_subgraph {} ".format(id(graph), id(my_subgraph))
+        print(level*'\t' + "StateMachineViz.add_to_graph({}) adding my_subgraph {} ".format(id(graph), id(my_subgraph)))
 
         # for outcome in self.smach_obj._outcomes:
         #     outcomeviz = ContainerOutcomeViz(outcome, self)
@@ -131,21 +137,21 @@ class StateMachineViz(ContainerViz):
         # for childname, child in self.smach_obj.get_children().iteritems():
         #     childviz = self.make_childviz(child)
 
-        print level*'\t' + "self.smach_obj._transitions = {}".format(self.smach_obj._transitions)
+        print(level*'\t' + "self.smach_obj._transitions = {}".format(self.smach_obj._transitions))
         element_viz_set = set()
         for childname in self.smach_obj._transitions.keys():
-            print level*'\t' + "child {}".format(childname)
+            print(level*'\t' + "child {}".format(childname))
             child = self.smach_obj.get_children()[childname]
             childviz = self.make_childviz(child)
             # childviz.add_to_graph(my_subgraph, level=level+1)
             element_viz_set.add(childviz)
 
             for transition, to_name in self.smach_obj._transitions[childname].iteritems():
-                print level*'\t' + "transition {} --{}--> {}".format(childname, transition, to_name)
-                if not to_name in self.smach_obj._outcomes:
+                print(level*'\t' + "transition {} --{}--> {}".format(childname, transition, to_name))
+                if to_name not in self.smach_obj._outcomes:
                     # if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
                     if to_name == None:
-                        print level*'\t' + "ERROR: Transition {} of {} to None".format(transition, childname)
+                        print(level*'\t' + "ERROR: Transition {} of {} to None".format(transition, childname))
                         continue
                     to = self.smach_obj.get_children()[to_name]
                     to_viz = self.make_childviz(to)
@@ -160,15 +166,14 @@ class StateMachineViz(ContainerViz):
 
         for elem_viz in element_viz_set:
             if isinstance(elem_viz, TransitionViz):
-                print "Adding transition: {} --> {}".format(elem_viz.to.get_node_identifier(), elem_viz.from_.get_node_identifier())
+                print("Adding transition: {} --> {}".format(elem_viz.to.get_node_identifier(),
+                                                            elem_viz.from_.get_node_identifier()))
             elem_viz.add_to_graph(my_subgraph, level=level+1)
 
         my_subgraph.body.append('label = "{}"'.format(self.get_name()))
         my_subgraph.body.append('color=blue')
 
-
         graph.subgraph(my_subgraph)
-
 
     def get_name(self):
         if self.parent:
@@ -177,6 +182,7 @@ class StateMachineViz(ContainerViz):
             return name
         else:
             return self.name
+
 
 class IteratorViz(ContainerViz):
     def __init__(self, smach_obj, parent):
@@ -188,7 +194,7 @@ class IteratorViz(ContainerViz):
     def add_to_graph(self, graph, level=0):
         machine = Digraph()
 
-        #import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         for outcome in self.smach_obj._outcomes:
             outcomeviz = ContainerOutcomeViz(outcome, self)
             outcomeviz.add_to_graph(machine)
@@ -212,7 +218,9 @@ class IteratorViz(ContainerViz):
         machine.body.append('color=red')
         graph.subgraph(machine)
 
+
 visualization_classes = [type(None), StateViz, StateMachineViz, TransitionViz, ContainerOutcomeViz, IteratorViz]
+
 
 def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot = Digraph(statemachine_name, comment=statemachine_name, format=fmt)
@@ -220,7 +228,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
-    viz  = StateMachineViz(statemachine, None, statemachine_name)
+    viz = StateMachineViz(statemachine, None, statemachine_name)
     # import ipdb; ipdb.set_trace()
     viz.add_to_graph(dot)
     #_visualize_machine("ROOT", statemachine, dot)
@@ -232,6 +240,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.render(statemachine_name + '_statemachine')
 
     os.remove(statemachine_name + '_statemachine')
+
 
 def testcase1():
     import smach
@@ -249,6 +258,7 @@ def testcase1():
                                 transitions={'succeeded':'Done'})
 
     visualize(sm, "testcase1")
+
 
 def testcase2():
     import smach
@@ -280,6 +290,7 @@ def testcase2():
                                              'Failed'   :'Aborted'})
     visualize(toplevel, "testcase2", save_dot=True)
 
+
 def testcase3():
     import smach
 
@@ -308,6 +319,7 @@ def testcase3():
                                 sublevel1,
                                 transitions={'Finished' :'Done'})
     visualize(testcase3, "testcase3", save_dot=True)
+
 
 def testcase4():
     import smach

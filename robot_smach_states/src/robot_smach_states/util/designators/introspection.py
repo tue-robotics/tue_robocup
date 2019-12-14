@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """
 Introspection for designators.
 Usage: pass a Smach state-machine to analyse_designators.

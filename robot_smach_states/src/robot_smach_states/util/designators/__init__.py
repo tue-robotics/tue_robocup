@@ -4,6 +4,7 @@ from utility import *
 from ed_designators import *
 from arm import *
 from introspection import *
+from string_manipulation import *
 
 """
 Designators are intended to encapsulate the process of resolving values needed
