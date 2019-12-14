@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 import rospy
 import smach
 import robot_smach_states as states

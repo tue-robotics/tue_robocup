@@ -23,7 +23,7 @@ class Speech(RobotPart):
     def close(self):
         pass
 
-    def speak(self, sentence, language=None, personality=None, voice=None, mood=None, block=True, replace={"_": " "}):
+    def speak(self, sentence, language=None, personality=None, voice=None, mood=None, block=True, replace=None):
         """
         Send a sentence to the text to speech module.
         You can set language, personality, voice and mood for the Philips TTS.
@@ -41,11 +41,9 @@ class Speech(RobotPart):
         Emotional, Weepy, Excited, Surprised, Sad, Disgusted, Whisper.
         :param block: bool to indicate whether this function should return immediately or if it should block until the
         sentence has been spoken
-        :param replace: dictionary with replacement stuff # ToDo: replace
+        :param replace: dictionary with replacement stuff
         """
         # ToDo: replace personality by character and mood by emotion. Furthermore, change the order of the arguments.
-        # ToDo: finally, get rid of the "replace" dict. This can be handled by the caller (in any case, you cannot
-        # pass a dict as a default argument!)
         if not language:
             language = self._default_language
         if not voice:
@@ -54,6 +52,8 @@ class Speech(RobotPart):
             personality = self._default_character
         if not mood:
             mood = self._default_emotion
+        if replace is None:
+            replace = {"_": " "}
 
         if hasattr(self._pre_hook, '__call__'):
             self._pre_hook()

@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # ROS
 import rospy
 import smach
@@ -47,7 +46,7 @@ class PreparePlace(smach.State):
 
         # Torso up (non-blocking)
         self._robot.torso.reset()
-        
+
         # Arm to position in a safe way
         arm.send_joint_trajectory('prepare_place', timeout=0)
         arm.wait_for_motion_done()
