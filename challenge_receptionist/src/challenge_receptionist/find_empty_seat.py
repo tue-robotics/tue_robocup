@@ -1,7 +1,5 @@
 #! /usr/bin/env python
-import sys
 import rospy
-import traceback
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
@@ -123,21 +121,21 @@ class FindEmptySeat(smach.StateMachine):
 
 
 if __name__ == "__main__":
+    import sys
     from robot_skills import get_robot
 
-    if len(sys.argv) > 3:
-        robot_name = sys.argv[1]
-        room = sys.argv[2]
-        seats_to_inspect = sys.argv[3:]
-
-        rospy.init_node('test_find_emtpy_seat')
-        robot = get_robot(robot_name)
-
-        sm = FindEmptySeat(robot,
-                           seats_to_inspect=seats_to_inspect,
-                           room=ds.EntityByIdDesignator(robot, room))
-        sm.execute()
-    else:
+    if len(sys.argv) < 4:
         print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
-        exit(1)
+        sys.exit(1)
+    
+    robot_name = sys.argv[1]
+    room = sys.argv[2]
+    seats_to_inspect = sys.argv[3:]
 
+    rospy.init_node('test_find_emtpy_seat')
+    robot = get_robot(robot_name)
+
+    sm = FindEmptySeat(robot,
+                       seats_to_inspect=seats_to_inspect,
+                       room=ds.EntityByIdDesignator(robot, room))
+    sm.execute()
