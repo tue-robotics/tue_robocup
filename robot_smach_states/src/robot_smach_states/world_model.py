@@ -13,7 +13,6 @@ from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states.navigation import NavigateToObserve, NavigateToSymbolic
-from robot_smach_states.rise import RiseForInspect
 import robot_smach_states.util.designators as ds
 
 
@@ -219,6 +218,7 @@ class SegmentObjects(smach.State):
 
         return 'done'
 
+
 # ----------------------------------------------------------------------------------------------------
 
 
@@ -251,16 +251,12 @@ class Inspect(smach.StateMachine):
                                                                                  entityDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
-                                                    'arrived': 'RISE'})
+                                                    'arrived': 'SEGMENT'})
             else:
                 smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
-                                                    'arrived': 'RISE'})
-
-            smach.StateMachine.add('RISE', RiseForInspect(robot, entityDes, searchArea),
-                                   transitions={'succeeded': 'SEGMENT',
-                                                'failed': 'SEGMENT'})
+                                                    'arrived': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
                                    SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
