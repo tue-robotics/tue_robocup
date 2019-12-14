@@ -21,7 +21,6 @@ class GetFurnitureFromOperatorPose(State):
         self.all_possible_furniture = knowledge.location_names
 
     def execute(self, userdata=None):
-        rospy.loginfo("I entered the execution state!")
         final_result = None
         while not rospy.is_shutdown() and final_result is None:
             self._prep_operator()  # output should be checked
@@ -52,11 +51,9 @@ class GetFurnitureFromOperatorPose(State):
                 self._robot.speech.speak("That's not furniture, you dummy.")
                 rospy.sleep(3)
                 self.operator = None
-                self._robot.get_arm().send_joint_goal("reset")
                 return 'failed'
 
         self._robot.speech.speak("You pointed at %s" % final_result.entity_id)
-        self._robot.get_arm().send_joint_goal("reset")
         return 'succeeded'
 
     def _show_image(self, timeout=5.0):  # could also use /hero/openpose/result_image as rgb (same msg type)
@@ -67,7 +64,6 @@ class GetFurnitureFromOperatorPose(State):
     def _prep_operator(self):
         self.operator = None
 
-        self._robot.ed.reset()
         self._robot.head.reset()
         self._robot.speech.speak("Let's point, please stand in front of me!", block=False)
         for x in range(0, 4):
@@ -94,7 +90,7 @@ class GetFurnitureFromOperatorPose(State):
             if persons:
                 persons = sorted(persons, key=lambda x: x.position.z)
                 person = persons[0]
-                if self._is_operator(person):
+                if self._verify_operator_pose(person):
                     self.operator = person
 
         # robot.speech.speak("I see an operator at %.2f meter in front of me" % OPERATOR.position.z)
@@ -102,7 +98,7 @@ class GetFurnitureFromOperatorPose(State):
 
         return
 
-    def _is_operator(self, person):
+    def _verify_operator_pose(self, person):
         if person.position.z > 2.5:
             self._robot.speech.speak("You're too close, please stand in my view with your full body")
             return False
