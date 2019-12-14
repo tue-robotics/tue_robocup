@@ -14,13 +14,11 @@ waiting_point = "gpsr_meeting_point"
 
 # required keys: entity_id (str), room_id (str), navigation_area (str), segment_areas (list)
 cleaning_locations = [
-    {'name': 'dinner_table',  'room': 'livingroom', 'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
-    {'name': 'couch_table',   'room': 'livingroom', 'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
-    {'name': 'cabinet',       'room': 'kitchen',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']},
-    {'name': 'hallway_table', 'room': 'hallway',    'navigation_area': 'in_front_of',   'segment_areas': ['on_top_of']}
+    {'name': 'couch_table',   'room': 'livingroom', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'dinner_table',  'room': 'livingroom', 'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'cabinet',       'room': 'kitchen',    'navigate_area': 'near',   'segment_areas': ['on_top_of']},
+    {'name': 'hallway_table', 'room': 'hallway',    'navigate_area': 'near',   'segment_areas': ['on_top_of']}
 ]
-
-trashbin_id = "trashbin"
 
 grammar_target = "T"
 
@@ -38,7 +36,7 @@ category_grammar += "\nCATEGORY[{}] -> {}".format("trash", "trash".replace('_', 
 
 
 if __name__ == "__main__":
-    print("GPSR Grammar:\n\n{}\n\n".format(category_grammar))
+    print("Clean-up Grammar:\n\n{}\n\n".format(category_grammar))
 
     from grammar_parser.cfgparser import CFGParser
 

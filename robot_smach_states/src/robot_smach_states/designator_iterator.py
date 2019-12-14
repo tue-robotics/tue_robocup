@@ -49,8 +49,10 @@ class IterateDesignator(smach.State):
 
         is_writeable(element_des)
 
-        assert hasattr(collection_des.resolve_type, '__iter__')
-        assert collection_des.resolve_type[0] == element_des.resolve_type
+        assert hasattr(collection_des, 'resolve'), "collection_des should have attribute 'resolve'"
+        assert hasattr(collection_des.resolve_type, '__iter__'), "collection_des should resolve to an interable type"
+        assert collection_des.resolve_type[0] == element_des.resolve_type, "Resolve type of collection and element" \
+                                                                           "don't match"
 
         self.collection_des = collection_des
         self.element_des = element_des
@@ -61,7 +63,7 @@ class IterateDesignator(smach.State):
         if self._current_elements is None:
             collection = self.collection_des.resolve()
             if collection is None:
-                rospy.loginfo("Collection is None".format(collection))
+                rospy.logwarn("Collection is None")
                 return 'stop_iteration'
 
             rospy.loginfo("Current elements: {}".format(collection))
@@ -69,7 +71,7 @@ class IterateDesignator(smach.State):
 
         try:
             next_elem = next(self._current_elements)
-            rospy.loginfo("Iterate to next element {}".format(next_elem))
+            rospy.logdebug("Iterate to next element {}".format(next_elem))
             self.element_des.write(next_elem)
             return 'next'
         except StopIteration:

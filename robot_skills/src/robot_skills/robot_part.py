@@ -68,7 +68,7 @@ class RobotPart(object):
                 return True
             # Check all connections
             new_connections = {}
-            for name, connection in self.__ros_connections.iteritems():
+            for name, connection in self.__ros_connections.items():
                 rospy.logdebug("Checking {}".format(name))
                 connected = False
                 # Check actionlib connection
@@ -80,7 +80,8 @@ class RobotPart(object):
                     try:
                         connection.wait_for_service(timeout=0.01)
                         connected = True
-                    except:
+                    except Exception as e:
+                        rospy.logerr(e)
                         connected = False
                 elif isinstance(connection, rospy.Subscriber):
                     connected = connection.get_num_connections() >= 1
@@ -90,7 +91,7 @@ class RobotPart(object):
                 if connected:
                     rospy.logdebug("Connected to {}".format(name))
                     # self.__ros_connections = {name: connection
-                    #                           for name, connection in self.__ros_connections.iteritems() if name != k}
+                    #                           for name, connection in self.__ros_connections.items() if name != k}
                 else:
                     new_connections[name] = connection
 
@@ -98,7 +99,7 @@ class RobotPart(object):
             r.sleep()
 
         if log_failing_connections:
-            for name, connection in self.__ros_connections.iteritems():
+            for name, connection in self.__ros_connections.items():
                 rospy.logerr("{} not connected timely".format(name))
         return False
 
@@ -130,7 +131,7 @@ class RobotPart(object):
         :param name: string with the name topic to subscribe
         :param args: other args passed to rospy.Subscriber
         :param kwargs: other keyword args passed to rospy.Subscriber
-        :return: the service client
+        :return: the Subscriber
         """
         sub = rospy.Subscriber(name, *args, **kwargs)
         self._add_connection(name, sub)

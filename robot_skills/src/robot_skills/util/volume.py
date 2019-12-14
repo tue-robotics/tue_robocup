@@ -22,14 +22,24 @@ class Volume(object):
         return self._calc_center_point()
 
     def _calc_center_point(self):
-        raise NotImplementedError("_calc_center_point must be implemented by subclasses")
+        raise NotImplementedError("_calc_center_point must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     def contains(self, point):
         """ Checks if the point is inside this volume
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        raise NotImplementedError("contains must be implemented by subclasses")
+        raise NotImplementedError("contains must be implemented by subclasses. " 
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
+
+    @property
+    def size(self):
+        return self._calc_size()
+
+    def _calc_size(self):
+        raise NotImplementedError("_calc_size must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def size(self):

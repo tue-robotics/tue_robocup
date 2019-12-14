@@ -60,7 +60,7 @@ class Torso(RobotPart):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def _send_goal(self, torso_pos, timeout=0.0, tolerance=[]):
+    def _send_goal(self, torso_pos, timeout=0.0, tolerance=[], start_time=1.5):
         """
         Send a joint goal to the torso
         :param torso_pos: list of joint positions with the length equal to the number of joints
@@ -93,7 +93,7 @@ class Torso(RobotPart):
         torso_goal_point = trajectory_msgs.msg.JointTrajectoryPoint()
         torso_goal.trajectory.joint_names = list(self.joint_names)
         torso_goal_point.positions = torso_pos
-        torso_goal_point.time_from_start = rospy.Duration.from_sec(1.5)
+        torso_goal_point.time_from_start = rospy.Duration.from_sec(start_time)
         torso_goal.trajectory.points.append(torso_goal_point)
 
         for i in range(0, len(self.joint_names)):
@@ -120,6 +120,11 @@ class Torso(RobotPart):
         # Fill with required joint names (desired in hardware / gazebo impl)
         current_joint_state = self._get_joint_states()
         missing_joint_names = [n for n in self._arm_joint_names if n not in self.joint_names]
+        # This bit is needed because in some robots some joints are part of both arm(s) and torso.
+        # Thus both need to be controlled.
+        # In robots where these are disjoint sets (arm and torso joints do not overlap), missing_joint_names will be
+        # empty and thus no change is incurred.
+        # To fix this the entire concept of separate joint groups should be kicked out
         torso_goal.trajectory.joint_names += missing_joint_names
         torso_goal.trajectory.points[0].positions += [current_joint_state[n] for n in missing_joint_names]
         torso_goal.goal_tolerance += [control_msgs.msg.JointTolerance(

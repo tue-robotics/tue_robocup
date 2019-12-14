@@ -20,7 +20,8 @@ class Shape(object):
         return self._calc_size()
 
     def _calc_size(self):
-        raise NotImplementedError("_calc_size must be implemented by subclasses")
+        raise NotImplementedError("_calc_size must be implemented by subclasses. "
+                                  "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
     def x_min(self):

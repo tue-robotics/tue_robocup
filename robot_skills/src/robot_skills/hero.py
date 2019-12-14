@@ -14,7 +14,10 @@ class Hero(robot.Robot):
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        self.add_arm_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, side="left"))
+        self.add_arm_part(
+            'leftArm',
+            arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        )
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,

@@ -131,7 +131,7 @@ class AskWhichRoomToClean(smach.StateMachine):
                                                                                     ds.writeable(hmi_result_des)),
                                    transitions={"heard": "SAY_HEARD_CORRECT",
                                                 "no_result": "ASK_WHICH_ROOM"})
-            smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.SayFormatted(
+            smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.Say(
                 robot, "I understood that the {room} should be cleaned, is this correct?", room=room_name_des,
                 block=True),
                                    transitions={"spoken": "HEAR_CORRECT"})
@@ -223,11 +223,11 @@ def setup_statemachine(robot):
                                             "goal_not_defined": "SAY_CLEANED_ROOM"})
 
         smach.StateMachine.add('SAY_CLEANED_ROOM',
-                               robot_smach_states.SayFormatted(robot,
+                               robot_smach_states.Say(robot,
                                    ["I successfully cleaned the {room}!",
-                                   "All done in the {room}. Am I a good robot now?",
-                                   "There, I cleaned up your mess in the {room}, are you happy now!"],
-                                                               room=roomr, block=False),
+                                    "All done in the {room}. Am I a good robot now?",
+                                    "There, I cleaned up your mess in the {room}, are you happy now!"],
+                                   room=roomr, block=False),
                                transitions={"spoken": "Done"})
 
     return sm

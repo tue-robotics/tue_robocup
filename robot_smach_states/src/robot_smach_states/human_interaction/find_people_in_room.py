@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+from __future__ import print_function
 
 # System
 import math
@@ -23,41 +23,56 @@ class FindPeople(smach.State):
     Smach state to find a person. The robot looks around and tries to find
     people in its view.
 
-    >>> # The requried imports on robot console
-    >>> import robot_smach_states as states
-    >>> import robot_smach_states.util.designators as ds
-    >>> from robot_skills.util.entity import Entity
-    >>>
+    >>> from robot_skills.mockbot import Mockbot
+    >>> robot = Mockbot()
     >>> # Designator to store the result
     >>> des = ds.VariableDesignator(resolve_type=[Entity])
     >>>
-    >>> sm = state.FindPeople(robot=robot, properties={'id': 'NAME'}, found_people_designator=des.writeable)
-    >>> sm.execute()
-    >>> des.resolve()
+    >>> sm = FindPeople(robot=robot, properties={'id': 'NAME'}, found_people_designator=des.writeable)
+    >>> # sm.execute()
+    >>> # des.resolve()
+
     Entity(id=something, )
 
     """
 
     def __init__(self, robot, properties=None, query_entity_designator=None,
                  found_people_designator=None, look_distance=10.0, speak=False,
-                 strict=True, nearest=False, attempts=1, search_timeout=60):
+                 strict=True, nearest=False, attempts=1, search_timeout=60,
+                 look_range=(-np.pi/2, np.pi/2), look_steps=8):
         """ Initialization method
         :param robot: robot api object
-        :param properties: (dict) keyvalue pair of the properties a person must
+        :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
             values of the property.
-        :param query_entity_designator: An entity designator to match all found
+        :param query_entity_designator: (default: None) An entity designator to match all found
             people to
-        :param found_people_designator: A designator to write the search result to.
+        :param found_people_designator: (default: None) A designator to write the search result to.
             The designator always has a list of found people written to it.
-        :param look_distance: (float) The distance (radius) which the robot must look at
-        :param speak: (bool) If True, the robot will speak while trying to find
+        :param look_distance: (float) (default: 10.0) The distance (radius) which the robot must look at
+        :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
-        :param strict: (bool) If True then only people with all specified
-            properties is returned else all people with at least one true property
-        :param nearest: (bool) If True, selects the person nearest to the robot
-        :param attempts: (int) Max number of search attempts
-        :param search_timeout: (float) maximum time the robot is allowed to search
+        :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
+        property has non None values.
+            If set to True then only people with all specified
+            properties are returned, else all people with at least one true property.
+            Example:
+                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                strict = True
+                    This will return a list of people who have the tags:
+                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+
+                strict = False
+                    This will return a list of people who have the tags:
+                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+
+        :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
+            requirements posed using the properties, query_entity_designator, look distance and strict arguments
+        :param attempts: (int) (default: 1) Max number of search attempts
+        :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
+        :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
+        robot search
+        :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
 
@@ -72,6 +87,8 @@ class FindPeople(smach.State):
 
         self._search_timeout = search_timeout
 
+        self._look_angles = np.linspace(look_range[0], look_range[1], look_steps)
+
         if found_people_designator:
             ds.is_writeable(found_people_designator)
             ds.check_type(found_people_designator, [Entity])
@@ -85,8 +102,6 @@ class FindPeople(smach.State):
         look_angles = None
         person_label = None
 
-        look_angles = np.linspace(-np.pi / 2, np.pi / 2, 8)  # From -pi/2 to +pi/2 to scan 180 degrees wide
-
         if self._properties:
             try:
                 person_label = self._properties["id"]
@@ -94,16 +109,17 @@ class FindPeople(smach.State):
                 person_label = person_label.resolve() if hasattr(person_label, 'resolve') else person_label
 
                 rospy.loginfo("Trying to find {}".format(person_label))
-                if self._speak:
-                    self._robot.speech.speak(
-                            "{}, please look at me while I am looking for you".format(
-                            person_label),
-                        block=False)
             except:
                 # The try except is to check if a named person is queried for
                 # in the properties. If there is none then exception is raised
                 # and nothing is to be done with it
                 pass
+
+        if self._speak:
+            self._robot.speech.speak(
+                "{}please look at me while I am looking for you".format(
+                    person_label+', ' if person_label else ''),
+                block=False)
 
         start_time = rospy.Time.now()
 
@@ -111,7 +127,7 @@ class FindPeople(smach.State):
                                                     y=self._look_distance * math.sin(angle),
                                                     z=1.5,
                                                     frame_id="/%s/base_link" % self._robot.robot_name)
-                      for angle in look_angles]
+                      for angle in self._look_angles]
 
         i = 0
         attempts = 0
@@ -130,9 +146,18 @@ class FindPeople(smach.State):
 
             self._robot.head.wait_for_motion_done()
 
-            self._image_data = self._robot.perception.get_rgb_depth_caminfo()
-            success, found_people_ids = self._robot.ed.detect_people(*self._image_data)
-            found_people = [self._robot.ed.get_entity(eid) for eid in found_people_ids]
+            found_people_ids = []
+            for _ in range(2):  # TODO: parametrize
+                self._image_data = self._robot.perception.get_rgb_depth_caminfo()
+                if self._image_data:
+                    success, found_ids = self._robot.ed.detect_people(*self._image_data)
+                else:
+                    rospy.logwarn("Could not get_rgb_depth_caminfo")
+                    success, found_ids = False, []
+                found_people_ids += found_ids
+
+            # Use only unique IDs in the odd case ED sees the same people twice
+            found_people = [self._robot.ed.get_entity(eid) for eid in set(found_people_ids)]
 
             rospy.loginfo("Found {} people: {}".format(len(found_people), found_people))
             found_people = [p for p in found_people if p]
@@ -237,23 +262,41 @@ class FindFirstPerson(smach.StateMachine):
                  strict=True,
                  nearest=False,
                  attempts=1,
-                 search_timeout=60):
+                 search_timeout=60,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Initialization method
         :param robot: robot api object
-        :param properties: (dict) keyvalue pair of the properties a person must
+        :param found_person_designator: A designator to write the search result to.
+        :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
             values of the property.
-        :param query_entity_designator: An entity designator to match all found
+        :param query_entity_designator: (default: None) An entity designator to match all found
             people to
-        :param found_person_designator: A designator to write the search result to.
-        :param look_distance: (float) The distance (radius) which the robot must look at
-        :param speak: (bool) If True, the robot will speak while trying to find
+        :param look_distance: (float) (default: 10.0) The distance (radius) which the robot must look at
+        :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
-        :param strict: (bool) If True then only people with all specified
-            properties is returned else all people with at least one true property
-        :param nearest: (bool) If True, selects the person nearest to the robot
-        :param attempts: (int) Max number of search attempts
-        :param search_timeout: (float) maximum time the robot is allowed to search
+        :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
+        property has non None values.
+            If set to True then only people with all specified
+            properties are returned, else all people with at least one true property.
+            Example:
+                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                strict = True
+                    This will return a list of people who have the tags:
+                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+
+                strict = False
+                    This will return a list of people who have the tags:
+                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+
+        :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
+            requirements posed using the properties, query_entity_designator, look distance and strict arguments
+        :param attempts: (int) (default: 1) Max number of search attempts
+        :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
+        :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
+        robot search
+        :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         super(FindFirstPerson, self).__init__(outcomes=["found", "failed"])
         ds.is_writeable(found_person_designator)
@@ -273,7 +316,9 @@ class FindFirstPerson(smach.StateMachine):
                          strict=strict,
                          nearest=nearest,
                          attempts=attempts,
-                         search_timeout=search_timeout),
+                         search_timeout=search_timeout,
+                         look_range=look_range,
+                         look_steps=look_steps),
                      transitions={
                          'found': 'GET_FIRST_ITERATE',
                          'failed': 'failed'
@@ -303,25 +348,43 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                  strict=True,
                  nearest=False,
                  attempts=1,
-                 search_timeout=60):
+                 search_timeout=60,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Initialization method
         :param robot: robot api object
-        :param found_person_designator: A designator to write the search result to.
         :param dst_entity_designator: A designator of an Entity whose pose must be updated.
-        :param dst_entity_type: Type of the destination entity
-        :param properties: (dict) keyvalue pair of the properties a person must
+        :param dst_entity_type: (str) (default: waypoint) Type of the destination entity
+        :param found_person_designator: (default: None) A designator to write the search result to.
+        :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
             values of the property.
-        :param query_entity_designator: An entity designator to match all found
+        :param query_entity_designator: (default: None) An entity designator to match all found
             people to
-        :param look_distance: (float) The distance (radius) which the robot must look at
-        :param speak: (bool) If True, the robot will speak while trying to find
+        :param look_distance: (float) (default: 10.0) The distance (radius) which the robot must look at
+        :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
-        :param strict: (bool) If True then only people with all specified
-            properties is returned else all people with at least one true property
-        :param nearest: (bool) If True, selects the person nearest to the robot
-        :param attempts: (int) Max number of search attempts
-        :param search_timeout: (float) maximum time the robot is allowed to search
+        :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
+        property has non None values.
+            If set to True then only people with all specified
+            properties are returned, else all people with at least one true property.
+            Example:
+                properties = {'tags': ['LWave', 'RWave', 'LHolding', 'RHolding']}
+                strict = True
+                    This will return a list of people who have the tags:
+                        'LWave' AND 'RWave' AND 'LHolding' AND 'RHolding'
+
+                strict = False
+                    This will return a list of people who have the tags:
+                        'LWave' OR 'RWave' OR 'LHolding' OR 'RHolding'
+
+        :param nearest: (bool) (default: False) If True, selects the people nearest to the robot who match the
+            requirements posed using the properties, query_entity_designator, look distance and strict arguments
+        :param attempts: (int) (default: 1) Max number of search attempts
+        :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
+        :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
+        robot search
+        :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         super(SetPoseFirstFoundPersonToEntity,
               self).__init__(outcomes=["done", "failed"])
@@ -341,7 +404,9 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                          strict=strict,
                          nearest=nearest,
                          attempts=attempts,
-                         search_timeout=search_timeout),
+                         search_timeout=search_timeout,
+                         look_range=look_range,
+                         look_steps=look_steps),
                      transitions={
                          'found': 'UPDATE_POSE',
                          'failed': 'failed'
@@ -393,7 +458,9 @@ class FindPeopleInRoom(smach.StateMachine):
     in that room.
     """
 
-    def __init__(self, robot, room, found_people_designator):
+    def __init__(self, robot, room, found_people_designator,
+                 look_range=(-np.pi/2, np.pi/2),
+                 look_steps=8):
         """ Constructor
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
@@ -435,27 +502,32 @@ class FindPeopleInRoom(smach.StateMachine):
                                    FindPeople(robot=robot,
                                               query_entity_designator=room_designator,
                                               found_people_designator=found_people_designator,
-                                              speak=True),
+                                              speak=True,
+                                              look_range=look_range,
+                                              look_steps=look_steps),
                                    transitions={"found": "found",
                                                 "failed": "not_found"})
 
 
 if __name__ == "__main__":
 
-    from robot_skills import get_robot
+    import doctest
+    doctest.testmod()
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-        _area = sys.argv[2]
-
-        rospy.init_node('test_find_people_in_room')
-        _robot = get_robot(robot_name)
-
-        people = ds.VariableDesignator(resolve_type=[Entity])
-        sm = FindPeopleInRoom(_robot, _area, people.writeable)
-        sm.execute()
-
-        rospy.loginfo("Found {}".format(people.resolve()))
-    else:
-        print("Please provide robot name as argument.")
-        exit(1)
+    # from robot_skills import get_robot
+    #
+    # if len(sys.argv) > 1:
+    #     robot_name = sys.argv[1]
+    #     _area = sys.argv[2]
+    #
+    #     rospy.init_node('test_find_people_in_room')
+    #     _robot = get_robot(robot_name)
+    #
+    #     people = ds.VariableDesignator(resolve_type=[Entity])
+    #     sm = FindPeopleInRoom(_robot, _area, people.writeable)
+    #     sm.execute()
+    #
+    #     rospy.loginfo("Found {}".format(people.resolve()))
+    # else:
+    #     print("Please provide robot name as argument.")
+    #     exit(1)

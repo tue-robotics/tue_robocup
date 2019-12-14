@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+from __future__ import print_function
 
 # System
 import time
@@ -116,29 +116,24 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
 
     def execute(self, userdata=None):
         """ Looks at the entity and updates its pose using the update kinect service """
-        src_entity = self._src_entity_designator.resolve() if hasattr(
-            self._src_entity_designator,
-            'resolve') else self._src_entity_designator
+        src_entity = self._src_entity_designator.resolve() if hasattr(self._src_entity_designator, 'resolve') else \
+            self._src_entity_designator
 
-        dst_entity = self._dst_entity_designator.resolve() if hasattr(
-            self._dst_entity_designator,
-            'resolve') else self._dst_entity_designator
+        dst_entity = self._dst_entity_designator.resolve() if hasattr(self._dst_entity_designator, 'resolve') else \
+            self._dst_entity_designator
 
-        if (not src_entity) or (not self._robot.ed.get_entity(
-                src_entity.id)) or (not dst_entity):
+        if (not src_entity) or (not self._robot.ed.get_entity(src_entity.id)) or (not dst_entity):
             return "failed"
+
+        if isinstance(dst_entity, Entity):
+            dst_id = dst_entity.id
         else:
-            dst_id = None
-            if isinstance(dst_entity, Entity):
-                dst_id = dst_entity.id
-            else:
-                dst_id = dst_entity
+            dst_id = dst_entity
 
-            self._robot.ed.update_entity(id=dst_id,
-                                         frame_stamped=src_entity.pose,
-                                         type=self._dst_entity_type)
+        self._robot.ed.update_entity(id=dst_id,
+                                     frame_stamped=src_entity.pose)
 
-            return "done"
+        return "done"
 
 
 class SegmentObjects(smach.State):
@@ -153,11 +148,9 @@ class SegmentObjects(smach.State):
         :param segmented_entity_ids_designator: designator that is used to store the segmented objects
         :param entity_to_inspect_designator: EdEntityDesignator indicating the (furniture) object to inspect
         :param segmentation_area: string defining where the objects are w.r.t. the entity, default = on_top_of
-        :param unknown_threshold: Entities whose classification score is lower are not marked with a type
-        :type unknown_threshold: float
-        :param filter_threshold: Entities whose classification score is lower are ignored
+        :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
+        :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
-        :type filter_threshold: float
         """
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
@@ -168,13 +161,13 @@ class SegmentObjects(smach.State):
         ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
 
+        ds.check_type(segmentation_area, str)
         if isinstance(segmentation_area, str):
             self.segmentation_area_des = ds.VariableDesignator(segmentation_area)
         elif isinstance(segmentation_area, ds.Designator):
-            # ds.check_resolve_type(segmentation_area, "str")
             self.segmentation_area_des = segmentation_area
         else:
-            raise RuntimeError("segmentation_area is not a str or Designator")
+            raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
 
         ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
         ds.is_writeable(segmented_entity_ids_designator)
@@ -243,11 +236,9 @@ class Inspect(smach.StateMachine):
         :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
         If left empty, NavigateToObserve is used.
-        :param unknown_threshold: Entities whose classification score is lower are not marked with a type
-        :type unknown_threshold: float
-        :param filter_threshold: Entities whose classification score is lower are ignored
+        :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
+        :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
-        :type filter_threshold: float
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -271,8 +262,10 @@ class Inspect(smach.StateMachine):
                                    transitions={'succeeded': 'SEGMENT',
                                                 'failed': 'SEGMENT'})
 
-            smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
-                                                             unknown_threshold=unknown_threshold, filter_threshold=filter_threshold),
+            smach.StateMachine.add('SEGMENT',
+                                   SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
+                                                  unknown_threshold=unknown_threshold,
+                                                  filter_threshold=filter_threshold),
                                    transitions={'done': 'done'})
 
 
@@ -281,9 +274,14 @@ if __name__ == "__main__":
     from robot_skills import get_robot_from_argv
     from robot_smach_states.util.designators import EdEntityDesignator
 
-    rospy.init_node('state_machine')
+    from robocup_knowledge import knowledge_loader
+
+    common = knowledge_loader.load_knowledge("common")
+
+    rospy.init_node('inspect_test')
 
     robot = get_robot_from_argv(index=1)
 
-    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="closet"))
+    sm = Inspect(robot=robot, entityDes=EdEntityDesignator(robot=robot, id="display_cabinet"),
+                 navigation_area="in_front_of")
     print(sm.execute())

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # ROS
 import rospy
 import smach
@@ -99,5 +101,5 @@ if __name__ == "__main__":
                      look_at_designator=ds.EdEntityDesignator(robot, id=look_at, name='look_at_des'))
         sm.execute()
     else:
-        print "Please provide robot name, point_at ID and look_at ID as argument."
+        print("Please provide robot name, point_at ID and look_at ID as argument.")
         exit(1)

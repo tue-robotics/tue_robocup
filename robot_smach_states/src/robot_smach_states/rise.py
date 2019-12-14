@@ -1,8 +1,5 @@
-#! /usr/bin/env python
 # ROS
-
 import smach
-import rospy
 
 import PyKDL as kdl
 
@@ -45,7 +42,6 @@ class RiseForInspect(smach.State):
         self._volume = volume
 
     def execute(self, userdata=None):
-
         # Determine the height of the head target
         # Start with a default
         entity = self._entity.resolve()

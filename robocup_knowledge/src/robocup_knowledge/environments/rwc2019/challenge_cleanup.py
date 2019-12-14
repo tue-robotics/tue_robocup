@@ -58,7 +58,7 @@ category_grammar += "\nCATEGORY[{}] -> {}".format("trash", "trash".replace('_', 
 
 
 if __name__ == "__main__":
-    print("GPSR Grammar:\n\n{}\n\n".format(category_grammar))
+    print("Clean-up Grammar:\n\n{}\n\n".format(category_grammar))
 
     from grammar_parser.cfgparser import CFGParser
 

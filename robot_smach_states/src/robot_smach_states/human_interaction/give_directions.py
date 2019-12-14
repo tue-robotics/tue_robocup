@@ -72,10 +72,10 @@ class GiveDirections(smach.State):
         path = None
         for name, nav_con in nav_constraints.iteritems():
             path = self._robot.base.global_planner.getPlan(position_constraint=nav_con[0])
-            if path is not None:
+            if path:
                 break
 
-        if path is None:
+        if not path:
             rospy.logerr("No path to {}".format(goal_entity.id))
             self._robot.speech.speak("I'm sorry but I don't know how to get to the {}".format(goal_entity.id))
             return "failed"
@@ -237,9 +237,9 @@ if __name__ == "__main__":
                 position = kdl.Vector(x, y, 0)
                 try:
                     room = get_room(room_entities, position)
-                    print("Position {} is in the {}".format(position, room.id))
+                    rospy.loginfo("Position {} is in the {}".format(position, room.id))
                 except RuntimeError as e:
-                    print(e.message)
+                    rospy.logerr(e.message)
 
     rospy.init_node('give_directions')
 
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     elif robot_name == 'hero':
         from robot_skills.hero import Hero as Robot
     else:
-        print("unknown robot")
+        rospy.logerr("unknown robot")
         sys.exit()
 
     robot = Robot()
