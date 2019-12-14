@@ -186,7 +186,7 @@ class CheckEmpty(smach.State):
         :param threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
             (None means any entities filling the volume will result in 'occupied')
         """
-        smach.State.__init__(self, outcomes=["done"])
+        smach.State.__init__(self, outcomes=["occupied", "partially_occupied", "empty"])
         self.seen_entities_des = segmented_entity_ids_designator
         self.entity_des = entity_designator
         self.volume = volume
