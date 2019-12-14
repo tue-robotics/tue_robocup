@@ -10,42 +10,6 @@ from robot_skills.util.volume import Volume
 from robot_skills.classification_result import ClassificationResult
 
 
-class CheckVolumeEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, volume):
-        smach.StateMachine.__init__(self, outcomes=['empty', 'occupied',  'partially_occupied', 'failed'])
-
-        seen_entities_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
-
-        with self:
-            smach.StateMachine.add('INSPECT',
-                                   states.Inspect(robot, entity_des, searchArea=volume, objectIDsDes=seen_entities_des),
-                                   transitions = {"done": "CHECK",
-                                                  "failed": "failed"})
-
-            @smach.cb_interface(outcomes=['empty', 'occupied', 'partially_occupied'])
-            def check_occupied(userdata):
-                seat = entity_des.resolve()  # type: Entity
-                seen_entities = seen_entities_des.resolve()
-                if seen_entities:
-                    try:
-                        vol = seat.volumes[volume]  # type: Volume
-                        occupied_space = sum(on_seat.size for on_seat in seen_entities)
-                        remaining_space = vol.size - occupied_space
-                        rospy.loginfo('Occupied space is {}, remaining space is {}'.format(occupied_space, remaining_space))
-                        if remaining_space > 0.2: #  m^3, I estimate I occupy some 0.5m wide, 0.5m long 0.8m high space on top of a seat
-                            return 'partially_occupied'
-                    except Exception as e:
-                        traceback.print_exc()
-                        rospy.logwarn("Could not get seat and volume, just assuming its occupied: {}".format(e))
-                    return 'occupied'
-                else:
-                    return 'empty'
-            smach.StateMachine.add('CHECK', smach.CBState(check_occupied),
-                                   transitions={'empty': 'empty',
-                                                'partially_occupied': 'partially_occupied',
-                                                'occupied': 'occupied'})
-
-
 class SeatsInRoomDesignator(ds.Designator):
     def __init__(self, robot, seat_ids, room, name=None):
         super(SeatsInRoomDesignator, self).__init__(resolve_type=[Entity], name=name)
@@ -105,7 +69,7 @@ class FindEmptySeat(smach.StateMachine):
                                                 'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of'),
+                                   states.CheckVolumeEmpty(robot, seat_ent_des, 'on_top_of'),
                                    transitions={'occupied': 'ITERATE_NEXT_SEAT',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
