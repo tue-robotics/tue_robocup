@@ -11,8 +11,6 @@ class Designator(object):
     define Designators that take a goal specification, like a query to a world
     model.
 
-    Current is therefore a property with only a getter.
-
     >>> d = Designator("Initial value", name="tester")
     >>> d.resolve()
     'Initial value'
@@ -31,7 +29,9 @@ class Designator(object):
         :param resolve_type: Type to which this designator should resolve.
                              If None, use the type of the initial value. Value
                              must be not None in that case.
-        :vartype resolve_type: Type or a list with one type (the element type).
+        :vartype resolve_type: Type or a list with a single type (the element type).
+                               The latter represents list of values where each
+                               value has the element type.
 
         :param name: name used for debugging purposes
         :vartype name: str
@@ -42,8 +42,9 @@ class Designator(object):
         self.__initial_value = initial_value
         if resolve_type:
             if isinstance(resolve_type, list):
+                # Value is a list of items with each item of type resolve_type[0] .
                 if len(resolve_type) != 1:
-                    msg = "The resolve_type must be a sinlge-item list, found {}."
+                    msg = "The resolve_type must be a single-item list, found {}."
                     raise TypeError(msg.format(resolve_type))
 
                 if resolve_type[0] is None:
@@ -52,20 +53,26 @@ class Designator(object):
         else:
             # No resolve type provided, use the inital value to derive a type.
             if self.__initial_value is None:
-                raise TypeError("resolve_type could not be inferred from None.")
+                raise TypeError("No resolve_type provided and type could not be inferred "
+                                "from the initial_value (found 'None').")
 
             if isinstance(self.__initial_value, list):
                 if len(self.__initial_value) > 0:
                     self._resolve_type = [type(self.__initial_value[0])]
                 else:
-                    raise TypeError("resolve_type could not be inferred from empty list.")
+                    raise TypeError("No resolve_type provided and type could not be inferred "
+                                    "from the initial_value (found empty list).")
             else:
                 self._resolve_type = type(self.__initial_value)
 
-        Designator.instances += [self]
+        Designator.instances += [self] # XXX Memory leak!
 
     def resolve(self):
-        """Selects a new goal and sets it as the current value."""
+        """
+        Selects a new goal and sets it as the current value.
+
+        Don't override this method, override self._resolve() instead.
+        """
         result = self._resolve()
         result_type = type(result)
         resolve_type = self.resolve_type

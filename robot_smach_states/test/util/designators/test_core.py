@@ -47,7 +47,7 @@ class TestVariableDesignator(unittest.TestCase):
         self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
 
     def test_none_value(self):
-        # Resolve a [object] to None value
+        # Resolve a [object] to a None value
         class MyVariableDesignator(VariableDesignator):
             def __init__(self):
                 super(MyVariableDesignator, self).__init__(resolve_type=[object])
@@ -58,7 +58,7 @@ class TestVariableDesignator(unittest.TestCase):
         self.assertEquals(v.resolve(), None)
 
     def test_empty_list_value(self):
-        # Resolve a [object] to None value
+        # Resolve a [object] to an empty list value.
         class MyVariableDesignator(VariableDesignator):
             def __init__(self):
                 super(MyVariableDesignator, self).__init__(resolve_type=[str])
@@ -69,7 +69,7 @@ class TestVariableDesignator(unittest.TestCase):
         self.assertEquals(v.resolve(), [])
 
     def test_none_list_value(self):
-        # Resolve a [object] to None value
+        # Resolve a [object] to a [None] list value.
         class MyVariableDesignator(VariableDesignator):
             def __init__(self):
                 super(MyVariableDesignator, self).__init__(resolve_type=[str])
