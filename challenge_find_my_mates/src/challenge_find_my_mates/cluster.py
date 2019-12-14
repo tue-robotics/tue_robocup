@@ -69,5 +69,5 @@ if __name__ == "__main__":
     locations = zip(xs2, ys2)
     pprint.pprint(locations)
 
-    with open('/home/loy/kmeans_output.pickle', 'w') as dumpfile:
+    with open('/home/kmeans_output.pickle', 'w') as dumpfile:
         pickle.dump(clustered_ppl, dumpfile)
