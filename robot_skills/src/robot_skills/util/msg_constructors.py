@@ -22,9 +22,9 @@ def Point(x=0, y=0, z=0):
 
 def Header(frame_id="/map", stamp=None):
     """Make a Header
-    >>> h = Header("/base_link")
-    >>> assert h.stamp.secs > 0
-    >>> assert h.stamp.nsecs > 0
+    >>> h = Header("/base_link")  # doctest: +SKIP
+    >>> assert h.stamp.secs > 0  # doctest: +SKIP
+    >>> assert h.stamp.nsecs > 0  # doctest: +SKIP
     """
     if not stamp:
         _time = rospy.Time.now()
@@ -89,8 +89,8 @@ def PoseStamped(x=0, y=0, z=0, phi=0,
     frame_id="/map", stamp=None, pointstamped=None):
     """Build a geometry_msgs.msgs.PoseStamped from any number of arguments.
     Each value defaults to 0
-    >>> ps = PoseStamped(yaw=0.5)
-    >>> ps.pose
+    >>> ps = PoseStamped(yaw=0.5)  # doctest: +SKIP
+    >>> ps.pose  # doctest: +SKIP
     position:
       x: 0
       y: 0
