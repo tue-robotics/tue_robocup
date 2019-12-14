@@ -43,7 +43,7 @@ class Restaurant(smach.StateMachine):
                                    transitions={'spoken': 'SHOW_IMAGE'})
 
             smach.StateMachine.add('SHOW_IMAGE', states.ShowImageState(robot,
-                                                                       "challenge_restaurant",
+                                                                       "~/ros/kinetic/system/src/challenge_restaurant/"
                                                                        "images/waving.jpg", seconds=10),
                                    transitions={'succeeded': 'STORE_KITCHEN',
                                                 'failed': 'STORE_KITCHEN'})
