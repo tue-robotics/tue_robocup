@@ -232,7 +232,7 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                    states.ShowImageState(
                                         robot=robot,
                                         image_filename="~/ros/kinetic/system/src/challenge_take_out_the_garbage/src"
-                                                      "/challenge_take_out_the_garbage/beun_picture.png",
+                                                       "/challenge_take_out_the_garbage/beun_picture.png",
                                         seconds=5),
                                    transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
 
