@@ -57,7 +57,7 @@ class WhereIsThis(smach.StateMachine):
                                                     "no_result": "ASK_WHERE_TO_GO"})  # ToDo: add fallbacks #option: STORE_STARTING_POSE
 
                 smach.StateMachine.add("ASK_CONFIRMATION",
-                                       states.SayFormatted(robot, ["I hear that you would like me to start the tours at"
+                                       states.Say(robot, ["I hear that you would like me to start the tours at"
                                                                    " the {place}, is this correct?"],
                                                            place=information_point_id_designator,
                                                            block=True),

@@ -201,7 +201,7 @@ class InformMachine(smach.StateMachine):
                                        transitions={"spoken": "WAIT_TO_BE_CALLED"})
 
                 smach.StateMachine.add("WAIT_TO_BE_CALLED",
-                                       states.HearOptions(robot, ["{}".format(robot.robot_name)], rospy.Duration(10)),
+                                       states.HearOptions(robot, ["{}".format(robot.robot_name)], timeout=10),
                                        transitions={"{}".format(robot.robot_name): "INSTRUCT",
                                                     "no_result": "ANNOUNCE_ITEM"})
 
@@ -235,7 +235,7 @@ class InformMachine(smach.StateMachine):
                                                 "no_result": "HANDLE_FAILED_HMI"})
 
             smach.StateMachine.add("ASK_CONFIRMATION",
-                                   states.SayFormatted(robot, ["I hear that you would like to go to the {place},"
+                                   states.Say(robot, ["I hear that you would like to go to the {place},"
                                                                "is this correct?"],
                                                        place=ds.AttrDesignator(self.entity_des, "id",
                                                                                    resolve_type=str)),
@@ -276,7 +276,7 @@ class InformMachine(smach.StateMachine):
                                                 "failed": "failed"})
 
             smach.StateMachine.add("INSTRUCT_FOR_WAIT",
-                                   states.human_interaction.SayFormatted(
+                                   states.human_interaction.Say(
                                        robot,
                                        ["Let me think how to get to the {entity_id}",
                                         "I will now determine the best route to the {entity_id}"],
