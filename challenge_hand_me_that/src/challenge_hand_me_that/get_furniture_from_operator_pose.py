@@ -14,7 +14,6 @@ from robot_smach_states.util.designators import is_writeable
 from rospy import ServiceException
 from smach import StateMachine, cb_interface, CBState
 from std_msgs.msg import Header
-from ed_sensor_integration.srv import RayTraceResponse
 
 
 OPERATOR = None
@@ -134,7 +133,7 @@ class GetFurnitureFromOperatorPose(StateMachine):
                             ),
                             pose=OPERATOR.pointing_pose
                         ))
-                        result = robot.ed.ray_trace(map_pose)  # type: RayTraceResponse
+                        result = robot.ed.ray_trace(map_pose)
                     except Exception as e:
                         rospy.logerr("Could not get ray trace from closest person: {}".format(e))
                     rospy.sleep(1.)

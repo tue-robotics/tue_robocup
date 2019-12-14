@@ -5,6 +5,8 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from os.path import expanduser
+
 from sklearn.cluster import KMeans
 
 
@@ -69,5 +71,5 @@ if __name__ == "__main__":
     locations = zip(xs2, ys2)
     pprint.pprint(locations)
 
-    with open('/home/kmeans_output.pickle', 'w') as dumpfile:
+    with open(expanduser('~') + '/kmeans_output.pickle', 'w') as dumpfile:
         pickle.dump(clustered_ppl, dumpfile)
