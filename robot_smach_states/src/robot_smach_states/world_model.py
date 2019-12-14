@@ -219,9 +219,6 @@ class SegmentObjects(smach.State):
         return 'done'
 
 
-# ----------------------------------------------------------------------------------------------------
-
-
 class Inspect(smach.StateMachine):
     """
     Class to navigate to a(n) (furniture) object and segment the objects on top of it.
