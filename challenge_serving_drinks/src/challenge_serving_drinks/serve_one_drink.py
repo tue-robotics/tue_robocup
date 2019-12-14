@@ -12,20 +12,6 @@ from .sd_states import DescriptionStrDesignator
 from .get_order import GetOrder
 
 
-class CheckBool(smach.State):
-    def __init__(self, check_designator):
-        super(CheckBool, self).__init__(outcomes=["true", "false"])
-        ds.check_type(check_designator, bool)
-        self._check_designator = check_designator
-
-    def execute(self, userdata=None):
-        val = self._check_designator.resolve() if hasattr(self._check_designator, "resolve") else self._check_designator
-        if val:
-            return "true"
-        else:
-            return "false"
-
-
 class ServeOneDrink(smach.StateMachine):
     """
     Serves on drink to an operator
@@ -117,7 +103,7 @@ class ServeOneDrink(smach.StateMachine):
                                                 'failed': "CHECK_LEARN_OPERATOR"})
 
             smach.StateMachine.add("CHECK_LEARN_OPERATOR",
-                                   CheckBool(learn_check_designator),
+                                   states.CheckBool(learn_check_designator),
                                    transitions={"true": "FIND_OPERATOR",
                                                 "false": "GO_TO_ROOM"})
 

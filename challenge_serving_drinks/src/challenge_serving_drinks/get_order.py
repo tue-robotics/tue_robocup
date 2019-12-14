@@ -8,24 +8,6 @@ import robot_smach_states.util.designators as ds
 # Serving drinks
 from .sd_states import AskDrink
 
-
-class ToggleBool(smach.State):
-    def __init__(self, check_designator):
-        super(ToggleBool, self).__init__(outcomes=["done"])
-        ds.is_writeable(check_designator)
-        ds.check_type(check_designator, bool)
-        self._check_designator = check_designator
-
-    def execute(self, userdata=None):
-        val = self._check_designator.resolve()
-        if val:
-            self._check_designator.write(False)
-        else:
-            self._check_designator.write(True)
-
-        return "done"
-
-
 class GetOrder(smach.StateMachine):
     """
     Gets an order. If succeeded, the person_designator and drink_designator are filled and can be used in subsequent
@@ -177,7 +159,7 @@ class GetOrder(smach.StateMachine):
                                    transitions={"spoken": "LEARN_OPERATOR_FLAG_TOGGLE"})
 
             smach.StateMachine.add("LEARN_OPERATOR_FLAG_TOGGLE",
-                                   ToggleBool(learn_check_designator),
+                                   states.ToggleBool(learn_check_designator),
                                    transitions={"done": "ASK_DRINK"})
 
             # Ask for preferred beverage
