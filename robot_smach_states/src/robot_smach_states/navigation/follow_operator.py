@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # System
 import copy
 import math
@@ -100,7 +98,7 @@ class FollowOperator(smach.State):
             return False
 
         operator_current_fs = kdl_conversions.FrameStamped(self._operator._pose, "/map", stamp=rospy.Time.now())
-        # print "Operator position: %s" % self._operator.pose.position
+        # rospy.loginfo("Operator position: %s" % self._operator.pose.position)
 
         if not self._last_operator_fs:
             self._last_operator_fs = operator_current_fs
@@ -110,7 +108,7 @@ class FollowOperator(smach.State):
                 # Update the last pose
                 self._last_operator_fs = operator_current_fs
             else:
-                print "Operator is standing still for %f seconds" % (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec()
+                rospy.loginfo("Operator is standing still for %f seconds" % (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec())
                 # Check whether we passed the timeout
                 if (operator_current_fs.stamp - self._last_operator_fs.stamp).to_sec() > timeout:
                     return True
@@ -138,7 +136,7 @@ class FollowOperator(smach.State):
                 self._last_pose_stamped_time = rospy.Time.now()
             else:
 
-                print "Robot dit not move for x seconds: %f"%(now - self._last_pose_stamped_time).to_sec()
+                rospy.loginfo( "Robot dit not move for x seconds: %f"%(now - self._last_pose_stamped_time).to_sec())
 
                 # Check whether we passed the timeout
                 if (now - self._last_pose_stamped_time).to_sec() > timeout:
@@ -209,7 +207,7 @@ class FollowOperator(smach.State):
                 if not operator:
                     rospy.sleep(1)
 
-        print "We have a new operator: %s"%operator.id
+        rospy.loginfo("We have a new operator: %s" % operator.id)
         self._robot.speech.speak("Gotcha! I will follow you!", block=False)
         self._operator_id = operator.id
         self._operator = operator
@@ -217,7 +215,7 @@ class FollowOperator(smach.State):
 
         self._robot.head.close()
 
-        print ("NOW!!!")
+        rospy.loginfo("NOW!!!")
         rospy.sleep(3)
 
         return True
@@ -252,7 +250,7 @@ class FollowOperator(smach.State):
 
     def _backup_register(self):
         """This only happens when the operator was just registered, and never tracked"""
-        print "Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1"
+        rospy.loginfo("Operator already lost. Getting closest possible person entity at 1.5 m in front, radius = 1")
         self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                  center_point=kdl_conversions.VectorStamped(
                                                                      x=1.5, y=0, z=1,
@@ -260,7 +258,7 @@ class FollowOperator(smach.State):
         if self._operator:
             return True
         else:
-            print "Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1"
+            rospy.loginfo("Operator still lost. Getting closest possible laser entity at 1.5 m in front, radius = 1")
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                      center_point=kdl_conversions.VectorStamped(
                                                                          x=1.5, y=0, z=1,
@@ -269,7 +267,7 @@ class FollowOperator(smach.State):
         if self._operator:
             return True
         else:
-            print "Trying to register operator again"
+            rospy.loginfo("Trying to register operator again")
             self._robot.speech.speak("Oops, let's try this again...", block=False)
             self._register_operator()
             self._operator = self._robot.ed.get_entity( id=self._operator_id )
@@ -436,7 +434,7 @@ class FollowOperator(smach.State):
         ros_plan = frame_stampeds_to_pose_stampeds(kdl_plan)
         # Check if plan is valid. If not, remove invalid points from the path
         if not self._robot.base.global_planner.checkPlan(ros_plan):
-            print "Breadcrumb plan is blocked, removing blocked points"
+            rospy.loginfo("Breadcrumb plan is blocked, removing blocked points")
             # Go through plan from operator to robot and pick the first unoccupied point as goal point
             ros_plan = [point for point in ros_plan if self._robot.base.global_planner.checkPlan([point])]
 
@@ -489,7 +487,7 @@ class FollowOperator(smach.State):
             rospy.loginfo("best_detection = {}".format(best_detection))
             if best_detection:
 
-                # print "Best detection: {}".format(best_detection)
+                # rospy.loginfo("Best detection: {}".format(best_detection))
                 roi = best_detection.roi
 
                 try:
@@ -505,16 +503,16 @@ class FollowOperator(smach.State):
                                                                              center_point=operator_pos_kdl)
 
                 if recovered_operator:
-                    print "Found one!"
+                    rospy.loginfo("Found one!")
                     self._operator_id = recovered_operator.id
-                    print "Recovered operator id: %s" % self._operator_id
+                    rospy.loginfo("Recovered operator id: %s" % self._operator_id)
                     self._operator = recovered_operator
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again",block=False)
                     self._robot.head.close()
                     self._time_started = rospy.Time.now()
                     return True
                 else:
-                    print "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
+                    rospy.loginfo("Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl))
 
         self._robot.head.close()
         self._turn_towards_operator()
@@ -553,13 +551,13 @@ class FollowOperator(smach.State):
         pose.pose.orientation.z = zz
         pose.pose.orientation.w = ww
         plan = [pose]
-        print "Operator within self._lookat_radius"
+        rospy.loginfo("Operator within self._lookat_radius")
 
         self._robot.base.local_planner.setPlan(plan, p, o)
 
     def _replan(self):
         self._replan_attempts += 1
-        print "Trying to get a global plan"
+        rospy.loginfo("Trying to get a global plan")
         operator_position = self._last_operator._pose.p
         # Define end goal constraint, solely based on the (old) operator position
         self._replan_pc = PositionConstraint()
@@ -567,10 +565,10 @@ class FollowOperator(smach.State):
                                                                      self._operator_radius)
         ros_plan = self._robot.base.global_planner.getPlan(self._replan_pc)
         if not ros_plan or not self._robot.base.global_planner.checkPlan(ros_plan):
-            print "No global plan possible"
+            rospy.loginfo("No global plan possible")
         else:
             self._robot.speech.speak("Just a sec, let me try this way.")
-            print "Found a global plan, sending it to local planner"
+            rospy.loginfo("Found a global plan, sending it to local planner")
             self._replan_time = rospy.Time.now()
             self._replan_active = True
             oc = self._robot.base.local_planner.getCurrentOrientationConstraint()
@@ -582,7 +580,7 @@ class FollowOperator(smach.State):
         # Check if we still have an operator
         lost_operator = self._operator is None
 
-        print "Checking end criteria"
+        rospy.loginfo("Checking end criteria")
 
         if self._replan_active:
             if len(self._robot.base.global_planner.getPlan(self._replan_pc)) < 10:
@@ -591,10 +589,10 @@ class FollowOperator(smach.State):
                     return "lost_operator"
 
         # Try to recover operator if lost and reached last seen operator position
-        print "Operator is at %f meters distance" % self._operator_distance
+        rospy.loginfo("Operator is at %f meters distance" % self._operator_distance)
         # TODO: HACK! Magic number!
         if lost_operator and self._operator_distance < self._lookat_radius and self._standing_still_for_x_seconds(1.0):
-            print "lost operator and within lookat radius and standing still for 1 second"
+            rospy.loginfo("lost operator and within lookat radius and standing still for 1 second")
             if not self._recover_operator():
                 self._robot.base.local_planner.cancelCurrentPlan()
                 self._robot.speech.speak("I am unable to recover you")
@@ -627,19 +625,19 @@ class FollowOperator(smach.State):
             self._replan_attempts = 0
 
         # Check if we are already there (in operator radius and operator standing still long enough)
-        print "Checking if done following"
+        rospy.loginfo("Checking if done following")
         if self._operator_distance < self._operator_radius and self._operator_standing_still_for_x_seconds(self._operator_standing_still_timeout):
-            print "I'm close enough to the operator and he's been standing there for long enough"
-            print "Checking if we pass the start timeout"
+            rospy.loginfo("I'm close enough to the operator and he's been standing there for long enough")
+            rospy.loginfo("Checking if we pass the start timeout")
             if (rospy.Time.now() - self._time_started).to_sec() > self._start_timeout:
-                print "Passed"
+                rospy.loginfo("Passed")
                 self._operator_id_des.writeable.write(self._operator_id)
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "stopped"
             else:
-                print "Not passed"
+                rospy.loginfo("Not passed")
         else:
-            print "apparently not"
+            rospy.loginfo("apparently not")
 
         # No end criteria met
         return None
@@ -692,23 +690,23 @@ class FollowOperator(smach.State):
                 if self._replan_allowed:
                     # If replanned: if recently replanned, only update navigation if not standing still for too long
                     # (to make sure that local planner reaches align state) or just started following
-                    print "Replan=True, so check if we replanned..."
+                    rospy.loginfo("Replan=True, so check if we replanned...")
                     if self._replan_time.to_sec() > self._time_started.to_sec():
-                        print "We did replan at least once"
+                        rospy.loginfo("We did replan at least once")
                         if self._replan_active:
-                            print "and this plan is still active, so I'll give the global planner a chance"
+                            rospy.loginfo("and this plan is still active, so I'll give the global planner a chance")
                         else:
-                            print "but we reached that goal at some point, so we can safely update navigation"
+                            rospy.loginfo("but we reached that goal at some point, so we can safely update navigation")
                             self._update_navigation()
                     else:
-                        print "We never replanned so far, so we can safely update navigation"
+                        rospy.loginfo("We never replanned so far, so we can safely update navigation")
                         self._update_navigation()
                     # else:
-                    #     print "Updating navigation"
+                    #     rospy.loginfo("Updating navigation")
                     #     self._update_navigation()
                 else:
                     self._update_navigation()
-                    print "Updating navigation."
+                    rospy.loginfo("Updating navigation.")
 
             rospy.sleep(self._period) # Loop at 2Hz
 
@@ -726,7 +724,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
     else:
-        print "Please provide robot name as argument."
+        rospy.loginfo("Please provide robot name as argument.")
         exit(1)
 
     rospy.init_node('test_follow_operator')
