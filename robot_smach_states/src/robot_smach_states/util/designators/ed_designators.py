@@ -334,34 +334,6 @@ class EmptySpotDesignator(Designator):
         rospy.logerr("Could not find an empty spot")
         return None
 
-    def select_best_feasible_poi(self, open_POIs):
-        # List with tuples containing both the POI and the distance the
-        # robot needs to travel in order to place there
-        open_POIs_dist = [(poi, self.distance_to_poi_area(poi)) for poi in open_POIs]
-
-        # Feasible POIS: discard
-        feasible_POIs = []
-        for tup in open_POIs_dist:
-            if tup[1]:
-                feasible_POIs.append(tup)
-        if any(feasible_POIs):
-            feasible_POIs.sort(key=lambda tup: tup[1])  # sorts in place
-
-            # We don't care about small differences
-            nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
-            feasible_POIs = [f for f in feasible_POIs if (f[1] - feasible_POIs[0][1]) < nav_threshold]
-
-            feasible_POIs.sort(key=lambda tup: tup[0].edge_score, reverse=True)
-            best_poi = feasible_POIs[0][0]  # Get the POI of the best match
-
-            selection = self.create_selection_marker(best_poi)
-            self.marker_pub.publish(MarkerArray([selection]))
-
-            return best_poi
-        else:
-            rospy.logerr("Could not find an empty spot")
-            return None
-
     def is_poi_occupied(self, frame_stamped):
         entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
                                                      radius=self._spacing)
