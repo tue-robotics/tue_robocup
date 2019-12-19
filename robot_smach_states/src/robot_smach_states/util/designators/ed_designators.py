@@ -323,8 +323,16 @@ class EmptySpotDesignator(Designator):
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
         open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
+        open_POIs.sort(key=self.distance_to_poi_area_heuristic)
 
-        return self.select_best_feasible_poi(open_POIs)
+        for POI in open_POIs:
+            if self.distance_to_poi_area(poi):
+                selection = self.create_selection_marker(best_poi)
+                self.marker_pub.publish(MarkerArray([selection]))
+                return POI
+
+        rospy.logerr("Could not find an empty spot")
+        return None
 
     def select_best_feasible_poi(self, open_POIs):
         # List with tuples containing both the POI and the distance the
@@ -358,6 +366,20 @@ class EmptySpotDesignator(Designator):
         entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
                                                      radius=self._spacing)
         return not any(entities_at_poi)
+
+    def distance_to_poi_area_heuristic(self, frame_stamped):
+        base_pose = self.base.get_location()
+        bo = self.robot.arms.values()[0].base_offset
+
+        offset_pose = base_pose.frame * bo
+        offset_pose_x = offset_pose[0]
+        offset_pose_y = offset_pose[1]
+
+        x = frame_stamped.frame.p.x
+        y = frame_stamped.frame.p.y
+
+        dist = math.hypot(offset_pose_x - x, offset_pose_y - y)
+        return dist
 
     def distance_to_poi_area(self, frame_stamped):
 
