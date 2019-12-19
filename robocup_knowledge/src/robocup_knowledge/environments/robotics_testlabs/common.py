@@ -49,7 +49,6 @@ objects = [
     {'category': 'drink',               'name': 'beer',             'color': 'brown',           'volume': 388,      'weight': 100},
     {'category': 'drink',               'name': 'bifrutas',         'color': 'blue',            'volume': 378,      'weight': 100},
     {'category': 'drink',               'name': 'coke',             'color': 'red',             'volume': 376,      'weight': 335},
-    {'category': 'drink',               'name': 'coke_zero',        'color': 'red',             'volume': 376,      'weight': 335},
     {'category': 'drink',               'name': 'fanta',            'color': 'orange',          'volume': 376,      'weight': 335},
     {'category': 'drink',               'name': 'ice_tea',          'color': 'yellow',          'volume': 376,      'weight': 335},
     {'category': 'drink',               'name': 'tea',              'color': 'green',           'volume': 877,      'weight': 100},
