@@ -16,12 +16,12 @@
   <build_depend>pcl_ros</build_depend>
 
   <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>python-markdown</exec_depend>
+  <exec_depend>python-numpy</exec_depend>
+  <exec_depend>python-xhtml2pdf</exec_depend>
   <exec_depend>robot_skills</exec_depend>
   <exec_depend>robot_smach_states</exec_depend>
   <exec_depend>rospy</exec_depend>
-  <exec_depend>python-markdown</exec_depend>
-  <exec_depend>python-xhtml2pdf</exec_depend>
-  <exec_depend>python-numpy</exec_depend>
   <exec_depend>tue_msgs</exec_depend>
 
 </package>
