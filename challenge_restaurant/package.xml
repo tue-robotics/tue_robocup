@@ -11,6 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>depth_image_proc</depend>
+  <depend>roscpp</depend>
 
   <build_depend>pcl_ros</build_depend>
   <build_depend>robot_skills</build_depend>
