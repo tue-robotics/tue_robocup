@@ -14,8 +14,6 @@
   <depend>roscpp</depend>
 
   <build_depend>pcl_ros</build_depend>
-  <build_depend>robot_skills</build_depend>
-  <build_depend>robot_smach_states</build_depend>
 
   <exec_depend>pcl_ros</exec_depend>
   <exec_depend>robot_skills</exec_depend>
