@@ -1,4 +1,5 @@
 __author__ = 'loy'
+import weakref
 from deprecation_warnings import get_caller_info
 import rospy
 
@@ -20,7 +21,7 @@ class Designator(object):
     >>> assert(issubclass(d.resolve_type, str))
     """
 
-    instances = []
+    instances = weakref.WeakSet()
 
     def __init__(self, initial_value=None, resolve_type=None, name=None):
         """
@@ -46,7 +47,7 @@ class Designator(object):
         else:
             self._resolve_type = resolve_type
 
-        Designator.instances += [self]
+        Designator.instances.add(self)
 
     def resolve(self):
         """Selects a new goal and sets it as the current value."""
@@ -205,12 +206,12 @@ class VariableWriter(object):
     ['a', 'b', 'c', 'd']
     """
 
-    instances = []
+    instances = weakref.WeakSet()
 
     def __init__(self, variable_designator):
         self.variable_designator = variable_designator
         self.name = "writeable({})".format(self.variable_designator.name)
-        VariableWriter.instances += [self]
+        VariableWriter.instances.add(self)
 
     def write(self, value):
         """
