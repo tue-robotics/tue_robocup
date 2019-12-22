@@ -4,6 +4,8 @@
 #
 # \author Rein Appeldoorn
 
+from __future__ import absolute_import
+
 import math
 from collections import namedtuple
 

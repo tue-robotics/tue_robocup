@@ -1,4 +1,4 @@
-__author__ = 'rokus'
+from __future__ import absolute_import, print_function
 
 # ROS
 import smach

@@ -1,6 +1,8 @@
 """
 Module contains states to guide an operator to a designated location.
 """
+from __future__ import absolute_import
+
 import math
 
 # ROS
@@ -13,7 +15,7 @@ from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
 
-import navigation
+import robot_smach_states.navigation as navigation
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 
