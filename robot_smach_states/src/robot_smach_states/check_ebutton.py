@@ -14,8 +14,7 @@ from robot_smach_states.human_interaction.human_interaction import Say
 class CheckEButton(smach.State):
     """Check if the robot's Emergency button is pressed"""
     def __init__(self, robot=None):
-        smach.State.__init__(self, outcomes=["pressed",
-                                             "released"])
+        smach.State.__init__(self, outcomes=["pressed", "released"])
         self.robot = robot
 
     def execute(self, userdata=None):

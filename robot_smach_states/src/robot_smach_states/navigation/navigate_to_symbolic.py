@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 # ROS
-from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
@@ -10,9 +9,6 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
 from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.util.designators import check_resolve_type
-
-
-# ----------------------------------------------------------------------------------------------------
 
 
 class NavigateToSymbolic(NavigateTo):

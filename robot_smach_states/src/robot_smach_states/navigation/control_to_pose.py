@@ -10,7 +10,7 @@ import math
 from collections import namedtuple
 
 # ROS
-from geometry_msgs.msg import PoseStamped, Twist, Vector3
+from geometry_msgs.msg import PoseStamped
 import rospy
 import smach
 import tf2_geometry_msgs

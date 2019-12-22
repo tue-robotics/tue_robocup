@@ -4,7 +4,6 @@ import rospy
 import smach
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_smach_states.util.startup import startup
 from robot_skills.classification_result import ClassificationResult
 
 

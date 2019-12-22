@@ -8,7 +8,6 @@ import smach
 from ed_msgs.msg import EntityInfo
 from robot_skills.arms import PublicArm
 from robot_skills.arms import GripperState
-from robot_skills.util import transformations
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator

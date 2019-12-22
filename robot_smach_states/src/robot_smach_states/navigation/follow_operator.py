@@ -8,7 +8,9 @@ import math
 import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
 import PyKDL as kdl
-import smach, rospy, sys
+import smach
+import rospy
+import sys
 from visualization_msgs.msg import Marker
 
 # TU/e Robotics

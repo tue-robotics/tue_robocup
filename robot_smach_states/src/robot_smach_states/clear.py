@@ -3,15 +3,14 @@ from __future__ import absolute_import
 # ROS
 import rospy
 import smach
-import tf2_ros
 
 # TU/e Robotics
-from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import check_type
-from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator, EmptySpotDesignator
+from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator
+
 
 class SelectEntity(smach.State):
     def __init__(self, robot, entitity_classifications_designator, selected_entity_designator):
@@ -118,4 +117,3 @@ class Clear(smach.StateMachine):
                                    transitions={'done': 'INSPECT_SOURCE_ENTITY',
                                                 'failed': 'failed'}
                                    )
-

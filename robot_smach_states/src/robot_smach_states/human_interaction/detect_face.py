@@ -3,8 +3,6 @@ from __future__ import absolute_import
 # ROS
 import rospy
 import smach
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
 
 
 class DetectFace(smach.State):

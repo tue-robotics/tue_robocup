@@ -5,7 +5,6 @@ import collections
 import copy
 import math
 import random
-import sys
 import hmi
 
 # ROS
