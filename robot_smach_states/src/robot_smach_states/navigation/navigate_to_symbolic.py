@@ -7,8 +7,8 @@ import rospy
 from cb_planner_msgs_srvs.msg import *
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
-from robot_smach_states.navigation import NavigateTo
-from robot_smach_states.util.designators import check_resolve_type
+from robot_smach_states.navigation.navigation import NavigateTo
+from robot_smach_states.util.designators.checks import check_resolve_type
 
 
 class NavigateToSymbolic(NavigateTo):

@@ -8,10 +8,10 @@ import smach
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
-from robot_smach_states.navigation import NavigateToPlace
+from robot_smach_states.navigation.navigate_to_place import NavigateToPlace
 from robot_smach_states.world_model import Inspect
 from robot_smach_states.util.designators.ed_designators import EmptySpotDesignator
-from robot_smach_states.util.designators import check_type
+from robot_smach_states.util.designators.checks import check_type
 
 
 class PreparePlace(smach.State):

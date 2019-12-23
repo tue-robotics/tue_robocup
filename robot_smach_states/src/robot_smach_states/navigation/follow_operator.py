@@ -5,7 +5,6 @@ import copy
 import math
 
 # ROS
-import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
 import PyKDL as kdl
 import smach
@@ -19,7 +18,7 @@ from hmi import TimeoutException
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
 from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import VariableDesignator
+from robot_smach_states.util.designators.core import VariableDesignator
 
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):

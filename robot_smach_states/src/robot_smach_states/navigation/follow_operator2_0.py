@@ -8,7 +8,6 @@ import random
 import hmi
 
 # ROS
-import geometry_msgs  # Only used for publishing markers
 import geometry_msgs.msg
 import rospy
 import smach
@@ -17,7 +16,7 @@ from visualization_msgs.msg import Marker
 # TU/e
 from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 from robot_skills.util import kdl_conversions
-from robot_smach_states.human_interaction import LearnOperator
+from robot_smach_states.human_interaction.learn_operator import LearnOperator
 
 
 class CrumbWaypoint:

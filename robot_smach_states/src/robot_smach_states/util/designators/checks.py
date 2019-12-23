@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 __author__ = 'loy'
-import core
+
+from robot_smach_states.util.designators.core import VariableWriter
 
 
 def check_resolve_type(designator, *allowed_types):
@@ -124,7 +127,7 @@ def check_type(designator_or_value, *allowed_types):
 
 
 def is_writeable(variable_writer):
-    if isinstance(variable_writer, core.VariableWriter):
+    if isinstance(variable_writer, VariableWriter):
         return True
     else:
         raise TypeError("{0} is not writable".format(variable_writer))
