@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # System
 import os
 
@@ -8,7 +6,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_smach_states.human_interaction.human_interaction import Say
+from human_interaction import Say
 
 
 class CheckEButton(smach.State):

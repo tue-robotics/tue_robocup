@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import rospy
 import smach
 import robot_smach_states as states

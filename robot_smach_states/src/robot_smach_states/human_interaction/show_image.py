@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # ROS
 import os
 import rospy

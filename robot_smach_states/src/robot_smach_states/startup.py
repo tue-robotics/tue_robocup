@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-
 # System
 from functools import partial
 import math
@@ -13,10 +11,10 @@ import smach
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
-from robot_smach_states import check_ebutton
-from robot_smach_states.human_interaction.human_interaction import Say
-from robot_smach_states.navigation.navigation import ForceDrive
-import robot_smach_states.utility as utility
+import check_ebutton
+import human_interaction
+from navigation import ForceDrive
+import utility
 
 
 class StartChallengeRobust(smach.StateMachine):
@@ -58,8 +56,8 @@ class StartChallengeRobust(smach.StateMachine):
                                                 "timeout": "Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
-                                   Say(robot, ["Hi there, I will now wait until the door is opened",
-                                               "I'm waiting for the door"], block=False),
+                                   human_interaction.Say(robot, ["Hi there, I will now wait until the door is opened",
+                                                                 "I'm waiting for the door"], block=False),
                                    transitions={"spoken": "WAIT_FOR_DOOR"})
 
             # Start laser sensor that may change the state of the door if the door is open:
@@ -69,13 +67,13 @@ class StartChallengeRobust(smach.StateMachine):
                                                 "open": "DOOR_OPEN"})
 
             smach.StateMachine.add("DOOR_CLOSED",
-                                   Say(robot, ["Door is closed, please open the door",
-                                               "I'd start, if only you'd let me in",
-                                               "Please let me in"]),
+                                   human_interaction.Say(robot, ["Door is closed, please open the door",
+                                                                 "I'd start, if only you'd let me in",
+                                                                 "Please let me in"]),
                                    transitions={"spoken": "WAIT_FOR_DOOR"})
 
             smach.StateMachine.add("DOOR_OPEN",
-                                   Say(robot, "Door is open!", block=False),
+                                   human_interaction.Say(robot, "Door is open!", block=False),
                                    transitions={"spoken": "INIT_POSE"})
 
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial
@@ -108,9 +106,8 @@ class EnterArena(smach.StateMachine):
         with self:
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add("THROUGH_DOOR",
-                                   Say(robot, ["I will start my task now",
-                                               "Let's rock and roll!",
-                                               "Let's kick some ass!"], block=False),
+                                   human_interaction.Say(robot, ["I will start my task now", "Let's rock and roll!",
+                                                                 "Let's kick some ass!"], block=False),
                                    transitions={"spoken": "FORCE_DRIVE_THROUGH_DOOR"})
 
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',

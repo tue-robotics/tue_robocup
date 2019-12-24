@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # ROS
 import PyKDL as kdl
 import rospy

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # System
 import numpy as np
 from threading import Event

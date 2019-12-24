@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # ROS
 from geometry_msgs.msg import *
 import rospy

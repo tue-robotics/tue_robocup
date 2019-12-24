@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from robot_skills.util import kdl_conversions
 import smach
 import math

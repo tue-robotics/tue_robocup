@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # ROS
 import rospy
 import smach
@@ -7,7 +5,7 @@ import std_msgs.msg
 
 # TU/e Robotics
 import robot_smach_states.util.designators as ds
-from robot_smach_states.util.robocup_recorder import start_robocup_recorder
+from util.robocup_recorder import start_robocup_recorder
 
 
 class Initialize(smach.State):
