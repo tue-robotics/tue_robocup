@@ -147,12 +147,16 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
         state_label = state2label.get(state, state)  # Get the label of state but default to ugly __repr__
         for designator_role, designator in state.__dict__.iteritems():  # Iterate the self.xxx members of each state
             # If the member is also a designator, then process it.
+            # This check is espcially added to catch sets before checked if they are in the weaksets, which will raise
+            # a TypeError.
+            if not isinstance(designator, Designator) and not isinstance(designator, VariableWriter):
+                continue
+
             if designator in designators:
                 usages += [DesignatorUsedInState(state_label, designator, designator_role)]
 
             if designator in writers:
                 usages += [DesignatorWrittenInState(state_label, designator, designator_role)]
-
 
     for parent_designator in designators:
         # Iterate the self.xxx members of each designator
