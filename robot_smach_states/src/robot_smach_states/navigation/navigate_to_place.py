@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import math
 
@@ -9,8 +11,8 @@ import rospy
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from robot_skills.util.kdl_conversions import FrameStamped
-from robot_smach_states.navigation import NavigateTo
-from robot_smach_states.util.designators import Designator, check_resolve_type
+from .navigation import NavigateTo
+from ..util.designators import Designator, check_resolve_type
 
 
 # ----------------------------------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 from geometry_msgs.msg import *
 import rospy
@@ -6,7 +8,7 @@ import rospy
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 import ed_msgs.msg
-from robot_smach_states.navigation import NavigateTo
+from .navigation import NavigateTo
 from robot_smach_states.util.designators import check_resolve_type
 
 
