@@ -12,10 +12,8 @@ import smach
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.navigation.navigate_to_observe import NavigateToObserve
-from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
-from robot_smach_states.util.designators.core import Designator, VariableDesignator
-from robot_smach_states.util.designators.checks import check_resolve_type, check_type, is_writeable
+from robot_smach_states.navigation import NavigateToObserve, NavigateToSymbolic
+import robot_smach_states.util.designators as ds
 
 
 def _color_info(string):
@@ -109,8 +107,8 @@ class UpdateDestEntityPoseWithSrcEntity(smach.State):
         """
         super(UpdateDestEntityPoseWithSrcEntity, self).__init__(outcomes=["done", "failed"])
         self._robot = robot
-        check_type(src_entity_designator, Entity)
-        check_type(dst_entity_designator, Entity, str)
+        ds.check_type(src_entity_designator, Entity)
+        ds.check_type(dst_entity_designator, Entity, str)
         self._src_entity_designator = src_entity_designator
         self._dst_entity_designator = dst_entity_designator
         self._dst_entity_type = dst_entity_type
@@ -159,19 +157,19 @@ class SegmentObjects(smach.State):
         self.unknown_threshold = unknown_threshold
         self.filter_threshold = filter_threshold
 
-        check_resolve_type(entity_to_inspect_designator, Entity)
+        ds.check_resolve_type(entity_to_inspect_designator, Entity)
         self.entity_to_inspect_designator = entity_to_inspect_designator
 
-        check_type(segmentation_area, str)
+        ds.check_type(segmentation_area, str)
         if isinstance(segmentation_area, str):
-            self.segmentation_area_des = VariableDesignator(segmentation_area)
-        elif isinstance(segmentation_area, Designator):
+            self.segmentation_area_des = ds.VariableDesignator(segmentation_area)
+        elif isinstance(segmentation_area, ds.Designator):
             self.segmentation_area_des = segmentation_area
         else:
             raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
 
-        check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
-        is_writeable(segmented_entity_ids_designator)
+        ds.check_resolve_type(segmented_entity_ids_designator, [ClassificationResult])
+        ds.is_writeable(segmented_entity_ids_designator)
         self.segmented_entity_ids_designator = segmented_entity_ids_designator
 
     def execute(self, userdata=None):
@@ -278,7 +276,7 @@ class Inspect(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         if not objectIDsDes:
-            objectIDsDes = VariableDesignator([], resolve_type=[ClassificationResult])
+            objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
             if navigation_area:
@@ -312,7 +310,7 @@ class CheckVolumeEmpty(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['empty', 'occupied',  'partially_occupied', 'failed'])
 
-        seen_entities_des = VariableDesignator([], resolve_type=[ClassificationResult])
+        seen_entities_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
             smach.StateMachine.add('INSPECT',

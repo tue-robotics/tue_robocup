@@ -8,10 +8,8 @@ import smach
 from robot_skills.classification_result import ClassificationResult
 
 import robot_smach_states as states
-from robot_smach_states.util.designators.arm import UnoccupiedArmDesignator
-from robot_smach_states.util.designators.checks import check_type
-from robot_smach_states.util.designators.core import VariableDesignator
-from robot_smach_states.util.designators.ed_designators import EdEntityDesignator, EntityByIdDesignator
+from robot_smach_states.util.designators import check_type
+from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator
 
 
 class SelectEntity(smach.State):
@@ -34,7 +32,6 @@ class SelectEntity(smach.State):
         self._selected_entity_designator.id_ = entity_classification.id
 
         return "entity_selected"
-
 
 class isitclear(smach.State):
     """

@@ -12,11 +12,11 @@ import PyKDL as kdl
 
 # Robot skills
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.utility import WaitTime
-from robot_smach_states.util.designators.ed_designators import EdEntityDesignator
+from robot_smach_states import WaitTime
+from robot_smach_states.util.designators import EdEntityDesignator
 
 import robot_smach_states.navigation as navigation
-from robot_smach_states.human_interaction.human_interaction import Say
+from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 
 

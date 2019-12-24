@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 """
 Introspection for designators.
 Usage: pass a Smach state-machine to analyse_designators.

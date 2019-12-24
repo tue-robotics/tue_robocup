@@ -12,8 +12,8 @@ import smach
 
 # TU/e Robotics
 import robot_smach_states as states
-from robot_smach_states.util.designators.checks import check_type, is_writeable
-from robot_smach_states.util.designators.ed_designators import EntityByIdDesignator
+import robot_smach_states.util.designators as ds
+from robot_smach_states.util.designators import check_type
 from robot_skills.util import kdl_conversions
 
 
@@ -52,7 +52,7 @@ class FindPerson(smach.State):
         self._discard_other_labels = discard_other_labels
 
         if found_entity_designator:
-            is_writeable(found_entity_designator)
+            ds.is_writeable(found_entity_designator)
         self._found_entity_designator = found_entity_designator
 
         self._room = room
@@ -185,8 +185,8 @@ class FindPersonInRoom(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        waypoint_designator = EntityByIdDesignator(robot=robot, id=area + "_waypoint")
-        room_designator = EntityByIdDesignator(robot=robot, id=area)
+        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=area + "_waypoint")
+        room_designator = ds.EntityByIdDesignator(robot=robot, id=area)
 
         with self:
             smach.StateMachine.add("DECIDE_NAVIGATE_STATE",

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import rospy
 import copy
 from robot_smach_states.util.designators.checks import check_type

@@ -4,7 +4,7 @@ From:
 - http://stackoverflow.com/questions/2536307/decorators-in-the-python-standard-lib-deprecated-specifically
 """
 
-from __future__ import absolute_import, print_function
+from __future__ import print_function
 
 __author__ = 'Loy'
 

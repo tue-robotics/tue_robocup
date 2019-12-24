@@ -4,7 +4,7 @@ from geometry_msgs.msg import *
 
 # TU/e Robotics
 from cb_planner_msgs_srvs.msg import *
-from robot_smach_states.navigation.navigation import NavigateTo
+from robot_smach_states.navigation import NavigateTo
 
 
 # ----------------------------------------------------------------------------------------------------

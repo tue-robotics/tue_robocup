@@ -8,11 +8,11 @@ import smach
 from ed_msgs.msg import EntityInfo
 from robot_skills.arms import PublicArm
 from robot_skills.arms import GripperState
-from robot_smach_states.human_interaction.human_interaction import Say
+from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetPart
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
-from robot_smach_states.util.designators.utility import LockingDesignator
-from robot_smach_states.util.designators.checks import check_type
+from robot_smach_states.util.designators import LockingDesignator
+from robot_smach_states.util.designators import check_type
 
 
 class ArmToJointConfig(smach.State):

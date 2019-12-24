@@ -12,8 +12,7 @@ import smach
 
 # TU/e Robotics
 from hmi import TimeoutException
-import robot_smach_states.util.designators.checks as ds_check
-import robot_smach_states.util.designators.core as ds_core
+import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 
 # Say: Immediate Say with optional named placeholders for designators
@@ -34,24 +33,24 @@ class Say(smach.State):
     >>> say.execute()
     'spoken'
     >>>
-    >>> say1 = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds_core.VariableDesignator("hero"))
+    >>> say1 = Say(robot, ["Hey {a}", "He {a}", "Hoi {a}"], a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes1 = [say.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes1)
     >>>
-    >>> say2 = Say(robot, ds_core.VariableDesignator('aap'))
+    >>> say2 = Say(robot, ds.VariableDesignator('aap'))
     >>> say2.execute()
     'spoken'
     >>> robot.speech.speak.assert_called_with('aap', None, None, None, None, True)
     >>>
-    >>> des = ds_core.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"], resolve_type=[str])
-    >>> say3 = Say(robot, des, a=ds_core.VariableDesignator("hero"))
+    >>> des = ds.VariableDesignator(["Hey {a}", "He {a}", "Hoi {a}"], resolve_type=[str])
+    >>> say3 = Say(robot, des, a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes3 = [say3.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes3)
     >>>
-    >>> des2 = ds_core.VariableDesignator(["Hey", "He", "Hoi"])
-    >>> say4 = Say(robot, des2, a=ds_core.VariableDesignator("hero"))
+    >>> des2 = ds.VariableDesignator(["Hey", "He", "Hoi"])
+    >>> say4 = Say(robot, des2, a=ds.VariableDesignator("hero"))
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes4 = [say4.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes4)
@@ -61,13 +60,13 @@ class Say(smach.State):
     >>> outcomes5 = [say5.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes5)
     >>>
-    >>> say6 = Say(robot, des, b=ds_core.VariableDesignator("hero"))
+    >>> say6 = Say(robot, des, b=ds.VariableDesignator("hero"))
     >>> say6.execute()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     RuntimeError: ...
     >>>
-    >>> des3 = ds_core.VariableDesignator(resolve_type=str).writeable
+    >>> des3 = ds.VariableDesignator(resolve_type=str).writeable
     >>> des3.write('banana')
     >>> say6 = Say(robot, des3)
     >>> say6.execute()
@@ -103,14 +102,14 @@ class Say(smach.State):
         """
         smach.State.__init__(self, outcomes=["spoken"])
 
-        ds_check.check_type(sentence, [str], str)
+        ds.check_type(sentence, [str], str)
         assert(isinstance(language, str) or isinstance(language, type(None)))
         assert(isinstance(personality, str) or isinstance(personality, type(None)))
         assert(isinstance(voice, str) or isinstance(voice, type(None)))
         assert(isinstance(mood, str) or isinstance(mood, type(None)))
         assert(isinstance(block, bool))
 
-        assert(all(isinstance(v, ds_core.Designator) for v in place_holders.values()))
+        assert(all(isinstance(v, ds.Designator) for v in place_holders.values()))
 
         self.ph_designators = place_holders
 
@@ -215,10 +214,10 @@ class HearOptionsExtra(smach.State):
 
     Example of usage:
         from hmi import HMIResult
-        spec = ds_core.Designator("T --> <name>)|<name>)")
-        choices = ds_core.Designator({"name"  : names_list,
+        spec = ds.Designator("T --> <name>)|<name>)")
+        choices = ds.Designator({"name"  : names_list,
                               "prefix": ["My name is", "I'm called"]})
-        answer = ds_core.VariableDesignator(resolve_type=HMIResult)
+        answer = ds.VariableDesignator(resolve_type=HMIResult)
         state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
@@ -248,9 +247,9 @@ class HearOptionsExtra(smach.State):
 
         self.robot = robot
 
-        ds_check.check_resolve_type(spec_designator, str)
-        ds_check.check_resolve_type(speech_result_designator, HMIResult)
-        ds_check.is_writeable(speech_result_designator)
+        ds.check_resolve_type(spec_designator, str)
+        ds.check_resolve_type(speech_result_designator, HMIResult)
+        ds.is_writeable(speech_result_designator)
 
         self.spec_designator = spec_designator
         self.speech_result_designator = speech_result_designator
@@ -358,7 +357,7 @@ class LearnPerson(smach.State):
         self._robot = robot
         self._person_name = person_name
         if name_designator:
-            ds_check.check_resolve_type(name_designator, str)
+            ds.check_resolve_type(name_designator, str)
         self._name_designator = name_designator
         self._nr_tries = nr_tries
 
@@ -461,9 +460,9 @@ class AskPersonName(smach.State):
             names_spec = "T['name': N] -> NAME[N]\n\n"
             for dn in self.name_options:
                 names_spec += "NAME['{name}'] -> {name}\n".format(name=dn)
-            spec = ds_core.Designator(names_spec)
+            spec = ds.Designator(names_spec)
 
-            answer = ds_core.VariableDesignator(resolve_type=HMIResult)
+            answer = ds.VariableDesignator(resolve_type=HMIResult)
             state = HearOptionsExtra(self.robot, spec, answer.writeable)
             try:
                 outcome = state.execute()

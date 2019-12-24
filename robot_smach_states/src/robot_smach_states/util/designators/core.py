@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-
 __author__ = 'loy'
-
 import weakref
-from robot_smach_states.util.designators.deprecation_warnings import get_caller_info
+from deprecation_warnings import get_caller_info
 import rospy
 
 
