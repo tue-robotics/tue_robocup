@@ -2,3 +2,7 @@
     path = robot_smach_states/docs
     url = https://github.com/tue-robotics/tue_documentation_sphinx.git
     branch = master
+[submodule "robot_skills/docs"]
+    path = robot_skills/docs
+    url = https://github.com/tue-robotics/tue_documentation_sphinx.git
+    branch = master
