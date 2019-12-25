@@ -1,0 +1,4 @@
+[submodule "robot_smach_states/docs"]
+    path = robot_smach_states/docs
+    url = https://github.com/tue-robotics/tue_documentation_sphinx.git
+    branch = master
