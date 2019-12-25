@@ -13,7 +13,7 @@ from robot_smach_states.util.designators import check_type
 
 
 class PreparePlace(smach.State):
-    def __init__(self, robot, placement_pose, arm):
+    def __init__(self, robot, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
         :param robot: Robot to execute state with
@@ -24,20 +24,13 @@ class PreparePlace(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Check types or designator resolve types
-        check_type(placement_pose, FrameStamped)
         check_type(arm, PublicArm)
 
         # Assign member variables
         self._robot = robot
-        self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
     def execute(self, userdata=None):
-
-        placement_fs = self._placement_pose_designator.resolve()
-        if not placement_fs:
-            rospy.logerr("Could not resolve placement_pose")
-            return "failed"
 
         arm = self._arm_designator.resolve()
         if not arm:
@@ -252,7 +245,7 @@ class Place(smach.StateMachine):
                                                     'failed': 'failed'}
                                        )
 
-            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
+            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
                                    transitions={'succeeded': 'NAVIGATE_TO_PLACE',
                                                 'failed': 'failed'})
 
