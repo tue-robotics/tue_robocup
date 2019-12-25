@@ -8,7 +8,9 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from robot_smach_states.navigation import NavigateToPlace
 from robot_smach_states.world_model import Inspect
+from robot_smach_states.utility import LockDesignator
 from robot_smach_states.util.designators.ed_designators import EmptySpotDesignator
+from robot_smach_states.util.designators.utility import LockingDesignator
 from robot_smach_states.util.designators import check_type
 
 
@@ -236,6 +238,8 @@ class Place(smach.StateMachine):
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
 
+        locking_place_designator = LockingDesignator(place_designator)
+
         with self:
 
             if furniture_designator is not None:
@@ -246,15 +250,18 @@ class Place(smach.StateMachine):
                                        )
 
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
-                                   transitions={'succeeded': 'NAVIGATE_TO_PLACE',
+                                   transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_designator, arm),
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
+                                   transitions={'locked': 'NAVIGATE_TO_PLACE'})
+
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
                                                 'arrived': 'PUT'})
 
-            smach.StateMachine.add('PUT', Put(robot, item_to_place, place_designator, arm),
+            smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'failed'})
 
