@@ -340,6 +340,9 @@ class EmptySpotDesignator(Designator):
         return not any(entities_at_poi)
 
     def distance_to_poi_area_heuristic(self, frame_stamped):
+
+        # ToDo: cook up something better: we need the arm that we're currently using but this would require a
+        # rather large API break (issue #739)
         base_pose = self.robot.base.get_location()
         bo = self.robot.arms.values()[0].base_offset
 
