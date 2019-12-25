@@ -9,7 +9,7 @@ from robot_skills.util.volume import BoxVolume
 from robot_skills.util.kdl_conversions import FrameStamped
 
 # Robot Smach States
-from robot_smach_states.navigation.guidance import TourGuide, Guide
+from robot_smach_states.navigation.guidance import TourGuide
 
 
 class TestTourGuide(unittest.TestCase):
