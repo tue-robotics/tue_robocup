@@ -19,7 +19,6 @@ class PreparePlace(smach.State):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
         :param robot: Robot to execute state with
-        :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
         ArmHoldingEntityDesignator
         """
