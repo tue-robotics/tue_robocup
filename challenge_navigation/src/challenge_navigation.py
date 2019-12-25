@@ -1,5 +1,7 @@
-#!/usr/bin/python
-import roslib;
+#!/usr/bin/env python
+
+from __future__ import print_function
+
 import rospy
 import smach
 import sys
@@ -12,10 +14,6 @@ import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
-
-print "=============================================="
-print "==           CHALLENGE NAVIGATION           =="
-print "=============================================="
 
 
 class checkTimeOut(smach.State):
@@ -190,6 +188,10 @@ class DetermineObject(smach.State):
         return "done"
 
 def setup_statemachine(robot):
+
+    print("==============================================")
+    print("==           CHALLENGE NAVIGATION           ==")
+    print("==============================================")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 

@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+from __future__ import print_function
 
 import rospy
 import smach
@@ -14,14 +16,14 @@ from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
-print "=============================================="
-print "==         CHALLENGE HELP ME CARRY          =="
-print "=============================================="
-
 
 class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+
+        print("==============================================")
+        print("==         CHALLENGE HELP ME CARRY          ==")
+        print("==============================================")
 
         self.target_destination = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place)
 
