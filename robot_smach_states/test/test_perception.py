@@ -31,7 +31,7 @@ class TestLookAtEntity(unittest.TestCase):
         """Test that the robot looks at the center point of the named area, w.r.t. the frame of the entity"""
         entity_ds = ds.Designator(self.entity)
 
-        state = states.LookAtEntity(self.robot, entity_ds, waittime=0)
+        state = states.perception.LookAtEntity(self.robot, entity_ds, waittime=0)
 
         state.execute()
 
@@ -62,7 +62,7 @@ class TestLookAtArea(unittest.TestCase):
         entity_ds = ds.Designator(self.entity)
         area_ds = ds.Designator(self.area)
 
-        state = states.LookAtArea(self.robot, entity_ds, area_ds, waittime=0)
+        state = states.perception.LookAtArea(self.robot, entity_ds, area_ds, waittime=0)
 
         state.execute()
 
