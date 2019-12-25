@@ -8,7 +8,7 @@ import robot_smach_states as states
 
 
 class TestForceDrive(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.robot = Mockbot()

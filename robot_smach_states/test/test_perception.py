@@ -8,7 +8,6 @@ from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
-from robot_skills.util.shape import RightPrism
 
 # Robot Smach States
 import robot_smach_states as states
@@ -16,7 +15,7 @@ import robot_smach_states.util.designators as ds
 
 
 class TestLookAtEntity(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.robot = Mockbot()

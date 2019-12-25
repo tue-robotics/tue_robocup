@@ -59,7 +59,8 @@ class TestHandOverFromHuman(unittest.TestCase):
         self.robot.arms["leftArm"].send_joint_goal.assert_not_called()
         self.robot.arms["leftArm"].send_gripper_goal.assert_not_called()
 
-        self.robot.arms["rightArm"].send_joint_goal.assert_any_call('handover_to_human', max_joint_vel=mock.ANY, timeout=mock.ANY)
+        self.robot.arms["rightArm"].send_joint_goal.assert_any_call('handover_to_human', max_joint_vel=mock.ANY,
+                                                                    timeout=mock.ANY)
 
         self.robot.arms["rightArm"].handover_to_robot.assert_called_once()
 
