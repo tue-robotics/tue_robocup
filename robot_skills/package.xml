@@ -39,7 +39,11 @@
   <depend>visualization_msgs</depend>
 
   <exec_depend>python-mock</exec_depend>
-  
+
   <test_depend>test_tools</test_depend>
+
+  <export>
+    <rosdoc config="rosdoc.yaml" />
+  </export>
 
 </package>
