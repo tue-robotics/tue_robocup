@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import absolute_import
+
 # System
 from collections import defaultdict
 import mock
@@ -14,7 +16,6 @@ import std_msgs.msg
 import tf
 
 # TU/e Robotics
-import arms
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
 from robot_skills import robot

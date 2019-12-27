@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+
 # ROS
 import PyKDL as kdl
-from kdl_conversions import point_msg_to_kdl_vector
+from .kdl_conversions import point_msg_to_kdl_vector
 from numpy import abs
 
 
