@@ -32,7 +32,7 @@ class Volume(object):
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        raise NotImplementedError("contains must be implemented by subclasses. " 
+        raise NotImplementedError("contains must be implemented by subclasses. "
                                   "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property
