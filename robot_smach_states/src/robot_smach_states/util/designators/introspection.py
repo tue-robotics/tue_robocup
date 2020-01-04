@@ -110,8 +110,8 @@ def make_legend():
     legend = Digraph('cluster_1')
 
     state = smach.State()
-    parent_desig = Designator(name="parent_designator")
-    desig = Designator(name="designator")
+    parent_desig = Designator(name="parent_designator", resolve_type=[str])  # No resolve_type really needed but required
+    desig = Designator(name="designator", resolve_type=[str])  # No resolve_type really needed but required
     vardesig = VariableDesignator(resolve_type=str, name="variable").writeable
 
     used_in_state = DesignatorUsedInState(state, desig, "role_resolved_from")
