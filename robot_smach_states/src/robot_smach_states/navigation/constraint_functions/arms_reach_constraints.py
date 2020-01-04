@@ -9,8 +9,39 @@ from geometry_msgs.msg import Point
 
 # TU/e Robotics
 from robot_skills.arm.arms import PublicArm
-from ...util.designators import check_type, Designator
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
+
+# Robot smach states
+from ...util.designators import check_type, ArmDesignator, AttrDesignator, Designator
+
+
+def determine_offsets(self):
+    # type: (pose_designator, arm_designator) -> Tuple[FrameStamped, float, float]
+    arm = self.arm_designator.resolve()
+    if not arm:
+        rospy.logerr("Could not resolve arm")
+        return None
+
+    angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
+    radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
+
+    pose = pose_designator.resolve()
+    if not pose:
+        rospy.logerr("No such place_pose, Designator {} did not resolve".format(pose_designator))
+        return None
+
+    entity = self.entity_designator.resolve()
+    rospy.loginfo("Grasp entity id:{0}".format(entity.id))
+
+    if not entity:
+        raise RuntimeError("No such entity")
+
+    try:
+        pose = entity.pose  # TODO Janno: Not all entities have pose information
+    except KeyError as ke:
+        raise RuntimeError("Could not determine pose: {}".format(ke))
+
+    return pose, radius, angle_offset
 
 
 def arms_reach_constraint(pose_designator, arm_designator, look=True):
@@ -23,34 +54,38 @@ def arms_reach_constraint(pose_designator, arm_designator, look=True):
     :return: navigation constraints, if a designator does not resolve None is returned
     :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
-
-    arm = arm_designator.resolve()
-    if not arm:
-        rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm_designator))
-        return None
-
-    radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
-
-    pose = pose_designator.resolve()
-    if not pose:
-        rospy.logerr("No such place_pose, Designator {} did not resolve".format(pose_designator))
-        return None
-
+    # arm = arm_designator.resolve()
+    # if not arm:
+    #     rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm_designator))
+    #     return None
+    #
+    # radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
+    #
+    # pose = pose_designator.resolve()
+    # if not pose:
+    #     rospy.logerr("No such place_pose, Designator {} did not resolve".format(pose_designator))
+    #     return None
+    #
+    # try:
+    #     x = pose.frame.p.x()
+    #     y = pose.frame.p.y()
+    # except KeyError as ke:
+    #     rospy.logerr("Could not determine pose: ".format(ke))
+    #     return None
+    # ToDo: what do we do with the 'look' parameter?
     try:
-        x = pose.frame.p.x()
-        y = pose.frame.p.y()
-    except KeyError as ke:
-        rospy.logerr("Could not determine pose: ".format(ke))
+        pose, radius, angle_offset = determine_offsets(pose_designator, arm_designator)
+    except RuntimeError as e:
+        rospy.logerr(e.message)
         return None
+
+    x = pose.frame.p.x()
+    y = pose.frame.p.y()
 
     # Outer radius
     ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
     ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
-    pc = PositionConstraint(constraint=ri + " and " + ro, frame="map")
-
-    oc = None
-    if look:
-        angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="map", angle_offset=angle_offset)
+    pc = PositionConstraint(constraint=ri + " and " + ro, frame="/map")
+    oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
 
     return pc, oc

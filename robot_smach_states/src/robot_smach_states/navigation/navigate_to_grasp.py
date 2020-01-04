@@ -1,11 +1,21 @@
 from __future__ import absolute_import
 
+# System
+import math
+from typing import Tuple
+
+# ROS
+from geometry_msgs.msg import *
+import rospy
+
 # TU/e Robotics
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import FrameStamped
+
+# Robot smach states
 from .navigation import NavigateTo
 from .constraint_functions import arms_reach_constraint
-from ..util.designators import check_resolve_type, AttrDesignator
+from ..util.designators import check_resolve_type, AttrDesignator, UnoccupiedArmDesignator
 
 
 class NavigateToGrasp(NavigateTo):
