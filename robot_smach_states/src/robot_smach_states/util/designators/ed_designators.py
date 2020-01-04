@@ -336,7 +336,7 @@ class EmptySpotDesignator(Designator):
             if self.distance_to_poi_area(poi[0]):
                 selection = self.create_selection_marker(poi[0])
                 self.marker_pub.publish(MarkerArray([selection]))
-                return poi
+                return poi[0]
 
         rospy.logerr("Could not find an empty spot")
         return None
