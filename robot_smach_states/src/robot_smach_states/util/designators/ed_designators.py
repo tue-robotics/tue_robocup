@@ -282,15 +282,17 @@ class EmptySpotDesignator(Designator):
     CABINET = "bookcase"
     PLACE_SHELF = "shelf2"
     cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
-    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, name="placement", area=PLACE_SHELF),
+    arm = ds.UnoccupiedArmDesignator(robot, {})
+    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, arm, name="placement", area=PLACE_SHELF),
                                           name="place_position")
     """
 
-    def __init__(self, robot, place_location_designator, name=None, area=None):
+    def __init__(self, robot, place_location_designator, arm_designator, name=None, area=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
+        :param arm_designator: Designator resolving to an arm robot part, e.g. OccupiedArmDesignator
         :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
         """
@@ -298,6 +300,7 @@ class EmptySpotDesignator(Designator):
         self.robot = robot
 
         self.place_location_designator = place_location_designator
+        self.arm_designator = arm_designator
         self._edge_distance = 0.05  # Distance to table edge
         self._spacing = 0.15
         self._area = area
@@ -324,7 +327,7 @@ class EmptySpotDesignator(Designator):
 
         open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
 
-        open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi)) for poi in open_POIs]
+        open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi, arm_designator)) for poi in open_POIs]
 
         # We don't care about small differences
         nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
@@ -346,12 +349,11 @@ class EmptySpotDesignator(Designator):
                                                      radius=self._spacing)
         return not any(entities_at_poi)
 
-    def distance_to_poi_area_heuristic(self, frame_stamped):
+    def distance_to_poi_area_heuristic(self, frame_stamped, arm_designator):
 
-        # ToDo: cook up something better: we need the arm that we're currently using but this would require a
-        # rather large API break (issue #739)
         base_pose = self.robot.base.get_location()
-        bo = self.robot.arms.values()[0].base_offset
+        arm = arm_designator.resolve()
+        bo = arm.base_offset
 
         offset_pose = base_pose.frame * bo
         offset_pose_x = offset_pose[0]

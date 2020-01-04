@@ -11,6 +11,7 @@ import robot_smach_states as states
 from robot_smach_states.util.designators import check_type
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator, EmptySpotDesignator
 
+
 class SelectEntity(smach.State):
     def __init__(self, robot, entitity_classifications_designator, selected_entity_designator):
         smach.State.__init__(self, outcomes=["entity_selected", "no_entities_left"])
@@ -75,6 +76,7 @@ class Clear(smach.StateMachine):
 
         place_position = states.util.designators.EmptySpotDesignator(robot, EdEntityDesignator(
                                                                         robot, id=target_location.id),
+                                                                     arm_des,
                                                                      area="on_top_of"
                                                                      )
 

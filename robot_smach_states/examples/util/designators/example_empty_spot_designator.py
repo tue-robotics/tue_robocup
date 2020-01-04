@@ -16,10 +16,12 @@ if __name__ == "__main__":
     robot = get_robot(args.robot)
 
     furniture_designator = ds.EdEntityDesignator(robot, id="dinner_table")
+    arm_designator = ds.UnoccupiedArmDesignator(robot, {})
 
     def with_area():
         esd = ds.EmptySpotDesignator(robot=robot,
                                      place_location_designator=furniture_designator,
+                                     arm_designator=arm_designator,
                                      name="with_area",
                                      area="on_top_of")
         print(esd.resolve())
@@ -27,6 +29,7 @@ if __name__ == "__main__":
     def without_area():
         esd = ds.EmptySpotDesignator(robot=robot,
                                      place_location_designator=furniture_designator,
+                                     arm_designator=arm_designator,
                                      name="without_area")
         print(esd.resolve())
 
