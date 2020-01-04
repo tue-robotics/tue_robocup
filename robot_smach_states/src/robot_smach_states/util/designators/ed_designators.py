@@ -1,21 +1,15 @@
 # System
 import inspect
-import math
 import pprint
 
 # ROS
-import PyKDL as kdl
 import rospy
-from visualization_msgs.msg import MarkerArray, Marker
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_skills.util.entity import Entity
-from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped,\
-    kdl_frame_stamped_from_XYZRPY
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
-from robot_smach_states.util.geometry_helpers import offsetConvexHull
 
 
 __author__ = 'loy'

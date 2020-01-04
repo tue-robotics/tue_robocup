@@ -2,6 +2,7 @@ from core import *
 from checks import *
 from utility import *
 from ed_designators import *
+from place_designators import *
 from arm import *
 from introspection import *
 from string_manipulation import *
