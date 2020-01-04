@@ -7,16 +7,21 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
-from robot_skills.robot import Robot
-from robot_skills.util.kdl_conversions import VectorStamped
-from robot_skills.util.entity import Entity
-from robot_skills.arm.arms import PublicArm, GripperTypes
+from .move_to_grasp import MoveToGrasp
 from ..utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
+from robot_skills.robot import Robot
+from robot_skills.arm.arms import PublicArm, GripperTypes
+from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.entity import Entity
+from robot_smach_states.util.designators import check_type
+from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
+from robot_smach_states.util.designators.arm import ArmDesignator
+from robot_smach_states.util.designators.core import Designator
 
 
 class PrepareEdGrasp(smach.State):
@@ -342,7 +347,7 @@ class Grab(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
+            smach.StateMachine.add('MOVE_TO_GRAB', MoveToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
