@@ -84,7 +84,7 @@ class TestVariableDesignator(unittest.TestCase):
         with self.assertRaises(TypeError):
             v = VariableDesignator(resolve_type=[])
 
-    def test_none_type(self):
+    def test_none_type_in_list(self):
         with self.assertRaises(TypeError):
             v = VariableDesignator(resolve_type=[None])
 
@@ -92,7 +92,7 @@ class TestVariableDesignator(unittest.TestCase):
         with self.assertRaises(TypeError):
             v = VariableDesignator(resolve_type=[str, bool])
 
-    def test_none_type(self):
+    def test_none_type_singular(self):
         with self.assertRaises(TypeError):
             v = VariableDesignator(resolve_type=None)
 
