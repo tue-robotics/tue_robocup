@@ -19,7 +19,6 @@ class NavigateToGrasp(NavigateTo):
         """
         check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
         pose_designator = AttrDesignator(entity_designator, 'pose', resolve_type=FrameStamped)
-
         super(NavigateToGrasp, self).__init__(robot,
                                               lambda: arms_reach_constraint(pose_designator=pose_designator,
                                                                             look=True,
