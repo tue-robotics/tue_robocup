@@ -328,7 +328,7 @@ class EmptySpotDesignator(Designator):
         open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
 
         base_pose = self.robot.base.get_location()
-        open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi, base_pose, arm_designator)) for poi in open_POIs]
+        open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi, base_pose, self.arm_designator)) for poi in open_POIs]
 
         # We don't care about small differences
         nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
