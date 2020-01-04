@@ -46,6 +46,55 @@ class TestVariableDesignator(unittest.TestCase):
         self.assertEqual(v.resolve_type, [str])
         self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
 
+    def test_none_value(self):
+        # Resolve a [object] to a None value
+        class MyVariableDesignator(VariableDesignator):
+            def __init__(self):
+                super(MyVariableDesignator, self).__init__(resolve_type=[object])
+            def _resolve(self):
+                return None
+
+        v = MyVariableDesignator()
+        self.assertEquals(v.resolve(), None)
+
+    def test_empty_list_value(self):
+        # Resolve a [object] to an empty list value.
+        class MyVariableDesignator(VariableDesignator):
+            def __init__(self):
+                super(MyVariableDesignator, self).__init__(resolve_type=[str])
+            def _resolve(self):
+                return []
+
+        v = MyVariableDesignator()
+        self.assertEquals(v.resolve(), [])
+
+    def test_none_list_value(self):
+        # Resolve a [object] to a [None] list value.
+        class MyVariableDesignator(VariableDesignator):
+            def __init__(self):
+                super(MyVariableDesignator, self).__init__(resolve_type=[str])
+            def _resolve(self):
+                return [None]
+
+        v = MyVariableDesignator()
+        with self.assertRaises(TypeError):
+            self.assertEquals(v.resolve(), [None])
+
+    def test_empty_list_type(self):
+        with self.assertRaises(TypeError):
+            v = VariableDesignator(resolve_type=[])
+
+    def test_none_type_in_list(self):
+        with self.assertRaises(TypeError):
+            v = VariableDesignator(resolve_type=[None])
+
+    def test_multi_element_type(self):
+        with self.assertRaises(TypeError):
+            v = VariableDesignator(resolve_type=[str, bool])
+
+    def test_none_type_singular(self):
+        with self.assertRaises(TypeError):
+            v = VariableDesignator(resolve_type=None)
 
 class TestVariableWriter(unittest.TestCase):
     def test_basics(self):
