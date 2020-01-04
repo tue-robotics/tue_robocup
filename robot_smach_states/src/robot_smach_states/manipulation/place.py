@@ -9,6 +9,8 @@ from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, Fra
 from robot_smach_states.navigation import NavigateToPlace
 from robot_smach_states.world_model import Inspect
 from robot_smach_states.util.designators.ed_designators import Designator
+from robot_smach_states.utility import LockDesignator
+from robot_smach_states.util.designators.utility import LockingDesignator
 from robot_smach_states.util.designators import check_type
 
 from visualization_msgs.msg import MarkerArray, Marker
@@ -253,31 +255,23 @@ class EmptySpotDesignator(Designator):
 
 
 class PreparePlace(smach.State):
-    def __init__(self, robot, placement_pose, arm):
+    def __init__(self, robot, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
         :param robot: Robot to execute state with
-        :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
         ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Check types or designator resolve types
-        check_type(placement_pose, FrameStamped)
         check_type(arm, PublicArm)
 
         # Assign member variables
         self._robot = robot
-        self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
     def execute(self, userdata=None):
-
-        placement_fs = self._placement_pose_designator.resolve()
-        if not placement_fs:
-            rospy.logerr("Could not resolve placement_pose")
-            return "failed"
 
         arm = self._arm_designator.resolve()
         if not arm:
@@ -483,6 +477,8 @@ class Place(smach.StateMachine):
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
 
+        locking_place_designator = LockingDesignator(place_designator)
+
         with self:
 
             if furniture_designator is not None:
@@ -492,16 +488,19 @@ class Place(smach.StateMachine):
                                                     'failed': 'failed'}
                                        )
 
-            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
-                                   transitions={'succeeded': 'NAVIGATE_TO_PLACE',
+            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
+                                   transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_designator, arm),
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
+                                   transitions={'locked': 'NAVIGATE_TO_PLACE'})
+
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
                                                 'arrived': 'PUT'})
 
-            smach.StateMachine.add('PUT', Put(robot, item_to_place, place_designator, arm),
+            smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'failed'})
 
