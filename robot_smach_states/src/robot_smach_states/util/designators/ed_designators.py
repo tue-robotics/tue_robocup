@@ -323,11 +323,18 @@ class EmptySpotDesignator(Designator):
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
         open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
-        open_POIs.sort(key=self.distance_to_poi_area_heuristic)
 
-        for poi in open_POIs:
-            if self.distance_to_poi_area(poi):
-                selection = self.create_selection_marker(poi)
+        open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi)) for poi in open_POIs]
+
+        # We don't care about small differences
+        nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
+        open_POIs_dist = [f for f in open_POIs_dist if (f[1] - open_POIs_dist[0][1]) < nav_threshold]
+
+        open_POIs_dist.sort(key=lambda tup: tup[1]) # sorts in place
+
+        for poi in open_POIs_dist:
+            if self.distance_to_poi_area(poi[0]):
+                selection = self.create_selection_marker(poi[0])
                 self.marker_pub.publish(MarkerArray([selection]))
                 return poi
 
