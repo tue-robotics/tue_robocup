@@ -11,18 +11,17 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>depth_image_proc</depend>
+  <depend>roscpp</depend>
 
   <build_depend>pcl_ros</build_depend>
-  <build_depend>robot_skills</build_depend>
-  <build_depend>robot_smach_states</build_depend>
 
   <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>python-markdown</exec_depend>
+  <exec_depend>python-numpy</exec_depend>
+  <exec_depend>python-xhtml2pdf</exec_depend>
   <exec_depend>robot_skills</exec_depend>
   <exec_depend>robot_smach_states</exec_depend>
   <exec_depend>rospy</exec_depend>
-  <exec_depend>python-markdown</exec_depend>
-  <exec_depend>python-xhtml2pdf</exec_depend>
-  <exec_depend>python-numpy</exec_depend>
   <exec_depend>tue_msgs</exec_depend>
 
 </package>

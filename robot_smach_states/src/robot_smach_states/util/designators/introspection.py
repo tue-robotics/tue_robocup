@@ -37,6 +37,7 @@ class DesignatorUsedInState(DesignatorUsage):
                    label=gv_safe("{}.resolve".format(self.role)),
                    color="green")
 
+
 class DesignatorWrittenInState(DesignatorUsage):
     def add_graphviz_edge(self, graph):
         writer_name = format_designator(self.designator)
@@ -87,9 +88,9 @@ def format_designator(desig):
         resolve_type_format = desig.resolve_type.__name__
 
     desig_name = "{name}\\n{cls}\\n@{addr}\\n<{resolve_type}>".format(name=desig.name + " " if desig.name else "",
-                                                                 cls=desig.__class__.__name__,
-                                                                 addr=hex(id(desig)),
-                                                                 resolve_type=resolve_type_format)
+                                                                      cls=desig.__class__.__name__,
+                                                                      addr=hex(id(desig)),
+                                                                      resolve_type=resolve_type_format)
     return desig_name
 
 
@@ -147,12 +148,16 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
         state_label = state2label.get(state, state)  # Get the label of state but default to ugly __repr__
         for designator_role, designator in state.__dict__.iteritems():  # Iterate the self.xxx members of each state
             # If the member is also a designator, then process it.
+            # This check is espcially added to catch sets before checked if they are in the weaksets, which will raise
+            # a TypeError.
+            if not isinstance(designator, Designator) and not isinstance(designator, VariableWriter):
+                continue
+
             if designator in designators:
                 usages += [DesignatorUsedInState(state_label, designator, designator_role)]
 
             if designator in writers:
                 usages += [DesignatorWrittenInState(state_label, designator, designator_role)]
-
 
     for parent_designator in designators:
         # Iterate the self.xxx members of each designator
@@ -163,7 +168,7 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
 
     dot = Digraph(comment=statemachine_name + ' Designators', format=fmt)
     dot.graph_attr['label'] = statemachine_name
-    dot.graph_attr['labelloc'] ="t"
+    dot.graph_attr['labelloc'] = "t"
 
     for usage in usages:
         usage.add_graphviz_edge(dot)

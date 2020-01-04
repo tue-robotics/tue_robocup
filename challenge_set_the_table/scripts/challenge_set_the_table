@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2019, TU/e Robotics, Netherlands
+# All rights reserved.
+#
+# \author Rein Appeldoorn
+
+from __future__ import print_function
+
+import os
+
+import rospy
+
+from challenge_set_the_table.set_the_table import setup_statemachine
+from robot_smach_states.util import startup
+
+
+if __name__ == '__main__':
+    challenge_name = os.path.basename(__file__)
+    rospy.init_node(challenge_name)
+    startup(setup_statemachine, challenge_name=challenge_name)

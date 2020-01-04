@@ -29,10 +29,7 @@ C[{A}] -> VP[A]
 ##############################################################################
 
 grammar += """
-V_GUIDE -> guide | escort | take | lead | accompany
-
 DET -> the | a | an | some
-NUMBER -> one | two | three
 MANIPULATION_AREA_DESCRIPTION -> on top of | at | in | on | from
 """
 

@@ -324,12 +324,12 @@ class Arm(RobotPart):
     Use left or right to get arm while running from the python console
 
     Examples:
-    >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)
+    >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)  # doctest: +SKIP
     or Equivalently:
-    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')
+    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')  # doctest: +SKIP
 
     #To open left gripper
-    >>> left.send_gripper_goal_open(10)
+    >>> left.send_gripper_goal_open(10)  # doctest: +SKIP
     """
     def __init__(self, robot_name, tf_listener, get_joint_states, side):
         """
@@ -913,31 +913,21 @@ class ForceSensingArm(Arm):
         # Fill with required joint names (desired in hardware / gazebo impl)
         current_joint_state = self.get_joint_states()
         current_joint_state['arm_lift_joint'] = 0
-
-        self._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
-            trajectory=JointTrajectory(
-                joint_names=self.joint_names,
-                points=[JointTrajectoryPoint(
-                    positions=[current_joint_state[n] for n in self.joint_names],
-                    time_from_start=rospy.Duration.from_sec(timeout)
-                )]
-            )
-        ))
+        self._ac_joint_traj.send_goal(self._make_goal(current_joint_state, timeout))
 
         self.force_sensor.wait_for_edge_up(timeout)
         self.cancel_goals()
 
         current_joint_state = self.get_joint_states()
         current_joint_state['arm_lift_joint'] += retract_distance
-        self._ac_joint_traj.send_goal(FollowJointTrajectoryGoal(
-            trajectory=JointTrajectory(
-                joint_names=self.joint_names,
-                points=[JointTrajectoryPoint(
-                    positions=[current_joint_state[n] for n in self.joint_names],
-                    time_from_start=rospy.Duration.from_sec(0.5)
-                )]
-            )
-        ))
+        self._ac_joint_traj.send_goal(self._make_goal(current_joint_state, 0.5))
+
+    def _make_goal(self, current_joint_state, timeout):
+        positions = [current_joint_state[n] for n in self.joint_names]
+        points = [JointTrajectoryPoint(positions=positions,
+                                       time_from_start=rospy.Duration.from_sec(timeout))]
+        trajectory = JointTrajectory(joint_names=self.joint_names, points=points)
+        return FollowJointTrajectoryGoal(trajectory=trajectory)
 
 
 class FakeArm(RobotPart):

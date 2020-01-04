@@ -26,7 +26,9 @@ class MeasureForce(object):
 
     def __init__(self, robot):
         """
+        Constructor
 
+        :param robot: robot object
         """
         self._robot = robot
 
@@ -227,17 +229,19 @@ class HandoverFromHumanFigure(smach.StateMachine):
                                    transitions={'spoken': 'SHOW_IMAGE'})
 
             smach.StateMachine.add("SHOW_IMAGE",
-                                   states.ShowImageState(robot=robot, package_name='challenge_take_out_the_garbage',
-                                                         path_to_image_in_package=
-                                                         'src/challenge_take_out_the_garbage/beun_picture.png',
-                                                         seconds=5),
+                                   states.ShowImageState(
+                                        robot=robot,
+                                        image_filename="~/ros/kinetic/system/src/challenge_take_out_the_garbage/src"
+                                                       "/challenge_take_out_the_garbage/beun_picture.png",
+                                        seconds=5),
                                    transitions={'succeeded': 'CLOSE_AFTER_INSERT'})
 
-            smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(robot,
-                                                                                                    arm_designator,
-                                                                                                    grabbed_entity_label=grabbed_entity_label,
-                                                                                                    grabbed_entity_designator=grabbed_entity_designator,
-                                                                                                    timeout=timeout),
+            smach.StateMachine.add('CLOSE_AFTER_INSERT', manipulation.CloseGripperOnHandoverToRobot(
+                robot,
+                arm_designator,
+                grabbed_entity_label=grabbed_entity_label,
+                grabbed_entity_designator=grabbed_entity_designator,
+                timeout=timeout),
                                    transitions={'succeeded': 'succeeded',
                                                 'timeout': 'failed',
                                                 'failed': 'failed'})

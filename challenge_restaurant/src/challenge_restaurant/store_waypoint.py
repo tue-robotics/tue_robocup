@@ -7,7 +7,7 @@ import numpy as np
 import robot_smach_states as states
 import rospy
 import smach
-from challenge_restaurant.srv import GetNormalScore
+# from challenge_restaurant.srv import GetNormalScore
 from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdl_frame_to_pose_msg
 from robot_skills.util.shape import RightPrism
 from visualization_msgs.msg import Marker
@@ -20,164 +20,164 @@ def _get_area(convex_hull):
     return area
 
 
-class AutomaticSideDetection2(smach.State):
-    """ State to automatically detect whether a table or similar is left or right of the robot """
-
-    def __init__(self, robot):
-        """ Constructor
-
-        :param robot: robot object
-        """
-        look_x = 0.2
-        look_y = 1.5
-        self._sides = {
-            'left': VectorStamped(look_x, look_y, z=0, frame_id="/" + robot.robot_name + "/base_link"),
-            'right': VectorStamped(look_x, -look_y, z=0, frame_id="/" + robot.robot_name + "/base_link"),
-        }
-        smach.State.__init__(self, outcomes=self._sides.keys())
-
-        self._robot = robot
-        self._get_normal_score = rospy.ServiceProxy('/' + self._robot.robot_name + '/top_kinect/get_normal_score',
-                                                    GetNormalScore)
-
-    def execute(self, userdata=None):
-        scores = {}
-        for side, vs in self._sides.items():
-            # Look at the side
-            rospy.loginfo("looking at side %s" % side)
-            self._robot.head.look_at_point(vs)
-            self._robot.head.wait_for_motion_done()
-            rospy.sleep(0.2)
-
-            base_loc = self._robot.base.get_location()
-            base_position = base_loc.frame.p
-
-            score = self._get_normal_score().score
-            rospy.loginfo('Normal score: %f', score)
-            scores[side] = score
-
-        min_side, min_score = max(scores.items(), key=itemgetter(1))
-        return min_side
-
-
-class AutomaticSideDetection(smach.State):
-    """ State to automatically detect whether a table or similar is left or right of the robot """
-    def __init__(self, robot, background_padding=0.3, look_x=0.2, look_y=1.5, max_radius=1.5, min_area=0.3):
-        """ Constructor
-
-        :param robot: robot object
-        :param background_padding:
-        :param look_x:
-        :param look_y:
-        :param max_radius:
-        :param min_area:
-        """
-        self._sides = {
-            "left": {
-                "x": look_x,
-                "y": look_y,
-                "score": {},
-                "entities": []
-            },
-            "right": {
-                "x": look_x,
-                "y": -look_y,
-                "score": {},
-                "entities": []
-            },
-        }
-        smach.State.__init__(self, outcomes=self._sides.keys())
-        self._robot = robot
-        self._background_padding = background_padding
-        self._max_radius = max_radius
-        self._min_area = min_area
-
-    def _get_head_goal(self, spec):
-        vs = VectorStamped(spec["x"], spec["y"], z=0, frame_id="/"+self._robot.robot_name+"/base_link")
-        return vs
-
-    def _inspect_sides(self):
-        for side, spec in self._sides.iteritems():
-            # Look at the side
-            rospy.loginfo("looking at side %s" % side)
-            vs = self._get_head_goal(spec)
-            self._robot.head.look_at_point(vs)
-            self._robot.head.wait_for_motion_done()
-            rospy.sleep(0.2)
-
-            base_loc = self._robot.base.get_location()
-            base_position = base_loc.frame.p
-
-            # Update kinect
-            try:
-                rospy.loginfo("Updating kinect for side %s" % side)
-                # kinect_update = self._robot.ed.update_kinect(background_padding=self._background_padding)
-                kinect_update = self._robot.ed.update_kinect(background_padding=self._background_padding)
-            except:
-                rospy.logerr("Could not update_kinect")
-                continue
-
-            ents = [self._robot.ed.get_entity(id=id_) for id_ in set(kinect_update.new_ids + kinect_update.updated_ids)]
-            ents = [e for e in ents if e is not None]
-
-            rospy.loginfo("Found %d entities for side %s" % (len(ents), side))
-
-            # Filter subset
-            self._sides[side]["entities"] = [e for e in ents if self._subset_selection(base_position, e)]
-
-            # Score entities
-            self._sides[side]["score"]["area_sum"] = sum([self._score_area(e) for e in self._sides[side]["entities"]])
-            self._sides[side]["score"]["min_distance"] = self._score_closest_point(base_position,
-                                                                                   self._sides[side]["entities"])
-
-            vs.vector.z(0.8)
-            self._robot.head.look_at_point(vs)
-            self._robot.head.wait_for_motion_done()
-            rospy.sleep(0.2)
-
-    def _subset_selection(self, base_position, e):
-        distance = e.distance_to_2d(base_position)
-        return distance < self._max_radius
-
-    @staticmethod
-    def _score_area(e):
-        """ Scores the area of an entity. If the shape is not a convex hull, it's not what were looking for and 0
-        is returned
-        """
-        if isinstance(e.shape, RightPrism):
-            return _get_area(e.shape.convex_hull)
-        else:
-            return 0.0
-
-    def _score_closest_point(self, base_position, entities):
-        distances = [e.distance_to_2d(base_position) for e in entities]
-        if distances:
-            min_distance = min(distances)
-        else:
-            min_distance = self._max_radius
-
-        return (self._max_radius - min_distance) / self._max_radius
-
-    def _get_best_side(self):
-
-        best_side = None
-        for side, spec in self._sides.iteritems():
-            end_score = self._sides[side]["score"]["area_sum"] + \
-                        self._sides[side]["score"]["min_distance"]
-            rospy.loginfo("Side %s scoring (%f): %s" % (side, end_score, self._sides[side]["score"]))
-
-            if best_side is None or self._sides[side]["score"] > self._sides[best_side]["score"]:
-                best_side = side
-
-        return best_side
-
-    def execute(self, userdata=None):
-        rospy.sleep(0.2)
-        self._inspect_sides()
-
-        best_side = self._get_best_side()
-
-        return best_side
+# class AutomaticSideDetection2(smach.State):
+#     """ State to automatically detect whether a table or similar is left or right of the robot """
+#
+#     def __init__(self, robot):
+#         """ Constructor
+#
+#         :param robot: robot object
+#         """
+#         look_x = 0.2
+#         look_y = 1.5
+#         self._sides = {
+#             'left': VectorStamped(look_x, look_y, z=0, frame_id="/" + robot.robot_name + "/base_link"),
+#             'right': VectorStamped(look_x, -look_y, z=0, frame_id="/" + robot.robot_name + "/base_link"),
+#         }
+#         smach.State.__init__(self, outcomes=self._sides.keys())
+#
+#         self._robot = robot
+#         self._get_normal_score = rospy.ServiceProxy('/' + self._robot.robot_name + '/top_kinect/get_normal_score',
+#                                                     GetNormalScore)
+#
+#     def execute(self, userdata=None):
+#         scores = {}
+#         for side, vs in self._sides.items():
+#             # Look at the side
+#             rospy.loginfo("looking at side %s" % side)
+#             self._robot.head.look_at_point(vs)
+#             self._robot.head.wait_for_motion_done()
+#             rospy.sleep(0.2)
+#
+#             base_loc = self._robot.base.get_location()
+#             base_position = base_loc.frame.p
+#
+#             score = self._get_normal_score().score
+#             rospy.loginfo('Normal score: %f', score)
+#             scores[side] = score
+#
+#         min_side, min_score = max(scores.items(), key=itemgetter(1))
+#         return min_side
+#
+#
+# class AutomaticSideDetection(smach.State):
+#     """ State to automatically detect whether a table or similar is left or right of the robot """
+#     def __init__(self, robot, background_padding=0.3, look_x=0.2, look_y=1.5, max_radius=1.5, min_area=0.3):
+#         """ Constructor
+#
+#         :param robot: robot object
+#         :param background_padding:
+#         :param look_x:
+#         :param look_y:
+#         :param max_radius:
+#         :param min_area:
+#         """
+#         self._sides = {
+#             "left": {
+#                 "x": look_x,
+#                 "y": look_y,
+#                 "score": {},
+#                 "entities": []
+#             },
+#             "right": {
+#                 "x": look_x,
+#                 "y": -look_y,
+#                 "score": {},
+#                 "entities": []
+#             },
+#         }
+#         smach.State.__init__(self, outcomes=self._sides.keys())
+#         self._robot = robot
+#         self._background_padding = background_padding
+#         self._max_radius = max_radius
+#         self._min_area = min_area
+#
+#     def _get_head_goal(self, spec):
+#         vs = VectorStamped(spec["x"], spec["y"], z=0, frame_id="/"+self._robot.robot_name+"/base_link")
+#         return vs
+#
+#     def _inspect_sides(self):
+#         for side, spec in self._sides.iteritems():
+#             # Look at the side
+#             rospy.loginfo("looking at side %s" % side)
+#             vs = self._get_head_goal(spec)
+#             self._robot.head.look_at_point(vs)
+#             self._robot.head.wait_for_motion_done()
+#             rospy.sleep(0.2)
+#
+#             base_loc = self._robot.base.get_location()
+#             base_position = base_loc.frame.p
+#
+#             # Update kinect
+#             try:
+#                 rospy.loginfo("Updating kinect for side %s" % side)
+#                 # kinect_update = self._robot.ed.update_kinect(background_padding=self._background_padding)
+#                 kinect_update = self._robot.ed.update_kinect(background_padding=self._background_padding)
+#             except:
+#                 rospy.logerr("Could not update_kinect")
+#                 continue
+#
+#             ents = [self._robot.ed.get_entity(id=id_) for id_ in set(kinect_update.new_ids + kinect_update.updated_ids)]
+#             ents = [e for e in ents if e is not None]
+#
+#             rospy.loginfo("Found %d entities for side %s" % (len(ents), side))
+#
+#             # Filter subset
+#             self._sides[side]["entities"] = [e for e in ents if self._subset_selection(base_position, e)]
+#
+#             # Score entities
+#             self._sides[side]["score"]["area_sum"] = sum([self._score_area(e) for e in self._sides[side]["entities"]])
+#             self._sides[side]["score"]["min_distance"] = self._score_closest_point(base_position,
+#                                                                                    self._sides[side]["entities"])
+#
+#             vs.vector.z(0.8)
+#             self._robot.head.look_at_point(vs)
+#             self._robot.head.wait_for_motion_done()
+#             rospy.sleep(0.2)
+#
+#     def _subset_selection(self, base_position, e):
+#         distance = e.distance_to_2d(base_position)
+#         return distance < self._max_radius
+#
+#     @staticmethod
+#     def _score_area(e):
+#         """ Scores the area of an entity. If the shape is not a convex hull, it's not what were looking for and 0
+#         is returned
+#         """
+#         if isinstance(e.shape, RightPrism):
+#             return _get_area(e.shape.convex_hull)
+#         else:
+#             return 0.0
+#
+#     def _score_closest_point(self, base_position, entities):
+#         distances = [e.distance_to_2d(base_position) for e in entities]
+#         if distances:
+#             min_distance = min(distances)
+#         else:
+#             min_distance = self._max_radius
+#
+#         return (self._max_radius - min_distance) / self._max_radius
+#
+#     def _get_best_side(self):
+#
+#         best_side = None
+#         for side, spec in self._sides.iteritems():
+#             end_score = self._sides[side]["score"]["area_sum"] + \
+#                         self._sides[side]["score"]["min_distance"]
+#             rospy.loginfo("Side %s scoring (%f): %s" % (side, end_score, self._sides[side]["score"]))
+#
+#             if best_side is None or self._sides[side]["score"] > self._sides[best_side]["score"]:
+#                 best_side = side
+#
+#         return best_side
+#
+#     def execute(self, userdata=None):
+#         rospy.sleep(0.2)
+#         self._inspect_sides()
+#
+#         best_side = self._get_best_side()
+#
+#         return best_side
 
 
 class StoreWaypoint(smach.State):
@@ -200,19 +200,19 @@ class StoreWaypoint(smach.State):
         base_pose = base_loc.frame
 
         # Create automatic side detection state and execute
-        self._robot.speech.speak("I am now going to look for the table", block=False)
-        automatic_side_detection = AutomaticSideDetection2(self._robot)
-        side = automatic_side_detection.execute({})
-        self._robot.head.look_at_standing_person()
+        # self._robot.speech.speak("I am now going to look for the table", block=False)
+        # automatic_side_detection = AutomaticSideDetection2(self._robot)
+        # side = automatic_side_detection.execute({})
+        # self._robot.head.look_at_standing_person()
 
-        self._robot.speech.speak("The {} is to my {}".format(self._location_id, side))
+        # self._robot.speech.speak("The {} is to my {}".format(self._location_id, side))
 
-        self._robot.head.cancel_goal()
+        # self._robot.head.cancel_goal()
 
-        if side == "left":
-            base_pose.M.DoRotZ(math.pi / 2)
-        elif side == "right":
-            base_pose.M.DoRotZ(-math.pi / 2)
+        # if side == "left":
+        #     base_pose.M.DoRotZ(math.pi / 2)
+        # elif side == "right":
+        #     base_pose.M.DoRotZ(-math.pi / 2)
 
         # Add to param server
         loc_dict = {'x': base_pose.p.x(), 'y': base_pose.p.y(), 'phi': base_pose.M.GetRPY()[2]}

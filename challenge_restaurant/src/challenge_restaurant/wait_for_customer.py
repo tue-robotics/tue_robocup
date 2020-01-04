@@ -177,11 +177,11 @@ class AskTakeTheOrder(smach.State):
 
         self.robot = robot
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         cgrammar = """
-        C['yes'] -> amigo take the order
-        C['wait'] -> amigo wait
-        """
+        C['yes'] -> {robot} take the order
+        C['wait'] -> {robot} wait
+        """.format(robot=self.robot.robot_name)
         for i in range(3):
             try:
                 speech_result = self.robot.hmi.query(description="Should I get the order?",

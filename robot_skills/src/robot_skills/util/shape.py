@@ -145,5 +145,4 @@ def shape_from_entity_info(e):
 
 if __name__ == "__main__":
     import doctest
-
     doctest.testmod()

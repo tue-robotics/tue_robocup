@@ -1,6 +1,5 @@
 # System
 import random
-import math
 
 # ROS
 import rospy
@@ -11,10 +10,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
 from hmi import TimeoutException
-from robocup_knowledge import knowledge_loader
-from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from tue_msgs.msg import People
-from Queue import Queue, Empty
 
 
 class CheckAvailability(smach.State):
@@ -23,7 +18,7 @@ class CheckAvailability(smach.State):
     """
 
     def __init__(self, robot, drink_designator, available_drinks_designator, unavailable_drink_designator,
-                 objects, max_tries=3, max_queries_per_try=3):
+                 objects, max_tries=6, max_queries_per_try=3):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
@@ -43,14 +38,14 @@ class CheckAvailability(smach.State):
         self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
+        self.trial = 0
 
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
 
-        smach.State.__init__(self, outcomes=["available", "unavailable", "aborted"])
+        smach.State.__init__(self, outcomes=["available", "unavailable", "aborted", "bad_operator"])
 
-    @staticmethod
-    def _setup_drinks_grammar():
+    def _setup_drinks_grammar(self):
         """
         Sets up the grammar to ask which drink someone would like based on the objects in the knowlegde.
         :return: tuple(str, str) grammar and target
@@ -70,10 +65,9 @@ class CheckAvailability(smach.State):
 
     def execute(self, userdata=None):
 
-        nr_tries = 0
-        while nr_tries < self._max_tries and not rospy.is_shutdown():
-            nr_tries += 1
-            rospy.loginfo("AskDrink: attempt {} of {}".format(nr_tries, self._max_tries))
+        self.trial += 1
+        while self.trial < (self._max_tries + 1) and not rospy.is_shutdown():
+            rospy.loginfo("AskDrink: attempt {} of {}".format(self.trial, self._max_tries))
             rospy.loginfo("Unavailable drink: {}".format(self._unavailable_drink_designator.resolve()))
             rospy.loginfo("Available drinks: {}".format(self._available_drinks_designator.resolve()))
 
@@ -98,6 +92,8 @@ class CheckAvailability(smach.State):
                 self._drink_designator.write(str(speech_result.semantics))
                 rospy.loginfo("Requested drink: {}".format(self._drink_designator.resolve()))
                 return "available"
+
+        return "bad_operator"
 
     def _query_drink(self, max_tries):
         """
@@ -148,6 +144,11 @@ class AskDrink(smach.StateMachine):
         with self:
 
             # Ask for order
+            smach.StateMachine.add("RISE_FOR_HMI",
+                                   states.RiseForHMI(robot=robot),
+                                   transitions={"succeeded": "ASK_FOR_ORDER",
+                                                "failed": "ASK_FOR_ORDER"})
+
             smach.StateMachine.add("ASK_FOR_ORDER",
                                    states.Say(robot=robot,
                                               sentence=random.choice(["What would you like to drink?",
@@ -166,7 +167,9 @@ class AskDrink(smach.StateMachine):
                                                      objects=objects),
                                    transitions={"available": "ASK_FOR_CONFIRMATION",
                                                 "unavailable": "STATE_UNAVAILABLE",
-                                                "aborted": "aborted"})
+                                                "aborted": "aborted",
+                                                "bad_operator": "SAY_BAD_OPERATOR"})
+
 
             # Ask for confirmation
             smach.StateMachine.add("ASK_FOR_CONFIRMATION",
@@ -175,6 +178,7 @@ class AskDrink(smach.StateMachine):
                                                                                 drink_designator, operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "HEAR_CONFIRMATION"})
+
 
             # Hear the confirmation
             smach.StateMachine.add("HEAR_CONFIRMATION",
@@ -191,6 +195,13 @@ class AskDrink(smach.StateMachine):
                                                                                 operator_name),
                                               look_at_standing_person=True),
                                    transitions={"spoken": "ASK_FOR_ORDER"})
+
+            # Tell the operator to stop fucking around!
+            smach.StateMachine.add("SAY_BAD_OPERATOR",
+                                   states.Say(robot=robot,
+                                              sentence="I'm not going to ask you again as I have already informed you multiple times that your request is unavailable",
+                                              look_at_standing_person=True),
+                                   transitions={"spoken": "aborted"})
 
 
 class AskAvailability(smach.State):
@@ -215,12 +226,12 @@ class AskAvailability(smach.State):
         self._objects = objects
         self._max_tries = max_tries
         self._max_queries_per_try = max_queries_per_try
+        self._trial = 0
 
         # Speech grammars
         self._drinks_grammar, self._drinks_target = self._setup_drinks_grammar()
 
-    @staticmethod
-    def _setup_drinks_grammar():
+    def _setup_drinks_grammar(self):
         """ Sets up the grammar to ask which drink is unavailable based on the objects in the knowlegde.
 
         :return: tuple(str, str) grammar and target
@@ -241,10 +252,9 @@ class AskAvailability(smach.State):
 
         self._robot.head.look_at_standing_person()
 
-        nr_tries = 0
-        while nr_tries < self._max_tries and not rospy.is_shutdown():
-            nr_tries += 1
-            rospy.loginfo("AskAvailable: attempt {} of {}".format(nr_tries, self._max_tries))
+        while self._trial < self._max_tries and not rospy.is_shutdown():
+            self._trial += 1
+            rospy.loginfo("AskAvailable: attempt {} of {}".format(self._trial, self._max_tries))
 
             # Ask the bartender a question
             self._robot.speech.speak(
@@ -320,108 +330,6 @@ class AskAvailability(smach.State):
         return speech_result.semantics
 
 
-class DetectWaving(smach.State):
-    """ Waits for waving person.
-
-    This is based on the 'WaitForCustomer' class of the the restaurant challenge. Might
-    be nice to merge these two.
-    """
-    def __init__(self, robot, caller_id):
-        """
-        Constructor
-        :param robot: robot object
-        """
-        smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
-        self._robot = robot
-        self._caller_id = caller_id
-        self._people_sub = rospy.Subscriber(robot.robot_name + '/persons', People, self.people_cb, queue_size=1)
-        self.people_queue = Queue(maxsize=1)
-
-    def people_cb(self, persons):
-        if persons.people:
-            rospy.logdebug('Received %d persons in the people cb', len(persons.people))
-        self.people_queue.put(persons)
-
-    def execute(self, userdata=None):
-
-        self._robot.head.reset()
-        self._robot.head.wait_for_motion_done()
-
-        self._robot.speech.speak("Please wave if you want me to bring you something")
-
-        head_samples = 20
-        look_distance = 3.0
-        look_angles = [0, 0, 0, 10, -10, 20, -20]
-        self.clear_queue()
-
-        waving_persons = []
-        i = 0
-        while not rospy.is_shutdown() and not waving_persons:
-            # ToDo: It looks like this goes on forever if no waving person is found.
-            header, waving_persons = self.wait_for_waving_person(head_samples=head_samples)
-
-            angle = look_angles[i % len(look_angles)]
-            rospy.loginfo('Still waiting... looking at %d degrees', angle)
-            angle = math.radians(angle)
-            head_goal = VectorStamped(x=look_distance * math.cos(angle),
-                                      y=look_distance * math.sin(angle), z=1.3,
-                                      frame_id="/%s/base_link" % self._robot.robot_name)
-            self._robot.head.look_at_point(head_goal)
-            i += 1
-
-        if not waving_persons:
-            return 'aborted'
-
-        rospy.loginfo('waving persons: %s', waving_persons)
-        if len(waving_persons) > 1:
-            rospy.logwarn('using the first person')
-
-        point = waving_persons[0].position
-        pose = frame_stamped(header.frame_id, point.x, point.y, point.z)
-        rospy.loginfo('update customer position to %s', pose)
-        self._robot.ed.update_entity(id=self._caller_id, frame_stamped=pose, type="waypoint")
-
-        return 'succeeded'
-
-    def clear_queue(self):
-        while True:
-            try:
-                self.people_queue.get_nowait()
-                rospy.loginfo("trying")
-            except Empty:
-                # There is probably an old measurement blocking in the callback thread, also remove that one
-                if not self.people_queue.empty():
-                    self.people_queue.get()
-                rospy.loginfo("returning")
-                return
-
-    def wait_for_waving_person(self, head_samples):
-        waving_persons = []
-        for i in range(0, head_samples):
-            if rospy.is_shutdown():
-                return
-
-            people_received = self.wait_for_cb()
-            rospy.logdebug('Got sample %d with seq %s', i, people_received.header.seq)
-            for person in people_received.people:
-                if {'RWave', 'LWave'}.intersection(set(person.tags)):
-                    waving_persons.append(person)
-
-            if waving_persons:
-                break
-        return people_received.header, waving_persons
-
-    def wait_for_cb(self):
-        timeout = 1
-
-        people_received = People()
-        while not rospy.is_shutdown() and not people_received.people:
-            try:
-                return self.people_queue.get(timeout=timeout)
-            except Empty:
-                rospy.logwarn('No people message received within %d seconds', timeout)
-
-
 class DescriptionStrDesignator(ds.Designator):
     def __init__(self, message_type, drink_request_des, operator_name_des, name=None):
         super(DescriptionStrDesignator, self).__init__(resolve_type=str, name=name)
@@ -435,11 +343,15 @@ class DescriptionStrDesignator(ds.Designator):
 
     def _resolve(self):
         operator_name = self.operator_name_des.resolve()
+        if not operator_name:
+            rospy.logerr("Could not resolve operator name")
         drink_request = self.drink_request_des.resolve()
+        if not drink_request:
+            rospy.logerr("Could not resolve drink request")
         if self.message_type == "found_operator":
             return "Hey {name}, I'm bringing your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "not_found_operator":
-            return "Hey {name} I cannot find you!"\
+            return "Hey {name} I'm back."\
                    "Please come to me to receive your {drink}".format(name=operator_name, drink=drink_request)
         elif self.message_type == "fallback_bar":
             return "Oh, I cannot inspect the bar. Please hand me over the {drink}".format(drink=drink_request)
@@ -468,6 +380,6 @@ if __name__ == "__main__":
     rospy.loginfo("Waiting for tf cache to be filled")
     rospy.sleep(0.5)  # wait for tf cache to be filled
 
-    state = AskDrink(robot=_robot, drink_designator=ds.VariableDesignator(type=str).writeable, max_tries=1,
-                     max_queries_per_try=1)
+    state = AskDrink(robot=_robot,
+            drink_designator=ds.VariableDesignator(resolve_type=str).writeable)
     state.execute(None)

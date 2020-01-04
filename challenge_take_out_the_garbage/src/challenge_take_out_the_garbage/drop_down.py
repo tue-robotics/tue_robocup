@@ -10,7 +10,7 @@ from robocup_knowledge import load_knowledge
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
 
-class DropTrash(smach.StateMachine):
+class DropTrash(smach.State):
     """
     State that moves the robot to the drop bag position and opens the gripper
     """
