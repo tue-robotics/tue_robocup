@@ -261,20 +261,24 @@ class SelfCleanup(smach.StateMachine):
                                                                    block=True),
                                    transitions={"spoken": "GRAB"})
 
-            smach.StateMachine.add("GRAB",
-                                   robot_smach_states.Grab(robot, selected_entity_designator,
-                                                           ds.UnoccupiedArmDesignator(robot, {},
-                                                                                      name="empty_arm_designator")),
-                                   transitions={"done": "SAY_GRAB_SUCCESS",
-                                                "failed": "ARM_RESET"})
+            smach.StateMachine.add(
+                "GRAB",
+                robot_smach_states.Grab(
+                    robot, selected_entity_designator,
+                    ds.UnoccupiedArmDesignator(robot,
+                                               arm_properties={"required_trajectory": "prepare_grasp"},
+                                               name="empty_arm_designator")),
+                transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
 
-            smach.StateMachine.add("ARM_RESET", robot_smach_states.ArmToJointConfig(robot,
-                                                                                    ds.UnoccupiedArmDesignator(robot,
-                                                                                                               {},
-                                                                                    name="empty_arm_designator"),
-                                                                                    "reset"),
-                                   transitions={"succeeded": "SAY_GRAB_FAILED",
-                                                "failed": "SAY_GRAB_FAILED"})
+            smach.StateMachine.add(
+                "ARM_RESET",
+                robot_smach_states.ArmToJointConfig(
+                    robot,
+                    ds.UnoccupiedArmDesignator(robot,
+                                               arm_properties={"required_goals": "reset"},
+                                               name="empty_arm_designator"),
+                    "reset"),
+                transitions={"succeeded": "SAY_GRAB_FAILED", "failed": "SAY_GRAB_FAILED"})
 
             smach.StateMachine.add('SAY_GRAB_SUCCESS',
                                    robot_smach_states.Say(robot, ["Now I am going to move this item",
@@ -331,21 +335,26 @@ class SelfCleanup(smach.StateMachine):
                                                 "failed": "SAY_PLACE_FAILED"})
 
             smach.StateMachine.add('PLACE_IN_TRASH',
-                                   robot_smach_states.Place(robot,
-                                                            selected_entity_designator,
-                                                            trash_place_pose,
-                                                            ds.OccupiedArmDesignator(robot, {},
-                                                                                  name="occupied_arm_designator")),
+                                   robot_smach_states.Place(
+                                       robot,
+                                       selected_entity_designator,
+                                       trash_place_pose,
+                                       ds.OccupiedArmDesignator(robot,
+                                                                arm_properties={"required_trajectory": "prepare_place"},
+                                                                name="occupied_arm_designator")),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
 
-            smach.StateMachine.add('PLACE_TO_STORE', robot_smach_states.Place(robot, selected_entity_designator,
-                                                                              store_entity_des,
-                                                                              ds.OccupiedArmDesignator(robot, {}, name=
-                                                                                "occupied_arm_designator"),
-                                                                                "on_top_of"),
-                                   transitions={"done": "SAY_PLACE_SUCCESS",
-                                                "failed": "SAY_PLACE_FAILED"})
+            smach.StateMachine.add('PLACE_TO_STORE',
+                                   robot_smach_states.Place(robot,
+                                                            selected_entity_designator,
+                                                            store_entity_des,
+                                                            ds.OccupiedArmDesignator(
+                                                                robot,
+                                                                arm_properties={"required_trajectory": "prepare_place"},
+                                                                name="occupied_arm_designator"),
+                                                            "on_top_of"),
+                                   transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
 
             smach.StateMachine.add('SAY_PLACE_SUCCESS',
                                    robot_smach_states.Say(robot, ["Bye bye!",
