@@ -78,7 +78,7 @@ class EmptySpotDesignator(Designator):
         open_POIs_dist.sort(key=lambda tup: tup[0].edge_score, reverse=True) # sorts in place
 
         for poi in open_POIs_dist:
-            if self.distance_to_poi_area(poi[0]):
+            if self.distance_to_poi_area(poi[0], self.arm_designator):
                 selection = self.create_selection_marker(poi[0])
                 self.marker_pub.publish(MarkerArray([selection]))
                 return poi[0]
@@ -105,11 +105,9 @@ class EmptySpotDesignator(Designator):
         dist = math.hypot(offset_pose_x - x, offset_pose_y - y)
         return dist
 
-    def distance_to_poi_area(self, frame_stamped):
-
-        # ToDo: cook up something better: we need the arm that we're currently using but this would require a
-        # rather large API break (issue #739)
-        base_offset = self.robot.arms.values()[0].base_offset
+    def distance_to_poi_area(self, frame_stamped, arm_designator):
+        arm = arm_designator.resolve()
+        base_offset = arm.base_offset
         radius = math.hypot(base_offset.x(), base_offset.y())
 
         x = frame_stamped.frame.p.x()
