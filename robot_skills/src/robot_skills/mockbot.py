@@ -233,6 +233,8 @@ class ED(MockedRobotPart):
         self._dynamic_entities['john'] = self.generate_random_entity(id='john', type='person')
         self._static_entities = defaultdict(self.generate_random_entity,
                                      {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
+        self._static_entities['test_waypoint_1'] = self.generate_random_entity(id='test_waypoint_1', type='waypoint')
+        self._static_entities['cabinet'] = self.generate_random_entity(id='cabinet')
 
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None, parse=True: self._entities[id]
