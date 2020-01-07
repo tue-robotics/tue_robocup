@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
         robot = get_robot(args.robot)
 
-        grasp_cls = ds.Designator(robot, args.cls, name='grasp_cls')
+        grasp_cls = ds.Designator(args.cls, name='grasp_cls')
         support_entity = ds.EdEntityDesignator(robot, id=args.support, name='support_entity')
         entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
         waypoint = ds.EdEntityDesignator(robot, id=args.waypoint, name='waypoint')
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
             inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
             if inspection_result:
-                matching_entity_ids = [result.id for result in inspection_result if result.type == grasp_cls]
+                matching_entity_ids = [result.id for result in inspection_result if result.type == args.cls]
                 if matching_entity_ids:
                     selected_entity_id = matching_entity_ids[0]
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
