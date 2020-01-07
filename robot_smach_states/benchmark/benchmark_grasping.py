@@ -39,7 +39,7 @@ if __name__ == "__main__":
     with open(args.output, 'a+') as csv_file:
         reader = csv.DictReader(csv_file)
 
-        fields = ['robot', 'start_waypoint', 'class', 'id', 'inspect_start', 'inspect_end', 'grab_start', 'grab_end']
+        fields = ['robot', 'start_waypoint', 'class', 'id', 'inspect_start', 'inspect_end', 'inspect_duration', 'grab_start', 'grab_end', 'grab_duration']
         results_writer = csv.DictWriter(csv_file, fieldnames=fields)
 
         if reader.fieldnames != results_writer.fieldnames:
@@ -57,7 +57,6 @@ if __name__ == "__main__":
 
         record = {'robot': args.robot, 'start_waypoint': args.waypoint, 'class': args.cls,
                   'id': None, 'inspect_start': None, 'inspect_end': None, 'grab_start': None, 'grab_end': None}
-        overall_start = time.time()
 
         try:
             nav_to_start = NavigateToWaypoint(robot,
@@ -70,7 +69,8 @@ if __name__ == "__main__":
 
             record['inspect_start'] = time.time()
             assert inspect.execute() == 'done'
-            record['inspect_end'] = time.time() - record['inspect_start']
+            record['inspect_end'] = time.time()
+            record['inspect_duration'] = record['inspect_end'] - record['inspect_start']
 
             inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
             if inspection_result:
@@ -81,15 +81,16 @@ if __name__ == "__main__":
                     grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
 
                     grab_state = Grab(robot, grasp_entity, arm)
-                    record['grab_start'] = time.time() - record['inspect_end']
+                    record['grab_start'] = time.time()
                     grab_state.execute()
-                    record['grab_end'] = time.time() - record['grab_start']
+                    record['grab_end'] = time.time()
+                    record['grab_duration'] = record['grab_end'] - record['grab_start']
 
                     assert nav_to_start.execute() == 'arrived'
 
                     rospy.logwarn("Robot will turn around to drop the {}".format(grasp_cls.resolve()))
 
-                    force_drive = ForceDrive(robot, 0, 0, 1.57, 3)
+                    force_drive = ForceDrive(robot, 0, 0, 1, 3.14)  #rotate 180 degs in pi seconds
                     force_drive.execute()
 
                     drop_it = SetGripper(robot, arm_designator=arm, grab_entity_designator=grasp_entity)
