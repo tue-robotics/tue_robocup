@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     rospy.loginfo("Creating arm designator")
     arm_designator = ds.UnoccupiedArmDesignator(robot=robot,
-                                                arm_properties={},
+                                                arm_properties={"required_goals": "[handover_to_human, reset]"},
                                                 name='arm_des').lockable()
 
     rospy.loginfo("Creating lock designator state")
