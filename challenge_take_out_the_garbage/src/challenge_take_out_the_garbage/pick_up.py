@@ -332,7 +332,7 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed",
                                                 "timeout": "TIMEOUT"})
 
-            arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={})
+            arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={"required_goals": "reset"})
 
             smach.StateMachine.add("LOWER_ARM", states.ArmToJointConfig(robot=robot,
                                                                         arm_designator=arm_occupied_designator,
@@ -358,7 +358,7 @@ if __name__ == '__main__':
     hero = Hero()
     hero.reset()
 
-    arm = ds.UnoccupiedArmDesignator(hero, {})
+    arm = ds.UnoccupiedArmDesignator(hero, {"required_goals": ["reset", "handover"], "force_sensor_required": True})
 
     # sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
     # sm.execute()
