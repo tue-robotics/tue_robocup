@@ -91,7 +91,9 @@ class DropDownTrash(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
 
-        arm_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={})
+        arm_designator = ds.OccupiedArmDesignator(
+            robot=robot,
+            arm_properties={"required_goals": ["handover", "reset", "handover_to_human"]})
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
