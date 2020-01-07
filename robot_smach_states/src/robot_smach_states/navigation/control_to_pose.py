@@ -83,23 +83,21 @@ class ControlToPose(smach.State):
 
         rate = rospy.Rate(self._rate)
         rospy.loginfo("Starting alignment ....")
-        while not rospy.is_shutdown():
-            dx, dy, dyaw = self._get_target_delta_in_robot_frame(goal_pose)
+        with self.robot.base.get_cmd_vel_publisher() as pub_cmd_vel:
+            while not rospy.is_shutdown():
+                dx, dy, dyaw = self._get_target_delta_in_robot_frame(goal_pose)
 
-            if self._goal_reached(dx, dy, dyaw):
-                rospy.loginfo("Goal reached")
-                return 'succeeded'
+                if self._goal_reached(dx, dy, dyaw):
+                    rospy.loginfo("Goal reached")
+                    return 'succeeded'
 
-            rospy.logdebug_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
+                rospy.logdebug_throttle(0.1, "Aligning .. Delta = {} {} {}".format(dx, dy, dyaw))
 
-            self.robot.base.force_drive(vx=_clamp(self.params.abs_vx, self.params.position_gain * dx),
-                                        vy=_clamp(self.params.abs_vy, self.params.position_gain * dy),
-                                        vth=_clamp(self.params.abs_vyaw, self.params.rotation_gain * dyaw),
-                                        timeout=1/float(self._rate), loop_rate=self._rate, stop=False)
+                pub_cmd_vel(vx=_clamp(self.params.abs_vx, self.params.position_gain * dx),
+                            vy=_clamp(self.params.abs_vy, self.params.position_gain * dy),
+                            vth=_clamp(self.params.abs_vyaw, self.params.rotation_gain * dyaw),)
 
-            rate.sleep()
-
-        self.robot.base.force_drive(vx=0, vy=0, vth=0, timeout=0, stop=True)
+                rate.sleep()
 
         return 'failed'
 
