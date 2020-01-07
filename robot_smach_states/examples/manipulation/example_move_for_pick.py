@@ -61,6 +61,8 @@ if __name__ == "__main__":
         threading_event.clear()
         rospy.loginfo("Waiting for the user to click on a point in rviz")
         threading_event.wait()
+        if rospy.is_shutdown():
+            break
         rospy.loginfo("Setting test entity to {}".format(pose.frame.p))
 
         robot.ed.update_entity(id=entity_id, frame_stamped=pose)

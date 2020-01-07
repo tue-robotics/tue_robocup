@@ -24,7 +24,7 @@ class _GoalPoseDesignator(Designator):
         """
         super(_GoalPoseDesignator, self).__init__(resolve_type=geometry_msgs.msg.PoseStamped)
         self._goal_pose = geometry_msgs.msg.PoseStamped()
-        self._goal_pose.header.frame_id = "/map"
+        self._goal_pose.header.frame_id = "map"
 
     def lockable(self):
         return False
@@ -99,12 +99,15 @@ class MoveToGrasp(smach.StateMachine):
         goal_pose_designator = _GoalPoseDesignator()
         navigate_state = NavigateToGrasp(robot, item, arm)
         control_parameters = ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)
+        # print(control_parameters)
+        # import ipdb;ipdb.set_trace()
 
         # Create state machine
         with self:
             @smach.cb_interface(input_keys=[], output_keys=[], outcomes=["control", "navigate"])
             def determine_approach(_=None):
                 entity_pose, radius, angle_offset = navigate_state.determine_offsets()
+                radius = 1.0  # ToDo: remove!
                 base_pose = robot.base.get_location()  # type: FrameStamped
                 goal_position = _point_between_points_at_distance(entity_pose.frame.p, base_pose.frame.p, radius)
                 import rospy
@@ -121,7 +124,11 @@ class MoveToGrasp(smach.StateMachine):
                     return "navigate"
 
                 # ToDo: fix orientation
-                goal_pose_designator.write(kdl.Frame(goal_position))
+                goal_orientation = kdl.Rotation.RPY(0.0, 0.0, math.atan2(goal_position.y() - base_pose.frame.p.y(),
+                                                                         goal_position.x() - base_pose.frame.p.x())
+                                                    )
+                goal_orientation.DoRotZ(angle_offset)
+                goal_pose_designator.write(kdl.Frame(goal_orientation, goal_position))
                 return "control"
 
             smach.StateMachine.add(
