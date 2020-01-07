@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
             inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
             if inspection_result:
-                matching_entity_ids = [result.id for result in inspection_result if result.type == args.cls]
+                matching_entity_ids = [result.id for result in inspection_result if result.type == grasp_cls.resolve()]
                 if matching_entity_ids:
                     selected_entity_id = matching_entity_ids[0]
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
