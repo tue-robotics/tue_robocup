@@ -70,7 +70,9 @@ class Clear(smach.StateMachine):
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
         selected_entity_designator = EntityByIdDesignator(robot, "TBD", name='selected_entity_designator', )
 
-        arm_des = UnoccupiedArmDesignator(robot, {}).lockable()
+        arm_des = UnoccupiedArmDesignator(robot,
+                                          arm_properties={"required_trajectories": "[prepare_place, prepare_grasp]"})\
+            .lockable()
         arm_des.lock()
 
         place_position = states.util.designators.EmptySpotDesignator(robot, EdEntityDesignator(
