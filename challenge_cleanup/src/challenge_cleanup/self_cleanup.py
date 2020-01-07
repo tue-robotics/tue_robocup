@@ -266,7 +266,7 @@ class SelfCleanup(smach.StateMachine):
                 robot_smach_states.Grab(
                     robot, selected_entity_designator,
                     ds.UnoccupiedArmDesignator(robot,
-                                               arm_properties={"required_trajectory": "prepare_grasp"},
+                                               arm_properties={"required_trajectories": "prepare_grasp"},
                                                name="empty_arm_designator")),
                 transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
 
@@ -340,7 +340,7 @@ class SelfCleanup(smach.StateMachine):
                                        selected_entity_designator,
                                        trash_place_pose,
                                        ds.OccupiedArmDesignator(robot,
-                                                                arm_properties={"required_trajectory": "prepare_place"},
+                                                                arm_properties={"required_trajectories": "prepare_place"},
                                                                 name="occupied_arm_designator")),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
@@ -351,7 +351,7 @@ class SelfCleanup(smach.StateMachine):
                                                             store_entity_des,
                                                             ds.OccupiedArmDesignator(
                                                                 robot,
-                                                                arm_properties={"required_trajectory": "prepare_place"},
+                                                                arm_properties={"required_trajectories": "prepare_place"},
                                                                 name="occupied_arm_designator"),
                                                             "on_top_of"),
                                    transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
