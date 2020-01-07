@@ -13,7 +13,7 @@ from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
-from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint
+from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper
 
 try:
     from typing import List
@@ -52,6 +52,9 @@ if __name__ == "__main__":
         entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
         waypoint = ds.EdEntityDesignator(robot, id=args.waypoint, name='waypoint')
 
+        arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, {}))
+        arm.lock()
+
         record = {'robot': args.robot, 'start_waypoint': args.waypoint, 'class': args.cls,
                   'id': None, 'inspect_start': None, 'inspect_end': None, 'grab_start': None, 'grab_end': None}
         overall_start = time.time()
@@ -67,7 +70,7 @@ if __name__ == "__main__":
 
             record['inspect_start'] = time.time()
             assert inspect.execute() == 'done'
-            record['inspect_end'] = time.time()
+            record['inspect_end'] = time.time() - record['inspect_start']
 
             inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
             if inspection_result:
@@ -77,17 +80,25 @@ if __name__ == "__main__":
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
                     grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
 
-                    arm = ds.UnoccupiedArmDesignator(robot, {})
-
                     grab_state = Grab(robot, grasp_entity, arm)
-                    record['grab_start'] = time.time()
+                    record['grab_start'] = time.time() - record['inspect_end']
                     grab_state.execute()
-                    record['grab_end'] = time.time()
+                    record['grab_end'] = time.time() - record['grab_start']
+
+                    assert nav_to_start.execute() == 'arrived'
+
+                    rospy.logwarn("Robot will turn around to drop the {}".format(grasp_cls.resolve()))
+
+                    force_drive = ForceDrive(robot, 0, 0, 1.57, 3)
+                    force_drive.execute()
+
+                    drop_it = SetGripper(robot, arm_designator=arm, grab_entity_designator=grasp_entity)
+                    drop_it.execute()
+
+                    nav_to_start.execute()
                 else:
-                    rospy.logerr("No entities found of the given class '{}'".format(grasp_cls))
+                    rospy.logerr("No entities found of the given class '{}'".format(grasp_cls.resolve()))
             else:
                 rospy.logerr("No entities found at all :-(")
-
-            assert nav_to_start.execute() == 'arrived'
         finally:
             results_writer.writerow(record)
