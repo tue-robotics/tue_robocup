@@ -32,7 +32,12 @@ class ChallengeHelpMeCarry(smach.StateMachine):
                                                                           area=challenge_knowledge.default_area),
                                                    name="place_position")
 
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(
+            robot,
+            arm_properties={"required_goals": ["handover_to_human",
+                                               challenge_knowledge.driving_bag_pose,
+                                               challenge_knowledge.drop_bag_pose]},
+            name="empty_arm_designator")
 
         # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm, unless it is unlocked.
         # For this challenge, unlocking is not needed.
