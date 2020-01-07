@@ -71,7 +71,7 @@ class Clear(smach.StateMachine):
         selected_entity_designator = EntityByIdDesignator(robot, "TBD", name='selected_entity_designator', )
 
         arm_des = UnoccupiedArmDesignator(robot,
-                                          arm_properties={"required_trajectories": "[prepare_place, prepare_grasp]"})\
+                                          arm_properties={"required_trajectories": ["prepare_place", "prepare_grasp"]})\
             .lockable()
         arm_des.lock()
 
