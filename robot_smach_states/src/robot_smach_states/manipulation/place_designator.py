@@ -73,7 +73,7 @@ class EmptySpotDesignator(Designator):
         open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi, base_pose, arm)) for poi in open_POIs]
 
         # We don't care about small differences
-        nav_threshold = 0.5 / 0.05  # Distance (0.5 m) divided by resolution (0.05)
+        nav_threshold = 0.5 # Distance (0.5 m)
         open_POIs_dist = [f for f in open_POIs_dist if (f[1] - open_POIs_dist[0][1]) < nav_threshold]
 
         open_POIs_dist.sort(key=lambda tup: tup[0].edge_score, reverse=True) # sorts in place
