@@ -10,7 +10,7 @@ from robot_smach_states.navigation import NavigateToPlace
 from robot_smach_states.world_model import Inspect
 from robot_smach_states.utility import LockDesignator
 from robot_smach_states.util.designators.utility import LockingDesignator
-from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
+from .place_designator import EmptySpotDesignator
 from robot_smach_states.util.designators import check_type
 
 
