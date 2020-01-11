@@ -26,6 +26,7 @@ from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
 from robot_skills.robot_part import RobotPart
 
+infradius = 200000
 
 class Navigation(RobotPart):
     def __init__(self, robot_name, tf_listener):
@@ -92,7 +93,7 @@ class ED(RobotPart):
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
+    def get_entities(self, type="", center_point=VectorStamped(), radius=infradius, id="", parse=True):
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
@@ -110,7 +111,7 @@ class ED(RobotPart):
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=None, radius=0):
+    def get_closest_entity(self, type="", center_point=None, radius=infradius):
         if not center_point:
             center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
 
@@ -132,13 +133,13 @@ class ED(RobotPart):
 
         return entities[0]
 
-    def get_closest_room(self, center_point=None, radius=0):
+    def get_closest_room(self, center_point=None, radius=infradius):
         if not center_point:
             center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
-    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0, ignore_z=False):
+    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=infradius, ignore_z=False):
         """
         Get the closest entity detected by the laser. The ID's of such entities are postfixed with '-laser'
         For the rest, this works exactly like get_closest_entity
@@ -300,7 +301,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, center_point=VectorStamped(), radius=0):
+    def get_closest_possible_person_entity(self, center_point=VectorStamped(), radius=infradius):
         """ Returns the 'possible_human' entity closest to a certain center point.
 
         :param center_point: (VectorStamped) indicating where the human should be close to
