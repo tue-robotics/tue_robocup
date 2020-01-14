@@ -13,6 +13,8 @@ from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
+from robot_skills.util.entity import Entity
+from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper, \
     Say
 
@@ -52,7 +54,7 @@ if __name__ == "__main__":
     with open(args.output, 'a+') as csv_file:
         reader = csv.DictReader(csv_file)
 
-        fields = ['robot', 'start_waypoint', 'expected_class', 'observed_class', 'id', 'inspect_start', 'inspect_end', 'inspect_duration', 'grab_start', 'grab_end', 'grab_duration']
+        fields = ['robot', 'start_waypoint', 'expected_class', 'observed_class', 'id', 'inspect_start', 'inspect_end', 'inspect_duration', 'grab_start', 'grab_end', 'grab_duration', 'x', 'y', 'z']
         results_writer = csv.DictWriter(csv_file, fieldnames=fields)
 
         if reader.fieldnames != results_writer.fieldnames:
@@ -107,6 +109,13 @@ if __name__ == "__main__":
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
                     grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
                     record['id'] = selected_entity_id
+
+                    entity = grasp_entity.resolve() # type: Entity
+                    if entity:
+                        vector_stamped = entity.pose.extractVectorStamped()  # type: VectorStamped
+                        record['x'] = vector_stamped.vector.x()
+                        record['y'] = vector_stamped.vector.y()
+                        record['z'] = vector_stamped.vector.z()
 
                     grab_state = Grab(robot, grasp_entity, arm)
                     record['grab_start'] = time.time()
