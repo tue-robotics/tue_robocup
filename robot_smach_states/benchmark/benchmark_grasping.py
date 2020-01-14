@@ -35,20 +35,19 @@ if __name__ == "__main__":
                         help="ID of entity to grasp FROM ('grasp' entity is on-top-of this 'support' entity), eg. 'cabinet'")
     parser.add_argument("waypoint", type=str,
                         help="ID of waypoint for start and end position of the robot")
-    parser.add_argument("inspect_from_area", type=str,
+    parser.add_argument("--inspect_from_area", type=str,
                         help="What area of the support-entity to inspect from", default='in_front_of')
     parser.add_argument("--robot", default="hero",
                         help="Robot name (amigo, hero, sergio)")
     parser.add_argument("--output", default="grasp_benchmark.csv",
                         help="Output of the benchmark results")
-    parser.add_argument("--strict-class", default=True,
+    parser.add_argument("--non-strict-class", action='store_true',
                         help="Only grasp an item if it matches the specified class. "
-                             "Pass --strict-class=false to also grab another class of items "
+                             "Pass --non-strict-class=False to also grab another class of items "
                              "if none of the expected class is observed. "
                              "Use this if you only care about grasping, not object recognition")
 
     args = parser.parse_args()
-
     rospy.init_node("benchmark_grasping")
 
     with open(args.output, 'a+') as csv_file:
@@ -96,7 +95,7 @@ if __name__ == "__main__":
 
             inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
             if inspection_result:
-                if grasp_cls.resolve() == '*' or not args.strict_class:
+                if grasp_cls.resolve() == '*' or args.non_strict_class:
                     rospy.loginfo("Any item will match")
                     matching_results = inspection_result
                 else:
