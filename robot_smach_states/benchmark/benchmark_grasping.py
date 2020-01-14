@@ -30,6 +30,7 @@ if __name__ == "__main__":
     parser.add_argument("cls", type=str, help="class of entity to grasp, eg. 'coke'")
     parser.add_argument("support", type=str, help="ID of entity to grasp FROM ('grasp' entity is on-top-of this 'support' entity), eg. 'cabinet'")
     parser.add_argument("waypoint", type=str, help="ID of waypoint for start and end position of the robot")
+    parser.add_argument("inspect_from_area", type=str, help="What area of the support-entity to inspect from", default='in_front_of')
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     parser.add_argument("--output", default="grasp_benchmark.csv", help="Output of the benchmark results")
 
@@ -66,7 +67,8 @@ if __name__ == "__main__":
 
             assert nav_to_start.execute() == 'arrived'
 
-            inspect = Inspect(robot=robot, entityDes=support_entity, objectIDsDes=entity_ids)
+            inspect = Inspect(robot=robot, entityDes=support_entity, objectIDsDes=entity_ids,
+                              navigation_area=args.inspect_from_area)
 
             record['inspect_start'] = time.time()
             assert inspect.execute() == 'done'
@@ -94,7 +96,6 @@ if __name__ == "__main__":
 
                     force_drive = ForceDrive(robot, 0, 0, 1, 3.14)  #rotate 180 degs in pi seconds
                     force_drive.execute()
-
 
                     say_drop = Say(robot, sentence="I'm going to drop the item, please hold it!")
                     say_drop.execute()
