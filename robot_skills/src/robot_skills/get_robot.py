@@ -5,6 +5,7 @@ import sys
 import rospy
 
 # Robot skills
+from .robot import Robot
 from .amigo import Amigo
 from .hero import Hero
 from .mockbot import Mockbot
@@ -36,6 +37,7 @@ def get_robot_from_argv(index, default_robot_name="hero"):
 
 
 def get_robot(name):
+    # type: (str) -> Robot
     """
     Constructs a robot (api) object based on the provided name
     :param name: (str) robot name
