@@ -83,13 +83,13 @@ if __name__ == "__main__":
                                               waypoint_designator=waypoint,
                                               look_at_designator=support_entity)
 
-            assert nav_to_start.execute() == 'arrived'
+            assert nav_to_start.execute() == 'arrived', "I did not arrive at the start"
 
             inspect = Inspect(robot=robot, entityDes=support_entity, objectIDsDes=entity_ids,
                               navigation_area=args.inspect_from_area)
 
             record['inspect_start'] = '{:.3f}'.format(time.time())
-            assert inspect.execute() == 'done'
+            assert inspect.execute() == 'done', "I could not inspect the support entity"
             record['inspect_end'] = '{:.3f}'.format(time.time())
             record['inspect_duration'] = '{:3.3f}'.format(float(record['inspect_end']) - float(record['inspect_start']))
 
@@ -125,11 +125,11 @@ if __name__ == "__main__":
                     grab_state = Grab(robot, grasp_entity, arm)
 
                     record['grab_start'] = '{:.3f}'.format(time.time())
-                    assert grab_state.execute() == 'done'
+                    assert grab_state.execute() == 'done', "I couldn't grasp"
                     record['grab_end'] = '{:.3f}'.format(time.time())
                     record['grab_duration'] = '{:3.3f}'.format(float(record['grab_end']) - float(record['grab_start']))
 
-                    assert nav_to_start.execute() == 'arrived'
+                    assert nav_to_start.execute() == 'arrived', "I could not navigate back to the start"
 
                     rospy.logwarn("Robot will turn around to drop the {}".format(grasp_cls.resolve()))
 
@@ -149,5 +149,8 @@ if __name__ == "__main__":
                     rospy.logerr("No entities found of the given class '{}'".format(grasp_cls.resolve()))
             else:
                 rospy.logerr("No entities found at all :-(")
+        except AssertionError as assertion_err:
+            say_fail = Say(robot, sentence=assertion_err.message)
+            say_fail.execute()
         finally:
             results_writer.writerow(record)
