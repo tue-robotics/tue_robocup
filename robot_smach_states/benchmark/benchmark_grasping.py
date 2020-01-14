@@ -111,20 +111,11 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     finally:
         results_writer.writerow(record)
 
+    return record
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Measure the time it takes to grasp an entity when starting from a given pose. "
-                                                 "After the grasping is done, go back to the waypoint, "
-                                                 "turn around and drop the item, "
-                                                 "then turn around once more to be in the start configuration again")
-    parser.add_argument("cls", type=str,
-                        help="class of entity to grasp, eg. 'coke' or '*' if you don't care")
-    parser.add_argument("support", type=str,
-                        help="ID of entity to grasp FROM ('grasp' entity is on-top-of this 'support' entity), eg. 'cabinet'")
-    parser.add_argument("waypoint", type=str,
-                        help="ID of waypoint for start and end position of the robot")
-    parser.add_argument("--inspect_from_area", type=str,
-                        help="What area of the support-entity to inspect from", default='in_front_of')
+    parser = argparse.ArgumentParser(description='Benchmark grasping, for a single item or multiple items at various locations')
     parser.add_argument("--robot", default="hero",
                         help="Robot name (amigo, hero, sergio)")
     parser.add_argument("--output", default="grasp_benchmark.csv",
@@ -135,7 +126,27 @@ if __name__ == "__main__":
                              "if none of the expected class is observed. "
                              "Use this if you only care about grasping, not object recognition")
 
-    args = parser.parse_args()
+    subparsers = parser.add_subparsers(help='single or batch mode', dest='subcommand')
+    single = subparsers.add_parser(name='single', description="Measure the time it takes to grasp an entity when starting from a given pose. "
+                                                 "After the grasping is done, go back to the waypoint, "
+                                                 "turn around and drop the item, "
+                                                 "then turn around once more to be in the start configuration again")
+    single.add_argument("cls", type=str,
+                        help="class of entity to grasp, eg. 'coke' or '*' if you don't care")
+    single.add_argument("support", type=str,
+                        help="ID of entity to grasp FROM ('grasp' entity is on-top-of this 'support' entity), eg. 'cabinet'")
+    single.add_argument("waypoint", type=str,
+                        help="ID of waypoint for start and end position of the robot")
+    single.add_argument("--inspect_from_area", type=str,
+                        help="What area of the support-entity to inspect from", default='in_front_of')
+
+
+    batch = subparsers.add_parser(name='batch', description="Perform the single case repeatedly, "
+                                                           "taking configurations from a .csv file, "
+                                                            "with columns 'cls,support,waypoint,inspect_from_area' (the latter may be empty)")
+    batch.add_argument("configuration", type=str, default='grasp_benchmark_config.csv')
+
+    args = single.parse_args()
     rospy.init_node("benchmark_grasping")
 
     with open(args.output, 'a+') as csv_file:
@@ -155,4 +166,19 @@ if __name__ == "__main__":
 
         robot = get_robot(args.robot)
 
-        single_item(robot, results_writer, args.cls, args.support, args.inspect_from_area, args.non_strict_class)
+        if args.subcommand == 'single':
+            single_item(robot, results_writer,
+                        args.cls, args.support, args.waypoint, args.inspect_from_area,
+                        args.non_strict_class)
+        elif args.subcommand == 'batch':
+            with open(args.configuration) as config_file:
+                config_reader = csv.DictReader(config_file)
+                config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area']
+                assert config_reader.fieldnames == config_fields, "Config needs fields '{}'".format(config_fields)
+
+                records = []
+                for config_row in config_reader:
+                    record = single_item(robot, results_writer,
+                                config_row['cls'], config_row['support'], config_row['inspect_from_area'],
+                                args.non_strict_class)
+                    records += [record]
