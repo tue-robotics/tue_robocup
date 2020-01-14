@@ -13,7 +13,8 @@ from robot_skills.get_robot import get_robot
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
-from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper
+from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper, \
+    Say
 
 try:
     from typing import List
@@ -79,6 +80,7 @@ if __name__ == "__main__":
                     selected_entity_id = matching_entity_ids[0]
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
                     grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
+                    record['id'] = selected_entity_id
 
                     grab_state = Grab(robot, grasp_entity, arm)
                     record['grab_start'] = time.time()
@@ -92,6 +94,10 @@ if __name__ == "__main__":
 
                     force_drive = ForceDrive(robot, 0, 0, 1, 3.14)  #rotate 180 degs in pi seconds
                     force_drive.execute()
+
+
+                    say_drop = Say(robot, sentence="I'm going to drop the item, please hold it!")
+                    say_drop.execute()
 
                     drop_it = SetGripper(robot, arm_designator=arm, grab_entity_designator=grasp_entity)
                     drop_it.execute()
