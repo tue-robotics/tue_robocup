@@ -57,10 +57,10 @@ if __name__ == "__main__":
                   'start_waypoint',
                   'expected_class', 'observed_class',
                   'id',
-                  'inspect_start', 'inspect_end', 'inspect_duration',
-                  'grab_start', 'grab_end', 'grab_duration',
+                  'inspect_duration',
+                  'grab_duration',
                   'x', 'y', 'z']
-        results_writer = csv.DictWriter(csv_file, fieldnames=fields)
+        results_writer = csv.DictWriter(csv_file, fieldnames=fields, extrasaction='ignore')  # Ignore extra keys in the dicts
 
         if reader.fieldnames != results_writer.fieldnames:
             results_writer.writeheader()
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         arm.lock()
 
         record = {'robot': args.robot, 'start_waypoint': args.waypoint, 'expected_class': args.cls,
-                  'id': None, 'inspect_start': None, 'inspect_end': None, 'grab_start': None, 'grab_end': None}
+                  'id': None}
 
         try:
             nav_to_start = NavigateToWaypoint(robot,
@@ -113,14 +113,14 @@ if __name__ == "__main__":
 
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
                     grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
-                    record['id'] = selected_entity_id
+                    record['id'] = selected_entity_id[:6]
 
                     entity = grasp_entity.resolve() # type: Entity
                     if entity:
                         vector_stamped = entity.pose.extractVectorStamped()  # type: VectorStamped
-                        record['x'] = vector_stamped.vector.x()
-                        record['y'] = vector_stamped.vector.y()
-                        record['z'] = vector_stamped.vector.z()
+                        record['x'] = '{:.3f}'.format(vector_stamped.vector.x())
+                        record['y'] = '{:.3f}'.format(vector_stamped.vector.y())
+                        record['z'] = '{:.3f}'.format(vector_stamped.vector.z())
 
                     grab_state = Grab(robot, grasp_entity, arm)
 
