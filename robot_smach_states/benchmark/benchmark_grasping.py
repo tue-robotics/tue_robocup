@@ -88,10 +88,10 @@ if __name__ == "__main__":
             inspect = Inspect(robot=robot, entityDes=support_entity, objectIDsDes=entity_ids,
                               navigation_area=args.inspect_from_area)
 
-            record['inspect_start'] = time.time()
+            record['inspect_start'] = '{:.3f}'.format(time.time())
             assert inspect.execute() == 'done'
-            record['inspect_end'] = time.time()
-            record['inspect_duration'] = record['inspect_end'] - record['inspect_start']
+            record['inspect_end'] = '{:.3f}'.format(time.time())
+            record['inspect_duration'] = '{:3.3f}'.format(float(record['inspect_end']) - float(record['inspect_start']))
 
             inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
             if inspection_result:
@@ -124,10 +124,10 @@ if __name__ == "__main__":
 
                     grab_state = Grab(robot, grasp_entity, arm)
 
-                    record['grab_start'] = time.time()
+                    record['grab_start'] = '{:.3f}'.format(time.time())
                     assert grab_state.execute() == 'done'
-                    record['grab_end'] = time.time()
-                    record['grab_duration'] = record['grab_end'] - record['grab_start']
+                    record['grab_end'] = '{:.3f}'.format(time.time())
+                    record['grab_duration'] = '{:3.3f}'.format(float(record['grab_end']) - float(record['grab_start']))
 
                     assert nav_to_start.execute() == 'arrived'
 
