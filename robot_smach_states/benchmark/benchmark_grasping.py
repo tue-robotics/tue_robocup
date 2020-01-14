@@ -123,8 +123,9 @@ if __name__ == "__main__":
                         record['z'] = vector_stamped.vector.z()
 
                     grab_state = Grab(robot, grasp_entity, arm)
+
                     record['grab_start'] = time.time()
-                    grab_state.execute()
+                    assert grab_state.execute() == 'done'
                     record['grab_end'] = time.time()
                     record['grab_duration'] = record['grab_end'] - record['grab_start']
 
@@ -141,6 +142,8 @@ if __name__ == "__main__":
                     drop_it = SetGripper(robot, arm_designator=arm, grab_entity_designator=grasp_entity)
                     drop_it.execute()
 
+                    force_drive_back = ForceDrive(robot, 0, 0, -1, 3.14)  #rotate -180 degs in pi seconds
+                    force_drive_back.execute()
                     nav_to_start.execute()
                 else:
                     rospy.logerr("No entities found of the given class '{}'".format(grasp_cls.resolve()))
