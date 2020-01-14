@@ -146,11 +146,11 @@ if __name__ == "__main__":
                     force_drive_back.execute()
                     nav_to_start.execute()
                 else:
-                    rospy.logerr("No entities found of the given class '{}'".format(grasp_cls.resolve()))
+                    raise AssertionError("No {} found".format(grasp_cls.resolve()))
             else:
                 rospy.logerr("No entities found at all :-(")
         except AssertionError as assertion_err:
-            say_fail = Say(robot, sentence=assertion_err.message)
+            say_fail = Say(robot, sentence=assertion_err.message+", sorry")
             say_fail.execute()
         finally:
             results_writer.writerow(record)
