@@ -54,7 +54,13 @@ if __name__ == "__main__":
     with open(args.output, 'a+') as csv_file:
         reader = csv.DictReader(csv_file)
 
-        fields = ['robot', 'start_waypoint', 'expected_class', 'observed_class', 'id', 'inspect_start', 'inspect_end', 'inspect_duration', 'grab_start', 'grab_end', 'grab_duration', 'x', 'y', 'z']
+        fields = ['robot',
+                  'start_waypoint',
+                  'expected_class', 'observed_class',
+                  'id',
+                  'inspect_start', 'inspect_end', 'inspect_duration',
+                  'grab_start', 'grab_end', 'grab_duration',
+                  'x', 'y', 'z']
         results_writer = csv.DictWriter(csv_file, fieldnames=fields)
 
         if reader.fieldnames != results_writer.fieldnames:
