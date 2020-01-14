@@ -105,11 +105,11 @@ if __name__ == "__main__":
 
                 if matching_results:
                     if len(matching_results) > 1:
-                        rospy.logwarn("There are multiple items OK to grab, will select the first one")
+                        rospy.logwarn("There are multiple items OK to grab, will select the last one")
                         record['observed_class'] = ' '.join([result.type for result in matching_results])
                     else:
-                        record['observed_class'] = matching_results[0].type
-                    selected_entity_id = matching_results[0].id
+                        record['observed_class'] = matching_results[-1].type
+                    selected_entity_id = matching_results[-1].id
 
                     rospy.loginfo("Selected entity {} for grasping".format(selected_entity_id))
                     grasp_entity = ds.EdEntityDesignator(robot, id=selected_entity_id)
