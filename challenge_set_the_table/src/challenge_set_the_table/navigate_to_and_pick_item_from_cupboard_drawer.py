@@ -36,8 +36,8 @@ class PickItemFromCupboardDrawer(StateMachine):
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
-        def send_gripper_goal(open_close_string, max_torque=0.1):
-            arm.send_gripper_goal(open_close_string, max_torque=max_torque)
+        def send_gripper_goal(open_close_string, max_force=0.1):
+            arm.send_gripper_goal(open_close_string, max_force=max_force)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         def show_image(package_name, path_to_image_in_package):
@@ -75,7 +75,7 @@ class PickItemFromCupboardDrawer(StateMachine):
             rospy.sleep(5.0)
             robot.speech.speak("Thanks for that!", block=False)
             if item_name == 'plate':
-                send_gripper_goal("close", max_torque=0.7)
+                send_gripper_goal("close", max_force=0.7)
             else:
                 send_gripper_goal("close")
 

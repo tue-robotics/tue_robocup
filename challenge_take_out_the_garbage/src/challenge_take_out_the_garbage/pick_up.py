@@ -134,7 +134,7 @@ class GrabTrash(smach.State):
 
             # arm.send_gripper_goal('open')
             # arm.wait_for_motion_done()
-            # arm.send_gripper_goal('close', max_torque=1.0)
+            # arm.send_gripper_goal('close', max_force=1.0)
             # arm.wait_for_motion_done()
 
             arm_weight = measure_force.get_force()
@@ -154,7 +154,7 @@ class GrabTrash(smach.State):
             # self._robot.torso.send_goal("grab_trash_down")
             # self._robot.torso.wait_for_motion_done()
             # rospy.sleep(3)
-            arm.send_gripper_goal('close', max_torque=1.0)
+            arm.send_gripper_goal('close', max_force=1.0)
             arm.wait_for_motion_done()
 
             # Go up and back to pre grasp position

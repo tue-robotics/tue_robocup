@@ -34,8 +34,8 @@ class GrabRack(StateMachine):
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
-        def send_gripper_goal(open_close_string, max_torque=1.0):
-            arm.send_gripper_goal(open_close_string, max_torque=max_torque)
+        def send_gripper_goal(open_close_string, max_force=1.0):
+            arm.send_gripper_goal(open_close_string, max_force=max_force)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         def show_image(package_name, path_to_image_in_package):
