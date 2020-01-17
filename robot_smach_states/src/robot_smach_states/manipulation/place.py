@@ -9,8 +9,8 @@ from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, Fra
 from robot_smach_states.navigation import NavigateToPlace
 from robot_smach_states.world_model import Inspect
 from robot_smach_states.utility import LockDesignator
-from robot_smach_states.util.designators.ed_designators import EmptySpotDesignator
 from robot_smach_states.util.designators.utility import LockingDesignator
+from .place_designator import EmptySpotDesignator
 from robot_smach_states.util.designators import check_type
 
 
@@ -224,7 +224,7 @@ class Place(smach.StateMachine):
         if isinstance(place_pose, str):
             furniture_designator = EdEntityDesignator(robot=robot, id=place_pose)
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_area)
+                                                   arm_designator=arm, area=place_area)
         # Case 1
         elif place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped:
             furniture_designator = None
@@ -233,7 +233,7 @@ class Place(smach.StateMachine):
         elif place_pose.resolve_type == Entity:
             furniture_designator = place_pose
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_area)
+                                                   arm_designator=arm, area=place_area)
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
 
