@@ -46,7 +46,7 @@ class EmptySpotDesignator(Designator):
         self._edge_distance = 0.05  # Distance to table edge
         self._spacing = 0.15
         self._area = area
-        self._nav_threshold = 0.5   # Distance we are willing to drive further for better edge_score
+        self._nav_threshold = 0.3   # Distance we are willing to drive further for better edge_score
 
         self.marker_pub = rospy.Publisher('/empty_spots', MarkerArray, queue_size=1)
         self.marker_array = MarkerArray()
@@ -75,7 +75,7 @@ class EmptySpotDesignator(Designator):
         open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi, base_pose, arm)) for poi in open_POIs]
 
         # We don't care about small differences
-        open_POIs_dist = open_POIs_dist.sort(key=lambda tup:tup[1])
+        open_POIs_dist.sort(key=lambda tup:tup[1])
         open_POIs_dist = [f for f in open_POIs_dist if (f[1] - open_POIs_dist[0][1]) < self._nav_threshold]
 
         open_POIs_dist.sort(key=lambda tup: tup[0].edge_score, reverse=True) # sorts in place
