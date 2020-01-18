@@ -1,12 +1,10 @@
 # ROS
 import rospy
 import smach
-import tf2_ros
 
 # TU/e Robotics
-from robot_skills.util.entity import Entity
 from robot_skills.classification_result import ClassificationResult
-
+from robot_skills import arms
 import robot_smach_states as states
 from robot_smach_states.util.designators import check_type
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator, EmptySpotDesignator
@@ -70,9 +68,11 @@ class Clear(smach.StateMachine):
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
         selected_entity_designator = EntityByIdDesignator(robot, "TBD", name='selected_entity_designator', )
 
-        arm_des = UnoccupiedArmDesignator(robot,
-                                          arm_properties={"required_trajectories": ["prepare_place", "prepare_grasp"]})\
-            .lockable()
+        arm_des = UnoccupiedArmDesignator(
+            robot,
+            arm_properties={"required_trajectories": ["prepare_place", "prepare_grasp"],
+                            "required_goals": "carrying_pose",
+                            "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
         arm_des.lock()
 
         place_position = states.util.designators.EmptySpotDesignator(robot, EdEntityDesignator(
