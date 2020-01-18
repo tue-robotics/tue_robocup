@@ -32,7 +32,7 @@ class TestHandOverToHuman(unittest.TestCase):
         self.robot.arms["leftArm"].send_joint_goal.assert_any_call('handover_to_human', max_joint_vel=mock.ANY, timeout=mock.ANY)
         self.robot.arms["leftArm"].send_joint_goal.assert_any_call('reset', max_joint_vel=mock.ANY, timeout=mock.ANY)
 
-        self.robot.arms["leftArm"].send_gripper_goal.assert_any_call('open', mock.ANY, max_torque=mock.ANY)
+        self.robot.arms["leftArm"].send_gripper_goal.assert_any_call('open', mock.ANY, max_force=mock.ANY)
         self.assertIsNone(self.robot.arms["leftArm"].occupied_by)
 
 
@@ -63,8 +63,8 @@ class TestHandOverFromHuman(unittest.TestCase):
 
         self.robot.arms["rightArm"].handover_to_robot.assert_called_once()
 
-        self.robot.arms["rightArm"].send_gripper_goal.assert_any_call('open', mock.ANY, max_torque=mock.ANY)
-        self.robot.arms["rightArm"].send_gripper_goal.assert_called_with('close', mock.ANY, max_torque=mock.ANY)
+        self.robot.arms["rightArm"].send_gripper_goal.assert_any_call('open', mock.ANY, max_force=mock.ANY)
+        self.robot.arms["rightArm"].send_gripper_goal.assert_called_with('close', mock.ANY, max_force=mock.ANY)
         self.assertEqual(self.robot.arms["rightArm"].occupied_by, self.entity)
 
 
@@ -79,7 +79,7 @@ class TestSetGripperOpen(unittest.TestCase):
     def test_set_open(self):
         state = states.SetGripper(self.robot, self.arm_ds, 'open')
         self.assertEqual(state.execute(), "succeeded")
-        self.robot.arms["leftArm"].send_gripper_goal.assert_called_once_with('open', mock.ANY, max_torque=mock.ANY)
+        self.robot.arms["leftArm"].send_gripper_goal.assert_called_once_with('open', mock.ANY, max_force=mock.ANY)
 
 
 class TestSetGripperClose(unittest.TestCase):
@@ -95,7 +95,7 @@ class TestSetGripperClose(unittest.TestCase):
     def test_set_close(self):
         state = states.SetGripper(self.robot, self.arm_ds, 'close', self.entity_ds)
         self.assertEqual(state.execute(), "succeeded")
-        self.robot.arms["leftArm"].send_gripper_goal.assert_called_once_with('close', mock.ANY, max_torque=mock.ANY)
+        self.robot.arms["leftArm"].send_gripper_goal.assert_called_once_with('close', mock.ANY, max_force=mock.ANY)
         self.assertEqual(self.robot.arms["leftArm"].occupied_by, self.entity)
 
 
