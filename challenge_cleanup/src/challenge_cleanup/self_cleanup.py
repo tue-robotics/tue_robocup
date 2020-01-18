@@ -5,6 +5,7 @@ import hmi
 
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.util.entity import Entity
+from robot_skills import arms
 import robot_smach_states.util.designators as ds
 
 from robocup_knowledge import load_knowledge
@@ -264,15 +265,16 @@ class SelfCleanup(smach.StateMachine):
             smach.StateMachine.add(
                 "GRAB",
                 robot_smach_states.Grab(
-                    robot, selected_entity_designator,
+                    robot,
+                    selected_entity_designator,
                     ds.UnoccupiedArmDesignator(robot,
-                                               arm_properties={"required_trajectories": "prepare_grasp"},
+                                               arm_properties={"required_trajectories": "prepare_grasp",
+                                                               "required_goals": "carrying_pose",
+                                                               "reequired_gripper_types": arms.GripperTypes.GRASPING},
                                                name="empty_arm_designator")),
                 transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
 
-            smach.StateMachine.add(
-                "ARM_RESET",
-                robot_smach_states.ArmToJointConfig(
+            smach.StateMachine.add("ARM_RESET",robot_smach_states.ArmToJointConfig(
                     robot,
                     ds.UnoccupiedArmDesignator(robot,
                                                arm_properties={"required_goals": "reset"},
@@ -339,9 +341,11 @@ class SelfCleanup(smach.StateMachine):
                                        robot,
                                        selected_entity_designator,
                                        trash_place_pose,
-                                       ds.OccupiedArmDesignator(robot,
-                                                                arm_properties={"required_trajectories": "prepare_place"},
-                                                                name="occupied_arm_designator")),
+                                       ds.OccupiedArmDesignator(
+                                           robot,
+                                           arm_properties={"required_trajectories": "prepare_place",
+                                                           "required_gripper_types": [arms.GripperTypes.GRASPING]},
+                                           name="occupied_arm_designator")),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
 
@@ -351,8 +355,11 @@ class SelfCleanup(smach.StateMachine):
                                                             store_entity_des,
                                                             ds.OccupiedArmDesignator(
                                                                 robot,
-                                                                arm_properties={"required_trajectories": "prepare_place"},
-                                                                name="occupied_arm_designator"),
+                                                                arm_properties={
+                                                                    "required_trajectories": "prepare_place",
+                                                                    "required_gripper_types": [
+                                                                        arms.GripperTypes.GRASPING]},
+                                                                name="occupied_arm_designator")),
                                                             "on_top_of"),
                                    transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
 
