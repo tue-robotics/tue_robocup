@@ -206,7 +206,7 @@ class ManipulateMachine(smach.StateMachine):
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
-        self.arm_designator = ds.ArmDesignator(robot, {})
+        self.arm_designator = ds.UnoccupiedArmDesignator(robot, {})
         self.place_designator = EmptySpotDesignator(robot=robot,
                                                     place_location_designator=self.place_entity_designator,
                                                     arm_designator=self.arm_designator,
