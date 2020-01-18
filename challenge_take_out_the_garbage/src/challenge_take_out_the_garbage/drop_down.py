@@ -5,7 +5,7 @@ import rospy
 # TU/e
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills.util.kdl_conversions import FrameStamped
+from robot_skills import arms
 from robocup_knowledge import load_knowledge
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
@@ -93,7 +93,8 @@ class DropDownTrash(smach.StateMachine):
 
         arm_designator = ds.OccupiedArmDesignator(
             robot=robot,
-            arm_properties={"required_goals": ["handover", "reset", "handover_to_human"]})
+            arm_properties={"required_goals": ["handover", "reset", "handover_to_human"],
+                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
         with self:
             smach.StateMachine.add("GO_TO_COLLECTION_ZONE",
