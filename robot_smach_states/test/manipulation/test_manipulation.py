@@ -2,6 +2,7 @@ import unittest
 import mock
 
 # Robot Skills
+from robot_skills import arms
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 
@@ -19,7 +20,8 @@ class TestHandOverToHuman(unittest.TestCase):
     def setUp(self):
         entity = Entity("12345", "dummy", "/map", None, None, {}, None, 0)
         self.robot.arms["leftArm"].occupied_by = entity
-        self.arm_ds = ds.OccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human', 'reset']})
+        self.arm_ds = ds.OccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human', 'reset'],
+                                                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     def test_handover_to_human(self):
         state = states.HandoverToHuman(self.robot, self.arm_ds)
@@ -46,7 +48,8 @@ class TestHandOverFromHuman(unittest.TestCase):
         entity = Entity("123", "dummy", "/map",
                         None, None, {}, None, 0)
         self.robot.arms["leftArm"].occupied_by = entity
-        self.arm_ds = ds.UnoccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human']})
+        self.arm_ds = ds.UnoccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human'],
+                                                              "required_gripper_types": [arms.GripperTypes.GRASPING]})
         self.entity = Entity("456", "dummy", "/map",
                              None, None, {}, None, 0)
 
@@ -74,7 +77,8 @@ class TestSetGripperOpen(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+        self.arm_ds = ds.ArmDesignator(self.robot, {"required_gripper_types": [arms.GripperTypes.GRASPING],
+                                                    'required_arm_name': 'leftArm'})
 
     def test_set_open(self):
         state = states.SetGripper(self.robot, self.arm_ds, 'open')
@@ -88,7 +92,8 @@ class TestSetGripperClose(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm',
+                                                    "required_gripper_types": [arms.GripperTypes.GRASPING]})
         self.entity = Entity("12345", "dummy", "/map", None, None, {}, None, 0)
         self.entity_ds = ds.VariableDesignator(self.entity)
 
@@ -105,7 +110,8 @@ class TestSetGripperFail(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm',
+                                                    "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     def test_invalid_arm_designator(self):
         invalid_arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'there_is_no_arm_with_this_name'})
@@ -119,7 +125,8 @@ class TestCloseGripper(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm',
+                                                    "required_gripper_types": [arms.GripperTypes.GRASPING]})
         self.entity_label = "entity_label"
 
     def test_open_gripper(self):
@@ -135,7 +142,8 @@ class TestCloseGripperFail(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm'})
+        self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm',
+                                                    "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     def test_missing_input(self):
         state = states.CloseGripperOnHandoverToRobot(self.robot, self.arm_ds)  # no entity label or entity designator
