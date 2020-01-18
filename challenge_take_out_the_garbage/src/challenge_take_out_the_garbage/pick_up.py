@@ -10,7 +10,7 @@ from smach import cb_interface, CBState
 import robot_smach_states as states
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arms import PublicArm
-import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBin
 
 from ed_msgs.msg import EntityInfo
@@ -259,7 +259,7 @@ class PickUpTrash(smach.StateMachine):
         :param arm_designator: arm designator resolving to the arm with which to grab
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
-        place_pose_designator = ds.EmptySpotDesignator(robot, trashbin_designator)
+        place_pose_designator = EmptySpotDesignator(robot, trashbin_designator, arm_designator)
 
         with self:
             # @cb_interface(outcomes=['done'])
