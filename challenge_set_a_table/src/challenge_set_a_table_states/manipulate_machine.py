@@ -179,7 +179,7 @@ class ManipulateMachine(smach.StateMachine):
         grasp_furniture_designator2 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id2)
 
         place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
-        arm_designator = ds.OccupiedArmDesignator(robot, {})
+        arm_designator = ds.ArmDesignator(robot, {})
         place_designator = EmptySpotDesignator(robot=robot,
                                                place_location_designator=place_furniture_designator,
                                                arm_designator=arm_designator,
