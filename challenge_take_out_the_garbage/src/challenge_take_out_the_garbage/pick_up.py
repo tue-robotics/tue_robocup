@@ -352,13 +352,14 @@ class PickUpTrash(smach.StateMachine):
 if __name__ == '__main__':
     import os
     import robot_smach_states.util.designators as ds
-    from robot_skills import Hero
+    from robot_skills import Hero, arms
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
 
-    arm = ds.UnoccupiedArmDesignator(hero, {"required_goals": ["reset", "handover"], "force_sensor_required": True})
+    arm = ds.UnoccupiedArmDesignator(hero, {"required_goals": ["reset", "handover"], "force_sensor_required": True,
+                                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     # sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
     # sm.execute()
