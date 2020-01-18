@@ -5,6 +5,7 @@ import rospy
 # Robot smach states
 import robot_smach_states as states
 from robocup_knowledge import load_knowledge
+import robot_smach_states.util.designators as ds
 from robot_skills import arms
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
 from challenge_take_out_the_garbage.drop_down import DropDownTrash, DropTrash
