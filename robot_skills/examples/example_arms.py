@@ -21,11 +21,11 @@ robot = robot_constructor(robot_name)
 failed_actions_per_arm = {}
 
 # First make sure the arms are in a known state
-for side, arm in robot.arms.items():
+for side, arm in robot._arms.items():
     robot.speech.speak("I will first reset my {} arm".format(side))
     arm.reset()
 
-for side, arm in robot.arms.items():
+for side, arm in robot._arms.items():
     failed_actions = []
     robot.speech.speak("I will test my {} arm".format(side))
 
