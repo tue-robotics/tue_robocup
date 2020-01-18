@@ -6,7 +6,7 @@ import datetime
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 
-from robot_skills.arms import GripperState
+from robot_skills.arms import GripperState, GripperTypes
 from robocup_knowledge import load_knowledge
 from challenge_hmc_functions import hmc_states
 from robot_skills.util import kdl_conversions
@@ -35,8 +35,10 @@ class ChallengeHelpMeCarry(smach.StateMachine):
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(
             robot,
             arm_properties={"required_goals": ["handover_to_human",
+                                               "reset",
                                                challenge_knowledge.driving_bag_pose,
-                                               challenge_knowledge.drop_bag_pose]},
+                                               challenge_knowledge.drop_bag_pose],
+                            "required_gripper_types": [GripperTypes.GRASPING]},
             name="empty_arm_designator")
 
         # With the empty_arm_designator locked, it will ALWAYS resolve to the same arm, unless it is unlocked.
