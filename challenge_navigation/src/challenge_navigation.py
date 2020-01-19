@@ -190,7 +190,7 @@ def setup_statemachine(robot):
     msg = "\n".join(["==============================================",
                      "==           CHALLENGE NAVIGATION           ==",
                      "=============================================="])
-    rospy.loginfo(msg)
+    rospy.loginfo("\n" + msg)
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
