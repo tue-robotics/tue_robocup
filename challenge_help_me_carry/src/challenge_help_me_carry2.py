@@ -22,9 +22,10 @@ class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        print("==============================================")
-        print("==         CHALLENGE HELP ME CARRY          ==")
-        print("==============================================")
+        msg = "\n".join(["==============================================",
+                         "==         CHALLENGE HELP ME CARRY          ==",
+                         "=============================================="])
+        rospy.loginfo("\n" + msg)
 
         self.target_destination = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place)
 
