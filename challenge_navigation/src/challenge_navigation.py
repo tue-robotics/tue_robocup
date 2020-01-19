@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import rospy
 import smach
 import sys
@@ -189,9 +187,10 @@ class DetermineObject(smach.State):
 
 def setup_statemachine(robot):
 
-    print("==============================================")
-    print("==           CHALLENGE NAVIGATION           ==")
-    print("==============================================")
+    msg = "\n".join(["==============================================",
+                     "==           CHALLENGE NAVIGATION           ==",
+                     "=============================================="])
+    rospy.loginfo(msg)
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
