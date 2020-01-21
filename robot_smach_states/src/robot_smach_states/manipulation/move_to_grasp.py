@@ -1,6 +1,8 @@
-# ROS
+# System
 import math
 
+# ROS
+import rospy
 import geometry_msgs.msg
 import PyKDL as kdl
 import smach
@@ -99,31 +101,35 @@ class MoveToGrasp(smach.StateMachine):
         goal_pose_designator = _GoalPoseDesignator()
         navigate_state = NavigateToGrasp(robot, item, arm)
         control_parameters = ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)
-        # print(control_parameters)
-        # import ipdb;ipdb.set_trace()
+        distance_threshold = 0.5  # The plan must be valid and we don't want to 'ForceDrive' more than a this distance
 
         # Create state machine
         with self:
             @smach.cb_interface(input_keys=[], output_keys=[], outcomes=["control", "navigate"])
             def determine_approach(_=None):
-                entity_pose, radius, angle_offset = navigate_state.determine_offsets()
-                radius = 1.0  # ToDo: remove!
-                base_pose = robot.base.get_location()  # type: FrameStamped
-                goal_position = self.compute_goal_position(base_pose.frame.p, entity_pose.frame.p, radius)
-                import rospy
-                rospy.logwarn("entity position: {}".format(entity_pose.frame.p))
-                rospy.logwarn("goal position: {}".format(goal_position))
-
-                plan = _create_straight_line_plan(base_pose.frame.p, goal_position)
-                for p in plan:
-                    import rospy
-                    rospy.logwarn(p.pose.position)
-                length = robot.base.global_planner.computePathLength(plan)
-                rospy.logwarn("Length: {}, valid: {}".format(length, robot.base.global_planner.checkPlan(plan)))
-                if not robot.base.global_planner.checkPlan(plan):  # or length > 0.5:
+                try:
+                    entity_pose, radius, angle_offset = navigate_state.determine_offsets()
+                    rospy.loginfo("Entity pose: {}, radius: {}, offset: {}".format(entity_pose, radius, angle_offset))
+                except RuntimeError as e:
+                    rospy.logwarn("Cannot compute offsets: {}. Will try to navigate.".format(e.message))
                     return "navigate"
 
-                # ToDo: fix orientation
+                base_pose = robot.base.get_location()  # type: FrameStamped
+                goal_position = self.compute_goal_position(base_pose.frame.p, entity_pose.frame.p, radius)
+                rospy.logdebug("entity position: {}".format(entity_pose.frame.p))
+                rospy.logdebug("goal position: {}".format(goal_position))
+
+                plan = _create_straight_line_plan(base_pose.frame.p, goal_position)
+                distance = robot.base.global_planner.computePathLength(plan)
+                valid = robot.base.global_planner.checkPlan(plan)
+
+                if not valid or distance > distance_threshold:
+                    rospy.logwarn("Distance: {}, valid: {}".format(distance, valid))
+                    if not valid:
+                        for p in plan:
+                            rospy.logwarn(p.pose.position)
+                    return "navigate"
+
                 goal_orientation = self.compute_goal_orientation(base_pose.frame.p, goal_position, angle_offset)
                 goal_pose_designator.write(kdl.Frame(goal_orientation, goal_position))
                 return "control"
