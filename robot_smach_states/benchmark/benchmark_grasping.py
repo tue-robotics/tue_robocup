@@ -23,6 +23,8 @@ try:
 except ImportError:
     pass
 
+ANY_OPTIONS = ['ANY', '*', 'any']
+
 def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area=None, non_strict_class=False, search_area='on_top_of'):
     grasp_cls = ds.Designator(cls, name='grasp_cls')
     support_entity = ds.EdEntityDesignator(robot, id=support, name='support_entity')
@@ -52,7 +54,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
         inspection_result = entity_ids.resolve()  # type: List[ClassificationResult]
         if inspection_result:
-            if grasp_cls.resolve() == '*' or non_strict_class:
+            if grasp_cls.resolve() in ANY_OPTIONS or non_strict_class:
                 rospy.loginfo("Any item will match")
                 matching_results = inspection_result
             else:
@@ -132,7 +134,7 @@ if __name__ == "__main__":
                                                  "turn around and drop the item, "
                                                  "then turn around once more to be in the start configuration again")
     single.add_argument("cls", type=str,
-                        help="class of entity to grasp, eg. 'coke' or '*' if you don't care")
+                        help="class of entity to grasp, eg. 'coke' or one of {} if you don't care".format(ANY_OPTIONS))
     single.add_argument("support", type=str,
                         help="ID of entity to grasp FROM ('grasp' entity is on-top-of this 'support' entity), eg. 'cabinet'")
     single.add_argument("waypoint", type=str,
@@ -140,10 +142,10 @@ if __name__ == "__main__":
     single.add_argument("--inspect_from_area", type=str,
                         help="What area of the support-entity to inspect from", default='in_front_of')
 
-
+    batch_config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area', 'search_area']
     batch = subparsers.add_parser(name='batch', description="Perform the single case repeatedly, "
-                                                           "taking configurations from a .csv file, "
-                                                            "with columns 'cls,support,waypoint,inspect_from_area' (the latter may be empty)")
+                                                            "taking configurations from a .csv file, "
+                                                            "with columns {}".format(','.join(batch_config_fields)))
     batch.add_argument("configuration", type=str, default='grasp_benchmark_config.csv')
 
     args = parser.parse_args()
@@ -173,8 +175,7 @@ if __name__ == "__main__":
         elif args.subcommand == 'batch':
             with open(args.configuration) as config_file:
                 config_reader = csv.DictReader(config_file)
-                config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area', 'search_area']
-                assert config_reader.fieldnames == config_fields, "CSV file need fields {}".format(','.join(config_fields))
+                assert config_reader.fieldnames == batch_config_fields, "CSV file need fields {}".format(','.join(batch_config_fields))
 
                 configs = []
 
