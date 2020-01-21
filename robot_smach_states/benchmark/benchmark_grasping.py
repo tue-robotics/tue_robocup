@@ -191,6 +191,7 @@ if __name__ == "__main__":
 
                 records = []
                 for config_row in configs:
+                    rospy.loginfo(config_row)
                     record = single_item(robot, results_writer,
                                          cls=config_row['cls'],
                                          waypoint=config_row['waypoint'],
