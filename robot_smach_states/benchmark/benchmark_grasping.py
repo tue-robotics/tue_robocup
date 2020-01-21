@@ -173,12 +173,25 @@ if __name__ == "__main__":
         elif args.subcommand == 'batch':
             with open(args.configuration) as config_file:
                 config_reader = csv.DictReader(config_file)
-                config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area']
-                assert config_reader.fieldnames == config_fields, "Config needs fields '{}'".format(config_fields)
+                config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area', 'search_area']
+                assert config_reader.fieldnames == config_fields, "CSV file need fields {}".format(','.join(config_fields))
+
+                environment_config_description = ""
+                for config_row in config_reader
+                    item_config_description = "Put a {cls} {search_area} the {support}"\
+                        .format(cls=config_row['cls'],
+                                support=config_row['support'],
+                                search_area=config_row['search_area'])
+                    rospy.logwarn(item_config_description)
+                    environment_config_description += item_config_description
 
                 records = []
                 for config_row in config_reader:
                     record = single_item(robot, results_writer,
-                                config_row['cls'], config_row['support'], config_row['inspect_from_area'],
-                                args.non_strict_class)
+                                         cls=config_row['cls'],
+                                         waypoint=config_row['waypoint'],
+                                         support=config_row['support'],
+                                         inspect_from_area=config_row['inspect_from_area'],
+                                         non_strict_class=args.non_strict_class,
+                                         search_area=config_row['search_area'])
                     records += [record]
