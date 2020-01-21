@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Benchmark grasping, for a single item or multiple items at various locations')
     parser.add_argument("--robot", default="hero",
-                        help="Robot name (amigo, hero, sergio)")
+                        help="Robot name (amigo, hero, sergio, mockbot)")
     parser.add_argument("--output", default="grasp_benchmark.csv",
                         help="Output of the benchmark results")
     parser.add_argument("--non-strict-class", action='store_true',
@@ -146,7 +146,7 @@ if __name__ == "__main__":
                                                             "with columns 'cls,support,waypoint,inspect_from_area' (the latter may be empty)")
     batch.add_argument("configuration", type=str, default='grasp_benchmark_config.csv')
 
-    args = single.parse_args()
+    args = parser.parse_args()
     rospy.init_node("benchmark_grasping")
 
     with open(args.output, 'a+') as csv_file:
@@ -176,8 +176,11 @@ if __name__ == "__main__":
                 config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area', 'search_area']
                 assert config_reader.fieldnames == config_fields, "CSV file need fields {}".format(','.join(config_fields))
 
+                configs = []
+
                 environment_config_description = ""
-                for config_row in config_reader
+                for config_row in config_reader:
+                    configs += [config_row]
                     item_config_description = "Put a {cls} {search_area} the {support}"\
                         .format(cls=config_row['cls'],
                                 support=config_row['support'],
@@ -186,7 +189,7 @@ if __name__ == "__main__":
                     environment_config_description += item_config_description
 
                 records = []
-                for config_row in config_reader:
+                for config_row in configs:
                     record = single_item(robot, results_writer,
                                          cls=config_row['cls'],
                                          waypoint=config_row['waypoint'],
