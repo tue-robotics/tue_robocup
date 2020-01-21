@@ -5,9 +5,11 @@ import smach
 # TU/e Robotics
 from robot_skills.classification_result import ClassificationResult
 
-import robot_smach_states as states
-from robot_smach_states.util.designators import check_type
-from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator
+from .manipulation.grab import Grab
+from .manipulation.place import Place
+from .world_model import Inspect
+from .util.designators import EmptySpotDesignator, EdEntityDesignator, EntityByIdDesignator,\
+    UnoccupiedArmDesignator, VariableDesignator
 
 
 class SelectEntity(smach.State):
@@ -30,6 +32,7 @@ class SelectEntity(smach.State):
         self._selected_entity_designator.id_ = entity_classification.id
 
         return "entity_selected"
+
 
 class isitclear(smach.State):
     """
@@ -72,15 +75,13 @@ class Clear(smach.StateMachine):
         arm_des = UnoccupiedArmDesignator(robot, {}).lockable()
         arm_des.lock()
 
-        place_position = states.util.designators.EmptySpotDesignator(robot, EdEntityDesignator(
-                                                                        robot, id=target_location.id),
-                                                                     area="on_top_of"
-                                                                     )
+        place_position = EmptySpotDesignator(robot, EdEntityDesignator(robot, id=target_location.id),
+                                             area="on_top_of")
 
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',
-                                   states.Inspect(robot, source_location, objectIDsDes=segmented_entities_designator,
-                                                  searchArea=source_searchArea, navigation_area=source_navArea),
+                                   Inspect(robot, source_location, objectIDsDes=segmented_entities_designator,
+                                           searchArea=source_searchArea, navigation_area=source_navArea),
                                    transitions={'done': 'DETERMINE_IF_CLEAR',
                                                 'failed': 'failed'}
                                    )
@@ -98,20 +99,20 @@ class Clear(smach.StateMachine):
                                    )
 
             smach.StateMachine.add('GRAB',
-                                   states.Grab(robot, selected_entity_designator, arm_des),
+                                   Grab(robot, selected_entity_designator, arm_des),
                                    transitions={'done': 'INSPECT_TARGET',
                                                 'failed': 'failed'}
                                    )
 
             smach.StateMachine.add('INSPECT_TARGET',
-                                   states.Inspect(robot, target_location, searchArea=target_placeArea,
-                                                  navigation_area=target_navArea),
+                                   Inspect(robot, target_location, searchArea=target_placeArea,
+                                           navigation_area=target_navArea),
                                    transitions={'done': 'PLACE',
                                                 'failed': 'failed'}
                                    )
 
             smach.StateMachine.add('PLACE',
-                                   states.Place(robot, selected_entity_designator, place_position, arm_des),
+                                   Place(robot, selected_entity_designator, place_position, arm_des),
                                    transitions={'done': 'INSPECT_SOURCE_ENTITY',
                                                 'failed': 'failed'}
                                    )
