@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import absolute_import
+
 # ROS
 import rospy
 
@@ -6,7 +8,7 @@ import rospy
 import operator
 
 # TU/e Robotics
-from robot_smach_states.util.designators.core import Designator, VariableDesignator
+from .core import Designator, VariableDesignator
 
 __author__ = 'loy'
 

@@ -6,7 +6,7 @@ __author__ = 'loy'
 import unittest
 
 # TU/e Robotics
-from robot_smach_states.util.designators.core import Designator, VariableDesignator
+from .core import Designator, VariableDesignator
 
 
 class MyTestCase(unittest.TestCase):

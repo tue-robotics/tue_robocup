@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # System
 import math
@@ -11,9 +11,9 @@ import rospy
 import smach
 
 # TU/e Robotics
-import robot_smach_states as states
-import robot_smach_states.util.designators as ds
-from robot_smach_states.util.designators import check_type
+from ..navigation.navigate_to_waypoint import NavigateToWaypoint
+from ..navigation.navigate_to_symbolic import NavigateToRoom
+from ..util.designators import check_type, EntityByIdDesignator, is_writeable
 from robot_skills.util import kdl_conversions
 
 
@@ -52,7 +52,7 @@ class FindPerson(smach.State):
         self._discard_other_labels = discard_other_labels
 
         if found_entity_designator:
-            ds.is_writeable(found_entity_designator)
+            is_writeable(found_entity_designator)
         self._found_entity_designator = found_entity_designator
 
         self._room = room
@@ -185,8 +185,8 @@ class FindPersonInRoom(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=area + "_waypoint")
-        room_designator = ds.EntityByIdDesignator(robot=robot, id=area)
+        waypoint_designator = EntityByIdDesignator(robot=robot, id=area + "_waypoint")
+        room_designator = EntityByIdDesignator(robot=robot, id=area)
 
         with self:
             smach.StateMachine.add("DECIDE_NAVIGATE_STATE",
@@ -197,14 +197,14 @@ class FindPersonInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   states.NavigateToWaypoint(robot=robot,
-                                                             waypoint_designator=waypoint_designator, radius=0.15),
+                                   NavigateToWaypoint(robot=robot,
+                                                      waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PERSON",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
-                                                                             entity_designator_room=room_designator),
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot=robot,
+                                                                      entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PERSON",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})

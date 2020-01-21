@@ -15,8 +15,8 @@ from robot_smach_states.utility import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
 
 from . import navigation
-from robot_smach_states.human_interaction import Say
-from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
+from ..human_interaction.human_interaction import Say
+from .navigate_to_symbolic import NavigateToSymbolic
 
 
 def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):

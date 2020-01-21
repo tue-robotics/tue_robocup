@@ -5,11 +5,10 @@ from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 import ed_msgs.msg
 from .navigation import NavigateTo
-from robot_smach_states.util.designators import check_resolve_type
+from ..util.designators import check_resolve_type
 
 
 class NavigateToExplore(NavigateTo):

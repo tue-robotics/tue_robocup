@@ -1,6 +1,6 @@
 # ROS
 import rospy
-from std_srvs.srv import Trigger, TriggerRequest
+from std_srvs.srv import Trigger
 
 
 def start_robocup_recorder(robot_name):

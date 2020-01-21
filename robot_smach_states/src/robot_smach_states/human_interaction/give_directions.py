@@ -13,8 +13,8 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped
 
 # Robot Smach States
-from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
-from robot_smach_states.util.designators.ed_designators import Designator
+from ..navigation.navigate_to_symbolic import NavigateToSymbolic
+from ..util.designators.ed_designators import Designator
 
 
 class GiveDirections(smach.State):

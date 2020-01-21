@@ -1,7 +1,7 @@
 import rospy
 import copy
-from robot_smach_states.util.designators.checks import check_type
-from robot_smach_states.util.designators.core import Designator
+from .checks import check_type
+from .core import Designator
 from hmi import HMIResult
 
 
