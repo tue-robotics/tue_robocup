@@ -109,7 +109,7 @@ class MoveToGrasp(smach.StateMachine):
                 entity_pose, radius, angle_offset = navigate_state.determine_offsets()
                 radius = 1.0  # ToDo: remove!
                 base_pose = robot.base.get_location()  # type: FrameStamped
-                goal_position = _point_between_points_at_distance(entity_pose.frame.p, base_pose.frame.p, radius)
+                goal_position = self.compute_goal_position(base_pose.frame.p, entity_pose.frame.p, radius)
                 import rospy
                 rospy.logwarn("entity position: {}".format(entity_pose.frame.p))
                 rospy.logwarn("goal position: {}".format(goal_position))
@@ -124,10 +124,7 @@ class MoveToGrasp(smach.StateMachine):
                     return "navigate"
 
                 # ToDo: fix orientation
-                goal_orientation = kdl.Rotation.RPY(0.0, 0.0, math.atan2(goal_position.y() - base_pose.frame.p.y(),
-                                                                         goal_position.x() - base_pose.frame.p.x())
-                                                    )
-                goal_orientation.DoRotZ(angle_offset)
+                goal_orientation = self.compute_goal_orientation(base_pose.frame.p, goal_position, angle_offset)
                 goal_pose_designator.write(kdl.Frame(goal_orientation, goal_position))
                 return "control"
 
@@ -149,16 +146,27 @@ class MoveToGrasp(smach.StateMachine):
                                                 "arrived": "arrived"})
             # ToDo: add final control?
 
-# @smach.cb_interface(input_keys=['q'],
-#                     output_keys=['xyz'],
-#                     outcomes=['foo'])
-# def my_cb(ud, x, y, z):
-#     ud.xyz = ud.q + x + y + z
-#     return 'foo'
-# ...
-# with sm:
-#     ...
-#     StateMachine.add('MY_CB', CBState(my_cb,
-#                                       cb_args=[10],
-#                                       cb_kwargs={'z':2,'y':3}),
-#                               {'foo':'OTHER_STATE'})
+    @staticmethod
+    def compute_goal_position(robot_position, entity_position, radius):
+        # type: (kdl.Vector, kdl.Vector, float) -> kdl.Vector
+        """
+        Computes the goal position for the control state based on the robot position, the entity position and the
+        radius, i.e., the desired distance from the entity
+        """
+        return _point_between_points_at_distance(entity_position, robot_position, radius)
+
+    @staticmethod
+    def compute_goal_orientation(robot_position, goal_position, angle_offset):
+        # type: (kdl.Vector, kdl.Vector, float) -> kdl.Rotation
+        """
+        Computes the goal orientation for the control state based on the robot position, the *goal* position and the
+        desired angle offset
+        """
+        result = kdl.Rotation.RPY(
+            0.0,
+            0.0,
+            math.atan2(goal_position.y() - robot_position.y(), goal_position.x() - robot_position.x())
+        )
+        result.DoRotZ(angle_offset)
+        return result
+
