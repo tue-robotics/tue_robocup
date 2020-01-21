@@ -29,6 +29,7 @@ def _clamp(abs_value, value):
 def _get_yaw_from_quaternion_msg(msg):
     """
     Returns the yaw angle from a rotation in quaternion representation (msg)
+
     :param msg: The quaternion msg
     :return: (float) Yaw angle in rad
     """

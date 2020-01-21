@@ -78,6 +78,7 @@ class RoomToCleanUpLocations(smach.State):
     def __init__(self, knowledge, room_des, cleanup_locations):
         """
         Determine cleaning locations on runtime
+
         :param knowledge: challenge knowledge
         :param room_des: Designator resolving to room
         :type room_des: Designator(str)

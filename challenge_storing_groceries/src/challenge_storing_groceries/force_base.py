@@ -4,7 +4,9 @@ import smach
 class ForceDrive(smach.State):
     """ Force drives... """
     def __init__(self, robot, vx, vy, vth, duration):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param vx: velocity in x-direction
         :param vy: velocity in y-direction
@@ -29,13 +31,13 @@ class ForceRotate(smach.State):
     """ Force forth and back. If a timeout is exceeded, we won't do this anymore """
 
     def __init__(self, robot, vth, duration, timeout):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param vth: yaw-velocity
         :param duration: float indicating how long to drive
         :param timeout: after this, timedout is returned
-        :return done: rotated back and forth
-        :return timedout: this takes too long
         """
         smach.State.__init__(self, outcomes=['done', 'timedout'])
         self._robot = robot
@@ -45,7 +47,12 @@ class ForceRotate(smach.State):
         self._first_stamp = None
 
     def execute(self, userdata=None):
-        """ Executes the state """
+        """
+        Executes the state
+
+        :param userdata:
+        :return: "done" if rotated back and forth, or "timedout" if this takes too long
+        """
         if self._first_stamp is None:
             self._first_stamp = rospy.Time.now()
 

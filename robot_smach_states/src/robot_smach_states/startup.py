@@ -29,7 +29,7 @@ class StartChallengeRobust(smach.StateMachine):
 
         :param robot: (Robot)
         :param initial_pose: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
-        a tuple(float, float, float) representing x, y and yaw in map frame can be used.
+            a tuple(float, float, float) representing x, y and yaw in map frame can be used.
         :param use_entry_points: (bool) (not yet implemented)
         :param door: (bool) indicates whether to wait for a door to open and whether to 'force-drive' inside
         """
@@ -99,6 +99,7 @@ class EnterArena(smach.StateMachine):
     def __init__(self, robot):
         """
         Enter the arena by force driving through the door
+
         :param robot: robot object
         """
         smach.StateMachine.__init__(self, outcomes=['done'])
@@ -121,6 +122,7 @@ class WaitForDoorOpen(smach.State):
         """
         Wait till the average distance in front of the robot is bigger than 1 meter. Only point in front of the middle
         are taken into account
+
         :param robot: robot object
         :param timeout: timeout for waiting till the door is opened
         """
@@ -135,6 +137,7 @@ class WaitForDoorOpen(smach.State):
     def avg(lst):
         """
         return the mean of the element of a list. NaNs are ignored
+
         :param lst: list of numbers
         :return: mean of the elements
         """
@@ -144,6 +147,7 @@ class WaitForDoorOpen(smach.State):
     def process_scan(self, laser_upside_down, laser_yaw, door_open, scan_msg):
         """
         callback function checking the distance of the laser points in front of the robot.
+
         :param laser_upside_down: (int) 1 as normal, -1 as upside down
         :param laser_yaw: yaw angle of the laser
         :param door_open: Event to be set when ready
@@ -204,6 +208,7 @@ class WaitForLocalPlanner(smach.State):
     def __init__(self, robot, timeout):
         """
         Constructor
+
         :param robot: robot object
         :type robot: robot
         :param timeout: timeout
@@ -218,6 +223,7 @@ class WaitForLocalPlanner(smach.State):
         # type: (Event, PolygonStamped) -> None
         """
         Footprint message callback
+
         :param ready_event: Event to set when ready
         :type ready_event: Event
         :param msg: footprint message

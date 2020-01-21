@@ -15,13 +15,14 @@ class NavigateToSymbolic(NavigateTo):
     """ Navigation class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
-        """ Constructor
+        """
+        Constructor
 
         :param robot: robot object
         :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
-        to compute the orientation constraint.
+            to compute the orientation constraint.
         """
         super(NavigateToSymbolic, self).__init__(robot)
 
@@ -42,16 +43,17 @@ class NavigateToSymbolic(NavigateTo):
 
     @staticmethod
     def generate_constraint(robot, entity_designator_area_name_map, entity_lookat_designator):
-        """ Staticmethod generating the position and orientation constraint.
-
+        """
+        Staticmethod generating the position and orientation constraint.
         By implementing this as a staticmethod, it can also be used for other purposes.
+
         :param robot: robot object
         :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
-        to compute the orientation constraint.
+            to compute the orientation constraint.
         :return: (tuple(PositionConstraint, OrientationConstraint)). If one of the entities does not resolve,
-        None is returned.
+            None is returned.
         """
         entity_id_area_name_map = {}
         for desig, area_name in entity_designator_area_name_map.iteritems():
@@ -98,7 +100,7 @@ class NavigateToRoom(NavigateToSymbolic):
         :param entity_designator_room: Designator to the room
         :type entity_designator_room: Designator resolving to an ED entity
         :param entity_lookat_designator: (Optional) Designator defining the entity the robot should look at. This is
-        used to compute the orientation constraint. If not provided, the entity_designator_room is used.
+            used to compute the orientation constraint. If not provided, the entity_designator_room is used.
         :type entity_lookat_designator: Designator resolving to an ED entity
         """
         room_area = "in"

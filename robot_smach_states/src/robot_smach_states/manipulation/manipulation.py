@@ -16,6 +16,7 @@ class ArmToJointConfig(smach.State):
     def __init__(self, robot, arm_designator, configuration):
         """
         Put arm of robot in some joint configuration
+
         :param robot: robot to execute state with
         :param arm_designator: designator that resolves to arm to put in given configuration
         :param configuration: joint configuration to put arm in
@@ -41,6 +42,7 @@ class HandOverTo(smach.State):
     def __init__(self, robot, arm_designator, timeout=10):
         """
         Handover the object in arm to a human.
+
         :param robot: robot to execute state with
         :param arm_designator: designator that resolves to arm holding an object
         :param timeout: float time the operation may take
@@ -95,6 +97,7 @@ class HandoverFromHuman(smach.StateMachine):
                  arm_configuration="handover_to_human"):
         """
         Hold up hand to accept an object and close hand once something is inserted
+
         :param robot: Robot with which to execute this behavior
         :param arm_designator: ArmDesignator resolving to arm accept item into
         :param grabbed_entity_label: What ID to give a dummy item in case no grabbed_entity_designator is supplied
@@ -134,6 +137,7 @@ class HandoverToHuman(smach.StateMachine):
     def __init__(self, robot, arm_designator, timeout=10):
         """
         State to hand over the object in the arm to a human operator
+
         :param robot: robot to execute state with
         :param arm_designator: designator that resolves to arm holding the object
         :param timeout: float amount of time the procedure may take
@@ -184,6 +188,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
         """
         State to wait until the operator pushes an object into the gripper
+
         :param robot: robot to execute state with
         :param arm_designator: designator that resolves to arm receiving the object
         :param grabbed_entity_label: label to assign the dummy entity representing the received object
@@ -230,6 +235,7 @@ class SetGripper(smach.State):
     def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, grab_entity_designator=None, timeout=10):
         """
         Instruct the gripper
+
         :param robot: robot to execute state with
         :param arm_designator: designator that resolves to arm corresponding to the gripper
         :param gripperstate: desired state of the gripper
@@ -270,6 +276,7 @@ class TorsoToUserPos(smach.State):
     def __init__(self, robot, torso_pos, time_out=0.0):
         """
         State to set the pose of the torso
+
         :param robot: robot to execute state with
         :param torso_pos: float desired position of the torso
         :param time_out: float amount of time the procedure may take

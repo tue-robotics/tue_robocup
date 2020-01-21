@@ -7,37 +7,31 @@ from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from ..navigation.navigate_to_place import NavigateToPlace
-from ..world_model import Inspect
-from ..util.designators.ed_designators import EmptySpotDesignator
+from ..utility import LockDesignator
 from ..util.designators import check_type
+from ..util.designators.utility import LockingDesignator
+from ..world_model import Inspect
 
 
 class PreparePlace(smach.State):
-    def __init__(self, robot, placement_pose, arm):
+    def __init__(self, robot, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
+
         :param robot: Robot to execute state with
-        :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
         ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Check types or designator resolve types
-        check_type(placement_pose, FrameStamped)
         check_type(arm, PublicArm)
 
         # Assign member variables
         self._robot = robot
-        self._placement_pose_designator = placement_pose
         self._arm_designator = arm
 
     def execute(self, userdata=None):
-
-        placement_fs = self._placement_pose_designator.resolve()
-        if not placement_fs:
-            rospy.logerr("Could not resolve placement_pose")
-            return "failed"
 
         arm = self._arm_designator.resolve()
         if not arm:
@@ -70,11 +64,12 @@ class Put(smach.State):
     def __init__(self, robot, item_to_place, placement_pose, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
+
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-        ArmHoldingEntityDesignator
+            ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -197,18 +192,19 @@ class Place(smach.StateMachine):
         """
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
         item there
+
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param place_pose: The place pose can be one of three things:
-         1: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-         2: EdEntityDesignator resolving to an object on which the robot should place something
-         3: A string identifying an object on which the robot should place something
+            1: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
+            2: EdEntityDesignator resolving to an object on which the robot should place something
+            3: A string identifying an object on which the robot should place something
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-        ArmHoldingEntityDesignator
-        :param place_volume (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
-        'shelf3'
-        :param update_supporting_entity (optional) bool to indicate whether the supporting entity should be updated.
-        This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
+            ArmHoldingEntityDesignator
+        :param place_volume: (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
+            'shelf3'
+        :param update_supporting_entity: (optional) bool to indicate whether the supporting entity should be updated.
+            This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -230,7 +226,7 @@ class Place(smach.StateMachine):
         if isinstance(place_pose, str):
             furniture_designator = EdEntityDesignator(robot=robot, id=place_pose)
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_area)
+                                                   arm_designator=arm, area=place_area)
         # Case 1
         elif place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped:
             furniture_designator = None
@@ -239,9 +235,11 @@ class Place(smach.StateMachine):
         elif place_pose.resolve_type == Entity:
             furniture_designator = place_pose
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_area)
+                                                   arm_designator=arm, area=place_area)
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
+
+        locking_place_designator = LockingDesignator(place_designator)
 
         with self:
 
@@ -252,16 +250,19 @@ class Place(smach.StateMachine):
                                                     'failed': 'failed'}
                                        )
 
-            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, place_designator, arm),
-                                   transitions={'succeeded': 'NAVIGATE_TO_PLACE',
+            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
+                                   transitions={'succeeded': 'LOCK_DESIGNATOR',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_designator, arm),
+            smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
+                                   transitions={'locked': 'NAVIGATE_TO_PLACE'})
+
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
                                                 'arrived': 'PUT'})
 
-            smach.StateMachine.add('PUT', Put(robot, item_to_place, place_designator, arm),
+            smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'failed'})
 

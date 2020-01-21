@@ -6,9 +6,9 @@ import smach
 from robot_skills.classification_result import ClassificationResult
 
 from .manipulation.grab import Grab
-from .manipulation.place import Place
+from .manipulation.place import EmptySpotDesignator, Place
 from .world_model import Inspect
-from .util.designators import EmptySpotDesignator, EdEntityDesignator, EntityByIdDesignator,\
+from .util.designators import EdEntityDesignator, EntityByIdDesignator,\
     UnoccupiedArmDesignator, VariableDesignator
 
 
@@ -58,10 +58,10 @@ class Clear(smach.StateMachine):
     def __init__(self, robot, source_location, source_navArea, target_location, target_navArea, target_placeArea="on_top_of", source_searchArea="on_top_of"):
         """
         Let the given robot move to a location and remove all entities from that table one at a time
+
         :param robot: Robot to use
         :param source_location: Location which will be cleared
         :param target_location: Location where the objects will be placed
-        :return:
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -75,8 +75,16 @@ class Clear(smach.StateMachine):
         arm_des = UnoccupiedArmDesignator(robot, {}).lockable()
         arm_des.lock()
 
+<<<<<<< HEAD
         place_position = EmptySpotDesignator(robot, EdEntityDesignator(robot, id=target_location.id),
                                              area="on_top_of")
+=======
+        place_position = EmptySpotDesignator(robot, EdEntityDesignator(
+                                             robot, id=target_location.id),
+                                             arm_des,
+                                             area="on_top_of"
+                                             )
+>>>>>>> origin/master
 
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',

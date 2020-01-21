@@ -10,6 +10,7 @@ class CleanInspect(smach.StateMachine):
     def __init__(self, robot, location_des):
         """
         Visit all selected locations from the list, and handle the found objects
+
         :param location_des is a designator resolving to a dictionary with fields ... TODO
         """
 

@@ -224,7 +224,9 @@ class CheckEmpty(smach.State):
     Check whether a volume of an entity is filled
     """
     def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold=None):
-        """ Constructor
+        """
+        Constructor
+
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
         :param volume: string defining which volume of the entity is checked
@@ -263,12 +265,13 @@ class Inspect(smach.StateMachine):
                  unknown_threshold=0.0, filter_threshold=0.0):
         """
         Constructor
+
         :param robot: robot object
         :param entityDes: EdEntityDesignator indicating the (furniture) object to inspect
         :param objectIDsDes: designator that is used to store the segmented objects
         :param searchArea: string defining where the objects are w.r.t. the entity, default = on_top_of
         :param navigation_area: string identifying the inspection area. If provided, NavigateToSymbolic is used.
-        If left empty, NavigateToObserve is used.
+            If left empty, NavigateToObserve is used.
         :param unknown_threshold: Entities whose classification score is lower than this float are not marked with a type
         :param filter_threshold: Entities whose classification score is lower than this float are ignored
             (i.e. are not added to the segmented_entity_ids_designator)
