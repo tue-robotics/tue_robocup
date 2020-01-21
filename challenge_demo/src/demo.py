@@ -179,7 +179,9 @@ def main():
         robot.lights.set_color(0, 0, 1)  # be sure lights are blue
 
         robot.head.look_at_standing_person()
-        for arm in robot.arms.itervalues():
+        # ToDo: this should either the general reset state or, preferably, the state should become part of the arm skill
+        #       This is necessary to prevent the private function from being called
+        for arm in robot._arms.itervalues():
             arm.reset()
             arm.send_gripper_goal('close', 0.0)
         robot.torso.reset()
