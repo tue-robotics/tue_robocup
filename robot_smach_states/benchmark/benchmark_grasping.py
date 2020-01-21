@@ -29,7 +29,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     grasp_cls = ds.Designator(cls, name='grasp_cls')
     support_entity = ds.EdEntityDesignator(robot, id=support, name='support_entity')
     entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
-    waypoint = ds.EdEntityDesignator(robot, id=waypoint, name='waypoint')
+    waypoint_des = ds.EdEntityDesignator(robot, id=waypoint, name='waypoint')
 
     arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, {}))
     arm.lock()
@@ -39,7 +39,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
     try:
         nav_to_start = NavigateToWaypoint(robot,
-                                          waypoint_designator=waypoint,
+                                          waypoint_designator=waypoint_des,
                                           look_at_designator=support_entity)
 
         assert nav_to_start.execute() == 'arrived', "I did not arrive at the start"
