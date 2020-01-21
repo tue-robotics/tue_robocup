@@ -23,7 +23,7 @@ try:
 except ImportError:
     pass
 
-def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area=None, non_strict_class=False):
+def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area=None, non_strict_class=False, search_area='on_top_of'):
     grasp_cls = ds.Designator(cls, name='grasp_cls')
     support_entity = ds.EdEntityDesignator(robot, id=support, name='support_entity')
     entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
@@ -43,7 +43,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
         assert nav_to_start.execute() == 'arrived', "I did not arrive at the start"
 
         inspect = Inspect(robot=robot, entityDes=support_entity, objectIDsDes=entity_ids,
-                          navigation_area=inspect_from_area)
+                          navigation_area=inspect_from_area, searchArea=search_area)
 
         record['inspect_start'] = time.time()
         assert inspect.execute() == 'done', "I could not inspect the support entity"
