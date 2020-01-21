@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     args = parser.parse_args()
 
-    rospy.init_node("test_move_to_grasp")
+    rospy.init_node("test_move_to_grasp", log_level=rospy.DEBUG)
 
     robot_skills.robot.CONNECTION_TIMEOUT = 1.0
     robot = get_robot(args.robot)

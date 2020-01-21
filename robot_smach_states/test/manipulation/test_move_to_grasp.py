@@ -41,16 +41,16 @@ class TestMoveToGraspPose(unittest.TestCase):
         radius = 0.25
         angle_offset = 0.0
         entity_positions = [
-            kdl.Vector(1.0, 0.0, 0.0),
-            kdl.Vector(0.0, 1.0, 0.0),
-            kdl.Vector(-1.0, 0.0, 0.0),
-            kdl.Vector(0.0, -1.0, 0.0),
+            kdl.Vector(2.0, 0.0, 0.0),
+            kdl.Vector(0.0, 2.0, 0.0),
+            kdl.Vector(-2.0, 0.0, 0.0),
+            kdl.Vector(0.0, -2.0, 0.0),
         ]
         expected_positions = [
-            kdl.Vector(0.75, 0.0, 0.0),
-            kdl.Vector(0.0, 0.75, 0.0),
-            kdl.Vector(-0.75, 0.0, 0.0),
-            kdl.Vector(0.0, -0.75, 0.0),
+            kdl.Vector(1.75, 0.0, 0.0),
+            kdl.Vector(0.0, 1.75, 0.0),
+            kdl.Vector(-1.75, 0.0, 0.0),
+            kdl.Vector(0.0, -1.75, 0.0),
         ]
         expected_orientations = [
             kdl.Rotation.RPY(0.0, 0.0, 0.0),
@@ -69,7 +69,51 @@ class TestMoveToGraspPose(unittest.TestCase):
                 msg="Goal position {} does not correspond to expected goal position {}".format(
                     goal_pos, expected_goal_pos)
             )
-            goal_orientation = MoveToGrasp.compute_goal_orientation(robot_position, goal_pos, angle_offset)
+            goal_orientation = MoveToGrasp.compute_goal_orientation(robot_position, entity_pos, goal_pos, angle_offset)
+            self.assertAlmostEqual(
+                kdl.diff(expected_goal_orientation, goal_orientation).Norm(),
+                0.0,
+                msg="Goal orientation {} does not correspond to expected goal orientation {}".format(
+                    goal_orientation, expected_goal_orientation)
+            )
+
+    def test_closer_than_radius(self):
+        """
+        Tests what happens if the robot is closer to the entity than the desired entity
+        """
+        robot_position = kdl.Vector()
+        radius = 0.25
+        angle_offset = 0.0
+        entity_positions = [
+            kdl.Vector(0.2, 0.0, 0.0),
+            kdl.Vector(0.0, 0.2, 0.0),
+            kdl.Vector(-0.2, 0.0, 0.0),
+            kdl.Vector(0.0, -0.2, 0.0),
+        ]
+        expected_positions = [
+            kdl.Vector(-0.05, 0.0, 0.0),
+            kdl.Vector(0.0, -0.05, 0.0),
+            kdl.Vector(0.05, 0.0, 0.0),
+            kdl.Vector(0.0, 0.05, 0.0),
+        ]
+        expected_orientations = [
+            kdl.Rotation.RPY(0.0, 0.0, 0.0),
+            kdl.Rotation.RPY(0.0, 0.0, 0.5 * math.pi),
+            kdl.Rotation.RPY(0.0, 0.0, math.pi),
+            kdl.Rotation.RPY(0.0, 0.0, 1.5 * math.pi),
+        ]
+        for entity_pos, expected_goal_pos, expected_goal_orientation in zip(
+          entity_positions,
+          expected_positions,
+          expected_orientations):
+            goal_pos = MoveToGrasp.compute_goal_position(robot_position, entity_pos, radius)
+            self.assertAlmostEqual(
+                (expected_goal_pos - goal_pos).Norm(),
+                0.0,
+                msg="Goal position {} does not correspond to expected goal position {}".format(
+                    goal_pos, expected_goal_pos)
+            )
+            goal_orientation = MoveToGrasp.compute_goal_orientation(robot_position, entity_pos, goal_pos, angle_offset)
             self.assertAlmostEqual(
                 kdl.diff(expected_goal_orientation, goal_orientation).Norm(),
                 0.0,

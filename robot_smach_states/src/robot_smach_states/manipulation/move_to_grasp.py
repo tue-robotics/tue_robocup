@@ -116,10 +116,13 @@ class MoveToGrasp(smach.StateMachine):
 
                 base_pose = robot.base.get_location()  # type: FrameStamped
                 goal_position = self.compute_goal_position(base_pose.frame.p, entity_pose.frame.p, radius)
+                rospy.logdebug("robot_position: {}".format(base_pose.frame.p))
                 rospy.logdebug("entity position: {}".format(entity_pose.frame.p))
                 rospy.logdebug("goal position: {}".format(goal_position))
 
                 plan = _create_straight_line_plan(base_pose.frame.p, goal_position)
+                for pose_stamped in plan:  # type: geometry_msgs.msg.PoseStamped
+                    pose_stamped.pose.position.z = 0.0
                 distance = robot.base.global_planner.computePathLength(plan)
                 valid = robot.base.global_planner.checkPlan(plan)
 
@@ -130,7 +133,9 @@ class MoveToGrasp(smach.StateMachine):
                             rospy.logwarn(p.pose.position)
                     return "navigate"
 
-                goal_orientation = self.compute_goal_orientation(base_pose.frame.p, goal_position, angle_offset)
+                goal_orientation = self.compute_goal_orientation(
+                    base_pose.frame.p, entity_pose.frame.p, goal_position, angle_offset
+                )
                 goal_pose_designator.write(kdl.Frame(goal_orientation, goal_position))
                 return "control"
 
@@ -162,17 +167,24 @@ class MoveToGrasp(smach.StateMachine):
         return _point_between_points_at_distance(entity_position, robot_position, radius)
 
     @staticmethod
-    def compute_goal_orientation(robot_position, goal_position, angle_offset):
-        # type: (kdl.Vector, kdl.Vector, float) -> kdl.Rotation
+    def compute_goal_orientation(robot_position, entity_position, goal_position, angle_offset):
+        # type: (kdl.Vector, kdl.Vector, entity_position, float) -> kdl.Rotation
         """
         Computes the goal orientation for the control state based on the robot position, the *goal* position and the
         desired angle offset
         """
+        # ToDo: This does not work if the goal position is further away from the entity than the current base pose
         result = kdl.Rotation.RPY(
             0.0,
             0.0,
             math.atan2(goal_position.y() - robot_position.y(), goal_position.x() - robot_position.x())
         )
         result.DoRotZ(angle_offset)
+
+        # If the robot is already closer to the entity than the desired radius, this will result in a 180 degree
+        # wrong result. If this is the case: fix it
+        if kdl.diff(robot_position, entity_position).Norm() < kdl.diff(goal_position, entity_position).Norm():
+            result.DoRotZ(math.pi)
+
         return result
 
