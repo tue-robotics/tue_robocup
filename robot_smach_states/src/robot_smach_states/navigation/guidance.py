@@ -11,8 +11,8 @@ import PyKDL as kdl
 
 # Robot skills
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.utility import WaitTime
-from robot_smach_states.util.designators import EdEntityDesignator
+from ..utility import WaitTime
+from ..util.designators import EdEntityDesignator
 
 from . import navigation
 from ..human_interaction.human_interaction import Say
