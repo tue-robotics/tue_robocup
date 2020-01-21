@@ -77,7 +77,7 @@ class GrabSingleItem(smach.StateMachine):
 
         :param robot: robot object
         :param grab_designator: EdEntityDesignator designating the item to grab. If not provided, a default one is
-        constructed (grabs the closest object in the volume of the surface)
+            constructed (grabs the closest object in the volume of the surface)
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -186,7 +186,9 @@ class ManipulateMachine(smach.StateMachine):
     - Place item
     """
     def __init__(self, robot, grab_designator_1=None, grab_designator_2=None, place_designator=None, pdf_writer=None):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param grab_designator_1: EdEntityDesignator designating the item to grab
         :param grab_designator_2: EdEntityDesignator designating the item to grab

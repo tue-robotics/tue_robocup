@@ -245,6 +245,7 @@ class VariableWriter(object):
     def write(self, value):
         """
         Write a value to the designator this writer is associated with.
+
         :param value: the value to be written
         :return: None
 

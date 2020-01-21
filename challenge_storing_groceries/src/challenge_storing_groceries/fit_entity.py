@@ -7,7 +7,9 @@ class FitEntity(smach.State):
     """ Fits an entity """
 
     def __init__(self, robot, entity_str):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param entity_str: string with the entity type to fit
         """

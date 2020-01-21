@@ -212,6 +212,7 @@ class EntityByIdDesignator(Designator):
     def __init__(self, robot, id, parse=True, name=None):
         """
         Designate an entity by its ID. Resolves to the entity with that ID
+
         :param robot: Robot who's worldmodel to use
         :param id: ID of the entity. If no such ID, resolves to None
         :param parse: Whether to parse the Entity's data-field
@@ -237,6 +238,7 @@ class ReasonedEntityDesignator(Designator):
     def __init__(self, robot, query, name=None):
         """
         Designate an entity by its ID. Resolves to the entity with that ID
+
         :param robot: Robot who's worldmodel and reasoner to use. Robot must have a reasoner
         :param query: query to the reasoner. The first answer is cast to string and used as ID
         :param name: Name of the designator for introspection purposes

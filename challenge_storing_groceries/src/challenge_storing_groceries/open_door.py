@@ -25,6 +25,7 @@ import robot_smach_states.util.designators as ds
 def _clamp(abs_value, value):
     """
     Clamps the value to be between -abs_value and +abs_value
+
     :param abs_value: limit of the value in both positive and negative direction
     :param value: value to be clamped...
     :return: The -abs_value when value is smaller than -abs_value OR +abs_value when value is more than +abs_value
@@ -35,6 +36,7 @@ def _clamp(abs_value, value):
 def _get_yaw_from_quaternion_msg(msg):
     """
     Returns the yaw angle from a rotation in quaternion representation (msg)
+
     :param msg: The quaternion msg
     :return: Yaw angle
     """
@@ -47,6 +49,7 @@ def _wrap_angle_pi(angle):
     """
     Wraps between -pi and +pi
     -pi is excluded, (-pi, pi]
+
     :param angle: Input angle
     :return: Wrapped angle
     """

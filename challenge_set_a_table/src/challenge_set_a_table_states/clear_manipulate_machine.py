@@ -27,7 +27,9 @@ class ClearManipulateMachine(smach.StateMachine):
     - Place item
     """
     def __init__(self, robot, grasp_furniture_id, place_furniture_id1, place_furniture_id2):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param grasp_furniture_id: string identifying the furniture object where to grasp the objects
         :param place_furniture_id1: string identifying the furniture object where to place objects 1 and 2

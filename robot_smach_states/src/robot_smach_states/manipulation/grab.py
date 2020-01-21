@@ -21,6 +21,7 @@ class PrepareEdGrasp(smach.State):
         # type: (Robot, ArmDesignator, Designator) -> None
         """
         Set the arm in the appropriate position before actually grabbing
+
         :param robot: robot to execute state with
         :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
@@ -71,6 +72,7 @@ class PickUp(smach.State):
     def __init__(self, robot, arm, grab_entity, check_occupancy=False):
         """
         Pick up an item given an arm and an entity to be picked up
+
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
@@ -245,9 +247,11 @@ class PickUp(smach.State):
         return result
 
     def associate(self, original_entity):
-        """ Tries to associate the original entity with one of the entities in the world model. This is useful if
+        """
+        Tries to associate the original entity with one of the entities in the world model. This is useful if
         after an update, the original entity is no longer present in the world model. If no good map can be found,
         the original entity will be returned as the associated entity.
+
         :param original_entity:
         :return: associated entity
         """
@@ -275,7 +279,9 @@ class PickUp(smach.State):
 class ResetOnFailure(smach.StateMachine):
     """ Class to reset the robot after a grab has failed """
     def __init__(self, robot, arm):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         """
         smach.StateMachine.__init__(self, outcomes=['done'])
@@ -304,10 +310,10 @@ class Grab(smach.StateMachine):
     def __init__(self, robot, item, arm):
         """
         Let the given robot move to an entity and grab that entity using some arm
+
         :param robot: Robot to use
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
-        :return:
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 

@@ -46,11 +46,11 @@ class LookAtArea(State):
     def __init__(self, robot, entity, area, waittime=2.0):
         """
         Constructor
+
         :param robot: robot object
         :param entity: EdEntityDesignator with the area to look at
         :param area: string with the area to look at
         :param waittime: (optional) waittime (in seconds) between giving a head target and returning
-        :return:
         """
         ds.check_type(entity, Entity)
 
