@@ -100,7 +100,7 @@ class MoveToGrasp(smach.StateMachine):
 
         goal_pose_designator = _GoalPoseDesignator()
         navigate_state = NavigateToGrasp(robot, item, arm)
-        control_parameters = ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)
+        control_parameters = ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.05, 0.1)
         distance_threshold = 0.5  # The plan must be valid and we don't want to 'ForceDrive' more than a this distance
 
         # Create state machine
@@ -164,7 +164,11 @@ class MoveToGrasp(smach.StateMachine):
         Computes the goal position for the control state based on the robot position, the entity position and the
         radius, i.e., the desired distance from the entity
         """
-        return _point_between_points_at_distance(entity_position, robot_position, radius)
+        robot_position_cp = kdl.Vector(robot_position)
+        robot_position_cp.z(0.0)
+        entity_position_cp = kdl.Vector(entity_position)
+        entity_position_cp.z(0.0)
+        return _point_between_points_at_distance(entity_position_cp, robot_position_cp, radius)
 
     @staticmethod
     def compute_goal_orientation(robot_position, entity_position, goal_position, angle_offset):
