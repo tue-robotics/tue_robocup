@@ -1,8 +1,8 @@
 import smach
 import rospy
-import robot_smach_states
 import hmi
 
+from robot_smach_states.human_interaction import Say
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.util.entity import Entity
 import robot_smach_states.util.designators as ds
@@ -152,9 +152,8 @@ class OperatorToCategory(smach.StateMachine):
                                                 "unreachable": "SAY_COME_TO_ME",
                                                 "goal_not_defined": "SAY_COME_TO_ME"})
 
-            smach.StateMachine.add("SAY_COME_TO_ME", robot_smach_states.Say(robot,
-                                                                            "Operator, please come to me in the {room}",
-                                                                            room=room_id_des, block=True),
+            smach.StateMachine.add("SAY_COME_TO_ME", Say(robot, "Operator, please come to me in the {room}",
+                                                         room=room_id_des, block=True),
                                    transitions={"spoken": "WAIT_FOR_OPERATOR"})
 
             smach.StateMachine.add("WAIT_FOR_OPERATOR", robot_smach_states.WaitTime(4),
@@ -210,9 +209,9 @@ class AskWhichCategory(smach.StateMachine):
             return 'done'
 
         with self:
-            smach.StateMachine.add("ASK_WHERE_TO_DROP", robot_smach_states.Say(robot,
-                "Please look at the object in my gripper and tell me which category it is. If it should be thrown away,"
-                "call it trash", block=True),
+            smach.StateMachine.add("ASK_WHERE_TO_DROP", Say(robot,"Please look at the object in my gripper and tell me"
+                                                                  "which category it is. If it should be thrown away,"
+                                                                  "call it trash", block=True),
                                    transitions={"spoken": "HEAR_LOCATION"})
 
             smach.StateMachine.add("HEAR_LOCATION", robot_smach_states.HearOptionsExtra(robot, category_grammar,
