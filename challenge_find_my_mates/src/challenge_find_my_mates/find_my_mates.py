@@ -17,7 +17,7 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['done', 'failed', 'aborted'])
 
     with sm:
-        smach.StateMachine.add('START_CHALLENGE_ROBUST', states.StartChallengeRobust(robot, STARTING_POINT),
+        smach.StateMachine.add('START_CHALLENGE_ROBUST', states.startup.StartChallengeRobust(robot, STARTING_POINT),
                                transitions={'Done': 'GO_TO_SEARCH_POSE',
                                             'Aborted': 'aborted',
                                             'Failed': 'GO_TO_SEARCH_POSE'})
