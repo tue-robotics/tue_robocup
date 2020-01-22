@@ -162,7 +162,7 @@ def setup_statemachine(robot):
 
     with sm:
         smach.StateMachine.add("START_ROBUST",
-                               robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.starting_point),
+                               robot_smach_states.startup.StartChallengeRobust(robot, challenge_knowledge.starting_point),
                                transitions={"Done": "GO_TO_WAITING_POINT",
                                             "Aborted": "GO_TO_WAITING_POINT",
                                             "Failed": "GO_TO_WAITING_POINT"})
