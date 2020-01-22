@@ -75,16 +75,11 @@ class Clear(smach.StateMachine):
         arm_des = UnoccupiedArmDesignator(robot, {}).lockable()
         arm_des.lock()
 
-<<<<<<< HEAD
-        place_position = EmptySpotDesignator(robot, EdEntityDesignator(robot, id=target_location.id),
-                                             area="on_top_of")
-=======
         place_position = EmptySpotDesignator(robot, EdEntityDesignator(
                                              robot, id=target_location.id),
                                              arm_des,
                                              area="on_top_of"
                                              )
->>>>>>> origin/master
 
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',
