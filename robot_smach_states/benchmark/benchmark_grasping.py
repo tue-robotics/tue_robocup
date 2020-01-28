@@ -26,6 +26,19 @@ except ImportError:
 ANY_OPTIONS = ['ANY', '*', 'any']
 
 def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area=None, non_strict_class=False, search_area='on_top_of'):
+    """
+    Benchmark grasping for a single item. Outputs a record dictionary
+
+    :param robot: an instance of Robot
+    :param results_writer: a csv.DictWriter to which the output record is written
+    :param cls: class/type of item to grab
+    :param support: ID of the entity supporting the item-to-grab
+    :param waypoint: From where should the robot start the grasp
+    :param inspect_from_area: Which area of the support-entity should the robot be in to start the inspection
+    :param non_strict_class: If set to True, the robot is not strict about the type of item it grabs, eg. it continues grasping with another type of object
+    :param search_area: which area of the support-entity to search/inspect for an item of the given class
+    :return: a dict with the benchmark result
+    """
     grasp_cls = ds.Designator(cls, name='grasp_cls')
     support_entity = ds.EdEntityDesignator(robot, id=support, name='support_entity')
     entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
@@ -34,8 +47,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, {}))
     arm.lock()
 
-    record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls,
-              'id': None}
+    record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls, 'id': None}
 
     try:
         nav_to_start = NavigateToWaypoint(robot,
