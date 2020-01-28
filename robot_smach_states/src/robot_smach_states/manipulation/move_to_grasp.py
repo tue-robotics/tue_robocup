@@ -177,7 +177,6 @@ class MoveToGrasp(smach.StateMachine):
         Computes the goal orientation for the control state based on the robot position, the *goal* position and the
         desired angle offset
         """
-        # ToDo: This does not work if the goal position is further away from the entity than the current base pose
         result = kdl.Rotation.RPY(
             0.0,
             0.0,
