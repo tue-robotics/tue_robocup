@@ -164,7 +164,7 @@ if __name__ == "__main__":
     batch = subparsers.add_parser(name='batch', description="Perform the single case repeatedly, "
                                                             "taking configurations from a .csv file, "
                                                             "with columns {}".format(','.join(batch_config_fields)))
-    batch.add_argument("configuration", type=str, default='grasp_benchmark_config.csv')
+    batch.add_argument("--configuration", type=str, default='grasp_benchmark_config.csv')
 
     args = parser.parse_args()
     rospy.init_node("benchmark_grasping")
