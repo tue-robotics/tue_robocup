@@ -4,6 +4,7 @@
 import argparse
 import csv
 import time
+import datetime
 
 # ROS
 import rospy
@@ -47,7 +48,8 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, {}))
     arm.lock()
 
-    record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls, 'id': None}
+    record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls, 'id': None,
+              'timestamp': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}
 
     try:
         nav_to_start = NavigateToWaypoint(robot,
@@ -166,7 +168,7 @@ if __name__ == "__main__":
     with open(args.output, 'a+') as csv_file:
         reader = csv.DictReader(csv_file)
 
-        fields = ['robot',
+        fields = ['timestamp', 'robot',
                   'start_waypoint',
                   'expected_class', 'observed_class',
                   'id',
