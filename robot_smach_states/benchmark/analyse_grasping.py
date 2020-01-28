@@ -17,7 +17,6 @@ def analyse(results_file, start=None, end=None, plot=False):
     df = pd.read_csv(results_file)
     assert df.columns.tolist() == RESULT_FIELDS, \
         "CSV file need fields {}".format(','.join(RESULT_FIELDS))
-    import ipdb; ipdb.set_trace()
     df.index = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%M:%S')
 
     if not start:
