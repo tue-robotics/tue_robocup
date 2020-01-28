@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 
 import argparse
-import pandas as pd
+from dateutil.parser import parse as parse_date
 import matplotlib.pyplot as plt
+import pandas as pd
 
 RESULT_FIELDS = [ 'timestamp', 'robot',
                   'start_waypoint',
@@ -12,11 +13,20 @@ RESULT_FIELDS = [ 'timestamp', 'robot',
                   'grab_duration',
                   'x', 'y', 'z']
 
-def analyse(results_file, plot=False):
+def analyse(results_file, start=None, end=None, plot=False):
     df = pd.read_csv(results_file)
     assert df.columns.tolist() == RESULT_FIELDS, \
         "CSV file need fields {}".format(','.join(RESULT_FIELDS))
-    df.index = df['timestamp']
+    import ipdb; ipdb.set_trace()
+    df.index = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%M:%S')
+
+    if not start:
+        start = df.index[0]
+    if not end:
+        end = df.index[-1]
+    mask = (df.index > start) & (df.index <= end)
+    df = df.loc[mask]
+
     print(df.describe())
 
     if plot:
@@ -35,8 +45,13 @@ if __name__ == "__main__":
                         help="Output of the benchmark results (input for analysis)")
     parser.add_argument("--plot", action='store_true',
                         help="Make a plot of the results")
+    parser.add_argument("--start", help="Take only measurement since the start into account. Specify timestamp as in .csv file")
+    parser.add_argument("--end", help="Take only measurement until the end into account. Specify timestamp as in .csv file")
 
     args = parser.parse_args()
 
     with open(args.output) as csv_file:
-        analyse(csv_file, plot=args.plot)
+        analyse(csv_file,
+                plot=args.plot,
+                start=parse_date(args.start if args.start else None),
+                end=parse_date(args.end) if args.end else None)

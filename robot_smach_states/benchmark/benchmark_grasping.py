@@ -58,7 +58,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     arm.lock()
 
     record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls, 'id': None,
-              'timestamp': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}
+              'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
     try:
         say_announce = Say(robot, sentence="Please put a {cls} {search_area} the {support}"
