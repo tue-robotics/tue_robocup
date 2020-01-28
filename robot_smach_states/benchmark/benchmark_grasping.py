@@ -19,6 +19,14 @@ from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper, \
     Say
 
+RESULT_FIELDS = [ 'timestamp', 'robot',
+                  'start_waypoint',
+                  'expected_class', 'observed_class',
+                  'id',
+                  'inspect_duration',
+                  'grab_duration',
+                  'x', 'y', 'z']
+BATCH_CONFIG_FIELDS = ['cls', 'support', 'waypoint', 'inspect_from_area', 'search_area']
 try:
     from typing import List
 except ImportError:
@@ -133,6 +141,9 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
     return record
 
+def analyse(results_file):
+    with
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Benchmark grasping, for a single item or multiple items at various locations'
@@ -164,10 +175,9 @@ if __name__ == "__main__":
     single.add_argument("--inspect_from_area", type=str,
                         help="What area of the support-entity to inspect from", default='in_front_of')
 
-    batch_config_fields = ['cls', 'support', 'waypoint', 'inspect_from_area', 'search_area']
     batch = subparsers.add_parser(name='batch', description="Perform the single case repeatedly, "
                                                             "taking configurations from a .csv file, "
-                                                            "with columns {}".format(','.join(batch_config_fields)))
+                                                            "with columns {}".format(','.join(BATCH_CONFIG_FIELDS)))
     batch.add_argument("--configuration", type=str, default='grasp_benchmark_config.csv')
 
     args = parser.parse_args()
@@ -176,14 +186,7 @@ if __name__ == "__main__":
     with open(args.output, 'a+') as csv_file:
         reader = csv.DictReader(csv_file)
 
-        fields = ['timestamp', 'robot',
-                  'start_waypoint',
-                  'expected_class', 'observed_class',
-                  'id',
-                  'inspect_duration',
-                  'grab_duration',
-                  'x', 'y', 'z']
-        results_writer = csv.DictWriter(csv_file, fieldnames=fields, extrasaction='ignore')  # Ignore extra keys in the dicts
+        results_writer = csv.DictWriter(csv_file, fieldnames=RESULT_FIELDS, extrasaction='ignore')  # Ignore extra keys in the dicts
 
         if reader.fieldnames != results_writer.fieldnames:
             results_writer.writeheader()
@@ -197,7 +200,7 @@ if __name__ == "__main__":
         elif args.subcommand == 'batch':
             with open(args.configuration) as config_file:
                 config_reader = csv.DictReader(config_file)
-                assert config_reader.fieldnames == batch_config_fields, "CSV file need fields {}".format(','.join(batch_config_fields))
+                assert config_reader.fieldnames == BATCH_CONFIG_FIELDS, "CSV file need fields {}".format(','.join(BATCH_CONFIG_FIELDS))
 
                 configs = []
 
