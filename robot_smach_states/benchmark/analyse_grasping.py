@@ -35,11 +35,7 @@ def analyse(results_file, start=None, end=None, plot=False):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Benchmark grasping, for a single item or multiple items at various locations'
-                                                 'By specifying ANY as the class, anything class of object will '
-                                                 'be picked up without looking at the object type'
-                                                 'By specifying a specific class but --non-strict-class as well, '
-                                                 'the robot will grab something else if the specified thing is not available')
+    parser = argparse.ArgumentParser(description='Analyse results of grasping benchmark')
     parser.add_argument("--output", default="grasp_benchmark.csv",
                         help="Output of the benchmark results (input for analysis)")
     parser.add_argument("--plot", action='store_true',
