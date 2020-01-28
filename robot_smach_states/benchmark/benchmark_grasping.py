@@ -52,6 +52,10 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
               'timestamp': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}
 
     try:
+        say_announce = Say(robot, sentence="Please put a {cls} {search_area} the {support}"
+                           .format(cls=cls,support=support,search_area=search_area))
+        say_announce.execute()
+
         nav_to_start = NavigateToWaypoint(robot,
                                           waypoint_designator=waypoint_des,
                                           look_at_designator=support_entity)
