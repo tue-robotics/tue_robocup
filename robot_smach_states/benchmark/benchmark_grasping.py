@@ -19,6 +19,7 @@ from robot_skills.util.kdl_conversions import VectorStamped
 from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper, \
     Say
 
+
 RESULT_FIELDS = [ 'timestamp', 'robot',
                   'start_waypoint',
                   'expected_class', 'observed_class',
@@ -141,8 +142,6 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
     return record
 
-def analyse(results_file):
-    with
 
 if __name__ == "__main__":
 
@@ -161,7 +160,7 @@ if __name__ == "__main__":
                              "if none of the expected class is observed. "
                              "Use this if you only care about grasping, not object recognition")
 
-    subparsers = parser.add_subparsers(help='single or batch mode', dest='subcommand')
+    subparsers = parser.add_subparsers(help='single or batch mode or analyse', dest='subcommand')
     single = subparsers.add_parser(name='single', description="Measure the time it takes to grasp an entity when starting from a given pose. "
                                                  "After the grasping is done, go back to the waypoint, "
                                                  "turn around and drop the item, "
@@ -179,6 +178,8 @@ if __name__ == "__main__":
                                                             "taking configurations from a .csv file, "
                                                             "with columns {}".format(','.join(BATCH_CONFIG_FIELDS)))
     batch.add_argument("--configuration", type=str, default='grasp_benchmark_config.csv')
+
+    analyse = subparsers.add_parser(name='analyse', description="Analyse the results")
 
     args = parser.parse_args()
     rospy.init_node("benchmark_grasping")
@@ -225,3 +226,4 @@ if __name__ == "__main__":
                                          non_strict_class=args.non_strict_class,
                                          search_area=config_row['search_area'])
                     records += [record]
+
