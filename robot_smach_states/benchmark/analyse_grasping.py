@@ -52,5 +52,5 @@ if __name__ == "__main__":
     with open(args.output) as csv_file:
         analyse(csv_file,
                 plot=args.plot,
-                start=parse_date(args.start if args.start else None),
+                start=parse_date(args.start) if args.start else None,
                 end=parse_date(args.end) if args.end else None)
