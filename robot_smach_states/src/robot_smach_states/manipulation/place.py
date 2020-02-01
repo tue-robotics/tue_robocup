@@ -276,7 +276,7 @@ if __name__ == "__main__":
 
     robot.ed.update_entity(id="bla")
     place_entity = EdEntityDesignator(robot, id="bla")
-    arm = ArmDesignator(robot, arm_properties={"required_trajectories": "prepare_place",
+    arm = ArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_place"],
                                                "required_grasping_types": [arms.GripperTypes.GRASPING]})
 
     sm = Place(robot=robot, item_to_place=place_entity, place_pose='dinner_table', arm=arm, place_volume='on_top_of')

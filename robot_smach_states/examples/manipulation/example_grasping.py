@@ -37,8 +37,8 @@ if __name__ == "__main__":
 
     item = ds.EdEntityDesignator(robot, id=entity_id)
 
-    arm = ds.UnoccupiedArmDesignator(robot, arm_properties={"required_trajectories": "prepare_grasp",
-                                                            "required_goals": "carrying_pose",
+    arm = ds.UnoccupiedArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_grasp"],
+                                                            "required_goals": ["carrying_pose"],
                                                             "required_grasping_types": [arms.GripperTypes.GRASPING]})
 
     grab_state = Grab(robot, item, arm)

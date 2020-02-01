@@ -76,8 +76,8 @@ class GrabSingleItem(smach.StateMachine):
 
         # Create designators
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot,
-                                                               {"required_trajectories": "prepare_grasp",
-                                                                "required_goals": "carrying_pose",
+                                                               {"required_trajectories": ["prepare_grasp"],
+                                                                "required_goals": ["carrying_pose"],
                                                                 "required_gripper_types": [arms.GripperTypes.GRASPING]},
                                                                name="empty_arm_designator")
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
@@ -135,7 +135,8 @@ class PlaceSingleItem(smach.State):
     def execute(self, userdata=None):
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
-        arm_designator = ds.OccupiedArmDesignator(self._robot, arm_properties={"required_trajectories": "prepare_place",
+        arm_designator = ds.OccupiedArmDesignator(self._robot, arm_properties={"required_trajectories": ["prepare_place"
+                                                                                                         ],
                                                                                "required_goals": ["reset",
                                                                                                   "handover_to_human"],
                                                                                "required_gripper_types": [

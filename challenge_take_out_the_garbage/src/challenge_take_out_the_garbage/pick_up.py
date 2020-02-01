@@ -332,7 +332,8 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed",
                                                 "timeout": "TIMEOUT"})
 
-            arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={"required_goals": "reset"})
+            arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={"required_goals": ["reset"
+                                                                                                               ]})
 
             smach.StateMachine.add("LOWER_ARM", states.ArmToJointConfig(robot=robot,
                                                                         arm_designator=arm_occupied_designator,

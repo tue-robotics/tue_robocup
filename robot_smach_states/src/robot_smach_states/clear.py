@@ -71,7 +71,7 @@ class Clear(smach.StateMachine):
         arm_des = UnoccupiedArmDesignator(
             robot,
             arm_properties={"required_trajectories": ["prepare_place", "prepare_grasp"],
-                            "required_goals": "carrying_pose",
+                            "required_goals": ["carrying_pose"],
                             "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
         arm_des.lock()
 

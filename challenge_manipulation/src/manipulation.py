@@ -444,8 +444,8 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                    name="place_position")
 
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot,
-                                                               {'required_trajectories': 'prepare_grasp',
-                                                                'required_goals': 'carrying_pose',
+                                                               {'required_trajectories': ['prepare_grasp'],
+                                                                'required_goals': ['carrying_pose'],
                                                                 'required_gripper_types': [arms.GripperTypes.GRASPING],
                                                                 'required_arm_name': PREFERRED_ARM},
                                                                name="empty_arm_designator")

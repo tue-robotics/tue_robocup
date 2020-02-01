@@ -102,7 +102,7 @@ class Hero(robot.Robot):
 
         :return None
         """
-        arm = self.get_arm(required_goals='arm_out_of_way')
+        arm = self.get_arm(required_goals=['arm_out_of_way'])
 
         rotation = 1.57
         rotation_speed = 1

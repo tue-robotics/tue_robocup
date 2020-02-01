@@ -83,8 +83,8 @@ class GrabSingleItem(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": "perpare_grasp",
-                                                                       "required_goals": "carrying_pose",
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp"],
+                                                                       "required_goals": ["carrying_pose"],
                                                                        "required_gripper_types": [
                                                                            arms.GripperTypes.GRASPING]},
                                                                name="empty_arm_designator")
