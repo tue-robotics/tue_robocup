@@ -19,6 +19,7 @@ class GetOrder(smach.StateMachine):
         # type: (Robot, str, VariableDesignator) -> None
         """
         Initialization method
+
         :param robot: robot api object
         :param operator_name: name with which the operator will be stored in image recognition module
         :param drink_designator: (VariableDesignator) in which the drink to fetch is stored

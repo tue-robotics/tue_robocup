@@ -65,7 +65,7 @@ class InspectAndCount(smach.StateMachine):
         :param robot: robot object
         :param where_to_count_designator: Where to look for objects?
         :param type_to_count_designator: a VariableDesignator (resolve_type=string) that stores the type of the objects
-         that should be counted
+            that should be counted
         :param count_designator:  VariableDesignator(resolve_type=int).writeable() that will store the number
             of objects
         """

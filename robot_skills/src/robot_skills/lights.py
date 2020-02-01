@@ -18,6 +18,7 @@ class Lights(RobotPart):
     def __init__(self, robot_name, tf_listener):
         """
         constructor
+
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
         """
@@ -31,6 +32,7 @@ class Lights(RobotPart):
     def set_color(self, r, g, b, a=1.0):
         """
         Set the color of the lights of the robot in RGBA values
+
         :param r: red value 0.0-1.0
         :param g: green value 0.0-1.0
         :param b: blue value 0.0-1.0
@@ -42,6 +44,7 @@ class Lights(RobotPart):
     def set_color_colorRGBA(self, rgba):
         """
         Set the color of the robot by a std_msgs.msg.ColorRGBA
+
         :param rgba: std_msgs.msg.ColorRGBA
         :return: no return
         """
@@ -52,6 +55,7 @@ class Lights(RobotPart):
     def reset(self):
         """
         Set the lights to blue
+
         :return: no return
         """
         self.set_color_colorRGBA(RESET)
@@ -60,6 +64,7 @@ class Lights(RobotPart):
     def on(self):
         """
         Set the lights of the robot ON
+
         :return: no return
         """
         rgb_msg = RGBLightCommand(show_color=True)
@@ -68,6 +73,7 @@ class Lights(RobotPart):
     def off(self):
         """
         Set the lights of the robot OFF
+
         :return: no return
         """
         rgb_msg = RGBLightCommand(show_color=False)
@@ -76,6 +82,7 @@ class Lights(RobotPart):
     def taste_the_rainbow(self, duration=5.0):
         """
         Show awesome rainbow on the real amigo robot
+
         :param duration: (float) Indicates the total duration of the rainbow
         """
 

@@ -34,13 +34,13 @@ class Speech(RobotPart):
         :param sentence: string with sentence to pronounce
         :param language: string with language to speak. Philips TTS supports English (us) Dutch (nl)
         :param personality: string indicating the personality. Supported are Default, Man, OldMan, OldWoman, Boy,
-         YoungGirl, Robot, Giant, Dwarf, Alien
+            YoungGirl, Robot, Giant, Dwarf, Alien
         :param voice: string indicating the voice to speak with. In English, "kyle" (default), "gregory" (French
-        accent) and "carlos" (Spanish accent) are supported. The Dutch voices are "david" and "marjolijn"
+            accent) and "carlos" (Spanish accent) are supported. The Dutch voices are "david" and "marjolijn"
         :param mood: string indicating the emotion. Supported are: Neutral, Friendly, Angry, Furious, Drill, Scared,
-        Emotional, Weepy, Excited, Surprised, Sad, Disgusted, Whisper.
+            Emotional, Weepy, Excited, Surprised, Sad, Disgusted, Whisper.
         :param block: bool to indicate whether this function should return immediately or if it should block until the
-        sentence has been spoken
+            sentence has been spoken
         :param replace: dictionary with replacement stuff
         """
         # ToDo: replace personality by character and mood by emotion. Furthermore, change the order of the arguments.

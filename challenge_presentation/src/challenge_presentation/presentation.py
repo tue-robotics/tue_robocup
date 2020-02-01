@@ -185,6 +185,7 @@ class Presentation(smach.State):
 class PresentationMachine(smach.StateMachine):
     def __init__(self, robot, language='nl'):
             """ Contains the Initialize state and the Presentation state
+
             :param robot: Robot to use
             :return:
             """

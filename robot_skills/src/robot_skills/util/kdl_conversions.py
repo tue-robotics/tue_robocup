@@ -9,6 +9,7 @@ import rospy
 
 class FrameStamped(object):
     """Kdl alternative for a geometry_msgs.PoseStamped.
+
     This class consists of a kdl.Frame and the frame_id w.r.t which the Frame is defined"""
 
     def __init__(self, frame, frame_id, stamp=None):
@@ -37,7 +38,8 @@ class FrameStamped(object):
 
     def extractVectorStamped(self):
         """Extract only the position of this FrameStamped, without the orientation but with the frame_id metadata
-        :returns VectorStamped
+
+        :return: VectorStamped
         >>> fs = FrameStamped(kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3)), "/map")
         >>> fs.extractVectorStamped()
         VectorStamped([           1,           2,           3] @ /map)
@@ -89,6 +91,7 @@ class VectorStamped(object):
 def point_msg_to_kdl_vector(point):
     """
     Convert a ROS geometry_msgs.msg.Point message to a PyKDL.Vector object
+
     :type point:  geometry_msgs.msg.Point
     :rtype: PyKDL.Vector
 
@@ -106,6 +109,7 @@ def point_msg_to_kdl_vector(point):
 def kdl_vector_to_point_msg(vector):
     """
     Convert a PyKDL.Vector object to a ROS geometry_msgs.msg.Point message
+
     :type vector: PyKDL.Vector
     :rtype: geometry_msgs.msg.Point
 
@@ -123,6 +127,7 @@ def kdl_vector_to_point_msg(vector):
 def kdl_rotation_to_quaternion_msg(rotation):
     """
     Convert a PyKDL.Rotation object to a ROS geometry_msgs.msg.Quaternion message
+
     :param rotation: Rotation to be converted
     :type rotation: PyKDL.Rotation
     :rtype: geometry_msgs.msg.Quaternion
@@ -142,6 +147,7 @@ def kdl_rotation_to_quaternion_msg(rotation):
 def quaternion_msg_to_kdl_rotation(quaternion):
     """
     Convert a geometry_msgs.msg.Quaternion message to a ROS PyKDL.Rotation object
+
     :param quaternion: Rotation to be converted
     :type quaternion: geometry_msgs.msg.Quaternion
     :rtype: PyKDL.Rotation
@@ -156,6 +162,7 @@ def quaternion_msg_to_kdl_rotation(quaternion):
 def pose_msg_to_kdl_frame(pose):
     """
     Convert a geometry_msgs.msg.Pose message to a PyKDL.Frame object
+
     :param pose: Pose to be converted
     :type pose: geometry_msgs.msg.Pose
     :rtype: PyKDL.Frame
@@ -174,6 +181,7 @@ def pose_msg_to_kdl_frame(pose):
 def kdl_frame_to_pose_msg(frame):
     """
     Convert a ROS PyKDL.Frame object to a geometry_msgs.msg.Pose message
+
     :param frame: Frame to be converted
     :type frame: PyKDL.Frame
     :rtype: geometry_msgs.msg.Pose
@@ -193,6 +201,7 @@ def kdl_frame_to_pose_msg(frame):
 def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
     """
     Convert a ROS PyKDL.Frame object to a geometry_msgs.msg.Pose message
+
     :param frame: Frame to be converted
     :type frame: PyKDL.Frame
     :rtype: geometry_msgs.msg.Pose
@@ -213,6 +222,7 @@ def kdl_frame_stamped_to_pose_stamped_msg(frame_stamped):
 def kdl_frame_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
     """
     Create a PyKDL.Frame from raw scalars
+
     :param x: The X value of the position
     :param y: The Y value of the position
     :param z: The Z value of the position
@@ -226,8 +236,9 @@ def kdl_frame_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0):
 
 def kdl_frame_stamped_from_pose_stamped_msg(pose_stamped):
     """Convert a PoseStamped to FrameStamped
-    :param pose_stamped the PoseStamped to be converted
-    :returns FrameStamped"""
+
+    :param pose_stamped: the PoseStamped to be converted
+    :return: FrameStamped"""
     assert isinstance(pose_stamped, gm.PoseStamped)
     return FrameStamped(frame=pose_msg_to_kdl_frame(pose_stamped.pose),
                         frame_id=pose_stamped.header.frame_id,
@@ -236,6 +247,7 @@ def kdl_frame_stamped_from_pose_stamped_msg(pose_stamped):
 def kdl_frame_stamped_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
     """
     Create a FrameStamped from raw scalars
+
     :param x: The X value of the position
     :param y: The Y value of the position
     :param z: The Z value of the position
@@ -251,16 +263,18 @@ def kdl_frame_stamped_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_i
 
 def kdl_vector_stamped_from_point_stamped_msg(point_stamped):
     """Convert a PointStamped to VectorStamped
-    :param point_stamped the PointStamped to be converted
-    :returns VectorStamped"""
+
+    :param point_stamped: the PointStamped to be converted
+    :return: VectorStamped"""
     assert isinstance(point_stamped, gm.PointStamped), "point_stamped is not a geometry_msgs/PointStamped but a {}".format(type(point_stamped))
     return VectorStamped(vector=point_msg_to_kdl_vector(point_stamped.point),
                          frame_id=point_stamped.header.frame_id)
 
 def kdl_vector_stamped_to_point_stamped(vector_stamped):
     """Convert a VectorStamped to a PointStamped
+
     :param vector_stamped the VectorStamped to be converted
-    :returns PointStamped"""
+    :return: PointStamped"""
     ps = gm.PointStamped()
     ps.header.frame_id = vector_stamped.frame_id
     ps.point = gm.Point(vector_stamped.vector.x(),

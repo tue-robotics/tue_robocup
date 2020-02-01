@@ -27,6 +27,7 @@ class Volume(object):
 
     def contains(self, point):
         """ Checks if the point is inside this volume
+
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
@@ -63,6 +64,7 @@ class BoxVolume(Volume):
 
     def _calc_center_point(self):
         """Calculate where the center of the box is located
+
         >>> b = BoxVolume(kdl.Vector(0,0,0), kdl.Vector(1,1,1))
         >>> b.center_point
         [         0.5,         0.5,         0.5]
@@ -104,6 +106,7 @@ class BoxVolume(Volume):
 
     def contains(self, point):
         """ Checks if the point is inside this volume
+
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
@@ -137,6 +140,7 @@ class CompositeBoxVolume(Volume):
 
     def _calc_center_point(self):
         """Calculate where the center of the box is located
+
         >>> b = CompositeBoxVolume([(kdl.Vector(0,0,0), kdl.Vector(1,1,1))])
         >>> b.center_point
         [         0.5,         0.5,         0.5]
@@ -178,6 +182,7 @@ class CompositeBoxVolume(Volume):
 
     def contains(self, point):
         """ Checks if the point is inside this volume
+
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """

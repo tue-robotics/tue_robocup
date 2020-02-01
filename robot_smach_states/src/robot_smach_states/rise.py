@@ -10,7 +10,7 @@ class RiseForHMI(smach.State):
     """
     State to pose the robot for conversations
 
-    :param robot: Robot to execute state with
+    :var robot: Robot to execute state with
     """
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])

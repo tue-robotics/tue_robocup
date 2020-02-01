@@ -16,6 +16,7 @@ class LearnGuest(smach.StateMachine):
                  guest_name_des, guest_drink_des):
         """
         Learn what a guest looks like and what his/her favourite drink is
+
         :param robot: Robot that should execute this state
         :param door_waypoint: Entity-designator resolving to a waypoint Where are guests expected to come in
         :param guest_ent_des: Entity of the guest

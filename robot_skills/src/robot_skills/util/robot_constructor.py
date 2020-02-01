@@ -2,8 +2,10 @@
 
 def robot_constructor(robot_name):
     """Construct a robot by it's name. Choices are amigo, sergio, hero, mockbot
-    :param robot_name str of robot name. Current options are amigo, sergio, hero, mockbot
-    :returns a Robot-instance"""
+
+    :param robot_name: str of robot name. Current options are amigo, sergio, hero, mockbot
+    :return: a Robot-instance
+    """
 
     if robot_name == "amigo":
         import robot_skills.amigo

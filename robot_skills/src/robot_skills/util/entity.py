@@ -48,7 +48,7 @@ class Entity(object):
 
         :param point: VectorStamped with the point to check
         :param volume_id: string with the volume
-        :return boolean indicating whether the point is in the designated volume. If an error occurs, False is returned
+        :return: boolean indicating whether the point is in the designated volume. If an error occurs, False is returned
         """
         # Check if the volume exists
         if volume_id not in self._volumes:
@@ -71,6 +71,7 @@ class Entity(object):
     def entities_in_volume(self, entities, volume_id):
         """
         Filter the collection of entities down to only those in the given volume
+
         :param entities: collection/sequence of entities
         :type entities: List[Entity]
         :param volume_id: volume these entities need to be in
@@ -90,6 +91,7 @@ class Entity(object):
     def distance_to_2d(self, point):
         """
         Calculate the distance between this entity's pose and the given point.
+
         :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
         :return: the distance between the entity's pose and the point
 
@@ -107,6 +109,7 @@ class Entity(object):
     def distance_to_3d(self, point):
         """
         Calculate the distance between this entity's pose and the given point.
+
         :param point: kdl.Vector, assumed to be in the same frame_id as the entity itself
         :return: the distance between the entity's pose and the point
 
@@ -120,6 +123,7 @@ class Entity(object):
     def is_a(self, super_type):
         """
         Check whether the entity is a (subclass of) some supertype
+
         :param super_type: str representing the name of the super_type
         :return: bool True if the entity is a (sub)type of the given super_type
 
@@ -165,6 +169,7 @@ class PersonProperties(object):
         # Once the message definition in people_recognition is cleaned up then tagnames should be removed completely."
         """
         Container for several properties related to a person
+
         :param name: the person's name. This is separate from the entity, which is unique while this doesn't have to be
         :param age: Estimated age of the person
         :param emotion: str indicating the emotion

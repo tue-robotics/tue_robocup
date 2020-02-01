@@ -20,7 +20,7 @@ def color_map(N=256, normalized=False):
 
     :param N : int amount of colors to generate
     :param normalized: bool indicating range of each channel: float32 in [0, 1] or int in [0, 255]
-    :return a numpy.array of shape (N, 3) with a row for each color and each row is [R,G,B]
+    :return: a numpy.array of shape (N, 3) with a row for each color and each row is [R,G,B]
     """
 
     def bitget(byteval, idx):

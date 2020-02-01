@@ -52,6 +52,7 @@ class DetectCrowd(smach.State):
     def recognize(self, tries=3):
         """
         Recognize people. Takes multiple images and takes the try with the most faces
+
         :param tries: number of tries
         :type tries: int
         :return: list of face properties
@@ -90,6 +91,7 @@ class DetectCrowd(smach.State):
     def describe_crowd(self, detections):
         """
         Conversion from individual face properties to crowd properties
+
         :param detections: list of face properties
         :type detections: list[image_recognition_msgs/FaceProperties]
         :return: crowd properties
