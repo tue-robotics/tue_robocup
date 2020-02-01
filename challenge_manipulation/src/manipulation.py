@@ -449,7 +449,12 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                                 'required_gripper_types': [arms.GripperTypes.GRASPING],
                                                                 'required_arm_name': PREFERRED_ARM},
                                                                name="empty_arm_designator")
-        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot, {'required_objects':[self.current_item]},
+        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot,
+                                                                      {'required_objects': [self.current_item]},
+                                                                      {"required_trajectories": ["prepare_place"],
+                                                                       "required_goals": ["reset", "handover_to_human"],
+                                                                       'required_gripper_types': [
+                                                                           arms.GripperTypes.GRASPING]},
                                                                       name="arm_with_item_designator")
 
         # print "{0} = pick_shelf".format(self.pick_shelf)
