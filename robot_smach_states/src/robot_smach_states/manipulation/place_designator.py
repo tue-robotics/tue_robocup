@@ -61,18 +61,18 @@ class EmptySpotDesignator(Designator):
 
         # points_of_interest = []
         if self._area:
-            vectors_of_interest = self.determine_points_of_interest_with_area(place_location, self._area)
+            vectors_of_interest = self._determine_points_of_interest_with_area(place_location, self._area)
         else:
-            vectors_of_interest = self.determine_points_of_interest(place_frame.frame, z_max=place_location.shape.z_max,
+            vectors_of_interest = self._determine_points_of_interest(place_frame.frame, z_max=place_location.shape.z_max,
                                                                     convex_hull=place_location.shape.convex_hull)
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
-        open_POIs = filter(lambda pose: self.is_poi_unoccupied(pose, place_location), vectors_of_interest)
+        open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, place_location), vectors_of_interest)
 
         base_pose = self.robot.base.get_location()
         arm = self.arm_designator.resolve()
-        open_POIs_dist = [(poi, self.distance_to_poi_area_heuristic(poi, base_pose, arm)) for poi in open_POIs]
+        open_POIs_dist = [(poi, self._distance_to_poi_area_heuristic(poi, base_pose, arm)) for poi in open_POIs]
 
         # We don't care about small differences
         open_POIs_dist.sort(key=lambda tup:tup[1])
@@ -81,21 +81,21 @@ class EmptySpotDesignator(Designator):
         open_POIs_dist.sort(key=lambda tup: tup[0].edge_score, reverse=True) # sorts in place
 
         for poi in open_POIs_dist:
-            if self.distance_to_poi_area(poi[0], arm):
-                selection = self.create_selection_marker(poi[0])
+            if self._distance_to_poi_area(poi[0], arm):
+                selection = self._create_selection_marker(poi[0])
                 self.marker_pub.publish(MarkerArray([selection]))
                 return poi[0]
 
         rospy.logerr("Could not find an empty spot")
         return None
 
-    def is_poi_unoccupied(self, frame_stamped, surface_entity):
+    def _is_poi_unoccupied(self, frame_stamped, surface_entity):
         entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
                                                      radius=self._spacing)
         entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
         return not any(entities_at_poi)
 
-    def distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
+    def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
         """
         :return: direct distance between a point and and the place offset of the arm
         :returns: double [meters]
@@ -112,7 +112,7 @@ class EmptySpotDesignator(Designator):
         dist = math.hypot(offset_pose_x - x, offset_pose_y - y)
         return dist
 
-    def distance_to_poi_area(self, frame_stamped, arm):
+    def _distance_to_poi_area(self, frame_stamped, arm):
         """
         :return: length of the path the robot would need to drive to place at the given point
         :returns: int [plan steps]
@@ -136,7 +136,7 @@ class EmptySpotDesignator(Designator):
             distance = None
         return distance
 
-    def create_marker(self, x, y, z):
+    def _create_marker(self, x, y, z):
         marker = Marker()
         marker.id = len(self.marker_array.markers)
         marker.type = 2
@@ -155,7 +155,7 @@ class EmptySpotDesignator(Designator):
         marker.lifetime = rospy.Duration(10.0)
         return marker
 
-    def create_selection_marker(self, selected_pose):
+    def _create_selection_marker(self, selected_pose):
         marker = Marker()
         marker.id = len(self.marker_array.markers) + 1
         marker.type = 2
@@ -174,7 +174,7 @@ class EmptySpotDesignator(Designator):
         marker.lifetime = rospy.Duration(30.0)
         return marker
 
-    def determine_points_of_interest_with_area(self, entity, area):
+    def _determine_points_of_interest_with_area(self, entity, area):
         """ Determines the points of interest using an area
         :type entity: Entity
         :param area: str indicating which volume of the entity to look at
@@ -194,9 +194,9 @@ class EmptySpotDesignator(Designator):
         # Now we're sure to have the correct bounding box
         # Make sure we offset the bottom of the box
         top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
-        return self.determine_points_of_interest(entity._pose, top_z, box.bottom_area)
+        return self._determine_points_of_interest(entity._pose, top_z, box.bottom_area)
 
-    def determine_points_of_interest(self, center_frame, z_max, convex_hull):
+    def _determine_points_of_interest(self, center_frame, z_max, convex_hull):
         """
         Determine candidates for place poses
         :param center_frame: kdl.Frame, center of the Entity to place on top of
@@ -244,7 +244,7 @@ class EmptySpotDesignator(Designator):
 
                 points += [fs]
 
-                self.marker_array.markers.append(self.create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
+                self.marker_array.markers.append(self._create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
 
                 # ToDo: check if still within hull???
                 d += self._spacing
