@@ -1,4 +1,4 @@
-import robot_smach_states as states
+import robot_smach_states as rss
 import robot_smach_states.util.designators as ds
 import smach
 
@@ -17,24 +17,24 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['done', 'failed', 'aborted'])
 
     with sm:
-        smach.StateMachine.add('START_CHALLENGE_ROBUST', states.startup.StartChallengeRobust(robot, STARTING_POINT),
+        smach.StateMachine.add('START_CHALLENGE_ROBUST', rss.startup.StartChallengeRobust(robot, STARTING_POINT),
                                transitions={'Done': 'GO_TO_SEARCH_POSE',
                                             'Aborted': 'aborted',
                                             'Failed': 'GO_TO_SEARCH_POSE'})
 
         smach.StateMachine.add('SAY_START',
-                               states.Say(robot, "Finding your mates, here we go!", block=False),
+                               rss.human_interaction.Say(robot, "Finding your mates, here we go!", block=False),
                                transitions={'spoken': 'GO_TO_SEARCH_POSE'})
 
         smach.StateMachine.add('GO_TO_SEARCH_POSE',
-                               states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=SEARCH_POINT),
-                                                         radius=0.375),
+                               rss.navigation.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=SEARCH_POINT),
+                                                                 radius=0.375),
                                transitions={'arrived': 'RISE_FOR_THE_PEOPLE',
                                             'goal_not_defined': 'failed',
                                             'unreachable': 'WAIT_SEARCH_POSE'})
 
         smach.StateMachine.add('WAIT_SEARCH_POSE',
-                               states.WaitTime(robot, 5),
+                               rss.utility.WaitTime(robot, 5),
                                transitions={'preempted': 'aborted',
                                             'waited': 'GO_TO_SEARCH_POSE'})
 
@@ -74,7 +74,7 @@ def setup_statemachine(robot):
 
         # drive back to the operator to describe the mates
         smach.StateMachine.add('GO_BACK_TO_OPERATOR',
-                               states.NavigateToWaypoint(
+                               rss.navigation.NavigateToWaypoint(
                                    robot, ds.EntityByIdDesignator(robot, id=OPERATOR_POINT),
                                    radius=0.7, look_at_designator=ds.EntityByIdDesignator(robot, id=OPERATOR_POINT)),
                                transitions={'arrived': 'REPORT_PEOPLE',
@@ -82,7 +82,7 @@ def setup_statemachine(robot):
                                             'unreachable': 'WAIT_GO_BACK'})
 
         smach.StateMachine.add('WAIT_GO_BACK',
-                               states.WaitTime(robot, 5),
+                               rss.utility.WaitTime(robot, 5),
                                transitions={'preempted': 'aborted',
                                             'waited': 'GO_BACK_TO_OPERATOR'})
 
