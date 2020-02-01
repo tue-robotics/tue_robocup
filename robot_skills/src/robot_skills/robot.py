@@ -14,7 +14,7 @@ from robot_skills.util import decorators
 
 from collections import OrderedDict, Sequence
 
-CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
+CONNECTION_TIMEOUT = 15.0  # Timeout: all ROS connections must be alive within this duration
 
 
 class Robot(object):
