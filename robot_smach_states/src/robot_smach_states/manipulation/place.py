@@ -6,6 +6,7 @@ import smach
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
+from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
 from ..utility import LockDesignator
 from ..util.designators import check_type
