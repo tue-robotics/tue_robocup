@@ -9,7 +9,7 @@ import os
 import rospy
 import rospkg
 from robot_skills import Hero
-from robot_smach_states import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 
