@@ -43,7 +43,7 @@ class SetInitialPose(smach.State):
 
         :param robot: (Robot)
         :param init_position: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
-        a tuple(float, float, float) representing x, y and yaw in map frame can be used.
+            a tuple(float, float, float) representing x, y and yaw in map frame can be used.
         """
         smach.State.__init__(self, outcomes=["done", "preempted", "error"])
 

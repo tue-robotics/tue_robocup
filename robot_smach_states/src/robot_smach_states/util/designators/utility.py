@@ -144,6 +144,7 @@ class ValueByKeyDesignator(Designator):
     def __init__(self, container, key, resolve_type, name=None):
         """
         Get a value from a dictionary by it's key
+
         :param container: any object with a __getitem__ method or a designator that resolves to it
         :param name: Name of the designator for introspection purposes
         """

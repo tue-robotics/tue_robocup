@@ -25,15 +25,16 @@ class GiveDirections(smach.State):
         # type: (Robot, Designator, float, float) -> None
         """
         Init
+
         :param robot: API object
         :type robot: Robot
         :param entity_designator: resolving to the entity the operator wants to go to
         :type entity_designator: Designator
         :param x_threshold: if the entity is closer than this distance in x-direction w.r.t. the path frame
-        it is considered 'passed'
+            it is considered 'passed'
         :type x_threshold: float
         :param y_threshold: if the entity is closer than this distance in y-direction w.r.t. the path frame
-        it is considered 'passed'
+            it is considered 'passed'
         :type y_threshold: float
         """
 
@@ -143,6 +144,7 @@ class GiveDirections(smach.State):
         # type: (kdl.Vector, kdl.Vector, kdl.Frame) -> kdl.Frame
         """
         Computes the entity pose w.r.t. the virtual frame that is spanned by the two points
+
         :param point: First point in fixed frame
         :type point: kdl.Vector
         :param next_point: Next point in fixed frame
@@ -166,6 +168,7 @@ def create_frame_from_points(p0, p1):
     """
     Creates a frame from two points. The origin of the frame is the first point. The x-direction points into the
     direction of the next point
+
     :param p0: Origin of the frame
     :type p0: kdl.Vector
     :param p1: x-direction of the frame will point to this vector
@@ -185,10 +188,11 @@ def in_room(room, position):
     # type: (Entity, kdl.Vector) -> bool
     """
     Checks if the given position is in the given room
+
     :param room: Room entity
     :type room: Entity
     :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room
-    entities
+        entities
     :type position: kdl.Vector
     :return: whether or not the position is in the room
     :rtype: bool
@@ -202,6 +206,7 @@ def get_room(rooms, position):
     # type: (list[Entity], kdl.Vector) -> Entity
     """
     Checks if the given position is in one of the provided rooms
+
     :param rooms: list(Entity) containing all room entities
     :type rooms: list[Entity]
     :param position: position to check. N.B.: it is assumed this is w.r.t. the same frame as the room entities

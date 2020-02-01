@@ -347,7 +347,7 @@ class LearnPerson(smach.State):
         :param robot: robot object
         :param person_name: string indicating the name that will be given
         :param name_designator: designator returning a string with the name of the person. This will be used if no
-        person name is provided
+            person name is provided
         :param nr_tries: maximum number of tries
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])

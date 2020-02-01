@@ -92,7 +92,9 @@ class WritePdf(smach.State):
         return "done"
 
     def set_designator(self, designator):
-        """ Sets a designator that can be used to add to the internal list.
+        """
+        Sets a designator that can be used to add to the internal list.
+
         :param designator: designator with list of ClassificationResults as resolve type
         """
         self._designator = designator

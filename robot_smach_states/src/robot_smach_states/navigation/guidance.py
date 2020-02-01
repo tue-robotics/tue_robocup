@@ -191,7 +191,7 @@ class ExecutePlanGuidance(smach.State):
         :param robot: (Robot) robot api object
         :param operator_distance: (float) check for the operator to be within this range of the robot
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
-        this radius
+            this radius
         """
         smach.State.__init__(self, outcomes=["arrived", "blocked", "preempted", "lost_operator"])
         self.robot = robot
@@ -277,7 +277,7 @@ class WaitForOperator(smach.State):
         :param timeout: (float) if the operator has not been detected for this period, "is_lost" will be returned
         :param distance: (float) check for the operator to be within this range of the robot [m]
         :param radius: (float) from the point behind the robot defined by `distance`, the person must be within this
-        radius [m]
+            radius [m]
         """
         smach.State.__init__(self, outcomes=["is_following", "is_lost", "preempted"])
         self._robot = robot
@@ -384,16 +384,17 @@ class GuideToSymbolic(Guide):
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
                  operator_radius=0.5):
         # type: (Robot, dict, EdEntityDesignator, float, float) -> None
-        """ Constructor
+        """
+        Constructor
 
         :param robot: robot object
         :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
-        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+            resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
-        to compute the orientation constraint.
+            to compute the orientation constraint.
         :param operator_distance: (float) check for the operator to be within this range of the robot [m]
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
-        this radius [m]
+            this radius [m]
         """
         super(GuideToSymbolic, self).__init__(robot=robot,
                                               operator_distance=operator_distance,

@@ -83,6 +83,7 @@ class GetOrders(smach.StateMachine):
             def assign_random_drinks(user_data):
                 """
                 Edits user_data['detected_people'] elements (which are dicts) and adds a new 'selection'-key
+
                 :param user_data:
                 :return:
                 """
@@ -111,6 +112,7 @@ class GetOrders(smach.StateMachine):
             def store_current_person_order(user_data):
                 """
                 Edits user_data['detected_people'] elements (which are dicts) and adds a new 'selection'-key
+
                 :param user_data:
                 :return:
                 """
@@ -134,7 +136,8 @@ class GetOrders(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def increase_ppl_counter(user_data):
                 """
-                Edits user_data['detected_people'] elements (which are dicts) and adds a new 'selection'-key
+                Increments number of detected people.
+
                 :param user_data:
                 :return:
                 """

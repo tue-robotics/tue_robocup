@@ -24,11 +24,11 @@ class NavigateRobust(smach.StateMachine):
         arrived. If not unreachable or goal not defined, the robot will wait for <waittime> seconds and proceed to the
         next navigation option until either it succeeds or runs out of options.
 
-        N.B.: on preemption, "unreachable" is returned (since the NavigateTo class has no "preempted" outcome.
+        N.B.: on preemption, "unreachable" is returned (since the NavigateTo class has no "preempted" outcome).
 
         :param robot: (Robot) api object
         :param options: (list(NavigateTo)) list of different navigation options (instances of some derivative of the
-        'NavigateTo' class, e.g., 'NavigateToSymbolic', 'NavigateToWaypoint', 'NavigateToRoom' etc.
+            'NavigateTo' class, e.g., 'NavigateToSymbolic', 'NavigateToWaypoint', 'NavigateToRoom' etc.
         :param wait_time: (float) time the robot waits before trying different options.
         """
         assert all([isinstance(option, NavigateTo) for option in options]), "Not all options are 'NavigateTo' instances"

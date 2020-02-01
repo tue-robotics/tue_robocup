@@ -9,8 +9,8 @@ from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, Fra
 from robot_smach_states.navigation import NavigateToPlace
 from robot_smach_states.world_model import Inspect
 from robot_smach_states.utility import LockDesignator
-from robot_smach_states.util.designators.ed_designators import EmptySpotDesignator
 from robot_smach_states.util.designators.utility import LockingDesignator
+from .place_designator import EmptySpotDesignator
 from robot_smach_states.util.designators import check_type
 
 
@@ -18,6 +18,7 @@ class PreparePlace(smach.State):
     def __init__(self, robot, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
+
         :param robot: Robot to execute state with
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
         ArmHoldingEntityDesignator
@@ -64,11 +65,12 @@ class Put(smach.State):
     def __init__(self, robot, item_to_place, placement_pose, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
+
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-        ArmHoldingEntityDesignator
+            ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -191,18 +193,19 @@ class Place(smach.StateMachine):
         """
         Drive the robot to be close to the designated place_pose and move the designated arm to place the designated
         item there
+
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param place_pose: The place pose can be one of three things:
-         1: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-         2: EdEntityDesignator resolving to an object on which the robot should place something
-         3: A string identifying an object on which the robot should place something
+            1: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
+            2: EdEntityDesignator resolving to an object on which the robot should place something
+            3: A string identifying an object on which the robot should place something
         :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-        ArmHoldingEntityDesignator
-        :param place_volume (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
-        'shelf3'
-        :param update_supporting_entity (optional) bool to indicate whether the supporting entity should be updated.
-        This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
+            ArmHoldingEntityDesignator
+        :param place_volume: (optional) string identifying the volume where to place the object, e.g., 'on_top_of',
+            'shelf3'
+        :param update_supporting_entity: (optional) bool to indicate whether the supporting entity should be updated.
+            This can only be used if the supporting entity is supplied, case 2 or 3 mentioned under item_to_place
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -224,7 +227,7 @@ class Place(smach.StateMachine):
         if isinstance(place_pose, str):
             furniture_designator = EdEntityDesignator(robot=robot, id=place_pose)
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_area)
+                                                   arm_designator=arm, area=place_area)
         # Case 1
         elif place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped:
             furniture_designator = None
@@ -233,7 +236,7 @@ class Place(smach.StateMachine):
         elif place_pose.resolve_type == Entity:
             furniture_designator = place_pose
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   area=place_area)
+                                                   arm_designator=arm, area=place_area)
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
 
