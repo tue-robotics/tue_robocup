@@ -20,6 +20,7 @@ import config
 import robot_smach_states as states
 
 import robot_smach_states.util.designators as ds
+from robot_smach_states.util.geometry_helpers import wrap_angle_pi
 
 
 def _clamp(abs_value, value):
@@ -44,21 +45,6 @@ def _get_yaw_from_quaternion_msg(msg):
     _, _, yaw = euler_from_quaternion(orientation_list)
     return yaw
 
-
-def _wrap_angle_pi(angle):
-    """
-    Wraps between -pi and +pi
-    -pi is excluded, (-pi, pi]
-
-    :param angle: Input angle
-    :return: Wrapped angle
-    """
-    angle = angle % (2 * math.pi)
-    if angle > math.pi:
-        return angle - 2 * math.pi
-    elif angle <= -math.pi:
-        return angle + 2 * math.pi
-    return angle
 
 
 class UpdateCabinetPose(smach.State):
@@ -99,7 +85,7 @@ class OpenDoor(smach.State):
         goal_pose.header.stamp = rospy.Time.now()
         pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
-        return pose.pose.position.x, pose.pose.position.y, _wrap_angle_pi(yaw)
+        return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
     def _goal_reached(self, dx, dy, dyaw):
         return math.hypot(dx, dy) < self._goal_position_tolerance and abs(dyaw) < self._goal_rotation_tolerance
