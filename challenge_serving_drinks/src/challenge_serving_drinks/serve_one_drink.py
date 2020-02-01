@@ -20,6 +20,7 @@ class ServeOneDrink(smach.StateMachine):
                  objects_list_des, unav_drink_des, name_options, objects):
         """
         Initialization method
+
         :param robot: robot api object
         :param bar_designator: (EntityDesignator) in which the bar location is stored
         :param room_id: room ID from challenge knowledge

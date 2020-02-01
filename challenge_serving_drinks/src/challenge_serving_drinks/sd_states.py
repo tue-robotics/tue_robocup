@@ -22,6 +22,7 @@ class CheckAvailability(smach.State):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
+
         :param robot: robot api object
         :param drink_designator: (VariableDesignator) in which the drink to fetch is stored
         :param available_drinks_designator: (VariableDesignator) in which the available drinks are stored
@@ -131,6 +132,7 @@ class AskDrink(smach.StateMachine):
         # type (Robot, VariableDesignator) -> None
         """
         Initialization method
+
         :param robot: robot api object
         :param operator_name: (EntityDesignator) in which the operator's name is stored
         :param drink_designator: (VariableDesignator) in which the drink to fetch is stored

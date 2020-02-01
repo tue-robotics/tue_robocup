@@ -97,7 +97,7 @@ class EmptySpotDesignator(Designator):
     def distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
         """
         :return: direct distance between a point and and the place offset of the arm
-        :returns: double [meters]
+        :rtype: double [meters]
         """
         bo = arm.base_offset
 
@@ -114,7 +114,7 @@ class EmptySpotDesignator(Designator):
     def distance_to_poi_area(self, frame_stamped, arm):
         """
         :return: length of the path the robot would need to drive to place at the given point
-        :returns: int [plan steps]
+        :rtype: int [plan steps]
         """
         base_offset = arm.base_offset
         radius = math.hypot(base_offset.x(), base_offset.y())

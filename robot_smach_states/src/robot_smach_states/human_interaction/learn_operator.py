@@ -34,7 +34,7 @@ class LearnOperator(smach.State):
         """ In this function an operator is located and their face is learned
 
         :param userdata: contains operator which is initially none, for global definition purposes
-        :return failed in case something went wrong
+        :return: failed in case something went wrong
                 done if an operator is found
                 aborted if preempt is requested
         """
