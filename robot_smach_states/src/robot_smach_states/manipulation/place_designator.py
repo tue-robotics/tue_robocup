@@ -24,7 +24,7 @@ class EmptySpotDesignator(Designator):
     PLACE_SHELF = "shelf2"
     cabinet = ds.EntityByIdDesignator(robot, id=CABINET, name="pick_shelf")
     arm = ds.UnoccupiedArmDesignator(robot, {})
-    place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, cabinet, arm, name="placement", area=PLACE_SHELF),
+    place_position = ds.LockingDesignator(EmptySpotDesignator(robot, cabinet, arm, name="placement", area=PLACE_SHELF),
                                           name="place_position")
     """
 
