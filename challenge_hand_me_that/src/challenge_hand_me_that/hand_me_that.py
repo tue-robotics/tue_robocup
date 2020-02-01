@@ -8,8 +8,9 @@ from smach import StateMachine
 
 import robot_smach_states.util.designators as ds
 from robot_skills.util.entity import Entity
-from robot_smach_states import NavigateToWaypoint, StartChallengeRobust, Say, VariableDesignator,\
-    UnoccupiedArmDesignator
+from robot_smach_states.navigation import NavigateToWaypoint
+from robot_smach_states.startup import StartChallengeRobust
+from robot_smach_states.human_interaction import Say
 from robocup_knowledge import load_knowledge
 
 from get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
@@ -25,9 +26,9 @@ HOME_LOCATION = challenge_knowledge.home_location  # Location where the robot wi
 def setup_statemachine(robot):
     state_machine = StateMachine(outcomes=['done'])
 
-    furniture_designator = VariableDesignator(resolve_type=Entity)
-    entity_designator = VariableDesignator(resolve_type=Entity)
-    arm_designator = UnoccupiedArmDesignator(robot, {})
+    furniture_designator = ds.VariableDesignator(resolve_type=Entity)
+    entity_designator = ds.VariableDesignator(resolve_type=Entity)
+    arm_designator = ds.UnoccupiedArmDesignator(robot, {})
 
     with state_machine:
         # Intro
