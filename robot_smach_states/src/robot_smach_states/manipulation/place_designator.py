@@ -68,7 +68,7 @@ class EmptySpotDesignator(Designator):
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
-        open_POIs = filter(self.is_poi_occupied, vectors_of_interest)
+        open_POIs = filter(lambda pose: self.is_poi_occupied(pose, place_location), vectors_of_interest)
 
         base_pose = self.robot.base.get_location()
         arm = self.arm_designator.resolve()
@@ -89,9 +89,10 @@ class EmptySpotDesignator(Designator):
         rospy.logerr("Could not find an empty spot")
         return None
 
-    def is_poi_occupied(self, frame_stamped):
+    def is_poi_occupied(self, frame_stamped, surface_entity):
         entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
                                                      radius=self._spacing)
+        entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
         return not any(entities_at_poi)
 
     def distance_to_poi_area_heuristic(self, frame_stamped, base_pose, arm):
