@@ -40,7 +40,9 @@ class FindPeople(smach.State):
                  found_people_designator=None, look_distance=10.0, speak=False,
                  strict=True, nearest=False, attempts=1, search_timeout=60,
                  look_range=(-np.pi/2, np.pi/2), look_steps=8):
-        """ Initialization method
+        """
+        Initialization method
+
         :param robot: robot api object
         :param properties: (dict) (default: None) keyvalue pair of the properties a person must
             possess. None as a value for a property would search for all possible
@@ -53,7 +55,7 @@ class FindPeople(smach.State):
         :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
         :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
-        property has non None values.
+            property has non None values.
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
@@ -71,7 +73,7 @@ class FindPeople(smach.State):
         :param attempts: (int) (default: 1) Max number of search attempts
         :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
         :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
-        robot search
+            robot search
         :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         smach.State.__init__(self, outcomes=['found', 'failed'])
@@ -249,9 +251,9 @@ class FindPeople(smach.State):
 
 
 class FindFirstPerson(smach.StateMachine):
-    """ Wrapper around FindPeople to get the first person that matches the
-    search criteria """
-
+    """
+    Wrapper around FindPeople to get the first person that matches the search criteria
+    """
     def __init__(self,
                  robot,
                  found_person_designator,
@@ -265,7 +267,9 @@ class FindFirstPerson(smach.StateMachine):
                  search_timeout=60,
                  look_range=(-np.pi/2, np.pi/2),
                  look_steps=8):
-        """ Initialization method
+        """
+        Initialization method
+
         :param robot: robot api object
         :param found_person_designator: A designator to write the search result to.
         :param properties: (dict) (default: None) keyvalue pair of the properties a person must
@@ -277,7 +281,7 @@ class FindFirstPerson(smach.StateMachine):
         :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
         :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
-        property has non None values.
+            property has non None values.
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
@@ -295,7 +299,7 @@ class FindFirstPerson(smach.StateMachine):
         :param attempts: (int) (default: 1) Max number of search attempts
         :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
         :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
-        robot search
+            robot search
         :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         super(FindFirstPerson, self).__init__(outcomes=["found", "failed"])
@@ -332,8 +336,8 @@ class FindFirstPerson(smach.StateMachine):
 
 
 class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
-    """Wrapper around FirstFoundPerson and addition of
-    UpdateDestEntityPoseWithSrcEntity of top of it
+    """
+    Wrapper around FirstFoundPerson and addition of UpdateDestEntityPoseWithSrcEntity of top of it
     """
 
     def __init__(self,
@@ -351,7 +355,9 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                  search_timeout=60,
                  look_range=(-np.pi/2, np.pi/2),
                  look_steps=8):
-        """ Initialization method
+        """
+        Initialization method
+
         :param robot: robot api object
         :param dst_entity_designator: A designator of an Entity whose pose must be updated.
         :param dst_entity_type: (str) (default: waypoint) Type of the destination entity
@@ -365,7 +371,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
         :param speak: (bool) (default: False) If True, the robot will speak while trying to find
             a named person
         :param strict: (bool) (default: True)  Only used if properties is not None AND the {key:value} pair of a
-        property has non None values.
+            property has non None values.
             If set to True then only people with all specified
             properties are returned, else all people with at least one true property.
             Example:
@@ -383,7 +389,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
         :param attempts: (int) (default: 1) Max number of search attempts
         :param search_timeout: (float) (default: 60) maximum time the robot is allowed to search
         :param look_range: (tuple of size 2) (default: (-np.pi/2, np.pi/2)) from what to what head angle should the
-        robot search
+            robot search
         :param look_steps: (int) (default: 8) How many steps does it take in that range
         """
         super(SetPoseFirstFoundPersonToEntity,
@@ -428,7 +434,9 @@ class _DecideNavigateState(smach.State):
     """ Helper state to decide whether to use a NavigateToWaypoint or a NavigateToRoom state
     """
     def __init__(self, robot, waypoint_designator, room_designator):
-        """ Initialize method
+        """
+        Initialize method
+
         :param robot: Robot API object
         :param waypoint_designator: EdEntityDesignator that should resolve to a waypoint
         :param room_designator: EdEntityDesignator that should resolve to the room in which the waypoint is located
@@ -461,10 +469,12 @@ class FindPeopleInRoom(smach.StateMachine):
     def __init__(self, robot, room, found_people_designator,
                  look_range=(-np.pi/2, np.pi/2),
                  look_steps=8):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
-        to this waypoint. Else, it will navigate to the room called "<area>"
+            to this waypoint. Else, it will navigate to the room called "<area>"
         :param name: (str) Name of the person to look for
         :param discard_other_labels: (bool) Whether or not to discard faces based on label
         :param found_person_designator: (Designator) A designator that will resolve to the found object

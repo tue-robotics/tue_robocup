@@ -66,11 +66,12 @@ class DefaultGrabDesignator(ds.Designator):
 class GrabSingleItem(smach.StateMachine):
     """ Lock an object, announce it and grab it """
     def __init__(self, robot, grab_designator=None):
-        """ Constructor
+        """
+        Constructor
 
         :param robot: robot object
         :param grab_designator: EdEntityDesignator designating the item to grab. If not provided, a default one is
-        constructed (grabs the closest object in the volume of the surface)
+            constructed (grabs the closest object in the volume of the surface)
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 

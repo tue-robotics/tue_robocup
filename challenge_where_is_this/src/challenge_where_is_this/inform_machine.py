@@ -37,11 +37,12 @@ WAIT_MODE = WaitMode.SPEECH
 
 
 class EntityFromHmiResults(ds.Designator):
-    """ Designator to pick the closest item on top of the table to grab. This is used for testing
-
+    """
+    Designator to pick the closest item on top of the table to grab. This is used for testing
     """
     def __init__(self, robot, hmi_result_des, parse=True):
-        """ Constructor
+        """
+        Constructor
 
         :param robot: robot object
         :param hmi_result_des:
@@ -53,7 +54,8 @@ class EntityFromHmiResults(ds.Designator):
         self.parse = parse
 
     def _resolve(self):
-        """ Resolves
+        """
+        Resolves
 
         :return: entity in the <area_description> of the <surface_designator> that is closest to the robot
         """
@@ -70,7 +72,9 @@ class EntityFromHmiResults(ds.Designator):
 
 class GuideToRoomOrObject(smach.StateMachine):
     def __init__(self, robot, entity_des, operator_distance=1.5, operator_radius=0.5):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param entity_des: designator resolving to a room or a piece of furniture
         :param operator_distance: (float) check for the operator to be within this range of the robot
@@ -171,7 +175,9 @@ class GuideToRoomOrObject(smach.StateMachine):
 
 class InformMachine(smach.StateMachine):
     def __init__(self, robot):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])

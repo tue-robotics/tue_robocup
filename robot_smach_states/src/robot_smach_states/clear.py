@@ -58,10 +58,10 @@ class Clear(smach.StateMachine):
     def __init__(self, robot, source_location, source_navArea, target_location, target_navArea, target_placeArea="on_top_of", source_searchArea="on_top_of"):
         """
         Let the given robot move to a location and remove all entities from that table one at a time
+
         :param robot: Robot to use
         :param source_location: Location which will be cleared
         :param target_location: Location where the objects will be placed
-        :return:
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 

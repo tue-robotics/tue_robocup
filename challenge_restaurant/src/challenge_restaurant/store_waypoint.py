@@ -227,6 +227,7 @@ class StoreWaypoint(smach.State):
     def _visualize_location(self, base_pose, location):
         """
         Visualize a marker on the base_pose with the text 'location' and rotated to the correct side.
+
         :param base_pose: kdl Frame (in map) where the waypoint is located
         :param location: The name of the location as a label
         :return:

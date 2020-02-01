@@ -72,6 +72,13 @@ class Robot(object):
         self.parts[arm_name] = arm_part
         self._arms[arm_name] = arm_part
 
+    @property
+    def arms(self):
+        # ToDo: remove this property per September 2020
+        rospy.logwarn('Arms should be private and therefore not be called directly. The only interface that should be '
+                      'used is the get_arm function. Change your code, you are invading private property!')
+        return self._arms
+
     def configure(self):
         """
         This should be run at the end of the constructor of a child class.
