@@ -68,7 +68,7 @@ class EmptySpotDesignator(Designator):
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
-        open_POIs = filter(lambda pose: self.is_poi_occupied(pose, place_location), vectors_of_interest)
+        open_POIs = filter(lambda pose: self.is_poi_unoccupied(pose, place_location), vectors_of_interest)
 
         base_pose = self.robot.base.get_location()
         arm = self.arm_designator.resolve()
@@ -89,7 +89,7 @@ class EmptySpotDesignator(Designator):
         rospy.logerr("Could not find an empty spot")
         return None
 
-    def is_poi_occupied(self, frame_stamped, surface_entity):
+    def is_poi_unoccupied(self, frame_stamped, surface_entity):
         entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
                                                      radius=self._spacing)
         entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
