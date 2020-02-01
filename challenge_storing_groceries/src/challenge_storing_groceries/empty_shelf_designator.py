@@ -5,9 +5,9 @@ from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_stamped_fr
 
 
 class EmptyShelfDesignator(Designator):
-    """Designates an empty spot on the empty placement-shelve.
-    It does this by querying ED for entities that occupy some space.
-        If the result is no entities, then we found an open spot.
+    """
+    Designates an empty spot on the empty placement-shelve.
+    It does this by querying ED for entities that occupy some space. If the result is no entities, then we found an open spot.
 
     To test this in the robotics_test_lab with amigo-console:
     robot = amigo
@@ -19,6 +19,7 @@ class EmptyShelfDesignator(Designator):
     def __init__(self, robot, place_location_designator, name=None, area=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
+
         :param robot: Robot whose worldmodel to use
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param name: name for introspection purposes
@@ -96,7 +97,9 @@ class EmptyShelfDesignator(Designator):
         return marker
 
     def determine_points_of_interest_with_area(self, e, area):
-        """ Determines the points of interest using an area
+        """
+        Determines the points of interest using an area
+
         :param e:
         :param area:
         :return:

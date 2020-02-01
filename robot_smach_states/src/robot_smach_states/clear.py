@@ -6,8 +6,10 @@ import smach
 from robot_skills.classification_result import ClassificationResult
 from robot_skills import arms
 import robot_smach_states as states
+from robot_smach_states.manipulation.place import EmptySpotDesignator
 from robot_smach_states.util.designators import check_type
-from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator, EmptySpotDesignator
+from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, UnoccupiedArmDesignator
+
 
 class SelectEntity(smach.State):
     def __init__(self, robot, entitity_classifications_designator, selected_entity_designator):
@@ -54,10 +56,10 @@ class Clear(smach.StateMachine):
     def __init__(self, robot, source_location, source_navArea, target_location, target_navArea, target_placeArea="on_top_of", source_searchArea="on_top_of"):
         """
         Let the given robot move to a location and remove all entities from that table one at a time
+
         :param robot: Robot to use
         :param source_location: Location which will be cleared
         :param target_location: Location where the objects will be placed
-        :return:
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
@@ -75,10 +77,11 @@ class Clear(smach.StateMachine):
                             "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
         arm_des.lock()
 
-        place_position = states.util.designators.EmptySpotDesignator(robot, EdEntityDesignator(
-                                                                        robot, id=target_location.id),
-                                                                     area="on_top_of"
-                                                                     )
+        place_position = EmptySpotDesignator(robot, EdEntityDesignator(
+                                             robot, id=target_location.id),
+                                             arm_des,
+                                             area="on_top_of"
+                                             )
 
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',

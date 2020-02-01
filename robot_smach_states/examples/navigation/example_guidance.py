@@ -13,6 +13,7 @@ OPERATOR_AVAILABLE = True
 def toggle_operator(_):
     """
     Toggles if the operator is following
+
     :param _:
     :return:
     """

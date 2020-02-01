@@ -17,10 +17,10 @@ from robot_smach_states.designators.designator import Designator
 from ed_msgs.srv import SimpleQuery
 
 
-class RandomNavDesignator(Designator):
+class RandomNavDesignator(EdEntityDesignator):
 
     def __init__(self, robot):
-        super(Designator, self).__init__()
+        super(RandomNavDesignator, self).__init__()
         self._robot = robot
         self.entity_id = None
         self.last_entity_id = None

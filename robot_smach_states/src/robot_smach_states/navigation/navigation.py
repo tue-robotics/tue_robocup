@@ -300,7 +300,9 @@ class NavigateTo(smach.StateMachine):
 class ForceDrive(smach.State):
     """ Force drives... """
     def __init__(self, robot, vx, vy, vth, duration):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param vx: velocity in x-direction (m/s)
         :param vy: velocity in y-direction (m/s)

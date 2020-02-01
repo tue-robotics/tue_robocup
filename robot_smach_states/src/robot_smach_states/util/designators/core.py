@@ -12,8 +12,6 @@ class Designator(object):
     define Designators that take a goal specification, like a query to a world
     model.
 
-    current is therefore a property with only a getter.
-
     >>> d = Designator("Initial value", name="tester")
     >>> d.resolve()
     'Initial value'
@@ -27,47 +25,84 @@ class Designator(object):
         """
         Initialization method
 
-        :param initial_value: () initial value
-        :param resolve_type: (type) type to which this designator should resolve
-        :param name: (str) name used for debugging purposes
+        :param initial_value: Initial value, should match the given resolve_type.
+                              None is allowed if a resolve_type is provided.
+        :param resolve_type: Type to which this designator should resolve.
+                             If None, use the type of the initial value. Value
+                             must be not None in that case.
+        :vartype resolve_type: Type or a list with a single type (the element type).
+                               The latter represents list of values where each
+                               value has the element type.
+
+        :param name: name used for debugging purposes
+        :vartype name: str
         """
         super(Designator, self).__init__()
 
         self._name = name
-
         self.__initial_value = initial_value
-        if not resolve_type:
+        if resolve_type:
+            if isinstance(resolve_type, list):
+                # Value is a list of items with each item of type resolve_type[0] .
+                if len(resolve_type) != 1:
+                    msg = "The resolve_type must be a single-item list, found {}."
+                    raise TypeError(msg.format(resolve_type))
+
+                if resolve_type[0] is None:
+                    raise TypeError("The resolve_type may not be [None]")
+            self._resolve_type = resolve_type
+        else:
+            # No resolve type provided, use the inital value to derive a type.
+            if self.__initial_value is None:
+                raise TypeError("No resolve_type provided and type could not be inferred "
+                                "from the initial_value (found 'None').")
+
             if isinstance(self.__initial_value, list):
-                if self.__initial_value:
+                if len(self.__initial_value) > 0:
                     self._resolve_type = [type(self.__initial_value[0])]
                 else:
-                    raise TypeError("resolve_type could not be inferred from empty list.")
+                    raise TypeError("No resolve_type provided and type could not be inferred "
+                                    "from the initial_value (found empty list).")
             else:
                 self._resolve_type = type(self.__initial_value)
-        else:
-            self._resolve_type = resolve_type
 
         Designator.instances.add(self)
 
     def resolve(self):
-        """Selects a new goal and sets it as the current value."""
+        """
+        Selects a new goal and sets it as the current value.
+
+        Don't override this method, override self._resolve() instead.
+        """
         result = self._resolve()
         result_type = type(result)
         resolve_type = self.resolve_type
 
-        if isinstance(result, list):
-            if not result:
-                return []
-            result_type = type(result[0])
+        if result is None: # No data available for checking the type.
+            return result
 
-        if isinstance(self.resolve_type, list):
-            resolve_type = self.resolve_type[0]
+        if isinstance(self._resolve_type, list):
+            # Not None, list expected instead.
+            if not isinstance(result, list):
+                self.fail_with_type_error(result_type, resolve_type)
 
-        if result is not None and not issubclass(result_type, resolve_type):
-            raise TypeError("{} resolved to a '{}' instead of expected '{}'. "
-                            "Originals: result type: {}, resolve type: {}".format(self, result_type, resolve_type,
-                                                                                  type(result), self.resolve_type))
+            if len(result) == 0: # Empty list, cannot check element type.
+                return result
+
+            if not isinstance(result[0], resolve_type[0]): # Element type check.
+                self.fail_with_type_error(result_type, resolve_type)
+
+            return result
+
+        # Normal type.
+        if not issubclass(result_type, resolve_type):
+            self.fail_with_type_error(result_type, resolve_type)
+
         return result
+
+    def fail_with_type_error(self, result_type, resolve_type):
+            msg = "{} resolved to a '{}' instead of expected '{}'."
+            raise TypeError(msg.format(self, result_type, resolve_type))
 
     def _resolve(self):
         return self.__initial_value
@@ -131,17 +166,11 @@ class VariableDesignator(Designator):
                             "can use it")
 
         super(VariableDesignator, self).__init__(initial_value, resolve_type, name=name)
-
         self._current = initial_value
-
         self.writeable = VariableWriter(self)
 
     def _set_current_protected(self, value):
         resolve_type = self.resolve_type
-        try:
-            resolve_type = tuple(self.resolve_type)
-        except TypeError:
-            pass
 
         if isinstance(value, list) and isinstance(self.resolve_type, list):
             if value and not issubclass(type(value[0]), resolve_type[0]):
@@ -216,6 +245,7 @@ class VariableWriter(object):
     def write(self, value):
         """
         Write a value to the designator this writer is associated with.
+
         :param value: the value to be written
         :return: None
 

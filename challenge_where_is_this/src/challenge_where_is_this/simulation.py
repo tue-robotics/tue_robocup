@@ -12,6 +12,7 @@ OPERATOR_AVAILABLE = True
 def _toggle_operator(_):
     """
     Toggles if the operator is following
+
     :param _:
     :return:
     """
@@ -24,6 +25,7 @@ def _toggle_operator(_):
 def mock_detect_operator(robot, distance=1.0, radius=0.5):  # noinspection
     """
     Mocks the 'detect operator' method. Only returns if the mocked operator is available
+
     :param robot: -
     :param distance: -
     :param radius: -

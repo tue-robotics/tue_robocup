@@ -200,6 +200,7 @@ class HandoverFromHumanFigure(smach.StateMachine):
                  arm_configuration="handover_to_human"):
         """
         Hold up hand to accept an object and close hand once something is inserted
+
         :param robot: Robot with which to execute this behavior
         :param arm_designator: ArmDesignator resolving to arm accept item into
         :param grabbed_entity_label: What ID to give a dummy item in case no grabbed_entity_designator is supplied

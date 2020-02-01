@@ -129,7 +129,9 @@ class EntityDescriptionDesignator(ds.Designator):
 class ForceDrive(smach.State):
     """ Force drives... """
     def __init__(self, robot, vx, vy, vth, duration):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param vx: velocity in x-direction
         :param vy: velocity in y-direction
@@ -155,7 +157,9 @@ class ForceRotate(smach.State):
     """ Force forth and back. If a timeout is exceeded, we won't do this anymore """
 
     def __init__(self, robot, vth, duration, timeout):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param vth: yaw-velocity
         :param duration: float indicating how long to drive
@@ -192,7 +196,9 @@ class FitEntity(smach.State):
     """ Fits an entity """
 
     def __init__(self, robot, entity_str):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param entity_str: string with the entity type to fit
         """
@@ -414,7 +420,9 @@ class ManipRecogSingleItem(smach.StateMachine):
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
 
         def entity_z_pos(entity):
-            """ Checks if the entity is between the minimum and maximum grasp height
+            """
+            Checks if the entity is between the minimum and maximum grasp height
+
             :param entity:
             :return:
             """

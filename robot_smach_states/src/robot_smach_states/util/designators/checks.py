@@ -70,6 +70,7 @@ def check_type(designator_or_value, *allowed_types):
     Incorrect: []; [str, int]
     Correct: [str]; [str], [int]
     This check allows for type checking on construction of a statemachine, so runtime error can be prevented.
+
     :param designator_or_value: Designator or variable to check the type of.
     :param allowed_types: Allowed type of the designator or variable.
 
