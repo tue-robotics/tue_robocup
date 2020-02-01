@@ -26,6 +26,7 @@ from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
 from robot_skills.robot_part import RobotPart
 
+
 class Navigation(RobotPart):
     def __init__(self, robot_name, tf_listener):
         super(Navigation, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
