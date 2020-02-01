@@ -5,7 +5,7 @@ import math
 import smach
 
 # TU/e Robotics
-import robot_smach_states as states
+import robot_smach_states as rss
 import robot_smach_states.util.designators as ds
 from hmi import HMIResult
 from robocup_knowledge import load_knowledge
@@ -38,18 +38,19 @@ class WhereIsThis(smach.StateMachine):
 
             if START_ROBUST:
                 smach.StateMachine.add("START_CHALLENGE",
-                                       states.StartChallengeRobust(robot, INITIAL_POSE_ID),
+                                       rss.startup.StartChallengeRobust(robot, INITIAL_POSE_ID),
                                        transitions={"Done": "ASK_WHERE_TO_GO",
                                                     "Aborted": "Aborted",
                                                     "Failed": "Aborted"})
 
                 smach.StateMachine.add(
                     "ASK_WHERE_TO_GO",
-                    states.Say(robot, "Near which furniture object should I go to start guiding people?"),
+                    rss.human_interaction.Say(
+                        robot, "Near which furniture object should I go to start guiding people?"),
                     transitions={"spoken": "WAIT_WHERE_TO_GO"})
 
                 smach.StateMachine.add("WAIT_WHERE_TO_GO",
-                                       states.HearOptionsExtra(
+                                       rss.human_interaction.HearOptionsExtra(
                                            robot=robot,
                                            spec_designator=ds.Designator(initial_value=START_GRAMMAR),
                                            speech_result_designator=hmi_result_des.writeable),
@@ -57,30 +58,30 @@ class WhereIsThis(smach.StateMachine):
                                                     "no_result": "ASK_WHERE_TO_GO"})  # ToDo: add fallbacks #option: STORE_STARTING_POSE
 
                 smach.StateMachine.add("ASK_CONFIRMATION",
-                                       states.Say(robot, ["I hear that you would like me to start the tours at"
+                                       rss.human_interaction.Say(robot, ["I hear that you would like me to start the tours at"
                                                                    " the {place}, is this correct?"],
                                                            place=information_point_id_designator,
                                                            block=True),
                                        transitions={"spoken": "CONFIRM_LOCATION"})
 
                 smach.StateMachine.add("CONFIRM_LOCATION",
-                                       states.HearOptions(robot=robot, options=["yes", "no"]),
+                                       rss.human_interaction.HearOptions(robot=robot, options=["yes", "no"]),
                                        transitions={"yes": "MOVE_OUT_OF_MY_WAY",
                                                     "no": "ASK_WHERE_TO_GO",
                                                     "no_result": "ASK_WHERE_TO_GO"})
 
                 smach.StateMachine.add("MOVE_OUT_OF_MY_WAY",
-                                       states.Say(robot, "Please move your ass so I can get going!"),
+                                       rss.human_interaction.Say(robot, "Please move your ass so I can get going!"),
                                        transitions={"spoken": "TC_MOVE_TIME"})
 
                 smach.StateMachine.add("TC_MOVE_TIME",
-                                       states.WaitTime(robot=robot, waittime=3),
+                                       rss.utility.WaitTime(robot=robot, waittime=3),
                                        transitions={"waited": "NAV_TO_START",
                                                     "preempted": "Aborted"}
                                        )
 
                 smach.StateMachine.add("NAV_TO_START",
-                                       states.NavigateToSymbolic(
+                                       rss.navigation.NavigateToSymbolic(
                                            robot=robot,
                                            entity_designator_area_name_map={
                                                information_point_designator: "in_front_of"
@@ -92,12 +93,12 @@ class WhereIsThis(smach.StateMachine):
                                                     "goal_not_defined": "Aborted"})  # If this happens: never mind
 
                 smach.StateMachine.add("WAIT_NAV_BACKUP",
-                                       states.WaitTime(robot, 3.0),
+                                       rss.utility.WaitTime(robot, 3.0),
                                        transitions={"waited": "NAV_TO_START_BACKUP",
                                                     "preempted": "Aborted"})
 
                 smach.StateMachine.add("NAV_TO_START_BACKUP",
-                                       states.NavigateToSymbolic(
+                                       rss.navigation.NavigateToSymbolic(
                                            robot=robot,
                                            entity_designator_area_name_map={information_point_designator: "near"},
                                            entity_lookat_designator=information_point_designator
@@ -118,7 +119,7 @@ class WhereIsThis(smach.StateMachine):
                                        transitions={"done": "STORE_STARTING_POSE"})
 
                 smach.StateMachine.add("SAY_CANNOT_REACH_WAYPOINT",
-                                       states.Say(robot, "I am not able to reach the starting point."
+                                       rss.human_interaction.Say(robot, "I am not able to reach the starting point."
                                                          "I'll use this as starting point"),
                                        transitions={"spoken": "STORE_STARTING_POSE"})
             else:
@@ -127,8 +128,7 @@ class WhereIsThis(smach.StateMachine):
                                        transitions={"initialized": "STORE_STARTING_POSE",
                                                     "abort": "Aborted"})
 
-
-            ## This is purely for a back up scenario until the range iterator
+            # This is purely for a back up scenario until the range iterator
             @smach.cb_interface(outcomes=["succeeded"])
             def store_pose(userdata=None):
                 base_loc = robot.base.get_location()
@@ -163,5 +163,5 @@ class WhereIsThis(smach.StateMachine):
             # End setup iterator
 
             smach.StateMachine.add("AT_END",
-                                   states.Say(robot, "Goodbye"),
+                                   rss.human_interaction.Say(robot, "Goodbye"),
                                    transitions={"spoken": "Done"})
