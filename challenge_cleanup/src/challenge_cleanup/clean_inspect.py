@@ -15,7 +15,7 @@ class CleanInspect(smach.StateMachine):
         """
         Visit all selected locations from the list, and handle the found objects
 
-        :param location_des is a designator resolving to a dictionary with fields ... TODO
+        :param location_des: is a designator resolving to a dictionary with fields ... TODO
         """
 
         smach.StateMachine.__init__(self, outcomes=['done'])

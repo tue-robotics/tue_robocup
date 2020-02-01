@@ -77,6 +77,8 @@ class Say(smach.State):
         """
         Constructor
 
+        State exits with 'spoken'.
+
         :param robot: robot object
         :type robot: Robot
         :param sentence: Sentence to be spoken, can contain place holders to  be filled in at runtime
@@ -95,8 +97,6 @@ class Say(smach.State):
         :type look_at_standing_person: bool
         :param place_holders: place holders to be filled in at runtime
         :type place_holders: designator to str
-        :return: spoken
-        :rtype: str
         """
         smach.State.__init__(self, outcomes=["spoken"])
 

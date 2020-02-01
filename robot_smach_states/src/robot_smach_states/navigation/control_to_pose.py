@@ -115,8 +115,9 @@ class ControlToPose(smach.State):
         Transfers the goal pose to robot frame
 
         :param goal_pose: (PoseStamped) Position the robot needs to go to
-        :return: (float) x position of goal in robot frame, (float) y position of goal in robot frame,
-        (float) yaw of goal in robot frame
+        :return: (float) x position of goal in robot frame,
+                 (float) y position of goal in robot frame,
+                 (float) yaw of goal in robot frame
         """
         goal_pose.header.stamp = rospy.Time.now()
         pose = self._tf_buffer.transform(goal_pose, self.robot.base_link_frame, rospy.Duration(1.0))

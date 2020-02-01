@@ -22,6 +22,7 @@ ROBOTS = {
 def get_robot_from_argv(index, default_robot_name="hero"):
     """
     Construct a robot from the name given in the command-line or from the default robot name.
+
     :param index: Index in the command-line arguments where a robot name may be available.
     :param default_robot_name: Name of the robot to use if the command line did not contain a name.
     :return: The constructed robot.
@@ -38,6 +39,7 @@ def get_robot_from_argv(index, default_robot_name="hero"):
 def get_robot(name):
     """
     Constructs a robot (api) object based on the provided name
+
     :param name: (str) robot name
     :return: (Robot)
     :raises: RuntimeError

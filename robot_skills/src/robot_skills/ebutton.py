@@ -14,7 +14,7 @@ class EButton(RobotPart):
         :param robot_name: (str) string indicates the robot name
         :param tf_listener: (tf.Listener) (default argument for robot parts)
         :param topic: (str) fully qualified topic (optional).
-        If not provided, "/<robot_name>/emergency_switch" will be used.
+            If not provided, "/<robot_name>/emergency_switch" will be used.
         """
         super(EButton, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 

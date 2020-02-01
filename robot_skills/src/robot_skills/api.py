@@ -15,6 +15,7 @@ class Api(RobotPart):
     def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
         """
         constructor
+
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
         :param pre_hook: callable function to execute before a query call, i.e. to set light color
@@ -35,6 +36,7 @@ class Api(RobotPart):
     def query(self, description, grammar, target, timeout=10):
         """
         Perform a HMI query, returns a HMIResult
+
         :param description: text describing the query
         :param grammar: string with the grammar to load
         :param target: string identifying the target of the grammar to recognize
@@ -60,6 +62,7 @@ class Api(RobotPart):
     def _show_image(self, msg, seconds=5.0):
         """
         Show an image on the HMI display interface
+
         :param msg: CompressedImage to display
         :param seconds: How many seconds you would like to display the image on the screen
         """
@@ -69,6 +72,7 @@ class Api(RobotPart):
     def show_image(self, path_to_image, seconds=5.0):
         """
         Show an image on the HMI display interface
+
         :param path_to_image: Absolute path to image file
         :param seconds: How many seconds you would like to display the image on the screen
         """
@@ -78,6 +82,7 @@ class Api(RobotPart):
     def show_image_from_msg(self, msg, seconds=5.0):
         """
         Show an image on the HMI display interface
+
         :param msg: rgb msg
         :param seconds: How many seconds you would like to display the image on the screen
         """

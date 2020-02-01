@@ -56,6 +56,7 @@ class Robot(object):
     def add_body_part(self, partname, bodypart):
         """
         Add a bodypart to the robot. This is added to the parts dict and set as an attribute
+
         :param partname: name of the bodypart
         :param bodypart: bodypart object
         """
@@ -65,12 +66,20 @@ class Robot(object):
     def add_arm_part(self, arm_name, arm_part):
         """
         Add an arm part to the robot. This is added to the parts dictionary as well.
+
         :param arm_name: Name of the arm part.
         :param arm_part: Arm part object
         """
         # Don't add the arm to the robot object to avoid direct access from challenge code.
         self.parts[arm_name] = arm_part
         self._arms[arm_name] = arm_part
+
+    @property
+    def arms(self):
+        # ToDo: remove this property per September 2020
+        rospy.logwarn('Arms should be private and therefore not be called directly. The only interface that should be '
+                      'used is the get_arm function. Change your code, you are invading private property!')
+        return self._arms
 
     def configure(self):
         """
@@ -332,12 +341,14 @@ class Robot(object):
     @property
     def operational(self):
         """
-        :returns if all parts are operational"""
+        :return: if all parts are operational
+        """
         return all(bodypart.operational for bodypart in self.parts.values())
 
     def handle_hardware_status(self, diagnostic_array):
         """
         hardware_status callback to determine if the bodypart is operational
+
         :param msg: diagnostic_msgs.msg.DiagnosticArray
         :return: no return
         """
@@ -356,7 +367,7 @@ class Robot(object):
         This poses the robot for an inspect.
 
         :param inspection_position: kdl.Frame with the pose of the entity to be inspected.
-        :return result: boolean, false if something went wrong.
+        :return: boolean, false if something went wrong.
         """
         rospy.logdebug("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
         return True
@@ -365,7 +376,7 @@ class Robot(object):
         """
         This poses the robot for conversations.
 
-        :return None
+        :return: None
         """
         rospy.logdebug("move_to_hmi_pose() not implemented for {} object".format(self.robot_name))
         pass

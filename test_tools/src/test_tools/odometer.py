@@ -30,6 +30,7 @@ class Odometer:
         """
         Constructor
         In the constructor old data is retrieved, if possible. Otherwise it starts from zero.
+
         :param path: Path to store the data. Path is expanded by hostname(lowercase). Can be relative or in home folder
         :type path: str
         :param filename: Filename of data file. Filenames are appended with date and extension.
@@ -128,6 +129,7 @@ class Odometer:
     def sample(self):
         """
         Current measurements are stored in self.data
+
         :return: no return
         """
         new_time = rospy.Time.now().secs
@@ -144,6 +146,7 @@ class Odometer:
     def write(self):
         """
         Writing all data in self.data to the data file and closing it again. This should prevent file corruption.
+
         :return: no return
         """
         # Create today's file if not already there
@@ -170,6 +173,7 @@ class Odometer:
     def callback(self, msg):
         """
         Measuring the displacement based on the new position
+
         :param msg: Odometry msg with position and rotation information
         :type msg: nag_msgs.msg.Odometry
         :return: no return
@@ -206,6 +210,7 @@ class Odometer:
     def activate_write(self, length):
         """
         If self.data contains more than X samples, all the data is written to the file
+
         :param length:
         :type length: int
         :return: no return
@@ -216,6 +221,7 @@ class Odometer:
     def shutdown(self):
         """
         To prevent data loss between last sample and shutdown, this function is called to sample and write all the data.
+
         :return: no return
         """
         self.sample()

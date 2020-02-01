@@ -81,8 +81,8 @@ class RightPrism(Shape):
         """ Constructor
 
         :param convex_hull: list with kdl Vectors representing the vertices of the convex hull. N.B.: these should only
-         contain x and y values, the z-values are not relevant (the height information is contained in the z_min
-         and z_max parameters).
+            contain x and y values, the z-values are not relevant (the height information is contained in the z_min
+            and z_max parameters).
         :param z_min: float minimum height [m] w.r.t. the center of the corresponding Entity
         :param z_max: float maximum height [m] w.r.t. the center of the corresponding Entity
         """

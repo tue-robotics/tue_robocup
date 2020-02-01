@@ -20,7 +20,7 @@ class NavigateToSymbolic(NavigateTo):
 
         :param robot: robot object
         :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
-        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+            resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
             to compute the orientation constraint.
         """
@@ -49,7 +49,7 @@ class NavigateToSymbolic(NavigateTo):
 
         :param robot: robot object
         :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
-        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+            resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
         :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
             to compute the orientation constraint.
         :return: (tuple(PositionConstraint, OrientationConstraint)). If one of the entities does not resolve,

@@ -95,9 +95,9 @@ class FollowOperator(smach.State):
         """
         Check whether the operator is standing still for X seconds
 
-        :param timeout how many seconds must the operator be standing still before returning True
+        :param timeout: how many seconds must the operator be standing still before returning True
         :type timeout: float
-        :returns bool indicating whether the operator has been standing still for longer than timeout seconds
+        :return: bool indicating whether the operator has been standing still for longer than timeout seconds
         """
         if not self._operator:
             return False
@@ -123,9 +123,9 @@ class FollowOperator(smach.State):
         """
         Check whether the robot is standing still for X seconds
 
-        :param timeout how many seconds must the robot be standing still before returning True
+        :param timeout: how many seconds must the robot be standing still before returning True
         :type timeout: float
-        :returns: bool indicating whether the robot has been standing still for longer than timeout seconds
+        :return: bool indicating whether the robot has been standing still for longer than timeout seconds
         """
         current_frame = self._robot.base.get_location().frame
         now = rospy.Time.now()

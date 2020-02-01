@@ -26,10 +26,10 @@ class TakeOrder(smach.State):
 
         :param robot: robot object
         :param orders: Python dict in which the orders will be stored
-        :return:
-        succeeded: understood correctly
-        failed: didn't hear anything or exceeded maximum number of tries
-        misunderstood: misunderstood, might try again
+        :return: Result of taking orders:
+            - succeeded: understood correctly
+            - failed: didn't hear anything or exceeded maximum number of tries
+            - misunderstood: misunderstood, might try again
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 

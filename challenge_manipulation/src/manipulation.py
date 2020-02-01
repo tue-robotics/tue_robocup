@@ -157,7 +157,13 @@ class ForceDrive(smach.State):
 
 
 class ForceRotate(smach.State):
-    """ Force forth and back. If a timeout is exceeded, we won't do this anymore """
+    """
+    Force forth and back. If a timeout is exceeded, we won't do this anymore
+
+    State is exited with
+    - done: rotated back and forth
+    - timedout: this takes too long
+    """
 
     def __init__(self, robot, vth, duration, timeout):
         """
@@ -167,8 +173,6 @@ class ForceRotate(smach.State):
         :param vth: yaw-velocity
         :param duration: float indicating how long to drive
         :param timeout: after this, timedout is returned
-        :return done: rotated back and forth
-        :return timedout: this takes too long
         """
         smach.State.__init__(self, outcomes=['done', 'timedout'])
         self._robot = robot

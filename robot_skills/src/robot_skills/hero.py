@@ -64,7 +64,7 @@ class Hero(robot.Robot):
         This poses the robot for an inspect.
 
         :param inspect_target: kdl.Frame with the pose of the entity to be inspected.
-        :return result: boolean, false if something went wrong.
+        :return: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
         z_over = 0.4  # height the robot should look over the surface
@@ -100,7 +100,7 @@ class Hero(robot.Robot):
         """
         This poses the robot for conversations.
 
-        :return None
+        :return: None
         """
         arm = self.get_arm()
 

@@ -153,7 +153,7 @@ class ForceDriveToTouchDoor(smach.State):
         Returns a numpy.ndarray of shape (N, 2)
 
         :param scan:
-        :type scan LaserScan
+        :type scan: LaserScan
         :return:
         """
 
@@ -348,10 +348,10 @@ class WaypointOfDoorDesignator(ds.Designator):
     """
     def __init__(self, robot, door_entity_designator, direction, name=None):
         """
-        :param robot The robot with which to query ED
-        :param door_entity_designator Designator resolving to an entity of type door that has a push_start_waypoint and push_destination_waypoint data field
-        :param direction 'start' or 'destination' to select one of the two data fields
-        :param name Name for this designator to aid in debugging.
+        :param robot: The robot with which to query ED
+        :param door_entity_designator: Designator resolving to an entity of type door that has a push_start_waypoint and push_destination_waypoint data field
+        :param direction: 'start' or 'destination' to select one of the two data fields
+        :param name: Name for this designator to aid in debugging.
         """
         super(WaypointOfDoorDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         self.robot = robot
