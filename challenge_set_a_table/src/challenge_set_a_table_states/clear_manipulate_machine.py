@@ -6,6 +6,7 @@ import smach
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge set the table
 # from entity_description_designator import EntityDescriptionDesignator
@@ -50,16 +51,16 @@ class ClearManipulateMachine(smach.StateMachine):
         arm_designator = ds.UnoccupiedArmDesignator(robot, {})
 
         place_furniture_designator1 = ds.EntityByIdDesignator(robot, id=place_furniture_id1)
-        place_designator1 = ds.EmptySpotDesignator(robot=robot,
-                                                   place_location_designator=place_furniture_designator1,
-                                                   arm_designator=arm_designator,
-                                                   area="on_top_of")
+        place_designator1 = EmptySpotDesignator(robot=robot,
+                                                place_location_designator=place_furniture_designator1,
+                                                arm_designator=arm_designator,
+                                                area="on_top_of")
 
         place_furniture_designator3 = ds.EntityByIdDesignator(robot, id=place_furniture_id2)
-        place_designator3 = ds.EmptySpotDesignator(robot=robot,
-                                                   place_location_designator=place_furniture_designator3,
-                                                   arm_designator=arm_designator,
-                                                   area="on_top_of")
+        place_designator3 = EmptySpotDesignator(robot=robot,
+                                                place_location_designator=place_furniture_designator3,
+                                                arm_designator=arm_designator,
+                                                area="on_top_of")
 
         with self:
 

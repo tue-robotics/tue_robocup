@@ -110,6 +110,7 @@ class ServingDrinks(smach.StateMachine):
         # type: (Robot) -> str
         """
         Initialization method
+
         :param robot: robot api object
         """
 

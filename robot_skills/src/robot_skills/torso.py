@@ -15,6 +15,7 @@ class Torso(RobotPart):
     def __init__(self, robot_name, tf_listener, get_joint_states):
         """
         constructor
+
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
         """
@@ -49,6 +50,7 @@ class Torso(RobotPart):
     def send_goal(self, configuration, timeout=0.0, tolerance=[]):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the torso
+
         :param configuration: name of configuration, configuration should be loaded as parameter
         :param timeout: timeout in seconds; in case of 0.0, not waiting for motion done
         :param tolerance: list of position tolerances with the length equal to the number of joints
@@ -63,6 +65,7 @@ class Torso(RobotPart):
     def _send_goal(self, torso_pos, timeout=0.0, tolerance=[], start_time=1.5):
         """
         Send a joint goal to the torso
+
         :param torso_pos: list of joint positions with the length equal to the number of joints
         :param timeout: timeout in seconds; in case of 0.0, not waiting for motion done
         :param tolerance: list of position tolerances with the length equal to the number of joints
@@ -142,6 +145,7 @@ class Torso(RobotPart):
     def high(self):
         """
         Sends the torso to its upper limit
+
         :return: True or False
         """
         return self._send_goal(self.upper_limit)
@@ -149,6 +153,7 @@ class Torso(RobotPart):
     def medium(self):
         """
         Sends the torso to the middle position of each joint
+
         :return: True or False
         """
         goal = []
@@ -160,6 +165,7 @@ class Torso(RobotPart):
     def low(self):
         """
         Sends the torso to its lower limit
+
         :return: True or False
         """
         return self._send_goal(self.lower_limit)
@@ -167,6 +173,7 @@ class Torso(RobotPart):
     def reset(self):
         """
         Sends the torso to the reset pose
+
         :return:
         """
         return self.send_goal('reset')
@@ -174,6 +181,7 @@ class Torso(RobotPart):
     def cancel_goal(self):
         """
         Cancels all active goals for the torso; Doing the same as close()
+
         :return: no return
         """
         self.ac_move_torso.cancel_goal()
@@ -181,11 +189,10 @@ class Torso(RobotPart):
 
     def wait_for_motion_done(self, timeout=10, cancel=False):
         """ Waits until all action clients are done
+
         :param timeout: double with time (defaults to 10.0 seconds)
-        :param cancel: bool specifying whether goals should be cancelled
-        if timeout is exceeded
-        :return bool indicates whether motion was done (True if reached,
-        False otherwise)
+        :param cancel: bool specifying whether goals should be cancelled if timeout is exceeded
+        :return: bool indicates whether motion was done (True if reached, False otherwise)
         """
         if self.ac_move_torso.gh:
             self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
@@ -207,6 +214,7 @@ class Torso(RobotPart):
     def get_position(self):
         """
         Get the current joint positions
+
         :return: list of current positions
         """
         # return self.current_position.position

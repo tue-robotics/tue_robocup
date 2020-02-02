@@ -81,7 +81,7 @@ class ED(RobotPart):
 
         :param timeout: timeout in seconds
         :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
-        multiple robot parts in a loop
+            multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
         return (super(ED, self).wait_for_connections(timeout, log_failing_connections) and
@@ -92,7 +92,7 @@ class ED(RobotPart):
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
+    def get_entities(self, type="", center_point=VectorStamped(), radius=float('inf'), id="", parse=True):
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
@@ -110,7 +110,7 @@ class ED(RobotPart):
 
         return entities
 
-    def get_closest_entity(self, type="", center_point=None, radius=0):
+    def get_closest_entity(self, type="", center_point=None, radius=float('inf')):
         if not center_point:
             center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
 
@@ -132,16 +132,17 @@ class ED(RobotPart):
 
         return entities[0]
 
-    def get_closest_room(self, center_point=None, radius=0):
+    def get_closest_room(self, center_point=None, radius=float('inf')):
         if not center_point:
             center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
-    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=0, ignore_z=False):
+    def get_closest_laser_entity(self, type="", center_point=VectorStamped(), radius=float('inf'), ignore_z=False):
         """
         Get the closest entity detected by the laser. The ID's of such entities are postfixed with '-laser'
         For the rest, this works exactly like get_closest_entity
+
         :param type: What type of entities to filter on
         :param center_point: combined with radius. Around which point to search for entities
         :param radius: how far from the center_point to look (in meters)
@@ -218,6 +219,7 @@ class ED(RobotPart):
     def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=[], remove_flags=[], action=None):
         """
         Updates entity
+
         :param id: entity id
         :param type: entity type
         :param frame_stamped: If specified, the entity is updated to be at this FrameStamped
@@ -284,8 +286,8 @@ class ED(RobotPart):
 
     def remove_entity(self, id):
         """ Removes entity with the provided id to the world model
-        Args:
-            id: string with the ID of the entity to remove
+
+        :param id: string with the ID of the entity to remove
         """
         return self.update_entity(id=id, action="remove")
 
@@ -300,7 +302,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def get_closest_possible_person_entity(self, center_point=VectorStamped(), radius=0):
+    def get_closest_possible_person_entity(self, center_point=VectorStamped(), radius=float('inf')):
         """ Returns the 'possible_human' entity closest to a certain center point.
 
         :param center_point: (VectorStamped) indicating where the human should be close to
@@ -337,10 +339,10 @@ class ED(RobotPart):
         """
         Update ED based on kinect (depth) images
 
-        :param area_description An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
-        :param background_padding The maximum distance to which kinect data points are associated to existing objects (in meters).
+        :param area_description: An entity id or area description, e.g. "a08d537e-e051-11e5-a34e-6cc217ec9f41" or "on_top_of cabinet-11"
+        :param background_padding: The maximum distance to which kinect data points are associated to existing objects (in meters).
                Or, in other words: the padding that is added to existing objects before they are removed from the point cloud
-        :returns Update result
+        :return: Update result
         """
         # Check the area description
         if area_description == "":
@@ -361,6 +363,7 @@ class ED(RobotPart):
         # type: (List[str], List[str], float) -> List[ClassificationResult]
         """
         Classifies the entities with the given IDs
+
         :param ids: list with IDs
         :type ids: List[str]
         :param types: list with types to identify
@@ -439,7 +442,7 @@ class ED(RobotPart):
 
         :param pose: geometry_msg PoseStamped. Position is the origin of ray. x-axis is pointing in the ray direction
         :return: RayTraceResult. This struct contains intersection_point (geometry_msgs/PoseStamped) and entity_id
-        (string)
+            (string)
         """
         return self._ed_ray_trace_srv(raytrace_pose=pose)
 
@@ -476,7 +479,7 @@ class ED(RobotPart):
         i) gets all entities and filters these on being furniture
         ii) loads the current ed object models file
         iii) iterates over the furniture object entities (i) and the data in the dict (ii). If the IDs match, the pose
-        of (ii) is updated with the pose of (i)
+             of (ii) is updated with the pose of (i)
         iv) dump the updated dict to the models file
 
         """
@@ -511,6 +514,7 @@ class ED(RobotPart):
     def detect_people(self, rgb, depth, cam_info):
         """
         Detect people in the given color message, depth image aided by the depth camera's camera info
+
         :param rgb: Color image
         :type rgb: sensor_msgs/Image
         :param depth: Depth image

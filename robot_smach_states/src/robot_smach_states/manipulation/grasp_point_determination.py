@@ -30,7 +30,7 @@ class GraspPointDeterminant(object):
 
         :param entity: entity to grasp
         :param arm: arm to use
-        :return FrameStamped with grasp pose in map frame
+        :return: FrameStamped with grasp pose in map frame
         """
         candidates = []
         starttime = rospy.Time.now()

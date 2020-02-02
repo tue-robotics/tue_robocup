@@ -23,6 +23,7 @@ class SSL(RobotPart):
     def __init__(self, robot_name, tf_listener):
         """
         constructor
+
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
         """
@@ -38,6 +39,7 @@ class SSL(RobotPart):
     def _callback(self, msg):
         """
         callback
+
         :param msg: incoming msg, PoseStamped
         :return: no return
         """
@@ -47,8 +49,9 @@ class SSL(RobotPart):
     def get_last_yaw(self, max_age_seconds=2):
         """
         Get last yaw rotation of the sound source localisation in the frame of the device
+
         :param max_age_seconds: maximum age of the last received direction of the sound, when older None is returned
-        :type max_age_seconds int
+        :type max_age_seconds: int
         :return: yaw
         """
         if not self._last_msg or rospy.Time.now() - self._last_received_time > rospy.Duration(max_age_seconds):

@@ -6,6 +6,7 @@ from cv_bridge import CvBridge, CvBridgeError
 def img_recognitions_to_rois(recognitions):
     """
     Extract the Region of Interest from a list of image recognitions
+
     :param recognitions: list of image recognitions
     :type recognitions: list[image_recognition_msgs/Recognition]
     :return: list of Regions of Interest
@@ -21,6 +22,7 @@ def img_recognitions_to_rois(recognitions):
 def img_cutout(image, rois):
     """
     cutout the rois from the image
+
     :param image: image
     :type image: sensor_msgs/Image
     :param rois: Regions of Interest

@@ -7,6 +7,7 @@ import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills import arms
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
@@ -213,9 +214,11 @@ class ManipulateMachine(smach.StateMachine):
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
-        self.place_designator = ds.EmptySpotDesignator(robot=robot,
-                                                       place_location_designator=self.place_entity_designator,
-                                                       area="temp")
+        self.arm_designator = ds.ArmDesignator(robot, {})
+        self.place_designator = EmptySpotDesignator(robot=robot,
+                                                    place_location_designator=self.place_entity_designator,
+                                                    arm_designator=self.arm_designator,
+                                                    area="temp")
         self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
         self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
 

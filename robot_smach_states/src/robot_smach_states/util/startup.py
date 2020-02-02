@@ -32,9 +32,9 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
         The function should take a robot as its first input.
     :param statemachine_args: A list of arguments. If the statemachine_creator
         function takes any arguments besides robot these can be placed here.
-    :param initial_state the state to start the state machine in.
+    :param initial_state: the state to start the state machine in.
         Can be supplied as command line argument
-    :param robot_name name of the robot to pass to the state machine
+    :param robot_name: name of the robot to pass to the state machine
     """
     t_start = time.time()
     if initial_state or robot_name:

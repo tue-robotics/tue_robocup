@@ -7,6 +7,7 @@ import robot_skills
 from robot_skills import arms
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge set the table
 from config import MIN_GRAB_OBJECT_HEIGHT, MAX_GRAB_OBJECT_WIDTH
@@ -189,9 +190,11 @@ class ManipulateMachine(smach.StateMachine):
         grasp_furniture_designator2 = ds.EntityByIdDesignator(robot, id=grasp_furniture_id2)
 
         place_furniture_designator = ds.EntityByIdDesignator(robot, id=place_furniture_id)
-        place_designator = ds.EmptySpotDesignator(robot=robot,
-                                                  place_location_designator=place_furniture_designator,
-                                                  area="on_top_of")
+        arm_designator = ds.ArmDesignator(robot, {})
+        place_designator = EmptySpotDesignator(robot=robot,
+                                               place_location_designator=place_furniture_designator,
+                                               arm_designator=arm_designator,
+                                               area="on_top_of")
 
         with self:
 

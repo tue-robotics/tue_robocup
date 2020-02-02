@@ -170,6 +170,7 @@ class Perception(RobotPart):
     def detect_faces(self, image=None, stamp=False):
         """
         Snap an image with the camera and return the recognized faces.
+
         :param image: image to use for recognition
         :type image: sensor_msgs/Image
         :param stamp: Return recognitions and stamp
@@ -196,7 +197,7 @@ class Perception(RobotPart):
         :type desired_label: str
         :param probability_threshold: only accept recognitions with probability higher than threshold
         :type probability_threshold: double
-        :return the best recognition matching the given desired_label
+        :return: the best recognition matching the given desired_label
         :rtype image_recognition_msgs/Recognition
         """
 
@@ -245,6 +246,7 @@ class Perception(RobotPart):
     def clear_face(self):
         """
         clearing all faces from the OpenFace node.
+
         :return: no return
         """
         rospy.loginfo('clearing all learned faces')
@@ -255,6 +257,7 @@ class Perception(RobotPart):
         """
         Get the face properties of all faces or in an image. If faces is provided, image is ignored. If both aren't
         provided, an image is collected.
+
         :param faces: images of all faces
         :type faces: list[sensor_msgs/Image]
         :param image: image containing the faces

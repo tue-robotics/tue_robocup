@@ -6,13 +6,16 @@ def check_resolve_type(designator, *allowed_types):
     """
     Check if the resolve type of a designator is one of the allowed types. If the resolve type is a list, the internal
     type is also checked.
-    Incorrect: []; [str, int]
-    Correct: [str]; [str], [int]
+
+        Incorrect: []; [str, int]
+        Correct: [str]; [str], [int]
+
     This check allows for type checking on construction of a statemachine, so runtime error can be prevented.
+
     :param designator: Designator to check the resolve type of. In case of a list resolve type, one type in the list
-    needs to be defined.
+        needs to be defined.
     :param allowed_types: Allowed resolve type of the designator. Allowed list types, also need to have an internal type
-    defined.
+        defined.
 
     >>> from robot_smach_states.util.designators.core import Designator
     >>> d1 = Designator("a", resolve_type=str, name='d1')

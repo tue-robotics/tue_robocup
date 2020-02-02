@@ -29,12 +29,14 @@ class ForceSensor(RobotPart):
         # type: (WrenchStamped) -> None
         """
         Process a WrenchStamped-message to determine if the norm(force) goes over the limit
+
         :param msg: WrenchStamped to see if it goes over self.force_norm_threshold
         :return: None but sets self.edge_up
         """
         def _detect_edge_up(calibrated_msg, msg):
             """
             Determine if the difference between calibrated_msg and msg is larger than self._force_norm_threshold
+
             :param calibrated_msg: Reference message
             :param msg: Comparision message, to be compared with the reference message
             :return: bool if the difference is larger than the threshold.
@@ -57,6 +59,7 @@ class ForceSensor(RobotPart):
     def wait_for_edge_up(self, timeout=10.0):
         """
         Returns if an edge up event is detected. Will raise a TimeOutException if no edge up is detected within timeout.
+
         :param timeout: Edge up wait patience
         """
         self._edge_up = False
