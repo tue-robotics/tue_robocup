@@ -359,7 +359,7 @@ class SelfCleanup(smach.StateMachine):
                                                                     "required_trajectories": ["prepare_place"],
                                                                     "required_gripper_types": [
                                                                         arms.GripperTypes.GRASPING]},
-                                                                name="occupied_arm_designator")),
+                                                                name="occupied_arm_designator"),
                                                             "on_top_of"),
                                    transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
 
