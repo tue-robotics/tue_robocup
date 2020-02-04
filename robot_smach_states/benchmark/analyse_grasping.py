@@ -4,6 +4,8 @@ import argparse
 from dateutil.parser import parse as parse_date
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+
 
 RESULT_FIELDS = [ 'timestamp', 'robot',
                   'start_waypoint',
@@ -13,7 +15,11 @@ RESULT_FIELDS = [ 'timestamp', 'robot',
                   'grab_duration',
                   'x', 'y', 'z']
 
+z_hist_steps = 0.05
+
 def analyse(results_file, start=None, end=None, plot=False):
+    fig, axs = plt.subplots(2, 1)
+
     df = pd.read_csv(results_file)
     assert df.columns.tolist() == RESULT_FIELDS, \
         "CSV file need fields {}".format(','.join(RESULT_FIELDS))
@@ -28,8 +34,13 @@ def analyse(results_file, start=None, end=None, plot=False):
 
     print(df.describe())
 
+    zs = df['z'].dropna(how='any')
+    z_histogram_success = zs.hist(bins=int(np.ceil(abs(max(zs) - min(zs)) / z_hist_steps)),
+                                  grid=True,
+                                  ax=axs[1])
     if plot:
-        df.plot()
+        df[['inspect_duration', 'grab_duration']].plot(ax=axs[0])
+        z_histogram_success.plot(x=z_histogram_success)
         plt.show()
 
 
