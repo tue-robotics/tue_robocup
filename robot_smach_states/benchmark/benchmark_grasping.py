@@ -11,7 +11,6 @@ import rospy
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot
-from robot_skills import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
@@ -55,10 +54,7 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
     waypoint_des = ds.EdEntityDesignator(robot, id=waypoint, name='waypoint')
 
-    arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot,
-                                                          arm_properties={"required_trajectories": ["prepare_grasp"],
-                                                                          "required_goals": ["carrying_pose"],
-                                                                          "required_gripper_types": arms.GripperTypes.GRASPING}))
+    arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, {}))
     arm.lock()
 
     record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls, 'id': None,
