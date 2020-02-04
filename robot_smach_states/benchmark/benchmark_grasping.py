@@ -205,7 +205,6 @@ if __name__ == "__main__":
 
                 configs = []
 
-                environment_config_description = ""
                 for config_row in config_reader:
                     configs += [config_row]
                     item_config_description = "Put a {cls} {search_area} the {support}"\
@@ -213,7 +212,6 @@ if __name__ == "__main__":
                                 support=config_row['support'],
                                 search_area=config_row['search_area'])
                     rospy.logwarn(item_config_description)
-                    environment_config_description += item_config_description
 
                 records = []
                 for config_row in configs:
