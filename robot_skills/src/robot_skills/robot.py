@@ -145,11 +145,12 @@ class Robot(object):
             If not specified, gripper movement uses 'arm_timeout'.
         """
         for arm in self._arms.itervalues():
-            arm.reset(timout=arm_timeout)
             if close_gripper:
                 if gripper_timeout is None:
                     gripper_timeout = arm_timeout
                 arm.send_gripper_goal('close', timeout=gripper_timeout)
+
+            arm.reset(timout=arm_timeout)
 
     def standby(self):
         if not self.robot_name == 'amigo':
