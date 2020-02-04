@@ -55,10 +55,10 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
     entity_ids = ds.VariableDesignator([], resolve_type=[ClassificationResult], name='entity_ids')
     waypoint_des = ds.EdEntityDesignator(robot, id=waypoint, name='waypoint')
 
-    arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot,
+    arm = ds.LockingDesignator(ds.UnoccupiedArmDesignator(robot, name='unoccupied-arm',
                                                           arm_properties={"required_trajectories": ["prepare_grasp"],
                                                                           "required_goals": ["carrying_pose"],
-                                                                          "required_gripper_types": arms.GripperTypes.GRASPING}))
+                                                                          "required_gripper_types": [arms.GripperTypes.GRASPING]}))
     arm.lock()
 
     record = {'robot': robot.robot_name, 'start_waypoint': waypoint, 'expected_class': cls, 'id': None,
