@@ -149,10 +149,10 @@ def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Benchmark grasping, for a single item or multiple items at various locations'
-                                                 'By specifying ANY as the class, anything class of object will '
-                                                 'be picked up without looking at the object type'
-                                                 'By specifying a specific class but --non-strict-class as well, '
+    parser = argparse.ArgumentParser(description='Benchmark grasping, for a single item or multiple items at various locations.'
+                                                 'By specifying ANY as the class, any class of object will be picked up,'
+                                                 'ignoring the object type'
+                                                 'By specifying a specific class *but* add the --non-strict-class flag, '
                                                  'the robot will grab something else if the specified thing is not available')
     parser.add_argument("--robot", default="hero",
                         help="Robot name (amigo, hero, sergio, mockbot)")
