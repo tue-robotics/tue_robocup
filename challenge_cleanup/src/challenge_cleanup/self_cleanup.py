@@ -347,12 +347,14 @@ class SelfCleanup(smach.StateMachine):
                                                             arm_designator_place),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
-
+            
+            arm_designator_place_store = ds.OccupiedArmDesignator(robot, arm_properties_place,
+                                                                  name="occupied_arm_designator")
             smach.StateMachine.add('PLACE_TO_STORE',
                                    robot_smach_states.Place(robot,
                                                             selected_entity_designator,
                                                             store_entity_des,
-                                                            arm_designator_place,
+                                                            arm_designator_place_store,
                                                             "on_top_of"),
                                    transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
 
