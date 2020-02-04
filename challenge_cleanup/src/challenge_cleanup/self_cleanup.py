@@ -270,7 +270,7 @@ class SelfCleanup(smach.StateMachine):
                     ds.UnoccupiedArmDesignator(robot,
                                                arm_properties={"required_trajectories": ["prepare_grasp"],
                                                                "required_goals": ["carrying_pose"],
-                                                               "reequired_gripper_types": [arms.GripperTypes.GRASPING]},
+                                                               "required_gripper_types": [arms.GripperTypes.GRASPING]},
                                                name="empty_arm_designator")),
                 transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
 
