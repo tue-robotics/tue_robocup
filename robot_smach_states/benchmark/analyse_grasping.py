@@ -42,8 +42,13 @@ def analyse(results_file, start=None, end=None, plot=False, time_as_x=False):
                                   grid=True,
                                   ax=axs[1])
     if plot:
+        axs[0].title.set_text('Duration through time')
         df[['inspect_duration', 'grab_duration']].plot(ax=axs[0], grid=True)
+
+        axs[1].title.set_text('Grasp height frequency')
         z_histogram_success.plot(x=z_histogram_success)
+        plt.xlabel('z')
+        plt.ylabel('# grasps')
         plt.show()
 
 
