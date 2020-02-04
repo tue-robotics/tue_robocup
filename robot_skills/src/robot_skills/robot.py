@@ -150,7 +150,7 @@ class Robot(object):
                     gripper_timeout = arm_timeout
                 arm.send_gripper_goal('close', timeout=gripper_timeout)
 
-            arm.reset(timout=arm_timeout)
+            arm.reset(timeout=arm_timeout)
 
     def standby(self):
         if not self.robot_name == 'amigo':
