@@ -54,3 +54,11 @@ timestamp,robot,start_waypoint,expected_class,observed_class,id,inspect_duration
 2020-02-04 20:10:25,hero,entry_point,fanta,,,7.676,,,,
 2020-02-04 20:10:48,hero,explore1,hairspray,hairspray,b54393,9.752,21.395,3.108,4.212,0.924
 2020-02-04 20:11:43,hero,help_me_carry_starting_point,coke,coke,db2371,4.739,22.362,0.876,1.969,0.813
+2020-02-04 20:20:27,hero,explore10,mentos,,,5.156,,,,
+2020-02-04 20:20:58,hero,entry_point,fanta,,,5.682,,,,
+2020-02-04 20:21:19,hero,explore1,hairspray,hairspray,b54393,9.915,17.974,3.096,4.213,0.924
+2020-02-04 20:22:13,hero,help_me_carry_starting_point,coke,,,4.614,,,,
+2020-02-04 20:22:51,hero,explore10,mentos,,,5.152,,,,
+2020-02-04 20:23:20,hero,entry_point,fanta,,,18.815,,,,
+2020-02-04 20:23:55,hero,explore1,hairspray,hairspray,b54393,9.610,21.413,3.101,4.035,0.926
+2020-02-04 20:25:12,hero,help_me_carry_starting_point,coke,,,4.766,,,,
