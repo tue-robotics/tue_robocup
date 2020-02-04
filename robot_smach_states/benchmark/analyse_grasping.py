@@ -18,15 +18,21 @@ RESULT_FIELDS = [ 'timestamp', 'robot',
 Z_HIST_STEP = 0.05
 
 
-def analyse(results_file, start=None, end=None, plot=False, time_as_x=False):
+def analyse(results_file, start=None, end=None, plot=False):
+    """
+
+    :param results_file: an open .csv file
+    :param start: a datetime after which to consider the results
+    :param end: a datetime before which to consider the results
+    :param plot: Open a window with graphical plots
+    """
     fig, axs = plt.subplots(2, 1)
 
     df = pd.read_csv(results_file)
     assert df.columns.tolist() == RESULT_FIELDS, \
         "CSV file need fields {}".format(','.join(RESULT_FIELDS))
 
-    if time_as_x:
-        df.index = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%M:%S')
+    df.index = pd.to_datetime(df['timestamp'], format='%Y-%m-%d %H:%M:%S')
 
     if not start:
         start = df.index[0]
@@ -61,8 +67,6 @@ if __name__ == "__main__":
                         help="Make a plot of the results")
     parser.add_argument("--start", help="Take only measurement since the start into account. Specify timestamp as in .csv file")
     parser.add_argument("--end", help="Take only measurement until the end into account. Specify timestamp as in .csv file")
-    parser.add_argument("--time-as-xaxis", action='store_true',
-                        help="Use the timestamps as the X-axis. May not look nice for sparse dates")
 
     args = parser.parse_args()
 
@@ -70,5 +74,4 @@ if __name__ == "__main__":
         analyse(csv_file,
                 plot=args.plot,
                 start=parse_date(args.start) if args.start else None,
-                end=parse_date(args.end) if args.end else None,
-                time_as_x=args.time_as_xaxis)
+                end=parse_date(args.end) if args.end else None)
