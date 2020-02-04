@@ -164,7 +164,7 @@ if __name__ == "__main__":
                              "if none of the expected class is observed. "
                              "Use this if you only care about grasping, not object recognition")
 
-    subparsers = parser.add_subparsers(help='single or batch mode or analyse', dest='subcommand')
+    subparsers = parser.add_subparsers(help='single or batch mode', dest='subcommand')
     single = subparsers.add_parser(name='single', description="Measure the time it takes to grasp an entity when starting from a given pose. "
                                                  "After the grasping is done, go back to the waypoint, "
                                                  "turn around and drop the item, "
@@ -182,8 +182,6 @@ if __name__ == "__main__":
                                                             "taking configurations from a .csv file, "
                                                             "with columns {}".format(','.join(BATCH_CONFIG_FIELDS)))
     batch.add_argument("--configuration", type=str, default='grasp_benchmark_config.csv')
-
-    analyse = subparsers.add_parser(name='analyse', description="Analyse the results")
 
     args = parser.parse_args()
     rospy.init_node("benchmark_grasping")
