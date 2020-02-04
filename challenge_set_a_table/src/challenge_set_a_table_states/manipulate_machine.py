@@ -137,12 +137,11 @@ class PlaceSingleItem(smach.State):
     def execute(self, userdata=None):
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
-        arm_designator = ds.OccupiedArmDesignator(self._robot, arm_properties={"required_trajectories": ["prepare_place"
-                                                                                                         ],
-                                                                               "required_goals": ["reset",
-                                                                                                  "handover_to_human"],
-                                                                               "required_gripper_types": [
-                                                                                   arms.GripperTypes.GRASPING]})
+        arm_designator = ds.OccupiedArmDesignator(self._robot,
+                                                  arm_properties={
+                                                      "required_trajectories": ["prepare_place"],
+                                                      "required_goals": ["reset", "handover_to_human"],
+                                                      "required_gripper_types": [arms.GripperTypes.GRASPING]})
         resolved_arm = arm_designator.resolve()
         if resolved_arm is None:
             rospy.logwarn("No arm holding an entity")
