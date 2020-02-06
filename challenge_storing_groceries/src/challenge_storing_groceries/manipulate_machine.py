@@ -6,6 +6,7 @@ import smach
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_skills import arms
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
@@ -83,7 +84,11 @@ class GrabSingleItem(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp"],
+                                                                       "required_goals": ["carrying_pose"],
+                                                                       "required_gripper_types": [
+                                                                           arms.GripperTypes.GRASPING]},
+                                                               name="empty_arm_designator")
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
 
         with self:
@@ -154,7 +159,8 @@ class PlaceSingleItem(smach.State):
     def execute(self, userdata=None):
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
-        arm_designator = ds.OccupiedArmDesignator(self._robot)
+        arm_designator = ds.OccupiedArmDesignator(self._robot, {"required_goals": ["reset", "handover_to_human"],
+                                                                "required_gripper_types": [arms.GripperTypes.GRASPING]})
         resolved_arm = arm_designator.resolve()
         if resolved_arm is None:
             rospy.logwarn("No arm holding an entity")

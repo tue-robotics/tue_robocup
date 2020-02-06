@@ -4,6 +4,7 @@ import argparse
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot
+from robot_skills import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
@@ -21,7 +22,8 @@ if __name__ == "__main__":
 
     rospy.loginfo("Creating arm designator")
     arm_designator = ds.UnoccupiedArmDesignator(robot=robot,
-                                                arm_properties={},
+                                                arm_properties={"required_goals": ["handover_to_human", "reset"],
+                                                                "required_gripper_types": [arms.GripperTypes.GRASPING]},
                                                 name='arm_des').lockable()
 
     rospy.loginfo("Creating lock designator state")

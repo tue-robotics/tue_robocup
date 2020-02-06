@@ -101,12 +101,11 @@ class Hero(robot.Robot):
 
         :return: None
         """
-        arm = self.get_arm()
+        arm = self.get_arm(required_goals=['arm_out_of_way'])
 
         rotation = 1.57
         rotation_speed = 1
         rotation_duration = rotation / rotation_speed
-        if arm.has_joint_goal('arm_out_of_way'):
-            arm.send_joint_goal('arm_out_of_way', 0.0)
-            self.base.force_drive(0, 0, rotation_speed, rotation_duration)
+        arm.send_joint_goal('arm_out_of_way', 0.0)
+        self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()

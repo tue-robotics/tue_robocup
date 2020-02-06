@@ -6,6 +6,7 @@ import rospy
 import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 import robot_smach_states.util.designators as ds
+from robot_skills import arms
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
 from challenge_take_out_the_garbage.drop_down import DropDownTrash, DropTrash
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
@@ -42,7 +43,11 @@ class TakeOutGarbage(smach.StateMachine):
         # drop_zone_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.drop_zone_id)
         helper_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.helper_waypoint)
         end_waypoint_designator = ds.EdEntityDesignator(robot=robot, id=CHALLENGE_KNOWLEDGE.end_waypoint)
-        arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
+        arm_designator = self.empty_arm_designator = ds.UnoccupiedArmDesignator(
+            robot,
+            {"required_goals": ["handover", "reset", "handover_to_human"], "force_sensor_required": True,
+             "required_gripper_types": [arms.GripperTypes.GRASPING]},
+            name="empty_arm_designator")
 
         with self:
             smach.StateMachine.add("START_CHALLENGE_ROBUST",
@@ -122,8 +127,13 @@ class TestDummy(smach.StateMachine):
         dummy_trashbin_designator = ds.EdEntityDesignator(dummy_robot,
                                                     id=CHALLENGE_KNOWLEDGE.trashbin_id2,
                                                     name='trashbin_designator')
-        dummy_arm_designator_un = ds.UnoccupiedArmDesignator(dummy_robot, {})
-        dummy_arm_designator_oc = ds.OccupiedArmDesignator(dummy_robot, {})
+        dummy_arm_designator_un = ds.UnoccupiedArmDesignator(
+            dummy_robot,
+            {"required_goals": ["handover", "reset", "handover_to_human"], "force_sensor_required": True,
+             "required_gripper_types": [arms.GripperTypes.GRASPING]})
+        dummy_arm_designator_oc = ds.OccupiedArmDesignator(dummy_robot, {"required_goals": ["handover", "reset"],
+                                                                         "required_gripper_types": [
+                                                                             arms.GripperTypes.GRASPING]})
 
         with self:
             smach.StateMachine.add("PICK_UP_TRASH", PickUpTrash(dummy_robot, dummy_trashbin_designator,
