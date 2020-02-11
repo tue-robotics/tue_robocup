@@ -79,3 +79,19 @@ timestamp,robot,start_waypoint,expected_class,observed_class,id,inspect_duration
 2020-02-11 21:18:58,hero,entry_point,fanta,fanta,f44b95,5.339,,1.938,4.937,0.470
 2020-02-11 21:20:25,hero,explore1,hairspray,hairspray hairspray,1567ed,7.818,23.482,3.048,4.298,0.971
 2020-02-11 21:21:23,hero,help_me_carry_starting_point,coke,,,,,,,
+2020-02-11 21:53:46,hero,explore10,mentos,,,6.195,,,,
+2020-02-11 21:54:17,hero,entry_point,fanta,,,5.253,,,,
+2020-02-11 21:54:38,hero,explore1,hairspray,hairspray hairspray,9c02f3,9.237,,3.427,4.042,0.981
+2020-02-11 21:55:00,hero,help_me_carry_starting_point,coke,coke,b5b3ea,4.416,25.362,0.927,2.216,0.817
+2020-02-11 21:56:19,hero,explore10,mentos,,,7.295,,,,
+2020-02-11 21:56:51,hero,entry_point,fanta,,,6.634,,,,
+2020-02-11 21:57:11,hero,explore1,hairspray,hairspray,b54393,9.850,20.368,3.110,4.009,0.927
+2020-02-11 21:58:10,hero,help_me_carry_starting_point,coke,coke,b5b3ea,3.730,22.313,0.930,2.064,0.817
+2020-02-11 21:59:23,hero,explore10,mentos,,,7.724,,,,
+2020-02-11 21:59:56,hero,entry_point,fanta,,,,,,,
+2020-02-11 22:00:13,hero,explore1,hairspray,hairspray,75ae39,9.943,,3.431,3.943,0.983
+2020-02-11 22:00:37,hero,help_me_carry_starting_point,coke,coke,3864aa,4.636,25.654,0.901,1.967,0.818
+2020-02-11 22:02:09,hero,explore10,mentos,,,5.137,,,,
+2020-02-11 22:02:39,hero,entry_point,fanta,,,,,,,
+2020-02-11 22:02:57,hero,explore1,hairspray,hairspray,75ae39,9.736,,3.427,3.938,0.987
+2020-02-11 22:03:20,hero,help_me_carry_starting_point,coke,coke,a84fc1,4.271,21.400,0.914,1.943,0.819
