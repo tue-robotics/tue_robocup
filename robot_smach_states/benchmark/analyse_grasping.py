@@ -2,7 +2,6 @@
 
 import argparse
 from dateutil.parser import parse as parse_date
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
@@ -26,7 +25,6 @@ def analyse(results_file, start=None, end=None, plot=False):
     :param end: a datetime before which to consider the results
     :param plot: Open a window with graphical plots
     """
-    fig, axs = plt.subplots(2, 1)
 
     df = pd.read_csv(results_file)
     assert df.columns.tolist() == RESULT_FIELDS, \
@@ -43,15 +41,17 @@ def analyse(results_file, start=None, end=None, plot=False):
 
     print(df.describe())
 
-    zs = df['z'].dropna(how='any')
-    z_histogram_success = zs.hist(bins=int(np.ceil(abs(max(zs) - min(zs)) / Z_HIST_STEP)),
-                                  grid=True,
-                                  ax=axs[1])
     if plot:
+        import matplotlib.pyplot as plt
+        fig, axs = plt.subplots(2, 1)
         axs[0].title.set_text('Duration through time')
         df[['inspect_duration', 'grab_duration']].plot(ax=axs[0], grid=True)
 
         axs[1].title.set_text('Grasp height frequency')
+        zs = df['z'].dropna(how='any')
+        z_histogram_success = zs.hist(bins=int(np.ceil(abs(max(zs) - min(zs)) / Z_HIST_STEP)),
+                                      grid=True,
+                                      ax=axs[1])
         z_histogram_success.plot(x=z_histogram_success)
         plt.xlabel('z')
         plt.ylabel('# grasps')
