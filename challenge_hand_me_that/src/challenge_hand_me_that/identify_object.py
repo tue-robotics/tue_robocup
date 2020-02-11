@@ -5,8 +5,9 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
-import robot_smach_states as rss
 import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
+from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
@@ -152,12 +153,12 @@ class IdentifyObject(smach.StateMachine):
         ds.check_type(arm, PublicArm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_POINT', rss.navigation.NavigateToGrasp(robot, item, arm),
+            smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_POINT'})
 
-            smach.StateMachine.add('PREPARE_POINT', rss.manipulation.PrepareEdGrasp(robot, arm, item),
+            smach.StateMachine.add('PREPARE_POINT', PrepareEdGrasp(robot, arm, item),
                                    transitions={'succeeded': 'POINT',
                                                 'failed': 'RESET_FAILURE'})
 
@@ -165,7 +166,7 @@ class IdentifyObject(smach.StateMachine):
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add("RESET_FAILURE", rss.manipulation.ResetOnFailure(robot, arm),
+            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
 

@@ -13,8 +13,9 @@ import rospy
 import smach
 
 # TU/e Robotics
-import robot_smach_states as rss
 import robot_smach_states.util.designators as ds
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.world_model import Inspect
 from robot_skills import get_robot_from_argv
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
@@ -47,23 +48,19 @@ class InspectFurniture(smach.StateMachine):
         with self:
 
             smach.StateMachine.add("SAY_GO",
-                                   rss.human_interaction.Say(robot, "Let's go to the {furniture_object}",
-                                                             furniture_object=ds.AttrDesignator(furniture_designator,
-                                                                                                "id",
-                                                                                                resolve_type=str)),
+                                   Say(robot, "Let's go to the {furniture_object}",
+                                       furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                                                          resolve_type=str)),
                                    transitions={"spoken": "INSPECT_FURNITURE"})
 
             smach.StateMachine.add("INSPECT_FURNITURE",
-                                   rss.world_model.Inspect(robot=robot,
-                                                           entityDes=furniture_designator,
-                                                           objectIDsDes=object_ids_des,
-                                                           navigation_area="in_front_of"),
+                                   Inspect(robot=robot, entityDes=furniture_designator, objectIDsDes=object_ids_des,
+                                           navigation_area="in_front_of"),
                                    transitions={"done": "SELECT_ENTITY",
                                                 "failed": "SAY_INSPECTION_FAILED"})  # ToDo: fallback?
 
             smach.StateMachine.add("SAY_INSPECTION_FAILED",
-                                   rss.human_interaction.Say(
-                                       robot, "I am sorry but I was not able to reach the {furniture_object}",
+                                   Say(robot, "I am sorry but I was not able to reach the {furniture_object}",
                                        furniture_object=ds.AttrDesignator(furniture_designator, "id",
                                                                           resolve_type=str)),
                                    transitions={"spoken": "failed"})
