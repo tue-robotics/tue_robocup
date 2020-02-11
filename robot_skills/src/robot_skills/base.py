@@ -4,6 +4,7 @@
 #
 
 # System
+import contextlib
 import math
 from numpy import sign
 
@@ -243,6 +244,37 @@ class Base(RobotPart):
             self._cmd_vel.publish(v)
 
         return True
+
+    @contextlib.contextmanager
+    def get_cmd_vel_publisher(self):
+        # type: () -> callable
+        """
+        Returns the command vel publisher. However, before returning this, local plans are cancelled and after
+        returning control, a zero Twist message is published for safety. This can be used, e.g., in a feedback loop.
+
+        :return: callable with args vx, vy and vth
+        """
+        self.local_planner.cancelCurrentPlan()
+
+        def pub_cmd_vel(vx, vy, vth):
+            # type: (float, float, float) -> None
+            """
+            Publishes a Twist message using the cmd vel publisher
+
+            :param vx: velocity in x-direction [m/s]
+            :param vy: velocity in y-direction [m/s]
+            :param vth: angular velocity in z-direction [rad/s]
+            """
+            msg = geometry_msgs.msg.Twist()
+            msg.linear.x = vx
+            msg.linear.y = vy
+            msg.angular.z = vth
+            self._cmd_vel.publish(msg)
+
+        try:
+            yield pub_cmd_vel
+        finally:
+            pub_cmd_vel(0.0, 0.0, 0.0)
 
     def get_location(self):
         """ Returns a FrameStamped with the robot pose

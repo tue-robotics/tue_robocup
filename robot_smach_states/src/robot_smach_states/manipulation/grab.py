@@ -10,10 +10,11 @@ from robot_skills.util.entity import Entity
 from robot_skills.arms import PublicArm, GripperMeasurement
 from robot_skills.robot import Robot
 from robot_smach_states.util.designators import check_type
-from robot_smach_states.navigation import NavigateToGrasp
 from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 from robot_smach_states.util.designators.arm import ArmDesignator
 from robot_smach_states.util.designators.core import Designator
+
+from .move_to_grasp import MoveToGrasp
 
 
 class PrepareEdGrasp(smach.State):
@@ -322,7 +323,7 @@ class Grab(smach.StateMachine):
         check_type(arm, PublicArm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
+            smach.StateMachine.add('MOVE_TO_GRAB', MoveToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
