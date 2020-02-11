@@ -12,6 +12,8 @@ Options:
   --no-execute                  Only construct state machine, do not execute it, i.e. only do checks.
 """
 
+from __future__ import absolute_import
+
 # System
 import ast
 from docopt import docopt

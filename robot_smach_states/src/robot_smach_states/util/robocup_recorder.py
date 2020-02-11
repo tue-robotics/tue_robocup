@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 import rospy
 from std_srvs.srv import Trigger

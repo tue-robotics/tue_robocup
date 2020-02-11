@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import rospy
 import copy
 from .checks import check_type
