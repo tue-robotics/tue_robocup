@@ -67,3 +67,15 @@ timestamp,robot,start_waypoint,expected_class,observed_class,id,inspect_duration
 2020-02-04 21:40:37,hero,entry_point,fanta,,,33.681,,,,
 2020-02-04 21:41:25,hero,explore1,hairspray,hairspray,b54393,8.111,29.782,3.112,4.212,0.835
 2020-02-04 21:43:00,hero,help_me_carry_starting_point,coke,,,17.261,,,,
+2020-02-11 21:01:04,hero,explore10,mentos,mentos,20ac2c,5.116,25.619,0.783,3.719,0.791
+2020-02-11 21:02:20,hero,entry_point,fanta,fanta,f44b95,5.010,,2.040,5.002,0.468
+2020-02-11 21:02:44,hero,explore1,hairspray,hairspray,3ffd47,9.694,23.183,3.104,4.297,0.973
+2020-02-11 21:03:45,hero,help_me_carry_starting_point,coke,,,7.565,,,,
+2020-02-11 21:09:07,hero,explore10,mentos,,,9.564,,,,
+2020-02-11 21:09:24,hero,entry_point,fanta,fanta,f44b95,5.626,,1.979,5.023,0.469
+2020-02-11 21:09:48,hero,explore1,hairspray,hairspray,7ed449,9.810,26.041,3.163,3.931,0.928
+2020-02-11 21:10:54,hero,help_me_carry_starting_point,coke,coke,fbf745,8.177,22.521,0.912,1.955,0.816
+2020-02-11 21:18:26,hero,explore10,mentos,,,8.727,,,,
+2020-02-11 21:18:58,hero,entry_point,fanta,fanta,f44b95,5.339,,1.938,4.937,0.470
+2020-02-11 21:20:25,hero,explore1,hairspray,hairspray hairspray,1567ed,7.818,23.482,3.048,4.298,0.971
+2020-02-11 21:21:23,hero,help_me_carry_starting_point,coke,,,,,,,
