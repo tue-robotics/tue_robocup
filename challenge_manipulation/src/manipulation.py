@@ -21,7 +21,6 @@ Afterwards, a PDF report has to be made:
 
 import rospy
 import smach
-import random
 
 # ED
 from ed_robocup_msgs.srv import FitEntityInImage, FitEntityInImageRequest
@@ -32,13 +31,11 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
-from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util.kdl_conversions import VectorStamped
 
 # Robot Skills
 from robot_skills.util.entity import Entity
-from robot_skills.util import msg_constructors as geom
-from robot_skills.util import transformations
+from robot_skills import arms
 
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge
@@ -458,9 +455,18 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                                         name="placement", area=PLACE_SHELF),
                                                    name="place_position")
 
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {'required_arm_name': PREFERRED_ARM},
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot,
+                                                               {'required_trajectories': ['prepare_grasp'],
+                                                                'required_goals': ['carrying_pose'],
+                                                                'required_gripper_types': [arms.GripperTypes.GRASPING],
+                                                                'required_arm_name': PREFERRED_ARM},
                                                                name="empty_arm_designator")
-        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot, {'required_objects':[self.current_item]},
+        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot,
+                                                                      {'required_objects': [self.current_item]},
+                                                                      {"required_trajectories": ["prepare_place"],
+                                                                       "required_goals": ["reset", "handover_to_human"],
+                                                                       'required_gripper_types': [
+                                                                           arms.GripperTypes.GRASPING]},
                                                                       name="arm_with_item_designator")
 
         # print "{0} = pick_shelf".format(self.pick_shelf)

@@ -133,16 +133,31 @@ class Robot(object):
                 bodypart.reset()
         return all(results.values())
 
+    def reset_all_arms(self, arm_timeout=0.0, close_gripper=True, gripper_timeout=None):
+        """
+        Reset all arms of the robot, and by default, close their grippers.
+
+        The arm is always reset, the gripper is closed if 'close_gripper' is True (which is the default).
+
+        :param arm_timeout: How long to wait for resetting the arm, by default 0.0
+        :param close_gripper: By default 'True', which closes the gripper. If False, the gripper is not activated,
+        :param gripper_timeout: If specified and 'close_gripper' holds, timeout for closing the gripper.
+            If not specified, gripper movement uses 'arm_timeout'.
+        """
+        for arm in self._arms.itervalues():
+            if close_gripper:
+                if gripper_timeout is None:
+                    gripper_timeout = arm_timeout
+                arm.send_gripper_goal('close', timeout=gripper_timeout)
+
+            arm.reset(timeout=arm_timeout)
+
     def standby(self):
         if not self.robot_name == 'amigo':
             rospy.logerr('Standby only works for amigo')
             return
 
-        for arm in self._arms.itervalues():
-            arm.reset()
-        for arm in self._arms.itervalues():
-            arm.send_gripper_goal('close')
-
+        self.reset_all_arms()
         self.head.look_down()
         self.torso.low()
         self.lights.set_color(0, 0, 0)
@@ -226,10 +241,6 @@ class Robot(object):
 
             # Grippers
             matching_grippers = set()
-            # ToDO: HACK for not specifying any requirements
-            if required_gripper_types is None:
-                required_gripper_types = [arms.GripperTypes.GRASPING]
-
             if required_gripper_types is not None:
                 matches = [arm.collect_gripper_types(req_type) for req_type in required_gripper_types]
                 all_matched = all(match_list for match_list in matches)
@@ -240,32 +251,18 @@ class Robot(object):
                 for match in matches:
                     matching_grippers.update(match)
 
-            # ToDO: HACK for not specifying any requirements
-            if desired_gripper_types is None:
-                desired_gripper_types = [arms.GripperTypes.GRASPING]
-
             if desired_gripper_types is not None:
                 matches = [arm.collect_gripper_types(des_type) for des_type in desired_gripper_types]
                 for match in matches:
                     matching_grippers.update(match)
 
             # Goals
-            # ToDO: HACK for not specifying any requirements
-            if required_goals is None:
-                required_goals = arm.default_configurations.keys()
-            if desired_goals is None:
-                desired_goals = arm.default_configurations.keys()
             matching_goals = _collect_needs_desires(required_goals, desired_goals, arm.has_joint_goal)
             if matching_goals is None:
                 discarded_reasons.append((arm_name, "required goals failed"))
                 continue
 
             # Trajectories
-            # ToDO: HACK for not specifying any requirements
-            if required_trajectories is None:
-                required_trajectories = arm.default_trajectories.keys()
-            if desired_trajectories is None:
-                desired_trajectories = arm.default_trajectories.keys()
             matching_trajectories = _collect_needs_desires(required_trajectories, desired_trajectories,
                                                            arm.has_joint_trajectory)
             if matching_trajectories is None:

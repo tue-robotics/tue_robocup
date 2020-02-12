@@ -48,10 +48,9 @@ class Hero(robot.Robot):
         self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
-        for arm in self._arms.itervalues():
-            arm.unsubscribe_hardware_status()
-        for arm in self._arms.itervalues():
-            arm._operational = True
+        for part in self.parts.itervalues():
+            part.unsubscribe_hardware_status()
+            part._operational = True
 
         # verify joint goal required for posing
         assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
@@ -102,12 +101,11 @@ class Hero(robot.Robot):
 
         :return: None
         """
-        arm = self.get_arm()
+        arm = self.get_arm(required_goals=['arm_out_of_way'])
 
         rotation = 1.57
         rotation_speed = 1
         rotation_duration = rotation / rotation_speed
-        if arm.has_joint_goal('arm_out_of_way'):
-            arm.send_joint_goal('arm_out_of_way', 0.0)
-            self.base.force_drive(0, 0, rotation_speed, rotation_duration)
+        arm.send_joint_goal('arm_out_of_way', 0.0)
+        self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()

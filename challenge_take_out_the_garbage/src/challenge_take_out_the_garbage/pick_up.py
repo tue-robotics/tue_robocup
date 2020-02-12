@@ -10,7 +10,7 @@ from smach import cb_interface, CBState
 import robot_smach_states as states
 import robot_smach_states.manipulation as manipulation
 from robot_skills.arms import PublicArm
-import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBin
 
 from ed_msgs.msg import EntityInfo
@@ -260,7 +260,7 @@ class PickUpTrash(smach.StateMachine):
         :param arm_designator: arm designator resolving to the arm with which to grab
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "aborted"])
-        place_pose_designator = ds.EmptySpotDesignator(robot, trashbin_designator)
+        place_pose_designator = EmptySpotDesignator(robot, trashbin_designator, arm_designator)
 
         with self:
             # @cb_interface(outcomes=['done'])
@@ -333,7 +333,8 @@ class PickUpTrash(smach.StateMachine):
                                                 "failed": "failed",
                                                 "timeout": "TIMEOUT"})
 
-            arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={})
+            arm_occupied_designator = ds.OccupiedArmDesignator(robot=robot, arm_properties={"required_goals": ["reset"
+                                                                                                               ]})
 
             smach.StateMachine.add("LOWER_ARM", states.ArmToJointConfig(robot=robot,
                                                                         arm_designator=arm_occupied_designator,
@@ -353,13 +354,14 @@ class PickUpTrash(smach.StateMachine):
 if __name__ == '__main__':
     import os
     import robot_smach_states.util.designators as ds
-    from robot_skills import Hero
+    from robot_skills import Hero, arms
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()
     hero.reset()
 
-    arm = ds.UnoccupiedArmDesignator(hero, {})
+    arm = ds.UnoccupiedArmDesignator(hero, {"required_goals": ["reset", "handover"], "force_sensor_required": True,
+                                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     # sm = HandoverFromHumanFigure(hero, arm, grabbed_entity_label='trash')
     # sm.execute()

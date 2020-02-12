@@ -5,6 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
+from robot_skills import arms
 from robot_skills.classification_result import ClassificationResult
 
 from .manipulation.grab import Grab
@@ -74,7 +75,11 @@ class Clear(smach.StateMachine):
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
         selected_entity_designator = EntityByIdDesignator(robot, "TBD", name='selected_entity_designator', )
 
-        arm_des = UnoccupiedArmDesignator(robot, {}).lockable()
+        arm_des = UnoccupiedArmDesignator(
+            robot,
+            arm_properties={"required_trajectories": ["prepare_place", "prepare_grasp"],
+                            "required_goals": ["carrying_pose"],
+                            "required_gripper_types": [arms.GripperTypes.GRASPING]}).lockable()
         arm_des.lock()
 
         place_position = EmptySpotDesignator(robot, EdEntityDesignator(
