@@ -48,11 +48,13 @@ jobs:
       displayName: 'Get CI scripts'
     - task: Bash@3
       inputs:
-        filePath: 'install-package.sh'
-        arguments: '--package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}'
+        targetType: 'inline'
+        script: |
+          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}
       displayName: 'Install'
     - task: Bash@3
       inputs:
-        filePath: 'build-package.sh'
-        arguments: '--package=$PACKAGE'
+        targetType: 'inline'
+        script: |
+          bash build-package.sh --package=$PACKAGE
       displayName: 'Build & test'
