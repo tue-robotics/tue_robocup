@@ -8,7 +8,7 @@ import math
 from collections import namedtuple
 
 # ROS
-from geometry_msgs.msg import PoseStamped, Twist, Vector3
+from geometry_msgs.msg import PoseStamped
 import rospy
 import smach
 import tf2_geometry_msgs
@@ -16,8 +16,8 @@ import tf2_ros
 from tf.transformations import euler_from_quaternion
 
 # TU/e Robotics
-from robot_smach_states.util.geometry_helpers import wrap_angle_pi
-from robot_smach_states.util.designators.checks import check_type
+from ..util.geometry_helpers import wrap_angle_pi
+from ..util.designators.checks import check_type
 
 _ = tf2_geometry_msgs  # tf2_geometry_msgs must be declared here for it to be imported
 

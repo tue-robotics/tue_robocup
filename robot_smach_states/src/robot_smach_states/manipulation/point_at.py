@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # ROS
 import rospy
@@ -7,7 +7,7 @@ import smach
 # TU/e Robotics
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
-import robot_smach_states.util.designators as ds
+from ..util.designators import check_type
 
 # System
 import numpy as np
@@ -20,9 +20,8 @@ class PointAt(smach.State):
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
 
         :param robot: Robot to execute state with
-        :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
-            ArmHoldingEntityDesignator
+        :param arm_designator : arm to place with, so Arm that holds entity_to_place, E.g. ArmHoldingEntityDesignator
+        :param point_at_designator: Designator that resolves to the pose to place at. E.g. EmptySpotDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
@@ -30,9 +29,9 @@ class PointAt(smach.State):
             look_at_designator = point_at_designator
 
         # Check types or designator resolve types
-        ds.check_type(arm_designator, PublicArm)
-        ds.check_type(point_at_designator, Entity)
-        ds.check_type(look_at_designator, Entity)
+        check_type(arm_designator, PublicArm)
+        check_type(point_at_designator, Entity)
+        check_type(look_at_designator, Entity)
 
         # Assign member variables
         self._robot = robot
@@ -88,6 +87,7 @@ class PointAt(smach.State):
 
 if __name__ == "__main__":
     from robot_skills import get_robot
+    from ..util.designators import EdEntityDesignator, UnoccupiedArmDesignator
 
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
@@ -97,9 +97,9 @@ if __name__ == "__main__":
         rospy.init_node('test_follow_operator')
         robot = get_robot(robot_name)
         sm = PointAt(robot,
-                     arm_designator=ds.UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
-                     point_at_designator=ds.EdEntityDesignator(robot, id=point_at, name='point_at_des'),
-                     look_at_designator=ds.EdEntityDesignator(robot, id=look_at, name='look_at_des'))
+                     arm_designator=UnoccupiedArmDesignator(robot, {'required_goals':['point_at']}),
+                     point_at_designator=EdEntityDesignator(robot, id=point_at, name='point_at_des'),
+                     look_at_designator=EdEntityDesignator(robot, id=look_at, name='look_at_des'))
         sm.execute()
     else:
         print("Please provide robot name, point_at ID and look_at ID as argument.")

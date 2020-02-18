@@ -1,6 +1,7 @@
 """
 Module contains states to guide an operator to a designated location.
 """
+from __future__ import absolute_import
 import math
 
 # ROS
@@ -10,12 +11,12 @@ import PyKDL as kdl
 
 # Robot skills
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states import WaitTime
-from robot_smach_states.util.designators import EdEntityDesignator
+from ..utility import WaitTime
+from ..util.designators import EdEntityDesignator
 
-import navigation
-from robot_smach_states.human_interaction import Say
-from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
+from . import navigation
+from ..human_interaction.human_interaction import Say
+from .navigate_to_symbolic import NavigateToSymbolic
 
 
 def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):

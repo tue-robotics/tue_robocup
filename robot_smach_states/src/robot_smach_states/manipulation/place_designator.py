@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import rospy
 import math
@@ -8,7 +10,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
-from robot_smach_states.util.designators.ed_designators import Designator
+from ..util.designators.ed_designators import Designator
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from robot_smach_states.util.geometry_helpers import offsetConvexHull
 

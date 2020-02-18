@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
-from robot_smach_states.util.designators import *
+from .core import Designator
 
-def functionDesignator(original_function):
+
+def FunctionDesignator(original_function):
 
     Class = type('Wrapped' + original_function.__name__, (Designator,), {})
 
@@ -25,9 +26,9 @@ def functionDesignator(original_function):
 if __name__ == '__main__':
 
     # to test the decorator, let's define a designator with it
-    @functionDesignator
+    @FunctionDesignator
     def FormattedSentenceDesignator(fmt, **kwargs):
-        kwargs_resolved = {key:value.resolve() for key,value in kwargs.iteritems()}
+        kwargs_resolved = {key: value.resolve() for key, value in kwargs.iteritems()}
         return fmt.format(**kwargs_resolved)
 
     print("creating the designator")

@@ -13,11 +13,13 @@ import rospy
 import smach
 
 # TU/e Robotics
-import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.world_model import Inspect
 from robot_skills import get_robot_from_argv
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
+from robot_skills.classification_result import ClassificationResult
 
 # Items with x- or y-dimension larger than this value will be filtered out
 SIZE_LIMIT = 0.2
@@ -41,29 +43,26 @@ class InspectFurniture(smach.StateMachine):
                                     input_keys=["laser_dot"])
 
         assert ds.is_writeable(entity_designator), "Entity designator must be writeable for this purpose"
-        object_ids_des = ds.VariableDesignator([], resolve_type=[states.ClassificationResult])
+        object_ids_des = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
 
             smach.StateMachine.add("SAY_GO",
-                                   states.Say(robot, "Let's go to the {furniture_object}",
-                                              furniture_object=ds.AttrDesignator(furniture_designator, "id",
-                                                                                 resolve_type=str)),
+                                   Say(robot, "Let's go to the {furniture_object}",
+                                       furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                                                          resolve_type=str)),
                                    transitions={"spoken": "INSPECT_FURNITURE"})
 
             smach.StateMachine.add("INSPECT_FURNITURE",
-                                   states.Inspect(robot=robot,
-                                                  entityDes=furniture_designator,
-                                                  objectIDsDes=object_ids_des,
-                                                  navigation_area="in_front_of",
-                                                  ),
+                                   Inspect(robot=robot, entityDes=furniture_designator, objectIDsDes=object_ids_des,
+                                           navigation_area="in_front_of"),
                                    transitions={"done": "SELECT_ENTITY",
                                                 "failed": "SAY_INSPECTION_FAILED"})  # ToDo: fallback?
 
             smach.StateMachine.add("SAY_INSPECTION_FAILED",
-                                   states.Say(robot, "I am sorry but I was not able to reach the {furniture_object}",
-                                              furniture_object=ds.AttrDesignator(furniture_designator, "id",
-                                                                                 resolve_type=str)),
+                                   Say(robot, "I am sorry but I was not able to reach the {furniture_object}",
+                                       furniture_object=ds.AttrDesignator(furniture_designator, "id",
+                                                                          resolve_type=str)),
                                    transitions={"spoken": "failed"})
 
             @smach.cb_interface(outcomes=["succeeded", "no_entities"],
@@ -79,7 +78,7 @@ class InspectFurniture(smach.StateMachine):
                 :param userdata: (dict)
                 :return: (str) outcome
                 """
-                assert userdata.laser_dot.header.frame_id.endswith("map"), "Provide your laser  dot in map frame"
+                assert userdata.laser_dot.header.frame_id.endswith("map"), "Provide your laser dot in map frame"
 
                 # Extract classification results
                 entity_ids = [cr.id for cr in object_ids_des.resolve()]

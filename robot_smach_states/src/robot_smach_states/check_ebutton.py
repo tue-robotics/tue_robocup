@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # System
 import os
 
@@ -6,14 +7,13 @@ import rospy
 import smach
 
 # TU/e Robotics
-from human_interaction import Say
+from .human_interaction.human_interaction import Say
 
 
 class CheckEButton(smach.State):
     """Check if the robot's Emergency button is pressed"""
     def __init__(self, robot=None):
-        smach.State.__init__(self, outcomes=["pressed",
-                                             "released"])
+        smach.State.__init__(self, outcomes=["pressed", "released"])
         self.robot = robot
 
     def execute(self, userdata=None):

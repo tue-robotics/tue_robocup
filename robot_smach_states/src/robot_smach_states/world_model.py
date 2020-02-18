@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # System
 import time
@@ -12,8 +12,8 @@ import smach
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.navigation import NavigateToObserve, NavigateToSymbolic
-import robot_smach_states.util.designators as ds
+from .navigation import NavigateToObserve, NavigateToSymbolic
+from .util import designators as ds
 
 
 def _color_info(string):

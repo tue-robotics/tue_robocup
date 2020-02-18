@@ -2,7 +2,7 @@ import os
 import unittest
 
 from robot_skills.mockbot import Mockbot
-from robot_smach_states import ShowImageState
+from robot_smach_states.human_interaction import ShowImageState
 
 
 class TestShowImage(unittest.TestCase):

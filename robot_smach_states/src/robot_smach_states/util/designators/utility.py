@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import absolute_import
+
 # ROS
 import rospy
 
@@ -6,7 +8,7 @@ import rospy
 import operator
 
 # TU/e Robotics
-from robot_smach_states.util.designators.core import Designator, VariableDesignator
+from .core import Designator, VariableDesignator
 
 __author__ = 'loy'
 
@@ -74,7 +76,7 @@ class LockingDesignator(Designator):
 
     def _resolve(self):
         if self._locked:
-            if self._current == None:
+            if self._current is None:
                 self._current = self.to_be_locked.resolve()
                 # rospy.loginfo("{0} locked to {1}".format(self, str(self._current)[:10]))
             return self._current

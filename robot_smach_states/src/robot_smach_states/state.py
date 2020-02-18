@@ -1,11 +1,11 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # ROS
 import smach
 import rospy
 
 # TU/e Robotics
-from robot_smach_states.util.designators import Designator
+from .util.designators import Designator
 
 
 class State(smach.State):

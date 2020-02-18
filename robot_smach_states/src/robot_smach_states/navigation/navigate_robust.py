@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import collections
 
@@ -5,8 +7,8 @@ import collections
 import smach
 
 # Robot smach states
-from robot_smach_states.human_interaction.human_interaction import Say
-from robot_smach_states.utility import WaitTime
+from ..human_interaction.human_interaction import Say
+from ..utility import WaitTime
 from .navigation import NavigateTo
 
 

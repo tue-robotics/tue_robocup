@@ -14,8 +14,10 @@ import rospy
 import visualization_msgs.msg
 from geometry_msgs.msg import PoseStamped, Vector3
 from robot_skills import Hero
-from robot_smach_states import NavigateToSymbolic, Say, WaitTime, ForceDrive
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
+from robot_smach_states.utility import WaitTime
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
 from std_msgs.msg import ColorRGBA

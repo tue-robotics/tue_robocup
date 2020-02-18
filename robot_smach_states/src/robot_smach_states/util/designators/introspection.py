@@ -5,6 +5,7 @@ Usage: pass a Smach state-machine to analyse_designators.
 A .dot and .png will be saved to the current directory, showing the relations and composition of states,
 state_machines and designators.
 """
+from __future__ import absolute_import
 
 # System
 from graphviz import Digraph
@@ -14,7 +15,7 @@ import os
 import smach
 
 # TU/e Robotics
-from robot_smach_states.util.designators.core import Designator, VariableWriter, VariableDesignator
+from .core import Designator, VariableWriter, VariableDesignator
 
 __author__ = 'loy'
 

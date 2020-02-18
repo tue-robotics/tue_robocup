@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+
 # ROS
 import PyKDL as kdl
-from kdl_conversions import point_msg_to_kdl_vector
+from .kdl_conversions import point_msg_to_kdl_vector
 from numpy import abs
 
 
@@ -31,7 +33,7 @@ class Volume(object):
         :param point: kdl Vector w.r.t. the same frame as this volume
         :return: True if inside, False otherwise
         """
-        raise NotImplementedError("contains must be implemented by subclasses. " 
+        raise NotImplementedError("contains must be implemented by subclasses. "
                                   "Class {cls} has no implementation".format(cls=self.__class__.__name__))
 
     @property

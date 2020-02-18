@@ -1,16 +1,15 @@
+from __future__ import absolute_import
+
 # ROS
 from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from robot_skills.util.entity import Entity
-from robot_smach_states.navigation import NavigateTo
-from robot_smach_states.util.designators import check_resolve_type
+from .navigation import NavigateTo
+from ..util.designators import check_resolve_type
 
-
-# ----------------------------------------------------------------------------------------------------
 
 class NavigateToWaypoint(NavigateTo):
     def __init__(self, robot, waypoint_designator, radius = 0.15, look_at_designator=None, speak=True):

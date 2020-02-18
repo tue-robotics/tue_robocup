@@ -10,7 +10,9 @@ from challenge_set_the_table.navigate_to_and_open_cupboard_drawer import Navigat
 from challenge_set_the_table.navigate_to_and_pick_item_from_cupboard_drawer import \
     NavigateToAndPickItemFromCupboardDrawer
 from challenge_set_the_table.navigate_to_and_place_item_on_table import NavigateToAndPlaceItemOnTable
-from robot_smach_states import Say, WaitTime, Initialize, StartChallengeRobust
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.startup import StartChallengeRobust
+from robot_smach_states.utility import WaitTime
 from smach import StateMachine, cb_interface, CBState
 
 

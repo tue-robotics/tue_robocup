@@ -1,9 +1,10 @@
+from __future__ import absolute_import
+
 # System
 import collections
 import copy
 import math
 import random
-import sys
 import hmi
 
 # ROS
@@ -16,7 +17,7 @@ from visualization_msgs.msg import Marker
 # TU/e
 from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 from robot_skills.util import kdl_conversions
-from robot_smach_states.human_interaction import LearnOperator
+from ..human_interaction.learn_operator import LearnOperator
 
 
 class CrumbWaypoint:

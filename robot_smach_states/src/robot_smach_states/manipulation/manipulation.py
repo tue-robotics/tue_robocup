@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 import rospy
 import smach
@@ -6,12 +8,10 @@ import smach
 from ed_msgs.msg import EntityInfo
 from robot_skills.arms import PublicArm
 from robot_skills.arms import GripperState
-from robot_skills.util import transformations
-from robot_smach_states.human_interaction import Say
-from robot_smach_states.reset import ResetPart
-from robot_smach_states.utility import LockDesignator, UnlockDesignator
-from robot_smach_states.util.designators import LockingDesignator
-from robot_smach_states.util.designators import check_type
+from ..human_interaction.human_interaction import Say
+from ..reset import ResetPart
+from ..utility import LockDesignator, UnlockDesignator
+from ..util.designators import check_type, LockingDesignator
 
 
 class ArmToJointConfig(smach.State):

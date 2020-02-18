@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 from functools import partial
 import math
@@ -11,10 +13,10 @@ import smach
 
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import quaternion_msg_to_kdl_rotation
-import check_ebutton
-import human_interaction
-from navigation import ForceDrive
-import utility
+from . import check_ebutton
+from . import human_interaction
+from .navigation import ForceDrive
+from . import utility
 
 
 class StartChallengeRobust(smach.StateMachine):

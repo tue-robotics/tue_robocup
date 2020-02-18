@@ -1,8 +1,7 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # System
 import math
-import sys
 import numpy as np
 
 # ROS
@@ -14,8 +13,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
-
-__all__ = ['FindPeople', 'FindFirstPerson', 'SetPoseFirstFoundPersonToEntity', 'FindPeopleInRoom']
 
 
 class FindPeople(smach.State):

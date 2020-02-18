@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 __author__ = 'loy'
 import weakref
-from deprecation_warnings import get_caller_info
+from .deprecation_warnings import get_caller_info
 import rospy
 
 

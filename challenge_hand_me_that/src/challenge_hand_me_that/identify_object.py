@@ -5,9 +5,9 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
-import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills import get_robot_from_argv
+from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
+from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
@@ -28,7 +28,7 @@ class PointAt(smach.State):
         self.robot = robot
         self.arm_designator = arm
 
-        states.check_type(point_entity_designator, Entity)
+        ds.check_type(point_entity_designator, Entity)
         self.point_entity_designator = point_entity_designator
 
     def execute(self, userdata=None):
@@ -61,7 +61,7 @@ class PointAt(smach.State):
 
         # This is needed because the head is not entirely still when the
         # look_at_point function finishes
-        rospy.sleep(rospy.Duration(0.5))
+        rospy.sleep(0.5)
 
         # Resolve the entity again because we want the latest pose
         updated_point_entity = self.point_entity_designator.resolve()
@@ -149,16 +149,16 @@ class IdentifyObject(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        states.check_type(item, Entity)
-        states.check_type(arm, PublicArm)
+        ds.check_type(item, Entity)
+        ds.check_type(arm, PublicArm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_POINT', states.NavigateToGrasp(robot, item, arm),
+            smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_POINT'})
 
-            smach.StateMachine.add('PREPARE_POINT', states.PrepareEdGrasp(robot, arm, item),
+            smach.StateMachine.add('PREPARE_POINT', PrepareEdGrasp(robot, arm, item),
                                    transitions={'succeeded': 'POINT',
                                                 'failed': 'RESET_FAILURE'})
 
@@ -166,11 +166,12 @@ class IdentifyObject(smach.StateMachine):
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add("RESET_FAILURE", states.ResetOnFailure(robot, arm),
+            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
 
 if __name__ == "__main__":
+    from robot_skills import get_robot_from_argv
 
     rospy.init_node("test_grasping")
 

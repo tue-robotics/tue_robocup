@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # System
 import sys
@@ -11,8 +11,8 @@ import smach
 from robot_skills.util.entity import Entity
 
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.state import State
-import robot_smach_states.util.designators as ds
+from .state import State
+from .util import designators as ds
 
 
 class LookAtEntity(State):

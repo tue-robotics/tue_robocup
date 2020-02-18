@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 __author__ = 'loy'
-import core
+from . import core
 
 
 def check_resolve_type(designator, *allowed_types):

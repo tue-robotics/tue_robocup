@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 import rospy
 import smach
@@ -6,12 +8,12 @@ import smach
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
-from robot_smach_states.navigation import NavigateToPlace
-from robot_smach_states.world_model import Inspect
-from robot_smach_states.utility import LockDesignator
-from robot_smach_states.util.designators.utility import LockingDesignator
 from .place_designator import EmptySpotDesignator
-from robot_smach_states.util.designators import check_type
+from ..navigation.navigate_to_place import NavigateToPlace
+from ..utility import LockDesignator
+from ..util.designators import check_type
+from ..util.designators.utility import LockingDesignator
+from ..world_model import Inspect
 
 
 class PreparePlace(smach.State):

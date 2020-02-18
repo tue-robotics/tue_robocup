@@ -1,6 +1,7 @@
 import smach
-import robot_smach_states
 import rospy
+
+from robot_smach_states.human_interaction import Say
 
 from PIL import Image
 import cStringIO as StringIO
@@ -11,7 +12,7 @@ import cv2
 from timeout import Timeout
 
 
-def _get_cropped_image_from_info(info):        
+def _get_cropped_image_from_info(info):
 
     if len(info.measurement_image_unmasked) == 0:
         rospy.logerr("Received empty image from ED. This should not happen")
@@ -36,7 +37,7 @@ def _get_cropped_image_from_info(info):
         image_data_new = image_data[cropBox[0]:cropBox[1]+1, cropBox[2]:cropBox[3]+1 , :]
 
         cropped_image = Image.fromarray(image_data_new)
-    except:
+    except Exception:
         rospy.logerr("Could not crop image, I will use the original image as cropped image")
         cropped_image = image
 
@@ -60,7 +61,7 @@ class OperatorFeedback(smach.State):
         timeout_function = Timeout(self._request, timeout)
         return timeout_function(img_msg)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         e = self._selected_entity_designator.resolve()
 
         # If we have cached it, clean it up
@@ -130,7 +131,7 @@ class OperatorCleanup(smach.StateMachine):
         with self:
 
             smach.StateMachine.add('SAY_CONTACTING_OPERATOR',
-                                   robot_smach_states.Say(robot, sentences, block=True),
+                                   Say(robot, sentences, block=True),
                                    transitions={"spoken": "OPERATOR_FEEDBACK"})
 
             smach.StateMachine.add('OPERATOR_FEEDBACK',
@@ -138,13 +139,12 @@ class OperatorCleanup(smach.StateMachine):
                                    transitions={"cleanup": "SAY_CLEANUP", "no_cleanup": "SAY_NO_CLEANUP"})
 
             smach.StateMachine.add('SAY_CLEANUP',
-                                robot_smach_states.Say(robot, ["Ok, I will cleanup the object",
-                                                                "That's ok!",
-                                                                "As you wish"], block=True),
-                                transitions={"spoken": "cleanup"})
+                                   Say(robot, ["Ok, I will cleanup the object",
+                                               "That's ok!",
+                                               "As you wish"], block=True),
+                                   transitions={"spoken": "cleanup"})
 
             smach.StateMachine.add('SAY_NO_CLEANUP',
-                                robot_smach_states.Say(robot, ["Ok, I will leave the object here",
-                                                                "That's ok! I will continue",
-                                                                "Now I know that this object is not trash"], block=True),
-                                transitions={"spoken": "no_cleanup"})
+                                   Say(robot, ["Ok, I will leave the object here", "That's ok! I will continue",
+                                               "Now I know that this object is not trash"], block=True),
+                                   transitions={"spoken": "no_cleanup"})
