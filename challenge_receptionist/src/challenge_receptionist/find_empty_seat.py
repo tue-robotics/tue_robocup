@@ -55,7 +55,7 @@ class FindEmptySeat(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('SAY_LETS_FIND_SEAT',
-                                   states.SayFormatted(robot,
+                                   states.Say(robot,
                                                        ["Let me find a place for {name} to sit. Please be patient while I check out where there's place to sit"],
                                                        name=seat_is_for,
                                                        block=False),
@@ -82,7 +82,7 @@ class FindEmptySeat(smach.StateMachine):
                                                 "failed": "SAY_SEAT_EMPTY"})
 
             smach.StateMachine.add('SAY_SEAT_EMPTY',
-                                   states.SayFormatted(robot,
+                                   states.Say(robot,
                                                        ["Please sit on the {seat}, {name}"],
                                                        name=seat_is_for,
                                                        seat=ds.AttrDesignator(seat_ent_des, 'id', resolve_type=str),
@@ -98,14 +98,14 @@ class FindEmptySeat(smach.StateMachine):
                                                 "failed": "SAY_SEAT_PARTIALLY_OCCUPIED"})
 
             smach.StateMachine.add('SAY_SEAT_PARTIALLY_OCCUPIED',
-                                   states.SayFormatted(robot,
+                                   states.Say(robot,
                                                        ["I think there's some space left here where you can sit {name}"],
                                                        name=seat_is_for,
                                                        block=True),
                                    transitions={'spoken': 'RESET_SUCCESS'})
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
-                                   states.SayFormatted(robot,
+                                   states.Say(robot,
                                                        ["Sorry, there are no empty seats. I guess you just have to stand {name}"],
                                                        name=seat_is_for,
                                                        block=True),
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 4:
         print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
         sys.exit(1)
-    
+
     robot_name = sys.argv[1]
     room = sys.argv[2]
     seats_to_inspect = sys.argv[3:]
