@@ -10,8 +10,8 @@ import rospy
 # TU/e Robotics
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.util.designators.core import Designator
-from robot_smach_states.util.designators.checks import check_resolve_type
+from .core import Designator
+from .checks import check_resolve_type
 
 
 __author__ = 'loy'
