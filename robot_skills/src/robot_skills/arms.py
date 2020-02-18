@@ -859,6 +859,22 @@ class Arm(RobotPart):
         :return: Position of an object w.r.t. the base link of a robot.
         :rtype: kdl Vector
         """
+        rospy.logwarn("Arm.base_offset is deprecated, use Arm.get_base_offset(end_effector_goal) instead")
+        return self._base_offset
+
+    # noinspection PyUnusedLocal
+    def get_base_offset(self, end_effector_goal):
+        # type: (FrameStamped) -> kdl.Vector
+        """
+        Retrieves the 'optimal' position of an object w.r.t. the base link of a
+        robot for this arm to grasp it.
+
+        By default, this method returns the (static) base offset. This should/might be overwritten by robot-specific
+        implementations.
+
+        :param end_effector_goal: goal where the end-effector should go
+        :return: Position of an object w.r.t. the base link of a robot.
+        """
         return self._base_offset
 
     def _publish_marker(self, goal, color, ns=""):
