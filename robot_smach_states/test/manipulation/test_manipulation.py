@@ -7,7 +7,7 @@ from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 
 # Robot Smach States
-from robot_smach_states.manipulation import CloseGripperOnHandoverToRobot, HandoverToHuman, SetGripper
+from robot_smach_states.manipulation import CloseGripperOnHandoverToRobot, HandoverFromHuman, HandoverToHuman, SetGripper
 from robot_smach_states.util import designators as ds
 
 
