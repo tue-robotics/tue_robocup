@@ -10,7 +10,7 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
 
 # Robot Smach States
-import robot_smach_states as states
+from robot_smach_states.perception import LookAtArea, LookAtEntity
 import robot_smach_states.util.designators as ds
 
 
@@ -30,7 +30,7 @@ class TestLookAtEntity(unittest.TestCase):
         """Test that the robot looks at the center point of the named area, w.r.t. the frame of the entity"""
         entity_ds = ds.Designator(self.entity)
 
-        state = states.perception.LookAtEntity(self.robot, entity_ds, waittime=0)
+        state = LookAtEntity(self.robot, entity_ds, waittime=0)
 
         state.execute()
 
@@ -61,7 +61,7 @@ class TestLookAtArea(unittest.TestCase):
         entity_ds = ds.Designator(self.entity)
         area_ds = ds.Designator(self.area)
 
-        state = states.perception.LookAtArea(self.robot, entity_ds, area_ds, waittime=0)
+        state = LookAtArea(self.robot, entity_ds, area_ds, waittime=0)
 
         state.execute()
 
