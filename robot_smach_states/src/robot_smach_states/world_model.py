@@ -13,7 +13,7 @@ from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
 from .navigation import NavigateToObserve, NavigateToSymbolic
-import .util.designators as ds
+from .util import designators as ds
 
 
 def _color_info(string):
