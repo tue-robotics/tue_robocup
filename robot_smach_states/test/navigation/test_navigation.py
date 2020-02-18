@@ -4,7 +4,7 @@ import unittest
 from robot_skills.mockbot import Mockbot
 
 # Robot Smach States
-from robot_smach_states.navigation imoort ForceDrive
+from robot_smach_states.navigation import ForceDrive
 
 
 class TestForceDrive(unittest.TestCase):
