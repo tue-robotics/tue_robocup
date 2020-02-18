@@ -12,7 +12,7 @@ from robot_skills.util.entity import Entity
 
 from robot_skills.util.kdl_conversions import VectorStamped
 from .state import State
-import .util.designators as ds
+from .util import designators as ds
 
 
 class LookAtEntity(State):
