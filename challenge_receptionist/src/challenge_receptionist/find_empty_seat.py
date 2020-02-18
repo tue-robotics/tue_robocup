@@ -9,7 +9,7 @@ from robot_skills.classification_result import ClassificationResult
 
 
 class SeatsInRoomDesignator(ds.Designator):
-    def __init__(self, robot, seat_ids, room, name=None):
+    def __init__(self, robot, seat_ids, room, name=None, debug=True):
         super(SeatsInRoomDesignator, self).__init__(resolve_type=[Entity], name=name)
 
         self.robot = robot
@@ -19,8 +19,11 @@ class SeatsInRoomDesignator(ds.Designator):
 
         self.room = room
         self.seat_ids = seat_ids
+        self.debug = debug
 
     def _resolve(self):
+        if self.debug:
+            import ipdb;ipdb.set_trace()
         room = self.room.resolve() if hasattr(self.room, 'resolve') else self.room  # type: Entity
         if not room:
             rospy.logwarn("Room is None, so cannot find seats there")
