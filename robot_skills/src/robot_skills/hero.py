@@ -1,4 +1,5 @@
 from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from .hero_parts import HeroArm
 from .simulation import is_sim_mode, SimEButton
 
 import rospy
@@ -14,9 +15,15 @@ class Hero(robot.Robot):
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
+        # self.add_arm_part(
+        #     'leftArm',
+        #     arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        # )
+        # NOTE: THE HERO ARM IS STILL IN DEVELOPMENT AND DOES NOT HAVE ALL FUNCTIONALITY
+        # For scalability, this needs to be merged with Albert's work
         self.add_arm_part(
-            'leftArm',
-            arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+            "leftArm",
+            HeroArm(self.robot_name, self.tf_listener, self.get_joint_states),
         )
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
@@ -44,7 +51,7 @@ class Hero(robot.Robot):
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
 
-        #rename joint names
+        # rename joint names
         self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
