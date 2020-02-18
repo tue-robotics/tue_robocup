@@ -16,8 +16,8 @@ from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 from hmi import TimeoutException
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
-from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import VariableDesignator
+from ..util.startup import startup
+from ..util.designators import VariableDesignator
 
 
 def vector_stampeds_to_point_stampeds(vector_stampeds):

@@ -4,7 +4,7 @@ import smach
 import rospy
 
 import robot_smach_states.util.designators.core as ds
-from robot_smach_states.util.designators import is_writeable
+from .util.designators import is_writeable
 
 
 class IterateDesignator(smach.State):

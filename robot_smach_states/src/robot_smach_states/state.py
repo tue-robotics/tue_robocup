@@ -5,7 +5,7 @@ import smach
 import rospy
 
 # TU/e Robotics
-from robot_smach_states.util.designators import Designator
+from .util.designators import Designator
 
 
 class State(smach.State):

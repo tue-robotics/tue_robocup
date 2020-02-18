@@ -11,8 +11,8 @@ import smach
 from robot_skills.util.entity import Entity
 
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.state import State
-import robot_smach_states.util.designators as ds
+from .state import State
+import .util.designators as ds
 
 
 class LookAtEntity(State):

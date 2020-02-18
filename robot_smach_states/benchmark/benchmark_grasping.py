@@ -15,10 +15,13 @@ from robot_skills import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
+from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states import Grab, Inspect, ClassificationResult, NavigateToWaypoint, ForceDrive, SetGripper, \
-    Say
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.manipulation import Grab, SetGripper
+from robot_smach_states.navigation import ForceDrive, NavigateToWaypoint
+from robot_smach_states.world_model import Inspect
 
 
 RESULT_FIELDS = [ 'timestamp', 'robot',
@@ -35,6 +38,7 @@ except ImportError:
     pass
 
 ANY_OPTIONS = ['ANY', '*', 'any']
+
 
 def single_item(robot, results_writer, cls, support, waypoint, inspect_from_area=None, non_strict_class=False, search_area='on_top_of'):
     """

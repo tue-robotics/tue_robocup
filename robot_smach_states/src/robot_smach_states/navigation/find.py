@@ -6,8 +6,8 @@ import rospy
 
 # TU/e Robotics
 from robot_skills.classification_result import ClassificationResult
-import robot_smach_states as states
-from robot_smach_states.util.designators import VariableDesignator
+from ..world_model import Inspect
+from ..util.designators import VariableDesignator
 
 
 def entities_from_description(robot, knowledge, entity_description, list_of_entity_ids=None):
@@ -102,11 +102,11 @@ class Find(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('INSPECT_SOURCE_ENTITY',
-                                   states.world_model.Inspect(robot=robot,
-                                                              entityDes=source_entity_designator,
-                                                              objectIDsDes=segmented_entities_designator,
-                                                              searchArea=area_name_designator,
-                                                              navigation_area=navigation_area_designator),
+                                   Inspect(robot=robot,
+                                           entityDes=source_entity_designator,
+                                           objectIDsDes=segmented_entities_designator,
+                                           searchArea=area_name_designator,
+                                           navigation_area=navigation_area_designator),
                                    transitions={'done': 'CHECK_IF_ENTITY_FOUND',
                                                 'failed': 'inspect_failed'})
 
