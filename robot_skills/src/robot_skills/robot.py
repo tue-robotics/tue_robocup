@@ -378,6 +378,15 @@ class Robot(object):
         rospy.logdebug("move_to_hmi_pose() not implemented for {} object".format(self.robot_name))
         pass
 
+    def go_to_driving_pose(self):
+        """
+        This poses the robot for driving.
+
+        :return: None
+        """
+        rospy.logdebug("go_to_driving_pose() not implemented for {} object".format(self.robot_name))
+        pass
+
     def __enter__(self):
         pass
 

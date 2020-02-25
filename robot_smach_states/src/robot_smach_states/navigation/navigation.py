@@ -103,6 +103,9 @@ class executePlan(smach.State):
         if self.reset_head:
             self.robot.head.close()
 
+        # Move the robot to a suitable driving pose
+        self.robot.go_to_driving_pose()
+
         while not rospy.is_shutdown():
             rospy.Rate(10).sleep() # 10hz
 

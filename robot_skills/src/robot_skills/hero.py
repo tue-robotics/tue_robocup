@@ -109,3 +109,7 @@ class Hero(robot.Robot):
         arm.send_joint_goal('arm_out_of_way', 0.0)
         self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
+
+    def go_to_driving_pose(self):
+        arm = self.parts['leftArm']
+        arm.send_joint_goal('carrying_pose')
