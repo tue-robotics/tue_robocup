@@ -62,7 +62,7 @@ class SeatVolumeNamesDesignator(ds.Designator):
 
         try:
             seat_entity = self.seat_entity_designator.resolve()  # type: Entity
-            seat_volume_names = [k for k in seat_entity.volumes.keys() if k.endswith('seat')]
+            seat_volume_names = sorted([k for k in seat_entity.volumes.keys() if k.endswith('seat')])
 
             return seat_volume_names
         except AttributeError:

@@ -254,15 +254,21 @@ class CheckEmpty(smach.State):
     def execute(self, userdata=None):
         entity = self.entity_des.resolve()  # type: Entity
         seen_entities = self.seen_entities_des.resolve()
-        volume = self.volume_designator.resolve()
+        volume_name = self.volume_designator.resolve()
         if seen_entities:
             if self.threshold:
-                vol = entity.volumes[volume]  # type: Volume
+                vol = entity.volumes[volume_name]  # type: Volume
                 entities = [self.robot.ed.get_entity(id=seen_entity.id) for seen_entity in seen_entities]
                 occupied_space = sum(entity.shape.size for entity in entities)
                 remaining_space = vol.size - occupied_space
-                rospy.loginfo('{}: vol.size: {}, Occupied space is {}, remaining space is {}. Threshold=i{}'.format(self.volume, vol.size, occupied_space, remaining_space, self.threshold))
-                if occupied_space/vol.size > self.threshold:
+                ratio = occupied_space/vol.size
+                rospy.loginfo('{n}: vol.size: {s:.3f}m^3, Occupied space is {o:.3f}m^3, remaining space is {r:.3f}m^3. Occupied/vol.size={rat:.3f}% filled, threshold to mark as occupied is {t:.3f}%'.format(n=volume_name,
+                    s=vol.size,
+                    o=occupied_space,
+                    r=remaining_space,
+                    t=self.threshold*100,
+                    rat=ratio*100))
+                if ratio > self.threshold:
                     return 'partially_occupied'
             return 'occupied'
         else:
