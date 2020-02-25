@@ -111,7 +111,7 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('CHECK_SEAT_EMPTY',
                                    CheckVolumeEmpty(robot, seat_ent_des, seat_volume_des, 0.2),
-                                   transitions={'occupied': 'ITERATE_NEXT_SEAT',
+                                   transitions={'occupied': 'ITERATE_NEXT_VOLUME',
                                                 'empty': 'POINT_AT_EMPTY_SEAT',
                                                 'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
                                                 'failed': 'ITERATE_NEXT_SEAT'})
