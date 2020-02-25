@@ -269,6 +269,8 @@ class CheckEmpty(smach.State):
                     t=self.threshold*100,
                     rat=ratio*100))
                 if ratio > self.threshold:
+                    return 'occupied'
+                else:
                     return 'partially_occupied'
             return 'occupied'
         else:

@@ -86,7 +86,7 @@ class FindEmptySeat(smach.StateMachine):
         if seat_is_for:
             ds.check_type(seat_is_for, str)
         else:
-            seat_is_for = ds.Designator(' ')
+            seat_is_for = ds.Designator('someone')
 
         seat_volumes = SeatVolumeNamesDesignator(robot, seat_ent_des)
         seat_volume_des = ds.VariableDesignator(resolve_type=str)
@@ -149,7 +149,7 @@ class FindEmptySeat(smach.StateMachine):
 
             smach.StateMachine.add('SAY_NO_EMPTY_SEATS',
                                    Say(robot,
-                                              ["Sorry, there are no empty seats. I guess you just have to stand {name}"],
+                                              ["Sorry, there are no empty seats. I guess you just have to stand, {name}"],
                                               name=seat_is_for,
                                               block=True),
                                    transitions={'spoken': 'RESET_FAIL'})
