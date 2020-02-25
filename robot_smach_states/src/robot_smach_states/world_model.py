@@ -12,6 +12,9 @@ import smach
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
+from robot_skills.util.volume import Volume
+from robot_smach_states.util.designators import Designator
+
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds
 
@@ -223,7 +226,7 @@ class CheckEmpty(smach.State):
     """
     Check whether a volume of an entity is filled
     """
-    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume, threshold=None):
+    def __init__(self, robot, segmented_entity_ids_designator, entity_designator, volume_designator, threshold=None):
         """
         Constructor
 
@@ -237,15 +240,24 @@ class CheckEmpty(smach.State):
         self.robot = robot
         self.seen_entities_des = segmented_entity_ids_designator
         self.entity_des = entity_designator
-        self.volume = volume
+
+        ds.check_type(volume_designator, str)
+        if isinstance(volume_designator, str):
+            self.volume_designator = ds.VariableDesignator(volume_designator)
+        elif isinstance(volume_designator, ds.Designator):
+            self.volume_designator = volume_designator
+        else:
+            raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
+
         self.threshold = threshold
 
     def execute(self, userdata=None):
         entity = self.entity_des.resolve()  # type: Entity
         seen_entities = self.seen_entities_des.resolve()
+        volume = self.volume_designator.resolve()
         if seen_entities:
             if self.threshold:
-                vol = entity.volumes[self.volume]  # type: Volume
+                vol = entity.volumes[volume]  # type: Volume
                 entities = [self.robot.ed.get_entity(id=seen_entity.id) for seen_entity in seen_entities]
                 occupied_space = sum(entity.shape.size for entity in entities)
                 remaining_space = vol.size - occupied_space
@@ -302,7 +314,7 @@ class Inspect(smach.StateMachine):
 
 
 class CheckVolumeEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, volume="on_top_of", volume_threshold=0.0):
+    def __init__(self, robot, entity_des, volume_designator='on_top_of', volume_threshold=0.0):
         """ Constructor
 
         :param robot: robot object
@@ -317,12 +329,12 @@ class CheckVolumeEmpty(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('INSPECT',
-                                   Inspect(robot, entity_des, searchArea=volume, objectIDsDes=seen_entities_des),
+                                   Inspect(robot, entity_des, searchArea=volume_designator, objectIDsDes=seen_entities_des),
                                    transitions={"done": "CHECK",
                                                 "failed": "failed"})
 
             smach.StateMachine.add('CHECK',
-                                   CheckEmpty(robot, seen_entities_des, entity_des, volume, volume_threshold),
+                                   CheckEmpty(robot, seen_entities_des, entity_des, volume_designator, volume_threshold),
                                    transitions={'empty': 'empty',
                                                 'partially_occupied': 'partially_occupied',
                                                 'occupied': 'occupied'})
