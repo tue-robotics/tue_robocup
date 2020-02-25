@@ -21,6 +21,7 @@ so that the robot will introduce new guests to John (and other already introduce
 - [x] Fix launch files so that ED does not crash due to missing services (mentioned by Rein)
 - [x] Challenge crashes (ED detect people not available)
 - [ ] Rise robot before human-robot interaction
-- [ ] Check multiple volumes for emptiness
+- [x] Check multiple volumes for emptiness
 - [ ] Point at correct volume that is empty
-- [ ] For each seat, define various seat volumes
+- [x] For each seat, define various seat volumes
+- [ ] Check for Person entities in volumes, not for how full the volume is
