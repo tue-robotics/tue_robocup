@@ -72,7 +72,7 @@ class Hero(robot.Robot):
         z_head = inspect_target.z() + z_over
 
         # check whether moving the arm is necessary
-        if z_head < 1.1:
+        if z_head < 1.3:
             rospy.logdebug("Entity is low enough. we don't need to move the arm")
             return True
 
