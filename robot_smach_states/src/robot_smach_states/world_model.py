@@ -261,6 +261,7 @@ class CheckEmpty(smach.State):
 class Inspect(smach.StateMachine):
     """
     Class to navigate to a(n) (furniture) object and segment the objects on top of it.
+    Note that when inspecting a high entity the robot will end the Inspect in a high position.
     """
     def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area="",
                  unknown_threshold=0.0, filter_threshold=0.0):
