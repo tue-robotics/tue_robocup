@@ -198,6 +198,18 @@ class Base(RobotPart):
 
         return plan
 
+    def turn_towards(self, x, y, frame, offset=0.0):
+        current_pose = self.get_location()
+        p = PositionConstraint()
+        p.constraint = "(x-%f)^2+(y-%f)^2 < %f^2" % (current_pose.frame.p.x(), current_pose.frame.p.y(), 0.1)
+        p.frame = current_pose.frame_id
+        plan = self.global_planner.getPlan(p)
+        o = OrientationConstraint(look_at=geometry_msgs.msg.Point(x, y, 0.0), angle_offset=offset)
+        o.frame = frame
+        self.local_planner.setPlan(plan, p, o)
+
+        return plan
+
     def force_drive(self, vx, vy, vth, timeout, loop_rate=10, stop=True, ax=float('inf'), ay=float('inf'), ath=float('inf')):
         """ Forces the robot to drive by sending a command velocity directly to the base controller. N.B.: all collision
         avoidance is bypassed.
