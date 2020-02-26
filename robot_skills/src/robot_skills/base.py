@@ -128,7 +128,7 @@ class GlobalPlanner(RobotPart):
         end_time = rospy.Time.now()
         plan_time = (end_time-start_time).to_sec()
 
-        path_length = self.computePathLength(resp.plan)
+        self.path_length = self.computePathLength(resp.plan)
 
         return resp.plan
 

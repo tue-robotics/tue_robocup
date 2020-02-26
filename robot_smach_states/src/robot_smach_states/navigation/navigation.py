@@ -81,13 +81,14 @@ class getPlan(smach.State):
 
 
 class executePlan(smach.State):
-    def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_head=True):
+    def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_head=True, reset_pose=True):
         smach.State.__init__(self,outcomes=['succeeded','arrived','blocked','preempted'])
         self.robot = robot
         self.t_last_free = None
         self.blocked_timeout = blocked_timeout
         self.breakout_function = breakout_function
         self.reset_head = reset_head
+        self.reset_pose = reset_pose
 
     def execute(self, userdata=None):
         """
@@ -104,7 +105,8 @@ class executePlan(smach.State):
             self.robot.head.close()
 
         # Move the robot to a suitable driving pose
-        self.robot.go_to_driving_pose()
+        if self.reset_pose and self.robot.base.global_planner.path_length > 0.5:
+            self.robot.go_to_driving_pose()
 
         while not rospy.is_shutdown():
             rospy.Rate(10).sleep() # 10hz
@@ -204,7 +206,7 @@ class planBlocked(smach.State):
 
 
 class NavigateTo(smach.StateMachine):
-    def __init__(self, robot, reset_head=True, speak=True, input_keys=[], output_keys=[]):
+    def __init__(self, robot, reset_head=True, speak=True, reset_pose=True, input_keys=[], output_keys=[]):
         smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'],
                                     input_keys=input_keys, output_keys=output_keys)
         self.robot = robot
@@ -222,7 +224,8 @@ class NavigateTo(smach.StateMachine):
                                  'goal_not_defined'                     :   'goal_not_defined',
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
 
-                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut, reset_head=reset_head),
+                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut,
+                                                                                        reset_head=reset_head, reset_pose=reset_pose),
                     transitions={'succeeded'                            :   'arrived',
                                  'arrived'                              :   'GET_PLAN',
                                  'blocked'                              :   'PLAN_BLOCKED',

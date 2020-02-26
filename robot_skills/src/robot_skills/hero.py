@@ -4,7 +4,6 @@ from .simulation import is_sim_mode, SimEButton
 import rospy
 
 
-
 class Hero(robot.Robot):
     """docstring for Hero"""
     def __init__(self, wait_services=False):
@@ -92,7 +91,7 @@ class Hero(robot.Robot):
         pose[0] = z_arm
         arm._send_joint_trajectory([pose])
 
-        self.base.turn_towards(inspect_target.x, inspect_target.y, "/map", 1.57)
+        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
         arm.wait_for_motion_done()
         return True
 
