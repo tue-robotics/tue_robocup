@@ -82,11 +82,6 @@ class Hero(robot.Robot):
 
         arm = self.parts['leftArm']
 
-        # turn the robot
-        rotation = 1.57
-        rotation_speed = 1.0
-        rotation_duration = rotation / rotation_speed
-
         pose = arm.default_configurations['arm_out_of_way']
         pose[0] = z_arm
         arm._send_joint_trajectory([pose])
