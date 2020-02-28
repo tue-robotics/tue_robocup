@@ -105,6 +105,33 @@ class Hero(robot.Robot):
         self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
 
+    def move_to_pregrasp_pose(self, grasp_target):
+        """
+        This poses the robot for an inspect.
+
+        :param grasp_target: kdl.Frame with the pose of the entity to be grasp.
+        :return: boolean, false if something went wrong.
+        """
+        # calculate the arm_lift_link which must be sent
+        z_over = 0.4  # height the robot should look over the surface
+        z_hh = 0.9  # height of the robots head at z_arm=0
+        torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
+        z_head = grasp_target.z() + z_over
+
+        # saturate the arm lift goal
+        z_arm = (z_head - z_hh) * torso_to_arm_ratio
+        z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
+
+        arm = self.parts['leftArm']
+
+        pose = arm.default_configurations['prepare_grasp']
+        pose[0] = z_arm
+        arm._send_joint_trajectory([pose])
+
+        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map")
+        arm.wait_for_motion_done()
+        return True
+
     def go_to_driving_pose(self):
         arm = self.parts['leftArm']
         arm.send_joint_goal('carrying_pose')
