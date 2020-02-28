@@ -41,7 +41,6 @@ objects = [
     {'category': 'food',                'name': 'peas',             'color': 'green',           'volume': 239,      'weight': 100},
     {'category': 'food',                'name': 'pepper',           'color': 'black',           'volume': 110,      'weight': 100},
     {'category': 'food',                'name': 'salt',             'color': 'white',           'volume': 110,      'weight': 100},
-    {'category': 'food',                'name': 'pasta',            'color': 'yellow',          'volume': 1570,     'weight': 100},
     {'category': 'container',           'name': 'basket',           'color': 'green',           'volume': 3487,     'weight': 100},
     {'category': 'container',           'name': 'bowl',             'color': 'blue',            'volume': 617,      'weight': 100},
     {'category': 'container',           'name': 'cup',              'color': 'orangish',        'volume': 427,      'weight': 100},
