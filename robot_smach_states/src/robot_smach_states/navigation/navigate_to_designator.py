@@ -1,20 +1,18 @@
 from __future__ import absolute_import
 
-# ROS
-
 # TU/e Robotics
 from .navigation import NavigateTo
 from ..util.designators import check_resolve_type
 
 
 class NavigateToDesignator(NavigateTo):
-    def __init__(self, robot, constraint_designator):
+    def __init__(self, robot, constraint_designator, speak=True):
         """
         @param constraint_designator a Designator that resolves to navigation constraints
         """
-        super(NavigateToDesignator, self).__init__(robot)
+        super(NavigateToDesignator, self).__init__(robot, speak=speak)
 
-        check_resolve_type(constraint_designator, tuple)  # Check that the constraint designator resolves to a tuple
+        check_resolve_type(constraint_designator, tuple)  #TODO verify in more detail that this is indeed a constraint designator
         self.constraint_designator = constraint_designator
 
     def generateConstraint(self):
