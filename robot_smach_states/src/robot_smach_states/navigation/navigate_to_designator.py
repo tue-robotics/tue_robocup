@@ -6,11 +6,11 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToDesignator(NavigateTo):
-    def __init__(self, robot, constraint_designator, speak=True):
+    def __init__(self, robot, constraint_designator, reset_head=True, speak=True):
         """
         @param constraint_designator a Designator that resolves to navigation constraints
         """
-        super(NavigateToDesignator, self).__init__(robot, speak=speak)
+        super(NavigateToDesignator, self).__init__(robot, reset_head=reset_head, speak=speak)
 
         check_resolve_type(constraint_designator, tuple)  #TODO verify in more detail that this is indeed a constraint designator
         self.constraint_designator = constraint_designator

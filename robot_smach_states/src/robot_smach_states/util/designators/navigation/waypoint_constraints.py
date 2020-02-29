@@ -12,9 +12,8 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 
 
 class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
-    def __init__(self, robot, waypoint_designator, radius=0.15, look_at_designator=None, name=None):
+    def __init__(self, waypoint_designator, radius=0.15, look_at_designator=None, name=None):
         super(WayPointConstraintsDesignator, self).__init__(name=name)
-        self.robot = robot
 
         check_resolve_type(waypoint_designator, Entity)  # Check that the waypoint_designator resolves to an Entity
         if look_at_designator:
