@@ -6,6 +6,7 @@ from .ed_designators import *
 from .arm import *
 from .introspection import *
 from .string_manipulation import *
+from . import navigation
 
 """
 Designators are intended to encapsulate the process of resolving values needed
