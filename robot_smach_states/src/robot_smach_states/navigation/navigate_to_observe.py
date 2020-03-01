@@ -2,7 +2,8 @@ from __future__ import absolute_import
 
 # TU/e Robotics
 from . import NavigateToDesignator
-from ..util.designators.navigation import ObserveConstraintsDesignator
+from ..util.designators.navigation import CompoundConstraintsDesignator, RadiusConstraintsDesignator,\
+    LookAtConstraintsDesignator
 
 
 class NavigateToObserve(NavigateToDesignator):
@@ -17,5 +18,7 @@ class NavigateToObserve(NavigateToDesignator):
         :param radius: (float) desired distance to the pose of the entity [m]
         :param margin: (float) allowed margin w.r.t. specified radius on both sides [m]
         """
-        constraint_designator = ObserveConstraintsDesignator(robot, entity_designator, radius, margin)
+        constraint_designator = CompoundConstraintsDesignator()
+        constraint_designator.add(RadiusConstraintsDesignator(entity_designator, radius, margin), 'area')
+        constraint_designator.add(LookAtConstraintsDesignator(entity_designator), 'lookat')
         super(NavigateToObserve, self).__init__(robot, constraint_designator)

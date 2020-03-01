@@ -12,16 +12,20 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 
 
 class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
-    def __init__(self, waypoint_designator, radius=0.15, look_at_designator=None, name=None):
+    """ Navigates to a radius from a waypoint
+    :param waypoint_designator: designator resolving to the waypoint
+    :param radius: allowed distance to the waypoint
+    :param look: whether or not to take the orientation of the waypoint (default True)
+    :param name: name of the designator
+    """
+    def __init__(self, waypoint_designator, radius=0.15, look=True, name=None):
         super(WayPointConstraintsDesignator, self).__init__(name=name)
 
         check_resolve_type(waypoint_designator, Entity)  # Check that the waypoint_designator resolves to an Entity
-        if look_at_designator:
-            check_resolve_type(look_at_designator, Entity)  # Check that the look_at_designator resolves to an Entity
 
         self.waypoint_designator = waypoint_designator
         self.radius = radius
-        self.look_at_designator = look_at_designator
+        self.look = look
 
     def _resolve(self):
         e = self.waypoint_designator.resolve()
@@ -42,17 +46,8 @@ class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
             return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, self.radius), frame="/map")
-
         oc = None
-        if self.look_at_designator:
-            look_at_e = self.look_at_designator.resolve()
-            if look_at_e:
-                oc = OrientationConstraint(frame=look_at_e.id)
-            else:
-                rospy.logerr(
-                    "WayPointConstraintDesignator::generateConstraint: No entity could be resolved from designator '%s'" % self.look_at_designator)
-
-        if not oc:
+        if self.look:
             oc = OrientationConstraint(look_at=Point(x + 10, y, 0.0), angle_offset=rz, frame="/map")
 
         return pc, oc

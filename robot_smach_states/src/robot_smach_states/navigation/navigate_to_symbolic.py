@@ -2,7 +2,8 @@ from __future__ import absolute_import
 
 # TU/e Robotics
 from . import NavigateToDesignator
-from ..util.designators.navigation import SymbolicConstraintsDesignator, RoomConstraintsDesignator
+from ..util.designators.navigation import CompoundConstraintsDesignator, SymbolicConstraintsDesignator,\
+    RoomConstraintsDesignator, LookAtConstraintsDesignator
 
 
 class NavigateToSymbolic(NavigateToDesignator):
@@ -19,7 +20,9 @@ class NavigateToSymbolic(NavigateToDesignator):
             to compute the orientation constraint.
         :param speak: Optional parameter to (not) let the robot speak. default=True
         """
-        constraint_designator = SymbolicConstraintsDesignator(robot, entity_designator_area_name_map, entity_lookat_designator)
+        constraint_designator = CompoundConstraintsDesignator()
+        constraint_designator.add(SymbolicConstraintsDesignator(robot, entity_designator_area_name_map), 'area')
+        constraint_designator.add(LookAtConstraintsDesignator(entity_lookat_designator), 'lookat')
         super(NavigateToSymbolic, self).__init__(robot, constraint_designator, speak=speak)
 
 
@@ -36,5 +39,10 @@ class NavigateToRoom(NavigateToSymbolic):
             used to compute the orientation constraint. If not provided, the entity_designator_room is used.
         :param speak: Optional parameter to (not) let the robot speak. default=True
         """
-        constraint_designator = RoomConstraintsDesignator(robot, entity_designator_room, entity_lookat_designator)
+        constraint_designator = CompoundConstraintsDesignator()
+        constraint_designator.add(RoomConstraintsDesignator(robot, entity_designator_room), 'area')
+        if entity_lookat_designator:
+            constraint_designator.add(LookAtConstraintsDesignator(entity_lookat_designator), 'lookat')
+        else:
+            constraint_designator.add(LookAtConstraintsDesignator(entity_designator_room), 'lookat')
         super(NavigateToRoom, self).__init__(robot, constraint_designator, speak=speak)
