@@ -9,10 +9,11 @@ from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from .place_designator import EmptySpotDesignator
-from ..navigation.navigate_to_place import NavigateToPlace
+from ..navigation.navigate_to_designator import NavigateToDesignator
 from ..utility import LockDesignator
 from ..util.designators import check_type
 from ..util.designators.utility import LockingDesignator
+from ..util.designators.navigation import ArmsreachConstraintsDesignator
 from ..world_model import Inspect
 
 
@@ -187,6 +188,17 @@ class Put(smach.State):
         self._robot.torso.wait_for_motion_done()
 
         return 'succeeded'
+
+
+class NavigateToPlace(NavigateToDesignator):
+    """Navigate so that the arm can reach the place point
+    :param robot: robot object
+    :param place_pose_designator designator that resolves to a geometry_msgs.msg.PoseStamped
+    :param arm_designator: which arm to eventually place with?
+    """
+    def __init__(self, robot, place_pose_designator, arm_designator=None):
+        constraint_designator = ArmsreachConstraintsDesignator(robot, place_pose_designator, arm_designator, look=True)
+        super(NavigateToPlace, self).__init__(robot, constraint_designator)
 
 
 class Place(smach.StateMachine):
