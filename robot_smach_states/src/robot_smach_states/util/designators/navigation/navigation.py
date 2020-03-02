@@ -65,4 +65,3 @@ class CompoundConstraintsDesignator(NavigationConstraintsDesignator):
     def add(self, constraint_designator, name):
         check_resolve_type(constraint_designator, tuple)
         self.designators[name] = constraint_designator
-

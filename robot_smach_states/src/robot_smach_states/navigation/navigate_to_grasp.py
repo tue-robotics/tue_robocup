@@ -9,7 +9,7 @@ class NavigateToGrasp(NavigateToDesignator):
     """Navigate so that the arm can reach the grasp entity
     :param robot: robot object
     :param entity_designator: designator that resolves to an Ed Entity
-    :param arm_designator: which arm to eventually place with?
+    :param arm_designator: which arm to eventually grasp with?
     """
     def __init__(self, robot, entity_designator, arm_designator=None):
         constraint_designator = ArmsreachConstraintsDesignator(robot, entity_designator, arm_designator, look=True)
