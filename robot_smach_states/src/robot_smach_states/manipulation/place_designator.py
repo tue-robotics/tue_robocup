@@ -37,7 +37,7 @@ class EmptySpotDesignator(Designator):
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param arm_designator: Designator resolving to an arm robot part, e.g. OccupiedArmDesignator
         :param name: name for introspection purposes
-        :param area: (optional) area where the item should be placed
+        :param area: (optional) area where the item should be placed, str or str Designator
         :param nav_threshold:
         """
         super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
@@ -176,14 +176,20 @@ class EmptySpotDesignator(Designator):
         marker.lifetime = rospy.Duration(30.0)
         return marker
 
-    def _determine_points_of_interest_with_area(self, entity, area):
+    def _determine_points_of_interest_with_area(self, entity, areades):
         """ Determines the points of interest using an area
         :type entity: Entity
-        :param area: str indicating which volume of the entity to look at
+        :param area: str or str Designator indicating which volume of the entity to look at
         :rtype: [FrameStamped]
         """
 
         # We want to give it a convex hull using the designated area
+        if isinstance(areades, str):
+            area = areades
+        elif areades.resolve_type == str:
+            area = areades.resolve()
+        else:
+            raise AssertionError("Cannot place in {}".format(areades))
 
         if area not in entity.volumes:
             return []

@@ -212,24 +212,16 @@ class Place(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
-        assert(item_to_place.resolve_type == Entity or type(item_to_place) == Entity)
-        assert(arm.resolve_type == PublicArm or type(arm) == PublicArm)
-        #assert(place_volume.resolve_type == str or (type(place_volume) == str))
-
-        # parse place volume
-        if place_volume is not None:
-            if isinstance(place_volume, str):
-                place_area = place_volume
-            elif place_volume.resolve_type == str:
-                place_area = place_volume.resolve()
-            else:
-                raise AssertionError("Cannot place in {}".format(place_volume))
+        check_type(item_to_place, Entity)
+        check_type(arm, PublicArm)
+        if place_volume:
+            check_type(place_volume, str)
 
         # Case 3
         if isinstance(place_pose, str):
             furniture_designator = EdEntityDesignator(robot=robot, id=place_pose)
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   arm_designator=arm, area=place_area)
+                                                   arm_designator=arm, area=place_volume)
         # Case 1
         elif place_pose.resolve_type == FrameStamped or type(place_pose) == FrameStamped:
             furniture_designator = None
@@ -238,7 +230,7 @@ class Place(smach.StateMachine):
         elif place_pose.resolve_type == Entity:
             furniture_designator = place_pose
             place_designator = EmptySpotDesignator(robot=robot, place_location_designator=furniture_designator,
-                                                   arm_designator=arm, area=place_area)
+                                                   arm_designator=arm, area=place_volume)
         else:
             raise AssertionError("Cannot place on {}".format(place_pose))
 
