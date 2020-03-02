@@ -279,7 +279,7 @@ class PickUpTrash(smach.StateMachine):
             #                        transitions={'done': 'GO_BIN'})
 
             smach.StateMachine.add("GO_BIN",
-                                   states.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
+                                   states.manipulation.NavigateToPlace(robot=robot, place_pose_designator=place_pose_designator,
                                                           arm_designator=arm_designator),
                                    transitions={"arrived": "GET_BIN_POSITION",
                                                 "goal_not_defined": "aborted",

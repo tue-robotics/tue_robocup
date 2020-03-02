@@ -3,8 +3,8 @@ import rospy
 import hmi
 
 from robot_smach_states.human_interaction import AskYesNo, HearOptionsExtra, Say
-from robot_smach_states.manipulation import ArmToJointConfig, Grab, Place
-from robot_smach_states.navigation import NavigateToPlace, NavigateToRoom
+from robot_smach_states.manipulation import ArmToJointConfig, Grab, Place, NavigateToPlace
+from robot_smach_states.navigation import NavigateToRoom
 from robot_smach_states.utility import WaitTime
 from robot_smach_states.world_model import Inspect
 from robot_skills.util.kdl_conversions import FrameStamped
@@ -341,7 +341,7 @@ class SelfCleanup(smach.StateMachine):
                                    Place(robot, selected_entity_designator, trash_place_pose, arm_designator_place),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
-            
+
             arm_designator_place_store = ds.OccupiedArmDesignator(robot, arm_properties_place,
                                                                   name="occupied_arm_designator")
             smach.StateMachine.add('PLACE_TO_STORE',
