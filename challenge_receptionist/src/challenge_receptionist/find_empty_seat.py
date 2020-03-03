@@ -144,7 +144,7 @@ class FindEmptySeat(smach.StateMachine):
                                    transitions={'spoken': 'FIND_PEOPLE_IN_ROOM'})
 
             smach.StateMachine.add('FIND_PEOPLE_IN_ROOM',
-                                   FindPeopleInRoom(self.robot, room, people.writeable),
+                                   FindPeopleInRoom(robot, room, people.writeable),
                                    transitions={"found": "DETERMINE_EMPTY_SEAT",
                                                 "not_found": "DETERMINE_EMPTY_SEAT"})  # No people found means you can sit anywhere
 
