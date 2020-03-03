@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import rospy
-from robot_smach_states.human_interaction import Say
+from robot_skills.robot import Robot
+from robot_smach_states.human_interaction import Say, FindPeopleInRoom
 from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.manipulation import PointAt
 from robot_smach_states.reset import ResetArms
@@ -10,6 +11,11 @@ import smach
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import Volume
 from robot_skills.classification_result import ClassificationResult
+
+try:
+    from typing import List
+except ImportError:
+    pass
 
 
 class SeatsInRoomDesignator(ds.Designator):
@@ -44,7 +50,6 @@ class SeatsInRoomDesignator(ds.Designator):
         return "SeatsInRoomDesignator({}, {}, {}, {})".format(self.robot, self.seat_ids, self.room, self.name)
 
 
-
 class SeatVolumeNamesDesignator(ds.Designator):
     def __init__(self, robot, seat_entity_designator, name=None, debug=False):
         super(SeatVolumeNamesDesignator, self).__init__(resolve_type=[str], name=name)
@@ -72,6 +77,44 @@ class SeatVolumeNamesDesignator(ds.Designator):
         return "SeatsInRoomDesignator({}, {}, {}, {})".format(self.robot, self.seat_ids, self.room, self.name)
 
 
+class DetermineEmptySeat(smach.State):
+    """
+    Find an Entity with a volume that does *not* have a Person-entity in it
+    This is an empty seat.
+    """
+    def __init__(self, robot, people_des, all_seats_des, empty_seat_des, empty_volume_name_des):
+        # type: (Robot, ds.Designator, ds.Designator, ds.VariableWriter, ds.VariableWriter) -> None
+        super(DetermineEmptySeat, self).__init__(outcomes=["done"])
+        ds.check_type(people_des, [Entity])
+        self._people_des = people_des
+
+        ds.check_type(all_seats_des, [Entity])
+        self._all_seats_des = all_seats_des
+
+        ds.is_writeable(empty_seat_des)
+        ds.check_type(empty_seat_des, Entity)
+        self._empty_seat_des = empty_seat_des
+
+        ds.is_writeable(empty_volume_name_des)
+        ds.check_type(empty_volume_name_des, str)
+        self._empty_volume_name_des = empty_volume_name_des
+
+    def execute(self):
+        people = self._people_des.resolve()  # type: List[Entity]
+        all_seat_entities = self._all_seats_des.resolve()  # type: List[Entity] of class Person
+
+        for seat_entity in all_seat_entities:
+            # maybe TODO: do this in a dictionary comprehension?
+            seat_volume_names = sorted([k for k in seat_entity.volumes.keys() if k.endswith('seat')])
+            for seat_volume_name in seat_volume_names:
+                people_in_seat_volume = seat_entity.entities_in_volume(people, volume_id=seat_volume_name)
+                if not people_in_seat_volume:
+                    self._empty_seat_des.write(seat_entity)
+                    self._empty_volume_name_des.write(seat_volume_name)
+                    break
+
+        return 'done'
+
 class FindEmptySeat(smach.StateMachine):
     """
     Iterate over all seat-type objects and check that their 'on-top-of' volume is empty
@@ -81,15 +124,16 @@ class FindEmptySeat(smach.StateMachine):
     def __init__(self, robot, seats_to_inspect, room, seat_is_for=None):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
+        people = ds.VariableDesignator(resolve_type=[Entity])
+
         seats = SeatsInRoomDesignator(robot, seats_to_inspect, room, "seats_in_room")
-        seat_ent_des = ds.VariableDesignator(resolve_type=Entity)
+        seat_ent_des = ds.VariableDesignator(resolve_type=Entity, name='seat_entity_designator')
         if seat_is_for:
             ds.check_type(seat_is_for, str)
         else:
             seat_is_for = ds.Designator('someone')
 
-        seat_volumes = SeatVolumeNamesDesignator(robot, seat_ent_des)
-        seat_volume_des = ds.VariableDesignator(resolve_type=str)
+        seat_volume_des = ds.VariableDesignator(resolve_type=str, name='seat_volume_name_designator')
 
         with self:
             smach.StateMachine.add('SAY_LETS_FIND_SEAT',
@@ -97,24 +141,17 @@ class FindEmptySeat(smach.StateMachine):
                                               ["Let me find a place for {name} to sit. Please be patient while I check out where there's place to sit"],
                                               name=seat_is_for,
                                               block=False),
-                                   transitions={'spoken': 'ITERATE_NEXT_SEAT'})
+                                   transitions={'spoken': 'FIND_PEOPLE_IN_ROOM'})
 
-            smach.StateMachine.add('ITERATE_NEXT_SEAT',
-                                   IterateDesignator(seats, seat_ent_des.writeable),
-                                   transitions={'next': 'ITERATE_NEXT_VOLUME',
-                                                'stop_iteration': 'SAY_NO_EMPTY_SEATS'})
+            smach.StateMachine.add('FIND_PEOPLE_IN_ROOM',
+                                   FindPeopleInRoom(self.robot, room, people.writeable),
+                                   transitions={"found": "DETERMINE_EMPTY_SEAT",
+                                                "not_found": "DETERMINE_EMPTY_SEAT"})  # No people found means you can sit anywhere
 
-            smach.StateMachine.add('ITERATE_NEXT_VOLUME',
-                                   IterateDesignator(seat_volumes, seat_volume_des.writeable),
-                                   transitions={'next': 'CHECK_SEAT_EMPTY',
-                                                'stop_iteration': 'ITERATE_NEXT_SEAT'})
+            smach.StateMachine.add('DETERMINE_EMPTY_SEAT',
+                                   DetermineEmptySeat(self.robot, people, seats, seat_ent_des.writeable, seat_volume_des.writeable),
+                                   transitions={"done": "POINT_AT_EMPTY_SEAT"})
 
-            smach.StateMachine.add('CHECK_SEAT_EMPTY',
-                                   CheckVolumeEmpty(robot, seat_ent_des, seat_volume_des, 0.2),
-                                   transitions={'occupied': 'ITERATE_NEXT_VOLUME',
-                                                'empty': 'POINT_AT_EMPTY_SEAT',
-                                                'partially_occupied': 'POINT_AT_PARTIALLY_OCCUPIED_SEAT',
-                                                'failed': 'ITERATE_NEXT_SEAT'})
 
             smach.StateMachine.add('POINT_AT_EMPTY_SEAT',
                                    PointAt(robot=robot,
