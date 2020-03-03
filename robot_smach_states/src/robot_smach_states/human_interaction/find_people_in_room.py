@@ -517,24 +517,5 @@ class FindPeopleInRoom(smach.StateMachine):
 
 
 if __name__ == "__main__":
-
     import doctest
     doctest.testmod()
-
-    # from robot_skills import get_robot
-    #
-    # if len(sys.argv) > 1:
-    #     robot_name = sys.argv[1]
-    #     _area = sys.argv[2]
-    #
-    #     rospy.init_node('test_find_people_in_room')
-    #     _robot = get_robot(robot_name)
-    #
-    #     people = ds.VariableDesignator(resolve_type=[Entity])
-    #     sm = FindPeopleInRoom(_robot, _area, people.writeable)
-    #     sm.execute()
-    #
-    #     rospy.loginfo("Found {}".format(people.resolve()))
-    # else:
-    #     print("Please provide robot name as argument.")
-    #     exit(1)
