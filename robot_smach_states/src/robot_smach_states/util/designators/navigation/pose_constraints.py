@@ -5,7 +5,7 @@ from geometry_msgs.msg import *
 
 # TU/e Robotics
 from .navigation import NavigationConstraintsDesignator
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 
 
 class PoseConstraintsDesignator(NavigationConstraintsDesignator):
@@ -31,4 +31,5 @@ class PoseConstraintsDesignator(NavigationConstraintsDesignator):
         if self.rz:
             oc = OrientationConstraint(look_at=Point(self.x + 1, self.y, 0.0), angle_offset=self.rz, frame=self._frame_id)
 
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint

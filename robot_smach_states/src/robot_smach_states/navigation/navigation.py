@@ -63,7 +63,8 @@ class getPlan(smach.State):
             rospy.logwarn("Invalid constraints given to getPlan(). constraint: {}".format(constraint))
             return "goal_not_defined"
 
-        pc, oc = constraint
+        pc = constraint.pc
+        oc = constraint.oc
 
         plan = self.robot.base.global_planner.getPlan(pc)
 

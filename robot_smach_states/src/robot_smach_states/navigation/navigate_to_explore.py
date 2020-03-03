@@ -80,8 +80,8 @@ class NavigateToExplore(NavigateTo):
 
         pc = PositionConstraint(constraint=pci, frame="/map")
         oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map")
-
-        return pc, oc
+        constraint = PoseConstraint(pc, oc)
+        return constraint
 
     def breakOut(self):
 

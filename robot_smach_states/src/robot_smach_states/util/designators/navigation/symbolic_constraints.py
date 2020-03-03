@@ -6,7 +6,7 @@ from geometry_msgs.msg import *
 
 # TU/e Robotics
 from .navigation import NavigationConstraintsDesignator
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
 from .. import check_resolve_type
@@ -66,7 +66,8 @@ class SymbolicConstraintsDesignator(NavigationConstraintsDesignator):
 
         pc = robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
         oc = None
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint
 
 
 class RoomConstraintsDesignator(SymbolicConstraintsDesignator):

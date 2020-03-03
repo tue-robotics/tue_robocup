@@ -6,7 +6,7 @@ from geometry_msgs.msg import *
 
 # TU/e Robotics
 from .navigation import NavigationConstraintsDesignator
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
 from .. import check_resolve_type
@@ -49,5 +49,5 @@ class LookAtConstraintsDesignator(NavigationConstraintsDesignator):
 
         pc = None
         oc = OrientationConstraint(look_at=look_at, angle_offset=offset, frame=entity_lookat.pose.frame_id)
-
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint

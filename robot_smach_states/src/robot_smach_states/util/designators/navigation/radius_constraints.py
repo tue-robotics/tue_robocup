@@ -6,7 +6,7 @@ from geometry_msgs.msg import *
 
 # TU/e Robotics
 from .navigation import NavigationConstraintsDesignator
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 from .. import check_resolve_type
 from robot_skills.util.entity import Entity
 
@@ -74,5 +74,6 @@ class RadiusConstraintsDesignator(NavigationConstraintsDesignator):
 
         pc = PositionConstraint(constraint=pci, frame="/map")  # Create the position constraint from the string
         oc = None
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint
 

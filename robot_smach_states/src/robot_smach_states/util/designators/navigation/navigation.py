@@ -8,7 +8,7 @@ import rospy
 
 # TU/e Robotics
 from ..core import Designator
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 from .. import check_resolve_type
 
 
@@ -19,7 +19,7 @@ class NavigationConstraintsDesignator(Designator):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, name=None):
-        super(NavigationConstraintsDesignator, self).__init__(resolve_type=tuple, name=name)
+        super(NavigationConstraintsDesignator, self).__init__(resolve_type=PoseConstraint, name=name)
 
     @abc.abstractmethod
     def _resolve(self):
@@ -45,23 +45,26 @@ class CompoundConstraintsDesignator(NavigationConstraintsDesignator):
         pc_frame_id = None
         oc = None
         for key in self.designators:
-            pci, oci = self.designators[key].resolve()
-            if pci:
+            constrainti = self.designators[key].resolve()
+            pci = constrainti.pc
+            oci = constrainti.oc
+            if pci.frame != '':
                 if pc_frame_id:
-                    assert pc_frame_id == pci.frame
+                    assert (pc_frame_id == pci.frame), "frames of different position constraints must be the same"
                     pc_string += ' and '
                 else:
                     pc_frame_id = pci.frame
                 pc_string += pci.constraint
-            if oci:
+            if oci.frame != '':
                 if oc:
-                    rospy.logerr("only one orientation constraint allowed! Tell Peter to fix this")
+                    rospy.logerr("only one orientation constraint allowed! This must be fixed in cb_base_navigation")
                 else:
                     oc = oci
 
         pc = PositionConstraint(constraint=pc_string, frame=pc_frame_id)
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint
 
     def add(self, constraint_designator, name):
-        check_resolve_type(constraint_designator, tuple)
+        check_resolve_type(constraint_designator, PoseConstraint)
         self.designators[name] = constraint_designator

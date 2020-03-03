@@ -8,7 +8,7 @@ from geometry_msgs.msg import *
 from robot_skills.util.entity import Entity
 from .navigation import NavigationConstraintsDesignator
 from ..checks import check_resolve_type
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 
 
 class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
@@ -49,5 +49,5 @@ class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
         oc = None
         if self.look:
             oc = OrientationConstraint(look_at=Point(x + 10, y, 0.0), angle_offset=rz, frame="/map")
-
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint

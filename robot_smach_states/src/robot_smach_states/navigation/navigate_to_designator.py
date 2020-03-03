@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 # TU/e Robotics
 from .navigation import NavigateTo
+from cb_planner_msgs_srvs.msg import PoseConstraint
 from ..util.designators import check_resolve_type
 
 
@@ -12,7 +13,7 @@ class NavigateToDesignator(NavigateTo):
         """
         super(NavigateToDesignator, self).__init__(robot, reset_head=reset_head, speak=speak)
 
-        check_resolve_type(constraint_designator, tuple)  #TODO verify in more detail that this is indeed a constraint designator
+        check_resolve_type(constraint_designator, PoseConstraint)
         self.constraint_designator = constraint_designator
 
     def generateConstraint(self):

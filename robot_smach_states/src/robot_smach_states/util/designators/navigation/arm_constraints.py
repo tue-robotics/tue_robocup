@@ -10,7 +10,7 @@ from geometry_msgs.msg import *
 # TU/e Robotics
 from .navigation import NavigationConstraintsDesignator
 from .look_at_constraints import LookAtConstraintsDesignator
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.arms import PublicArm
@@ -89,4 +89,5 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
             angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
             oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
 
-        return pc, oc
+        constraint = PoseConstraint(pc=pc, oc=oc)
+        return constraint
