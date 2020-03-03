@@ -201,7 +201,7 @@ class Robot(object):
         :param required_arm_name: Name of the arm that is needed. If set, no
                 other arm will be considered. None means any arm will do.
 
-        :param force_sensor_required: Bool specifying whether a force_sensor is available or not.
+        :param force_sensor_required: Bool specifying whether a force_sensor is needed or not.
 
         :param required_objects: Collection of objects that the arm must have. Special
                 pseudo-objects PseudoObjects.ANY and PseudoObjects.EMPTY may be used
