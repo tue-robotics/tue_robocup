@@ -88,6 +88,8 @@ class Hero(robot.Robot):
 
         self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
         arm.wait_for_motion_done()
+        while self.base.local_planner.getStatus() != "arrived":
+            rospy.sleep(0.1)
         return True
 
     def move_to_hmi_pose(self):
@@ -118,18 +120,24 @@ class Hero(robot.Robot):
         torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
         z_head = grasp_target.z() + z_over
 
+        arm = self.parts['leftArm']
+
+        if z_head < 1.3:
+            # we dont need to do stupid stuff
+            arm._send_joint_trajectory('prepare_grasp')
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
-        arm = self.parts['leftArm']
+        pose = arm.default_trajectories['prepare_grasp']
+        pose[1][0] = z_arm  # You made me do this Lars!
+        arm._send_joint_trajectory(pose)
 
-        pose = arm.default_configurations['prepare_grasp']
-        pose[0] = z_arm
-        arm._send_joint_trajectory([pose])
-
-        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map")
+        angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
+        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)
         arm.wait_for_motion_done()
+        while self.base.local_planner.getStatus() != "arrived":
+            rospy.sleep(0.1)
         return True
 
     def go_to_driving_pose(self):
