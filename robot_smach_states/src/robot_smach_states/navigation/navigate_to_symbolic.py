@@ -39,10 +39,6 @@ class NavigateToRoom(NavigateToSymbolic):
             used to compute the orientation constraint. If not provided, the entity_designator_room is used.
         :param speak: Optional parameter to (not) let the robot speak. default=True
         """
-        constraint_designator = CompoundConstraintsDesignator()
-        constraint_designator.add(RoomConstraintsDesignator(robot, entity_designator_room), 'area')
-        if entity_lookat_designator:
-            constraint_designator.add(LookAtConstraintsDesignator(entity_lookat_designator), 'lookat')
-        else:
-            constraint_designator.add(LookAtConstraintsDesignator(entity_designator_room), 'lookat')
-        super(NavigateToRoom, self).__init__(robot, constraint_designator, speak=speak)
+        if not entity_lookat_designator:
+            entity_lookat_designator = entity_designator_room
+        super(NavigateToRoom, self).__init__(robot, entity_designator_room, entity_lookat_designator, speak=speak)
