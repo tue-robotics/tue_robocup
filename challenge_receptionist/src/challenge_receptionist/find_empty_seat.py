@@ -82,9 +82,11 @@ class DetermineEmptySeat(smach.State):
     Find an Entity with a volume that does *not* have a Person-entity in it
     This is an empty seat.
     """
-    def __init__(self, robot, people_des, all_seats_des, empty_seat_des, empty_volume_name_des):
+    def __init__(self, robot, people_des, all_seats_des, empty_seat_des, empty_volume_name_des, debug=False):
         # type: (Robot, ds.Designator, ds.Designator, ds.VariableWriter, ds.VariableWriter) -> None
         super(DetermineEmptySeat, self).__init__(outcomes=["done"])
+        self._debug = debug
+
         ds.check_type(people_des, [Entity])
         self._people_des = people_des
 
@@ -99,7 +101,9 @@ class DetermineEmptySeat(smach.State):
         ds.check_type(empty_volume_name_des, str)
         self._empty_volume_name_des = empty_volume_name_des
 
-    def execute(self):
+    def execute(self, userdata):
+        if self._debug:
+            import ipdb; ipdb.set_trace()
         people = self._people_des.resolve()  # type: List[Entity]
         all_seat_entities = self._all_seats_des.resolve()  # type: List[Entity] of class Person
 
