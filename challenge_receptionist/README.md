@@ -24,4 +24,4 @@ so that the robot will introduce new guests to John (and other already introduce
 - [x] Check multiple volumes for emptiness
 - [ ] Point at correct volume that is empty
 - [x] For each seat, define various seat volumes
-- [ ] Check for Person entities in volumes, not for how full the volume is
+- [x] Check for Person entities in volumes, not for how full the volume is
