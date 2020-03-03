@@ -27,7 +27,7 @@ class EdEntityCollectionDesignator(Designator):
     >>> check_resolve_type(entities, [Entity]) #This is more a test for check_resolve_type to be honest :-/
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
+    def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", parse=True, criteriafuncs=None,
                  type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates a collection of entities of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
@@ -102,7 +102,7 @@ class EdEntityDesignator(Designator):
     Resolves to an entity from an Ed query
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
+    def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", parse=True, criteriafuncs=None,
                  weight_function=None, type_designator=None, center_point_designator=None, id_designator=None,
                  debug=False, name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
