@@ -41,4 +41,4 @@ class NavigateToRoom(NavigateToSymbolic):
         """
         if not entity_lookat_designator:
             entity_lookat_designator = entity_designator_room
-        super(NavigateToRoom, self).__init__(robot, entity_designator_room, entity_lookat_designator, speak=speak)
+        super(NavigateToRoom, self).__init__(robot, {entity_designator_room: "in"}, entity_lookat_designator, speak=speak)
