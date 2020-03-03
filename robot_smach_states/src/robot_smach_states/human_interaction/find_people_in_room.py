@@ -13,6 +13,9 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.navigation import NavigateToWaypoint, NavigateToRoom
+from robot_smach_states.world_model import UpdateDestEntityPoseWithSrcEntity
 
 
 class FindPeople(smach.State):
@@ -326,7 +329,7 @@ class FindFirstPerson(smach.StateMachine):
                      })
 
             self.add("GET_FIRST_ITERATE",
-                     states.IterateDesignator(found_people_designator,
+                     IterateDesignator(found_people_designator,
                                               found_person_designator),
                      transitions={'next': 'found',
                                   'stop_iteration': 'failed'})
@@ -416,7 +419,7 @@ class SetPoseFirstFoundPersonToEntity(smach.StateMachine):
                      })
 
             self.add("UPDATE_POSE",
-                     states.UpdateDestEntityPoseWithSrcEntity(
+                     UpdateDestEntityPoseWithSrcEntity(
                          robot=robot,
                          src_entity_designator=found_person_designator,
                          dst_entity_designator=dst_entity_designator,
@@ -492,13 +495,13 @@ class FindPeopleInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   states.NavigateToWaypoint(robot=robot,
+                                   NavigateToWaypoint(robot=robot,
                                                              waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot=robot,
                                                                              entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PEOPLE",
                                                 "unreachable": "not_found",
