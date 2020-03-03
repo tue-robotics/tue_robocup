@@ -14,9 +14,10 @@ class Hero(robot.Robot):
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
+        joints_piece = arms.ArmJointsPiece(self.robot_name)
         self.add_arm_part(
             'leftArm',
-            arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+            arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left", joints_piece=joints_piece)
         )
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
@@ -43,9 +44,6 @@ class Hero(robot.Robot):
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
-
-        #rename joint names
-        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for part in self.parts.itervalues():

@@ -17,6 +17,7 @@ from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
 from robot_skills.robot_part import RobotPart
+from robot_skills.utils.parameter_loading import load_param
 
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
@@ -318,6 +319,42 @@ class GripperState(object):
     OPEN = "open"
     CLOSE = "close"
 
+class ArmPiece(object):
+    """
+    Base class for arm pieces.
+
+    :var robot_name: Name of the robot.
+    """
+    def __init__(self, robot_name: str):
+        self.robot_name = robot_name
+
+    def load_param(self, param_name, default=None);
+        return load_param(self.robot_name, param_name, default)
+
+class ArmJointsPiece(ArmPiece):
+    """
+    :var arm_joint_names: Names of all available arm joints.
+    :var torso_joint_names: Names of all available torso joints.
+    """
+    def __init__(self, robot_name: str, arm_joints_suffix: str=""):
+        """
+        Constructor.
+
+        :param robot_name: Name of the robot being used.
+        :param arm_joints_suffix: Suffix to append to names of arm joints.
+        """
+        super(ArmJointsPiece, self).__init__(robot_name)
+
+        joint_names = self.load_param('skills/arm/joint_names')
+        self.arm_joint_names = [name + arm_joints_suffix for name in joint_names]
+        self.torso_joint_names = self.load_param('skills/torso/joint_names')
+
+    def get_arm_joint_names(self):
+        return self.arm_joint_names
+
+    def get_torso_joint_names(self):
+        return sef.torso_joint_names
+
 
 class Arm(RobotPart):
     """
@@ -332,7 +369,7 @@ class Arm(RobotPart):
     #To open left gripper
     >>> left.send_gripper_goal_open(10)  # doctest: +SKIP
     """
-    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, side: str, joints_piece: ArmJointsPiece=None):
         """
         constructor
 
@@ -340,6 +377,7 @@ class Arm(RobotPart):
         :param tf_listener: tf_server.TFClient()
         :param get_joint_states: get_joint_states function for getting the last joint states
         :param side: left or right
+        :param joints_piece If specified, arm part containing the arm and torso joint names.
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
@@ -359,9 +397,10 @@ class Arm(RobotPart):
         go = self.load_param('skills/arm/' + self.side + '/base_offset')
         self._base_offset = kdl.Vector(go["x"], go["y"], go["z"])
 
-        self.joint_names = self.load_param('skills/arm/joint_names')
-        self.joint_names = [name + "_" + self.side for name in self.joint_names]
-        self.torso_joint_names = self.load_param('skills/torso/joint_names')
+        if joints_piece:
+            self._joints_part = joints_piece
+        else:
+            self._joints_part = ArmJointsPiece(self.robot_name, suffix="_" + side)
 
         self.default_configurations = self.load_param('skills/arm/default_configurations')
         self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
@@ -734,10 +773,12 @@ class Arm(RobotPart):
         if not joints_references:
             return False
 
-        if len(joints_references[0]) == len(self.joint_names) + len(self.torso_joint_names):
-            joint_names = self.torso_joint_names + self.joint_names
+        arm_joint_names = self._joints_part.get_arm_joint_names()
+        torso_joint_names = self._joints_part.get_torso_joint_names()
+        if len(joints_references[0]) == len(arm_joint_names) + len(torso_joint_names):
+            joint_names = torso_joint_names + arm_joint_names
         else:
-            joint_names = self.joint_names
+            joint_names = arm_joint_names
 
         if isinstance(max_joint_vel, (float, int)):
             max_joint_vel = [max_joint_vel]*len(joint_names)
@@ -763,8 +804,7 @@ class Arm(RobotPart):
                 positions=joints_reference,
                 time_from_start=rospy.Duration.from_sec(time_from_start)))
 
-        joint_trajectory = JointTrajectory(joint_names=joint_names,
-                                           points=ps)
+        joint_trajectory = JointTrajectory(joint_names=joint_names, points=ps)
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
         rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
@@ -894,7 +934,7 @@ class Arm(RobotPart):
 
 
 class ForceSensingArm(Arm):
-    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, side: str, joints_piece: ArmJointsPiece=None):
         """
         constructor
 
@@ -904,8 +944,10 @@ class ForceSensingArm(Arm):
         :param tf_listener: tf_server.TFClient()
         :param get_joint_states: get_joint_states function for getting the last joint states
         :param side: left or right
+        :param joints_piece: If specified, arm part containing the arm and torso joint names.
+
         """
-        super(ForceSensingArm, self).__init__(robot_name, tf_listener, get_joint_states, side)
+        super(ForceSensingArm, self).__init__(robot_name, tf_listener, get_joint_states, side, joints_piece)
 
         self.force_sensor = ForceSensor(robot_name, tf_listener, "/" + robot_name + "/wrist_wrench/raw")
 
@@ -931,16 +973,17 @@ class ForceSensingArm(Arm):
         self._ac_joint_traj.send_goal(self._make_goal(current_joint_state, 0.5))
 
     def _make_goal(self, current_joint_state, timeout):
-        positions = [current_joint_state[n] for n in self.joint_names]
+        arm_joint_names = self._joints_part.get_arm_joint_names()
+        positions = [current_joint_state[n] for n in arm_joint_names]
         points = [JointTrajectoryPoint(positions=positions,
                                        time_from_start=rospy.Duration.from_sec(timeout))]
-        trajectory = JointTrajectory(joint_names=self.joint_names, points=points)
+        trajectory = JointTrajectory(joint_names=arm_joint_names, points=points)
         return FollowJointTrajectoryGoal(trajectory=trajectory)
 
 
 class FakeArm(RobotPart):
-    def __init__(self, robot_name, tf_listener, side):
-        super(FakeArm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_listener, side: str, joints_piece: ArmJointsPiece=None):
+        super(FakeArm, self).__init__(robot_name=robot_name, tf_listener=tf_listener, joints_piece)
         self.side = side
         if (self.side is "left") or (self.side is "right"):
             pass
