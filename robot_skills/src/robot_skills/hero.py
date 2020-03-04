@@ -2,7 +2,7 @@ from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, pe
 from .simulation import is_sim_mode, SimEButton
 
 import rospy
-
+import math
 
 class Hero(robot.Robot):
     """docstring for Hero"""
@@ -124,7 +124,8 @@ class Hero(robot.Robot):
 
         if z_head < 1.3:
             # we dont need to do stupid stuff
-            arm._send_joint_trajectory('prepare_grasp')
+            arm.send_joint_trajectory('prepare_grasp')
+            return True
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
