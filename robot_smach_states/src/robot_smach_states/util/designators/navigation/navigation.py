@@ -13,6 +13,14 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 from .. import check_resolve_type
 
 PoseConstraint = namedtuple('PoseConstraint', 'pc oc')
+"""
+A combined position- and orientationconstraint
+
+:param pc:
+:type cb_planner_msgs_srvs.msg PositionConstraint
+:param oc
+:type cb_planner_msgs_srvs.msg OrientationConstraint
+"""
 
 
 class NavigationConstraintsDesignator(Designator):
