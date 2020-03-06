@@ -9,10 +9,12 @@ import PyKDL as kdl
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
+from robot_skills.arms import PublicArm
+from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
-from ..util.designators.ed_designators import Designator
+from ..util.designators import Designator, check_type
 from cb_planner_msgs_srvs.msg import PositionConstraint
-from robot_smach_states.util.geometry_helpers import offsetConvexHull
+from ..util.geometry_helpers import offsetConvexHull
 
 
 class EmptySpotDesignator(Designator):
@@ -43,11 +45,17 @@ class EmptySpotDesignator(Designator):
         super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
         self.robot = robot
 
+        check_type(place_location_designator, Entity)
         self.place_location_designator = place_location_designator
+
+        check_type(arm_designator, PublicArm)
         self.arm_designator = arm_designator
+
+        check_type(area, str)
+        self._area = area
+
         self._edge_distance = 0.05  # Distance to table edge
         self._spacing = 0.15
-        self._area = area
         self._nav_threshold = 0.3   # Distance we are willing to drive further for better edge_score
 
         self.marker_pub = rospy.Publisher('/empty_spots', MarkerArray, queue_size=1)
@@ -179,7 +187,7 @@ class EmptySpotDesignator(Designator):
     def _determine_points_of_interest_with_area(self, entity, areades):
         """ Determines the points of interest using an area
         :type entity: Entity
-        :param area: str or str Designator indicating which volume of the entity to look at
+        :param areades: str or str Designator indicating which volume of the entity to look at
         :rtype: [FrameStamped]
         """
 
