@@ -13,8 +13,11 @@ from .. import check_resolve_type
 
 
 class NavigationConstraintsDesignator(Designator):
-    """ Designator to provide constraints for navigation.
-        This is an abstract method. you cannot create an instance of this
+    """
+    Designator to provide constraints for navigation.
+    This is an abstract class. you cannot create an instance of this
+
+    :param name: name of the designator
     """
     __metaclass__ = abc.ABCMeta
 
@@ -27,7 +30,10 @@ class NavigationConstraintsDesignator(Designator):
 
 
 class CompoundConstraintsDesignator(NavigationConstraintsDesignator):
-    """ Combine multiple navigation constraints
+    """
+    Combine multiple navigation constraints.
+
+    :param name: name of the compound designator
     usage:
         compdes = CompoundConstraintDesignator()
         compdes.add(SomeConstraintDesignator, 'designator_name')
@@ -66,5 +72,12 @@ class CompoundConstraintsDesignator(NavigationConstraintsDesignator):
         return constraint
 
     def add(self, constraint_designator, name):
+        """
+        Add a constraint designator to the compound designator
+
+        :param constraint_designator: Designator to add to the compoound designator
+        :param name: name of the designator that is added
+        :return: None
+        """
         check_resolve_type(constraint_designator, PoseConstraint)
         self.designators[name] = constraint_designator

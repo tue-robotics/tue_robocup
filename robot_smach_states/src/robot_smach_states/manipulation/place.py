@@ -191,7 +191,8 @@ class Put(smach.State):
 
 
 class NavigateToPlace(NavigateToDesignator):
-    """Navigate so that the arm can reach the place point
+    """
+    Navigate so that the arm can reach the place point
     :param robot: robot object
     :param place_pose_designator designator that resolves to a geometry_msgs.msg.PoseStamped
     :param arm_designator: which arm to eventually place with?

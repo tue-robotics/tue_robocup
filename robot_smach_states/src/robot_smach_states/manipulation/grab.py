@@ -281,7 +281,9 @@ class PickUp(smach.State):
 
 
 class NavigateToPreGrasp(NavigateToDesignator):
-    """Navigate so that the arm can reach the grasp entity and we can see the entity
+    """
+    Navigate so that the arm can reach the grasp entity and we can see the entity
+
     :param robot: robot object
     :param entity_designator: designator that resolves to an Ed Entity
     :param arm_designator: which arm to eventually grasp with?
@@ -294,7 +296,9 @@ class NavigateToPreGrasp(NavigateToDesignator):
 
 
 class NavigateToGrasp(NavigateToDesignator):
-    """Navigate so that the arm can easily grasp the entity
+    """
+    Navigate so that the arm can easily grasp the entity
+
     :param robot: robot object
     :param entity_designator: designator that resolves to an Ed Entity
     :param arm_designator: which arm to eventually grasp with?
