@@ -5,10 +5,11 @@ from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import *
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 import ed_msgs.msg
 from .navigation import NavigateTo
 from ..util.designators import check_resolve_type
+from ..util.designators.navigation.navigation import PoseConstraint
 
 
 class NavigateToExplore(NavigateTo):

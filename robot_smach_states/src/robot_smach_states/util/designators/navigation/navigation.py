@@ -2,14 +2,17 @@ from __future__ import absolute_import
 
 # System
 import abc
+from collections import namedtuple
 
 # ROS
 import rospy
 
 # TU/e Robotics
 from ..core import Designator
-from cb_planner_msgs_srvs.msg import PoseConstraint, OrientationConstraint, PositionConstraint
+from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 from .. import check_resolve_type
+
+PoseConstraint = namedtuple('PoseConstraint', 'pc oc')
 
 
 class NavigationConstraintsDesignator(Designator):
@@ -49,27 +52,39 @@ class CompoundConstraintsDesignator(NavigationConstraintsDesignator):
 
         pc_string = ""
         pc_frame_id = None
+        pc = None
         oc = None
         for key in self.designators:
-            constrainti = self.designators[key].resolve()
-            pci = constrainti.pc
-            oci = constrainti.oc
-            if pci.frame != '':
+            constraint = self.designators[key].resolve()
+            if not constraint:
+                rospy.logerr("Designator: {} in CompoundConstraintdesignator {} did not resolve".format(self.designators[key].name, self.name))
+                continue
+
+            pci = constraint.pc
+            oci = constraint.oc
+
+            if pci:
                 if pc_frame_id:
                     assert (pc_frame_id == pci.frame), "frames of different position constraints must be the same"
                     pc_string += ' and '
                 else:
                     pc_frame_id = pci.frame
                 pc_string += pci.constraint
-            if oci.frame != '':
+            if oci:
                 if oc:
                     rospy.logerr("only one orientation constraint allowed! This must be fixed in cb_base_navigation")
                 else:
                     oc = oci
 
-        pc = PositionConstraint(constraint=pc_string, frame=pc_frame_id)
-        constraint = PoseConstraint(pc=pc, oc=oc)
-        return constraint
+        if pc_frame_id:
+            pc = PositionConstraint(constraint=pc_string, frame=pc_frame_id)
+
+        if pc_frame_id or oc:
+            constraint = PoseConstraint(pc, oc)
+            return constraint
+        else:
+            rospy.logerr("CompoundDesignator {} did not resolve to any constraints".format(self.name))
+            return None
 
     def add(self, constraint_designator, name):
         """

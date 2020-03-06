@@ -16,7 +16,7 @@ from ..util.designators import EdEntityDesignator
 
 from . import navigation
 from ..human_interaction.human_interaction import Say
-from .navigate_to_symbolic import NavigateToSymbolic
+from ..util.designators.navigation import SymbolicConstraintsDesignator, LookAtConstraintsDesignator
 
 
 def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
@@ -407,10 +407,13 @@ class GuideToSymbolic(Guide):
     def generate_constraint(self):
         # type: () -> tuple
         """
-        Generates the constraint using the generate constraint method of NavigateToSymbolic
+        Generates the constraint using the generate constraint method of the SymbolicConstraintDesignator
+        and the LookatConstraintsDesignator
 
         :return: (tuple(PositionConstraint, OrientationConstraint)). If one of the entities does not resolve,
         None is returned.
         """
-        return NavigateToSymbolic.generate_constraint(
-            self.robot, self._entity_designator_area_name_map, self._entity_lookat_designator)
+        pos = SymbolicConstraintsDesignator.generate_constraint(
+            self.robot, self._entity_designator_area_name_map)
+        orient = LookAtConstraintsDesignator.generate_constraint(self._entity_lookat_designator)
+        return pos.pc, orient.oc
