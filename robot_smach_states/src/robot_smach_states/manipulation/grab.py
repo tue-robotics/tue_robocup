@@ -280,21 +280,6 @@ class PickUp(smach.State):
         return e1.distance_to_3d(e2._pose.p)
 
 
-class NavigateToPreGrasp(NavigateToDesignator):
-    """
-    Navigate so that the arm can reach the grasp entity and we can see the entity
-
-    :param robot: robot object
-    :param entity_designator: designator that resolves to an Ed Entity
-    :param arm_designator: which arm to eventually grasp with?
-    """
-    def __init__(self, robot, entity_designator, arm_designator=None):
-        constraint_designator = CompoundConstraintsDesignator()
-        constraint_designator.add(ArmsreachConstraintsDesignator(robot, entity_designator, arm_designator, look=False), 'reach')
-        constraint_designator.add(LookAtConstraintsDesignator(entity_designator, 1.57), 'face') #TODO hero-specific magic number
-        super(NavigateToPreGrasp, self).__init__(robot, constraint_designator, reset_head=True)
-
-
 class NavigateToGrasp(NavigateToDesignator):
     """
     Navigate so that the arm can easily grasp the entity
@@ -302,10 +287,15 @@ class NavigateToGrasp(NavigateToDesignator):
     :param robot: robot object
     :param entity_designator: designator that resolves to an Ed Entity
     :param arm_designator: which arm to eventually grasp with?
+    :param reset_head: whether or not to use the head rgbd sensor during navigation.
     """
-    def __init__(self, robot, entity_designator, arm_designator=None):
-        constraint_designator = ArmsreachConstraintsDesignator(robot, entity_designator, arm_designator, look=True)
-        super(NavigateToGrasp, self).__init__(robot, constraint_designator, reset_head=False)
+    def __init__(self, robot, entity_designator, arm_designator=None, reset_head=False):
+        constraint_designator = ArmsreachConstraintsDesignator(robot,
+                                                               entity_designator,
+                                                               arm_designator,
+                                                               look=True,
+                                                               name="graspConstraints")
+        super(NavigateToGrasp, self).__init__(robot, constraint_designator, reset_head=reset_head)
 
 
 class ResetOnFailure(smach.StateMachine):
@@ -354,19 +344,14 @@ class Grab(smach.StateMachine):
         check_type(arm, PublicArm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_PREGRASP', NavigateToPreGrasp(robot, item, arm),
+            smach.StateMachine.add('NAVIGATE_TO_GRASP', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
 
             smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
-                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
+                                   transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
-
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
-                                   transitions={'unreachable': 'RESET_FAILURE',
-                                                'goal_not_defined': 'RESET_FAILURE',
-                                                'arrived': 'GRAB'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',

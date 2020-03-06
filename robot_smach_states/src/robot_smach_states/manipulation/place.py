@@ -196,10 +196,15 @@ class NavigateToPlace(NavigateToDesignator):
     :param robot: robot object
     :param place_pose_designator designator that resolves to a geometry_msgs.msg.PoseStamped
     :param arm_designator: which arm to eventually place with?
+    :param reset_head: whether or not to use the head rgbd sensor during navigation.
     """
-    def __init__(self, robot, place_pose_designator, arm_designator=None):
-        constraint_designator = ArmsreachConstraintsDesignator(robot, place_pose_designator, arm_designator, look=True)
-        super(NavigateToPlace, self).__init__(robot, constraint_designator)
+    def __init__(self, robot, place_pose_designator, arm_designator=None, reset_head=True):
+        constraint_designator = ArmsreachConstraintsDesignator(robot,
+                                                               place_pose_designator,
+                                                               arm_designator,
+                                                               look=True,
+                                                               name="placeConstraints")
+        super(NavigateToPlace, self).__init__(robot, constraint_designator, reset_head=reset_head)
 
 
 class Place(smach.StateMachine):
