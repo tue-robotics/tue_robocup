@@ -675,41 +675,18 @@ class Arm(RobotPart):
 
         # TODO: Get rid of this custom message type
         # Create goal:
-        grasp_precompute_goal = GraspPrecomputeGoal()
-        grasp_precompute_goal.goal.header.frame_id = frame_in_baselink.frame_id
-        grasp_precompute_goal.goal.header.stamp = rospy.Time.now()
-
-        grasp_precompute_goal.PERFORM_PRE_GRASP = pre_grasp
-        grasp_precompute_goal.FIRST_JOINT_POS_ONLY = first_joint_pos_only
-
-        grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
-
-        grasp_precompute_goal.goal.x = frame_in_baselink.frame.p.x()
-        grasp_precompute_goal.goal.y = frame_in_baselink.frame.p.y()
-        grasp_precompute_goal.goal.z = frame_in_baselink.frame.p.z()
-
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
-        self._marker_publisher.publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
+        grasp_goal = make_grasp_precompute_goal(frame_in_baselink, pre_grasp, first_joint_pos_only,
+                                                allowed_touch_objects)
+        self._marker_publisher.publish_marker(grasp_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
         offset_frame = frame_in_baselink.frame * self.offset
+        set_grasp_goal_position(grasp_goal, offset_frame.p)
+        set_grasp_goal_orientation(grasp_goal, frame_in_baselink.frame.M)
 
-        grasp_precompute_goal.goal.x = offset_frame.p.x()
-        grasp_precompute_goal.goal.y = offset_frame.p.y()
-        grasp_precompute_goal.goal.z = offset_frame.p.z()
+        # rospy.loginfo("Arm goal: {0}".format(grasp_goal))
 
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
-        # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
-
-        self._marker_publisher.publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
+        self._marker_publisher.publish_marker(grasp_goal, [0, 1, 0], "grasp_point_corrected")
 
         time.sleep(0.001)   # This is necessary: the rtt_actionlib in the hardware seems
                             # to only have a queue size of 1 and runs at 1000 hz. This
@@ -722,20 +699,20 @@ class Arm(RobotPart):
         # Send goal:
 
         if timeout == 0.0:
-            self._ac_grasp_precompute.send_goal(grasp_precompute_goal)
+            self._ac_grasp_precompute.send_goal(grasp_goal)
             return True
         else:
             result = self._ac_grasp_precompute.send_goal_and_wait(
-                grasp_precompute_goal,
+                grasp_goal,
                 execute_timeout=rospy.Duration(timeout))
             if result == GoalStatus.SUCCEEDED:
 
                 result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
                                                                self.robot_name + "/grippoint_{}".format(self.side),
                                                                rospy.Time(0))
-                dx = grasp_precompute_goal.goal.x - result_pose[0][0]
-                dy = grasp_precompute_goal.goal.y - result_pose[0][1]
-                dz = grasp_precompute_goal.goal.z - result_pose[0][2]
+                dx = grasp_goal.goal.x - result_pose[0][0]
+                dy = grasp_goal.goal.y - result_pose[0][1]
+                dz = grasp_goal.goal.z - result_pose[0][2]
 
                 if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
                     rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(
@@ -998,6 +975,56 @@ class Arm(RobotPart):
 
     def __repr__(self):
         return "Arm(side='{side}')".format(side=self.side)
+
+def make_grasp_precompute_goal(frame_in_baselink, pre_grasp, first_joint_pos_only,
+                               allowed_touch_objects):
+    """
+    Construct a grasp precompute goal.
+
+    :param frame_in_baselink:
+    :param first_joint_pos_only: Bool to only execute first joint position of
+            whole trajectory.
+    :param allowed_touch_objects: List of object names in the worldmodel, which
+            are allowed to be touched.
+    :return: The constructed precompute goal.
+    """
+    # TODO: Get rid of this custom message type
+    # Create goal:
+    grasp_goal = GraspPrecomputeGoal()
+    grasp_goal.goal.header.frame_id = frame_in_baselink.frame_id
+    grasp_goal.goal.header.stamp = rospy.Time.now()
+
+    grasp_goal.PERFORM_PRE_GRASP = pre_grasp
+    grasp_goal.FIRST_JOINT_POS_ONLY = first_joint_pos_only
+
+    grasp_goal.allowed_touch_objects = allowed_touch_objects
+
+    set_grasp_goal_position(grasp_goal, frame_in_baselink.frame.p)
+    set_grasp_goal_orientation(grasp_goal, frame_in_baselink.frame.M)
+    return grasp_goal
+
+def set_grasp_goal_position(grasp_goal, pos):
+    """
+    Set the position of the grasp goal.
+
+    :param grasp_goal: Grasp goal to change, modified in-place.
+    :param pos: Position to set.
+    """
+    grasp_goal.goal.x = pos.x()
+    grasp_goal.goal.y = pos.y()
+    grasp_goal.goal.z = pos.z()
+
+def set_grasp_goal_orientation(grasp_goal, ori):
+    """
+    Set the orientation of the grasp goal.
+
+    :param grasp_goal: Grasp goal to change, modified in-place.
+    :param ori: Orientation to set.
+    """
+    roll, pitch, yaw = ori.GetRPY()
+    grasp_goal.goal.roll  = roll
+    grasp_goal.goal.pitch = pitch
+    grasp_goal.goal.yaw   = yaw
 
 
 class ForceSensingArm(Arm):
