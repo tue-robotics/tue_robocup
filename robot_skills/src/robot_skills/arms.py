@@ -356,6 +356,68 @@ class ArmJointsPiece(ArmPiece):
     def get_torso_joint_names(self):
         return self.torso_joint_names
 
+class HandoverPiece(object):
+    """
+    Hand over an item between the arm and a human.
+    """
+    def __init__(self, arm):
+        """
+        :param arm: Arm to use for the exchange.
+        """
+        self.robot_name = arm.robot_name
+        self.side = arm.side
+
+        # Copy interface to the supplied arm.
+        arm.handover_to_human = self.handover_to_human
+        arm.handover_to_robot = self.handover_to_robot
+
+    def handover_to_human(self, timeout: float=10):
+        """
+        Handover an item from the gripper to a human.
+
+        Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
+        :param timeout: timeout in seconds
+        :return: True or False
+        """
+        return self._exchange_with_human(False, timeout)
+
+    def handover_to_robot(self, timeout: float=10):
+        """
+        Handover an item from a human to the robot.
+
+        Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
+        :param timeout: timeout in seconds
+        :return: True or False
+        """
+        return self._exchange_with_human(True, timeout)
+
+    def _exchange_with_human(self, to_robot: bool, timeout: float=10.0):
+        """
+        Exchange an item between the arm and a human.
+
+        If 'to_robot', it feels if user slightly pushes an item in the gripper.
+        If not 'to_robot', it feels if user slightly pulls or pushes (the item in) the arm.
+
+        :param to_robot: Direction of the exchange.
+        :param timeout: Timeout in seconds.
+        :return: Whether the excahnge succeeded.
+        """
+        if to_robot:
+            topic = '/{}/handoverdetector_{}/toggle_human2robot'.format(self.robot_name, self.side)
+        else:
+            topic = '/{}/handoverdetector_{}/toggle_robot2human'.format(self.robot_name, self.side)
+
+        pub = rospy.Publisher(topic, std_msgs.msg.Bool, queue_size=1, latch=True)
+        pub.publish(std_msgs.msg.Bool(True))
+
+        result_topic = '/{}/handoverdetector_{}/result'.format(self.robot_name, self.side)
+        try:
+            rospy.wait_for_message(result_topic, std_msgs.msg.Bool, timeout)
+            return True
+        except rospy.ROSException as e:
+            rospy.logerr(e)
+            return False
+
 class ArmDatabasePiece(ArmPiece):
     """
     High level knowledge about arm properties.
@@ -481,6 +543,7 @@ class Arm(RobotPart):
 
         self.arm_database = ArmDatabasePiece(self.robot_name)
         self._marker_publisher = ArmMarkerPublisherPiece(self.robot_name, self.side)
+        self._handover = HandoverPiece(self)
 
         # listen to the hardware status to determine if the arm is available
         self.subscribe_hardware_status(self.side + '_arm')
@@ -784,48 +847,6 @@ class Arm(RobotPart):
             goal_status = self._ac_gripper.get_state()
 
         return goal_status == GoalStatus.SUCCEEDED
-
-    def handover_to_human(self, timeout=10):
-        """
-        Handover an item from the gripper to a human.
-
-        Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
-        :param timeout: timeout in seconds
-        :return: True or False
-        """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
-
-    def handover_to_robot(self, timeout=10):
-        """
-        Handover an item from a human to the robot.
-
-        Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
-        :param timeout: timeout in seconds
-        :return: True or False
-        """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
 
     def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
         """
