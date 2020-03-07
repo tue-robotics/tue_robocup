@@ -114,13 +114,13 @@ class PublicArm(object):
                                          max_joint_vel=max_joint_vel)
 
     # Joint trajectories
-    def has_joint_trajectory(self, configuration):
+    def has_joint_trajectory(self, configuration: str):
         """
         Query whether the provided joint trajectory exists for the arm.
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration, timeout=5, max_joint_vel=0.7):
+    def send_joint_trajectory(self, configuration: str, timeout: float=5.0, max_joint_vel: float=0.7):
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
@@ -353,7 +353,38 @@ class ArmJointsPiece(ArmPiece):
         return self.arm_joint_names
 
     def get_torso_joint_names(self):
-        return sef.torso_joint_names
+        return self.torso_joint_names
+
+class ArmDatabasePiece(ArmPiece):
+    """
+    High level knowledge about arm properties.
+
+    :var goals: Default poses of the arm.
+    :var trajectories: Default trajectories of the arm.
+    """
+    def __init__(self, robot_name: str):
+        super(ArmDatabasePiece, self).__init__(robot_name)
+
+        self.goals = self.load_param('skills/arm/default_configurations')
+        self.trajectories = self.load_param('skills/arm/default_trajectories')
+
+    def get_goal(self, configuration: str):
+        """
+        Get an arm goal by name.
+
+        :param configuration: Name of the configuration to retrieve.
+        :return: Configuration for the arm, or None if the requested configuration does not exist.
+        """
+        return self.goals.get(configuration)
+
+    def get_trajectory(self, configuration: str):
+        """
+        Get an arm trajectory by name.
+
+        :param configuration: Name of the trajectory to retrieve.
+        :return: Trajectory for the arm, or None if the requested trajectory does not exist.
+        """
+        return self.trajectories.get(configuration)
 
 
 class Arm(RobotPart):
@@ -368,6 +399,8 @@ class Arm(RobotPart):
 
     #To open left gripper
     >>> left.send_gripper_goal_open(10)  # doctest: +SKIP
+
+    :var arm_database: High level knowledge about arm properties.
     """
     def __init__(self, robot_name, tf_listener, get_joint_states, side: str, joints_piece: ArmJointsPiece=None):
         """
@@ -402,8 +435,7 @@ class Arm(RobotPart):
         else:
             self._joints_part = ArmJointsPiece(self.robot_name, suffix="_" + side)
 
-        self.default_configurations = self.load_param('skills/arm/default_configurations')
-        self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
+        self.arm_database = ArmDatabasePiece(self.robot_name)
 
         # listen to the hardware status to determine if the arm is available
         self.subscribe_hardware_status(self.side + '_arm')
@@ -473,7 +505,7 @@ class Arm(RobotPart):
         :param configuration: name of jint goal to check.
         :return: Whether the joint goal is available.
         """
-        return configuration in self.default_configurations
+        return self.arm_database.get_goal(configuration) is not None
 
     def has_joint_trajectory(self, configuration):
         """
@@ -482,7 +514,7 @@ class Arm(RobotPart):
         :param configuration: name of jint trajectory to check.
         :return: Whether the joint trajectory is available.
         """
-        return configuration in self.default_trajectories
+        return self.arm_database.get_trajectory(configuration) is not None
 
     def cancel_goals(self):
         """
@@ -611,7 +643,7 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
+    def send_joint_goal(self, configuration: str, timeout: float=5.0, max_joint_vel: float=0.7):
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration:(str) name of configuration, configuration should be loaded as parameter
@@ -619,15 +651,16 @@ class Arm(RobotPart):
         :param max_joint_vel:(int,float,[int]) speed the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
-        if configuration in self.default_configurations:
-            return self._send_joint_trajectory([self.default_configurations[configuration]],
+        arm_configuration = self.arm_database.get_goal(configuration)
+        if arm_configuration:
+            return self._send_joint_trajectory(arm_configuration,
                                                timeout=rospy.Duration.from_sec(timeout),
                                                max_joint_vel=max_joint_vel)
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7):
+    def send_joint_trajectory(self, configuration: str, timeout: float=5.0, max_joint_vel: float=0.7):
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to the arm
 
@@ -636,8 +669,9 @@ class Arm(RobotPart):
         :param max_joint_vel:(int,float,[int]) speed the robot can have when getting to the desired configuration
         :return: True or False, False in case of nonexistent configuration or failed execution
         """
-        if configuration in self.default_trajectories:
-            return self._send_joint_trajectory(self.default_trajectories[configuration],
+        arm_trajectory = self.arm_database.get_trajectory(configuration)
+        if arm_trajectory:
+            return self._send_joint_trajectory(arm_trajectory,
                                                timeout=rospy.Duration.from_sec(timeout),
                                                max_joint_vel=max_joint_vel)
         else:
@@ -999,12 +1033,12 @@ class FakeArm(RobotPart):
 
         self.marker_to_grippoint_offset = self.load_param('skills/arm/offset/marker_to_grippoint')
 
-        self.joint_names = self.load_param('skills/arm/joint_names')
-        self.joint_names = [name + "_" + self.side for name in self.joint_names]
-        self.torso_joint_names = self.load_param('skills/torso/joint_names')
+        if joints_piece:
+            self._joints_part = joints_piece
+        else:
+            self._joints_part = ArmJointsPiece(self.robot_name, suffix="_" + side)
 
-        self.default_configurations = self.load_param('skills/arm/default_configurations')
-        self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
+        self.arm_database = ArmDatabasePiece(self.robot_name)
 
     @property
     def operational(self):
