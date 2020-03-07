@@ -31,19 +31,21 @@ class NavigateToGrasp(NavigateTo):
             self.arm_designator = UnoccupiedArmDesignator(self.robot, {})
 
     def generateConstraint(self):
-        arm = self.arm_designator.resolve()
+        arm = self.arm_designator.resolve()  # type: PublicArm
         if not arm:
             rospy.logerr("Could not resolve arm")
             return None
-
-        angle_offset =-math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
         entity = self.entity_designator.resolve()
 
         if not entity:
             rospy.logerr("No such entity")
             return None
+
+        base_offset = arm.base_offset  # Usual situation
+        # base_offset = arm.get_base_offset(entity.pose)  # New implementation
+        angle_offset = -math.atan2(base_offset.y(), base_offset.x())
+        radius = math.hypot(base_offset.x(), base_offset.y())
 
         rospy.loginfo("Navigating to grasp entity id:{0}".format(entity.id))
 
