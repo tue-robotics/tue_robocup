@@ -64,8 +64,8 @@ class NavigateToGrasp(NavigateTo):
             rz = 0
 
         # Outer radius
-        ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
-        ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+        ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.025)
+        ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.025)
         pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
         oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
 
