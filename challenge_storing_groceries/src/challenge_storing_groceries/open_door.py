@@ -15,8 +15,6 @@ from robot_skills.util.kdl_conversions import VectorStamped
 # Challenge storing groceries
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-import config
-
 import robot_smach_states as states
 
 import robot_smach_states.util.designators as ds
@@ -159,25 +157,26 @@ class OpenDoor(smach.State):
 
 
 class OpenDoorMachine(smach.StateMachine):
-    def __init__(self, robot, cabinet_id, cabinet_navigate_area, cabinet_inspect_area):
+    def __init__(self, robot, shelf_designator, cabinet_navigate_area):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        self.cabinet = ds.EntityByIdDesignator(robot=robot, id=cabinet_id)
+        self.shelfDes = shelf_designator
+        cabinet_inspect_area = "Todo"
 
         with self:
             smach.StateMachine.add("NAVIGATE_TO_CABINET",
-                                   states.NavigateToSymbolic(robot, {self.cabinet: cabinet_navigate_area}, self.cabinet),
+                                   states.NavigateToSymbolic(robot, {self.shelfDes: cabinet_navigate_area}, self.shelfDes),
                                    transitions={'arrived': 'UPDATE_CABINET_POSE',
                                                 'unreachable': 'failed',
                                                 'goal_not_defined': 'failed'})
 
             smach.StateMachine.add("UPDATE_CABINET_POSE",
-                                   UpdateCabinetPose(robot, self.cabinet, cabinet_inspect_area),
+                                   UpdateCabinetPose(robot, self.shelfDes, cabinet_inspect_area),
                                    transitions={'succeeded': 'OPEN_DOOR',
                                                 'failed': 'failed'})
 
             smach.StateMachine.add("OPEN_DOOR",
-                                   OpenDoor(robot, self.cabinet),
+                                   OpenDoor(robot, self.shelfDes),
                                    transitions={'succeeded': 'succeeded',
                                                 'failed': 'failed'})
 

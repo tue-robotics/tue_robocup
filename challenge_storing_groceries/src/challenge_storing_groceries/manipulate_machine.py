@@ -11,9 +11,9 @@ from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
-# from config import TABLE, GRAB_SURFACE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA, CABINET
-from config import GRAB_SURFACE
-from config import MIN_GRAB_OBJECT_HEIGHT, MAX_GRAB_OBJECT_WIDTH
+
+MIN_GRAB_OBJECT_HEIGHT = 0.0
+MAX_GRAB_OBJECT_WIDTH = 1.8
 
 
 class DefaultGrabDesignator(ds.Designator):
@@ -207,10 +207,10 @@ class ManipulateMachine(smach.StateMachine):
         self.table_designator = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
         if grab_designator_1 is None:
             grab_designator_1 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
-                                                      area_description=GRAB_SURFACE)
+                                                      area_description="on_top_of")
         if grab_designator_2 is None:
             grab_designator_2 = DefaultGrabDesignator(robot=robot, surface_designator=self.table_designator,
-                                                      area_description=GRAB_SURFACE)
+                                                      area_description="on_top_of")
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")

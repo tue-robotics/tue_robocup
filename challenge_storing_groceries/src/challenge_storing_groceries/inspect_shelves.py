@@ -9,7 +9,6 @@ import smach
 from robot_skills.util.kdl_conversions import VectorStamped
 
 # Challenge storing groceries
-import config
 
 
 class InspectShelves(smach.State):
