@@ -80,7 +80,7 @@ class Hero(robot.Robot):
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
-        arm = self.parts['leftArm']
+        arm = self.get_arm(required_goals=['arm_out_of_way'])
 
         pose = arm.default_configurations['arm_out_of_way']
         pose[0] = z_arm
@@ -88,8 +88,7 @@ class Hero(robot.Robot):
 
         self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
         arm.wait_for_motion_done()
-        while self.base.local_planner.getStatus() != "arrived":
-            rospy.sleep(0.1)
+        self.base.wait_for_motion_done()
         return True
 
     def move_to_hmi_pose(self):
@@ -111,6 +110,7 @@ class Hero(robot.Robot):
         """
         This poses the robot for an inspect.
 
+        :param arm: PublicArm to use for grasping the target, must have joint trajectory 'prepare_grasp'
         :param grasp_target: kdl.Frame with the pose of the entity to be grasp.
         :return: boolean, false if something went wrong.
         """
@@ -136,8 +136,7 @@ class Hero(robot.Robot):
         angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
         self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)
         arm.wait_for_motion_done()
-        while self.base.local_planner.getStatus() != "arrived":
-            rospy.sleep(0.1)
+        self.base.wait_for_motion_done()
         return True
 
     def go_to_driving_pose(self):

@@ -289,6 +289,28 @@ class Base(RobotPart):
 
         return True
 
+    def wait_for_motion_done(self, timeout=10.0, cancel=False):
+        """
+        Waits until local planner is done
+
+        :param timeout: timeout in seconds; in case 0.0, no sensible output is provided, just False
+        :param cancel: bool specifying whether goals should be cancelled
+            if timeout is exceeded
+        :return: bool indicates whether motion was done (True if reached, False otherwise)
+        """
+        #TODO implement navigation using an actionserver
+        starttime = rospy.Time.now()
+        while not rospy.is_shutdown():
+            if self.local_planner.getStatus() == "arrived":
+                return True
+            passed_time = (rospy.Time.now() - starttime).to_sec()
+            if passed_time > timeout:
+                if cancel:
+                    self.local_planner.cancelCurrentPlan()
+                return False
+            rospy.sleep(0.1)
+        return False
+
     def reset(self):
         loc = self.local_planner.reset()
         glob = self.global_planner.reset()
