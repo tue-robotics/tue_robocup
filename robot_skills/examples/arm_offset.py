@@ -18,7 +18,11 @@ if __name__ == "__main__":
     arm = robot._arms.values()[0]  # type: HeroArm
 
     t_start = rospy.Time.now()
-    heights = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+    dz = 0.05
+    z_max = 1.2
+    heights = [dz]
+    while heights[-1] < z_max:
+        heights.append(heights[-1] + dz)
     for z in heights:
 
         goal_pose = kdl.Frame(kdl.Vector(0, 0, z))
