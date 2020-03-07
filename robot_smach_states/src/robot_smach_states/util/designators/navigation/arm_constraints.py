@@ -39,7 +39,7 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
             self.pose_designator = designator
 
         if arm_designator:
-            check_resolve_type(arm_designator, PublicArm)  # Check that the arm_designator resolves to an Arm
+            check_resolve_type(arm_designator, PublicArm)
             self.arm_designator = arm_designator
         else:
             rospy.logwarn('ArmsreachConstraintsDesignator: Please specify the arm, will choose at random')

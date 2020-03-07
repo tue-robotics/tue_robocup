@@ -21,7 +21,7 @@ class LookAtConstraintsDesignator(NavigationConstraintsDesignator):
     """
     def __init__(self, entity_lookat_designator, offset=0.0, name=None):
         super(LookAtConstraintsDesignator, self).__init__(name=name)
-        check_resolve_type(entity_lookat_designator, Entity)  # Check that the entity_designator resolves to an Entity
+        check_resolve_type(entity_lookat_designator, Entity)
         self.entity_lookat_designator = entity_lookat_designator
         self.offset = offset
 

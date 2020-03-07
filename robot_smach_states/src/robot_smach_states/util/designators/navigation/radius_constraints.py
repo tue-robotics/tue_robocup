@@ -21,7 +21,7 @@ class RadiusConstraintsDesignator(NavigationConstraintsDesignator):
         :param margin: (float) allowed margin w.r.t. specified radius on both sides [m]
         """
         super(RadiusConstraintsDesignator, self).__init__(name=name)
-        check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
+        check_resolve_type(entity_designator, Entity)
         self.entity_designator = entity_designator
         self.radius = radius
         self.margin = margin

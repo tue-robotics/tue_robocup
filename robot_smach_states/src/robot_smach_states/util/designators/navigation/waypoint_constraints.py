@@ -21,7 +21,7 @@ class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
     def __init__(self, waypoint_designator, radius=0.15, look=True, name=None):
         super(WayPointConstraintsDesignator, self).__init__(name=name)
 
-        check_resolve_type(waypoint_designator, Entity)  # Check that the waypoint_designator resolves to an Entity
+        check_resolve_type(waypoint_designator, Entity)
 
         self.waypoint_designator = waypoint_designator
         self.radius = radius
