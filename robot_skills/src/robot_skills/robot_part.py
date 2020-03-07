@@ -7,6 +7,8 @@ import os
 import rospy
 import actionlib
 
+from robot_skills.utils.parameter_loading import load_param
+
 # Determine simulation mode
 SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"
 
@@ -40,10 +42,7 @@ class RobotPart(object):
         :param default: default value for when parameter unavailable
         :return: loaded parameters
         """
-        if default is None:
-            return rospy.get_param('/' + self.robot_name + '/' + param_name)
-        else:
-            return rospy.get_param('/' + self.robot_name + '/' + param_name, default)
+        return load_param(self.robot_name, param_name, default)
 
     def wait_for_connections(self, timeout, log_failing_connections=True):
         """
