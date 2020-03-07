@@ -36,7 +36,7 @@ class StoringGroceries(smach.StateMachine):
                                                 'Aborted': 'Aborted',
                                                 'Failed': 'Failed'})
 
-            smach.StateMachine.add("SKIP_DOOR?",
+            smach.StateMachine.add("SKIP_DOOR",
                                    CheckBool(skip_door),
                                    transitions={'true': "NAV_TO_START",
                                                 'false': "OPEN_DOOR"})
@@ -49,7 +49,7 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add('SAY_UNABLE_TO_OPEN_DOOR',
                                    states.human_interaction.Say(robot, "I am unable to open the shelf door, "
-                                                     "can you please open it for me?"),
+                                                                       "can you please open it for me?"),
                                    transitions={'spoken': 'NAV_TO_START'})
 
             # Inspect shelf
@@ -63,9 +63,9 @@ class StoringGroceries(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_SHELVES",
                                    InspectShelves(robot, shelfDes),
-                                   transitions={'succeeded': 'WRITE_PDF_SHELVES',
-                                                'nothing_found': 'WRITE_PDF_SHELVES',
-                                                'failed': 'WRITE_PDF_SHELVES'})
+                                   transitions={'succeeded': 'RANGE_ITERATOR',
+                                                'nothing_found': 'RANGE_ITERATOR',
+                                                'failed': 'RANGE_ITERATOR'})
 
             # store items
             # Begin setup iterator

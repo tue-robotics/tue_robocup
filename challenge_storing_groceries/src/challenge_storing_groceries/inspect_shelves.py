@@ -18,7 +18,7 @@ class InspectShelves(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'nothing_found'])
         self.robot = robot
         self.cabinet = cabinet
-        self.object_shelves = config.OBJECT_SHELVES
+        self.object_shelves = ["shelf3", "shelf4", "shelf5"]
 
     def execute(self, userdata=None):
 

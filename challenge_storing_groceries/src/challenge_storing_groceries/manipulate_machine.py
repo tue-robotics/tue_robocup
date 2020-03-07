@@ -17,8 +17,8 @@ MAX_GRAB_OBJECT_WIDTH = 1.8
 
 
 class DefaultGrabDesignator(ds.Designator):
-    """ Designator to pick the closest item on top of the table to grab. This is used for testing
-
+    """
+    Designator to pick the closest item on top of the table to grab. This is used for testing
     """
     def __init__(self, robot, surface_designator, area_description):
         """ Constructor
@@ -107,13 +107,13 @@ class GrabSingleItem(smach.StateMachine):
                                    transitions={'locked': 'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add("ANNOUNCE_ITEM",
-                                   states.Say(robot, EntityDescriptionDesignator(self.grab_designator,
+                                   states.human_interaction.Say(robot, EntityDescriptionDesignator(self.grab_designator,
                                                                                  name="current_item_desc"),
                                               block=False),
                                    transitions={'spoken': 'GRAB_ITEM'})
 
             smach.StateMachine.add("GRAB_ITEM",
-                                   states.Grab(robot, self.grab_designator, self.empty_arm_designator),
+                                   states.manipulation.Grab(robot, self.grab_designator, self.empty_arm_designator),
                                    transitions={'done': 'UNLOCK_ITEM_SUCCEED',
                                                 'failed': 'UNLOCK_ITEM_FAIL'})
 
@@ -173,7 +173,7 @@ class PlaceSingleItem(smach.State):
         if result != "done":
             rospy.loginfo("{place} resulted in {out}".format(place=place, out=result))
 
-            handover = states.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
+            handover = states.manipulation.HandoverToHuman(robot=self._robot, arm_designator=arm_designator)
             handover.execute()
 
         return "succeeded" if result == "done" else "failed"
@@ -225,7 +225,7 @@ class ManipulateMachine(smach.StateMachine):
         with self:
 
             smach.StateMachine.add("MOVE_TO_TABLE1",
-                                   states.NavigateToSymbolic(robot,
+                                   states.navigation.NavigateToSymbolic(robot,
                                                              {self.table_designator: "in_front_of"},
                                                              self.table_designator),
                                    transitions={'arrived': 'INSPECT_TABLE',
@@ -233,7 +233,7 @@ class ManipulateMachine(smach.StateMachine):
                                                 'goal_not_defined': 'INSPECT_TABLE'})
 
             smach.StateMachine.add("MOVE_TO_TABLE2",
-                                   states.NavigateToSymbolic(robot,
+                                   states.navigation.NavigateToSymbolic(robot,
                                                              {self.table_designator: "in_front_of"},
                                                              self.table_designator),
                                    transitions={'arrived': 'INSPECT_TABLE',
@@ -250,17 +250,17 @@ class ManipulateMachine(smach.StateMachine):
                 # Add the designator to the pdf writer state
                 pdf_writer.set_designator(class_designator)
 
-                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
+                smach.StateMachine.add("INSPECT_TABLE", states.world_model.Inspect(robot=robot, entityDes=self.table_designator,
                                                                        objectIDsDes=class_designator,
-                                                                       searchArea=GRAB_SURFACE,
+                                                                       searchArea="on_top_of",
                                                                        navigation_area="in_front_of"),
                                        transitions={"done": "WRITE_PDF",
                                                     "failed": "failed"})
 
                 smach.StateMachine.add("WRITE_PDF", pdf_writer, transitions={"done": "GRAB_ITEM_1"})
             else:
-                smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=self.table_designator,
-                                                                       objectIDsDes=None, searchArea=GRAB_SURFACE,
+                smach.StateMachine.add("INSPECT_TABLE", states.world_model.Inspect(robot=robot, entityDes=self.table_designator,
+                                                                       objectIDsDes=None, searchArea="on_top_of",
                                                                        navigation_area="in_front_of"),
                                        transitions={"done": "GRAB_ITEM_1",
                                                     "failed": "failed"})
@@ -274,7 +274,7 @@ class ManipulateMachine(smach.StateMachine):
                                                 "failed": "MOVE_TO_PLACE"})
 
             smach.StateMachine.add("MOVE_TO_PLACE",
-                                   states.NavigateToSymbolic(robot,
+                                   states.navigation.NavigateToSymbolic(robot,
                                                              {self.cabinet: "in_front_of"},
                                                              self.cabinet),
                                    transitions={'arrived': 'PLACE_ITEM_1',
