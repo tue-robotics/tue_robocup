@@ -39,3 +39,15 @@ class Sergio(robot.Robot):
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
 
         self.configure()
+
+    def move_to_pregrasp_pose(self, arm, grasp_target):
+        """
+        This poses the robot for an inspect.
+
+        :param arm: PublicArm to use for grasping the target
+        :param grasp_target: kdl.Frame with the pose of the entity to be grasp.
+        :return: boolean, false if something went wrong.
+        """
+
+        arm.send_joint_trajectory('prepare_grasp', timeout=0)
+        return True

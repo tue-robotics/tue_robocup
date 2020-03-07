@@ -107,7 +107,7 @@ class Hero(robot.Robot):
         self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
 
-    def move_to_pregrasp_pose(self, grasp_target):
+    def move_to_pregrasp_pose(self, arm, grasp_target):
         """
         This poses the robot for an inspect.
 
@@ -120,19 +120,18 @@ class Hero(robot.Robot):
         torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
         z_head = grasp_target.z() + z_over
 
-        arm = self.parts['leftArm']
-
         if z_head < 1.3:
             # we dont need to do stupid stuff
             arm.send_joint_trajectory('prepare_grasp')
             return True
+
         # saturate the arm lift goal
         z_arm = (z_head - z_hh) * torso_to_arm_ratio
-        z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
+        z_arm = min(0.69, max(z_arm, 0.0))
 
-        pose = arm.default_trajectories['prepare_grasp']
-        pose[1][0] = z_arm  # You made me do this Lars!
-        arm._send_joint_trajectory(pose)
+        pose = arm._arm.default_trajectories['prepare_grasp']
+        pose[1][0] = z_arm
+        arm._arm._send_joint_trajectory(pose)
 
         angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
         self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)

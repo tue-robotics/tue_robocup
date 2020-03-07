@@ -58,7 +58,7 @@ class PrepareEdGrasp(smach.State):
         self.robot.torso.reset()
 
         # Arm to position in a safe way
-        self.robot.move_to_pregrasp_pose(entity._pose.p)
+        self.robot.move_to_pregrasp_pose(arm, entity._pose.p)
         arm.wait_for_motion_done()
 
         # Open gripper

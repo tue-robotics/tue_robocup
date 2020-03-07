@@ -369,10 +369,11 @@ class Robot(object):
         rospy.logdebug("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
         return True
 
-    def move_to_pregrasp_pose(self, grasp_position):
+    def move_to_pregrasp_pose(self, arm, grasp_position):
         """
         This poses the robot for an inspect.
 
+        :param arm: PublicArm to use for grasping the target
         :param grasp_position: kdl.Frame with the pose of the entity to be grasp.
         :return: boolean, false if something went wrong.
         """
