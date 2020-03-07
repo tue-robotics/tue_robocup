@@ -5,7 +5,7 @@ import math
 
 # ROS
 import rospy
-from geometry_msgs.msg import *
+from geometry_msgs.msg import Point
 
 # TU/e Robotics
 from .navigation import NavigationConstraintsDesignator, PoseConstraint

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 # ROS
 import rospy
-from geometry_msgs.msg import *
+from geometry_msgs.msg import Point
 
 # TU/e Robotics
 from robot_skills.util.entity import Entity

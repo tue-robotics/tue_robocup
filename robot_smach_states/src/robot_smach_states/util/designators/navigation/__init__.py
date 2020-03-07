@@ -1,7 +1,7 @@
-from navigation import *
-from waypoint_constraints import *
-from pose_constraints import *
-from symbolic_constraints import *
-from radius_constraints import *
-from look_at_constraints import *
-from arm_constraints import *
+from navigation import NavigationConstraintsDesignator, CompoundConstraintsDesignator, PoseConstraint
+from waypoint_constraints import WayPointConstraintsDesignator
+from pose_constraints import PoseConstraintsDesignator
+from symbolic_constraints import SymbolicConstraintsDesignator, RoomConstraintsDesignator
+from radius_constraints import RadiusConstraintsDesignator
+from look_at_constraints import LookAtConstraintsDesignator
+from arm_constraints import ArmsreachConstraintsDesignator
