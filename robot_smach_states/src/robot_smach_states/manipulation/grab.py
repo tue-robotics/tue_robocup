@@ -9,7 +9,7 @@ import tf2_ros
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
-from robot_skills.arms import PublicArm, GripperMeasurement
+from robot_skills.arms import PublicArm, GripperTypes
 from robot_skills.robot import Robot
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
@@ -19,6 +19,9 @@ from ..util.designators.core import Designator
 
 
 class PrepareEdGrasp(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
+                               "required_trajectories": ["prepare_grasp"], }
+
     def __init__(self, robot, arm, grab_entity):
         # type: (Robot, ArmDesignator, Designator) -> None
         """
@@ -36,6 +39,9 @@ class PrepareEdGrasp(smach.State):
         self.grab_entity_designator = grab_entity
 
         check_type(grab_entity, Entity)
+        assert self.robot.get_arm(
+            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all" \
+                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
         entity = self.grab_entity_designator.resolve()
@@ -72,6 +78,9 @@ class PrepareEdGrasp(smach.State):
 
 
 class PickUp(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
+                               "required_goals": ["carrying_pose"], }
+
     def __init__(self, robot, arm, grab_entity, check_occupancy=False):
         """
         Pick up an item given an arm and an entity to be picked up
@@ -90,6 +99,10 @@ class PickUp(smach.State):
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
+
+        assert self.robot.get_arm(
+            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all" \
+                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
 
@@ -281,6 +294,10 @@ class PickUp(smach.State):
 
 class ResetOnFailure(smach.StateMachine):
     """ Class to reset the robot after a grab has failed """
+
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
+                               "required_goals": ["carrying_pose"], }
+
     def __init__(self, robot, arm):
         """
         Constructor
