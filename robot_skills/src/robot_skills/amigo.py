@@ -44,7 +44,7 @@ class Amigo(robot.Robot):
         """
         This poses the robot for an inspect.
 
-        :param arm: PublicArm to use for grasping the target
+        :param arm: PublicArm with an available joint_trajectory 'prepare_grasp' to use for grasping the target
         :param grasp_target: kdl.Frame with the pose of the entity to be grasped.
         :return: boolean, false if something went wrong.
         """
