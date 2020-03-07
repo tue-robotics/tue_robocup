@@ -55,6 +55,10 @@ class Hero(robot.Robot):
         # verify joint goal required for posing
         assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
             "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
+        # parameters for posing
+        self.z_over = 0.4  # height the robot should look over the surface
+        self.z_hh = 0.9  # height of the robots head at z_arm=0
+        self.torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
 
         self.configure()
 
@@ -66,10 +70,7 @@ class Hero(robot.Robot):
         :return: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
-        z_over = 0.4  # height the robot should look over the surface
-        z_hh = 0.9  # height of the robots head at z_arm=0
-        torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
-        z_head = inspect_target.z() + z_over
+        z_head = inspect_target.z() + self.z_over
 
         # check whether moving the arm is necessary
         if z_head < 1.3:
@@ -77,7 +78,7 @@ class Hero(robot.Robot):
             return True
 
         # saturate the arm lift goal
-        z_arm = (z_head - z_hh) * torso_to_arm_ratio
+        z_arm = (z_head - self.z_hh) * self.torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
         arm = self.get_arm(required_goals=['arm_out_of_way'])
@@ -115,10 +116,7 @@ class Hero(robot.Robot):
         :return: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
-        z_over = 0.4  # height the robot should look over the surface
-        z_hh = 0.9  # height of the robots head at z_arm=0
-        torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
-        z_head = grasp_target.z() + z_over
+        z_head = grasp_target.z() + self.z_over
 
         if z_head < 1.3:
             # we dont need to do stupid stuff
@@ -126,7 +124,7 @@ class Hero(robot.Robot):
             return True
 
         # saturate the arm lift goal
-        z_arm = (z_head - z_hh) * torso_to_arm_ratio
+        z_arm = (z_head - self.z_hh) * self.torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))
 
         pose = arm._arm.default_trajectories['prepare_grasp']
