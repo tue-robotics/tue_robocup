@@ -40,15 +40,29 @@ class HeroArm(Arm):
         :param end_effector_goal: goal where the end-effector should go
         :return: Position of an object w.r.t. the base link of a robot.
         """
+        try:
+            return self._get_base_offset(end_effector_goal)
+        except Exception as e:
+            rospy.logwarn("Computing base offset failed: {}, using default {}".format(
+                e.message, self._base_offset
+            ))
+            return self._base_offset
+
+    def _get_base_offset(self, end_effector_goal):
+        # type: (FrameStamped) -> kdl.Vector
+        """
+        Retrieves the 'optimal' position of an object w.r.t. the base link of a
+        robot for this arm to grasp it.
+
+        :param end_effector_goal: goal where the end-effector should go
+        :return: Position of an object w.r.t. the base link of a robot.
+        """
         assert end_effector_goal.frame_id.endswith("map"), "It is assumed that the provided goal is defined w.r.t." \
                                                            " map, not {}".format(end_effector_goal.frame_id)
 
         request = hero_msgs.srv.GetBasePoseRequest()
         request.end_effector_pose = kdl_frame_stamped_to_pose_stamped_msg(end_effector_goal)
         response = self._base_offset_client(request)  # type: hero_msgs.srv.GetBasePoseResponse
-        rospy.logwarn("Base offset response: {}".format(response))
-        # Desired base pose defined w.r.t. the frame id available in the response
-        # base_pose_response_frame = pose_msg_to_kdl_frame(response.base_pose)
 
         # Convert this frame to map frame (assumed in end-effector-goal)
         # base_pose_map
@@ -56,15 +70,11 @@ class HeroArm(Arm):
         base_pose_response_frame = copy.deepcopy(response.base_pose)
         base_pose_response_frame.header.stamp = rospy.Time(0)
         base_pose_map = listener.transformPose(end_effector_goal.frame_id, base_pose_response_frame)
-        print("Base pose map: {}".format(base_pose_map))
 
         # Compute the offset
         # base_pose * offset = end_effector_pose
         # offset = base_pose.Inverse() * end_effector_pose
         base_pose_map_kdl = pose_msg_to_kdl_frame(base_pose_map.pose)
-        print("Base pose map kdl: {}".format(base_pose_map_kdl))
-        # offset_6D = base_pose_map_kdl.Inverse() * end_effector_goal.frame
-        # return offset_6D.p
         return base_pose_map_kdl.Inverse() * end_effector_goal.frame.p
 
 
