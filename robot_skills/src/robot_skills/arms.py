@@ -219,6 +219,20 @@ class PublicArm(object):
         """
         return self._arm.base_offset
 
+    def get_base_offset(self, end_effector_goal):
+        # type: (FrameStamped) -> kdl.Vector
+        """
+        Retrieves the 'optimal' position of an object w.r.t. the base link of a
+        robot for this arm to grasp it.
+
+        By default, this method returns the (static) base offset. This should/might be overwritten by robot-specific
+        implementations.
+
+        :param end_effector_goal: goal where the end-effector should go
+        :return: Position of an object w.r.t. the base link of a robot.
+        """
+        return self._arm.get_base_offset(end_effector_goal)
+
     def _test_die(self, cond, feature, hint=''):
         """
         Test the condition, if it fails, die with an assertion error explaining what is wrong.
