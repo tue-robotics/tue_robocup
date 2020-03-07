@@ -14,7 +14,7 @@ from robot_smach_states.utility import CheckBool
 from robocup_knowledge import load_knowledge
 
 # Challenge storing groceries
-from inspect_shelves import InspectShelves
+from inspect_shelves import InspectAreas
 from manipulate_machine import ManipulateMachine
 from open_door import OpenDoorMachine
 
@@ -62,7 +62,7 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'INSPECT_SHELVES'})
 
         smach.StateMachine.add("INSPECT_SHELVES",
-                               InspectShelves(robot, shelfDes),
+                               InspectAreas(robot, shelfDes, knowledge=challenge_knowledge, navigation_area='in_front_of'),
                                transitions={'succeeded': 'RANGE_ITERATOR',
                                             'nothing_found': 'RANGE_ITERATOR',
                                             'failed': 'RANGE_ITERATOR'})

@@ -1,2 +1,2 @@
-from inspect_shelves import InspectShelves
+from inspect_shelves import InspectAreas
 from manipulate_machine import ManipulateMachine
