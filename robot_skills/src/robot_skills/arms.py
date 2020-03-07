@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 # ROS
 import rospy
@@ -386,6 +387,49 @@ class ArmDatabasePiece(ArmPiece):
         """
         return self.trajectories.get(configuration)
 
+class ArmMarkerPublisherPiece(ArmPiece):
+    """
+    Piece for publishing a marker.
+    """
+    def __init__(self, robot_name: str, side: str):
+        """
+        Constructor.
+
+        :param robot_name: Name of the robot being used.
+        :param side: Name of the arm.
+        """
+        super(ArmMarkerPublisherPiece).__init__(robot_name)
+
+        topic = "/{}/{}_arm/grasp_target".format(robot_name, side)
+        self._marker_publisher = rospy.Publisher(topic, visualization_msgs.msg.Marker, queue_size=10)
+
+    def publish_marker(self, goal, color: List[float], ns: str=""):
+        """
+        Publish markers for visualisation
+
+        :param goal: tue_manipulation_msgs.msg.GraspPrecomputeGoal
+        :param color: Color of the marker (0.0-1.0)
+        :param ns: Namespace
+        """
+        marker = visualization_msgs.msg.Marker()
+        marker.header.frame_id = goal.goal.header.frame_id
+        marker.header.stamp = rospy.Time.now()
+        marker.type = 2
+        marker.pose.position.x = goal.goal.x
+        marker.pose.position.y = goal.goal.y
+        marker.pose.position.z = goal.goal.z
+        marker.lifetime = rospy.Duration(20.0)
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
+        marker.ns = ns
+
+        marker.color.a = 1
+        marker.color.r = color[0]
+        marker.color.g = color[1]
+        marker.color.b = color[2]
+
+        self._marker_publisher.publish(marker)
 
 class Arm(RobotPart):
     """
@@ -436,6 +480,7 @@ class Arm(RobotPart):
             self._joints_part = ArmJointsPiece(self.robot_name, suffix="_" + side)
 
         self.arm_database = ArmDatabasePiece(self.robot_name)
+        self._marker_publisher = ArmMarkerPublisherPiece(self.robot_name, self.side)
 
         # listen to the hardware status to determine if the arm is available
         self.subscribe_hardware_status(self.side + '_arm')
@@ -456,11 +501,6 @@ class Arm(RobotPart):
         self._grasp_sensor_state = GripperMeasurement(0.0)
         rospy.Subscriber("/" + self.robot_name + "/" + self.side + "_arm/proximity_sensor",
                          std_msgs.msg.Float32MultiArray, self._grasp_sensor_callback)
-
-        # Init marker publisher
-        self._marker_publisher = rospy.Publisher(
-            "/" + robot_name + "/" + self.side + "_arm/grasp_target",
-            visualization_msgs.msg.Marker, queue_size=10)
 
         self.get_joint_states = get_joint_states
 
@@ -590,7 +630,7 @@ class Arm(RobotPart):
         grasp_precompute_goal.goal.pitch = pitch
         grasp_precompute_goal.goal.yaw   = yaw
 
-        self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
+        self._marker_publisher.publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
         offset_frame = frame_in_baselink.frame * self.offset
@@ -606,7 +646,7 @@ class Arm(RobotPart):
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 
-        self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
+        self._marker_publisher.publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
 
         time.sleep(0.001)   # This is necessary: the rtt_actionlib in the hardware seems
                             # to only have a queue size of 1 and runs at 1000 hz. This
@@ -934,34 +974,6 @@ class Arm(RobotPart):
         :rtype: kdl Vector
         """
         return self._base_offset
-
-    def _publish_marker(self, goal, color, ns=""):
-        """
-        Publish markers for visualisation
-        :param goal: tue_manipulation_msgs.msg.GraspPrecomputeGoal
-        :param color: list of rgb colors (0.0-1.0)
-        :param ns: namespace
-        :return: no return
-        """
-        marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = goal.goal.header.frame_id
-        marker.header.stamp = rospy.Time.now()
-        marker.type = 2
-        marker.pose.position.x = goal.goal.x
-        marker.pose.position.y = goal.goal.y
-        marker.pose.position.z = goal.goal.z
-        marker.lifetime = rospy.Duration(20.0)
-        marker.scale.x = 0.05
-        marker.scale.y = 0.05
-        marker.scale.z = 0.05
-        marker.ns = ns
-
-        marker.color.a = 1
-        marker.color.r = color[0]
-        marker.color.g = color[1]
-        marker.color.b = color[2]
-
-        self._marker_publisher.publish(marker)
 
     def __repr__(self):
         return "Arm(side='{side}')".format(side=self.side)
