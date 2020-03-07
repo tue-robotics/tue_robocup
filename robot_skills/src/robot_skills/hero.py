@@ -141,5 +141,5 @@ class Hero(robot.Robot):
         return True
 
     def go_to_driving_pose(self):
-        arm = self.parts['leftArm']
+        arm = self.get_arm(required_goals=['carrying_pose'])
         arm.send_joint_goal('carrying_pose')
