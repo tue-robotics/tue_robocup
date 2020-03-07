@@ -1,11 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+#
+# Copyright (c) 2019, TU/e Robotics, Netherlands
+# All rights reserved.
+
+import os
 
 import rospy
 from robot_smach_states.util.startup import startup
-from challenge_storing_groceries.storing_groceries import StoringGroceries
+from challenge_storing_groceries.storing_groceries import setup_statemachine
 
 
 if __name__ == '__main__':
-    rospy.init_node('state_machine')
-
-    startup(StoringGroceries)
+    challenge_name = os.path.basename(__file__)
+    rospy.init_node(challenge_name)
+    startup(setup_statemachine, challenge_name=challenge_name)
