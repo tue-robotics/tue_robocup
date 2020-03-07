@@ -115,13 +115,15 @@ class PublicArm(object):
                                          max_joint_vel=max_joint_vel)
 
     # Joint trajectories
-    def has_joint_trajectory(self, configuration: str):
+    def has_joint_trajectory(self, configuration):
+        # type: (str) -> bool
         """
         Query whether the provided joint trajectory exists for the arm.
         """
         return configuration in self._available_joint_trajectories
 
-    def send_joint_trajectory(self, configuration: str, timeout: float=5.0, max_joint_vel: float=0.7):
+    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7):
+        # type: (str, float, float) -> bool
         self._test_die(configuration in self._available_joint_trajectories, 'joint-goal ' + configuration,
                        "Specify get_arm(..., required_trajectories=['{}'])".format(configuration))
         return self._arm.send_joint_trajectory(configuration, timeout=timeout,
@@ -326,7 +328,8 @@ class ArmPiece(object):
 
     :var robot_name: Name of the robot.
     """
-    def __init__(self, robot_name: str):
+    def __init__(self, robot_name):
+        # type: (str)
         self.robot_name = robot_name
 
     def load_param(self, param_name, default=None);
@@ -337,7 +340,8 @@ class ArmJointsPiece(ArmPiece):
     :var arm_joint_names: Names of all available arm joints.
     :var torso_joint_names: Names of all available torso joints.
     """
-    def __init__(self, robot_name: str, arm_joints_suffix: str=""):
+    def __init__(self, robot_name, arm_joints_suffix=""):
+        # type: (str, str)
         """
         Constructor.
 
@@ -371,7 +375,8 @@ class HandoverPiece(object):
         arm.handover_to_human = self.handover_to_human
         arm.handover_to_robot = self.handover_to_robot
 
-    def handover_to_human(self, timeout: float=10):
+    def handover_to_human(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from the gripper to a human.
 
@@ -381,7 +386,8 @@ class HandoverPiece(object):
         """
         return self._exchange_with_human(False, timeout)
 
-    def handover_to_robot(self, timeout: float=10):
+    def handover_to_robot(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from a human to the robot.
 
@@ -391,7 +397,8 @@ class HandoverPiece(object):
         """
         return self._exchange_with_human(True, timeout)
 
-    def _exchange_with_human(self, to_robot: bool, timeout: float=10.0):
+    def _exchange_with_human(self, to_robot, timeout=10.0):
+        # type: (bool, float) -> bool
         """
         Exchange an item between the arm and a human.
 
@@ -400,7 +407,7 @@ class HandoverPiece(object):
 
         :param to_robot: Direction of the exchange.
         :param timeout: Timeout in seconds.
-        :return: Whether the excahnge succeeded.
+        :return: Whether the exchange succeeded.
         """
         if to_robot:
             topic = '/{}/handoverdetector_{}/toggle_human2robot'.format(self.robot_name, self.side)
@@ -425,13 +432,15 @@ class ArmDatabasePiece(ArmPiece):
     :var goals: Default poses of the arm.
     :var trajectories: Default trajectories of the arm.
     """
-    def __init__(self, robot_name: str):
+    def __init__(self, robot_name):
+        # type: (str)
         super(ArmDatabasePiece, self).__init__(robot_name)
 
         self.goals = self.load_param('skills/arm/default_configurations')
         self.trajectories = self.load_param('skills/arm/default_trajectories')
 
-    def get_goal(self, configuration: str):
+    def get_goal(self, configuration):
+        # type: (str)
         """
         Get an arm goal by name.
 
@@ -440,7 +449,8 @@ class ArmDatabasePiece(ArmPiece):
         """
         return self.goals.get(configuration)
 
-    def get_trajectory(self, configuration: str):
+    def get_trajectory(self, configuration):
+        # type: (str)
         """
         Get an arm trajectory by name.
 
@@ -453,7 +463,8 @@ class ArmMarkerPublisherPiece(ArmPiece):
     """
     Piece for publishing a marker.
     """
-    def __init__(self, robot_name: str, side: str):
+    def __init__(self, robot_name, side):
+        # type: (str, str)
         """
         Constructor.
 
@@ -465,7 +476,8 @@ class ArmMarkerPublisherPiece(ArmPiece):
         topic = "/{}/{}_arm/grasp_target".format(robot_name, side)
         self._marker_publisher = rospy.Publisher(topic, visualization_msgs.msg.Marker, queue_size=10)
 
-    def publish_marker(self, goal, color: List[float], ns: str=""):
+    def publish_marker(self, goal, color, ns=""):
+        # type: (GraspPrecomputeGoal, List[float], str) -> None
         """
         Publish markers for visualisation
 
@@ -508,7 +520,7 @@ class Arm(RobotPart):
 
     :var arm_database: High level knowledge about arm properties.
     """
-    def __init__(self, robot_name, tf_listener, get_joint_states, side: str, joints_piece: ArmJointsPiece=None):
+    def __init__(self, robot_name, tf_listener, get_joint_states, side, joints_piece=None):
         """
         constructor
 
@@ -516,7 +528,9 @@ class Arm(RobotPart):
         :param tf_listener: tf_server.TFClient()
         :param get_joint_states: get_joint_states function for getting the last joint states
         :param side: left or right
+        :vartype side: str
         :param joints_piece If specified, arm part containing the arm and torso joint names.
+        :vartype joint: ArmJointsPiece
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
@@ -723,7 +737,8 @@ class Arm(RobotPart):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration: str, timeout: float=5.0, max_joint_vel: float=0.7):
+    def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
+        # type: (str, float, float) -> bool
         """
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         :param configuration:(str) name of configuration, configuration should be loaded as parameter
@@ -740,7 +755,8 @@ class Arm(RobotPart):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration: str, timeout: float=5.0, max_joint_vel: float=0.7):
+    def send_joint_trajectory(self, configuration, timeout=5.0, max_joint_vel=0.7):
+        # type: (str, float, float) -> bool
         """
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to the arm
 
@@ -1028,7 +1044,7 @@ def set_grasp_goal_orientation(grasp_goal, ori):
 
 
 class ForceSensingArm(Arm):
-    def __init__(self, robot_name, tf_listener, get_joint_states, side: str, joints_piece: ArmJointsPiece=None):
+    def __init__(self, robot_name, tf_listener, get_joint_states, side, joints_piece=None):
         """
         constructor
 
@@ -1076,7 +1092,7 @@ class ForceSensingArm(Arm):
 
 
 class FakeArm(RobotPart):
-    def __init__(self, robot_name, tf_listener, side: str, joints_piece: ArmJointsPiece=None):
+    def __init__(self, robot_name, tf_listener, side, joints_piece=None):
         super(FakeArm, self).__init__(robot_name=robot_name, tf_listener=tf_listener, joints_piece)
         self.side = side
         if (self.side is "left") or (self.side is "right"):
