@@ -300,6 +300,7 @@ class Base(RobotPart):
         """
         #TODO implement navigation using an actionserver
         starttime = rospy.Time.now()
+        r = rospy.Rate(10)  # Hz
         while not rospy.is_shutdown():
             if self.local_planner.getStatus() == "arrived":
                 return True
@@ -308,7 +309,7 @@ class Base(RobotPart):
                 if cancel:
                     self.local_planner.cancelCurrentPlan()
                 return False
-            rospy.sleep(0.1)
+            r.sleep()
         return False
 
     def reset(self):
