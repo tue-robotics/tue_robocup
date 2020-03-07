@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import copy
+
 # ROS
 import rospy
 
@@ -12,6 +14,24 @@ from .utility import LockingDesignator
 
 __author__ = 'loy'
 
+
+def const_resolve(arm_designator, additional_properties):
+    """
+    Resolves the designator after adding properties. Note that the state is not altered.
+    :param arm_designator: ArmDesignator to which properties should be added.
+    :param additional_properties: Dict with the additional properties that are to be added.
+    :return: an arm with the desired properties and state
+    """
+
+    arm_designator_add_props = copy.copy(arm_designator)
+    for k, v in additional_properties.items():
+        if k in arm_designator_add_props.arm_properties:
+            for val in additional_properties[k]:
+                if val not in additional_properties[k]:
+                    arm_designator_add_props.arm_properties[k] += val
+        else:
+            arm_designator_add_props.arm_properties[k] = v
+    return arm_designator_add_props.resolve()
 
 class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.
@@ -125,8 +145,8 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         if not entity:
             rospy.logdebug('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
             return None
-        self.arm_properties['required_objects'] = [entity]
-        return super(ArmHoldingEntityDesignator, self)._resolve()
+        const_resolve(ArmHoldingEntityDesignator, {'required_objects':[entity]})
+
 
 
 if __name__ == "__main__":
