@@ -82,9 +82,9 @@ class Hero(robot.Robot):
 
         arm = self.get_arm(required_goals=['arm_out_of_way'])
 
-        pose = arm.default_configurations['arm_out_of_way']
+        pose = arm._arm.default_configurations['arm_out_of_way']
         pose[0] = z_arm
-        arm._send_joint_trajectory([pose])
+        arm._arm._send_joint_trajectory([pose])
 
         self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
         arm.wait_for_motion_done()
