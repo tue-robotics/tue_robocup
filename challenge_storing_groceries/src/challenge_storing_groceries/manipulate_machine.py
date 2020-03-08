@@ -16,6 +16,47 @@ MIN_GRAB_OBJECT_HEIGHT = 0.0
 MAX_GRAB_OBJECT_WIDTH = 1.8
 
 
+class StoreSingleItem(smach.StateMachine):
+    def __init__(self, robot, item_designator, place_pose_designator):
+        """
+        Constructor
+
+        :param robot: robot object
+        :param item_designator:
+        :param place_pose_designator: EdEntityDesignator designating the item to grab
+        """
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        # Create designators
+        self.arm_designator = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp", "prepare_place"],
+                                                                 "required_goals": ["carrying_pose"],
+                                                                 "required_gripper_types": [
+                                                                 arms.GripperTypes.GRASPING]},
+                                                         name="empty_arm_designator").lockable()
+
+        with self:
+            smach.StateMachine.add("CHOOSE_ARM",
+                                   states.utility.LockDesignator(self.arm_designator),
+                                   transitions={'locked': 'GRAB'}
+                                   )
+
+            smach.StateMachine.add("GRAB",
+                                   states.manipulation.Grab(robot, item_designator, self.arm_designator),
+                                   transitions={'done': 'PLACE',
+                                                'failed': 'failed'}
+                                   )
+
+            smach.StateMachine.add("PLACE",
+                                   states.manipulation.Place(robot,
+                                                             item_designator,
+                                                             place_pose_designator,
+                                                             self.arm_designator),
+                                   transitions={'done': 'succeeded',
+                                                'failed': 'failed'}
+                                   )
+
+
+# old code
 class DefaultGrabDesignator(ds.Designator):
     """
     Designator to pick the closest item on top of the table to grab. This is used for testing
