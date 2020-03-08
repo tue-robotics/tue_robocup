@@ -7,6 +7,8 @@ import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills import arms
+from robot_skills.classification_result import ClassificationResult
+from robot_skills.util.entity import Entity
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
@@ -17,6 +19,9 @@ MAX_GRAB_OBJECT_WIDTH = 1.8
 
 
 class StoreSingleItem(smach.StateMachine):
+    """
+    Store a single item at another place
+    """
     def __init__(self, robot, item_designator, place_pose_designator):
         """
         Constructor
@@ -54,6 +59,73 @@ class StoreSingleItem(smach.StateMachine):
                                    transitions={'done': 'succeeded',
                                                 'failed': 'failed'}
                                    )
+
+
+class StoreItems(smach.StateMachine):
+    """
+    Store a number of items from one place to another
+    """
+    def __init__(self, robot, source_entity, place_function):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "preempted"])
+
+        segmented_entities_designator = ds.VariableDesignator([], resolve_type=[ClassificationResult])
+        entities_designator = ds.VariableDesignator([], resolve_type=[Entity])
+        item_designator = ds.VariableDesignator(resolve_type=Entity)
+
+        with self:
+            smach.StateMachine.add('INSPECT',
+                                   states.world_model.Inspect(robot, source_entity, segmented_entities_designator),
+                                   transitions={'done': 'CONVERT_ENTITIES',
+                                                'failed': 'failed'})
+
+            @smach.cb_interface(outcomes=["converted"])
+            def convert(userdata=None):
+                """ convert Classificationresult to Entitiy"""
+                # This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
+                entities = []
+                segmented_entities = segmented_entities_designator.resolve()
+                for seg_entity in segmented_entities:
+                    e = robot.ed.get_entity(seg_entity.id)
+                    entities.append(e)
+                writer = entities_designator.writeable
+                writer.write(entities)
+                return "converted"
+
+            smach.StateMachine.add("CONVERT_ENTITIES",
+                                   smach.CBState(convert),
+                                   transitions={'converted': 'RANGE_ITERATOR'})
+
+            # Begin setup iterator
+            range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
+                                            input_keys=[], output_keys=[],
+                                            it=lambda: range(5),
+                                            it_label='index',
+                                            exhausted_outcome='succeeded')
+
+            with range_iterator:
+                contained_sm = smach.StateMachine(outcomes=['succeeded', 'failed'])
+
+                # process a single item
+                with contained_sm:
+                    smach.StateMachine.add('ITERATE_ENTITY',
+                                           states.designator_iterator.IterateDesignator(entities_designator, item_designator.writeable),
+                                           transitions={'next': 'succeeded',
+                                                        'stop_iteration': 'failed'}
+                                           )
+
+                    smach.StateMachine.add('STORE_ITEM',
+                                           StoreSingleItem(robot, item_designator, place_function),
+                                           transitions={'succeeded': 'succeeded',
+                                                        'failed': 'failed'}
+                                           )
+
+                smach.Iterator.set_contained_state('SINGLE_ITEM',
+                                                   contained_sm,
+                                                   loop_outcomes=['succeeded', 'failed'])
+
+            smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
+                                   {'succeeded': 'succeeded',
+                                    'failed': 'failed'})
 
 
 # old code

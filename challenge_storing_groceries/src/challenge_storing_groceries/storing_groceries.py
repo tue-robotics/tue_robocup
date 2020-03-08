@@ -15,7 +15,7 @@ from robocup_knowledge import load_knowledge
 
 # Challenge storing groceries
 from inspect_shelves import InspectAreas
-from manipulate_machine import ManipulateMachine
+from manipulate_machine import StoreItems
 from open_door import OpenDoorMachine
 
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
@@ -68,24 +68,31 @@ def setup_statemachine(robot):
                                             'failed': 'RANGE_ITERATOR'})
 
         # store items
-        # Begin setup iterator
-        single_item = ManipulateMachine(robot)
-        # The exhausted argument should be set to the prefered state machine outcome
-        range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
-                                        input_keys=[], output_keys=[],
-                                        it=lambda: range(5),
-                                        it_label='index',
-                                        exhausted_outcome='succeeded')
+        smach.StateMachine.add("STORE_GROCERIES",
+                               StoreItems(robot, shelfDes, tableDes, knowledge=challenge_knowledge),
+                               transitions={'succeeded': 'AT_END',
+                                            'preempted': 'Aborted',
+                                            'failed': 'Failed'}
+                               )
 
-        with range_iterator:
+        ## Begin setup iterator
+        #single_item = ManipulateMachine(robot)
+        ## The exhausted argument should be set to the prefered state machine outcome
+        #range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
+        #                                input_keys=[], output_keys=[],
+        #                                it=lambda: range(5),
+        #                                it_label='index',
+        #                                exhausted_outcome='succeeded')
 
-            smach.Iterator.set_contained_state('SINGLE_ITEM',
-                                               single_item,
-                                               loop_outcomes=['succeeded', 'failed'])
+        #with range_iterator:
 
-        smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-                               {'succeeded': 'AT_END',
-                                'failed': 'Failed'})
+        #    smach.Iterator.set_contained_state('SINGLE_ITEM',
+        #                                       single_item,
+        #                                       loop_outcomes=['succeeded', 'failed'])
+
+        #smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
+        #                       {'succeeded': 'AT_END',
+        #                        'failed': 'Failed'})
         # End setup iterator
 
         smach.StateMachine.add('AT_END',
