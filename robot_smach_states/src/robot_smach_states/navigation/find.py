@@ -7,6 +7,7 @@ import rospy
 # TU/e Robotics
 from robot_skills.classification_result import ClassificationResult
 from ..world_model import Inspect
+from ..utility import WaitTime
 from ..util.designators import VariableDesignator
 
 
@@ -94,8 +95,8 @@ class Find(smach.StateMachine):
     Find an entity based on a description. The description designator should
     have resolve type dict and it should contain at least a 'type' field
     """
-    def __init__(self, robot, knowledge, source_entity_designator, description_designator, area_name_designator,
-                 navigation_area_designator, found_entity_designator):
+    def __init__(self, robot, knowledge, source_entity_designator, description_designator, found_entity_designator,
+                 area_name="on_top_of", navigation_area_designator=""):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'inspect_failed', 'not_found'])
 
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
@@ -105,10 +106,16 @@ class Find(smach.StateMachine):
                                    Inspect(robot=robot,
                                            entityDes=source_entity_designator,
                                            objectIDsDes=segmented_entities_designator,
-                                           searchArea=area_name_designator,
+                                           searchArea=area_name,
                                            navigation_area=navigation_area_designator),
-                                   transitions={'done': 'CHECK_IF_ENTITY_FOUND',
+                                   transitions={'done': 'WAIT',
                                                 'failed': 'inspect_failed'})
+
+            smach.StateMachine.add('WAIT',
+                                   WaitTime(robot=robot,
+                                            waittime=1),
+                                   transitions={'waited': 'CHECK_IF_ENTITY_FOUND',
+                                                'preempted': 'inspect_failed'})
 
             smach.StateMachine.add('CHECK_IF_ENTITY_FOUND',
                                    CheckIfDescribedEntityAvailable(
