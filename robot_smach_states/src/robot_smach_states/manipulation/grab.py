@@ -307,7 +307,7 @@ class ResetOnFailure(smach.StateMachine):
 
         self._robot = robot
         self.arm_designator = arm
-        assert self.robot.get_arm(
+        assert self._robot.get_arm(
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
