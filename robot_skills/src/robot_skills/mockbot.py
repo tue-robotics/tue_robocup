@@ -100,9 +100,11 @@ class Base(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Base, self).__init__(robot_name, tf_listener)
         self.move = mock.MagicMock()
+        self.turn_towards = mock.MagicMock()
         self.force_drive = mock.MagicMock()
         self.get_location = lambda: FrameStamped(random_kdl_frame(), "/map")
         self.set_initial_pose = mock.MagicMock()
+        self.wait_for_motion_done = mock.MagicMock()
         self.go = mock.MagicMock()
         self.reset_costmap = mock.MagicMock()
         self.cancel_goal = mock.MagicMock()
