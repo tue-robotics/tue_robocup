@@ -10,6 +10,7 @@ from robot_smach_states.navigation import NavigateToSymbolic, NavigateToObserve
 from robot_smach_states.util.designators import Designator, VariableDesignator, check_type
 from robot_smach_states.world_model import SegmentObjects
 from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.rise import RiseForInspect
 
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
@@ -87,9 +88,13 @@ class InspectAreas(smach.StateMachine):
 
             smach.StateMachine.add('ITERATE_AREA',
                                    IterateDesignator(searchAreas, searchArea.writeable),
-                                   transitions={'next': 'SEGMENT',
+                                   transitions={'next': 'RISE',
                                                 'stop_iteration': 'done'}
                                    )
+
+            smach.StateMachine.add('RISE', RiseForInspect(robot, entityDes, searchArea),
+                                   transitions={'succeeded': 'SEGMENT',
+                                                'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
                                    SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
