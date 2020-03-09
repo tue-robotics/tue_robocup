@@ -128,7 +128,7 @@ class GlobalPlanner(RobotPart):
         end_time = rospy.Time.now()
         plan_time = (end_time-start_time).to_sec()
 
-        path_length = self.computePathLength(resp.plan)
+        self.path_length = self.computePathLength(resp.plan)
 
         return resp.plan
 
@@ -195,6 +195,18 @@ class Base(RobotPart):
             o = OrientationConstraint()
             o.frame = frame
             self.local_planner.setPlan(plan, p, o)
+
+        return plan
+
+    def turn_towards(self, x, y, frame, offset=0.0):
+        current_pose = self.get_location()
+        p = PositionConstraint()
+        p.constraint = "(x-%f)^2+(y-%f)^2 < %f^2" % (current_pose.frame.p.x(), current_pose.frame.p.y(), 0.1)
+        p.frame = current_pose.frame_id
+        plan = self.global_planner.getPlan(p)
+        o = OrientationConstraint(look_at=geometry_msgs.msg.Point(x, y, 0.0), angle_offset=offset)
+        o.frame = frame
+        self.local_planner.setPlan(plan, p, o)
 
         return plan
 
@@ -276,6 +288,29 @@ class Base(RobotPart):
         self._initial_pose_publisher.publish(initial_pose)
 
         return True
+
+    def wait_for_motion_done(self, timeout=10.0, cancel=False):
+        """
+        Waits until local planner is done
+
+        :param timeout: timeout in seconds; in case 0.0, no sensible output is provided, just False
+        :param cancel: bool specifying whether goals should be cancelled
+            if timeout is exceeded
+        :return: bool indicates whether motion was done (True if reached, False otherwise)
+        """
+        #TODO implement navigation using an actionserver
+        starttime = rospy.Time.now()
+        r = rospy.Rate(10)  # Hz
+        while not rospy.is_shutdown():
+            if self.local_planner.getStatus() == "arrived":
+                return True
+            passed_time = (rospy.Time.now() - starttime).to_sec()
+            if passed_time > timeout:
+                if cancel:
+                    self.local_planner.cancelCurrentPlan()
+                return False
+            r.sleep()
+        return False
 
     def reset(self):
         loc = self.local_planner.reset()
