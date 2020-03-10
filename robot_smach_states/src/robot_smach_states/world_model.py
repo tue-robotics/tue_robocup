@@ -232,7 +232,7 @@ class CheckEmpty(smach.State):
 
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
-        :param volume: string defining which volume of the entity is checked
+        :param volume_designator: string (or Designator resolving to a str) defining which volume of the entity is checked
         :param threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
             (None means any entities filling the volume will result in 'occupied')
         """
