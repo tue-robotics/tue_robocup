@@ -43,7 +43,9 @@ if __name__ == "__main__":
         z_values.append(z_values[-1] + DZ)
 
     results = []
-    for z in z_values:
+    for test_nr, z in enumerate(z_values):
+
+        print("\nTest nr {} of {} at height {}".format(test_nr + 1, len(z_values), z))
 
         # Add an entity to ed
         grasp_entity_id = "test_entity"
@@ -69,6 +71,9 @@ if __name__ == "__main__":
         # noinspection PyProtectedMember
         arm = robot._arms.values()[0]  # type: HeroArm
         arm.send_gripper_goal(state=arms.GripperState.OPEN)
+
+        if rospy.is_shutdown():
+            break
 
     # Print the results
     print("\n ---------- \n")
