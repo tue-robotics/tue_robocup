@@ -521,20 +521,14 @@ class Arm(RobotPart):
 
         grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
 
-        grasp_precompute_goal.goal.x = frame_in_baselink.frame.p.x()
-        grasp_precompute_goal.goal.y = frame_in_baselink.frame.p.y()
-        grasp_precompute_goal.goal.z = frame_in_baselink.frame.p.z()
-
+        set_grasp_goal_position(grasp_precompute_goal.goal, frame_in_baselink.p)
         set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
         self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
         offset_frame = frame_in_baselink.frame * self.offset
 
-        grasp_precompute_goal.goal.x = offset_frame.p.x()
-        grasp_precompute_goal.goal.y = offset_frame.p.y()
-        grasp_precompute_goal.goal.z = offset_frame.p.z()
-
+        set_grasp_goal_position(grasp_precompute_goal.goal, offset_frame.p)
         set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
         self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
@@ -575,8 +569,14 @@ class Arm(RobotPart):
                 return False
 
     @staticmethod
-    def set_grasp_goal_orientation(goal, rpy):
-        roll, pitch, yaw = rpy
+    def set_grasp_goal_position(goal, pos):
+        goal.x = pos.x()
+        goal.y = pos.y()
+        goal.z = pos.z()
+
+    @staticmethod
+    def set_grasp_goal_orientation(goal, orient):
+        roll, pitch, yaw = orient
         goal.roll = roll
         goal.pitch = pitch
         goal.yaw = yaw
