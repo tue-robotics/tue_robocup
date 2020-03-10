@@ -347,18 +347,7 @@ class ArmHandover(object):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.arm_name+'/toggle_robot2human',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.arm_name+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
+        return self._exchange_with_human(False, timeout)
 
     def handover_to_robot(self, timeout=10):
         """
@@ -368,13 +357,20 @@ class ArmHandover(object):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.arm_name+'/toggle_human2robot',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
+        return self._exchange_with_human(True, timeout)
+
+    def _exchange_with_human(self, to_robot, timeout=10):
+        if to_robot:
+            topic = '/{}/handoverdetector_{}/toggle_human2robot'.format(self.robot_name, self.arm_name)
+        else:
+            topic = '/{}/handoverdetector_{}/toggle_robot2human'.format(self.robot_name, self.arm_name)
+
+        pub = rospy.Publisher(topic, std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(std_msgs.msg.Bool(True))
 
+        result_topic = '/{}/handoverdetector_{}/result'.format(self.robot_name, self.arm_name)
         try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.arm_name+'/result', std_msgs.msg.Bool,
-                                   timeout)
+            rospy.wait_for_message(result_topic, std_msgs.msg.Bool, timeout)
             # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
             return True
         except rospy.ROSException as e:
