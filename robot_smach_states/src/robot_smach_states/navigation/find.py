@@ -96,7 +96,16 @@ class Find(smach.StateMachine):
     have resolve type dict and it should contain at least a 'type' field
     """
     def __init__(self, robot, knowledge, source_entity_designator, description_designator, found_entity_designator,
-                 area_name="on_top_of", navigation_area_designator=""):
+                 area_name="on_top_of", navigation_area=None):
+        """
+        :param robot: Robot object
+        :param knowledge: Robocup knowledge object. Used to find an object by its properties
+        :param source_entity_designator: Designator resolving to EdEntity to inspect
+        :param description_designator: dict which contains at least a 'type' field
+        :param found_entity_designator: Designator the found entity can be written to
+        :param area_name: str or str Designator describing the area of the source entity to inspect
+        :param navigation_area: str or str Designator describing the area to drive to for the inspect
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'inspect_failed', 'not_found'])
 
         segmented_entities_designator = VariableDesignator([], resolve_type=[ClassificationResult])
@@ -107,13 +116,14 @@ class Find(smach.StateMachine):
                                            entityDes=source_entity_designator,
                                            objectIDsDes=segmented_entities_designator,
                                            searchArea=area_name,
-                                           navigation_area=navigation_area_designator),
+                                           navigation_area=navigation_area),
                                    transitions={'done': 'WAIT',
                                                 'failed': 'inspect_failed'})
 
+            # give ed time to update
             smach.StateMachine.add('WAIT',
                                    WaitTime(robot=robot,
-                                            waittime=1),
+                                            waittime=0.5),
                                    transitions={'waited': 'CHECK_IF_ENTITY_FOUND',
                                                 'preempted': 'inspect_failed'})
 
