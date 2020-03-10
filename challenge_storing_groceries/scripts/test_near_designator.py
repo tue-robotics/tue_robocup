@@ -33,5 +33,6 @@ if __name__ == '__main__':
 
     shelfDes = ds.EntityByIdDesignator(robot, id=challenge_knowledge.shelf)
     itemDes = ds.EntityByIdDesignator(robot, entity_id)
-    des = NearObjectSpotDesignator(robot, itemDes, shelfDes, "shelf3")
+    area = ds.VariableDesignator("shelf3")
+    des = NearObjectSpotDesignator(robot, itemDes, shelfDes, area)
     print des.resolve()

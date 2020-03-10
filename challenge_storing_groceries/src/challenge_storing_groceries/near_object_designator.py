@@ -21,13 +21,13 @@ class NearObjectSpotDesignator(Designator):
         If the result is no entities, then we found an open spot.
     """
 
-    def __init__(self, robot, near_entity_designator, supporting_entity_designator, area=None, name=None):
+    def __init__(self, robot, near_entity_designator, supporting_entity_designator, area, name=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
         :param near_entity_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param supporting_entity_designator: Designator resolving to an Entity
-        :param area: (optional) str or str Designator describing the area where the item should be placed
+        :param area: str or str Designator describing the area where the item should be placed
         :param name: name for introspection purposes
         """
         super(NearObjectSpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
@@ -50,17 +50,14 @@ class NearObjectSpotDesignator(Designator):
         """
         near_entity = self.near_entity_designator.resolve()
         supporting_entity = self.supporting_entity_designator.resolve()
-        place_frame = FrameStamped(frame=supporting_entity.pose.frame, frame_id="/map")
+        area = self._area.resolve() if hasattr(self._area, "resolve") else self._area
 
         vectors_of_interest = self._determine_points_of_interest(near_entity, self._radius, self._spacing)
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
         # filter poi's that fall outside of the supporting surface
-        if self._area:
-            open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, self._area), vectors_of_interest)
-        else:
-            open_POIs = filter(lambda pose: self._is_poi_on_top_of(pose, supporting_entity), vectors_of_interest)
+        open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, area), vectors_of_interest)
 
         # filter poi's occupied by other entities
         open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs)
@@ -107,19 +104,6 @@ class NearObjectSpotDesignator(Designator):
 
         poi_in_entity_frame = poi.projectToFrame(entity.frame_id, self.robot.tf_listener)
         return entity.in_volume(poi_in_entity_frame.extractVectorStamped(), area)
-
-    def _is_poi_on_top_of(self, poi, entity):
-        """
-        Check whether the poi falls on top of the entity
-        :param poi: FrameStamped
-        :param entity: Entity
-        :return: bool
-        """
-        return self._in_convex_hull(poi, entity.shape.convex_hull)
-
-    def _in_convex_hull(self, poi, convex_hull):
-        return True
-
 
     def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose):
         """
