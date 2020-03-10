@@ -525,11 +525,7 @@ class Arm(RobotPart):
         grasp_precompute_goal.goal.y = frame_in_baselink.frame.p.y()
         grasp_precompute_goal.goal.z = frame_in_baselink.frame.p.z()
 
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
+        set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
         self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
@@ -539,13 +535,8 @@ class Arm(RobotPart):
         grasp_precompute_goal.goal.y = offset_frame.p.y()
         grasp_precompute_goal.goal.z = offset_frame.p.z()
 
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
+        set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
-
         self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
 
         time.sleep(0.001)   # This is necessary: the rtt_actionlib in the hardware seems
@@ -582,6 +573,13 @@ class Arm(RobotPart):
                 # failure
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
+
+    @staticmethod
+    def set_grasp_goal_orientation(goal, rpy):
+        roll, pitch, yaw = rpy
+        goal.roll = roll
+        goal.pitch = pitch
+        goal.yaw = yaw
 
     def send_joint_goal(self, configuration, timeout=5.0, max_joint_vel=0.7):
         """
