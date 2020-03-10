@@ -12,7 +12,8 @@ from robot_skills.util.entity import Entity
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
-from entity_description_designator import EntityDescriptionDesignator
+from near_object_designator import NearObjectSpotDesignator
+from similarity import SimilarEntityDesignator
 
 MIN_GRAB_OBJECT_HEIGHT = 0.0
 MAX_GRAB_OBJECT_WIDTH = 1.8
@@ -65,12 +66,15 @@ class StoreItems(smach.StateMachine):
     """
     Store a number of items from one place to another
     """
-    def __init__(self, robot, source_entity, place_function):
+    def __init__(self, robot, source_entity, target_entity, item_classifications, knowledge):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", "preempted"])
 
         segmented_entities_designator = ds.VariableDesignator([], resolve_type=[ClassificationResult])
         entities_designator = ds.VariableDesignator([], resolve_type=[Entity])
         item_designator = ds.VariableDesignator(resolve_type=Entity)
+
+        near_object_designator = SimilarEntityDesignator(robot, item_designator, item_classifications, knowledge)
+        place_designator = NearObjectSpotDesignator(robot, near_object_designator, target_entity)
 
         with self:
             smach.StateMachine.add('INSPECT',
@@ -109,12 +113,12 @@ class StoreItems(smach.StateMachine):
                 with contained_sm:
                     smach.StateMachine.add('ITERATE_ENTITY',
                                            states.designator_iterator.IterateDesignator(entities_designator, item_designator.writeable),
-                                           transitions={'next': 'succeeded',
+                                           transitions={'next': 'STORE_ITEM',
                                                         'stop_iteration': 'failed'}
                                            )
 
                     smach.StateMachine.add('STORE_ITEM',
-                                           StoreSingleItem(robot, item_designator, place_function),
+                                           StoreSingleItem(robot, item_designator, place_designator),
                                            transitions={'succeeded': 'succeeded',
                                                         'failed': 'failed'}
                                            )

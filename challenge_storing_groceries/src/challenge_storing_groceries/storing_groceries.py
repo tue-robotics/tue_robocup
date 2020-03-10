@@ -12,6 +12,7 @@ from robot_smach_states.util.geometry_helpers import *
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.utility import CheckBool
 from robocup_knowledge import load_knowledge
+from robot_skills.classification_result import ClassificationResult
 
 # Challenge storing groceries
 from inspect_shelves import InspectAreas
@@ -27,6 +28,7 @@ def setup_statemachine(robot):
     skip_door = rospy.get_param("~skip_door", True)
     shelfDes = ds.EntityByIdDesignator(robot, id=challenge_knowledge.shelf)
     tableDes = ds.EntityByIdDesignator(robot, id=challenge_knowledge.table)
+    objectsDes = ds.VariableDesignator(resolve_type=[ClassificationResult])
 
     with state_machine:
 
@@ -62,38 +64,27 @@ def setup_statemachine(robot):
                                             'goal_not_defined': 'INSPECT_SHELVES'})
 
         smach.StateMachine.add("INSPECT_SHELVES",
-                               InspectAreas(robot, shelfDes, knowledge=challenge_knowledge, navigation_area='in_front_of'),
-                               transitions={'succeeded': 'RANGE_ITERATOR',
-                                            'nothing_found': 'RANGE_ITERATOR',
-                                            'failed': 'RANGE_ITERATOR'})
+                               InspectAreas(robot, shelfDes, objectsDes, knowledge=challenge_knowledge, navigation_area='in_front_of'),
+                               transitions={'done': 'RESET_ARM',
+                                            'failed': 'Failed'})
+
+        @smach.cb_interface(outcomes=["done"])
+        def reset_arm(userdata=None):
+            """ Set the robots arm to reset pose"""
+            arm = robot.get_arm(required_goals=['reset'])
+            arm.send_joint_goal('reset')
+            return "done"
+        smach.StateMachine.add("RESET_ARM",
+                               smach.CBState(reset_arm),
+                               transitions={'done': 'STORE_GROCERIES'})
 
         # store items
         smach.StateMachine.add("STORE_GROCERIES",
-                               StoreItems(robot, shelfDes, tableDes, knowledge=challenge_knowledge),
+                               StoreItems(robot, tableDes, shelfDes, objectsDes, challenge_knowledge),
                                transitions={'succeeded': 'AT_END',
                                             'preempted': 'Aborted',
                                             'failed': 'Failed'}
                                )
-
-        ## Begin setup iterator
-        #single_item = ManipulateMachine(robot)
-        ## The exhausted argument should be set to the prefered state machine outcome
-        #range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
-        #                                input_keys=[], output_keys=[],
-        #                                it=lambda: range(5),
-        #                                it_label='index',
-        #                                exhausted_outcome='succeeded')
-
-        #with range_iterator:
-
-        #    smach.Iterator.set_contained_state('SINGLE_ITEM',
-        #                                       single_item,
-        #                                       loop_outcomes=['succeeded', 'failed'])
-
-        #smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-        #                       {'succeeded': 'AT_END',
-        #                        'failed': 'Failed'})
-        # End setup iterator
 
         smach.StateMachine.add('AT_END',
                                states.human_interaction.Say(robot, "Goodbye"),
