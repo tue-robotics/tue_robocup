@@ -20,8 +20,9 @@ class PointAt(smach.State):
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
 
         :param robot: Robot to execute state with
-        :param arm_designator : arm to place with, so Arm that holds entity_to_place, E.g. ArmHoldingEntityDesignator
+        :param arm_designator : arm to point with, so eg. an UnoccupiedArmDesignator
         :param point_at_designator: Designator that resolves to the pose to place at. E.g. EmptySpotDesignator
+        :param look_at_designator: Designator that resolves to an Entity the robot should look at while pointing
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
