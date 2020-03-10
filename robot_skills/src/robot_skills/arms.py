@@ -332,6 +332,8 @@ class GripperState(object):
 
 class ArmHandover(object):
     """
+    Handover part of the arm functionality.
+
     :var robot_name: Name of the robot.
     :var arm_name: Name of the arm (typically 'left' or 'right').
     """
@@ -340,6 +342,7 @@ class ArmHandover(object):
         self.arm_name = arm_name
 
     def handover_to_human(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from the gripper to a human.
 
@@ -350,6 +353,7 @@ class ArmHandover(object):
         return self._exchange_with_human(False, timeout)
 
     def handover_to_robot(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from a human to the robot.
 
@@ -360,6 +364,7 @@ class ArmHandover(object):
         return self._exchange_with_human(True, timeout)
 
     def _exchange_with_human(self, to_robot, timeout=10):
+        # type: (bool, float) -> bool
         if to_robot:
             topic = '/{}/handoverdetector_{}/toggle_human2robot'.format(self.robot_name, self.arm_name)
         else:
@@ -734,6 +739,7 @@ class Arm(RobotPart):
         return goal_status == GoalStatus.SUCCEEDED
 
     def handover_to_human(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from the gripper to a human.
 
@@ -744,6 +750,7 @@ class Arm(RobotPart):
         return self._handover.handover_to_human(timeout)
 
     def handover_to_robot(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from a human to the robot.
 
