@@ -21,13 +21,12 @@ class NearObjectSpotDesignator(Designator):
         If the result is no entities, then we found an open spot.
     """
 
-    def __init__(self, robot, near_entity_designator, supporting_entity_designator, area, name=None):
+    def __init__(self, robot, near_entity_designator, supporting_entity_designator, name=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
         :param near_entity_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param supporting_entity_designator: Designator resolving to an Entity
-        :param area: str or str Designator describing the area where the item should be placed
         :param name: name for introspection purposes
         """
         super(NearObjectSpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
@@ -38,7 +37,6 @@ class NearObjectSpotDesignator(Designator):
         self._edge_distance = 0.05  # Distance to table edge
         self._spacing = 0.05
         self._radius = 0.2  # desired distance between near_entity and the place pose
-        self._area = area
 
         self.marker_pub = rospy.Publisher('/empty_spots', MarkerArray, queue_size=1)
         self.marker_array = MarkerArray()
@@ -50,14 +48,14 @@ class NearObjectSpotDesignator(Designator):
         """
         near_entity = self.near_entity_designator.resolve()
         supporting_entity = self.supporting_entity_designator.resolve()
-        area = self._area.resolve() if hasattr(self._area, "resolve") else self._area
+        #TODO derive area from the position of near_entity in supporting entity
 
-        vectors_of_interest = self._determine_points_of_interest(near_entity, self._radius, self._spacing)
+        open_POIs = self._determine_points_of_interest(near_entity, self._radius, self._spacing)
 
-        assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
+        assert all(isinstance(v, FrameStamped) for v in open_POIs)
 
         # filter poi's that fall outside of the supporting surface
-        open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, area), vectors_of_interest)
+        #open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, area), open_POIs)
 
         # filter poi's occupied by other entities
         open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs)
