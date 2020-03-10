@@ -27,7 +27,7 @@ class NearObjectSpotDesignator(Designator):
         :param robot: Robot whose worldmodel to use
         :param near_entity_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param supporting_entity_designator: Designator resolving to an Entity
-        :param area: (optional) area where the item should be placed
+        :param area: (optional) str or str Designator describing the area where the item should be placed
         :param name: name for introspection purposes
         """
         super(NearObjectSpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
@@ -52,33 +52,80 @@ class NearObjectSpotDesignator(Designator):
         supporting_entity = self.supporting_entity_designator.resolve()
         place_frame = FrameStamped(frame=supporting_entity.pose.frame, frame_id="/map")
 
-        # points_of_interest = []
         vectors_of_interest = self._determine_points_of_interest(near_entity, self._radius, self._spacing)
 
         assert all(isinstance(v, FrameStamped) for v in vectors_of_interest)
 
-        # filter POIs which are outside of the placement area
+        # filter poi's that fall outside of the supporting surface
+        if self._area:
+            open_POIs = filter(lambda pose: self._is_poi_in_area(pose, supporting_entity, self._area), vectors_of_interest)
+        else:
+            open_POIs = filter(lambda pose: self._is_poi_on_top_of(pose, supporting_entity), vectors_of_interest)
 
-        open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), vectors_of_interest)
+        # filter poi's occupied by other entities
+        open_POIs = filter(lambda pose: self._is_poi_unoccupied(pose, supporting_entity), open_POIs)
 
+        if not open_POIs:
+            rospy.logdebug("No suitable place position found")
+            return None
+        self._create_markers_from_pois(open_POIs)
+
+        # sort POI's based on distance
         base_pose = self.robot.base.get_location()
         open_POIs_dist = [(poi, self._distance_to_poi_area_heuristic(poi, base_pose)) for poi in open_POIs]
         open_POIs_dist.sort(key=lambda tup:tup[1])
 
         selection = self._create_selection_marker(open_POIs_dist[0][0])
-        self.marker_pub.publish(MarkerArray([selection]))
+        self.marker_array.markers.append(selection)
+        self.marker_pub.publish(self.marker_array)
         return open_POIs_dist[0][0]
 
-    def _is_poi_unoccupied(self, frame_stamped, surface_entity):
-        entities_at_poi = self.robot.ed.get_entities(center_point=frame_stamped.extractVectorStamped(),
-                                                     radius=self._spacing)
+    def _is_poi_unoccupied(self, poi, surface_entity):
+        """
+        Check whether or not the poi is occupied by another entity
+        :param poi: FrameStamped
+        :param surface_entity: Entity
+        :return: bool
+        """
+        entities_at_poi = self.robot.ed.get_entities(center_point=poi.extractVectorStamped(),
+                                                     radius=0.05)
         entities_at_poi = [entity for entity in entities_at_poi if entity.id != surface_entity.id]
         return not any(entities_at_poi)
 
+    def _is_poi_in_area(self, poi, entity, area):
+        """
+        Check whether or not a poi is within an area
+
+        :param poi: FrameStamped
+        :param entity: Entity to place on
+        :param area: Area to place in
+        :return: bool
+        """
+        if area not in entity.volumes:
+            rospy.logerr_throttle("{} not an area of {}".format(area, entity.id))
+            return False
+
+        poi_in_entity_frame = poi.projectToFrame(entity.frame_id, self.robot.tf_listener)
+        return entity.in_volume(poi_in_entity_frame.extractVectorStamped(), area)
+
+    def _is_poi_on_top_of(self, poi, entity):
+        """
+        Check whether the poi falls on top of the entity
+        :param poi: FrameStamped
+        :param entity: Entity
+        :return: bool
+        """
+        return self._in_convex_hull(poi, entity.shape.convex_hull)
+
+    def _in_convex_hull(self, poi, convex_hull):
+        return True
+
+
     def _distance_to_poi_area_heuristic(self, frame_stamped, base_pose):
         """
-        :return: direct distance between a point and the robot
-        :rtype: double [meters]
+        :param frame_stamped: FrameStamped
+        :param base_pose: FrameStamped
+        :return: direct distance in meters between a point and the robot
         """
         pose_x = base_pose.frame.p[0]
         pose_y = base_pose.frame.p[1]
@@ -88,6 +135,10 @@ class NearObjectSpotDesignator(Designator):
 
         dist = math.hypot(pose_x - x, pose_y - y)
         return dist
+
+    def _create_markers_from_pois(self, pois):
+        for poi in pois:
+            self.marker_array.markers.append(self._create_marker(poi.frame.p.x(), poi.frame.p.y(), poi.frame.p.z()))
 
     def _create_marker(self, x, y, z):
         marker = Marker()
@@ -137,91 +188,7 @@ class NearObjectSpotDesignator(Designator):
                                                y=near_place.y() + dy,
                                                z=near_place.z(),
                                                frame_id="/map")
-
             points += [fs]
-            self.marker_array.markers.append(self._create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
-            rospy.loginfo("{}".format(fs.frame.p))
-
-        self.marker_pub.publish(self.marker_array)
-        return points
-
-    def _determine_points_of_interest_with_area(self, entity, area):
-        """ Determines the points of interest using an area
-        :type entity: Entity
-        :param area: str indicating which volume of the entity to look at
-        :rtype: [FrameStamped]
-        """
-
-        # We want to give it a convex hull using the designated area
-
-        if area not in entity.volumes:
-            return []
-
-        box = entity.volumes[area]
-
-        if not hasattr(box, "bottom_area"):
-            rospy.logerr("Entity {0} has no shape with a bottom_area".format(entity.id))
-
-        # Now we're sure to have the correct bounding box
-        # Make sure we offset the bottom of the box
-        top_z = box.min_corner.z() - 0.04  # 0.04 is the usual offset
-        return self._determine_points_of_interest(entity._pose, top_z, box.bottom_area)
-
-    def _determine_points_of_interestother(self, center_frame, z_max, convex_hull):
-        """
-        Determine candidates for place poses
-        :param center_frame: kdl.Frame, center of the Entity to place on top of
-        :param z_max: float, height of the entity to place on, w.r.t. the entity
-        :param convex_hull: [kdl.Vector], convex hull of the entity
-        :return: [FrameStamped] of candidates for placing
-        """
-
-        points = []
-
-        if len(convex_hull) == 0:
-            rospy.logerr('determine_points_of_interest: Empty convex hull')
-            return []
-
-        # Convert convex hull to map frame
-        ch = offsetConvexHull(convex_hull, center_frame)
-
-        # Loop over hulls
-        self.marker_array.markers = []
-
-        for i in xrange(len(ch)):
-            j = (i + 1) % len(ch)
-
-            dx = ch[j].x() - ch[i].x()
-            dy = ch[j].y() - ch[i].y()
-
-            length = kdl.diff(ch[j], ch[i]).Norm()
-
-            d = self._edge_distance
-            while d < (length - self._edge_distance):
-                # Point on edge
-                xs = ch[i].x() + d / length * dx
-                ys = ch[i].y() + d / length * dy
-
-                # Shift point inwards and fill message
-                fs = kdl_frame_stamped_from_XYZRPY(x=xs - dy / length * self._edge_distance,
-                                                   y=ys + dx / length * self._edge_distance,
-                                                   z=center_frame.p.z() + z_max,
-                                                   frame_id="/map")
-
-                # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
-                # prevent the robot from hitting the cabinet edges
-                # print "Length: {}, edge score: {}".format(length, min(d, length-d))
-                setattr(fs, 'edge_score', min(d, length-d))
-
-                points += [fs]
-
-                self.marker_array.markers.append(self._create_marker(fs.frame.p.x(), fs.frame.p.y(), fs.frame.p.z()))
-
-                # ToDo: check if still within hull???
-                d += self._spacing
-
-        self.marker_pub.publish(self.marker_array)
-
         return points
 
     def __repr__(self):

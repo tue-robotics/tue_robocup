@@ -27,11 +27,11 @@ if __name__ == '__main__':
 
     # add entity on the table
     entity_id = "test_item"
-    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(3.1, 2.7, 0.7)),
+    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(3.1, 2.7, 0.8)),
                         frame_id="/map")
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
 
     shelfDes = ds.EntityByIdDesignator(robot, id=challenge_knowledge.shelf)
     itemDes = ds.EntityByIdDesignator(robot, entity_id)
-    des = NearObjectSpotDesignator(robot, itemDes, shelfDes)
+    des = NearObjectSpotDesignator(robot, itemDes, shelfDes, "shelf3")
     print des.resolve()
