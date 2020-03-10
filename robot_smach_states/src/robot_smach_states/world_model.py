@@ -14,6 +14,7 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.volume import Volume
 from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators.utility import resolve
 
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds
@@ -242,19 +243,16 @@ class CheckEmpty(smach.State):
         self.entity_des = entity_designator
 
         ds.check_type(volume_designator, str)
-        if isinstance(volume_designator, str):
-            self.volume_designator = ds.VariableDesignator(volume_designator)
-        elif isinstance(volume_designator, ds.Designator):
-            self.volume_designator = volume_designator
-        else:
-            raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
+        # Can be either designator or concrete value, but the resolve function takes care of either case
+        self.volume_designator = volume_designator
 
         self.threshold = threshold
 
     def execute(self, userdata=None):
         entity = self.entity_des.resolve()  # type: Entity
         seen_entities = self.seen_entities_des.resolve()
-        volume_name = self.volume_designator.resolve()
+        volume_name = resolve(self.volume_designator)
+
         if seen_entities:
             if self.threshold:
                 vol = entity.volumes[volume_name]  # type: Volume
