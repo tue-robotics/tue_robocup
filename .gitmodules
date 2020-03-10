@@ -1,0 +1,8 @@
+[submodule "robot_smach_states/docs"]
+    path = robot_smach_states/docs
+    url = https://github.com/tue-robotics/tue_documentation_python.git
+    branch = master
+[submodule "robot_skills/docs"]
+    path = robot_skills/docs
+    url = https://github.com/tue-robotics/tue_documentation_python.git
+    branch = master

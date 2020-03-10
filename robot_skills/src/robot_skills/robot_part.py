@@ -17,6 +17,7 @@ class RobotPart(object):
     def __init__(self, robot_name, tf_listener):
         """
         Constructor
+
         :param robot_name: string with robot name
         :param tf_listener: tf listener object
         """
@@ -34,6 +35,7 @@ class RobotPart(object):
     def load_param(self, param_name, default=None):
         """
         Loads a parameter from the parameter server, namespaced by robot name
+
         :param param_name: parameter name
         :param default: default value for when parameter unavailable
         :return: loaded parameters
@@ -49,7 +51,7 @@ class RobotPart(object):
 
         :param timeout: timeout in seconds
         :param log_failing_connections: (bool) whether to log errors if not connected. This is useful when checking
-        multiple robot parts in a loop
+            multiple robot parts in a loop
         :return: bool indicating whether all connections are connected
         """
         start = rospy.Time.now()
@@ -80,8 +82,7 @@ class RobotPart(object):
                     try:
                         connection.wait_for_service(timeout=0.01)
                         connected = True
-                    except Exception as e:
-                        rospy.logerr(e)
+                    except Exception:
                         connected = False
                 elif isinstance(connection, rospy.Subscriber):
                     connected = connection.get_num_connections() >= 1
@@ -106,6 +107,7 @@ class RobotPart(object):
     def create_simple_action_client(self, name, action_type):
         """
         Creates a simple actionlib client and waits for the action server
+
         :param name: string with the name of the action in the correct namespace
         :param action_type: action type of this action
         :return: the action client
@@ -128,6 +130,7 @@ class RobotPart(object):
     def create_subscriber(self, name, *args, **kwargs):
         """
         Creates a Subscriber and add to the connections to check
+
         :param name: string with the name topic to subscribe
         :param args: other args passed to rospy.Subscriber
         :param kwargs: other keyword args passed to rospy.Subscriber
@@ -140,6 +143,7 @@ class RobotPart(object):
     def _add_connection(self, name, connection):
         """
         Adds a connection to the internal dict with connections that is used when initializing the robot object.
+
         :param name: name of the connection
         :param connection: connection to add. This might be a ServiceProxy, ActionClient or Subscriber
         """
@@ -180,6 +184,7 @@ class RobotPart(object):
     def process_hardware_status(self, diagnostic_dict):
         """
         hardware_status callback to determine if the bodypart is operational
+
         :param diagnostic_dict: dictionary[str, diagnostic_msgs.msg.DiagnosticStatus]
         :return: no return
         """
@@ -206,6 +211,7 @@ class RobotPart(object):
     def reset(self):
         """
         Reset body part. This should be implemented in the subclass. Should always return a bool.
+
         :return: Succes
         :rtype: bool
         """

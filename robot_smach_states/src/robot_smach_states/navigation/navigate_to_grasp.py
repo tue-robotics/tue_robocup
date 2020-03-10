@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import math
 
@@ -9,9 +11,9 @@ import rospy
 from cb_planner_msgs_srvs.msg import *
 from robot_skills.arms import PublicArm
 from robot_skills.util.entity import Entity
-from robot_smach_states.navigation import NavigateTo
-from robot_smach_states.util.designators import check_resolve_type
-from robot_smach_states.util.designators.arm import UnoccupiedArmDesignator
+from .navigation import NavigateTo
+from ..util.designators import check_resolve_type
+from ..util.designators.arm import UnoccupiedArmDesignator
 
 
 class NavigateToGrasp(NavigateTo):

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import math
 import random
@@ -77,6 +79,8 @@ class Say(smach.State):
         """
         Constructor
 
+        State exits with 'spoken'.
+
         :param robot: robot object
         :type robot: Robot
         :param sentence: Sentence to be spoken, can contain place holders to  be filled in at runtime
@@ -95,8 +99,6 @@ class Say(smach.State):
         :type look_at_standing_person: bool
         :param place_holders: place holders to be filled in at runtime
         :type place_holders: designator to str
-        :return: spoken
-        :rtype: str
         """
         smach.State.__init__(self, outcomes=["spoken"])
 
@@ -347,7 +349,7 @@ class LearnPerson(smach.State):
         :param robot: robot object
         :param person_name: string indicating the name that will be given
         :param name_designator: designator returning a string with the name of the person. This will be used if no
-        person name is provided
+            person name is provided
         :param nr_tries: maximum number of tries
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])

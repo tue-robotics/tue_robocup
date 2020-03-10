@@ -6,6 +6,7 @@ import smach
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge set the table
 # from entity_description_designator import EntityDescriptionDesignator
@@ -27,7 +28,9 @@ class ClearManipulateMachine(smach.StateMachine):
     - Place item
     """
     def __init__(self, robot, grasp_furniture_id, place_furniture_id1, place_furniture_id2):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param grasp_furniture_id: string identifying the furniture object where to grasp the objects
         :param place_furniture_id1: string identifying the furniture object where to place objects 1 and 2
@@ -44,15 +47,20 @@ class ClearManipulateMachine(smach.StateMachine):
         grasp_designator3 = DefaultGrabDesignator(robot=robot, surface_designator=grasp_furniture_designator,
                                                   area_description="on_top_of")
 
+        # TODO use the same designator that is used for setting the table
+        arm_designator = ds.UnoccupiedArmDesignator(robot, {})
+
         place_furniture_designator1 = ds.EntityByIdDesignator(robot, id=place_furniture_id1)
-        place_designator1 = ds.EmptySpotDesignator(robot=robot,
-                                                   place_location_designator=place_furniture_designator1,
-                                                   area="on_top_of")
+        place_designator1 = EmptySpotDesignator(robot=robot,
+                                                place_location_designator=place_furniture_designator1,
+                                                arm_designator=arm_designator,
+                                                area="on_top_of")
 
         place_furniture_designator3 = ds.EntityByIdDesignator(robot, id=place_furniture_id2)
-        place_designator3 = ds.EmptySpotDesignator(robot=robot,
-                                                   place_location_designator=place_furniture_designator3,
-                                                   area="on_top_of")
+        place_designator3 = EmptySpotDesignator(robot=robot,
+                                                place_location_designator=place_furniture_designator3,
+                                                arm_designator=arm_designator,
+                                                area="on_top_of")
 
         with self:
 

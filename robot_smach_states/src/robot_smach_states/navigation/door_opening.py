@@ -151,8 +151,9 @@ class ForceDriveToTouchDoor(smach.State):
         """
         Convert a sensor_msgs.msg.LaserScan message to a list of point in base_link frame
         Returns a numpy.ndarray of shape (N, 2)
+
         :param scan:
-        :type scan LaserScan
+        :type scan: LaserScan
         :return:
         """
 
@@ -173,6 +174,7 @@ class ForceDriveToTouchDoor(smach.State):
         """
         Adds a distance to a list of points. Points should be an (N, 2)-shaped numpy.ndarray
         and delta must be a (2)-shaped np.ndarray.
+
         :param points:
         :param delta:
         :return:
@@ -190,6 +192,7 @@ class ForceDriveToTouchDoor(smach.State):
     def distance_between_footprint_and_scan(self, footprint_points, scan_points):
         """
         Find the distance between the two closest points in the two sets of points and return those points as well.
+
         :param footprint_points: Points (in base_link) that define the base's footprint
         :param scan_points: Points (in base_link) that are scanned by the front laser
         :return: tuple of (footprint_point, distance, scan_point)
@@ -345,10 +348,10 @@ class WaypointOfDoorDesignator(ds.Designator):
     """
     def __init__(self, robot, door_entity_designator, direction, name=None):
         """
-        :param robot The robot with which to query ED
-        :param door_entity_designator Designator resolving to an entity of type door that has a push_start_waypoint and push_destination_waypoint data field
-        :param direction 'start' or 'destination' to select one of the two data fields
-        :param name Name for this designator to aid in debugging.
+        :param robot: The robot with which to query ED
+        :param door_entity_designator: Designator resolving to an entity of type door that has a push_start_waypoint and push_destination_waypoint data field
+        :param direction: 'start' or 'destination' to select one of the two data fields
+        :param name: Name for this designator to aid in debugging.
         """
         super(WaypointOfDoorDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         self.robot = robot
@@ -378,6 +381,7 @@ class OpenDoorByPushing(smach.StateMachine):
     def __init__(self, robot, door_start_wp_designator, door_dest_wp_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
         """
         Push against a door until its open
+
         :param robot: Robot on which to execute this state machine
         :param door_entity_designator: The door entity. Defaults to None, which implies the door its in front of
             This entity must have 2 fields in its data: push_start_waypoint and push_destination_waypoint,

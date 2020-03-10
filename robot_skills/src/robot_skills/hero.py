@@ -2,7 +2,7 @@ from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, pe
 from .simulation import is_sim_mode, SimEButton
 
 import rospy
-
+import math
 
 class Hero(robot.Robot):
     """docstring for Hero"""
@@ -48,14 +48,17 @@ class Hero(robot.Robot):
         self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
-        for arm in self.arms.itervalues():
-            arm.unsubscribe_hardware_status()
-        for arm in self.arms.itervalues():
-            arm._operational = True
+        for part in self.parts.itervalues():
+            part.unsubscribe_hardware_status()
+            part._operational = True
 
         # verify joint goal required for posing
         assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
             "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
+        # parameters for posing
+        self.z_over = 0.4  # height the robot should look over the surface
+        self.z_hh = 0.9  # height of the robots head at z_arm=0
+        self.torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
 
         self.configure()
 
@@ -64,57 +67,76 @@ class Hero(robot.Robot):
         This poses the robot for an inspect.
 
         :param inspect_target: kdl.Frame with the pose of the entity to be inspected.
-        :return result: boolean, false if something went wrong.
+        :return: boolean, false if something went wrong.
         """
         # calculate the arm_lift_link which must be sent
-        z_over = 0.4  # height the robot should look over the surface
-        z_hh = 0.9  # height of the robots head at z_arm=0
-        torso_to_arm_ratio = 2.0  # motion of arm/motion of torso
-        z_head = inspect_target.z() + z_over
+        z_head = inspect_target.z() + self.z_over
 
         # check whether moving the arm is necessary
-        if z_head < 1.1:
+        if z_head < 1.3:
             rospy.logdebug("Entity is low enough. we don't need to move the arm")
             return True
 
         # saturate the arm lift goal
-        z_arm = (z_head - z_hh) * torso_to_arm_ratio
+        z_arm = (z_head - self.z_hh) * self.torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))  # arm_lift_joint limit
 
-        arm = self.parts['leftArm']
+        arm = self.get_arm(required_goals=['arm_out_of_way'])
 
-        # turn the robot
-        rotation = 1.57
-        rotation_speed = 1.0
-        rotation_duration = rotation / rotation_speed
-
-        pose = arm.default_configurations['arm_out_of_way']
+        pose = arm._arm.default_configurations['arm_out_of_way']
         pose[0] = z_arm
-        arm._send_joint_trajectory([pose])
+        arm._arm._send_joint_trajectory([pose])
 
-        self.base.force_drive(0, 0, rotation_speed, rotation_duration)
+        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
         arm.wait_for_motion_done()
+        self.base.wait_for_motion_done()
         return True
 
     def move_to_hmi_pose(self):
         """
         This poses the robot for conversations.
 
-        :return None
+        :return: None
         """
-        arm = self.get_arm()
+        arm = self.get_arm(required_goals=['arm_out_of_way'])
 
         rotation = 1.57
         rotation_speed = 1
         rotation_duration = rotation / rotation_speed
-        if arm.has_joint_goal('arm_out_of_way'):
-            arm.send_joint_goal('arm_out_of_way', 0.0)
-            self.base.force_drive(0, 0, rotation_speed, rotation_duration)
+        arm.send_joint_goal('arm_out_of_way', 0.0)
+        self.base.force_drive(0, 0, rotation_speed, rotation_duration)
         arm.wait_for_motion_done()
 
+    def move_to_pregrasp_pose(self, arm, grasp_target):
+        """
+        This poses the robot for an inspect.
 
-if __name__ == "__main__":
-    rospy.init_node("hero")
+        :param arm: PublicArm to use for grasping the target, must have joint trajectory 'prepare_grasp'
+        :param grasp_target: kdl.Frame with the pose of the entity to be grasp.
+        :return: boolean, false if something went wrong.
+        """
+        # calculate the arm_lift_link which must be sent
+        z_head = grasp_target.z() + self.z_over
 
-    import doctest
-    doctest.testmod()
+        if z_head < 1.3:
+            # we dont need to do stupid stuff
+            arm.send_joint_trajectory('prepare_grasp')
+            return True
+
+        # saturate the arm lift goal
+        z_arm = (z_head - self.z_hh) * self.torso_to_arm_ratio
+        z_arm = min(0.69, max(z_arm, 0.0))
+
+        pose = arm._arm.default_trajectories['prepare_grasp']
+        pose[1][0] = z_arm
+        arm._arm._send_joint_trajectory(pose)
+
+        angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
+        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)
+        arm.wait_for_motion_done()
+        self.base.wait_for_motion_done()
+        return True
+
+    def go_to_driving_pose(self):
+        arm = self.get_arm(required_goals=['carrying_pose'])
+        arm.send_joint_goal('carrying_pose')

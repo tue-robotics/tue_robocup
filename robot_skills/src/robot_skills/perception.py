@@ -52,20 +52,6 @@ class Perception(RobotPart):
         self._person_recognition_3d_srv = \
             self.create_service_client('/' + robot_name + '/people_recognition/detect_people_3d', RecognizePeople3D)
 
-        # camera topics
-        self.depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns), CameraInfo)
-        self.depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
-        self.rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
-
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub, self.depth_info_sub],
-                                                         queue_size=10,
-                                                         slop=10)
-        self.ts.registerCallback(self._callback)
-
-    def _callback(self, rgb, depth, depth_info):
-        rospy.logdebug('Received rgb, depth, cam_info')
-        self._image_data = (rgb, depth, depth_info)
-
     def close(self):
         pass
 
@@ -184,6 +170,7 @@ class Perception(RobotPart):
     def detect_faces(self, image=None, stamp=False):
         """
         Snap an image with the camera and return the recognized faces.
+
         :param image: image to use for recognition
         :type image: sensor_msgs/Image
         :param stamp: Return recognitions and stamp
@@ -210,7 +197,7 @@ class Perception(RobotPart):
         :type desired_label: str
         :param probability_threshold: only accept recognitions with probability higher than threshold
         :type probability_threshold: double
-        :return the best recognition matching the given desired_label
+        :return: the best recognition matching the given desired_label
         :rtype image_recognition_msgs/Recognition
         """
 
@@ -259,6 +246,7 @@ class Perception(RobotPart):
     def clear_face(self):
         """
         clearing all faces from the OpenFace node.
+
         :return: no return
         """
         rospy.loginfo('clearing all learned faces')
@@ -269,6 +257,7 @@ class Perception(RobotPart):
         """
         Get the face properties of all faces or in an image. If faces is provided, image is ignored. If both aren't
         provided, an image is collected.
+
         :param faces: images of all faces
         :type faces: list[sensor_msgs/Image]
         :param image: image containing the faces
@@ -303,10 +292,31 @@ class Perception(RobotPart):
         :param timeout: How long to wait until the images are all collected.
         :return: tuple(rgb, depth, depth_info) or a None if no images could be gathered.
         """
+        event = Event()
+
+        def callback(rgb, depth, depth_info):
+            rospy.loginfo('Received rgb, depth, cam_info')
+            self._image_data = (rgb, depth, depth_info)
+            event.set()
+
+        # camera topics
+        depth_info_sub = message_filters.Subscriber('{}/depth_registered/camera_info'.format(self._camera_base_ns),
+                                                    CameraInfo)
+        depth_sub = message_filters.Subscriber('{}/depth_registered/image'.format(self._camera_base_ns), Image)
+        rgb_sub = message_filters.Subscriber('{}/rgb/image_raw'.format(self._camera_base_ns), Image)
+
+        ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth_info_sub],
+                                                         queue_size=1,
+                                                         slop=10)
+        ts.registerCallback(callback)
+        event.wait(timeout)
+        ts.callbacks.clear()
+        del ts, depth_info_sub, depth_sub, rgb_sub, callback
+
         if any(self._image_data):
             return self._image_data
         else:
-            return None, None, None
+            return None
 
     def detect_person_3d(self, rgb, depth, depth_info):
         return self._person_recognition_3d_srv(image_rgb=rgb, image_depth=depth, camera_info_depth=depth_info).people

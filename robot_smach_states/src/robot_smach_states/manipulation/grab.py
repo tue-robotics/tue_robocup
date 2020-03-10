@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 import PyKDL as kdl
 import rospy
@@ -9,11 +11,11 @@ from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
 from robot_skills.arms import PublicArm, GripperMeasurement
 from robot_skills.robot import Robot
-from robot_smach_states.util.designators import check_type
-from robot_smach_states.navigation import NavigateToGrasp
-from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
-from robot_smach_states.util.designators.arm import ArmDesignator
-from robot_smach_states.util.designators.core import Designator
+from ..util.designators import check_type
+from ..navigation.navigate_to_grasp import NavigateToGrasp
+from ..manipulation.grasp_point_determination import GraspPointDeterminant
+from ..util.designators.arm import ArmDesignator
+from ..util.designators.core import Designator
 
 
 class PrepareEdGrasp(smach.State):
@@ -21,6 +23,7 @@ class PrepareEdGrasp(smach.State):
         # type: (Robot, ArmDesignator, Designator) -> None
         """
         Set the arm in the appropriate position before actually grabbing
+
         :param robot: robot to execute state with
         :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
@@ -40,6 +43,7 @@ class PrepareEdGrasp(smach.State):
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
+        self.robot.move_to_inspect_pose(entity._pose.p)
         self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
@@ -54,7 +58,7 @@ class PrepareEdGrasp(smach.State):
         self.robot.torso.reset()
 
         # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_grasp', timeout=0)
+        self.robot.move_to_pregrasp_pose(arm, entity._pose.p)
         arm.wait_for_motion_done()
 
         # Open gripper
@@ -71,6 +75,7 @@ class PickUp(smach.State):
     def __init__(self, robot, arm, grab_entity, check_occupancy=False):
         """
         Pick up an item given an arm and an entity to be picked up
+
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
@@ -245,9 +250,11 @@ class PickUp(smach.State):
         return result
 
     def associate(self, original_entity):
-        """ Tries to associate the original entity with one of the entities in the world model. This is useful if
+        """
+        Tries to associate the original entity with one of the entities in the world model. This is useful if
         after an update, the original entity is no longer present in the world model. If no good map can be found,
         the original entity will be returned as the associated entity.
+
         :param original_entity:
         :return: associated entity
         """
@@ -275,7 +282,9 @@ class PickUp(smach.State):
 class ResetOnFailure(smach.StateMachine):
     """ Class to reset the robot after a grab has failed """
     def __init__(self, robot, arm):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         """
         smach.StateMachine.__init__(self, outcomes=['done'])
@@ -304,10 +313,10 @@ class Grab(smach.StateMachine):
     def __init__(self, robot, item, arm):
         """
         Let the given robot move to an entity and grab that entity using some arm
+
         :param robot: Robot to use
         :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
         :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
-        :return:
         """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 

@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # System
 import sys
@@ -11,8 +11,8 @@ import smach
 from robot_skills.util.entity import Entity
 
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_smach_states.state import State
-import robot_smach_states.util.designators as ds
+from .state import State
+from .util import designators as ds
 
 
 class LookAtEntity(State):
@@ -46,11 +46,11 @@ class LookAtArea(State):
     def __init__(self, robot, entity, area, waittime=2.0):
         """
         Constructor
+
         :param robot: robot object
         :param entity: EdEntityDesignator with the area to look at
         :param area: string with the area to look at
         :param waittime: (optional) waittime (in seconds) between giving a head target and returning
-        :return:
         """
         ds.check_type(entity, Entity)
 

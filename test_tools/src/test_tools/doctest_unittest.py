@@ -26,9 +26,10 @@ class _TestDocTests(unittest.TestCase):
     def __init__(self, module_name, method_name="test_doctests"):
         """
         Constructor
+
         :param module_name: (str) Name of the python module
         :param method_name: (str) Name of the member variable to run, this should be "test_doctests" and shouldn't
-        be changed.
+            be changed.
         """
         assert method_name == "test_doctests", "The method_name should be 'test_doctests'. This is the function which" \
                                                "implements the functionality of this TestCase."

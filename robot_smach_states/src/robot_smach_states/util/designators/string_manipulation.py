@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+
 import rospy
 import copy
-from robot_smach_states.util.designators.checks import check_type
-from robot_smach_states.util.designators.core import Designator
+from .checks import check_type
+from .core import Designator
 from hmi import HMIResult
 
 
@@ -25,6 +27,7 @@ class FieldOfHMIResult(Designator):
         """
         Construct a designator that picks a field out of the semantics dict of a QueryResult
         (such as resulting from a HearOptionsExtra-state)
+
         :param query_result_des: A QueryResult or a designator resolving to a QueryResult
         :param semantics_path: str or [str] (or designator) used in query_result.semantics[semantics_path]
         :param name: str naming for this designator for debugging purposes

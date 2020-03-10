@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import math
 
@@ -7,8 +9,8 @@ import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 
 # TU/e Robotics
-from robot_smach_states.util.geometry_helpers import offsetConvexHull
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, FrameStamped, kdl_frame_to_pose_msg
+from ..util.geometry_helpers import offsetConvexHull
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_to_pose_msg
 
 
 class GraspPointDeterminant(object):
@@ -30,7 +32,7 @@ class GraspPointDeterminant(object):
 
         :param entity: entity to grasp
         :param arm: arm to use
-        :return FrameStamped with grasp pose in map frame
+        :return: FrameStamped with grasp pose in map frame
         """
         candidates = []
         starttime = rospy.Time.now()

@@ -6,7 +6,7 @@ from robot_skills import Mockbot
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
 from robot_skills.util.volume import BoxVolume
-from robot_smach_states import SegmentObjects
+from robot_smach_states.world_model import SegmentObjects
 import robot_smach_states.util.designators as ds
 
 

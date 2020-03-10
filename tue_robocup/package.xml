@@ -17,21 +17,17 @@
   <run_depend>challenge_final</run_depend>
   <run_depend>challenge_find_my_mates</run_depend>
   <run_depend>challenge_gpsr</run_depend>
+  <run_depend>challenge_hand_me_that</run_depend>
   <run_depend>challenge_help_me_carry</run_depend>
-  <run_depend>challenge_manipulation</run_depend>
-  <run_depend>challenge_navigation</run_depend>
-  <run_depend>challenge_person_recognition</run_depend>
   <run_depend>challenge_presentation</run_depend>
   <run_depend>challenge_receptionist</run_depend>
   <run_depend>challenge_restaurant</run_depend>
   <run_depend>challenge_rips</run_depend>
-  <run_depend>challenge_set_a_table</run_depend>
-  <run_depend>challenge_spr</run_depend>
-  <run_depend>challenge_set_a_table</run_depend>
+  <run_depend>challenge_set_the_table</run_depend>
   <run_depend>challenge_storing_groceries</run_depend>
   <run_depend>challenge_take_out_the_garbage</run_depend>
-  <run_depend>test_tools</run_depend>
   <run_depend>challenge_where_is_this</run_depend>
+  <run_depend>test_tools</run_depend>
 
   <export>
     <metapackage/>

@@ -1,10 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 import math
 import rospy
 import smach
 import datetime
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 from robot_skills.arms import GripperState
 from robocup_knowledge import load_knowledge
@@ -14,23 +16,19 @@ from robot_skills.util.entity import Entity
 
 challenge_knowledge = load_knowledge('challenge_help_me_carry')
 
-print "=============================================="
-print "==         CHALLENGE HELP ME CARRY          =="
-print "=============================================="
-
 
 class ChallengeHelpMeCarry(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
+        msg = "\n".join(["==============================================",
+                         "==         CHALLENGE HELP ME CARRY          ==",
+                         "=============================================="])
+        rospy.loginfo("\n" + msg)
+
         self.target_destination = ds.EntityByIdDesignator(robot, id=challenge_knowledge.default_place)
 
         self.car_waypoint = ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_car['id'])
-
-        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.target_destination,
-                                                                          name="placement",
-                                                                          area=challenge_knowledge.default_area),
-                                                   name="place_position")
 
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
 
@@ -40,6 +38,11 @@ class ChallengeHelpMeCarry(smach.StateMachine):
         self.bag_arm_designator = self.empty_arm_designator.lockable()
         self.bag_arm_designator.lock()
 
+        self.place_position = ds.LockingDesignator(EmptySpotDesignator(robot, self.target_destination,
+                                                                       arm_designator=self.bag_arm_designator,
+                                                                       name="placement",
+                                                                       area=challenge_knowledge.default_area),
+                                                   name="place_position")
         # We don't actually grab something, so there is no need for an actual thing to grab
 
         self.current_item = ds.VariableDesignator(Entity("dummy", "dummy", "/{}/base_link".format(robot.robot_name),

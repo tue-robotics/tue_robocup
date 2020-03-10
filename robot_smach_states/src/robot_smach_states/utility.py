@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # ROS
 import rospy
 import smach
@@ -5,7 +6,7 @@ import std_msgs.msg
 
 # TU/e Robotics
 import robot_smach_states.util.designators as ds
-from util.robocup_recorder import start_robocup_recorder
+from .util.robocup_recorder import start_robocup_recorder
 
 
 class Initialize(smach.State):
@@ -43,7 +44,7 @@ class SetInitialPose(smach.State):
 
         :param robot: (Robot)
         :param init_position: (str) identifies the (waypoint) entity to be used as initial pose. For testing purposes,
-        a tuple(float, float, float) representing x, y and yaw in map frame can be used.
+            a tuple(float, float, float) representing x, y and yaw in map frame can be used.
         """
         smach.State.__init__(self, outcomes=["done", "preempted", "error"])
 
@@ -305,6 +306,49 @@ class UnlockDesignator(smach.State):
             str(self.locking_designator.resolve())[:10], self.locking_designator))
         self.locking_designator.unlock()
         return 'unlocked'
+
+
+class CheckBool(smach.State):
+    """
+    Provide a different transition based on a boolean designator.
+    """
+    def __init__(self, check_designator):
+        """
+        :param check_designator: designator resolving to True or False
+        """
+        super(CheckBool, self).__init__(outcomes=["true", "false"])
+        ds.check_type(check_designator, bool)
+        self._check_designator = check_designator
+
+    def execute(self, userdata=None):
+        val = self._check_designator.resolve() if hasattr(self._check_designator, "resolve") else self._check_designator
+        if val:
+            return "true"
+        else:
+            return "false"
+
+
+class ToggleBool(smach.State):
+    """
+    Toggle a boolean designator from True to False and from False to True
+    """
+    def __init__(self, check_designator):
+        """
+        :param check_designator: boolean designator to be toggled
+        """
+        super(ToggleBool, self).__init__(outcomes=["done"])
+        ds.is_writeable(check_designator)
+        ds.check_type(check_designator, bool)
+        self._check_designator = check_designator
+
+    def execute(self, userdata=None):
+        val = self._check_designator.resolve()
+        if val:
+            self._check_designator.write(False)
+        else:
+            self._check_designator.write(True)
+
+        return "done"
 
 
 if __name__ == "__main__":

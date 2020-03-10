@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # System
 import math
 
@@ -12,6 +14,7 @@ from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
 def wrap_angle_pi(angle):
     """
     Wraps between -pi and +pi
+
     :param angle: Input angle
     :return: Wrapped angle
     """
@@ -102,7 +105,7 @@ def offsetConvexHull(input_ch, offset):
 
     :param input_ch: list with kdl Vectors
     :param offset: KDL frame representing the offset with which to multiply the convex_hull
-    :return list with KDL vectors representing the convex hull
+    :return: list with KDL vectors representing the convex hull
     """
     out_ch = []
     for p in input_ch:

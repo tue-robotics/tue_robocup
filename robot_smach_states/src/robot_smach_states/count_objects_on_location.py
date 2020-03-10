@@ -1,8 +1,9 @@
+from __future__ import absolute_import
+
 import rospy
 import smach
-import robot_smach_states as states
+from .world_model import Inspect
 import robot_smach_states.util.designators as ds
-from robot_smach_states.util.startup import startup
 from robot_skills.classification_result import ClassificationResult
 
 
@@ -65,7 +66,7 @@ class InspectAndCount(smach.StateMachine):
         :param robot: robot object
         :param where_to_count_designator: Where to look for objects?
         :param type_to_count_designator: a VariableDesignator (resolve_type=string) that stores the type of the objects
-         that should be counted
+            that should be counted
         :param count_designator:  VariableDesignator(resolve_type=int).writeable() that will store the number
             of objects
         """
@@ -74,10 +75,10 @@ class InspectAndCount(smach.StateMachine):
         entities = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
-            smach.StateMachine.add("INSPECT_TABLE", states.Inspect(robot=robot, entityDes=where_to_count_designator,
-                                                                   objectIDsDes=entities,
-                                                                   searchArea="on_top_of",
-                                                                   navigation_area="in_front_of"),
+            smach.StateMachine.add("INSPECT_TABLE", Inspect(robot=robot, entityDes=where_to_count_designator,
+                                                            objectIDsDes=entities,
+                                                            searchArea="on_top_of",
+                                                            navigation_area="in_front_of"),
                                    transitions={"done": "COUNT",
                                                 "failed": "Aborted"})
 

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 import rospy
 import smach
@@ -49,10 +51,7 @@ class ResetArms(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        for arm in self.robot.arms.itervalues():
-            arm.reset(timeout=self.timeout)
-            arm.send_gripper_goal('close', timeout=self.timeout)
-
+        self.robot.reset_all_arms(timeout=self.timeout)
         return "done"
 
 
@@ -75,9 +74,7 @@ class ResetArmsTorso(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
-        for arm in self.robot.arms.itervalues():
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.reset_all_arms(gripper_timeout=self.timeout)
         self.robot.torso.reset()
         return "done"
 
@@ -91,9 +88,7 @@ class ResetArmsTorsoHead(smach.State):
         self.timeout = timeout
 
     def execute(self, userdata=None):
-        for arm in self.robot.arms.itervalues():
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.reset_all_arms(gripper_timeout=self.timeout)
         self.robot.head.reset(timeout=self.timeout)
         self.robot.torso.reset()
         return "done"

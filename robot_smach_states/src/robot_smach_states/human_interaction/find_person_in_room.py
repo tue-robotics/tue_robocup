@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 # System
 import math
@@ -6,31 +6,15 @@ import sys
 import numpy as np
 
 # ROS
-import PyKDL as kdl
 import geometry_msgs
 import rospy
 import smach
-from sensor_msgs.msg import Image, CameraInfo
-import message_filters
 
 # TU/e Robotics
-import robot_smach_states as states
-import robot_smach_states.util.designators as ds
-from robot_smach_states.util.designators import check_type
+from ..navigation.navigate_to_waypoint import NavigateToWaypoint
+from ..navigation.navigate_to_symbolic import NavigateToRoom
+from ..util.designators import check_type, EntityByIdDesignator, is_writeable
 from robot_skills.util import kdl_conversions
-
-# class CheckIfPersonInRoom(smach.State):
-#     def __init__(self, robot, room):
-#         """
-#
-#         :param robot: robot api object
-#         :param room: room where person should be found
-#         """
-#         smach.State.__init__(self, outcomes=['true', 'false'])
-#         self._robot = robot
-#         self._room = room
-#
-#     def execute(self, userdata=None):
 
 
 class FindPerson(smach.State):
@@ -41,7 +25,9 @@ class FindPerson(smach.State):
     def __init__(self, robot, person_label='operator', search_timeout=60, look_distance=3.0, probability_threshold=1.5,
                  discard_other_labels=True, found_entity_designator=None, room=None, speak_when_found=True,
                  look_range=(-np.pi/2, np.pi/2), look_steps=8):
-        """ Initialization method
+        """
+        Initialization method
+
         :param robot: robot api object
         :param person_label: (str) person label or a designator resolving to a str
         :param search_timeout: (float) maximum time the robot is allowed to search
@@ -68,7 +54,7 @@ class FindPerson(smach.State):
         self._discard_other_labels = discard_other_labels
 
         if found_entity_designator:
-            ds.is_writeable(found_entity_designator)
+            is_writeable(found_entity_designator)
         self._found_entity_designator = found_entity_designator
 
         self._room = room
@@ -159,7 +145,9 @@ class _DecideNavigateState(smach.State):
     """ Helper state to decide whether to use a NavigateToWaypoint or a NavigateToRoom state
     """
     def __init__(self, robot, waypoint_designator, room_designator):
-        """ Initialize method
+        """
+        Initialize method
+
         :param robot: Robot API object
         :param waypoint_designator: EdEntityDesignator that should resolve to a waypoint
         :param room_designator: EdEntityDesignator that should resolve to the room in which the waypoint is located
@@ -191,18 +179,20 @@ class FindPersonInRoom(smach.StateMachine):
 
     def __init__(self, robot, area, name, discard_other_labels=True, found_entity_designator=None,
                  look_range=(-np.pi/2, np.pi/2), look_steps=8):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param area: (str) if a waypoint "<area>_waypoint" is present in the world model, the robot will navigate
-        to this waypoint. Else, it will navigate to the room called "<area>"
+            to this waypoint. Else, it will navigate to the room called "<area>"
         :param name: (str) Name of the person to look for
         :param discard_other_labels: (bool) Whether or not to discard faces based on label
         :param found_entity_designator: (Designator) A designator that will resolve to the found object
         """
         smach.StateMachine.__init__(self, outcomes=["found", "not_found"])
 
-        waypoint_designator = ds.EntityByIdDesignator(robot=robot, id=area + "_waypoint")
-        room_designator = ds.EntityByIdDesignator(robot=robot, id=area)
+        waypoint_designator = EntityByIdDesignator(robot=robot, id=area + "_waypoint")
+        room_designator = EntityByIdDesignator(robot=robot, id=area)
 
         with self:
             smach.StateMachine.add("DECIDE_NAVIGATE_STATE",
@@ -213,14 +203,14 @@ class FindPersonInRoom(smach.StateMachine):
                                                 "none": "not_found"})
 
             smach.StateMachine.add("NAVIGATE_TO_WAYPOINT",
-                                   states.NavigateToWaypoint(robot=robot,
-                                                             waypoint_designator=waypoint_designator, radius=0.15),
+                                   NavigateToWaypoint(robot=robot,
+                                                      waypoint_designator=waypoint_designator, radius=0.15),
                                    transitions={"arrived": "FIND_PERSON",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})
 
-            smach.StateMachine.add("NAVIGATE_TO_ROOM", states.NavigateToRoom(robot=robot,
-                                                                             entity_designator_room=room_designator),
+            smach.StateMachine.add("NAVIGATE_TO_ROOM", NavigateToRoom(robot=robot,
+                                                                      entity_designator_room=room_designator),
                                    transitions={"arrived": "FIND_PERSON",
                                                 "unreachable": "not_found",
                                                 "goal_not_defined": "not_found"})

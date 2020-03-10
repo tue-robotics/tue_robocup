@@ -6,6 +6,8 @@ import smach
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
+from robot_skills import arms
+from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
@@ -77,12 +79,16 @@ class GrabSingleItem(smach.StateMachine):
 
         :param robot: robot object
         :param grab_designator: EdEntityDesignator designating the item to grab. If not provided, a default one is
-        constructed (grabs the closest object in the volume of the surface)
+            constructed (grabs the closest object in the volume of the surface)
         """
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         # Create designators
-        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {}, name="empty_arm_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot, {"required_trajectories": ["prepare_grasp"],
+                                                                       "required_goals": ["carrying_pose"],
+                                                                       "required_gripper_types": [
+                                                                           arms.GripperTypes.GRASPING]},
+                                                               name="empty_arm_designator")
         self.grab_designator = ds.LockToId(robot=robot, to_be_locked=grab_designator)
 
         with self:
@@ -153,7 +159,8 @@ class PlaceSingleItem(smach.State):
     def execute(self, userdata=None):
         # Try to place the object
         item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
-        arm_designator = ds.OccupiedArmDesignator(self._robot)
+        arm_designator = ds.OccupiedArmDesignator(self._robot, {"required_goals": ["reset", "handover_to_human"],
+                                                                "required_gripper_types": [arms.GripperTypes.GRASPING]})
         resolved_arm = arm_designator.resolve()
         if resolved_arm is None:
             rospy.logwarn("No arm holding an entity")
@@ -186,7 +193,9 @@ class ManipulateMachine(smach.StateMachine):
     - Place item
     """
     def __init__(self, robot, grab_designator_1=None, grab_designator_2=None, place_designator=None, pdf_writer=None):
-        """ Constructor
+        """
+        Constructor
+
         :param robot: robot object
         :param grab_designator_1: EdEntityDesignator designating the item to grab
         :param grab_designator_2: EdEntityDesignator designating the item to grab
@@ -205,9 +214,11 @@ class ManipulateMachine(smach.StateMachine):
         self.cabinet = ds.EntityByIdDesignator(robot, id="temp")  # will be updated later on
 
         self.place_entity_designator = ds.EdEntityDesignator(robot=robot, id="temp")
-        self.place_designator = ds.EmptySpotDesignator(robot=robot,
-                                                       place_location_designator=self.place_entity_designator,
-                                                       area="temp")
+        self.arm_designator = ds.ArmDesignator(robot, {})
+        self.place_designator = EmptySpotDesignator(robot=robot,
+                                                    place_location_designator=self.place_entity_designator,
+                                                    arm_designator=self.arm_designator,
+                                                    area="temp")
         self.placeaction1 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
         self.placeaction2 = PlaceSingleItem(robot=robot, place_designator=self.place_designator)
 

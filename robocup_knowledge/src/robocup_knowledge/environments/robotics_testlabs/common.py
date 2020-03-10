@@ -9,21 +9,18 @@ names = female_names + male_names
 locations = [
     {'name': 'couch_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
     {'name': 'dinner_table',  'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
-    {'name': 'bar',           'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
     {'name': 'bookcase',      'room': 'livingroom', 'category': 'shelf',   'manipulation': 'yes'},
+    {'name': 'panda_table',   'room': 'livingroom', 'category': 'table',   'manipulation': 'yes'},
 
     {'name': 'cabinet',       'room': 'kitchen',    'category': 'shelf',   'manipulation': 'yes'},
     {'name': 'trashbin',      'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
-    {'name': 'plant',         'room': 'kitchen',    'category': 'plant',   'manipulation': 'no'},
+    {'name': 'couch',         'room': 'kitchen',    'category': 'utility', 'manipulation': 'no'},
 
-    {'name': 'bed',           'room': 'bedroom',    'category': 'seat',    'manipulation': 'yes'},
-    {'name': 'nightstand',    'room': 'bedroom',    'category': 'table',   'manipulation': 'yes'},
-
-    {'name': 'flight_case',   'room': 'workshop',   'category': 'table',   'manipulation': 'no'},
-    {'name': 'battery_table', 'room': 'workshop',   'category': 'table',   'manipulation': 'no'},
     {'name': 'workbench',     'room': 'workshop',   'category': 'table',   'manipulation': 'yes'},
 
-    {'name': 'hallway_table', 'room': 'hallway',    'category': 'table',   'manipulation': 'yes'}
+    {'name': 'hallway_table', 'room': 'hallway',    'category': 'table',   'manipulation': 'yes'},
+    {'name': 'bar',           'room': 'hallway',    'category': 'table',   'manipulation': 'yes'},
+    {'name': 'paperbin',      'room': 'hallway',    'category': 'utility', 'manipulation': 'no'}
 ]
 
 location_rooms = list(set([ o["room"] for o in locations ]))
@@ -44,7 +41,6 @@ objects = [
     {'category': 'food',                'name': 'peas',             'color': 'green',           'volume': 239,      'weight': 100},
     {'category': 'food',                'name': 'pepper',           'color': 'black',           'volume': 110,      'weight': 100},
     {'category': 'food',                'name': 'salt',             'color': 'white',           'volume': 110,      'weight': 100},
-    {'category': 'food',                'name': 'pasta',            'color': 'yellow',          'volume': 1570,     'weight': 100},
     {'category': 'container',           'name': 'basket',           'color': 'green',           'volume': 3487,     'weight': 100},
     {'category': 'container',           'name': 'bowl',             'color': 'blue',            'volume': 617,      'weight': 100},
     {'category': 'container',           'name': 'cup',              'color': 'orangish',        'volume': 427,      'weight': 100},

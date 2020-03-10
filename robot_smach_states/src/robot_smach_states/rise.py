@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # ROS
 import smach
 
@@ -9,7 +11,8 @@ from robot_skills.util.kdl_conversions import VectorStamped
 class RiseForHMI(smach.State):
     """
     State to pose the robot for conversations
-    :param robot: Robot to execute state with
+
+    :var robot: Robot to execute state with
     """
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -31,9 +34,10 @@ class RiseForInspect(smach.State):
     """
     State to ensure that the robot is in a proper position to inspect. This means its head is at the correct height
     and his vision is unobstructed. (no arm in front of its face)
-    :param robot: Robot to execute state with
-    :param entity: entity which is to be inspected
-    :param volume: volume of the entity which is to be inspected or Designator to it.
+
+    :var _robot: Robot to execute state with
+    :var _entity: entity which is to be inspected
+    :var _volume: volume of the entity which is to be inspected or Designator to it.
     """
     def __init__(self, robot, entity, volume=None):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])

@@ -32,7 +32,10 @@ import smach
 
 
 import hmi
-import robot_smach_states
+from robot_smach_states.human_interaction.human_interaction import AskYesNo, HearOptionsExtra, Say
+from robot_smach_states.designator_iterator import IterateDesignator
+from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
+from robot_smach_states.startup import StartChallengeRobust
 import robot_smach_states.util.designators as ds
 from clean_inspect import CleanInspect
 
@@ -78,6 +81,7 @@ class RoomToCleanUpLocations(smach.State):
     def __init__(self, knowledge, room_des, cleanup_locations):
         """
         Determine cleaning locations on runtime
+
         :param knowledge: challenge knowledge
         :param room_des: Designator resolving to room
         :type room_des: Designator(str)
@@ -124,18 +128,16 @@ class AskWhichRoomToClean(smach.StateMachine):
             return 'done'
 
         with self:
-            smach.StateMachine.add("ASK_WHICH_ROOM", robot_smach_states.Say(robot, "Which room should I clean for you?",
-                                                                            block=True),
+            smach.StateMachine.add("ASK_WHICH_ROOM", Say(robot, "Which room should I clean for you?", block=True),
                                    transitions={"spoken": "HEAR_ROOM"})
-            smach.StateMachine.add("HEAR_ROOM", robot_smach_states.HearOptionsExtra(robot, room_grammar,
-                                                                                    ds.writeable(hmi_result_des)),
+            smach.StateMachine.add("HEAR_ROOM", HearOptionsExtra(robot, room_grammar, ds.writeable(hmi_result_des)),
                                    transitions={"heard": "SAY_HEARD_CORRECT",
                                                 "no_result": "ASK_WHICH_ROOM"})
-            smach.StateMachine.add("SAY_HEARD_CORRECT", robot_smach_states.Say(
-                robot, "I understood that the {room} should be cleaned, is this correct?", room=room_name_des,
-                block=True),
+            smach.StateMachine.add("SAY_HEARD_CORRECT",
+                                   Say(robot, "I understood that the {room} should be cleaned, is this correct?",
+                                       room=room_name_des, block=True),
                                    transitions={"spoken": "HEAR_CORRECT"})
-            smach.StateMachine.add("HEAR_CORRECT", robot_smach_states.AskYesNo(robot),
+            smach.StateMachine.add("HEAR_CORRECT", AskYesNo(robot),
                                    transitions={"yes": "FILL_LOCATIONS",
                                                 "no": "ASK_WHICH_ROOM",
                                                 "no_result": "ASK_WHICH_ROOM"})
@@ -161,23 +163,21 @@ def setup_statemachine(robot):
 
     with sm:
         smach.StateMachine.add("START_ROBUST",
-                               robot_smach_states.StartChallengeRobust(robot, challenge_knowledge.starting_point),
+                               StartChallengeRobust(robot, challenge_knowledge.starting_point),
                                transitions={"Done": "GO_TO_WAITING_POINT",
                                             "Aborted": "GO_TO_WAITING_POINT",
                                             "Failed": "GO_TO_WAITING_POINT"})
 
         smach.StateMachine.add(
             "GO_TO_WAITING_POINT",
-            robot_smach_states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot,
-                                                                                 challenge_knowledge.waiting_point)),
+            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, challenge_knowledge.waiting_point)),
             transitions={"arrived": "INQUIRE_ROOM",
                          "unreachable": "GO_TO_WAITING_POINT1",
                          "goal_not_defined": "GO_TO_WAITING_POINT1"})
 
         smach.StateMachine.add(
             "GO_TO_WAITING_POINT1",
-            robot_smach_states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot,
-                                                                                 challenge_knowledge.waiting_point),
+            NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, challenge_knowledge.waiting_point),
                                                   radius=0.3),
             transitions={"arrived": "INQUIRE_ROOM",
                          "unreachable": "INQUIRE_ROOM",
@@ -192,20 +192,20 @@ def setup_statemachine(robot):
                                transitions={"done": "SAY_START_CHALLENGE",
                                             "failed": "SAY_KNOWLEDGE_NOT_COMPLETE"})
 
-        smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE', robot_smach_states.Say(robot,
-                                                                ["My knowledge of the world is not complete!",
-                                                                "Please give me some more information!"], block=False),
+        smach.StateMachine.add('SAY_KNOWLEDGE_NOT_COMPLETE', Say(robot, ["My knowledge of the world is not complete!",
+                                                                         "Please give me some more information!"],
+                                                                 block=False),
                                transitions={"spoken": "Aborted"})
 
         smach.StateMachine.add('SAY_START_CHALLENGE',
-                               robot_smach_states.Say(robot, ["Starting the cleanup challenge",
-                                                              "What a mess here, let's clean this room!",
-                                                              "Let's see if I can find some garbage here",
-                                                              "All I want to do is clean this mess up!"], block=False),
+                               Say(robot, ["Starting the cleanup challenge",
+                                           "What a mess here, let's clean this room!",
+                                           "Let's see if I can find some garbage here",
+                                           "All I want to do is clean this mess up!"], block=False),
                                transitions={"spoken": "ITERATE_NEXT_LOC"})
 
         smach.StateMachine.add('ITERATE_NEXT_LOC',
-                               robot_smach_states.IterateDesignator(cleanup_locationsr, location_des.writeable),
+                               IterateDesignator(cleanup_locationsr, location_des.writeable),
                                transitions={"next": "INSPECT",
                                             "stop_iteration": "RETURN_TO_OPERATOR"})
 
@@ -213,20 +213,18 @@ def setup_statemachine(robot):
                                 CleanInspect(robot, location_des), transitions={"done": "ITERATE_NEXT_LOC"})
 
         smach.StateMachine.add("RETURN_TO_OPERATOR",
-                               robot_smach_states.NavigateToWaypoint(robot=robot,
-                                                                     waypoint_designator=ds.EntityByIdDesignator(
-                                                                         robot=robot,
-                                                                         id=challenge_knowledge.starting_point),
-                                                                     radius=0.3),
+                               NavigateToWaypoint(robot=robot, waypoint_designator=ds.EntityByIdDesignator(
+                                   robot=robot,
+                                   id=challenge_knowledge.starting_point),
+                                                  radius=0.3),
                                transitions={"arrived": "SAY_CLEANED_ROOM",
                                             "unreachable": "SAY_CLEANED_ROOM",
                                             "goal_not_defined": "SAY_CLEANED_ROOM"})
 
         smach.StateMachine.add('SAY_CLEANED_ROOM',
-                               robot_smach_states.Say(robot,
-                                   ["I successfully cleaned the {room}!",
-                                    "All done in the {room}. Am I a good robot now?",
-                                    "There, I cleaned up your mess in the {room}, are you happy now!"],
+                               Say(robot, ["I successfully cleaned the {room}!",
+                                           "All done in the {room}. Am I a good robot now?",
+                                           "There, I cleaned up your mess in the {room}, are you happy now!"],
                                    room=roomr, block=False),
                                transitions={"spoken": "Done"})
 

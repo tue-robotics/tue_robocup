@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 __author__ = 'loy'
 
@@ -6,7 +6,7 @@ __author__ = 'loy'
 import unittest
 
 # TU/e Robotics
-from robot_smach_states.util.designators.core import Designator, VariableDesignator
+from .core import Designator, VariableDesignator
 
 
 class MyTestCase(unittest.TestCase):

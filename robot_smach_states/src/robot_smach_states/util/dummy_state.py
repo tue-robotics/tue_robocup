@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+
 import smach
 import rospy
 
-from robot_smach_states.util.designators.checks import check_type
+from .designators.checks import check_type
 
 
 class DummyState(smach.State):
