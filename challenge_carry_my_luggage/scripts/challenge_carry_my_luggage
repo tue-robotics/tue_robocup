@@ -1,0 +1,14 @@
+#!/usr/bin/python
+
+# ROS
+import rospy
+
+# TU/e Robotics
+from robot_smach_states.util.startup import startup
+
+# Challenge
+from challenge_carry_my_luggage import CarryMyLuggage
+
+if __name__ == "__main__":
+    rospy.init_node('carry_my_luggage')
+    startup(CarryMyLuggage)
