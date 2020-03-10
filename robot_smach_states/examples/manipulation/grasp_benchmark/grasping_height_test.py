@@ -1,5 +1,14 @@
 #! /usr/bin/env python
 
+"""
+This script has the robot navigate to the couch table. Next, on a number of different heights, a (virtual) entity is
+ added to the world model, the robot tries to grasp it and subsequently it is removed again. At the end, the results
+ (height, outcome, duration) at each height are printed.
+
+Since the position of the entity (X_ENTITY, Y_ENTITY) and the id of the supporting entity (SUPPORTING_ENTITY_ID) are
+heavily dependent, these are not parametrized. You can provide a different robot though.
+"""
+
 # System
 from collections import namedtuple
 
@@ -22,7 +31,9 @@ DZ = 0.1
 Z_MAX = 1.2
 
 X_ENTITY = 3.2
-Y_ENTITY = 1.55
+Y_ENTITY = 1.
+
+SUPPORTING_ENTITY_ID = "couch_table"
 
 Result = namedtuple("Result", ["height", "result", "duration"])
 
@@ -33,7 +44,7 @@ if __name__ == "__main__":
     robot = get_robot_from_argv(1)
 
     # Navigate to the couch table
-    nav_designator = EntityByIdDesignator(robot=robot, id="couch_table")
+    nav_designator = EntityByIdDesignator(robot=robot, id=SUPPORTING_ENTITY_ID)
     nav_state = NavigateToSymbolic(robot, {nav_designator: "in_front_of"}, nav_designator)
     nav_state.execute()
 
