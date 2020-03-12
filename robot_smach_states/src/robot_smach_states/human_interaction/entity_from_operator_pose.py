@@ -10,7 +10,8 @@ class GetFurnitureFromOperatorPose(State):
     """
 
     def __init__(self, robot, all_possible_furniture):
-        """" Initialization
+        """
+        Initialization
 
         :param robot: Robot API object
         :param all_possible_furniture: list with available furniture to be used
