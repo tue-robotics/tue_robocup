@@ -33,7 +33,7 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
 
         check_resolve_type(designator, Entity, FrameStamped)
         if designator.resolve_type is Entity:
-            self.pose_designator = AttrDesignator(designator, 'pose')
+            self.pose_designator = AttrDesignator(designator, 'pose', resolve_type=designator.resolve_type)
         else:
             self.pose_designator = designator
 
