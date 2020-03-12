@@ -15,7 +15,7 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector, VectorStamped
 
 # Robot Smach States
-from ..navigation.navigate_to_symbolic import NavigateToSymbolic
+from ..util.designators.navigation import SymbolicConstraintsDesignator, LookAtConstraintsDesignator
 from ..util.designators.ed_designators import Designator
 
 
@@ -61,10 +61,9 @@ class GiveDirections(smach.State):
         else:
             possible_areas = ["in_front_of", "near"]
         for area in possible_areas:
-            nav_constraints[area] = NavigateToSymbolic.generate_constraint(
-                robot=self._robot,
-                entity_designator_area_name_map={self._entity_designator: area},
-                entity_lookat_designator=self._entity_designator)
+            position_constraint = SymbolicConstraintsDesignator.generate_constraint(self._robot, {self._entity_designator: area})
+            orientation_constraint = LookAtConstraintsDesignator.generate_constraint(self._entity_designator)
+            nav_constraints[area] = position_constraint, orientation_constraint
 
         if not nav_constraints:
             rospy.logerr("Cannot give directions if I don't know where to go")
