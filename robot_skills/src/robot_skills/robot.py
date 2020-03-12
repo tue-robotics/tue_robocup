@@ -201,7 +201,7 @@ class Robot(object):
         :param required_arm_name: Name of the arm that is needed. If set, no
                 other arm will be considered. None means any arm will do.
 
-        :param force_sensor_required: Bool specifying whether a force_sensor is available or not.
+        :param force_sensor_required: Bool specifying whether a force_sensor is needed or not.
 
         :param required_objects: Collection of objects that the arm must have. Special
                 pseudo-objects PseudoObjects.ANY and PseudoObjects.EMPTY may be used
@@ -295,7 +295,7 @@ class Robot(object):
             else:
                 default_gripper = next(iter(matching_grippers))
             return arms.PublicArm(arm, matching_grippers, default_gripper, uses_objects,
-                                  matching_goals, matching_trajectories)
+                                  force_sensor_required, matching_goals, matching_trajectories)
 
         # No arm matched. Dump why.
         msg = ("Failed to find a matching arm, reasons: " +
@@ -369,6 +369,17 @@ class Robot(object):
         rospy.logdebug("move_to_inspect_pose() not implemented for {} object".format(self.robot_name))
         return True
 
+    def move_to_pregrasp_pose(self, arm, grasp_position):
+        """
+        This poses the robot for an inspect.
+
+        :param arm: PublicArm to use for grasping the target
+        :param grasp_position: kdl.Frame with the pose of the entity to be grasp.
+        :return: boolean, false if something went wrong.
+        """
+        rospy.logdebug("move_to_grasp_pose() not implemented for {} object".format(self.robot_name))
+        return True
+
     def move_to_hmi_pose(self):
         """
         This poses the robot for conversations.
@@ -376,6 +387,15 @@ class Robot(object):
         :return: None
         """
         rospy.logdebug("move_to_hmi_pose() not implemented for {} object".format(self.robot_name))
+        pass
+
+    def go_to_driving_pose(self):
+        """
+        This poses the robot for driving.
+
+        :return: None
+        """
+        rospy.logdebug("go_to_driving_pose() not implemented for {} object".format(self.robot_name))
         pass
 
     def __enter__(self):

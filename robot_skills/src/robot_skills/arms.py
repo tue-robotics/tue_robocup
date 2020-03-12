@@ -44,6 +44,9 @@ class PublicArm(object):
     """
     Public arm interface, also checks a challenge doesn't try to use more than it asked for.
 
+    THE ARM SHOULD NEVER ALLOW ANYTHING THAT WAS NOT ASKED FOR IN THE CONSTRUCTOR!
+
+
     :ivar _arm: Private link to the real arm.
     :vartype _arm: Arm
 
@@ -56,6 +59,9 @@ class PublicArm(object):
     :ivar _has_occupied_by: Whether the arm supports 'occupied_by' calls.
     :vartype _has_occupied_by: bool
 
+    :ivar _allow_force_sensor: Whether use of the force sensor is allowed.
+    :vartype _allow_force_sensor: bool
+
     :ivar _available_joint_goals: Joint goals that may be used.
     :vartype _available_joint_goals: set of str
 
@@ -64,11 +70,13 @@ class PublicArm(object):
 
     """
     def __init__(self, arm, available_gripper_types, default_gripper_type,
-                 has_occupied_by, available_joint_goals, available_joint_trajectories):
+                 has_occupied_by, allow_force_sensor, available_joint_goals,
+                 available_joint_trajectories):
         self._arm = arm
         self.default_gripper_type = default_gripper_type
         self._available_gripper_types = available_gripper_types
         self._has_occupied_by = has_occupied_by
+        self._allow_force_sensor = allow_force_sensor
         self._available_joint_goals = available_joint_goals
         self._available_joint_trajectories = available_joint_trajectories
 
@@ -168,11 +176,14 @@ class PublicArm(object):
 
     @property
     def has_force_sensor(self):
+        # Check that the user enabled force sensor access.
+        self._test_die(self._allow_force_sensor, 'allow_force_sensor=' + str(self._allow_force_sensor),
+                       "Specify get_arm(..., force_sensor_required=True)")
         return hasattr(self._arm, "force_sensor")
 
     def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
-        self._test_die(self.has_force_sensor, 'available_force_sensor=' + str(self.has_force_sensor),
-                       "Specify get_arm(..., available_force_sensor=True")
+        self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
+                       "Specify get_arm(..., force_sensor_required=True)")
         return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
 
     def handover_to_human(self, timeout=10, gripper_type=None):

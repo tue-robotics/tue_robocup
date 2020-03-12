@@ -45,6 +45,7 @@ class PrepareEdGrasp(smach.State):
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
+        self.robot.move_to_inspect_pose(entity._pose.p)
         self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
@@ -59,7 +60,7 @@ class PrepareEdGrasp(smach.State):
         self.robot.torso.reset()
 
         # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_grasp', timeout=0)
+        self.robot.move_to_pregrasp_pose(arm, entity._pose.p)
         arm.wait_for_motion_done()
 
         # Open gripper
