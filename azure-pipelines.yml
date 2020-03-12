@@ -50,7 +50,7 @@ jobs:
       inputs:
         targetType: 'inline'
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}
+          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
       displayName: 'Install'
     - task: Bash@3
       inputs:
