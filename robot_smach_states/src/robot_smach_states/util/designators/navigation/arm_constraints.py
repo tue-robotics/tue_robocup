@@ -13,7 +13,7 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.arms import PublicArm
-from .. import check_resolve_type
+from .. import check_resolve_type, AttrDesignator
 from ..arm import ArmDesignator
 
 
@@ -29,12 +29,11 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
 
         self.robot = robot
         self.look = look
-        self.entity_designator = None
         self.pose_designator = None
 
         check_resolve_type(designator, Entity, FrameStamped)
         if designator.resolve_type is Entity:
-            self.entity_designator = designator
+            self.pose_designator = AttrDesignator(designator, 'pose')
         else:
             self.pose_designator = designator
 
@@ -46,30 +45,21 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
             self.arm_designator = ArmDesignator(self.robot, {})
 
     def _resolve(self):
-        arm = self.arm_designator.resolve()
+        return self.generate_constraint(self.pose_designator, self.arm_designator, self.look)
+
+    @staticmethod
+    def generate_constraint(pose_designator, arm_designator, look):
+        arm = arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
             return None
 
         radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
-        if self.entity_designator:
-            entity = self.entity_designator.resolve()
-
-            if not entity:
-                rospy.logerr("No such entity")
-                return None
-
-            try:
-                pose = entity.pose
-            except KeyError as ke:
-                rospy.logerr("Could not determine pose: ".format(ke))
-                return None
-        else: # we have a pose designator
-            pose = self.pose_designator.resolve()
-            if not pose:
-                rospy.logerr("No such place_pose")
-                return None
+        pose = pose_designator.resolve()
+        if not pose:
+            rospy.logerr("No such place_pose")
+            return None
 
         try:
             x = pose.frame.p.x()
@@ -84,7 +74,7 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
         pc = PositionConstraint(constraint=ri + " and " + ro, frame="/map")
 
         oc = None
-        if self.look:
+        if look:
             angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
             oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
 

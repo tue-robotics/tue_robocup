@@ -28,11 +28,15 @@ class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
         self.look = look
 
     def _resolve(self):
-        e = self.waypoint_designator.resolve()
+        return self.generate_constraint(self.waypoint_designator, self.radius, self.look)
+
+    @staticmethod
+    def generate_constraint(waypoint_designator, radius, look):
+        e = waypoint_designator.resolve()
 
         if not e:
             rospy.logerr(
-                "WayPointConstraintDesignator: No entity could be resolved from designator '%s'" % self.waypoint_designator)
+                "WayPointConstraintDesignator: No entity could be resolved from designator '%s'" % waypoint_designator)
             return None
 
         rospy.logdebug("Navigating to waypoint '{}'".format(e.id))
@@ -45,9 +49,9 @@ class WayPointConstraintsDesignator(NavigationConstraintsDesignator):
             rospy.logerr(e)
             return None
 
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, self.radius), frame="/map")
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius), frame="/map")
         oc = None
-        if self.look:
+        if look:
             oc = OrientationConstraint(look_at=Point(x + 10, y, 0.0), angle_offset=rz, frame="/map")
         constraint = PoseConstraint(pc, oc)
         return constraint

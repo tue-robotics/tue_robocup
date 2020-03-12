@@ -27,10 +27,14 @@ class RadiusConstraintsDesignator(NavigationConstraintsDesignator):
         self.margin = margin
 
     def _resolve(self):
-        e = self.entity_designator.resolve()
+        return self.generate_constraint(self.entity_designator, self.radius, self.margin)
+
+    @staticmethod
+    def generate_constraint(entity, radius, margin):
+        e = entity.resolve()
 
         if not e:
-            rospy.logerr("No entity from {}".format(self.entity_designator))
+            rospy.logerr("No entity from {}".format(entity))
             return None
 
         rospy.logdebug("Navigating to observe entity '{}'".format(e.id))
@@ -55,8 +59,8 @@ class RadiusConstraintsDesignator(NavigationConstraintsDesignator):
 
                 length = (dx * dx + dy * dy) ** .5
 
-                xs = x + ch[i].x() + (dy / length) * self.radius
-                ys = y + ch[i].y() - (dx / length) * self.radius
+                xs = x + ch[i].x() + (dy / length) * radius
+                ys = y + ch[i].y() - (dx / length) * radius
 
                 if i != 0:
                     pci = pci + ' and '
@@ -64,8 +68,8 @@ class RadiusConstraintsDesignator(NavigationConstraintsDesignator):
                 pci = pci + "-(x-%f)*%f+(y-%f)*%f > 0.0 " % (xs, dy, ys, dx)
 
         else:  # If not, simply use the x and y position
-            outer_radius = max(0., self.radius + self.margin)
-            inner_radius = max(0., self.radius - self.margin)
+            outer_radius = max(0., radius + margin)
+            inner_radius = max(0., radius - margin)
 
             ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, outer_radius)
             ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, inner_radius)
