@@ -1,5 +1,5 @@
 # tue_robocup
-[![Build Status](https://dev.azure.com/tue-robotics/tue-robotics/_apis/build/status/tue-robotics.tue_robocup?branchName=master)](https://dev.azure.com/tue-robotics/tue-robotics/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/tue-robotics/tue-robotics/_apis/build/status/tue-robotics.tue_robocup?branchName=master)](https://dev.azure.com/tue-robotics/tue-robotics/_build/latest?definitionId=1&branchName=master)\
 RoboCup challenge implementations
 This is to high-level code that TU Eindhoven's AMIGO robot uses to perform RoboCup@Home challenges.
 
