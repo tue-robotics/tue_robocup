@@ -521,15 +521,15 @@ class Arm(RobotPart):
 
         grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
 
-        set_grasp_goal_position(grasp_precompute_goal.goal, frame_in_baselink.p)
-        set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
+        Arm.set_grasp_goal_position(grasp_precompute_goal.goal, frame_in_baselink.p)
+        Arm.set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
         self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
         offset_frame = frame_in_baselink.frame * self.offset
 
-        set_grasp_goal_position(grasp_precompute_goal.goal, offset_frame.p)
-        set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
+        Arm.set_grasp_goal_position(grasp_precompute_goal.goal, offset_frame.p)
+        Arm.set_grasp_goal_orientation(grasp_precompute_goal.goal, frame_in_baselink.frame.M.GetRPY())
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
         self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
 
