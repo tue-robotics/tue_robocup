@@ -11,6 +11,7 @@ heavily dependent, these are not parametrized. You can provide a different robot
 
 # System
 from collections import namedtuple
+from functools import partial
 
 # ROS
 import PyKDL as kdl
@@ -25,6 +26,8 @@ from robot_smach_states.util.designators import EntityByIdDesignator, Unoccupied
 from robot_skills import arms
 from robot_skills.hero_parts.hero_arm import HeroArm
 from robot_skills.get_robot import get_robot_from_argv
+from robot_skills.robot import Robot
+from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import FrameStamped
 
 DZ = 0.1
@@ -36,6 +39,25 @@ Y_ENTITY = 1.
 SUPPORTING_ENTITY_ID = "couch_table"
 
 Result = namedtuple("Result", ["height", "result", "duration"])
+
+
+# noinspection PyUnusedLocal
+def get_grasp_pose(_robot, entity, _arm):
+    # type: (Robot, Entity, HeroArm) -> FrameStamped
+    """
+    Overrides the 'get_grasp_pose' method of the GraspPointDetermination class so that a grasp pose can be determined if
+    an entity does not have a convex hull.
+
+    :param _robot: (Robot) api object
+    :param entity: entity to grasp
+    :param _arm: arm to use
+    :return: FrameStamped with grasp pose in map frame
+    """
+    robot_pose_map = _robot.base.get_location()  # type: FrameStamped
+    assert entity_pose.frame_id == robot_pose_map.frame_id, "It is assumed that the entity frame id and the " \
+                                                            "world frame id are equal (typically 'map')"
+    return FrameStamped(kdl.Frame(robot_pose_map.frame.M, entity.pose.frame.p), entity.frame_id)
+
 
 if __name__ == "__main__":
 
@@ -74,6 +96,11 @@ if __name__ == "__main__":
                 "required_trajectories": ["prepare_grasp"],
                 "required_gripper_types": [arms.GripperTypes.GRASPING]
             }))
+
+        # Override the 'get_grasp_pose' method
+        # noinspection PyProtectedMember
+        grasp_state["GRAB"]._gpd.get_grasp_pose = partial(get_grasp_pose, robot)
+
         grasp_result = grasp_state.execute()
         grasp_duration = (rospy.Time.now() - t_start).to_sec()
         results.append(Result(z, grasp_result, grasp_duration))
@@ -89,5 +116,5 @@ if __name__ == "__main__":
     # Print the results
     print("\n ---------- \n")
     for result in results:
-        print "Height: {} --> {} (duration: {})".format(result.height, result.result, result.duration)
+        print("Height: {} --> {} (duration: {})".format(result.height, result.result, result.duration))
     print("\n ---------- \n")
