@@ -17,7 +17,7 @@ from .. import check_resolve_type, AttrDesignator
 from ..arm import ArmDesignator
 
 
-class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
+class ArmsReachConstraintsDesignator(NavigationConstraintsDesignator):
     """Position so that the arm can reach the position/entity
     :param designator: designator that resolves to a either a FrameStamped or an Ed Entity with a pose
     :param arm_designator: which arm to use for manipulation
@@ -25,7 +25,7 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
     :param name: Optional name of the designator
     """
     def __init__(self, robot, designator, arm_designator=None, look=True, name=None):
-        super(ArmsreachConstraintsDesignator, self).__init__(name=name)
+        super(ArmsReachConstraintsDesignator, self).__init__(name=name)
 
         self.robot = robot
         self.look = look
@@ -41,7 +41,7 @@ class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
             check_resolve_type(arm_designator, PublicArm)
             self.arm_designator = arm_designator
         else:
-            rospy.logwarn('ArmsreachConstraintsDesignator: Please specify the arm, will choose at random')
+            rospy.logwarn('ArmsReachConstraintsDesignator: Please specify the arm, will choose at random')
             self.arm_designator = ArmDesignator(self.robot, {})
 
     def _resolve(self):

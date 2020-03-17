@@ -6,15 +6,15 @@ from robot_skills.util.kdl_conversions import frame_stamped
 from robot_smach_states.util.designators.core import VariableDesignator
 from robot_smach_states.util.designators.arm import ArmDesignator
 
-from robot_smach_states.util.designators.navigation.arm_constraints import ArmsreachConstraintsDesignator
+from robot_smach_states.util.designators.navigation.arm_constraints import ArmsReachConstraintsDesignator
 
 
-class TestArmsreachConstraintDesignator(unittest.TestCase):
+class TestArmsReachConstraintDesignator(unittest.TestCase):
     def test_resolve(self):
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
-        frame = VariableDesignator(frame_stamped("\map", 0, 0, 0), name="frame_designator")
-        n = ArmsreachConstraintsDesignator(robot, frame, arm, name="constraint_designator")
+        frame = VariableDesignator(frame_stamped("/map", 0, 0, 0), name="frame_designator")
+        n = ArmsReachConstraintsDesignator(robot, frame, arm, name="constraint_designator")
         constr = n.resolve()
         self.assertIsNotNone(constr.pc)
         self.assertIsNotNone(constr.oc)
@@ -22,8 +22,8 @@ class TestArmsreachConstraintDesignator(unittest.TestCase):
     def test_no_look(self):
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
-        frame = VariableDesignator(frame_stamped("\map", 0, 0, 0), name="frame_designator")
-        n = ArmsreachConstraintsDesignator(robot, frame, arm, look=False, name="constraint_designator")
+        frame = VariableDesignator(frame_stamped("/map", 0, 0, 0), name="frame_designator")
+        n = ArmsReachConstraintsDesignator(robot, frame, arm, look=False, name="constraint_designator")
         constr = n.resolve()
         self.assertIsNotNone(constr.pc)
         self.assertIsNone(constr.oc)

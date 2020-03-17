@@ -16,7 +16,7 @@ from ..navigation.navigate_to_designator import NavigateToDesignator
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
-from ..util.designators.navigation import CompoundConstraintsDesignator, ArmsreachConstraintsDesignator,\
+from ..util.designators.navigation import CompoundConstraintsDesignator, ArmsReachConstraintsDesignator,\
     LookAtConstraintsDesignator
 
 
@@ -291,7 +291,7 @@ class NavigateToGrasp(NavigateToDesignator):
     :param reset_head: whether or not to use the head rgbd sensor during navigation.
     """
     def __init__(self, robot, entity_designator, arm_designator=None, reset_head=False):
-        constraint_designator = ArmsreachConstraintsDesignator(robot,
+        constraint_designator = ArmsReachConstraintsDesignator(robot,
                                                                entity_designator,
                                                                arm_designator,
                                                                look=True,

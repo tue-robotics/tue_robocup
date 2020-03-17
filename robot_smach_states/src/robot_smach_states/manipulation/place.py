@@ -13,7 +13,7 @@ from ..navigation.navigate_to_designator import NavigateToDesignator
 from ..utility import LockDesignator
 from ..util.designators import check_type
 from ..util.designators.utility import LockingDesignator
-from ..util.designators.navigation import ArmsreachConstraintsDesignator
+from ..util.designators.navigation import ArmsReachConstraintsDesignator
 from ..world_model import Inspect
 
 
@@ -199,7 +199,7 @@ class NavigateToPlace(NavigateToDesignator):
     :param reset_head: whether or not to use the head rgbd sensor during navigation.
     """
     def __init__(self, robot, place_pose_designator, arm_designator=None, reset_head=True):
-        constraint_designator = ArmsreachConstraintsDesignator(robot,
+        constraint_designator = ArmsReachConstraintsDesignator(robot,
                                                                place_pose_designator,
                                                                arm_designator,
                                                                look=True,

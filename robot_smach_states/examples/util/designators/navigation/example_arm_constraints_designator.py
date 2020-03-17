@@ -4,7 +4,7 @@ import argparse
 from robot_skills.get_robot import get_robot
 from robot_skills.util.kdl_conversions import frame_stamped
 # Robot Smach States
-from robot_smach_states.util.designators.navigation.arm_constraints import ArmsreachConstraintsDesignator
+from robot_smach_states.util.designators.navigation.arm_constraints import ArmsReachConstraintsDesignator
 from robot_smach_states.util.designators.arm import ArmDesignator
 from robot_smach_states.util.designators.core import VariableDesignator
 
@@ -28,10 +28,10 @@ if __name__ == "__main__":
 
     # create an armsreach constraintdesignator
     # look at the frame
-    nav1 = ArmsreachConstraintsDesignator(robot, framedes, arm, name="armsreach designator")
+    nav1 = ArmsReachConstraintsDesignator(robot, framedes, arm, name="armsreach designator")
 
     # dont look at the frame
-    nav2 = ArmsreachConstraintsDesignator(robot, framedes, arm, look=False, name="armsreach designator no look")
+    nav2 = ArmsReachConstraintsDesignator(robot, framedes, arm, look=False, name="armsreach designator no look")
 
     # resolve the designators
     rospy.loginfo("Result of {}: {}".format(nav1.name, nav1.resolve()))
