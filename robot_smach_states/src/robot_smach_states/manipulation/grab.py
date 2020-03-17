@@ -31,7 +31,10 @@ class PrepareEdGrasp(smach.State):
         :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self,
+                             outcomes=['succeeded', 'failed'],
+                             input_keys=["arm"],
+                             )
 
         # Assign member variables
         self.robot = robot
@@ -43,7 +46,7 @@ class PrepareEdGrasp(smach.State):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
         entity = self.grab_entity_designator.resolve()
         if not entity:
             rospy.logerr("Could not resolve grab_entity")
@@ -54,11 +57,7 @@ class PrepareEdGrasp(smach.State):
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
-        arm = self.arm_designator.resolve()
-
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
+        arm = userdata.arm
 
         # Torso up (non-blocking)
         self.robot.torso.reset()
@@ -89,7 +88,10 @@ class PickUp(smach.State):
         :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        smach.State.__init__(self,
+                             outcomes=['succeeded', 'failed'],
+                             input_keys=["arm"],
+                             )
 
         # Assign member variables
         self.robot = robot
@@ -104,17 +106,14 @@ class PickUp(smach.State):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
 
         grab_entity = self.grab_entity_designator.resolve()
         if not grab_entity:
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
-        arm = self.arm_designator.resolve()
-        if not arm:
-            rospy.logerr("Could not resolve arm")
-            return "failed"
+        arm = userdata.arm
 
         goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
@@ -303,7 +302,7 @@ class ResetOnFailure(smach.StateMachine):
 
         :param robot: robot object
         """
-        smach.StateMachine.__init__(self, outcomes=['done'])
+        smach.StateMachine.__init__(self, outcomes=['done'], input_keys=["arm"])
 
         self._robot = robot
         self.arm_designator = arm
@@ -311,9 +310,9 @@ class ResetOnFailure(smach.StateMachine):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
         """ Execute hook """
-        arm = self.arm_designator.resolve()
+        arm = userdata.arm
         arm.reset()
 
         if self._robot.robot_name == "amigo":
@@ -343,19 +342,89 @@ class Grab(smach.StateMachine):
         check_type(item, Entity)
         check_type(arm, PublicArm)
 
+        # ToDo: move to a generic location? By doing so, we'd only need to resolve once instead of locking
+        # and unlocking at every outcome
+        @smach.cb_interface(output_keys=["arm"],
+                            outcomes=["succeeded", "failed"])
+        def resolve_arm_designator(userdata, arm_designator):
+            """
+            Selects the arm to use throughout the grab state and store it in the userdata
+
+            :param userdata:
+            :param arm_designator:
+            :return: state outcome
+            """
+            # ToDo: move import
+            from robot_smach_states.util.designators.arm import const_resolve
+            arm_requirements = collect_requirements(self)
+            resolved_arm = const_resolve(arm_designator, arm_requirements)
+            if resolved_arm is None:
+                rospy.logerror("Didn't find an arm")  # ToDo: improve error message
+                return "failed"
+            else:
+                userdata.arm = resolved_arm
+
         with self:
+            smach.StateMachine.add('RESOLVE_ARM', resolve_arm_designator(arm),
+                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
+                                                'failed': 'failed'})
+
+            # ToDo: add 'input_keys' to NavigateToGrab
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
 
+            # ToDo: remove arm argument (don't need it)
             smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
+            # ToDo: remove arm argument (don't need it)
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
+            # ToDo: remove arm argument (don't need it)
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
+
+        # @Loy, Lars: by checking here:
+        # * there's no need for the user to do this again (if recursively implemented, he can do so if he pleases)!
+        # * it should fail on construction
+        check_arm_requirements(self, robot)
+
+
+# ToDo: move the following to a generic location
+# ToDo: we could make this recursive
+# ToDo: write a proper test for this
+
+def collect_requirements(state_machine):
+    # Check arm requirements
+    arm_requirements = {}
+    for state in staticmethod.get_children().itervalues():
+
+        # If no arm properties defined: continue
+        if not hasattr(state, "REQUIRED_ARM_PROPERTIES"):
+            continue
+
+        for k, v in state.REQUIRED_ARM_PROPERTIES.iteritems():
+            if k not in arm_requirements:
+                arm_requirements[k] = v
+            else:
+                arm_requirements[k] += v
+    return arm_requirements
+
+
+def check_arm_requirements(state_machine, robot):
+    """
+    Checks if the robot has an arm that meets the requirements of all children states of this state machine
+
+    :param state_machine:
+    :param robot:
+    :return:
+    """
+    arm_requirements = collect_requirements(state_machine)
+    assert robot.get_arm(arm_requirements) is not None, "None of the available arms meets all this class's" \
+                                                        "requirements: {}".format(arm_requirements)
+
