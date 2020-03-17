@@ -117,15 +117,8 @@ class Find(smach.StateMachine):
                                            objectIDsDes=segmented_entities_designator,
                                            searchArea=area_name,
                                            navigation_area=navigation_area),
-                                   transitions={'done': 'WAIT',
+                                   transitions={'done': 'CHECK_IF_ENTITY_FOUND',
                                                 'failed': 'inspect_failed'})
-
-            # give ed time to update
-            smach.StateMachine.add('WAIT',
-                                   WaitTime(robot=robot,
-                                            waittime=0.5),
-                                   transitions={'waited': 'CHECK_IF_ENTITY_FOUND',
-                                                'preempted': 'inspect_failed'})
 
             smach.StateMachine.add('CHECK_IF_ENTITY_FOUND',
                                    CheckIfDescribedEntityAvailable(
