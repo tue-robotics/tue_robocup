@@ -34,26 +34,6 @@ class GraspPointDeterminant(object):
         :param arm: arm to use
         :return: FrameStamped with grasp pose in map frame
         """
-        try:
-            # Try to compute the grasp pose based on the entity
-            return self._get_grasp_pose(entity, arm)
-        # noinspection PyBroadException
-        except Exception as e:
-            rospy.logwarn("Cannot compute grasp pose ({}), defaulting to entity position and "
-                          "orientation the same as the robot".format(e.message))
-            robot_pose_map = self._robot.base.get_location()  # type: FrameStamped
-            assert entity.frame_id == robot_pose_map.frame_id, "It is assumed that the entity frame id and the " \
-                                                               "world frame id are equal (typically 'map')"
-            return FrameStamped(kdl.Frame(robot_pose_map.frame.M, entity.pose.frame.p), entity.frame_id)
-
-    def _get_grasp_pose(self, entity, arm):
-        """ Computes the most suitable grasp pose to grasp the specified entity with the specified arm
-
-        :param entity: entity to grasp
-        :param arm: arm to use
-        :return: FrameStamped with grasp pose in map frame
-        """
-
         candidates = []
         starttime = rospy.Time.now()
         # ToDo: divide into functions
