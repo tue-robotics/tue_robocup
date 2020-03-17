@@ -24,7 +24,6 @@ from robot_smach_states.util.designators import EntityByIdDesignator, Unoccupied
 
 # Robot Skills
 from robot_skills import arms
-from robot_skills.hero_parts.hero_arm import HeroArm
 from robot_skills.get_robot import get_robot_from_argv
 from robot_skills.robot import Robot
 from robot_skills.util.entity import Entity
@@ -43,7 +42,7 @@ Result = namedtuple("Result", ["height", "result", "duration"])
 
 # noinspection PyUnusedLocal
 def get_grasp_pose(_robot, entity, _arm):
-    # type: (Robot, Entity, HeroArm) -> FrameStamped
+    # type: (Robot, Entity, arms.PublicArm) -> FrameStamped
     """
     Overrides the 'get_grasp_pose' method of the GraspPointDetermination class so that a grasp pose can be determined if
     an entity does not have a convex hull.
@@ -107,7 +106,7 @@ if __name__ == "__main__":
 
         # Lose the entity
         # noinspection PyProtectedMember
-        arm = robot._arms.values()[0]  # type: HeroArm
+        arm = robot._arms.values()[0]  # type: arms.PublicArm
         arm.send_gripper_goal(state=arms.GripperState.OPEN)
 
         if rospy.is_shutdown():
