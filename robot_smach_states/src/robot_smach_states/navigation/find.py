@@ -96,7 +96,7 @@ class Find(smach.StateMachine):
     have resolve type dict and it should contain at least a 'type' field
     """
     def __init__(self, robot, knowledge, source_entity_designator, description_designator, found_entity_designator,
-                 area_name="on_top_of", navigation_area=""):
+                 area_name="on_top_of", navigation_area=None):
         """
         :param robot: Robot object
         :param knowledge: Robocup knowledge object. Used to find an object by its properties
