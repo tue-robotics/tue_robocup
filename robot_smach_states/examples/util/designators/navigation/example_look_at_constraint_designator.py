@@ -2,7 +2,6 @@ import rospy
 import argparse
 
 from robot_skills.util.entity import Entity
-from robot_skills.get_robot import get_robot
 import PyKDL as kdl
 # Robot Smach States
 from robot_smach_states.util.designators.navigation.look_at_constraints import LookAtConstraintsDesignator
@@ -11,15 +10,12 @@ from robot_smach_states.util.designators.core import VariableDesignator
 if __name__ == "__main__":
     """
     Example demonstrating how to use the LookAtConstraintsDesignator
-    Make sure you have a (robot)-start running since a robot object is created for this.
     """
 
     parser = argparse.ArgumentParser(description="Example look at constaints designator")
-    parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     args = parser.parse_args()
 
     rospy.init_node("example_look_at_constaints_designator")
-    robot = get_robot(args.robot)
 
     # get an entitydesignator
     pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(1, 2, 1.3))
