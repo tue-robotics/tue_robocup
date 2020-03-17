@@ -10,9 +10,9 @@ from collections import namedtuple
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Test the atttrDesignator")
+    parser = argparse.ArgumentParser(description="Example compound constraint designator")
     args = parser.parse_args()
-    rospy.init_node("test_attrDesignator")
+    rospy.init_node("example_CompoundConstraintsDesignator")
 
     # Create the compound designator
     comp = CompoundConstraintsDesignator()

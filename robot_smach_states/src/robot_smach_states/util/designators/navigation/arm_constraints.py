@@ -19,7 +19,7 @@ from ..arm import ArmDesignator
 
 class ArmsreachConstraintsDesignator(NavigationConstraintsDesignator):
     """Position so that the arm can reach the position/entity
-    :param designator: designator that resolves to a either a geometry_msgs.msg.PoseStamped or an Ed Entity with a pose
+    :param designator: designator that resolves to a either a FrameStamped or an Ed Entity with a pose
     :param arm_designator: which arm to use for manipulation
     :param look: whether or not the orientation must be constrained as well
     :param name: Optional name of the designator
