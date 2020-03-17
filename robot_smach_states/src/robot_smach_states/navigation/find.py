@@ -104,7 +104,8 @@ class Find(smach.StateMachine):
         :param description_designator: dict which contains at least a 'type' field
         :param found_entity_designator: Designator the found entity can be written to
         :param area_name: str or str Designator describing the area of the source entity to inspect
-        :param navigation_area: str or str Designator describing the area to drive to for the inspect
+        :param navigation_area: str or str Designator describing the area to drive to for the inspect.
+                                None=NavigateToObserve
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'inspect_failed', 'not_found'])
 
