@@ -18,12 +18,12 @@ if __name__ == "__main__":
     parser.add_argument("--robot", default="hero", help="Robot name (amigo, hero, sergio)")
     args = parser.parse_args()
 
-    rospy.init_node("example_force_drive")
+    rospy.init_node("example_armsreach_constraint_designator")
     robot = get_robot(args.robot)
 
-    # get an armdesignator, entitydesignator and
+    # get an armdesignator, framedesignator and
     arm = ArmDesignator(robot, {}, name="arm_designator")
-    frame = frame_stamped("\map", 0, 0, 1.3)
+    frame = frame_stamped("/map", 0, 0, 1.3)
     framedes = VariableDesignator(frame, name="frame designator")
 
     # create an armsreach constraintdesignator
