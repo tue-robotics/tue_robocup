@@ -10,7 +10,7 @@ from robot_smach_states.util.designators.core import VariableDesignator
 
 if __name__ == "__main__":
     """
-    Example demonstrating how to use the ArmsreachConstraintsDesignator
+    Example demonstrating how to use the ArmsReachConstraintsDesignator
     Make sure you have a (robot)-start running since a robot object is created for this.
     """
 
