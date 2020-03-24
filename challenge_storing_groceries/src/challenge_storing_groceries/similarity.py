@@ -7,7 +7,7 @@ from robot_smach_states.util.designators import Designator
 
 
 class SimilarEntityDesignator(Designator):
-    def __init__(self, robot, original, entity_list, knowledge):
+    def __init__(self, robot, original, entity_list, knowledge, name=None):
         """
         Return an entity from entity_list that bears a resemblance to the original according to the knowledge
         same type > same category
@@ -15,8 +15,9 @@ class SimilarEntityDesignator(Designator):
         :param original: EdEntityDesignator
         :param entity_list: Designator resolving to a list of ClassificationResults to compare to the original
         :param knowledge: Robocup knowledge object
+        :param name (optional): name of the designator
         """
-        super(SimilarEntityDesignator, self).__init__(self, resolve_type=Entity)
+        super(SimilarEntityDesignator, self).__init__(self, resolve_type=Entity, name=name)
         self.robot = robot
         self.original = original
         self.entity_list = entity_list
@@ -42,6 +43,10 @@ def find_similar_entity(original, entity_list, knowledge):
     :param knowledge: Robocup knowledge object
     :return: EdEntity of a similar
     """
+
+    if not entity_list: # List is empty
+        return None
+
     original_type = original.type
     matching_types = [entity for entity in entity_list if entity.type is original_type]
     if matching_types:
