@@ -14,7 +14,6 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.volume import Volume
 from robot_smach_states.util.designators import Designator
-from robot_smach_states.util.designators.utility import resolve
 
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds
@@ -233,7 +232,7 @@ class CheckEmpty(smach.State):
 
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
-        :param volume_designator: string (or Designator resolving to a str) defining which volume of the entity is checked
+        :param volume_designator: string-Designator defining which volume of the entity is checked
         :param threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
             (None means any entities filling the volume will result in 'occupied')
         """
@@ -251,7 +250,7 @@ class CheckEmpty(smach.State):
     def execute(self, userdata=None):
         entity = self.entity_des.resolve()  # type: Entity
         seen_entities = self.seen_entities_des.resolve()
-        volume_name = resolve(self.volume_designator)
+        volume_name = self.volume_designator.resolve()
 
         if seen_entities:
             if self.threshold:
@@ -320,12 +319,12 @@ class Inspect(smach.StateMachine):
 
 
 class CheckVolumeEmpty(smach.StateMachine):
-    def __init__(self, robot, entity_des, volume_designator='on_top_of', volume_threshold=0.0):
+    def __init__(self, robot, entity_des, volume_designator=ds.Designator('on_top_of'), volume_threshold=0.0):
         """ Constructor
 
         :param robot: robot object
         :param entity_des: EdEntityDesignator indicating the (furniture) object to check
-        :param volume: string defining volume of the entity to be checked, default = on_top_of
+        :param volume_designator: string-Designator defining volume of the entity to be checked, default = on_top_of
         :param volume_threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
             (None means any entities filling the volume will result in 'occupied')
         """
