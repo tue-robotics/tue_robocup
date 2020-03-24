@@ -2,15 +2,11 @@
 import rospy
 from robot_skills.robot import Robot
 from robot_smach_states.human_interaction import Say, FindPeopleInRoom
-from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.manipulation import PointAt
 from robot_smach_states.reset import ResetArms
-from robot_smach_states.world_model import CheckVolumeEmpty
 import robot_smach_states.util.designators as ds
 import smach
 from robot_skills.util.entity import Entity
-from robot_skills.util.volume import Volume
-from robot_skills.classification_result import ClassificationResult
 
 try:
     from typing import List
