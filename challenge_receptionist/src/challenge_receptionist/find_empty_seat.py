@@ -66,7 +66,8 @@ class SeatVolumeNamesDesignator(ds.Designator):
             seat_volume_names = sorted([k for k in seat_entity.volumes.keys() if k.endswith('seat')])
 
             return seat_volume_names
-        except AttributeError:
+        except AttributeError as attr_err:
+            rospy.logerr(attr_err)
             return None
 
     def __repr__(self):
