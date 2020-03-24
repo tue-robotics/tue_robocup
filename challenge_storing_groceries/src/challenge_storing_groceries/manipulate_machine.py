@@ -109,55 +109,36 @@ class StoreItems(smach.StateMachine):
 
             smach.StateMachine.add("CONVERT_ENTITIES",
                                    smach.CBState(convert),
-                                   transitions={'converted': 'RANGE_ITERATOR'})
+                                   transitions={'converted': 'ITERATE_ENTITY'})
 
-            # Begin setup iterator
-            range_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],  # Outcomes of the iterator state
-                                            input_keys=[], output_keys=[],
-                                            it=lambda: range(5),
-                                            it_label='index',
-                                            exhausted_outcome='succeeded')
+            # Begin setup iterations
+            smach.StateMachine.add('ITERATE_ENTITY',
+                                   states.designator_iterator.IterateDesignator(entities_designator,
+                                                                                item_designator.writeable),
+                                   transitions={'next': 'CHECK_SIMILAR_ITEM',
+                                                'stop_iteration': 'succeeded'}
+                                   )
 
-            with range_iterator:
-                contained_sm = smach.StateMachine(outcomes=['succeeded', 'failed'])
+            @smach.cb_interface(outcomes=["item_found", "no_similar_item"])
+            def check_similar_item(userdata=None):
+                rospy.loginfo("Going to store entity {}".format(item_designator.resolve()))
+                if near_object_designator.resolve():
+                    return "item_found"
+                return "no_similar_item"
 
-                # process a single item
-                with contained_sm:
-                    smach.StateMachine.add('ITERATE_ENTITY',
-                                           states.designator_iterator.IterateDesignator(entities_designator,
-                                                                                        item_designator.writeable),
-                                           transitions={'next': 'CHECK_SIMILAR_ITEM',
-                                                        'stop_iteration': 'failed'}
-                                           )
+            smach.StateMachine.add("CHECK_SIMILAR_ITEM",
+                                   smach.CBState(check_similar_item),
+                                   transitions={"item_found": "STORE_NEAR_ITEM",
+                                                "no_similar_item": "STORE_ANYWHERE"})
 
-                    @smach.cb_interface(outcomes=["item_found", "no_similar_item"])
-                    def check_similar_item(userdata=None):
-                        rospy.loginfo("Going to store entity {}".format(item_designator.resolve()))
-                        if near_object_designator.resolve():
-                            return "item_found"
-                        return "no_similar_item"
+            smach.StateMachine.add('STORE_NEAR_ITEM',
+                                   StoreSingleItem(robot, item_designator, place_near_designator),
+                                   transitions={'succeeded': 'ITERATE_ENTITY',
+                                                'failed': 'failed'}
+                                   )
 
-                    smach.StateMachine.add("CHECK_SIMILAR_ITEM",
-                                           smach.CBState(check_similar_item),
-                                           transitions={"item_found": "STORE_NEAR_ITEM",
-                                                        "no_similar_item": "STORE_ANYWHERE"})
-
-                    smach.StateMachine.add('STORE_NEAR_ITEM',
-                                           StoreSingleItem(robot, item_designator, place_near_designator),
-                                           transitions={'succeeded': 'succeeded',
-                                                        'failed': 'failed'}
-                                           )
-
-                    smach.StateMachine.add('STORE_ANYWHERE',
-                                           StoreSingleItem(robot, item_designator, place_anywhere_designator, arm),
-                                           transitions={'succeeded': 'succeeded',
-                                                        'failed': 'failed'}
-                                           )
-
-                smach.Iterator.set_contained_state('SINGLE_ITEM',
-                                                   contained_sm,
-                                                   loop_outcomes=['succeeded', 'failed'])
-
-            smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-                                   {'succeeded': 'succeeded',
-                                    'failed': 'failed'})
+            smach.StateMachine.add('STORE_ANYWHERE',
+                                   StoreSingleItem(robot, item_designator, place_anywhere_designator, arm),
+                                   transitions={'succeeded': 'ITERATE_ENTITY',
+                                                'failed': 'failed'}
+                                   )
