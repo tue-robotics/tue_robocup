@@ -243,8 +243,12 @@ class CheckEmpty(smach.State):
         self.entity_des = entity_designator
 
         ds.check_type(volume_designator, str)
-        # Can be either designator or concrete value, but the resolve function takes care of either case
-        self.volume_designator = volume_designator
+        if isinstance(volume_designator, str):
+            self.volume_designator = ds.VariableDesignator(volume_designator)
+        elif isinstance(volume_designator, ds.Designator):
+            self.volume_designator = volume_designator
+        else:
+            raise RuntimeError("This shouldn't happen. Wrong types should have raised an exception earlier")
 
         self.threshold = threshold
 
