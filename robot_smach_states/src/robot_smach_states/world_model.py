@@ -233,7 +233,8 @@ class CheckEmpty(smach.State):
         :param segmented_entity_ids_designator: designator containing the segmented objects in the volume
         :param entity_designator: EdEntityDesignator indicating the (furniture) object to check
         :param volume_designator: string-Designator defining which volume of the entity is checked
-        :param threshold: float [m^3] indicating the free volume above which the area is considered partially_occupied.
+        :param threshold: float indicating the ration between free and occupied space in the volume.
+            If ratio > threshold, then the volume is occupied, otherwie partially occupied
             (None means any entities filling the volume will result in 'occupied')
         """
         smach.State.__init__(self, outcomes=["occupied", "partially_occupied", "empty"])
