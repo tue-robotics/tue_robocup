@@ -48,15 +48,6 @@ class PreparePlace(smach.State):
         arm.send_joint_trajectory('prepare_place', timeout=0)
         arm.wait_for_motion_done()
 
-        # When the arm is in the prepare_place configuration, the grippoint is approximately at height torso_pos + 0.6
-        # Hence, we want the torso to go to the place height - 0.6
-        # Note: this is awefully hardcoded for AMIGO
-        # Sending it to 'high' seems to work much better...
-        # torso_goal = placement_fs.frame.p.z() - 0.6
-        # torso_goal = max(0.09, min(0.4, torso_goal))
-        # rospy.logwarn("Torso goal before placing: {0}".format(torso_goal))
-        # self._robot.torso._send_goal(torso_pos=[torso_goal])
-
         return 'succeeded'
 
 # ----------------------------------------------------------------------------------------------------
@@ -249,13 +240,9 @@ class Place(smach.StateMachine):
             if furniture_designator is not None:
                 smach.StateMachine.add('INSPECT',
                                        Inspect(robot, furniture_designator, navigation_area="in_front_of"),
-                                       transitions={'done': 'PREPARE_PLACE',
+                                       transitions={'done': 'LOCK_DESIGNATOR',
                                                     'failed': 'failed'}
                                        )
-
-            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
-                                   transitions={'succeeded': 'LOCK_DESIGNATOR',
-                                                'failed': 'failed'})
 
             smach.StateMachine.add('LOCK_DESIGNATOR', LockDesignator(locking_place_designator),
                                    transitions={'locked': 'NAVIGATE_TO_PLACE'})
@@ -263,7 +250,11 @@ class Place(smach.StateMachine):
             smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, locking_place_designator, arm),
                                    transitions={'unreachable': 'failed',
                                                 'goal_not_defined': 'failed',
-                                                'arrived': 'PUT'})
+                                                'arrived': 'PREPARE_PLACE'})
+
+            smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
+                                   transitions={'succeeded': 'PUT',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
