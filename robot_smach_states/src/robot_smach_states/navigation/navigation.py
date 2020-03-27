@@ -206,7 +206,7 @@ class planBlocked(smach.State):
 
 
 class NavigateTo(smach.StateMachine):
-    def __init__(self, robot, reset_head=True, speak=True, reset_pose=True, input_keys=[], output_keys=[]):
+    def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True, input_keys=[], output_keys=[]):
         smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'],
                                     input_keys=input_keys, output_keys=output_keys)
         self.robot = robot
@@ -219,7 +219,7 @@ class NavigateTo(smach.StateMachine):
 
             with sm_nav:
 
-                smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint, self.speak),
+                smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, constraint_function, self.speak),
                     transitions={'unreachable'                          :   'unreachable',
                                  'goal_not_defined'                     :   'goal_not_defined',
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
