@@ -12,24 +12,6 @@ from robot_smach_states.util.designators.core import Designator, VariableDesigna
 
 __author__ = 'loy'
 
-def resolve(designator_or_value):
-    """
-    Resolve the given designator or return the already concrete value.
-    :param designator_or_value: A designator or  value
-    :return: concrete value that we passed in or that the given designator resolves to
-
-    >>> d = Designator('aap')
-    >>> resolve(d)
-    'aap'
-    >>> v = 'aap'
-    >>> resolve(v)
-    'aap'
-    """
-
-    if hasattr(designator_or_value, 'resolve'):  # It's a designator
-        return designator_or_value.resolve()
-    else:  # It's not a designator so must be a concrete value already: just return it
-        return designator_or_value
 
 class LockingDesignator(Designator):
     """A designator's resolve() method may return a different object everytime.
