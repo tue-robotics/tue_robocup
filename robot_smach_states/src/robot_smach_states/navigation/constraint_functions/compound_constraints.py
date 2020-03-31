@@ -28,7 +28,7 @@ def combine_constraints(func_list):
             if not oc:
                 oc =oci
             else:
-                combine_orientation_constraints(oc, oci)
+                oc = combine_orientation_constraints(oc, oci)
 
     if pc or oc:
         # if one is missing fill it in.
@@ -49,3 +49,4 @@ def combine_position_constraints(pos1, pos2):
 
 def combine_orientation_constraints(oc1, oc2):
     rospy.logerr("Tried to combine {} and {}. Orientation constraints cannot be combined at this time".format(oc1, oc2))
+    return oc1
