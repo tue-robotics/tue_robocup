@@ -9,10 +9,12 @@ import PyKDL as kdl
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
+from robot_skills.arms import PublicArm
+from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
-from ..util.designators.ed_designators import Designator
+from ..util.designators import Designator, check_resolve_type
 from cb_planner_msgs_srvs.msg import PositionConstraint
-from robot_smach_states.util.geometry_helpers import offsetConvexHull
+from ..util.geometry_helpers import offsetConvexHull
 
 
 class EmptySpotDesignator(Designator):
@@ -30,21 +32,24 @@ class EmptySpotDesignator(Designator):
                                           name="place_position")
     """
 
-    def __init__(self, robot, place_location_designator, arm_designator, name=None, area=None):
+    def __init__(self, robot, place_location_designator, arm_designator, area=None, name=None):
         """
         Designate an empty spot (as PoseStamped) on some designated entity
         :param robot: Robot whose worldmodel to use
         :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
         :param arm_designator: Designator resolving to an arm robot part, e.g. OccupiedArmDesignator
-        :param name: name for introspection purposes
         :param area: (optional) area where the item should be placed
-        :param nav_threshold:
+        :param name: name for introspection purposes
         """
         super(EmptySpotDesignator, self).__init__(resolve_type=FrameStamped, name=name)
         self.robot = robot
 
+        check_resolve_type(place_location_designator, Entity)
         self.place_location_designator = place_location_designator
+
+        check_resolve_type(place_location_designator, PublicArm)
         self.arm_designator = arm_designator
+
         self._edge_distance = 0.05  # Distance to table edge
         self._spacing = 0.15
         self._area = area
