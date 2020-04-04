@@ -95,6 +95,10 @@ class Arm(MockedRobotPart):
     def collect_gripper_types(self, gripper_type):
         return gripper_type
 
+    @property
+    def base_offset(self):
+        return self._base_offset
+
 
 class Base(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
