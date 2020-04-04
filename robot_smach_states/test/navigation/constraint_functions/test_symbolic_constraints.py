@@ -3,7 +3,7 @@ import unittest
 
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
-from robot_smach_states.util.designators.core import VariableDesignator
+from robot_smach_states.util.designators.core import Designator
 
 from robot_smach_states.navigation.constraint_functions.symbolic_constraints import symbolic_constraint
 
@@ -17,7 +17,7 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
     def test_base(self):
         dummy_id = "dummy"
         e = Entity(dummy_id, "dummy_type", "/map", None, None, None, None, None)
-        entity = VariableDesignator(e, name="entity designator")
+        entity = Designator(e, name="entity designator")
         area_name = "area"
 
         pc, oc = symbolic_constraint(self.robot, {entity: area_name})
