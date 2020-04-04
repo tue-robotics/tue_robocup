@@ -56,7 +56,7 @@ def combine_position_constraints(pos1, pos2):
     :return: PositionConstraint
     """
     assert (pos1.frame == pos2.frame), "frames of different position constraints must be the same"
-    return PositionConstraint(constraint=pos1.constraint + " and " + pos2.constraint)
+    return PositionConstraint(constraint=pos1.constraint + " and " + pos2.constraint, frame=pos1.frame)
 
 
 def combine_orientation_constraints(oc1, oc2):
