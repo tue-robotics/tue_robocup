@@ -22,14 +22,14 @@ def arms_reach_constraint(pose_designator, arm_designator, look=True):
     """
     arm = arm_designator.resolve()
     if not arm:
-        rospy.logerr("Could not resolve arm")
+        rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm_designator))
         return None
 
     radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
 
     pose = pose_designator.resolve()
     if not pose:
-        rospy.logerr("No such place_pose")
+        rospy.logerr("No such place_pose, Designator {} did not resolve".format(pose_designator))
         return None
 
     try:
