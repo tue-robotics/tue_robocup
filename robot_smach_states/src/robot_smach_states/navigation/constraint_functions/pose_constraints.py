@@ -10,6 +10,7 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 def pose_constraints(x, y, rz=None, radius=0.15, frame_id="/map"):
     """
     Generate navigation constraints for a radius from a pose
+
     :param x, y: x and y coordinates
     :param rz: orientation to assume. None=no orientation constraint (default None)
     :param radius: allowed distance to the pose

@@ -11,6 +11,7 @@ from ..util.designators import check_resolve_type
 class NavigateToWaypoint(NavigateTo):
     """
     Navigate to a waypoint in the world model
+
     :param waypoint_designator: designator resolving to the waypoint
     :param radius (default 0.15): allowed distance to the waypoint
     :param look_at_designator: Entity the robot should face from the waypoint. If not specified the robot will adopt

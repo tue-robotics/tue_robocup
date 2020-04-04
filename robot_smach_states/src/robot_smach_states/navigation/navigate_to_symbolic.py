@@ -11,6 +11,7 @@ from ..util.designators import check_resolve_type
 class NavigateToSymbolic(NavigateTo):
     """
     Navigation class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
+
     :param robot: robot object
     :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
@@ -32,6 +33,7 @@ class NavigateToSymbolic(NavigateTo):
 class NavigateToRoom(NavigateToSymbolic):
     """
     Navigation class to navigate to the 'in' area of the provided entity, typically a room.
+
     :param robot: robot object
     :param entity_designator_room: Designator to the room
     :param entity_lookat_designator: (Optional) Designator defining the entity the robot should look at. This is

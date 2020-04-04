@@ -17,6 +17,7 @@ from ..util.designators.arm import UnoccupiedArmDesignator
 class NavigateToGrasp(NavigateTo):
     """"
     Navigate so that the arm can easily grasp the entity
+
     :param robot: robot object
     :param entity_designator: designator that resolves to an Ed Entity
     :param arm_designator: which arm to eventually grasp with?

@@ -208,6 +208,7 @@ class planBlocked(smach.State):
 class NavigateTo(smach.StateMachine):
     """
     Move the robot to a specified location.
+
     :param robot: Robot object
     :param constraint_function: function resolving to a tuple(PositionConstraint, OrientationConstraint)
         telling the robot where to drive to.

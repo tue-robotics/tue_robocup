@@ -14,6 +14,7 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 def arms_reach_constraint(pose_designator, arm_designator, look=True):
     """
     Position so that the arm can reach the position/entity
+
     :param pose_designator: designator that resolves to a FrameStamped of the point to be reached
     :param arm_designator: PublicArmDesignator, arm to use for manipulation
     :param look: bool, whether or not the orientation must be constrained as well

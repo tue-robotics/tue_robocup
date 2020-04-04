@@ -11,6 +11,7 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 def waypoint_constraint(waypoint_designator, radius, look=True):
     """
     Navigates to a radius from a waypoint
+
     :param waypoint_designator: designator resolving to the waypoint
     :param radius: allowed distance to the waypoint
     :param look: whether or not to take the orientation of the waypoint (default True)

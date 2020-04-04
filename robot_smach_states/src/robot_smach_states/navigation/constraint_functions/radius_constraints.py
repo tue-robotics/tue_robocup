@@ -11,6 +11,7 @@ def radius_constraint(entity, radius, margin):
     """
     Navigates to a radius from an ed entity. If a convex hull is present, the distance
     to the convex hull is used. Otherwise, the distance to the pose of the entity is used
+
     :param entity: EdEntityDesignator for the object to observe
     :param radius: (float) desired distance to the pose of the entity [m]
     :param margin: (float) allowed margin w.r.t. specified radius on both sides [m]

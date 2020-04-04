@@ -15,6 +15,7 @@ from ..util.designators import Designator, check_resolve_type
 class NavigateToPlace(NavigateTo):
     """
     Navigate so that the arm can reach the place point
+
     :param robot: robot object
     :param place_pose_designator designator that resolves to a FrameStamped
     :param arm_designator: which arm to eventually place with

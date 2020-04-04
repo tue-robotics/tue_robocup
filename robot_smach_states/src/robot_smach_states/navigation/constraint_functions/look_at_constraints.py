@@ -11,6 +11,7 @@ from robot_skills.util.kdl_conversions import kdl_vector_to_point_msg
 def look_at_constraint(entity_lookat_designator, offset=0.0):
     """
     Generate navigation constraints for looking at an entity
+
     :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at.
     :param offset: offset the angle with respect to the entity
     :return: tuple(PositionConstraint, OrientationConstraint). If the entity does not resolve, None is returned.

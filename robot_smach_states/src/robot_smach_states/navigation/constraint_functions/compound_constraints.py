@@ -10,6 +10,7 @@ from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
 def combine_constraints(func_list):
     """
     Combine multiple navigation constraints into a single position and orientation constraint
+
     :param func_list: list of constraint functions each one to be resolved without parameters
      and resolving to a tuple(PositionConstraint, OrientationConstraint)
     :return: tuple(PositionConstraint, OrientationConstraint)
@@ -51,6 +52,7 @@ def combine_constraints(func_list):
 def combine_position_constraints(pos1, pos2):
     """
     Combine two navigation constraints into one
+
     :param pos1: PositionConstraint
     :param pos2: PositionConstraint
     :return: PositionConstraint
@@ -62,6 +64,7 @@ def combine_position_constraints(pos1, pos2):
 def combine_orientation_constraints(oc1, oc2):
     """
     Combine two orientation constraints into one
+
     :param oc1: OrientationConstraint
     :param oc2: OrientationConstraint
     :return: OrientationConstraint

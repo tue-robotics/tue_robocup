@@ -9,6 +9,7 @@ from .constraint_functions import pose_constraints
 class NavigateToPose(NavigateTo):
     """
     Navigates to a pose specified by the user.
+
     :param robot: (Robot) object
     :param x, y: coordinates of the goal pose
     :param rz (optional): orientation to assume. if not specified no orientation constraint is used.
