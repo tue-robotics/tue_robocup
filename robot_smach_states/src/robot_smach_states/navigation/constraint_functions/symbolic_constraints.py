@@ -6,7 +6,7 @@ import rospy
 
 def symbolic_constraint(robot, entity_designator_area_name_map):
     """
-    Generate the constraint based on an entity and an area of that entity.
+    Generate navigation constraints based on an entity and an area of that entity.
     :param robot: robot object
     :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
@@ -40,7 +40,9 @@ def symbolic_constraint(robot, entity_designator_area_name_map):
 
 def room_constraint(robot, room_designator):
     """
+    Generate navigation constraints to a room entity.
     :param robot: robot object
     :param room_designator: Designator to the room
+    :return: tuple(PositionConstraint, OrientationConstraint). If the room entity does not resolve, None is returned.
     """
     symbolic_constraint(robot, {room_designator: "in"})

@@ -15,6 +15,12 @@ from ..util.designators.arm import UnoccupiedArmDesignator
 
 
 class NavigateToGrasp(NavigateTo):
+    """"
+    Navigate so that the arm can easily grasp the entity
+    :param robot: robot object
+    :param entity_designator: designator that resolves to an Ed Entity
+    :param arm_designator: which arm to eventually grasp with?
+    """
     def __init__(self, robot, entity_designator, arm_designator=None):
         check_resolve_type(entity_designator, Entity)  # Check that the entity_designator resolves to an Entity
         pose_designator = AttrDesignator(entity_designator, 'pose', resolve_type=FrameStamped)

@@ -206,6 +206,15 @@ class planBlocked(smach.State):
 
 
 class NavigateTo(smach.StateMachine):
+    """
+    Move the robot to a specified location.
+    :param robot: Robot object
+    :param constraint_function: function resolving to a tuple(PositionConstraint, OrientationConstraint)
+        telling the robot where to drive to.
+    :param reset_head: Whether or not the head should be used for obstacle avoidance during navigation.
+    :param speak: Whether or not the robot should speak during navigation
+    :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
+    """
     def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True, input_keys=[], output_keys=[]):
         smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'],
                                     input_keys=input_keys, output_keys=output_keys)
