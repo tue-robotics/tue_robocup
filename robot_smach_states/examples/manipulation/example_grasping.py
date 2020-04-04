@@ -12,7 +12,7 @@ from robot_skills import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
-from robot_smach_states import Grab
+from robot_smach_states.manipulation import Grab
 
 
 if __name__ == "__main__":
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     arm = ds.UnoccupiedArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_grasp"],
                                                             "required_goals": ["carrying_pose"],
-                                                            "required_grasping_types": [arms.GripperTypes.GRASPING]})
+                                                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     grab_state = Grab(robot, item, arm)
     grab_state.execute()
