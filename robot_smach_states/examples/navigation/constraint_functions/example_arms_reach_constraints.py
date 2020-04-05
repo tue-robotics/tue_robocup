@@ -47,7 +47,6 @@ if __name__ == "__main__":
     entity_designator = Designator(entity)
 
     rospy.loginfo("When you have an entity rather than a pose, consider wrapping it in an attribute designator")
-    rospy.loginfo("When you have an entity rather than a pose, consider wrapping it in an attribute designator")
     rospy.loginfo("Running: pc, oc = arms_reach_constraint(AttrDesignator(entity_designator, 'pose', resolve_type=FrameStamped), arm_designator)")
     pc, oc = arms_reach_constraint(AttrDesignator(entity_designator, 'pose', resolve_type=FrameStamped), arm_designator)
     rospy.loginfo("pc becomes : {}".format(pc))
