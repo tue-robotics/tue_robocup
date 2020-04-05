@@ -11,23 +11,48 @@ from robot_smach_states.navigation.constraint_functions.arms_reach_constraints i
 
 class TestArmsReachConstraintFunction(unittest.TestCase):
     def test_base(self):
+        # parameters
+        x_coordinate = 2.1
+        y_coordinate = 3.7
+        z_coordinate = 0
+        frame_id = "/map"
+
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
-        frame = Designator(frame_stamped("/map", 0, 0, 0), name="frame_designator")
+        frame = Designator(frame_stamped(frame_id, x_coordinate, y_coordinate, z_coordinate), name="frame_designator")
 
         pc, oc = arms_reach_constraint(frame, arm)
 
-        self.assertIsNotNone(pc)
-        self.assertIsNotNone(oc)
+        # verify positionconstraint
+        self.assertIn("x", pc.constraint)
+        self.assertIn("y", pc.constraint)
+        self.assertEqual(pc.frame, frame_id)
+
+        # verify orientationconstraint
+        self.assertEqual(oc.look_at.x, x_coordinate)
+        self.assertEqual(oc.look_at.y, y_coordinate)
+        # The z coordinate is irrelevant in the orientation constraint
+        self.assertEqual(oc.frame, frame_id)
 
     def test_no_look(self):
+        # parameters
+        x_coordinate = 2.1
+        y_coordinate = 3.7
+        z_coordinate = 0
+        frame_id = "/map"
+
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
-        frame = Designator(frame_stamped("/map", 0, 0, 0), name="frame_designator")
+        frame = Designator(frame_stamped(frame_id, x_coordinate, y_coordinate, z_coordinate), name="frame_designator")
 
         pc, oc = arms_reach_constraint(frame, arm, look=False)
 
-        self.assertIsNotNone(pc)
+        # verify positionconstraint
+        self.assertIn("x", pc.constraint)
+        self.assertIn("y", pc.constraint)
+        self.assertEqual(pc.frame, frame_id)
+
+        # verify orientationconstraint
         self.assertIsNone(oc)
 
 

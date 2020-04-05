@@ -10,22 +10,48 @@ from robot_smach_states.navigation.constraint_functions.waypoint_constraints imp
 
 class TestWaypointConstraintFunction(unittest.TestCase):
     def test_base(self):
-        pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(1, 2, 0.0))
-        e = Entity("dummy", "dummy_type", "/map", pose, None, None, None, None)
+        # parameters
+        x_coordinate = 2.1
+        y_coordinate = 3.7
+        z_coordinate = 0
+        yaw = 1.57
+        frame_id = "/map"
+
+        pose = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
+        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
         entity = Designator(e, name="entity designator")
 
         pc, oc = waypoint_constraint(entity, 0.3)
 
-        self.assertIsNotNone(pc)
-        self.assertIsNotNone(oc)
+        # verify positionconstraint
+        self.assertIn("x", pc.constraint)
+        self.assertIn("y", pc.constraint)
+        self.assertEqual(pc.frame, frame_id)
+
+        # verify orientationconstraint
+        self.assertEqual(oc.angle_offset, yaw)
+        self.assertEqual(oc.frame, frame_id)
 
     def test_no_look(self):
-        pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(1, 2, 0.0))
-        e = Entity("dummy", "dummy_type", "/map", pose, None, None, None, None)
-        entity = VariableDesignator(e, name="entity designator")
+        # parameters
+        x_coordinate = 2.1
+        y_coordinate = 3.7
+        z_coordinate = 0
+        yaw = 1.57
+        frame_id = "/map"
+
+        pose = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
+        e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
+        entity = Designator(e, name="entity designator")
+
         pc, oc = waypoint_constraint(entity, 0.3, look=False)
 
-        self.assertIsNotNone(pc)
+        # verify positionconstraint
+        self.assertIn("x", pc.constraint)
+        self.assertIn("y", pc.constraint)
+        self.assertEqual(pc.frame, frame_id)
+
+        # verify orientationconstraint
         self.assertIsNone(oc)
 
 

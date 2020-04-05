@@ -11,13 +11,26 @@ from robot_smach_states.navigation.constraint_functions.radius_constraints impor
 
 class TestRadiusConstraintFunction(unittest.TestCase):
     def test_no_shape(self):
-        pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(1, 2, 0.0))
-        e = Entity("dummy", "dummy_type", "/map", pose, Shape(), None, None, None)
+        # parameters
+        x_coordinate = 2.1
+        y_coordinate = 3.7
+        z_coordinate = 0
+        radius = 0.7
+        margin = 0.3
+        frame_id = "/map"
+
+        pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
+        e = Entity("dummy", "dummy_type", frame_id, pose, Shape(), None, None, None)
         entity = Designator(e, name="entity designator")
 
-        pc, oc = radius_constraint(entity, 0.7, 0.3)
+        pc, oc = radius_constraint(entity, radius, margin)
 
-        self.assertIsNotNone(pc)
+        # verify positionconstraint
+        self.assertIn("x", pc.constraint)
+        self.assertIn("y", pc.constraint)
+        self.assertEqual(pc.frame, frame_id)
+
+        # verify orientationconstraint
         self.assertIsNone(oc)
 
 
