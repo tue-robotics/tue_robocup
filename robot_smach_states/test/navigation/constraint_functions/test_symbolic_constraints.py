@@ -24,20 +24,18 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
 
         self.assertIsNotNone(pc)
         self.assertIsNone(oc)
-        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_once_with({dummy_id: area_name})
+        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id: area_name})
 
     def test_room(self):
         dummy_id = "dummy_room"
         r = Entity(dummy_id, "dummy_type", "/map", None, None, None, None, None)
         room = Designator(r, name="room designator")
 
-        res = room_constraint(self.robot, room)
+        pc, oc = room_constraint(self.robot, room)
 
-        self.assertIsNotNone(room.resolve())
-        self.assertIsNotNone(res)
-        #self.assertIsNotNone(pc)
-        #self.assertIsNone(oc)
-        #self.robot.parts["ed"].navigation.get_position_constraint.assert_called_once_with({dummy_id: "in"})
+        self.assertIsNotNone(pc)
+        self.assertIsNone(oc)
+        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id: "in"})
 
 
 if __name__ == '__main__':
