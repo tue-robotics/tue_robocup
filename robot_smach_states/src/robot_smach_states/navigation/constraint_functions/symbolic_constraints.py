@@ -47,4 +47,4 @@ def room_constraint(robot, room_designator):
     :param room_designator: Designator to the room
     :return: tuple(PositionConstraint, OrientationConstraint). If the room entity does not resolve, None is returned.
     """
-    symbolic_constraint(robot, {room_designator: "in"})
+    return symbolic_constraint(robot, {room_designator: "in"})

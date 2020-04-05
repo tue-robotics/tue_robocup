@@ -5,10 +5,10 @@ from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators.core import Designator
 
-from robot_smach_states.navigation.constraint_functions.symbolic_constraints import symbolic_constraint
+from robot_smach_states.navigation.constraint_functions.symbolic_constraints import symbolic_constraint, room_constraint
 
 
-class TestArmsReachConstraintFunction(unittest.TestCase):
+class TestSymbolicConstraintFunction(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -25,6 +25,19 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         self.assertIsNotNone(pc)
         self.assertIsNone(oc)
         self.robot.parts["ed"].navigation.get_position_constraint.assert_called_once_with({dummy_id: area_name})
+
+    def test_room(self):
+        dummy_id = "dummy_room"
+        r = Entity(dummy_id, "dummy_type", "/map", None, None, None, None, None)
+        room = Designator(r, name="room designator")
+
+        res = room_constraint(self.robot, room)
+
+        self.assertIsNotNone(room.resolve())
+        self.assertIsNotNone(res)
+        #self.assertIsNotNone(pc)
+        #self.assertIsNone(oc)
+        #self.robot.parts["ed"].navigation.get_position_constraint.assert_called_once_with({dummy_id: "in"})
 
 
 if __name__ == '__main__':
