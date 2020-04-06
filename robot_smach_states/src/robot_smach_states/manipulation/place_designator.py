@@ -47,7 +47,7 @@ class EmptySpotDesignator(Designator):
         check_resolve_type(place_location_designator, Entity)
         self.place_location_designator = place_location_designator
 
-        check_resolve_type(place_location_designator, PublicArm)
+        check_resolve_type(arm_designator, PublicArm)
         self.arm_designator = arm_designator
 
         self._edge_distance = 0.05  # Distance to table edge
