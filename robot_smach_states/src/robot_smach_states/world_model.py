@@ -14,6 +14,7 @@ from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped
 from .navigation import NavigateToObserve, NavigateToSymbolic
 from .util import designators as ds
+from .rise import RiseForInspect
 
 
 def _color_info(string):
@@ -260,6 +261,7 @@ class CheckEmpty(smach.State):
 class Inspect(smach.StateMachine):
     """
     Class to navigate to a(n) (furniture) object and segment the objects on top of it.
+    Note that when inspecting a high entity the robot will end the Inspect in a high position.
     """
     def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of", navigation_area="",
                  unknown_threshold=0.0, filter_threshold=0.0):
@@ -287,12 +289,16 @@ class Inspect(smach.StateMachine):
                                                                                  entityDes),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
-                                                    'arrived': 'SEGMENT'})
+                                                    'arrived': 'RISE'})
             else:
                 smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
                                        transitions={'unreachable': 'failed',
                                                     'goal_not_defined': 'failed',
-                                                    'arrived': 'SEGMENT'})
+                                                    'arrived': 'RISE'})
+
+            smach.StateMachine.add('RISE', RiseForInspect(robot, entityDes, searchArea),
+                                   transitions={'succeeded': 'SEGMENT',
+                                                'failed': 'SEGMENT'})
 
             smach.StateMachine.add('SEGMENT',
                                    SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea,
