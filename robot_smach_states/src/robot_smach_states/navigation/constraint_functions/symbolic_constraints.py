@@ -17,10 +17,8 @@ def symbolic_constraint(robot, entity_designator_area_name_map):
     entity_id_area_name_map = {}
     for desig, area_name in entity_designator_area_name_map.iteritems():
         entity = desig.resolve()
-        try:
+        if hasattr(area_name, "resolve"):
             area_name = area_name.resolve()
-        except:
-            pass
         if entity:
             entity_id_area_name_map[entity.id] = area_name
         else:
