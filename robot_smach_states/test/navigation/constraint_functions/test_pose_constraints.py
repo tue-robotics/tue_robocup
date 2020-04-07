@@ -31,7 +31,7 @@ class TestPoseConstraintFunction(unittest.TestCase):
         # verify orientationconstraint
         self.assertIsNone(oc)
 
-    def test_orientation(self):
+    def test_with_orientation(self):
         # parameters
         x_coordinate = 2.1
         y_coordinate = 3.7

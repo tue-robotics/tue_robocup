@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import math
+
 # ROS
 import rospy
 
@@ -41,7 +43,7 @@ def radius_constraint(entity, radius, margin):
             dx = ch[j].x() - ch[i].x()
             dy = ch[j].y() - ch[i].y()
 
-            length = (dx * dx + dy * dy) ** .5
+            length = math.hypot(dx, dy)
 
             xs = x + ch[i].x() + (dy / length) * radius
             ys = y + ch[i].y() - (dx / length) * radius

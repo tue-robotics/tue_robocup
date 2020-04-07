@@ -15,7 +15,7 @@ class NavigateToWaypoint(NavigateTo):
     :param waypoint_designator: designator resolving to the waypoint
     :param radius (default 0.15): allowed distance to the waypoint
     :param look_at_designator: Entity the robot should face from the waypoint. If not specified the robot will adopt
-     the orientation of the waypoint
+        the orientation of the waypoint
     :param speak: Whether or not the robot should speak while driving.
     """
     def __init__(self, robot, waypoint_designator, radius=0.15, look_at_designator=None, speak=True):
