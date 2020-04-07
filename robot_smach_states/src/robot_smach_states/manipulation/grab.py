@@ -57,7 +57,10 @@ class PrepareEdGrasp(smach.State):
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
-        arm = userdata.arm
+        # arm = userdata.arm
+        # Userdata gebruikt const objecten dus mag niet zo maar dingen sturen: potentiele opl--> stuur alleen de arm id over userdata door
+        arm = self.robot.get_arm(userdata.arm_id) # dummy
+
 
         # Torso up (non-blocking)
         self.robot.torso.reset()
@@ -363,11 +366,16 @@ class Grab(smach.StateMachine):
                 return "failed"
             else:
                 userdata.arm = resolved_arm
+                return "succeeded"
 
         with self:
-            smach.StateMachine.add('RESOLVE_ARM', resolve_arm_designator(arm),
-                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
-                                                'failed': 'failed'})
+            smach.StateMachine.add(
+                'RESOLVE_ARM',
+                smach.CBState(
+                    resolve_arm_designator,
+                    cb_args=[arm]),
+                transitions={'succeeded': 'NAVIGATE_TO_GRAB',
+                             'failed': 'failed'})
 
             # ToDo: add 'input_keys' to NavigateToGrab
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
@@ -402,7 +410,7 @@ class Grab(smach.StateMachine):
 def collect_requirements(state_machine):
     # Check arm requirements
     arm_requirements = {}
-    for state in staticmethod.get_children().itervalues():
+    for state in state_machine.get_children().itervalues():
 
         # If no arm properties defined: continue
         if not hasattr(state, "REQUIRED_ARM_PROPERTIES"):
@@ -412,9 +420,11 @@ def collect_requirements(state_machine):
             if k not in arm_requirements:
                 arm_requirements[k] = v
             else:
-                arm_requirements[k] += v
-    return arm_requirements
+                for value in v:
+                    if value not in arm_requirements[k]:
+                        arm_requirements[k] += v
 
+    return arm_requirements
 
 def check_arm_requirements(state_machine, robot):
     """
@@ -425,6 +435,9 @@ def check_arm_requirements(state_machine, robot):
     :return:
     """
     arm_requirements = collect_requirements(state_machine)
-    assert robot.get_arm(arm_requirements) is not None, "None of the available arms meets all this class's" \
-                                                        "requirements: {}".format(arm_requirements)
+    try:
+        assert robot.get_arm(**arm_requirements) is not None, "None of the available arms meets all this class's requirements: {}".format(arm_requirements)
+    except AssertionError as e:
+        rospy.logerr("Getting arm requirements failed, arm requirements: {}".format(arm_requirements))
+        raise
 
