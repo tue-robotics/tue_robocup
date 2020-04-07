@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 import unittest
+import math
+from numpy import linspace
 
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.kdl_conversions import frame_stamped
@@ -24,9 +26,19 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         pc, oc = arms_reach_constraint(frame, arm)
 
         # verify positionconstraint
-        self.assertIn("x", pc.constraint)
-        self.assertIn("y", pc.constraint)
+        constraint_string = pc.constraint
+        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
+
+        publicarm = arm.resolve()
+        radius = math.hypot(publicarm.base_offset.x(), publicarm.base_offset.y())
+        margin = 0.075
+        ro = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius + margin)
+        ri = "(x-{})**2+(y-{})**2 > {}**2".format(x_coordinate, y_coordinate, radius - margin)
+        verification_string = ri + " and " + ro
+        for x in linspace(-5, 5, 20):
+            for y in linspace(-5, 5, 20):
+                self.assertEqual(eval(constraint_string), eval(verification_string))
 
         # verify orientationconstraint
         self.assertEqual(oc.look_at.x, x_coordinate)
@@ -48,9 +60,19 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         pc, oc = arms_reach_constraint(frame, arm, look=False)
 
         # verify positionconstraint
-        self.assertIn("x", pc.constraint)
-        self.assertIn("y", pc.constraint)
+        constraint_string = pc.constraint
+        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
+
+        publicarm = arm.resolve()
+        radius = math.hypot(publicarm.base_offset.x(), publicarm.base_offset.y())
+        margin = 0.075
+        ro = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius + margin)
+        ri = "(x-{})**2+(y-{})**2 > {}**2".format(x_coordinate, y_coordinate, radius - margin)
+        verification_string = ri + " and " + ro
+        for x in linspace(-5, 5, 20):
+            for y in linspace(-5, 5, 20):
+                self.assertEqual(eval(constraint_string), eval(verification_string))
 
         # verify orientationconstraint
         self.assertIsNone(oc)

@@ -36,6 +36,7 @@ class TestCombineConstraintsFunction(unittest.TestCase):
         self.assertIn(pc1.constraint, pc.constraint)
         self.assertIn(pc2.constraint, pc.constraint)
         self.assertIn(pc3.constraint, pc.constraint)
+        self.assertEqual(pc.constraint.count("and"), 2)
 
         # only one orientation constraint is allowed under current system.
         self.assertTrue(oc == oc1 or oc == oc2 or oc == oc3)

@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import unittest
+from numpy import linspace
 
 from robot_skills.util.entity import Entity
 from robot_skills.util.shape import Shape
@@ -26,9 +27,16 @@ class TestRadiusConstraintFunction(unittest.TestCase):
         pc, oc = radius_constraint(entity, radius, margin)
 
         # verify positionconstraint
-        self.assertIn("x", pc.constraint)
-        self.assertIn("y", pc.constraint)
+        constraint_string = pc.constraint
+        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
+
+        ro = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius + margin)
+        ri = "(x-{})**2+(y-{})**2 > {}**2".format(x_coordinate, y_coordinate, radius - margin)
+        verification_string = ri + " and " + ro
+        for x in linspace(-5, 5, 20):
+            for y in linspace(-5, 5, 20):
+                self.assertEqual(eval(constraint_string), eval(verification_string))
 
         # verify orientationconstraint
         self.assertIsNone(oc)

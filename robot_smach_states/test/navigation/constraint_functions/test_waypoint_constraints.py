@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import unittest
+from numpy import linspace
 
 from robot_skills.util.entity import Entity
 import PyKDL as kdl
@@ -14,6 +15,7 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         z_coordinate = 0
+        radius = 0.3
         yaw = 1.57
         frame_id = "/map"
 
@@ -21,12 +23,17 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
         entity = Designator(e, name="entity designator")
 
-        pc, oc = waypoint_constraint(entity, 0.3)
+        pc, oc = waypoint_constraint(entity, radius)
 
         # verify positionconstraint
-        self.assertIn("x", pc.constraint)
-        self.assertIn("y", pc.constraint)
+        constraint_string = pc.constraint
+        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
+
+        verification_string = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius)
+        for x in linspace(-5, 5, 20):
+            for y in linspace(-5, 5, 20):
+                self.assertEqual(eval(constraint_string), eval(verification_string))
 
         # verify orientationconstraint
         self.assertEqual(oc.angle_offset, yaw)
@@ -37,6 +44,7 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         z_coordinate = 0
+        radius = 0.3
         yaw = 1.57
         frame_id = "/map"
 
@@ -44,12 +52,17 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
         entity = Designator(e, name="entity designator")
 
-        pc, oc = waypoint_constraint(entity, 0.3, look=False)
+        pc, oc = waypoint_constraint(entity, radius, look=False)
 
         # verify positionconstraint
-        self.assertIn("x", pc.constraint)
-        self.assertIn("y", pc.constraint)
+        constraint_string = pc.constraint
+        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
+
+        verification_string = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius)
+        for x in linspace(-5, 5, 20):
+            for y in linspace(-5, 5, 20):
+                self.assertEqual(eval(constraint_string), eval(verification_string))
 
         # verify orientationconstraint
         self.assertIsNone(oc)
