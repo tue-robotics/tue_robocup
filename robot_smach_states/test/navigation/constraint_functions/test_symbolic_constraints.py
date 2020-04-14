@@ -26,6 +26,24 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
         self.assertIsNone(oc)
         self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id: area_name})
 
+    def test_base_multiple_entries(self):
+        dummy_id_1 = "dummy"
+        e1 = Entity(dummy_id_1, "dummy_type", "/map", None, None, None, None, None)
+        entity1 = Designator(e1, name="entity designator")
+        area_name1 = "area"
+
+        dummy_id_2 = "dummy"
+        e2 = Entity(dummy_id_2, "dummy_type", "/map", None, None, None, None, None)
+        entity2 = Designator(e2, name="entity designator")
+        area_name2 = "area"
+
+        pc, oc = symbolic_constraint(self.robot, {entity1: area_name1, entity2: area_name2})
+
+        self.assertIsNotNone(pc)
+        self.assertIsNone(oc)
+        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id_1: area_name1})
+        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id_2: area_name2})
+
     def test_room(self):
         dummy_id = "dummy_room"
         r = Entity(dummy_id, "dummy_type", "/map", None, None, None, None, None)
