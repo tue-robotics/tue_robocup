@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import unittest
 import math
-from numpy import linspace
 
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.kdl_conversions import frame_stamped
@@ -9,6 +8,7 @@ from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.arm import ArmDesignator
 
 from robot_smach_states.navigation.constraint_functions.arms_reach_constraints import arms_reach_constraint
+from .util import constraint_strings_equal
 
 
 class TestArmsReachConstraintFunction(unittest.TestCase):
@@ -26,19 +26,16 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         pc, oc = arms_reach_constraint(frame, arm)
 
         # verify positionconstraint
-        constraint_string = pc.constraint
-        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
 
         publicarm = arm.resolve()
         radius = math.hypot(publicarm.base_offset.x(), publicarm.base_offset.y())
         margin = 0.075
-        ro = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius + margin)
-        ri = "(x-{})**2+(y-{})**2 > {}**2".format(x_coordinate, y_coordinate, radius - margin)
+        ro = "(x-{})^2+(y-{})^2 < {}^2".format(x_coordinate, y_coordinate, radius + margin)
+        ri = "(x-{})^2+(y-{})^2 > {}^2".format(x_coordinate, y_coordinate, radius - margin)
         verification_string = ri + " and " + ro
-        for x in linspace(-5, 5, 20):
-            for y in linspace(-5, 5, 20):
-                self.assertEqual(eval(constraint_string), eval(verification_string))
+        equal, msg = constraint_strings_equal(pc.constraint, verification_string)
+        self.assertTrue(equal, msg)
 
         # verify orientationconstraint
         self.assertEqual(oc.look_at.x, x_coordinate)
@@ -60,19 +57,16 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         pc, oc = arms_reach_constraint(frame, arm, look=False)
 
         # verify positionconstraint
-        constraint_string = pc.constraint
-        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
 
         publicarm = arm.resolve()
         radius = math.hypot(publicarm.base_offset.x(), publicarm.base_offset.y())
         margin = 0.075
-        ro = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius + margin)
-        ri = "(x-{})**2+(y-{})**2 > {}**2".format(x_coordinate, y_coordinate, radius - margin)
+        ro = "(x-{})^2+(y-{})^2 < {}^2".format(x_coordinate, y_coordinate, radius + margin)
+        ri = "(x-{})^2+(y-{})^2 > {}^2".format(x_coordinate, y_coordinate, radius - margin)
         verification_string = ri + " and " + ro
-        for x in linspace(-5, 5, 20):
-            for y in linspace(-5, 5, 20):
-                self.assertEqual(eval(constraint_string), eval(verification_string))
+        equal, msg = constraint_strings_equal(pc.constraint, verification_string)
+        self.assertTrue(equal, msg)
 
         # verify orientationconstraint
         self.assertIsNone(oc)

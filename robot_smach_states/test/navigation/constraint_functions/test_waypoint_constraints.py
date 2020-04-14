@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 import unittest
-from numpy import linspace
 
 from robot_skills.util.entity import Entity
 import PyKDL as kdl
 from robot_smach_states.util.designators.core import Designator
 
 from robot_smach_states.navigation.constraint_functions.waypoint_constraints import waypoint_constraint
+from .util import constraint_strings_equal
 
 
 class TestWaypointConstraintFunction(unittest.TestCase):
@@ -26,14 +26,11 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         pc, oc = waypoint_constraint(entity, radius)
 
         # verify positionconstraint
-        constraint_string = pc.constraint
-        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
 
-        verification_string = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius)
-        for x in linspace(-5, 5, 20):
-            for y in linspace(-5, 5, 20):
-                self.assertEqual(eval(constraint_string), eval(verification_string))
+        verification_string = "(x-{})^2+(y-{})^2 < {}^2".format(x_coordinate, y_coordinate, radius)
+        equal, msg = constraint_strings_equal(pc.constraint, verification_string)
+        self.assertTrue(equal, msg)
 
         # verify orientationconstraint
         self.assertEqual(oc.angle_offset, yaw)
@@ -55,14 +52,11 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         pc, oc = waypoint_constraint(entity, radius, look=False)
 
         # verify positionconstraint
-        constraint_string = pc.constraint
-        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
 
-        verification_string = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius)
-        for x in linspace(-5, 5, 20):
-            for y in linspace(-5, 5, 20):
-                self.assertEqual(eval(constraint_string), eval(verification_string))
+        verification_string = "(x-{})^2+(y-{})^2 < {}^2".format(x_coordinate, y_coordinate, radius)
+        equal, msg = constraint_strings_equal(pc.constraint, verification_string)
+        self.assertTrue(equal, msg)
 
         # verify orientationconstraint
         self.assertIsNone(oc)

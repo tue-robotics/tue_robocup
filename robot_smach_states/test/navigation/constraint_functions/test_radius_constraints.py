@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 import unittest
-from numpy import linspace
 
 from robot_skills.util.entity import Entity
 from robot_skills.util.shape import Shape
@@ -8,6 +7,7 @@ import PyKDL as kdl
 from robot_smach_states.util.designators.core import Designator
 
 from robot_smach_states.navigation.constraint_functions.radius_constraints import radius_constraint
+from .util import constraint_strings_equal
 
 
 class TestRadiusConstraintFunction(unittest.TestCase):
@@ -27,16 +27,13 @@ class TestRadiusConstraintFunction(unittest.TestCase):
         pc, oc = radius_constraint(entity, radius, margin)
 
         # verify positionconstraint
-        constraint_string = pc.constraint
-        constraint_string = constraint_string.replace("^", "**")
         self.assertEqual(pc.frame, frame_id)
 
-        ro = "(x-{})**2+(y-{})**2 < {}**2".format(x_coordinate, y_coordinate, radius + margin)
-        ri = "(x-{})**2+(y-{})**2 > {}**2".format(x_coordinate, y_coordinate, radius - margin)
+        ro = "(x-{})^2+(y-{})^2 < {}^2".format(x_coordinate, y_coordinate, radius + margin)
+        ri = "(x-{})^2+(y-{})^2 > {}^2".format(x_coordinate, y_coordinate, radius - margin)
         verification_string = ri + " and " + ro
-        for x in linspace(-5, 5, 20):
-            for y in linspace(-5, 5, 20):
-                self.assertEqual(eval(constraint_string), eval(verification_string))
+        equal, msg = constraint_strings_equal(pc.constraint, verification_string)
+        self.assertTrue(equal, msg)
 
         # verify orientationconstraint
         self.assertIsNone(oc)
