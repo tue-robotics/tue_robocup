@@ -229,40 +229,39 @@ class NavigateTo(smach.StateMachine):
 
             with sm_nav:
 
-                smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, constraint_function, self.speak),
-                    transitions={'unreachable'                          :   'unreachable',
-                                 'goal_not_defined'                     :   'goal_not_defined',
-                                 'goal_ok'                              :   'EXECUTE_PLAN'})
+                smach.StateMachine.add('GET_PLAN', getPlan(self.robot, constraint_function, self.speak),
+                                       transitions={'unreachable': 'unreachable',
+                                                    'goal_not_defined': 'goal_not_defined',
+                                                    'goal_ok': 'EXECUTE_PLAN'})
 
-                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut,
-                                                                                        reset_head=reset_head, reset_pose=reset_pose),
-                    transitions={'succeeded'                            :   'arrived',
-                                 'arrived'                              :   'GET_PLAN',
-                                 'blocked'                              :   'PLAN_BLOCKED',
-                                 'preempted'                            :   'preempted'})
+                smach.StateMachine.add('EXECUTE_PLAN', executePlan(self.robot, self.breakOut,
+                                                                   reset_head=reset_head, reset_pose=reset_pose),
+                                       transitions={'succeeded': 'arrived',
+                                                    'arrived': 'GET_PLAN',
+                                                    'blocked': 'PLAN_BLOCKED',
+                                                    'preempted': 'preempted'})
 
-                smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
-                    transitions={'blocked'                              :   'GET_PLAN',
-                                 'free'                                 :   'EXECUTE_PLAN'})
+                smach.StateMachine.add('PLAN_BLOCKED', planBlocked(self.robot),
+                                       transitions={'blocked': 'GET_PLAN',
+                                                    'free': 'EXECUTE_PLAN'})
 
             smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
-                transitions={'done'                                 :'NAVIGATE'})
-
+                                   transitions={'done': 'NAVIGATE'})
 
             smach.StateMachine.add('NAVIGATE', sm_nav,
-                transitions={'arrived'                              : 'STOP_ANALYSIS_SUCCEED',
-                             'unreachable'                          : 'STOP_ANALYSIS_UNREACHABLE',
-                             'goal_not_defined'                     : 'ABORT_ANALYSIS_NOT_DEFINED',
-                             'preempted'                            : 'STOP_ANALYSIS_SUCCEED'})
+                                   transitions={'arrived': 'STOP_ANALYSIS_SUCCEED',
+                                                'unreachable': 'STOP_ANALYSIS_UNREACHABLE',
+                                                'goal_not_defined': 'ABORT_ANALYSIS_NOT_DEFINED',
+                                                'preempted': 'STOP_ANALYSIS_SUCCEED'})
 
             smach.StateMachine.add('STOP_ANALYSIS_SUCCEED', StopAnalyzer(self.robot, 'succeeded'),
-                transitions={'done'                                 : 'arrived'})
+                                   transitions={'done': 'arrived'})
 
             smach.StateMachine.add('STOP_ANALYSIS_UNREACHABLE', StopAnalyzer(self.robot, 'unreachable'),
-                transitions={'done'                                 : 'unreachable'})
+                                   transitions={'done': 'unreachable'})
 
             smach.StateMachine.add('ABORT_ANALYSIS_NOT_DEFINED', AbortAnalyzer(self.robot),
-                transitions={'done'                                 : 'goal_not_defined'})
+                                   transitions={'done': 'goal_not_defined'})
 
     def generateConstraint(self):
         raise NotImplementedError("generateConstraint must be implemented by subclasses of NavigateTo")

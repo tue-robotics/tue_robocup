@@ -15,7 +15,8 @@ def pose_constraints(x, y, rz=None, radius=0.15, frame_id="/map"):
     :param rz: orientation to assume. None=no orientation constraint (default None)
     :param radius: allowed distance to the pose
     :param frame_id: frame in which the pose is expressed
-    :return: tuple(PositionConstraint, OrientationConstraint)
+    :return: navigation constraints
+    :type: tuple(PositionConstraint, OrientationConstraint)
     """
     pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius),
                             frame=frame_id)

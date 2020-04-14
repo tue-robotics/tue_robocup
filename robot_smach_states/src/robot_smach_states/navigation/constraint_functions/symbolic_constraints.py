@@ -11,8 +11,8 @@ def symbolic_constraint(robot, entity_designator_area_name_map):
     :param robot: robot object
     :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
         resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
-    :return: (tuple(PositionConstraint, OrientationConstraint)). If one of the entities does not resolve,
-        None is returned.
+    :return: navigation constraints. If one of the entities does not resolve, None is returned.
+    :type: tuple(PositionConstraint, OrientationConstraint)
     """
     entity_id_area_name_map = {}
     for desig, area_name in entity_designator_area_name_map.iteritems():

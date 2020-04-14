@@ -15,7 +15,8 @@ def waypoint_constraint(waypoint_designator, radius, look=True):
     :param waypoint_designator: designator resolving to the waypoint
     :param radius: allowed distance to the waypoint
     :param look: whether or not to take the orientation of the waypoint (default True)
-    :return: tuple(PositionConstraint, OrientationConstraint) if the entity does not resolve, None is returned.
+    :return: navigation constraints, if the entity does not resolve, None is returned.
+    :type: tuple(PositionConstraint, OrientationConstraint)
     """
     e = waypoint_designator.resolve()
 

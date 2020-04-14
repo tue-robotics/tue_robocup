@@ -13,7 +13,8 @@ def combine_constraints(func_list):
 
     :param func_list: list of constraint functions each one to be resolved without parameters
      and resolving to a tuple(PositionConstraint, OrientationConstraint)
-    :return: tuple(PositionConstraint, OrientationConstraint)
+    :return: navigation constraints
+    :type: tuple(PositionConstraint, OrientationConstraint)
     """
     pc = None
     oc = None
