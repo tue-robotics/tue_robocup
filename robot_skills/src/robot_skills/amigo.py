@@ -1,11 +1,21 @@
+from __future__ import print_function
+
 from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, \
     sound_source_localisation, torso, world_model_ed
 from .simulation import is_sim_mode, SimEButton
 
 
 class Amigo(robot.Robot):
-    """docstring for Amigo"""
+    """
+    Amigo
+    """
     def __init__(self, dontInclude=None, wait_services=False):
+        """
+        Constructor
+
+        :param dontInclude: Not supported anymore
+        :param wait_services: Not supported anymore by robot class
+        """
         if dontInclude is None:
             dontInclude = []
         super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)

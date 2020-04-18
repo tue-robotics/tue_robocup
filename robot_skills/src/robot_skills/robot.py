@@ -22,6 +22,16 @@ class Robot(object):
     Interface to all parts of the robot.
     """
     def __init__(self, robot_name="", wait_services=False, tf_listener=None):
+        """
+        Constructor
+
+        :param robot_name: Name of the robot
+        :type robot_name: str
+        :param wait_services: Not used anymore
+        :type wait_services: bool
+        :param tf_listener: tf_listener object
+        :type tf_listener: Union[tf.TransformListener, None]
+        """
 
         self.robot_name = robot_name
         self.tf_listener = tf.TransformListener() if tf_listener is None else tf_listener
