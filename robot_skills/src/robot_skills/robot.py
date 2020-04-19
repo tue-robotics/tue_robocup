@@ -30,7 +30,7 @@ class Robot(object):
         :param wait_services: Not used anymore
         :type wait_services: bool
         :param tf_listener: tf_listener object
-        :type tf_listener: Union[tf.TransformListener, None]
+        :type tf_listener: Optional[tf.TransformListener]
         """
 
         self.robot_name = robot_name
