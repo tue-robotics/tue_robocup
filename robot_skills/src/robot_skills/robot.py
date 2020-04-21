@@ -33,6 +33,9 @@ class Robot(object):
         :type tf_listener: Optional[tf.TransformListener]
         """
 
+        if wait_services:
+            rospy.logwarn("(Robot) wait_services is not used anymore and will be removed in the future")
+
         self.robot_name = robot_name
         self.tf_listener = tf.TransformListener() if tf_listener is None else tf_listener
 
