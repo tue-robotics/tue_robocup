@@ -4,9 +4,15 @@ from .simulation import is_sim_mode, SimEButton
 import rospy
 import math
 
+
 class Hero(robot.Robot):
-    """docstring for Hero"""
+    """Hero"""
     def __init__(self, wait_services=False):
+        """
+        Constructor
+
+        :param wait_services: Not supported anymore by robot class
+        """
         super(Hero, self).__init__(robot_name="hero", wait_services=wait_services)
 
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
