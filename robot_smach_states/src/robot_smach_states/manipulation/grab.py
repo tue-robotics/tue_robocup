@@ -16,6 +16,7 @@ from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
 from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
+from .visual_servoing import GrabVisualServoing
 
 
 class PrepareEdGrasp(smach.State):
@@ -71,7 +72,7 @@ class PrepareEdGrasp(smach.State):
         return 'succeeded'
 
 
-class PickUp(smach.State):
+class PreGrab(smach.State):
     def __init__(self, robot, arm, grab_entity, check_occupancy=False):
         """
         Pick up an item given an arm and an entity to be picked up
@@ -192,6 +193,120 @@ class PickUp(smach.State):
 
         arm.occupied_by = grab_entity
 
+        return 'succeeded'
+
+    def associate(self, original_entity):
+        """
+        Tries to associate the original entity with one of the entities in the world model. This is useful if
+        after an update, the original entity is no longer present in the world model. If no good map can be found,
+        the original entity will be returned as the associated entity.
+
+        :param original_entity:
+        :return: associated entity
+        """
+        # Get all entities
+        entities = self.robot.ed.get_entities(parse=False)
+
+        # Remove all entities with a shape. These are probably not the ones we want to grasp
+        for e in entities:
+            if e.is_a("furniture"):
+                entities.remove(e)
+        entities = sorted(entities,
+                          key=lambda entity: entity.distance_to_3d(original_entity._pose.p))
+
+        if self.distance(entities[0], original_entity) < 0.05:  # Objects Less than 5 cm apart might be associated
+            return entities[0]
+        else:
+            return original_entity
+
+    @staticmethod
+    def distance(e1, e2):
+        """ Computes the distance between two entities """
+        return e1.distance_to_3d(e2._pose.p)
+
+
+class GrabClassic(smach.State):
+    def __init__(self, robot, arm, grab_entity):
+        """
+        Pick up an item given an arm and an entity to be picked up
+
+        :param robot: robot to execute this state with
+        :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
+        :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
+        """
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        # Assign member variables
+        self.robot = robot
+        self.arm_designator = arm
+
+        check_type(grab_entity, Entity)
+        self.grab_entity_designator = grab_entity
+        self._gpd = GraspPointDeterminant(robot)
+
+    def execute(self, userdata=None):
+
+        grab_entity = self.grab_entity_designator.resolve()
+        if not grab_entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
+
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        grasp_framestamped = self._gpd.get_grasp_pose(grab_entity, arm)
+
+        # Grasp
+        # rospy.loginfo('Start grasping')
+        # if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
+        #     self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
+        #     rospy.logerr('Grasp failed')
+        #     arm.reset()
+        #     arm.send_gripper_goal('close', timeout=0.0)
+        #     return 'failed'
+
+        # Close gripper
+        arm.send_gripper_goal('close')
+
+        arm.occupied_by = grab_entity
+
+
+class PickUp(smach.State):
+    def __init__(self, robot, arm, grab_entity, check_occupancy=False):
+        """
+        Pick up an item given an arm and an entity to be picked up
+
+        :param robot: robot to execute this state with
+        :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
+        :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
+        """
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        # Assign member variables
+        self.robot = robot
+        self.arm_designator = arm
+
+        check_type(grab_entity, Entity)
+        self.grab_entity_designator = grab_entity
+        self._gpd = GraspPointDeterminant(robot)
+        self._check_occupancy = check_occupancy
+
+    def execute(self, userdata=None):
+
+        grab_entity = self.grab_entity_designator.resolve()
+        if not grab_entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
+
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        grasp_framestamped = self._gpd.get_grasp_pose(grab_entity, arm)
+
         # Lift
         goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
                                                     tf_listener=self.robot.tf_listener)
@@ -225,7 +340,6 @@ class PickUp(smach.State):
         arm.wait_for_motion_done(cancel=True)
 
         # Carrying pose
-        # rospy.loginfo('start moving to carrying pose')
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         result = 'succeeded'
@@ -248,35 +362,6 @@ class PickUp(smach.State):
         self.robot.head.cancel_goal()
 
         return result
-
-    def associate(self, original_entity):
-        """
-        Tries to associate the original entity with one of the entities in the world model. This is useful if
-        after an update, the original entity is no longer present in the world model. If no good map can be found,
-        the original entity will be returned as the associated entity.
-
-        :param original_entity:
-        :return: associated entity
-        """
-        # Get all entities
-        entities = self.robot.ed.get_entities(parse=False)
-
-        # Remove all entities with a shape. These are probably not the ones we want to grasp
-        for e in entities:
-            if e.is_a("furniture"):
-                entities.remove(e)
-        entities = sorted(entities,
-                          key=lambda entity: entity.distance_to_3d(original_entity._pose.p))
-
-        if self.distance(entities[0], original_entity) < 0.05:  # Objects Less than 5 cm apart might be associated
-            return entities[0]
-        else:
-            return original_entity
-
-    @staticmethod
-    def distance(e1, e2):
-        """ Computes the distance between two entities """
-        return e1.distance_to_3d(e2._pose.p)
 
 
 class ResetOnFailure(smach.StateMachine):
@@ -310,7 +395,7 @@ class ResetOnFailure(smach.StateMachine):
 
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot, item, arm):
+    def __init__(self, robot, item, arm, do_visual_servoing=True):
         """
         Let the given robot move to an entity and grab that entity using some arm
 
@@ -331,12 +416,26 @@ class Grab(smach.StateMachine):
                                                 'arrived': 'PREPARE_GRASP'})
 
             smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={'succeeded': 'PRE_GRAB',
+                                                'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add('PRE_GRAB', PreGrab(robot, arm, item),
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
+            # ToDo: change this to checking the properties of the arm (includes camera)
+            if robot.robot_name == "hero" and do_visual_servoing:
+                smach.StateMachine.add('GRAB', GrabVisualServoing(robot, arm, item),
+                                       transitions={'succeeded': 'PICK_UP',
+                                                    'failed': 'RESET_FAILURE'})
+            else:
+                smach.StateMachine.add('GRAB', GrabClassic(robot, arm, item),
+                                       transitions={'succeeded': 'PICK_UP',
+                                                    'failed': 'RESET_FAILURE'})
+
+            smach.StateMachine.add("PICK_UP", PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',
-                                                'failed': 'RESET_FAILURE'})
+                                                'failed': 'failed'})
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
