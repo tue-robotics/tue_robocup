@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 # System
 import argparse
 
