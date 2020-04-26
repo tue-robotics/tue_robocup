@@ -22,23 +22,25 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
 
         pc, oc = symbolic_constraint(self.robot, {entity: area_name})
 
+        # symbolic constraint should only generate a positionconstraint
         self.assertIsNotNone(pc)
         self.assertIsNone(oc)
         self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id: area_name})
 
     def test_base_multiple_entries(self):
-        dummy_id_1 = "dummy"
+        dummy_id_1 = "dummy1"
         e1 = Entity(dummy_id_1, "dummy_type", "/map", None, None, None, None, None)
         entity1 = Designator(e1, name="entity designator")
-        area_name1 = "area"
+        area_name1 = "area1"
 
-        dummy_id_2 = "dummy"
+        dummy_id_2 = "dummy2"
         e2 = Entity(dummy_id_2, "dummy_type", "/map", None, None, None, None, None)
         entity2 = Designator(e2, name="entity designator")
-        area_name2 = "area"
+        area_name2 = "area2"
 
         pc, oc = symbolic_constraint(self.robot, {entity1: area_name1, entity2: area_name2})
 
+        # symbolic constraint should only generate a positionconstraint
         self.assertIsNotNone(pc)
         self.assertIsNone(oc)
         self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id_1: area_name1})
@@ -51,6 +53,7 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
 
         pc, oc = room_constraint(self.robot, room)
 
+        # room constraint should only generate a positionconstraint
         self.assertIsNotNone(pc)
         self.assertIsNone(oc)
         self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id: "in"})
