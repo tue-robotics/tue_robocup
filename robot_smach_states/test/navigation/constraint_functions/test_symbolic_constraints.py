@@ -43,8 +43,7 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
         # symbolic constraint should only generate a positionconstraint
         self.assertIsNotNone(pc)
         self.assertIsNone(oc)
-        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id_1: area_name1})
-        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id_2: area_name2})
+        self.robot.parts["ed"].navigation.get_position_constraint.assert_called_with({dummy_id_1: area_name1, dummy_id_2: area_name2})
 
     def test_room(self):
         dummy_id = "dummy_room"
