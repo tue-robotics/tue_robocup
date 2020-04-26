@@ -19,7 +19,7 @@ def arms_reach_constraint(pose_designator, arm_designator, look=True):
     :param arm_designator: PublicArmDesignator, arm to use for manipulation
     :param look: bool, whether or not the orientation must be constrained as well
     :return: navigation constraints, if a designator does not resolve None is returned
-    :type: tuple(PositionConstraint, OrientationConstraint)
+    :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
     arm = arm_designator.resolve()
     if not arm:

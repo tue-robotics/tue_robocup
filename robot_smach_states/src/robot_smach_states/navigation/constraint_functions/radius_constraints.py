@@ -18,7 +18,7 @@ def radius_constraint(entity, radius, margin):
     :param radius: (float) desired distance to the pose of the entity [m]
     :param margin: (float) allowed margin w.r.t. specified radius on both sides [m]
     :return: navigation constraints. If the entity does not resolve, None is returned.
-    :type: tuple(PositionConstraint, OrientationConstraint)
+    :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
     e = entity.resolve()
 

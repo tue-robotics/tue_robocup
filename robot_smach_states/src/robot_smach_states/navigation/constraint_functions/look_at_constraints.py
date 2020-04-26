@@ -15,7 +15,7 @@ def look_at_constraint(entity_lookat_designator, offset=0.0):
     :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at.
     :param offset: offset the angle with respect to the entity
     :return: navigation constraints. If the entity does not resolve, None is returned.
-    :type: tuple(PositionConstraint, OrientationConstraint)
+    :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
     # Orientation constraint is the entity itself...
     entity_lookat = entity_lookat_designator.resolve()
