@@ -74,6 +74,7 @@ class Robot(object):
         :param bodypart: bodypart object
         """
         self.parts[partname] = bodypart
+        self.parts[partname].id = partname
         setattr(self, partname, bodypart)
 
     def add_arm_part(self, arm_name, arm_part):
@@ -86,6 +87,7 @@ class Robot(object):
         # Don't add the arm to the robot object to avoid direct access from challenge code.
         self.parts[arm_name] = arm_part
         self._arms[arm_name] = arm_part
+        self._arms[arm_name].id = arm_name
 
     @property
     def arms(self):

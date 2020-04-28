@@ -33,7 +33,7 @@ class PrepareEdGrasp(smach.State):
         """
         smach.State.__init__(self,
                              outcomes=['succeeded', 'failed'],
-                             input_keys=["arm"],
+                             input_keys=["arm_id"],
                              )
 
         # Assign member variables
@@ -57,10 +57,10 @@ class PrepareEdGrasp(smach.State):
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
-        # arm = userdata.arm
         # Userdata gebruikt const objecten dus mag niet zo maar dingen sturen: potentiele opl--> stuur alleen de arm id over userdata door
-        arm = self.robot.get_arm(userdata.arm_id) # dummy
-
+        # arm = self.robot.get_arm(userdata.arm_id) # dummy
+        # TODO get arm geeft nu niet alle requirements, maar door het id is het bekend dat de arm aan alle requirements kan voldoen
+        arm = self.robot.get_arm(required_arm_name=userdata.arm_id)
 
         # Torso up (non-blocking)
         self.robot.torso.reset()
@@ -93,7 +93,7 @@ class PickUp(smach.State):
         """
         smach.State.__init__(self,
                              outcomes=['succeeded', 'failed'],
-                             input_keys=["arm"],
+                             input_keys=["arm_id"],
                              )
 
         # Assign member variables
@@ -116,7 +116,7 @@ class PickUp(smach.State):
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
-        arm = userdata.arm
+        arm = self.robot.get_arm(required_arm_name=userdata.arm_id)
 
         goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
@@ -305,7 +305,7 @@ class ResetOnFailure(smach.StateMachine):
 
         :param robot: robot object
         """
-        smach.StateMachine.__init__(self, outcomes=['done'], input_keys=["arm"])
+        smach.StateMachine.__init__(self, outcomes=['done'], input_keys=["arm_id"])
 
         self._robot = robot
         self.arm_designator = arm
@@ -315,7 +315,7 @@ class ResetOnFailure(smach.StateMachine):
 
     def execute(self, userdata):
         """ Execute hook """
-        arm = userdata.arm
+        arm = self.robot.get_arm(required_arm_name=userdata.arm_id)
         arm.reset()
 
         if self._robot.robot_name == "amigo":
@@ -347,7 +347,7 @@ class Grab(smach.StateMachine):
 
         # ToDo: move to a generic location? By doing so, we'd only need to resolve once instead of locking
         # and unlocking at every outcome
-        @smach.cb_interface(output_keys=["arm"],
+        @smach.cb_interface(output_keys=["arm_id"],
                             outcomes=["succeeded", "failed"])
         def resolve_arm_designator(userdata, arm_designator):
             """
@@ -365,7 +365,7 @@ class Grab(smach.StateMachine):
                 rospy.logerror("Didn't find an arm")  # ToDo: improve error message
                 return "failed"
             else:
-                userdata.arm = resolved_arm
+                userdata.arm_id = resolved_arm.id()
                 return "succeeded"
 
         with self:
