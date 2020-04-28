@@ -22,6 +22,7 @@ class RobotPart(object):
         :param tf_listener: tf listener object
         """
         self.robot_name = robot_name
+        self._id = None
         self.tf_listener = tf_listener
 
         self.__ros_connections = {}
@@ -31,6 +32,15 @@ class RobotPart(object):
         # This is set to False by subscribe_hardware_status, because then apparently there is a meaningful check
         # If no such check exists, then assume it's operational unless overridden in subclass
         self._operational = True
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, _id):
+        assert self._id is None, "Can only set part ID once"
+        self._id = _id
 
     def load_param(self, param_name, default=None):
         """
