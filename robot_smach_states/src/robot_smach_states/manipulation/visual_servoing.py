@@ -32,6 +32,8 @@ class GrabVisualServoing(smach.State):
         self.robot = robot
         self.arm_designator = arm
         self._camera_topic = "/" + self.robot.robot_name + "/hand_camera/image_raw"
+        self._debug_image_pub = rospy.Publisher("image_debug_topic", Image)
+
         self._move_dist = 0.05
         self._bridge = CvBridge()
 
@@ -56,15 +58,15 @@ class GrabVisualServoing(smach.State):
         grasp_framestamped = self._gpd.get_grasp_pose(grab_entity, arm)
 
         # first move down to ensure we can already see the object
-        current_pose = self.robot.tf_listener.lookupTransform('base_link', 'hero/grippoint_left', rospy.Time(0))
-        curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
-        curr_x, curr_y, curr_z = current_pose[0]
-        # ToDo: check if 10 cm is correct move distance
-        next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y, curr_z - 0.1,
-                                                          curr_roll, curr_pitch, curr_yaw,
-                                                          "/" + self.robot.robot_name + "/base_link")
-        arm.send_goal(next_pose)
-        arm.wait_for_motion_done()
+        # current_pose = self.robot.tf_listener.lookupTransform('base_link', 'hero/grippoint_left', rospy.Time(0))
+        # curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
+        # curr_x, curr_y, curr_z = current_pose[0]
+        # # ToDo: check if 10 cm is correct move distance
+        # next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y, curr_z - 0.1,
+        #                                                   curr_roll, curr_pitch, curr_yaw,
+        #                                                   "/" + self.robot.robot_name + "/base_link")
+        # arm.send_goal(next_pose)
+        # arm.wait_for_motion_done()
 
         count = 0
         while count < 20:
@@ -72,28 +74,30 @@ class GrabVisualServoing(smach.State):
             curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
             curr_x, curr_y, curr_z = current_pose[0]
             move = self._visual_servo_feedback()
-            if move == "left":
+
+            if move > 40:
+                rospy.loginfo('Movement needed by the arm is {} pixels to the left'.format(move))
                 next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y + self._move_dist, curr_z,
                                                                   curr_roll, curr_pitch, curr_yaw,
                                                                   "/" + self.robot.robot_name + "/base_link")
-            elif move == "right":
+            elif move < -40:
+                rospy.loginfo('Movement needed by the arm is {} pixels to the right'.format(-1 * move))
                 next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y - self._move_dist, curr_z,
                                                                   curr_roll, curr_pitch, curr_yaw,
                                                                   "/" + self.robot.robot_name + "/base_link")
             elif move == "down":
-                next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y, curr_z - self._move_dist,
-                                                                  curr_roll, curr_pitch, curr_yaw,
-                                                                  "/" + self.robot.robot_name + "/base_link")
-
-            elif move is None:
-                next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x + self._move_dist, curr_y, curr_z,
-                                                                  curr_roll, curr_pitch, curr_yaw,
-                                                                  "/" + self.robot.robot_name + "/base_link")
+                pass
+                # next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y, curr_z - self._move_dist,
+                #                                                   curr_roll, curr_pitch, curr_yaw,
+                #                                                   "/" + self.robot.robot_name + "/base_link")
             else:
-                return 'failed'
+                print "DONE"
+                rospy.sleep(10.0)
+                return 'succeeded'
 
             arm.send_goal(next_pose)
             arm.wait_for_motion_done()
+            rospy.sleep(1.0)
             count += 1
 
         # Close gripper
@@ -109,9 +113,8 @@ class GrabVisualServoing(smach.State):
 
         # Cropping the image (removing top half)
         h, w, channels = image.shape
-        rospy.loginfo("w is {}, h is {}.".format(w, h))
         image = image[h / 2:h, 0:w]
-        cv2.imshow('image', image)
+        # cv2.imshow('image', image)
 
         # Applying a filter to the image
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -146,8 +149,16 @@ class GrabVisualServoing(smach.State):
         # it still is rgb, convert to opencv's default bgr
         graph_image = cv2.cvtColor(graph_image, cv2.COLOR_BGR2GRAY)
         h, w = graph_image.shape
-        graph_image = graph_image[15:h - 15, 15:w - 15]
-        cv2.imshow('graph_image_cropped', graph_image)
+        graph_image = graph_image[30:h - 15, 30:w - 30]
+
+        try:
+            self.image_message = self._bridge.cv2_to_imgmsg(graph_image, "passthrough")
+        except:
+            pass
+
+        rospy.sleep(1.0)
+        self._debug_image_pub.publish(self.image_message)
+        rospy.sleep(3.0)
 
         h1, w1 = graph_image.shape
         centerimg = [w1 / 2, h1 / 2]
@@ -155,7 +166,7 @@ class GrabVisualServoing(smach.State):
         # Applying filters to blur the image (faster processing and less noise)
         font = cv2.FONT_HERSHEY_COMPLEX
         im1 = graph_image
-        cv2.imshow('conv_image', im1)
+        # cv2.imshow('conv_image', im1)
         imCopy = im1.copy()
         kernel = np.ones((5, 5), np.float32) / 27
         im2 = cv2.filter2D(im1, -1, kernel)
@@ -173,7 +184,7 @@ class GrabVisualServoing(smach.State):
                 continue
 
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-            rospy.loginfo('Coordinates of contour are {}'.format(approx))
+            # rospy.loginfo('Coordinates of contour are {}'.format(approx))
 
             # Drawing boundaries of contours
             cv2.drawContours(imCopy, [approx], 0, (0, 0, 255), 1)
@@ -184,7 +195,7 @@ class GrabVisualServoing(smach.State):
             centerx = np.mean(xcoord)
             centery = np.mean(ycoord)
             centerobj = [centerx, centery]
-            rospy.loginfo('Center of contour is {}'.format(centerobj))
+            # rospy.loginfo('Center of contour is {}'.format(centerobj))
 
             # Calculating distance to target position as deviations
             deviations.append(centerimg[0] - centerx)
@@ -209,23 +220,15 @@ class GrabVisualServoing(smach.State):
                                     font, 0.15, (0, 255, 0))
 
         # Showing the final image, including contours
-        cv2.imshow('image2', imCopy)
+        # cv2.imshow('image2', imCopy)
+        try:
+            self.image_message = self._bridge.cv2_to_imgmsg(imCopy, "passthrough")
+        except:
+            pass
+
+        rospy.sleep(1.0)
+        self._debug_image_pub.publish(self.image_message)
 
         # Showing all deviations and finding the one closest to the target
-        rospy.loginfo('Deviations of all contours are {}'.format(deviations))
-        move = min(deviations, key=abs)
-
-        # Determining the needed movement
-        if move > 0:
-            rospy.loginfo('Movement needed by the arm is {} pixels to the left'.format(move))
-            return "left"
-        elif move < 0:
-            rospy.loginfo('Movement needed by the arm is {} pixels to the right'.format(-1 * move))
-            return "right"
-        # ToDo: add downward check
-        # elif move
-        #     rospy.loginfo('Movement needed by the arm is {} pixels down'.format())
-        #     return "down"
-        else:
-            rospy.loginfo('No movement needed')
-            return None
+        # rospy.loginfo('Deviations of all contours are {}'.format(deviations))
+        return min(deviations, key=abs)
