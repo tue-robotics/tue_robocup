@@ -45,16 +45,23 @@ jobs:
         script: |
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/test-package.sh
       displayName: 'Get CI scripts'
     - task: Bash@3
       inputs:
         targetType: 'inline'
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
+          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
       displayName: 'Install'
     - task: Bash@3
       inputs:
         targetType: 'inline'
         script: |
           bash build-package.sh --package=$PACKAGE
-      displayName: 'Build & test'
+      displayName: 'Build'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          bash test-package.sh --package=$PACKAGE
+      displayName: 'Test'
