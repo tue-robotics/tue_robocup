@@ -53,7 +53,7 @@ def remove_padding(image, kernel):
     for pad in padding_for_kernel(kernel):
         slice_i = slice(None) if pad == 0 else slice(pad, -pad)
         inner_region.append(slice_i)
-    return image[inner_region]
+    return image[tuple(inner_region)]
 
 
 # Slice windows
@@ -66,7 +66,7 @@ def window_slice(center, kernel):
 
 # Apply convolution kernel to image patch
 def apply_kernel(center, kernel, original_image):
-    image_patch = original_image[window_slice(center, kernel)]
+    image_patch = original_image[tuple(window_slice(center, kernel))]
     # An element-wise multiplication followed by the sum
     return np.sum(kernel * image_patch)
 
@@ -82,7 +82,7 @@ def iter_kernel_labels(image, kernel):
         i += i_pad
         j += j_pad
         mask = np.zeros(image.shape, dtype=int)  # Background = 0
-        mask[window_slice((i, j), kernel)] = kernel  # Kernel = 1
+        mask[tuple(window_slice((i, j), kernel))] = kernel  # Kernel = 1
         # mask[i, j] = 2                           # Kernel-center = 2
         yield (i, j), mask
 

@@ -76,6 +76,7 @@ class GrabVisualServoing(smach.State):
         rospy.loginfo('x-value is {}'.format(est_x))
 
         # first move down to ensure we can already see the object
+
         current_pose = self.robot.tf_listener.lookupTransform('base_link', 'hero/grippoint_left', rospy.Time(0))
         curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
         curr_x, curr_y, curr_z = current_pose[0]
@@ -85,14 +86,13 @@ class GrabVisualServoing(smach.State):
         arm.send_goal(next_pose)
         arm.wait_for_motion_done()
 
-
-
         count = 0
         down = 0
         while count < 5:
             current_pose = self.robot.tf_listener.lookupTransform('base_link', 'hero/grippoint_left', rospy.Time(0))
             curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
             curr_x, curr_y, curr_z = current_pose[0]
+
             move = self._visual_servo_feedback
 
             if move[0] > 50 and move[1] > 10 and (self.est_z < -down * self._move_distz - 0.1):
@@ -130,6 +130,7 @@ class GrabVisualServoing(smach.State):
 
             arm.send_goal(next_pose)
             arm.wait_for_motion_done()
+            rospy.sleep(1.0)
             count += 1
 
         # Close gripper
@@ -157,6 +158,10 @@ class GrabVisualServoing(smach.State):
         # rospy.sleep(1.0)
         # self._debug_image_pub.publish(self.image_message)
         # rospy.sleep(3.0)
+
+        image = image[h / 2:h, 0:w]
+        # cv2.imshow('image', image)
+
 
         # Applying a filter to the image
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -209,6 +214,8 @@ class GrabVisualServoing(smach.State):
         # Applying filters to blur the image (faster processing and less noise)
         font = cv2.FONT_HERSHEY_COMPLEX
         im1 = graph_image
+        # cv2.imshow('conv_image', im1)
+
         imCopy = im1.copy()
         kernel = np.ones((5, 5), np.float32) / 27
         im2 = cv2.filter2D(im1, -1, kernel)
@@ -228,6 +235,7 @@ class GrabVisualServoing(smach.State):
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
             #rospy.loginfo('Coordinates of contour are {}'.format(approx))
 
+
             # Drawing boundaries of contours
             cv2.drawContours(imCopy, [approx], 0, (0, 0, 255), 1)
 
@@ -236,7 +244,9 @@ class GrabVisualServoing(smach.State):
             ycoord = [x[0][1] for x in approx]
             centerx = np.mean(xcoord)
             centery = np.mean(ycoord)
-            #rospy.loginfo('Center of contour is {}'.format(centerobj))
+
+            centerobj = [centerx, centery]
+            # rospy.loginfo('Center of contour is {}'.format(centerobj))
 
             # Calculating distance to target position as deviations
             deviations.append((centerimg[0] - centerx, centerimg[1] - centery))
@@ -276,4 +286,5 @@ class GrabVisualServoing(smach.State):
         move = np.argmin([np.abs(x[0]) for x in only_positive_y])
 
         return only_positive_y[move]
+
 

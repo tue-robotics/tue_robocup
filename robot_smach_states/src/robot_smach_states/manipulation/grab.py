@@ -178,7 +178,6 @@ class PreGrab(smach.State):
         #     arm.reset()
         #     arm.send_gripper_goal('close', timeout=None)
         #     return 'failed'
-
         # Grasp
         # rospy.loginfo('Start grasping')
         # if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
@@ -192,7 +191,6 @@ class PreGrab(smach.State):
         # arm.send_gripper_goal('close')
         #
         # arm.occupied_by = grab_entity
-
         return 'succeeded'
 
     def associate(self, original_entity):
