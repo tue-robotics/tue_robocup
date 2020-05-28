@@ -180,18 +180,18 @@ class PreGrab(smach.State):
         #     return 'failed'
 
         # Grasp
-        rospy.loginfo('Start grasping')
-        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
-            self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
-            rospy.logerr('Grasp failed')
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=0.0)
-            return 'failed'
-
-        # Close gripper
-        arm.send_gripper_goal('close')
-
-        arm.occupied_by = grab_entity
+        # rospy.loginfo('Start grasping')
+        # if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
+        #     self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
+        #     rospy.logerr('Grasp failed')
+        #     arm.reset()
+        #     arm.send_gripper_goal('close', timeout=0.0)
+        #     return 'failed'
+        #
+        # # Close gripper
+        # arm.send_gripper_goal('close')
+        #
+        # arm.occupied_by = grab_entity
 
         return 'succeeded'
 

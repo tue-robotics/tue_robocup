@@ -1,3 +1,6 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
 # Visualize convolution. See https://tonysyu.github.io/
 def iter_pixels(image):
     """ Yield pixel position (row, column) and pixel intensity. """
@@ -164,5 +167,3 @@ def convolution_full(ax, image, kernel, **kwargs):
     ax.imshow(image_triple[2], aspect='auto', **kwargs)
     ax.set_xticks([])
     ax.set_yticks([])
-
-## Credits: Convolutional Neural Networks, Joaquin Vanschoren, Eindhoven University of Technology
