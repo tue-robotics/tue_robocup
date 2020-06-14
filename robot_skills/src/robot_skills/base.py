@@ -118,7 +118,7 @@ class GlobalPlanner(RobotPart):
         try:
             resp = self._get_plan_client(pcs)
         except Exception as e:
-            rospy.logerr("Could not get plan from global planner via service call: {}}".format(e))
+            rospy.logerr("Could not get plan from global planner via service call: {}".format(e))
             return None
 
         if not resp.succes:
