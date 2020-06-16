@@ -138,11 +138,7 @@ class PickUp(smach.State):
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
-            goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
-            if goal_bl is None:
-                return 'failed'
-            else:
-                return 'failed'
+            return 'failed'
         else:
             # We do have a grasp pose, given as a kdl frame in map
             try:
@@ -156,17 +152,6 @@ class PickUp(smach.State):
             except tf2_ros.TransformException as tfe:
                 rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
                 return 'failed'
-
-        # Pre-grasp --> this is only necessary when using visual servoing
-        # rospy.loginfo('Starting Pre-grasp')
-        # if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-        #                      frame_id='/'+self.robot.robot_name+'/base_link',
-        #                      timeout=20, pre_grasp=True, first_joint_pos_only=True
-        #                      ):
-        #     rospy.logerr('Pre-grasp failed:')
-        #     arm.reset()
-        #     arm.send_gripper_goal('close', timeout=None)
-        #     return 'failed'
 
         # Grasp
         rospy.loginfo('Start grasping')
