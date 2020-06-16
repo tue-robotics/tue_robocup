@@ -103,17 +103,7 @@ class PickUp(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
-        try:
-            # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.robot_name+'/base_link', tf_listener=self.robot.tf_listener)
-            if goal_bl is None:
-                rospy.logerr('Transformation of goal to base failed')
-                return 'failed'
-        except tf2_ros.TransformException as tfe:
-            rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
-            return 'failed'
 
         # Make sure the torso and the arm are done
         self.robot.torso.wait_for_motion_done(cancel=True)
