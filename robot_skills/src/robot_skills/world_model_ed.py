@@ -217,7 +217,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=[], remove_flags=[], action=None):
+    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=None, remove_flags=None, action=None):
         """
         Updates entity
 
@@ -229,6 +229,10 @@ class ED(RobotPart):
         :param remove_flags: list of flags which will removed from the specified entity
         :param action: update_action, e.g. remove
         """
+        if add_flags is None:
+            add_flags = []
+        if remove_flags is None:
+            remove_flags = []
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
