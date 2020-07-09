@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from geometry_msgs.msg import Point
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 
 def pose_constraints(x, y, rz=None, radius=0.15, frame_id="/map"):

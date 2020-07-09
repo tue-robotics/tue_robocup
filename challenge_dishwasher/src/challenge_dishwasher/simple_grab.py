@@ -3,7 +3,7 @@ import math
 import PyKDL as kdl
 import rospy
 import tf2_geometry_msgs
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from challenge_dishwasher.custom_find_cup import CustomFindCup
 from geometry_msgs.msg import PointStamped, Point
 from robot_skills.amigo import Amigo

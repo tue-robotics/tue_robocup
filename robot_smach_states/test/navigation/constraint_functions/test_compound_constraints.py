@@ -4,7 +4,7 @@ import unittest
 # ROS
 from geometry_msgs.msg import Point
 from robot_smach_states.navigation.constraint_functions.compound_constraints import combine_constraints
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 
 def dummy_constraint(name="test"):

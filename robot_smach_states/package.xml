@@ -21,7 +21,7 @@
   <exec_depend>ipython</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>actionlib</exec_depend>
-  <exec_depend>cb_planner_msgs_srvs</exec_depend>
+  <exec_depend>cb_base_navigation_msgs</exec_depend>
   <exec_depend>python-graphviz-pip</exec_depend>
   <exec_depend>python-psutil</exec_depend>
   <exec_depend>python-numpy</exec_depend>

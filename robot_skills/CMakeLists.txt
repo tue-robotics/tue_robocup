@@ -4,7 +4,7 @@ project(robot_skills)
 find_package(catkin REQUIRED COMPONENTS
     actionlib
     amigo_msgs
-    cb_planner_msgs_srvs
+    cb_base_navigation_msgs
     control_msgs
     cv_bridge
     ed_msgs

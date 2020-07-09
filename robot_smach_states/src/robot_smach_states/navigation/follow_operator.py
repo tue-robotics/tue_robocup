@@ -12,7 +12,7 @@ import sys
 from visualization_msgs.msg import Marker
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from hmi import TimeoutException
 from robot_skills.util import kdl_conversions
 from robot_skills.util.entity import Entity

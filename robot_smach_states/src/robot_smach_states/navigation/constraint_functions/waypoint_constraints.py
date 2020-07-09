@@ -5,7 +5,7 @@ import rospy
 from geometry_msgs.msg import Point
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 
 def waypoint_constraint(waypoint_designator, radius, look=True):

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import *
+from cb_base_navigation_msgs.msg import *
 from robot_skills.util.entity import Entity
 from .navigation import NavigateTo
 from .constraint_functions import combine_constraints, waypoint_constraint, look_at_constraint
