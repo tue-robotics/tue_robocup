@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import *
+from cb_base_navigation_msgs.msg import *
 from .navigation import NavigateTo
 from .constraint_functions import pose_constraints
 

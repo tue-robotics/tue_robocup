@@ -1,4 +1,4 @@
-from cb_planner_msgs_srvs.msg import PositionConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint
 
 import math
 import rospy

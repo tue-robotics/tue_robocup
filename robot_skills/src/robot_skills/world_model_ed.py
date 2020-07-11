@@ -16,7 +16,7 @@ from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
 from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
 from ed_navigation_msgs.srv import GetGoalConstraint
-from cb_planner_msgs_srvs.msg import PositionConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint
 
 # Robot skills
 from robot_skills.util import transformations

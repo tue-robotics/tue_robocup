@@ -14,8 +14,8 @@ import rospy
 import tf
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import LocalPlannerAction, OrientationConstraint, PositionConstraint, LocalPlannerGoal
-from cb_planner_msgs_srvs.srv import GetPlan, CheckPlan
+from cb_base_navigation_msgs.msg import LocalPlannerAction, OrientationConstraint, PositionConstraint, LocalPlannerGoal
+from cb_base_navigation_msgs.srv import GetPlan, CheckPlan
 from robot_skills.robot_part import RobotPart
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg
 from robot_skills.util import nav_analyzer, transformations

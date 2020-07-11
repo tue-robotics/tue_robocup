@@ -6,7 +6,7 @@ import math
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import OrientationConstraint, PositionConstraint
+from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 
 def radius_constraint(entity, radius, margin):
