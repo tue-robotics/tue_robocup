@@ -244,7 +244,7 @@ class ED(MockedRobotPart):
         self._static_entities['cabinet'] = self.generate_random_entity(id='cabinet')
 
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
-        self.get_entity = lambda id=None, parse=True: self._entities[id]
+        self.get_entity = lambda id=None: self._entities[id]
         self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
         self.navigation = mock.MagicMock()
         self.navigation.get_position_constraint = mock.MagicMock()
@@ -256,7 +256,7 @@ class ED(MockedRobotPart):
 
         self._person_names = []
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", parse=True):
+    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id=""):
 
         center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
 

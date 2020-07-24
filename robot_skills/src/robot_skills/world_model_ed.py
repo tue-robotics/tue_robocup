@@ -93,7 +93,7 @@ class ED(RobotPart):
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=float('inf'), id="", parse=True):
+    def get_entities(self, type="", center_point=VectorStamped(), radius=float('inf'), id=""):
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
@@ -189,8 +189,8 @@ class ED(RobotPart):
 
         return entities[0]
 
-    def get_entity(self, id, parse=True):
-        entities = self.get_entities(id=id, parse=parse)
+    def get_entity(self, id):
+        entities = self.get_entities(id=id)
         if len(entities) == 0:
             rospy.logwarn("Could not get_entity(id='{}')".format(id))
             return None
@@ -438,7 +438,7 @@ class ED(RobotPart):
 
     def get_full_id(self, short_id):
         """Get an entity's full ID based on the first characters of its ID like you can do with git hashes"""
-        all_entities = self.get_entities(parse=False)
+        all_entities = self.get_entities()
         matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
         return matches
 
