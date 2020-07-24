@@ -182,7 +182,7 @@ class ED(RobotPart):
     def get_entity(self, id):
         entities = self.get_entities(id=id)
         if len(entities) == 0:
-            rospy.logwarn("Could not get_entity(id='{}')".format(id))
+            rospy.logerr("Could not get_entity(id='{}')".format(id))
             return None
 
         return entities[0]
