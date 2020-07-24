@@ -26,7 +26,7 @@ class InspectShelves(smach.State):
         # Get cabinet entity
         # Sleep for a while to make sure that the robot is actually in ED
         rospy.sleep(rospy.Duration(0.25))
-        cabinet_entity = self.robot.ed.get_entity(id=self.cabinet.id_, parse=True)
+        cabinet_entity = self.robot.ed.get_entity(id=self.cabinet.id_)
 
         # Get the pose of all shelves
         shelves = []
@@ -68,7 +68,7 @@ class InspectShelves(smach.State):
 
             for id_ in segmented_entities.new_ids:
                 # In simulation, the entity type is not yet updated...
-                entity = self.robot.ed.get_entity(id=id_, parse=False)
+                entity = self.robot.ed.get_entity(id=id_)
                 config.SEGMENTED_ENTITIES.append((entity, id_))
             # print "Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES)
 
@@ -85,7 +85,7 @@ class InspectShelves(smach.State):
 
             for e in entity_types_and_probs:
                 # In simulation, the entity type is not yet updated...
-                entity = self.robot.ed.get_entity(id=e.id, parse=False)
+                entity = self.robot.ed.get_entity(id=e.id)
                 config.DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
             config.DETECTED_OBJECTS_WITH_PROBS = sorted(config.DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1],
