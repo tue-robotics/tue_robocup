@@ -256,7 +256,7 @@ class ED(MockedRobotPart):
 
         self._person_names = []
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id=""):
+    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", ignore_z=False):
 
         center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
 
@@ -264,7 +264,10 @@ class ED(MockedRobotPart):
         if type:
             entities = [e for e in entities if e.is_a(type)]
         if radius:
-            entities = [e for e in entities if e.distance_to_2d(center_point_in_map.vector) <= radius]
+            if ignore_z:
+                entities = [e for e in entities if e.distance_to_2d(center_point_in_map.vector) <= radius]
+            else:
+                entities = [e for e in entities if e.distance_to_3d(center_point_in_map.vector) <= radius]
         if id:
             entities = [e for e in entities if e.id == id]
 
