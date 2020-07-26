@@ -257,7 +257,7 @@ class InspectShelves(smach.State):
         ''' Get cabinet entity '''
         rospy.sleep(rospy.Duration(0.25))  # Sleep for a while to make
         # sure that the robot is actually in ED
-        cabinet_entity = self.robot.ed.get_entity(id=CABINET, parse=True)
+        cabinet_entity = self.robot.ed.get_entity(id=CABINET)
 
         ''' Get the pose of all shelves '''
         shelves = []
@@ -278,7 +278,7 @@ class InspectShelves(smach.State):
             center_vector = vector_stamped.vector
 
             # ''' Get entities '''
-            # shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
+            # shelf_entity = self.robot.ed.get_entity(id=shelf)
 
             # if shelf_entity:
 
@@ -313,7 +313,7 @@ class InspectShelves(smach.State):
             segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
 
             for id_ in segmented_entities.new_ids:
-                entity = self.robot.ed.get_entity(id=id_, parse=False)  # In simulation, the entity type is not yet updated...
+                entity = self.robot.ed.get_entity(id=id_)  # In simulation, the entity type is not yet updated...
                 SEGMENTED_ENTITIES.append((entity, id_))
 
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
@@ -328,7 +328,7 @@ class InspectShelves(smach.State):
             # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
             # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
             for e in entity_types_and_probs:
-                entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
+                entity = self.robot.ed.get_entity(id=e.id)  # In simulation, the entity type is not yet updated...
                 DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
             # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
@@ -367,7 +367,7 @@ class RemoveSegmentedEntities(smach.State):
 
     def execute(self, userdata=None):
 
-        entities = self.robot.ed.get_entities(parse=False)
+        entities = self.robot.ed.get_entities()
 
         for e in entities:
             if not e.is_a("furniture") and e.id != '_root':

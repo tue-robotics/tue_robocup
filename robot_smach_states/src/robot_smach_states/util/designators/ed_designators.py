@@ -27,7 +27,7 @@ class EdEntityCollectionDesignator(Designator):
     >>> check_resolve_type(entities, [Entity]) #This is more a test for check_resolve_type to be honest :-/
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", parse=True, criteriafuncs=None,
+    def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", criteriafuncs=None,
                  type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates a collection of entities of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
@@ -36,7 +36,6 @@ class EdEntityCollectionDesignator(Designator):
         @param center_point combined with radius: a sphere to search an entity in
         @param radius combined with center_point: a sphere to search an entity in
         @param id the ID of the object to get info about
-        @param parse whether to parse the data string associated with the object model or entity
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved through a designator.
                 Mutually exclusive with center_point
@@ -56,7 +55,6 @@ class EdEntityCollectionDesignator(Designator):
         self.center_point = center_point
         self.radius = radius
         self.id = id
-        self.parse = parse
         self.criteriafuncs = criteriafuncs or []
 
         if type_designator:
@@ -79,7 +77,7 @@ class EdEntityCollectionDesignator(Designator):
         _id = self.id_designator.resolve() if self.id_designator else self.id
         _criteria = self.criteriafuncs
 
-        entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
+        entities = self.ed.get_entities(_type, _center_point, self.radius, _id)
         if self.debug:
             import ipdb;
             ipdb.set_trace()
@@ -102,7 +100,7 @@ class EdEntityDesignator(Designator):
     Resolves to an entity from an Ed query
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", parse=True, criteriafuncs=None,
+    def __init__(self, robot, type="", center_point=None, radius=float('inf'), id="", criteriafuncs=None,
                  weight_function=None, type_designator=None, center_point_designator=None, id_designator=None,
                  debug=False, name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
@@ -112,7 +110,6 @@ class EdEntityDesignator(Designator):
         @param center_point combined with radius: a sphere to search an entity in
         @param radius combined with center_point: a sphere to search an entity in
         @param id the ID of the object to get info about
-        @param parse whether to parse the data string associated with the object model or entity
         @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)
         @param weight_function returns a weight for each entity, the one with the lowest weight will be selected
         (could be a distance calculation)
@@ -135,7 +132,6 @@ class EdEntityDesignator(Designator):
         self.center_point = center_point
         self.radius = radius
         self.id = id
-        self.parse = parse
         self.criteriafuncs = criteriafuncs or []
         self.weight_function = weight_function or (lambda entity: 0)
 
@@ -178,7 +174,7 @@ class EdEntityDesignator(Designator):
             typechecker = lambda entity: entity.type in _type
             _criteria += [typechecker]
 
-        entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
+        entities = self.ed.get_entities(_type, _center_point, self.radius, _id)
         if entities:
             for criterium in _criteria:
                 criterium_code = inspect.getsource(criterium)
@@ -211,22 +207,20 @@ class EdEntityDesignator(Designator):
 
 
 class EntityByIdDesignator(Designator):
-    def __init__(self, robot, id, parse=True, name=None):
+    def __init__(self, robot, id, name=None):
         """
         Designate an entity by its ID. Resolves to the entity with that ID
 
         :param robot: Robot who's worldmodel to use
         :param id: ID of the entity. If no such ID, resolves to None
-        :param parse: Whether to parse the Entity's data-field
         :param name: Name of the designator for introspection purposes
         """
         super(EntityByIdDesignator, self).__init__(resolve_type=Entity, name=name)
         self.ed = robot.ed
         self.id_ = id
-        self.parse = parse
 
     def _resolve(self):
-        entities = self.ed.get_entities(id=self.id_, parse=self.parse)
+        entities = self.ed.get_entities(id=self.id_)
         if entities:
             return entities[0]
         else:
@@ -258,7 +252,7 @@ class ReasonedEntityDesignator(Designator):
             return None
         rospy.loginfo("first_answer is:", str(first_answer))
 
-        entities = self.ed.get_entities(id=str(first_answer), parse=True)
+        entities = self.ed.get_entities(id=str(first_answer))
         if entities:
             return entities[0]
         else:

@@ -51,7 +51,7 @@ class RandomNavDesignator(EdEntityDesignator):
             return self.entity_id
 
         # Get all entities
-        entities = self._robot.ed.get_entities(type="", parse=False)
+        entities = self._robot.ed.get_entities(type="")
 
         # Temp: only pick close targets
         #if entities:
