@@ -25,7 +25,7 @@ jobs:
           script: |
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/packages.sh
             wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/azure_commit_range.py
-            export COMMIT_RANGE=$(python azure_commit_range.py)
+            export COMMIT_RANGE=$(python3 ./azure_commit_range.py)
             ALL=$([ $BUILD_REASON == "Schedule" ] && echo "true")
             source ./packages.sh --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --branch=$SYSTEM_PULLREQUEST_TARGETBRANCH --commit-range=$COMMIT_RANGE --all=$ALL tue_robocup challenge_following_and_guiding challenge_manipulation challenge_navigation challenge_person_recognition challenge_spr challenge_speech_recognition
             echo "##vso[task.setVariable variable=json_string;isOutput=true]$PACKAGES_DICT"
@@ -45,16 +45,23 @@ jobs:
         script: |
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/test-package.sh
       displayName: 'Get CI scripts'
     - task: Bash@3
       inputs:
         targetType: 'inline'
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH:-${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false}
+          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
       displayName: 'Install'
     - task: Bash@3
       inputs:
         targetType: 'inline'
         script: |
           bash build-package.sh --package=$PACKAGE
-      displayName: 'Build & test'
+      displayName: 'Build'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          bash test-package.sh --package=$PACKAGE
+      displayName: 'Test'

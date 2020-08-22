@@ -1,4 +1,4 @@
-from cb_planner_msgs_srvs.msg import PositionConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint
 
 import math
 import rospy
@@ -133,7 +133,7 @@ class EmptyShelfDesignator(Designator):
         :return:
         """
         # Just to be sure, copy e
-        e = self.robot.ed.get_entity(id=e.id, parse=True)
+        e = self.robot.ed.get_entity(id=e.id)
 
         # We want to give it a convex hull using the designated area
         if area in e.volumes:

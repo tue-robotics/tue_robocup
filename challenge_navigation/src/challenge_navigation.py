@@ -5,7 +5,7 @@ import smach
 import sys
 import time
 
-from cb_planner_msgs_srvs.msg import PositionConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint
 
 from robot_smach_states.util.designators import VariableDesignator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
 import robot_smach_states as states

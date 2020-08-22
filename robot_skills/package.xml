@@ -12,7 +12,7 @@
 
   <depend>actionlib</depend>
   <depend>amigo_msgs</depend>
-  <depend>cb_planner_msgs_srvs</depend>
+  <depend>cb_base_navigation_msgs</depend>
   <depend>control_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>ed_msgs</depend>
