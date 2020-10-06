@@ -178,9 +178,6 @@ class Put(smach.State):
             rospy.logwarn('Retraction failed')
             arm.cancel_goals()
 
-        # Close gripper
-        arm.send_gripper_goal('close', timeout=0.0)
-
         arm.reset()
         arm.wait_for_motion_done()
         self._robot.torso.reset()

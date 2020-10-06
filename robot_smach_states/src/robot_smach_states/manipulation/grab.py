@@ -184,7 +184,6 @@ class PickUp(smach.State):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
-            arm.send_gripper_goal('close', timeout=0.0)
             return 'failed'
 
         # Close gripper
@@ -295,12 +294,10 @@ class ResetOnFailure(smach.StateMachine):
     def execute(self, userdata=None):
         """ Execute hook """
         arm = self.arm_designator.resolve()
-        arm.reset()
 
         if self._robot.robot_name == "amigo":
             self._robot.torso.reset()  # Move up to make resetting of the arm safer.
-        if arm is not None:
-            arm.send_gripper_goal('close')
+
         self._robot.head.reset()  # Sends a goal
         self._robot.head.cancel_goal()  # And cancels it...
         if arm is not None:
