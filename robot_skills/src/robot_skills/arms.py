@@ -618,7 +618,7 @@ class Arm(RobotPart):
 
     def reset(self, timeout=0.0):
         """
-        Put the arm into the 'reset' pose
+        Put the arm into the 'reset' pose. And open the gripper
 
         :param timeout: timeout in seconds
         :return: True or False
