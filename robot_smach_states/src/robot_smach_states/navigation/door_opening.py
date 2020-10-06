@@ -10,7 +10,7 @@ import smach
 from visualization_msgs.msg import Marker, MarkerArray
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import PositionConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint
 from ed_msgs.msg import EntityInfo
 from robot_skills.base import computePathLength
 import robot_smach_states as states

@@ -16,7 +16,7 @@ from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
 from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
 from ed_navigation_msgs.srv import GetGoalConstraint
-from cb_planner_msgs_srvs.msg import PositionConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint
 
 # Robot skills
 from robot_skills.util import transformations
@@ -93,19 +93,28 @@ class ED(RobotPart):
     #                                             QUERYING
     # ----------------------------------------------------------------------------------------------------
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=float('inf'), id="", parse=True):
+    def get_entities(self, type="", center_point=VectorStamped(), radius=float('inf'), id="", ignore_z=False):
+        """
+        Get entities via Simple Query interface
+
+        :param type: Type of entity
+        :param center_point: Point from which radius is measured
+        :param radius: Distance between center_point and entity
+        :param id: ID of entity
+        :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point
+        """
         self._publish_marker(center_point, radius)
 
         center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
         query = SimpleQueryRequest(id=id, type=type, center_point=kdl_vector_to_point_msg(center_point_in_map.vector),
-                                   radius=radius)
+                                   radius=radius, ignore_z=ignore_z)
 
         try:
             entity_infos = self._ed_simple_query_srv(query).entities
             entities = map(from_entity_info, entity_infos)
         except Exception as e:
-            rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (
-                id, type, str(center_point), str(radius)))
+            rospy.logerr("ERROR: robot.ed.get_entities(id={}, type={}, center_point={}, radius={}, ignore_z={})".format(
+                id, type, str(center_point), str(radius), ignore_z))
             rospy.logerr("L____> [%s]" % e)
             return []
 
@@ -150,27 +159,8 @@ class ED(RobotPart):
         :param ignore_z: Consider only the distance in the X,Y plane for the radius from center_point criterium.
         :return: list of Entity
         """
-        if ignore_z:
-            # ED does not allow to ignore Z through its interface, so it has to be solved here.
-            #
-            # If we want to ignore the z of entities when checking their distance from center_point,
-            # the simplest thing to do is to set the Z of the center_point to the same value,
-            # so that delta Z is always 0.
-            # But then we first need to know Z (preferably without an additonal parameter or something robot specific)
-            # So, we query ED for other laser entities. These are *assumed* to all have the same Z,
-            # so we can just take one and use its Z and substitute that into the center_point.
-            # To 'just take one', we take entities from a larger range.
-            entities_for_height = self.get_entities(type="", center_point=center_point, radius=sqrt(2**2 + radius**2))
-            if entities_for_height:
-                override_z = entities_for_height[0].frame.extractVectorStamped().vector.z()
-                rospy.logwarn("ignoring Z, so overriding z to be equal to laser height: {}".format(override_z))
-                center_point = VectorStamped(center_point.vector.x(),
-                                             center_point.vector.y(),
-                                             override_z)
-            else:
-                return None
 
-        entities = self.get_entities(type="", center_point=center_point, radius=radius)
+        entities = self.get_entities(type="", center_point=center_point, radius=radius, ignore_z=ignore_z)
 
         # HACK
         entities = [e for e in entities if e.shape and e.type == "" and e.id.endswith("-laser")]
@@ -189,10 +179,10 @@ class ED(RobotPart):
 
         return entities[0]
 
-    def get_entity(self, id, parse=True):
-        entities = self.get_entities(id=id, parse=parse)
+    def get_entity(self, id):
+        entities = self.get_entities(id=id)
         if len(entities) == 0:
-            rospy.logwarn("Could not get_entity(id='{}')".format(id))
+            rospy.logerr("Could not get_entity(id='{}')".format(id))
             return None
 
         return entities[0]
@@ -217,7 +207,7 @@ class ED(RobotPart):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=[], remove_flags=[], action=None):
+    def update_entity(self, id, type=None, frame_stamped=None, flags=None, add_flags=None, remove_flags=None, action=None):
         """
         Updates entity
 
@@ -229,6 +219,10 @@ class ED(RobotPart):
         :param remove_flags: list of flags which will removed from the specified entity
         :param action: update_action, e.g. remove
         """
+        if add_flags is None:
+            add_flags = []
+        if remove_flags is None:
+            remove_flags = []
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
@@ -434,7 +428,7 @@ class ED(RobotPart):
 
     def get_full_id(self, short_id):
         """Get an entity's full ID based on the first characters of its ID like you can do with git hashes"""
-        all_entities = self.get_entities(parse=False)
+        all_entities = self.get_entities()
         matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
         return matches
 

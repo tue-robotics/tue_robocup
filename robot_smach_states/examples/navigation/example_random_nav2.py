@@ -8,7 +8,7 @@ import rospy
 import smach
 
 import robot_smach_states as states
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 
 from robot_smach_states.util.startup import startup
 import std_msgs.msg
@@ -51,7 +51,7 @@ class RandomNavDesignator(EdEntityDesignator):
             return self.entity_id
 
         # Get all entities
-        entities = self._robot.ed.get_entities(type="", parse=False)
+        entities = self._robot.ed.get_entities(type="")
 
         # Temp: only pick close targets
         #if entities:

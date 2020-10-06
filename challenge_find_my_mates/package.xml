@@ -19,7 +19,7 @@
   <depend>cv_bridge</depend>
 
   <!-- TU/e Robotics -->
-  <depend>cb_planner_msgs_srvs</depend>
+  <depend>cb_base_navigation_msgs</depend>
   <depend>robot_skills</depend>
   <depend>robot_smach_states</depend>
   <depend>robocup_knowledge</depend>

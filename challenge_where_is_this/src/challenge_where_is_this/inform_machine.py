@@ -63,7 +63,7 @@ class EntityFromHmiResults(ds.Designator):
         if entity_id is None:
             return None
 
-        entities = self._robot.ed.get_entities(id=entity_id, parse=self.parse)
+        entities = self._robot.ed.get_entities(id=entity_id)
         if entities:
             return entities[0]
         else:

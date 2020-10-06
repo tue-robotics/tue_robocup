@@ -361,6 +361,35 @@ class PickUp(smach.State):
 
         return result
 
+    def associate(self, original_entity):
+        """
+        Tries to associate the original entity with one of the entities in the world model. This is useful if
+        after an update, the original entity is no longer present in the world model. If no good map can be found,
+        the original entity will be returned as the associated entity.
+
+        :param original_entity:
+        :return: associated entity
+        """
+        # Get all entities
+        entities = self.robot.ed.get_entities()
+
+        # Remove all entities with a shape. These are probably not the ones we want to grasp
+        for e in entities:
+            if e.is_a("furniture"):
+                entities.remove(e)
+        entities = sorted(entities,
+                          key=lambda entity: entity.distance_to_3d(original_entity._pose.p))
+
+        if self.distance(entities[0], original_entity) < 0.05:  # Objects Less than 5 cm apart might be associated
+            return entities[0]
+        else:
+            return original_entity
+
+    @staticmethod
+    def distance(e1, e2):
+        """ Computes the distance between two entities """
+        return e1.distance_to_3d(e2._pose.p)
+
 
 class ResetOnFailure(smach.StateMachine):
     """ Class to reset the robot after a grab has failed """

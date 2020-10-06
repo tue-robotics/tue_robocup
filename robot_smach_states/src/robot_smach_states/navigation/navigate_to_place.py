@@ -4,8 +4,8 @@ from __future__ import absolute_import
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.srv import *
-from cb_planner_msgs_srvs.msg import *
+from cb_base_navigation_msgs.srv import *
+from cb_base_navigation_msgs.msg import *
 from robot_skills.util.kdl_conversions import FrameStamped
 from .navigation import NavigateTo
 from .constraint_functions import arms_reach_constraint
