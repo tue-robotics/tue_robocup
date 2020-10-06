@@ -78,6 +78,7 @@ class HandOverTo(smach.State):
         self.robot.ed.update_entity(id=object_in_arm.id, action='remove')
 
         self.robot.speech.speak("I will open my gripper now.", block=False)
+        arm.send_gripper_goal('open')
         arm.reset()
         arm.wait_for_motion_done()
 
