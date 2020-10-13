@@ -4,6 +4,8 @@ import smach
 from sensor_msgs.msg import Image
 import cv2
 from cv_bridge import CvBridge
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvas
@@ -31,7 +33,7 @@ class GrabVisualServoing(smach.State):
         # Assign member variables
         self.robot = robot
         self.arm_designator = arm
-        self._camera_topic = "/" + self.robot.robot_name + "/hand_camera/image_raw"
+        self._camera_topic = "/hand_camera/image_raw"
         self._debug_image_pub = rospy.Publisher("image_debug_topic", Image)
 
         # Assign distance per movement (in y- and z-direction)
@@ -77,7 +79,7 @@ class GrabVisualServoing(smach.State):
         rospy.loginfo('x-value is {}'.format(est_x_1))
 
         # First moving down, to ensure the object can be seen
-        current_pose = self.robot.tf_listener.lookupTransform('base_link', 'hero/grippoint_left', rospy.Time(0))
+        current_pose = self.robot.tf_listener.lookupTransform('/hero/base_link', 'hero/grippoint_left', rospy.Time())
         curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
         curr_x, curr_y, curr_z = current_pose[0]
         next_pose = kdl_con.kdl_frame_stamped_from_XYZRPY(curr_x, curr_y, curr_z - 0.1,
@@ -88,13 +90,16 @@ class GrabVisualServoing(smach.State):
 
         count = 0
         down = 0
+        rospy.loginfo('Received first transform.')
 
         # Performing visual servoing in 5 steps
         while count < 5:
-            current_pose = self.robot.tf_listener.lookupTransform('base_link', 'hero/grippoint_left', rospy.Time(0))
+            current_pose = self.robot.tf_listener.lookupTransform('/hero/base_link', 'hero/grippoint_left', rospy.Time())
             curr_roll, curr_pitch, curr_yaw = euler_from_quaternion(current_pose[1])
             curr_x, curr_y, curr_z = current_pose[0]
+            rospy.loginfo('Received transform from loop')
             move = self._visual_servo_feedback
+            rospy.loginfo('Returned from magig function')
 
             # For each step is checked whether the movement needed is to the left or right and if downwards movement is needed
             if move[0] > 50 and move[1] > 10 and (self.est_z < -down * self._move_distz - 0.1):
@@ -143,9 +148,10 @@ class GrabVisualServoing(smach.State):
     @property
     def _visual_servo_feedback(self):
         snap_image = rospy.wait_for_message(self._camera_topic, Image)
+        rospy.loginfo('Received image')
         cv_img = self._bridge.imgmsg_to_cv2(snap_image, desired_encoding="passthrough")
         image = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
+        rospy.loginfo('Converted image')
         # Cropping the image (removing top half)
         h, w, channels = image.shape
         image = image[h / 2:h, 0:w]
@@ -206,7 +212,7 @@ class GrabVisualServoing(smach.State):
         # Going through every contour found in the image and saving their deviations from the target position (center)
         deviations = []
         for cnt in contours:
-            if cv2.contourArea(cnt) <= 5000:
+            if cv2.contourArea(cnt) <= 500:
                 continue
 
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
