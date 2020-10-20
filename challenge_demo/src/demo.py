@@ -13,8 +13,9 @@ import hmi
 
 from action_server import Client as ActionClient
 
-from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states import StartChallengeRobust, WaitForTrigger
+from robot_smach_states.navigation import NavigateToWaypoint
+from robot_smach_states.startup import StartChallengeRobust
+from robot_smach_states.utility import WaitForTrigger
 from robot_smach_states.util.designators import EntityByIdDesignator
 
 from robot_skills.util.kdl_conversions import FrameStamped
@@ -167,7 +168,7 @@ def main():
         # Send the task specification to the action server
         task_result = action_client.send_task(task_specification)
 
-        print task_result.missing_field
+        print(task_result.missing_field)
         # # Ask for missing information
         # while task_result.missing_field:
         #     request_missing_field(knowledge.task_result.missing_field)

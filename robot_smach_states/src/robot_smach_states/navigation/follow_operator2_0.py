@@ -15,7 +15,7 @@ import smach
 from visualization_msgs.msg import Marker
 
 # TU/e
-from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
+from cb_base_navigation_msgs.msg import PositionConstraint, OrientationConstraint
 from robot_skills.util import kdl_conversions
 from ..human_interaction.learn_operator import LearnOperator
 

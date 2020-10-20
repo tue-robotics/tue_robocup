@@ -278,7 +278,7 @@ class PickUp(smach.State):
         :return: associated entity
         """
         # Get all entities
-        entities = self.robot.ed.get_entities(parse=False)
+        entities = self.robot.ed.get_entities()
 
         # Remove all entities with a shape. These are probably not the ones we want to grasp
         for e in entities:

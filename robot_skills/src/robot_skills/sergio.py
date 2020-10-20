@@ -4,8 +4,15 @@ from .simulation import is_sim_mode, SimEButton
 
 
 class Sergio(robot.Robot):
-    """docstring for Sergio"""
+    """
+    Sergio
+    """
     def __init__(self, wait_services=False):
+        """
+        Constructor
+
+        :param wait_services: Not supported anymore by robot class
+        """
         super(Sergio, self).__init__(robot_name="sergio", wait_services=wait_services)
 
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]

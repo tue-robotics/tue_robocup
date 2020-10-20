@@ -105,7 +105,7 @@ class EmptyShelfDesignator(Designator):
         :return:
         """
         # Just to be sure, copy e
-        e = self.robot.ed.get_entity(id=e.id, parse=True)
+        e = self.robot.ed.get_entity(id=e.id)
 
         # We want to give it a convex hull using the designated area
 

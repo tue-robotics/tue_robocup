@@ -21,6 +21,6 @@ if __name__ == "__main__":
     e_id = args.target_entity_id
 
     # Instantiate GuideToSymbolic machine
-    state = give_directions.GiveDirections(r, ds.EntityByIdDesignator(r, id=e_id))
+    state = give_directions.GiveDirections(robot, ds.EntityByIdDesignator(robot, id=e_id))
     # Execute the state
     state.execute()

@@ -5,7 +5,7 @@ from geometry_msgs.msg import *
 import rospy
 
 # TU/e Robotics
-from cb_planner_msgs_srvs.msg import *
+from cb_base_navigation_msgs.msg import *
 import ed_msgs.msg
 from .navigation import NavigateTo
 from ..util.designators import check_resolve_type
@@ -18,7 +18,7 @@ class NavigateToExplore(NavigateTo):
         @param breakout_designator when this Designator successfully resolves, the state signals it is done.
         For example, it could resolve to an item of a class you are looking for
         """
-        super(NavigateToExplore, self).__init__(robot)
+        super(NavigateToExplore, self).__init__(robot, self.generateConstraint)
 
         self.robot = robot
 

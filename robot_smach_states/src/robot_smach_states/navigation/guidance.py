@@ -16,7 +16,7 @@ from ..util.designators import EdEntityDesignator
 
 from . import navigation
 from ..human_interaction.human_interaction import Say
-from .navigate_to_symbolic import NavigateToSymbolic
+from .constraint_functions import symbolic_constraint, look_at_constraint, combine_constraints
 
 
 def _detect_operator_behind_robot(robot, distance=1.0, radius=0.5):
@@ -310,8 +310,8 @@ class WaitForOperator(smach.State):
 
 
 class Guide(smach.StateMachine):
-    def __init__(self, robot, operator_distance=1.0, operator_radius=0.5):
-        # type: (Robot, float, float) -> None
+    def __init__(self, robot, constraint_function, operator_distance=1.0, operator_radius=0.5):
+        # type: (Robot, function, float, float) -> None
         """
         Base Smach state to guide an operator to a designated position
 
@@ -351,7 +351,7 @@ class Guide(smach.StateMachine):
                                    transitions={"waited": "GET_PLAN",
                                                 "preempted": "preempted"})
 
-            smach.StateMachine.add("GET_PLAN", navigation.getPlan(self.robot, self.generate_constraint),
+            smach.StateMachine.add("GET_PLAN", navigation.getPlan(self.robot, constraint_function),
                                    transitions={"unreachable": "unreachable",
                                                 "goal_not_defined": "goal_not_defined",
                                                 "goal_ok": "EXECUTE_PLAN"})
@@ -373,14 +373,10 @@ class Guide(smach.StateMachine):
                                    transitions={"blocked": "GET_PLAN",
                                                 "free": "EXECUTE_PLAN"})
 
-    @staticmethod
-    def generate_constraint():
-        raise NotImplementedError("Inheriting Guide states must implement a generate constraint method, preferably"
-                                  "by re-using it from a navigation state.")
-
 
 class GuideToSymbolic(Guide):
-    """ Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
+    """
+    Guidance class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
     """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator, operator_distance=1.0,
                  operator_radius=0.5):
@@ -397,20 +393,11 @@ class GuideToSymbolic(Guide):
         :param operator_radius: (float) from the point behind the robot defined by `distance`, the person must be within
             this radius [m]
         """
+        constr_fun = lambda: combine_constraints(
+            [lambda: symbolic_constraint(robot, entity_designator_area_name_map),
+             lambda: look_at_constraint(entity_lookat_designator)]
+        )
         super(GuideToSymbolic, self).__init__(robot=robot,
+                                              constraint_function=constr_fun,
                                               operator_distance=operator_distance,
                                               operator_radius=operator_radius)
-
-        self._entity_designator_area_name_map = entity_designator_area_name_map
-        self._entity_lookat_designator = entity_lookat_designator
-
-    def generate_constraint(self):
-        # type: () -> tuple
-        """
-        Generates the constraint using the generate constraint method of NavigateToSymbolic
-
-        :return: (tuple(PositionConstraint, OrientationConstraint)). If one of the entities does not resolve,
-        None is returned.
-        """
-        return NavigateToSymbolic.generate_constraint(
-            self.robot, self._entity_designator_area_name_map, self._entity_lookat_designator)
