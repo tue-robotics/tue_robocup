@@ -42,7 +42,7 @@ jobs:
     steps:
     - task: Cache@2
       inputs:
-        key: 'docker | "$(Agent.OS)"'
+        key: 'docker | "$(Agent.OS)" | gzip'
         path: $(Pipeline.Workspace)/docker
         cacheHitVar: DOCKER_CACHE_RESTORED
       displayName: Caching Docker image
@@ -51,7 +51,7 @@ jobs:
         targetType: 'inline'
         script: |
           ls -la $(Pipeline.Workspace)/docker
-          docker load < $(Pipeline.Workspace)/docker/cachedDocker.tar
+          docker load < $(Pipeline.Workspace)/docker/cachedDocker.tar.gz
       condition: and(not(canceled()), eq(variables.DOCKER_CACHE_RESTORED, 'true'))
       displayName: 'Load cached Docker image'
     - task: Bash@3
@@ -88,6 +88,6 @@ jobs:
         targetType: 'inline'
         script: |
           mkdir -p $(Pipeline.Workspace)/docker
-          docker save $(docker images -a -q) > $(Pipeline.Workspace)/docker/cachedDocker.tar
+          docker save $(docker images -a -q) | gzip > $(Pipeline.Workspace)/docker/cachedDocker.tar
       displayName: 'Save Docker images'
       condition: and(not(canceled()), not(failed()))
