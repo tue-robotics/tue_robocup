@@ -41,7 +41,7 @@ jobs:
     steps:
     - task: Cache@2
       inputs:
-        key: 'docker | "$(Agent.OS)" | caching-docker.yml'
+        key: 'docker | "$(Agent.OS)"'
         path: $(Pipeline.Workspace)/docker
         cacheHitVar: DOCKER_CACHE_RESTORED
       displayName: Caching Docker image
