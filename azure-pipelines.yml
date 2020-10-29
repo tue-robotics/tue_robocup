@@ -89,3 +89,4 @@ jobs:
           docker images -a -q
           docker save $(docker images -a -q) | $(Pipeline.Workspace)/docker/cachedDocker.tar
       displayName: 'Save Docker images'
+      condition: not(canceled())
