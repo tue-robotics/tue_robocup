@@ -50,7 +50,7 @@ jobs:
       inputs:
         targetType: 'inline'
         script: |
-          docker load $(Pipeline.Workspace)/docker/cache.tar
+          docker load < $(Pipeline.Workspace)/docker/cache.tar
       condition: and(not(canceled()), eq(variables.DOCKER_CACHE_RESTORED, 'true'))
       displayName: 'Load cached Docker image'
     - task: Bash@3
