@@ -87,6 +87,6 @@ jobs:
         targetType: 'inline'
         script: |
           mkdir -p $(Pipeline.Workspace)/docker
-          docker save $(Pipeline.Workspace)/docker/cachedDocker.tar $(docker images -a -q)
+          docker save -o $(Pipeline.Workspace)/docker/cachedDocker.tar $(docker images -a -q)
       displayName: 'Save Docker images'
       condition: not(canceled())
