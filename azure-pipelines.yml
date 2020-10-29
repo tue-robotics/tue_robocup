@@ -36,7 +36,7 @@ jobs:
     pool:
       vmImage: 'ubuntu latest'
     dependsOn: package_selection
-    condition: and(or(not(canceled()), ne(dependencies.package_selection.outputs['matrix.json_string'], '{}')
+    condition: and(not(canceled()), ne(dependencies.package_selection.outputs['matrix.json_string'], '{}')
     strategy:
       matrix: $[ dependencies.package_selection.outputs['matrix.json_string'] ]
     steps:
