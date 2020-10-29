@@ -45,9 +45,13 @@ jobs:
         path: $(Pipeline.Workspace)/docker
         cacheHitVar: DOCKER_CACHE_RESTORED
       displayName: Caching Docker image
-    - script: |
-        docker load $(Pipeline.Workspace)/docker/cache.tar
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker load $(Pipeline.Workspace)/docker/cache.tar
       condition: and(not(canceled()), eq(variables.DOCKER_CACHE_RESTORED, 'true'))
+      displayName: 'Load cached Docker image'
     - task: Bash@3
       inputs:
         targetType: 'inline'
@@ -74,3 +78,10 @@ jobs:
         script: |
           bash test-package.sh --package=$PACKAGE
       displayName: 'Test'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker images -a -q
+          docker save $(docker images -a -q) | $(Pipeline.Workspace)/docker/cachedDocker.tar
+      displayName: 'Save Docker images'
