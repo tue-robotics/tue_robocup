@@ -80,13 +80,6 @@ class PublicArm(object):
         self._available_joint_goals = available_joint_goals
         self._available_joint_trajectories = available_joint_trajectories
 
-    def id(self):
-        """
-        Returns the id of the arm
-        :return: id
-        """
-        return self._arm.id
-
     # Occupied by
     def has_occupied_by(self):
         """

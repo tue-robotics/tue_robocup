@@ -58,10 +58,6 @@ class PrepareEdGrasp(smach.State):
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
-        # Userdata gebruikt const objecten dus mag niet zo maar dingen sturen: potentiele opl--> stuur alleen de arm id over userdata door
-        # arm = self.robot.get_arm(userdata.arm_id) # dummy
-        # TODO get arm geeft nu niet alle requirements, maar door het id is het bekend dat de arm aan alle requirements kan voldoen
-        # arm = self.robot.get_arm(required_arm_name=userdata.arm_id)
         arm = userdata.arm
 
         # Torso up (non-blocking)
@@ -429,6 +425,7 @@ def collect_requirements(state_machine):
                     if value not in arm_requirements[k]:
                         arm_requirements[k] += v
 
+    rospy.logerr(arm_requirements) # ToDo: remove or at least change
     return arm_requirements
 
 def check_arm_requirements(state_machine, robot):
