@@ -125,6 +125,8 @@ class PickUpCard(smach.State):
                 return 'failed'
 
         # Grasp
+        goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
+
         rospy.loginfo('Start grasping')
         if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
@@ -132,6 +134,16 @@ class PickUpCard(smach.State):
             arm.reset()
             return 'failed'
 
+        # Picking
+        goal_bl.frame.p.z(goal_bl.frame.p.z() - 0.05)  # Remove 5 cm
+
+        rospy.loginfo('Start lowering')
+        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
+            self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
+            rospy.logerr('Grasp failed to {}'.format(goal_bl))
+            arm.reset()
+            return 'failed'
+        # pick
         # TODO use suction cup
 
         arm.occupied_by = grab_entity
