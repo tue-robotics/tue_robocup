@@ -1027,3 +1027,48 @@ class FakeArm(RobotPart):
 
     def __repr__(self):
         return "FakeArm(side='{side}')".format(side=self.side)
+
+
+# TODO: make recursive
+# ToDo: write a test for this
+def collect_arm_requirements(state_machine):
+    """ Collects all requirements on the arm of this specific state machine
+
+    :param state_machine: State machine for which the requirements need to be collected
+    :return: All arm requirements of the state machine
+    """
+    # Check arm requirements
+    arm_requirements = {}
+    for state in state_machine.get_children().itervalues():
+
+        # If no arm properties defined: continue
+        if not hasattr(state, "REQUIRED_ARM_PROPERTIES"):
+            continue
+
+        for k, v in state.REQUIRED_ARM_PROPERTIES.iteritems():
+            if k not in arm_requirements:
+                arm_requirements[k] = v
+            else:
+                for value in v:
+                    if value not in arm_requirements[k]:
+                        arm_requirements[k] += v
+
+    rospy.logerr(arm_requirements) # ToDo: remove or at least change
+    return arm_requirements
+
+
+def check_arm_requirements(state_machine, robot):
+    """
+    Checks if the robot has an arm that meets the requirements of all children states of this state machine
+
+    :param state_machine: The state machine for which the requirements have to be checked
+    :param robot: Robot to use
+    :return: Check whether an arm is available that satisfies the requirements of the state machine
+    """
+    arm_requirements = collect_arm_requirements(state_machine)
+    try:
+        assert robot.get_arm(**arm_requirements) is not None,\
+            "None of the available arms meets all this state machine's requirements: {}".format(arm_requirements)
+    except AssertionError as e:
+        rospy.logerr("Getting arm requirements failed, arm requirements: {}".format(arm_requirements))
+        raise

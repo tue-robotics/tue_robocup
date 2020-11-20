@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import copy
+import smach
 
 # ROS
 import rospy
@@ -8,11 +9,38 @@ import rospy
 # TU/e Robotics
 # import GripperTypes and PseudoObjects to make them available for the user of these designators.
 from robot_skills.arms import PublicArm, GripperTypes, PseudoObjects
+from robot_skills.arms import collect_arm_requirements
 from .core import Designator
 from .utility import LockingDesignator
 
 
 __author__ = 'loy'
+
+
+class ResolveArm(smach.State):
+# Todo: Return to original cb state?
+    def __init__(self, arm_designator, state_machine):
+        """ Resolves, if possible, an arm for a state machine taking into account all the arm requirements
+
+        :param arm_designator: given arm designator
+        :param state_machine: used state machine
+        """
+        smach.State.__init__(self,
+                             outcomes=['succeeded', 'failed'],
+                             output_keys=["arm"]
+                             )
+        self.arm_designator = arm_designator
+        self.state_machine = state_machine
+
+    def execute(self, userdata):
+        arm_requirements = collect_arm_requirements(self.state_machine)
+        resolved_arm = const_resolve(self.arm_designator, arm_requirements)
+        if resolved_arm is None:
+            rospy.logerror("Didn't find an arm")  # ToDo: improve error message
+            return "failed"
+        else:
+            userdata.arm = resolved_arm
+            return "succeeded"
 
 
 def const_resolve(arm_designator, additional_properties):
@@ -32,6 +60,7 @@ def const_resolve(arm_designator, additional_properties):
         else:
             arm_designator_add_props.arm_properties[k] = v
     return arm_designator_add_props.resolve()
+
 
 class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.

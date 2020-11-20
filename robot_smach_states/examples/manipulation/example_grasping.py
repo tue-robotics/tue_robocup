@@ -42,9 +42,6 @@ if __name__ == "__main__":
     item = ds.Designator(item)
 
     arm = ds.UnoccupiedArmDesignator(robot, arm_properties={})
-    #"required_trajectories": ["prepare_grasp"],
-     #                                                       "required_goals": ["carrying_pose"],
-      #                                                      "required_gripper_types": [arms.GripperTypes.GRASPING]})
 
     grab_state = Grab(robot, item, arm)
     grab_state.execute()
