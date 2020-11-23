@@ -976,6 +976,24 @@ class SuctionGripperArm(Arm):
 
         self.occupied_by_suction = None
 
+    @staticmethod
+    def _has_specific_gripper_types(gripper_type):
+        """
+        Verify whether the arm as the given type of specific gripper.
+
+        :param gripper_type: Type of gripper to check for. Must not be a pseudo gripper type.
+        :return: Gripper types that match the requirement.
+        """
+        # TODO: Extend arm to have knowledge about the gripper type that it has.
+        if gripper_type == GripperTypes.PINCH:
+            return [GripperTypes.PINCH]
+        elif gripper_type == GripperTypes.PARALLEL:
+            return [GripperTypes.PARALLEL]
+        elif gripper_type == GripperTypes.SUCTION:
+            return [GripperTypes.SUCTION]
+        else:
+            return []  # Arm has no unknown types of grippers,
+
     @property
     def occupied_by_suction(self):
         """
@@ -996,7 +1014,7 @@ class SuctionGripperArm(Arm):
         """
         self._occupied_by_suction = value
 
-    def send_gripper_goal(self, sucking, timeout=5.0):
+    def send_gripper_goal_suction(self, sucking, timeout=5.0):
         """
         Send a GripperCommand to the gripper of this arm and wait for finishing
 
