@@ -91,21 +91,7 @@ class PickUpCard(smach.State):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
         grasp_framestamped = get_grasp_pose(self.robot, grab_entity, arm)
-
-        # TODO magic numbers
-        # define transform from handpalm to suction cup
-        M = kdl.Rotation.Quaternion(-0.6644307973614778,
-                                     -0.24193328636386194,
-                                     -0.6644307970373836,
-                                     0.24193328918327617) \
-             * kdl.Rotation(0, 1, 0, 1, 0, 0, 0, 0, -1) # rotation frame because toyota uses a different frame convention
-        fingervacuum_transform = kdl.Frame(M,
-                                           kdl.Vector(0.0864371733535394, 0.028381482562915693, -0.012000000053262072))
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        grasp_framestamped.frame = grasp_framestamped.frame * fingervacuum_transform.Inverse()
-
-        rospy.loginfo("M : {}\n grasp_framestamped: {}".format(M, grasp_framestamped))
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
@@ -128,7 +114,7 @@ class PickUpCard(smach.State):
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
 
         rospy.loginfo('Start grasping')
-        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal_suction(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed to {}'.format(goal_bl))
             arm.reset()
@@ -138,15 +124,15 @@ class PickUpCard(smach.State):
         goal_bl.frame.p.z(goal_bl.frame.p.z() - 0.05)  # Remove 5 cm
 
         rospy.loginfo('Start lowering')
-        if not arm.send_goal(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal_suction(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed to {}'.format(goal_bl))
             arm.reset()
             return 'failed'
         # pick
-        # TODO use suction cup
+        arm.send_gripper_goal_suction(True)
 
-        arm.occupied_by = grab_entity
+        arm.occupied_by_suction = grab_entity
 
         # Lift
         goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
@@ -155,7 +141,7 @@ class PickUpCard(smach.State):
 
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Add 5 cm
         rospy.loginfo("Start lift")
-        if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal_suction(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed lift')
 
         # Retract
@@ -166,7 +152,7 @@ class PickUpCard(smach.State):
         goal_bl.frame.p.x(goal_bl.frame.p.x() - 0.1)  # Retract 10 cm
         goal_bl.frame.p.z(goal_bl.frame.p.z() + 0.05)  # Go 5 cm higher
         rospy.loginfo("Start retract")
-        if not arm.send_goal(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
+        if not arm.send_goal_suction(goal_bl, timeout=0.0, allowed_touch_objects=[grab_entity.id]):
             rospy.logerr('Failed retract')
         arm.wait_for_motion_done()
         self.robot.base.force_drive(-0.125, 0, 0, 2.0)
