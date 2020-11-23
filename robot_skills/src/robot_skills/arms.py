@@ -1109,7 +1109,7 @@ class SuctionGripperArm(Arm):
         grasp_precompute_goal.goal.y = offset_frame.p.y()
         grasp_precompute_goal.goal.z = offset_frame.p.z()
 
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
+        roll, pitch, yaw = offset_frame.M.GetRPY()
         grasp_precompute_goal.goal.roll = roll
         grasp_precompute_goal.goal.pitch = pitch
         grasp_precompute_goal.goal.yaw = yaw
