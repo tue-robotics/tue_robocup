@@ -189,6 +189,7 @@ class Robot(object):
                 required_trajectories=None, desired_trajectories=None,
                 required_arm_name=None,
                 force_sensor_required=False,
+                suction_required=False,
                 required_objects=None, desired_objects=None):
         """
         Find an arm that has the needed and hopefully the desired properties.
@@ -239,6 +240,7 @@ class Robot(object):
         assert seq_or_none(required_trajectories)
         assert seq_or_none(desired_trajectories)
         assert isinstance(force_sensor_required, bool)
+        assert isinstance(suction_required, bool)
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
@@ -285,6 +287,11 @@ class Robot(object):
             # Force sensor availability
             if force_sensor_required and not hasattr(arm, "force_sensor"):
                 discarded_reasons.append((arm_name, "should have a force sensor but hasn't"))
+                continue
+
+            # Suction availability
+            if suction_required and not hasattr(arm, "_ac_suction"):
+                discarded_reasons.append((arm_name, "should have a suction cup but hasn't"))
                 continue
 
             # Objects

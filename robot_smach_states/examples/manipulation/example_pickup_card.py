@@ -44,7 +44,8 @@ if __name__ == "__main__":
     arm = ds.UnoccupiedArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_grasp"],
                                                             "required_goals": ["carrying_pose"],
                                                             "required_gripper_types": [arms.GripperTypes.GRASPING,
-                                                                                       arms.GripperTypes.SUCTION]})
+                                                                                       arms.GripperTypes.SUCTION],
+                                                            "suction_required": True})
 
     grab_state = GrabCard(robot, item, arm)
     grab_state.execute()

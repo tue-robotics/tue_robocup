@@ -80,6 +80,7 @@ class PublicArm(object):
         self._available_gripper_types = available_gripper_types
         self._has_occupied_by = has_occupied_by
         self._allow_force_sensor = allow_force_sensor
+        self._allow_suction = allow_suction
         self._available_joint_goals = available_joint_goals
         self._available_joint_trajectories = available_joint_trajectories
 
@@ -109,6 +110,26 @@ class PublicArm(object):
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
                        "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
         self._arm.occupied_by = value
+
+    @property
+    def occupied_by_suction(self):
+        """
+        Query the object currently held by the arm.
+        """
+        self._test_die(self._has_occupied_by, "occupied_by",
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
+                       "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+        return self._arm.occupied_by_suction
+
+    @occupied_by.setter
+    def occupied_by(self, value):
+        """
+        Set the object currently held by the arm,
+        """
+        self._test_die(self._has_occupied_by, "occupied_by",
+                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
+                       "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+        self._arm.occupied_by_suction = value
 
     # Joint goals
     def has_joint_goal(self, configuration):
@@ -185,6 +206,18 @@ class PublicArm(object):
         return hasattr(self._arm, "force_sensor")
 
     def move_down_until_force_sensor_edge_up(self, timeout=10, retract_distance=0.01):
+        self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
+                       "Specify get_arm(..., force_sensor_required=True)")
+        return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
+
+    @property
+    def has_suction_cup(self):
+        # Check that the user enabled force sensor access.
+        self._test_die(self._allow_suction, 'allow_suction=' + str(self._allow_suction),
+                       "Specify get_arm(..., suction_required=True)")
+        return hasattr(self._arm, "force_sensor")
+
+    def send_goal_suction(self, timeout=10, retract_distance=0.01):
         self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
                        "Specify get_arm(..., force_sensor_required=True)")
         return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
