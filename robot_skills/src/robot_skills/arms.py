@@ -65,6 +65,9 @@ class PublicArm(object):
     :ivar _allow_force_sensor: Whether use of the force sensor is allowed.
     :vartype _allow_force_sensor: bool
 
+    :ivar _allow_suction: Whether use of the suction cup is allowed.
+    :vartype _allow_suction: bool
+
     :ivar _available_joint_goals: Joint goals that may be used.
     :vartype _available_joint_goals: set of str
 
@@ -73,7 +76,7 @@ class PublicArm(object):
 
     """
     def __init__(self, arm, available_gripper_types, default_gripper_type,
-                 has_occupied_by, allow_force_sensor, available_joint_goals,
+                 has_occupied_by, allow_force_sensor, allow_suction, available_joint_goals,
                  available_joint_trajectories):
         self._arm = arm
         self.default_gripper_type = default_gripper_type
@@ -114,21 +117,19 @@ class PublicArm(object):
     @property
     def occupied_by_suction(self):
         """
-        Query the object currently held by the arm.
+        Query the object currently held by the suction cup.
         """
-        self._test_die(self._has_occupied_by, "occupied_by",
-                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
-                       "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+        self._test_die(self.has_suction_cup, 'has_suction_cup=' + str(self.has_suction_cup),
+                       "Specify get_arm(..., suction_required=True)")
         return self._arm.occupied_by_suction
 
-    @occupied_by.setter
-    def occupied_by(self, value):
+    @occupied_by_suction.setter
+    def occupied_by_suction(self, value):
         """
-        Set the object currently held by the arm,
+        Set the object currently held by the suction cup,
         """
-        self._test_die(self._has_occupied_by, "occupied_by",
-                       "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
-                       "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
+        self._test_die(self.has_suction_cup, 'has_suction_cup=' + str(self.has_suction_cup),
+                       "Specify get_arm(..., suction_required=True)")
         self._arm.occupied_by_suction = value
 
     # Joint goals
@@ -215,12 +216,20 @@ class PublicArm(object):
         # Check that the user enabled force sensor access.
         self._test_die(self._allow_suction, 'allow_suction=' + str(self._allow_suction),
                        "Specify get_arm(..., suction_required=True)")
-        return hasattr(self._arm, "force_sensor")
+        return hasattr(self._arm, "_ac_suction")
 
-    def send_goal_suction(self, timeout=10, retract_distance=0.01):
-        self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
-                       "Specify get_arm(..., force_sensor_required=True)")
-        return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
+    def send_gripper_goal_suction(self, sucking, timeout=5.0):
+        self._test_die(self.has_suction_cup, 'has_suction_cup=' + str(self.has_suction_cup),
+                       "Specify get_arm(..., suction_required=True)")
+        return self._arm.send_gripper_goal_suction(sucking=sucking, timeout=timeout)
+
+    def send_goal_suction(self, frameStamped, timeout=30, pre_grasp=False, first_joint_pos_only=False,
+                  allowed_touch_objects=None):
+        self._test_die(self.has_suction_cup, 'has_suction_cup=' + str(self.has_suction_cup),
+                       "Specify get_arm(..., suction_required=True)")
+        if allowed_touch_objects is None:
+            allowed_touch_objects = list()
+        return self._arm.send_goal_suction(frameStamped, timeout, pre_grasp, first_joint_pos_only, allowed_touch_objects)
 
     def handover_to_human(self, timeout=10, gripper_type=None):
         if gripper_type is None:
