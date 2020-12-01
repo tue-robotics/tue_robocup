@@ -77,16 +77,12 @@ class PickUpCard(smach.State):
         segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
 
         # Arm to position in a safe way
-        self.robot.move_to_pregrasp_pose(arm, grab_entity._pose.p)
+
         arm.send_gripper_goal('close', timeout=0.0)
-        arm.wait_for_motion_done()
+        self.robot.move_to_pregrasp_pose(arm, grab_entity._pose.p)
 
         # Make sure the head looks at the entity (so you can see where its going to grasp)
         self.robot.head.look_at_point(VectorStamped(vector=grab_entity._pose.p, frame_id="/map"), timeout=0.0)
-
-        # Make sure the torso and the arm are done
-        self.robot.torso.wait_for_motion_done(cancel=True)
-        arm.wait_for_motion_done(cancel=True)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
@@ -121,7 +117,8 @@ class PickUpCard(smach.State):
             return 'failed'
 
         # Picking
-        goal_bl.frame.p.z(goal_bl.frame.p.z() - 0.05)  # Remove 5 cm
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
+                                                    tf_listener=self.robot.tf_listener)
 
         rospy.loginfo('Start lowering')
         if not arm.send_goal_suction(goal_bl, timeout=20, pre_grasp=True, allowed_touch_objects=[grab_entity.id]):
