@@ -37,6 +37,7 @@
   <depend>tue_manipulation_msgs</depend>
   <depend>tue_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>tmc_suction</depend>
 
   <exec_depend>python-mock</exec_depend>
 
