@@ -22,7 +22,7 @@ class Hero(robot.Robot):
 
         self.add_arm_part(
             'leftArm',
-            arms.SuctionGripperArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+            arms.ForceSensingArm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
         )
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
