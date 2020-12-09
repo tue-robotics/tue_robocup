@@ -24,6 +24,9 @@ class RobotPart(object):
         self.robot_name = robot_name
         self.tf_listener = tf_listener
 
+        # Body parts
+        self.parts = dict()
+
         self.__ros_connections = {}
 
         self.__diagnostics_name = ""
@@ -31,6 +34,16 @@ class RobotPart(object):
         # This is set to False by subscribe_hardware_status, because then apparently there is a meaningful check
         # If no such check exists, then assume it's operational unless overridden in subclass
         self._operational = True
+
+    def add_part(self, partname, part):
+        """
+        Add a component part to the robot part. This is added to the parts dict and set as an attribute
+
+        :param partname: name of the bodypart
+        :param part: bodypart object
+        """
+        self.parts[partname] = part
+        setattr(self, partname, part)
 
     def load_param(self, param_name, default=None):
         """
@@ -215,4 +228,11 @@ class RobotPart(object):
         :return: Succes
         :rtype: bool
         """
-        return True
+        results = {}
+        for partname, part in self.parts.items():
+            rospy.logdebug("Resetting {}".format(partname))
+            if self.robot_name == 'hero' and partname == 'torso': # Todo: get rid of this custom thing.
+                rospy.logwarn("Skipping reset of %s", partname)
+            else:
+                part.reset()
+        return all(results.values())
