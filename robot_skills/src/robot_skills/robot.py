@@ -9,7 +9,7 @@ from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String, ColorRGBA, Header
 
 # TU/e
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_skills.util import decorators
 
 from collections import OrderedDict, Sequence

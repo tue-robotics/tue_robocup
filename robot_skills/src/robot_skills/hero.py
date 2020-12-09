@@ -1,4 +1,5 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from robot_skills.arm import arms
 from .simulation import is_sim_mode, SimEButton
 
 import rospy

@@ -2,7 +2,7 @@ import unittest
 import mock
 
 # Robot Skills
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_skills.mockbot import Mockbot
 from robot_skills.util.entity import Entity
 

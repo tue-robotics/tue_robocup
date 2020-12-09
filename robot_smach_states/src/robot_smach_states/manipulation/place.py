@@ -5,7 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from .place_designator import EmptySpotDesignator
@@ -271,7 +271,7 @@ class Place(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    from robot_skills import arms
+    from robot_skills.arm import arms
     from robot_skills import get_robot_from_argv
     from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 

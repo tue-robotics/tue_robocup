@@ -5,7 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
 from ..util.designators import check_type
 

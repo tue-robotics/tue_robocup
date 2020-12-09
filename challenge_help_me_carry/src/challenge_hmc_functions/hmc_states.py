@@ -5,7 +5,7 @@ import smach
 import robot_smach_states as states
 
 from robot_smach_states.util.designators import check_type
-from robot_skills.arms import Arm, GripperState
+from robot_skills.arm.arms import Arm, GripperState
 from hmi import TimeoutException
 
 from robocup_knowledge import load_knowledge

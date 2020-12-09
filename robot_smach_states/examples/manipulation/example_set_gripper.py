@@ -4,7 +4,7 @@ import argparse
 
 # TU/e Robotics
 from robot_skills.get_robot import get_robot
-from robot_skills.arms import GripperState, GripperTypes
+from robot_skills.arm.arms import GripperState, GripperTypes
 # Robot Smach States
 from robot_smach_states.manipulation import SetGripper
 import robot_smach_states.util.designators as ds

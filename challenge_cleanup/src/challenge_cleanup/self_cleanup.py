@@ -9,7 +9,7 @@ from robot_smach_states.utility import WaitTime
 from robot_smach_states.world_model import Inspect
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.util.entity import Entity
-from robot_skills import arms
+from robot_skills.arm import arms
 import robot_smach_states.util.designators as ds
 
 from robocup_knowledge import load_knowledge
