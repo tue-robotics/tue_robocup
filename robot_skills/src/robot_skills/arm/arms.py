@@ -8,7 +8,7 @@ import PyKDL as kdl
 import visualization_msgs.msg
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
-from robot_skills.force_sensor import ForceSensor
+from robot_skills.arm.force_sensor import ForceSensor
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 # TU/e Robotics
@@ -355,15 +355,9 @@ class Arm(RobotPart):
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
 
-        self._occupied_by = None
-
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
-        offset = self.load_param('skills/arm/' + self.side + '/grasp_offset/')
-        self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
-                                kdl.Vector(offset["x"], offset["y"], offset["z"]))
-
         self.marker_to_grippoint_offset = self.load_param('skills/arm/' + self.side + '/marker_to_grippoint')
 
         # Grasp offsets
@@ -623,107 +617,7 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        return self.send_joint_goal('reset', timeout=timeout) and self.send_gripper_goal('close', 0.0)
-
-    @property
-    def occupied_by(self):
-        """
-        The 'occupied_by' property will return the current entity that is in the gripper of this arm.
-
-        :return: robot_skills.util.entity, ED entity
-        """
-
-        return self._occupied_by
-
-    @occupied_by.setter
-    def occupied_by(self, value):
-        """
-        Set the entity which occupies the arm.
-
-        :param value: robot_skills.util.entity, ED entity
-        :return: no return
-        """
-        self._occupied_by = value
-
-    def send_gripper_goal(self, state, timeout=5.0, max_torque=0.1):
-        """
-        Send a GripperCommand to the gripper of this arm and wait for finishing
-
-        :param state: open or close
-        :type state: str (GripperState)
-        :param timeout: timeout in seconds; timeout of 0.0 is not allowed
-        :type timeout: float
-        :param max_torque: How much torque [Nm] to apply, only applied when closing the gripper
-        :return: True of False
-        :rtype: bool
-        """
-        goal = GripperCommandGoal()
-
-        if state == GripperState.OPEN:
-            goal.command.direction = GripperCommand.OPEN
-        elif state == GripperState.CLOSE:
-            goal.command.direction = GripperCommand.CLOSE
-            goal.command.max_torque = max_torque
-        else:
-            rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
-            return False
-
-        self._ac_gripper.send_goal(goal)
-
-        if state == GripperState.OPEN:
-            if self.occupied_by is not None:
-                rospy.logerr("send_gripper_goal open is called but there is still an entity with id '%s' \
-                occupying the gripper, please update the world model and remove this entity" % self.occupied_by.id)
-            self.occupied_by = None
-
-        goal_status = GoalStatus.SUCCEEDED
-        if timeout != 0.0:
-            self._ac_gripper.wait_for_result(rospy.Duration(timeout))
-            goal_status = self._ac_gripper.get_state()
-
-        return goal_status == GoalStatus.SUCCEEDED
-
-    def handover_to_human(self, timeout=10):
-        """
-        Handover an item from the gripper to a human.
-
-        Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
-        :param timeout: timeout in seconds
-        :return: True or False
-        """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
-
-    def handover_to_robot(self, timeout=10):
-        """
-        Handover an item from a human to the robot.
-
-        Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
-        :param timeout: timeout in seconds
-        :return: True or False
-        """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
+        return self.send_joint_goal('reset', timeout=timeout)
 
     def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
         """
@@ -835,7 +729,7 @@ class Arm(RobotPart):
             return True
 
     @property
-    def object_in_gripper_measurement(self):
+    def object_in_gripper_measurement(self): #TODO move grasp sensor to a separate robot part
         """
         Returns whether the gripper is empty, holding an object or if this is unknown
 
@@ -844,7 +738,7 @@ class Arm(RobotPart):
         return self._grasp_sensor_state
 
     @property
-    def grasp_sensor_distance(self):
+    def grasp_sensor_distance(self): # TODO move grasp sensor to a separate robot part
         """
         Returns the sensor distance. If no recent measurement is available or the measurement is outside bounds
         and hence unreliable, NaN is returned
