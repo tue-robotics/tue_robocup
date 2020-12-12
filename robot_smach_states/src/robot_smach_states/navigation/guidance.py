@@ -394,8 +394,8 @@ class GuideToSymbolic(Guide):
             this radius [m]
         """
         constr_fun = lambda: combine_constraints(
-            [lambda: symbolic_constraint(robot, entity_designator_area_name_map),
-             lambda: look_at_constraint(entity_lookat_designator)]
+            [lambda userdata: symbolic_constraint(robot, entity_designator_area_name_map),
+             lambda userdata: look_at_constraint(entity_lookat_designator)]
         )
         super(GuideToSymbolic, self).__init__(robot=robot,
                                               constraint_function=constr_fun,
