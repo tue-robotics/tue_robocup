@@ -105,5 +105,5 @@ class ParrallelGripper(Gripper):
 
         return goal_status == GoalStatus.SUCCEEDED
 
-    def reset(self):
+    def selfreset(self):
         return self.send_gripper_goal('open', 0.0)

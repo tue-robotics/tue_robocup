@@ -223,12 +223,13 @@ class RobotPart(object):
 
     def reset(self):
         """
-        Reset body part. This should be implemented in the subclass. Should always return a bool.
+        Reset body part and all its components, this function should not be overwritten.
 
         :return: Succes
         :rtype: bool
         """
         results = {}
+        self.selfreset()
         for partname, part in self.parts.items():
             rospy.logdebug("Resetting {}".format(partname))
             if self.robot_name == 'hero' and partname == 'torso': # Todo: get rid of this custom thing.
@@ -236,3 +237,10 @@ class RobotPart(object):
             else:
                 part.reset()
         return all(results.values())
+
+    def selfreset(self):
+        """
+        Reset of the body part itself. This function may be overwritten.
+        Returns: bool
+        """
+        return True

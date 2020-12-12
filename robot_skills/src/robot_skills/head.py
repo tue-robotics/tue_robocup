@@ -23,7 +23,7 @@ class Head(RobotPart):
 
     # -- Helpers --
 
-    def reset(self, timeout=0):
+    def selfreset(self, timeout=0):
         """
         Reset head position
         """

@@ -610,7 +610,7 @@ class Arm(RobotPart):
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
 
-    def reset(self, timeout=0.0):
+    def selfreset(self, timeout=0.0):
         """
         Put the arm into the 'reset' pose
 
@@ -892,7 +892,7 @@ class FakeArm(RobotPart):
         rospy.logwarn("_send_joint_trajectory called on FakeArm.")
         return False
 
-    def reset(self, timeout=0.0):
+    def selfreset(self, timeout=0.0):
         return False
 
     @property

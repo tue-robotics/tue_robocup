@@ -52,7 +52,7 @@ class Lights(RobotPart):
         rgb_msg.show_color.data = True
         self._topic.publish(rgb_msg)
 
-    def reset(self):
+    def selfreset(self):
         """
         Set the lights to blue
 
