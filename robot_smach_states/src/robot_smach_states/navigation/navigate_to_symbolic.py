@@ -27,7 +27,7 @@ class NavigateToSymbolic(NavigateTo):
             lambda: symbolic_constraint(robot, entity_designator_area_name_map),
             lambda: look_at_constraint(entity_lookat_designator)
         ]
-        super(NavigateToSymbolic, self).__init__(robot, lambda: combine_constraints(constraint_list))
+        super(NavigateToSymbolic, self).__init__(robot, lambda userdata: combine_constraints(constraint_list))
 
 
 class NavigateToRoom(NavigateToSymbolic):

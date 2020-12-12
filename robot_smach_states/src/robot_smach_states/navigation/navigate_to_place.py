@@ -28,4 +28,5 @@ class NavigateToPlace(NavigateTo):
                          'Please specify left or right, will default to left')
             arm_designator = Designator(robot.leftArm)
 
-        super(NavigateToPlace, self).__init__(robot, lambda: arms_reach_constraint(place_pose_designator, arm_designator, look=True))
+        super(NavigateToPlace, self).__init__(robot, lambda userdata: arms_reach_constraint(place_pose_designator,
+                                                                                            arm_designator, look=True))

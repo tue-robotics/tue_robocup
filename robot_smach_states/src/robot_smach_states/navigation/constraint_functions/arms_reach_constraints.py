@@ -8,22 +8,27 @@ import rospy
 from geometry_msgs.msg import Point
 
 # TU/e Robotics
+from robot_skills.arms import PublicArm
+from ...util.designators import check_type, Designator
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 
-def arms_reach_constraint(pose_designator, arm_designator, look=True):
+def arms_reach_constraint(pose_designator, arm, look=True):
     """
     Position so that the arm can reach the position/entity
 
     :param pose_designator: designator that resolves to a FrameStamped of the point to be reached
-    :param arm_designator: PublicArmDesignator, arm to use for manipulation
+    :param arm: PublicArmDesignator or arm to use for manipulation
     :param look: bool, whether or not the orientation must be constrained as well
     :return: navigation constraints, if a designator does not resolve None is returned
     :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
-    arm = arm_designator.resolve()
-    if not arm:
-        rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm_designator))
+
+    check_type(arm, PublicArm)  # Check that the arm is either a PublicArm or a designator to one
+
+    if isinstance(arm, Designator):
+        arm = arm.resolve()
+        rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm))
         return None
 
     radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())

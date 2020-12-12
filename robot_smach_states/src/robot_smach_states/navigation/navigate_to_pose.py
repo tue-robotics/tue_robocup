@@ -17,4 +17,4 @@ class NavigateToPose(NavigateTo):
     :param frame_id (default "/map"): frame in which the pose is expressed
     """
     def __init__(self, robot, x, y, rz, radius=0.15, frame_id="/map"):
-        super(NavigateToPose, self).__init__(robot, lambda: pose_constraints(x, y, rz, radius, frame_id))
+        super(NavigateToPose, self).__init__(robot, lambda userdata: pose_constraints(x, y, rz, radius, frame_id))

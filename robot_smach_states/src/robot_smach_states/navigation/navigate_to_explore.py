@@ -18,7 +18,7 @@ class NavigateToExplore(NavigateTo):
         @param breakout_designator when this Designator successfully resolves, the state signals it is done.
         For example, it could resolve to an item of a class you are looking for
         """
-        super(NavigateToExplore, self).__init__(robot, self.generateConstraint)
+        super(NavigateToExplore, self).__init__(robot, lambda userdata: self.generateConstraint())
 
         self.robot = robot
 

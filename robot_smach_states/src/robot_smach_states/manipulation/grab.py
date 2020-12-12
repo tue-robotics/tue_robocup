@@ -33,7 +33,7 @@ class PrepareEdGrasp(smach.State):
         smach.State.__init__(self,
                              outcomes=['succeeded', 'failed'],
                              input_keys=["arm"],
-                             output_keys=["arm"]        #solely necessary to make arm mutable
+                             output_keys=["arm"]        # solely necessary to make arm mutable
                              )
 
         # Assign member variables
@@ -347,9 +347,7 @@ class Grab(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            # Todo: remove arm from Navigate to grab;
-            # non trivial since userdata can not be accessed in navigate(TO) when necessary
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})

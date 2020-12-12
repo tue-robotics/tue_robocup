@@ -28,4 +28,4 @@ class NavigateToWaypoint(NavigateTo):
         else:
             constraints = [lambda: waypoint_constraint(waypoint_designator, radius, look=True)]
 
-        super(NavigateToWaypoint, self).__init__(robot, lambda: combine_constraints(constraints), speak=speak)
+        super(NavigateToWaypoint, self).__init__(robot, lambda userdata: combine_constraints(constraints), speak=speak)

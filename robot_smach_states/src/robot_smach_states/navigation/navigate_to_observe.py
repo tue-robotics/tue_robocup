@@ -24,4 +24,4 @@ class NavigateToObserve(NavigateTo):
             lambda: look_at_constraint(entity_designator),
             lambda: radius_constraint(entity_designator, radius, margin)
         ]
-        super(NavigateToObserve, self).__init__(robot, lambda: combine_constraints(constraint_list))
+        super(NavigateToObserve, self).__init__(robot, lambda userdata: combine_constraints(constraint_list))

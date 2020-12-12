@@ -40,14 +40,16 @@ class AbortAnalyzer(smach.State):
 
 
 class getPlan(smach.State):
-    def __init__(self, robot, constraint_function, speak=True):
+    def __init__(self, robot, constraint_function, input_keys, output_keys, speak=True):
         smach.State.__init__(self,
-            outcomes=['unreachable','goal_not_defined','goal_ok','preempted'])
+                             input_keys=input_keys,
+                             output_keys=output_keys,
+                             outcomes=['unreachable', 'goal_not_defined', 'goal_ok', 'preempted'])
         self.robot = robot
         self.constraint_function = constraint_function
         self.speak = speak
 
-    def execute(self, userdata=None):
+    def execute(self, userdata):
 
         # Sleep for 0.1 s (breakOut sleep) to prevent synchronization errors between monitor state and nav state
         rospy.sleep(rospy.Duration(0.1))
@@ -56,7 +58,7 @@ class getPlan(smach.State):
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'
 
-        constraint = self.constraint_function()
+        constraint = self.constraint_function(userdata)
 
         # Perform some typechecks
         if not constraint:
@@ -216,7 +218,8 @@ class NavigateTo(smach.StateMachine):
     :param speak: Whether or not the robot should speak during navigation
     :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
     """
-    def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True, input_keys=[], output_keys=[]):
+    def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True, input_keys=[],
+                 output_keys=[]):
         smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'],
                                     input_keys=input_keys, output_keys=output_keys)
         self.robot = robot
@@ -225,11 +228,13 @@ class NavigateTo(smach.StateMachine):
         with self:
 
             # Create the sub SMACH state machine
-            sm_nav = smach.StateMachine(outcomes=['arrived', 'unreachable', 'goal_not_defined', 'preempted'])
+            sm_nav = smach.StateMachine(outcomes=['arrived', 'unreachable', 'goal_not_defined', 'preempted'],
+                                        input_keys=input_keys, output_keys=output_keys)
 
             with sm_nav:
 
-                smach.StateMachine.add('GET_PLAN', getPlan(self.robot, constraint_function, self.speak),
+                smach.StateMachine.add('GET_PLAN', getPlan(self.robot, constraint_function, input_keys, output_keys,
+                                                           self.speak),
                                        transitions={'unreachable': 'unreachable',
                                                     'goal_not_defined': 'goal_not_defined',
                                                     'goal_ok': 'EXECUTE_PLAN'})
