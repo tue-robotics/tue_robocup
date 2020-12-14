@@ -57,7 +57,7 @@ class CustomPlace(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def open_gripper(ud):
-            arm.resolve().send_gripper_goal("open", timeout=0)
+            arm.resolve().gripper.send_goal("open", timeout=0)
             rospy.sleep(3.0)
             robot.speech.speak("This is where I usually place my cup")
             return 'done'
