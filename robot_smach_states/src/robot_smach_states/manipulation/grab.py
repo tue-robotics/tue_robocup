@@ -63,7 +63,7 @@ class PrepareEdGrasp(smach.State):
         arm.wait_for_motion_done()
 
         # Open gripper
-        arm.send_gripper_goal('open', timeout=0.0)
+        arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
@@ -176,7 +176,7 @@ class PickUp(smach.State):
         #                      ):
         #     rospy.logerr('Pre-grasp failed:')
         #     arm.reset()
-        #     arm.send_gripper_goal('close', timeout=None)
+        #     arm.gripper.send_goal('close', timeout=None)
         #     return 'failed'
 
         # Grasp
@@ -185,13 +185,13 @@ class PickUp(smach.State):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
-            arm.send_gripper_goal('close', timeout=0.0)
+            arm.gripper.send_goal('close', timeout=0.0)
             return 'failed'
 
         # Close gripper
-        arm.send_gripper_goal('close')
+        arm.gripper.send_goal('close')
 
-        arm.occupied_by = grab_entity
+        arm.gripper.occupied_by = grab_entity
 
         # Lift
         goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
@@ -237,7 +237,7 @@ class PickUp(smach.State):
                 result = "failed"
                 rospy.logerr("Gripper is not holding an object")
                 self.robot.speech.speak("Whoops, something went terribly wrong")
-                arm.occupied_by = None  # Set the object the arm is holding to None
+                arm.gripper.occupied_by = None  # Set the object the arm is holding to None
             else:
                 # State is holding, grasp succeeded.
                 # If unknown: sensor not there, assume gripper is holding and hope for the best
@@ -301,7 +301,7 @@ class ResetOnFailure(smach.StateMachine):
         if self._robot.robot_name == "amigo":
             self._robot.torso.reset()  # Move up to make resetting of the arm safer.
         if arm is not None:
-            arm.send_gripper_goal('close')
+            arm.gripper.send_goal('close')
         self._robot.head.reset()  # Sends a goal
         self._robot.head.cancel_goal()  # And cancels it...
         if arm is not None:
