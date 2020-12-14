@@ -172,7 +172,7 @@ class PublicArm(object):
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                        "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         # Specified type of gripper currently not used.
-        return self._arm.send_gripper_goal(state, timeout, max_torque=max_torque)
+        return self._arm.gripper.send_goal(state, timeout, max_torque=max_torque)
 
     @property
     def has_force_sensor(self):

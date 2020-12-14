@@ -329,7 +329,7 @@ class Robot(object):
         if obj_collection is None:
             return True
 
-        cur_obj = arm.occupied_by
+        cur_obj = arm.gripper.occupied_by
         for obj in obj_collection:
             if obj == arms.PseudoObjects.ANY:  # Any object, but not empty.
                 if cur_obj is None:
