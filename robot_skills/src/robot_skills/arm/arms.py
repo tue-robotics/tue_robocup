@@ -241,15 +241,6 @@ class PublicArm(object):
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
 
-
-class GripperState(object):
-    """
-    Specifies a State either OPEN or CLOSE
-    """
-    OPEN = "open"
-    CLOSE = "close"
-
-
 class Arm(RobotPart):
     """
     A single arm can be either left or right, extends Arms:

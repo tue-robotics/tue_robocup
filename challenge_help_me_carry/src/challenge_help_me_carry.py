@@ -7,7 +7,8 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
-from robot_skills.arm.arms import GripperState, GripperTypes
+from robot_skills.arm.arms import GripperTypes
+from robot_skills.arm.arms.gripper import GripperState
 from robocup_knowledge import load_knowledge
 from challenge_hmc_functions import hmc_states
 from robot_skills.util import kdl_conversions
