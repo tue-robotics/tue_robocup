@@ -28,7 +28,7 @@ class Hero(robot.Robot):
         hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'left'))
         guarded_motion.AddForceSensingArm(hero_arm)
 
-        self.add_body_part('leftArm', hero_arm)
+        self.add_arm_part('leftArm', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,

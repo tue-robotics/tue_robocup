@@ -9,6 +9,7 @@ import visualization_msgs.msg
 from actionlib import GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from robot_skills.arm.force_sensor import ForceSensor
+from robot_skills.arm.gripper import ParrallelGripper
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 # TU/e Robotics
@@ -140,6 +141,15 @@ class PublicArm(object):
         return self._arm.send_goal(frameStamped, timeout, pre_grasp, first_joint_pos_only, allowed_touch_objects)
 
     # Gripper
+    @property
+    def gripper(self):
+        return self._arm.gripper
+
+    # handover
+    @property
+    def handover_detector(self):
+        return self._arm.handover_detector
+
     def has_gripper_type(self, gripper_type=None):
         """
         Query whether the arm has the provided specific type of gripper.
@@ -152,28 +162,6 @@ class PublicArm(object):
 
         return gripper_type is not None and gripper_type in self._available_gripper_types
 
-    def send_gripper_goal(self, state, timeout=5.0, gripper_type=None, max_torque=0.1):
-        """
-        Tell the gripper to perform a motion.
-
-        :param state: New state of the gripper.
-        :type state: str (GripperState)
-        :param timeout: Amount of time available to reach the goal, default is 5
-        :type timeout: float
-        :param gripper_type: Optional type of gripper to perform the action.
-        :type gripper_type: str
-        :param max_torque: How much torque [Nm] to apply
-        :return: succes
-        :rtype: bool
-        """
-        if gripper_type is None:
-            gripper_type = self.default_gripper_type
-
-        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
-                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        # Specified type of gripper currently not used.
-        return self._arm.gripper.send_goal(state, timeout, max_torque=max_torque)
-
     @property
     def has_force_sensor(self):
         # Check that the user enabled force sensor access.
@@ -185,22 +173,6 @@ class PublicArm(object):
         self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
                        "Specify get_arm(..., force_sensor_required=True)")
         return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
-
-    def handover_to_human(self, timeout=10, gripper_type=None):
-        if gripper_type is None:
-            gripper_type = self.default_gripper_type
-
-        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
-                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        return self._arm.handover_detector.handover_to_human(timeout)
-
-    def handover_to_robot(self, timeout=10, gripper_type=None):
-        if gripper_type is None:
-            gripper_type = self.default_gripper_type
-
-        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
-                       "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        return self._arm.handover_detector.handover_to_robot(timeout)
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
         # Provided gripper type currently ignored.
@@ -320,19 +292,21 @@ class Arm(RobotPart):
                     self._has_specific_gripper_types(GripperTypes.PARALLEL))
         return self._has_specific_gripper_types(gripper_type)
 
-    @staticmethod
-    def _has_specific_gripper_types(gripper_type):
+    def _has_specific_gripper_types(self, gripper_type):
         """
         Verify whether the arm as the given type of specific gripper.
 
         :param gripper_type: Type of gripper to check for. Must not be a pseudo gripper type.
         :return: Gripper types that match the requirement.
         """
-        # TODO: Extend arm to have knowledge about the gripper type that it has.
+        if not hasattr(self, gripper):
+            rospy.loginfo("This arm does not have a 'gripper' ")
+
+        # TODO: Extend grippers to have knowledge about the gripper type that it has.
         if gripper_type == GripperTypes.PINCH:
-            return [GripperTypes.PINCH]
+            return isinstance(self.gripper, ParrallelGripper)
         elif gripper_type == GripperTypes.PARALLEL:
-            return [GripperTypes.PARALLEL]
+            return isinstance(self.gripper, ParrallelGripper)
         elif gripper_type == GripperTypes.SUCTION:
             return []
         else:
