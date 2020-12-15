@@ -1,5 +1,5 @@
 from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
-from robot_skills.arm import arms, force_sensor, gripper, guarded_motion
+from robot_skills.arm import arms, force_sensor, gripper, guarded_motion, handover_detector
 from .simulation import is_sim_mode, SimEButton
 
 import rospy
@@ -25,7 +25,7 @@ class Hero(robot.Robot):
         hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
         hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_listener, "/" + self.robot_name + "/wrist_wrench/raw"))
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
-
+        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'left'))
         guarded_motion.AddForceSensingArm(hero_arm)
 
         self.add_body_part('leftArm', hero_arm)
