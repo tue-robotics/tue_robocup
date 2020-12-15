@@ -192,7 +192,7 @@ class PublicArm(object):
 
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                        "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        return self._arm.handover_to_human(timeout)
+        return self._arm.handover_detector.handover_to_human(timeout)
 
     def handover_to_robot(self, timeout=10, gripper_type=None):
         if gripper_type is None:
@@ -200,7 +200,7 @@ class PublicArm(object):
 
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                        "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        return self._arm.handover_to_robot(timeout)
+        return self._arm.handover_detector.handover_to_robot(timeout)
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
         # Provided gripper type currently ignored.
