@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, \
     sound_source_localisation, torso, world_model_ed
-from robot_skills.arm import arms
+from robot_skills.arm import arms, gripper, handover_detector
 from .simulation import is_sim_mode, SimEButton
 
 
@@ -24,8 +24,19 @@ class Amigo(robot.Robot):
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        self.add_arm_part('leftArm', arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, side="left"))
-        self.add_arm_part('rightArm', arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, side="right"))
+        # construct left arm
+        left_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        left_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
+        left_arm.add_part('handover_detector',
+                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'left'))
+        self.add_arm_part('leftArm', left_arm)
+
+        # construct right arm
+        right_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
+        right_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'right'))
+        right_arm.add_part('handover_detector',
+                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'right'))
+        self.add_arm_part('rightArm', right_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))
