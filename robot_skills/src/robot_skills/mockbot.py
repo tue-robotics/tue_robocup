@@ -70,7 +70,6 @@ class Arm(MockedRobotPart):
         self.side = side
         self.get_joint_states = get_joint_states
 
-        self.occupied_by = None
         self._operational = True
 
         self._base_offset = random_kdl_vector()
@@ -85,9 +84,6 @@ class Arm(MockedRobotPart):
         self.send_joint_goal = mock.MagicMock()
         self.send_joint_trajectory = mock.MagicMock()
         self.reset = mock.MagicMock()
-        self.send_gripper_goal = mock.MagicMock()
-        self.handover_to_human = mock.MagicMock()
-        self.handover_to_robot = mock.MagicMock()
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
@@ -99,6 +95,18 @@ class Arm(MockedRobotPart):
     def base_offset(self):
         return self._base_offset
 
+
+class Gripper(MockedRobotPart):
+    def __init__(self, robot_name, tf_listener, *args, **kwargs):
+        super(Gripper, self).__init__(robot_name, tf_listener)
+        self.occupied_by = None
+        self.send_goal = mock.MagicMock()
+
+class HandoverDetector(MockedRobotPart):
+    def __init__(self):
+        super(HandoverDetector, self).__init__(robot_name, tf_listener)
+        self.handover_to_human = mock.MagicMock()
+        self.handover_to_robot = mock.MagicMock()
 
 class Base(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
@@ -339,14 +347,19 @@ class Mockbot(robot.Robot):
         # Body parts
         self.add_body_part('base', Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', Torso(self.robot_name, self.tf_listener, self.get_joint_states))
-        self.add_arm_part(
-            'leftArm',
-            Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
-        )
-        self.add_arm_part(
-            'rightArm',
-            Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
-        )
+
+        # construct left arm
+        left_arm = Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        left_arm.add_part('gripper', Gripper(self.robot_name, self.tf_listener, 'left'))
+        left_arm.add_part('handover_detector', HandoverDetector(self.robot_name, self.tf_listener, 'left'))
+        self.add_arm_part('leftArm', left_arm)
+
+        # construct right arm
+        right_arm = Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
+        right_arm.add_part('gripper', Gripper(self.robot_name, self.tf_listener, 'right'))
+        right_arm.add_part('handover_detector', HandoverDetector(self.robot_name, self.tf_listener, 'right'))
+        self.add_arm_part('rightArm', right_arm)
+
         self.add_body_part('head', Head(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
