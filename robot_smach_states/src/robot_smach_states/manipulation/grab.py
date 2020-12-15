@@ -9,7 +9,8 @@ import tf2_ros
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
-from robot_skills.arm.arms import PublicArm, GripperMeasurement
+from robot_skills.arm.arms import PublicArm
+from robot_skills.arm.grasp_sensor import GripperMeasurement
 from robot_skills.robot import Robot
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
@@ -229,9 +230,9 @@ class PickUp(smach.State):
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         result = 'succeeded'
-        if self._check_occupancy:
+        if self._check_occupancy and hasattr(arm.gripper, 'grasp_sensor'):
             # Check if the object is present in the gripper
-            if arm.object_in_gripper_measurement.is_empty:
+            if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_empty:
                 # If state is empty, grasp has failed
                 result = "failed"
                 rospy.logerr("Gripper is not holding an object")
@@ -241,7 +242,7 @@ class PickUp(smach.State):
                 # State is holding, grasp succeeded.
                 # If unknown: sensor not there, assume gripper is holding and hope for the best
                 result = "succeeded"
-                if arm.object_in_gripper_measurement.is_unknown:
+                if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_unknown:
                     rospy.logwarn("GripperMeasurement unknown")
 
         # Reset head
