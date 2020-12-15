@@ -188,8 +188,8 @@ class PublicArm(object):
     def close(self):
         self._arm.close()
 
-    def reset(self, timeout=0.0):
-        return self._arm.reset(timeout)
+    def reset(self):
+        return self._arm.reset()
 
     @property
     def base_offset(self):
@@ -299,14 +299,14 @@ class Arm(RobotPart):
         :param gripper_type: Type of gripper to check for. Must not be a pseudo gripper type.
         :return: Gripper types that match the requirement.
         """
-        if not hasattr(self, gripper):
+        if not hasattr(self, 'gripper'):
             rospy.loginfo("This arm does not have a 'gripper' ")
 
         # TODO: Extend grippers to have knowledge about the gripper type that it has.
-        if gripper_type == GripperTypes.PINCH:
-            return isinstance(self.gripper, ParrallelGripper)
-        elif gripper_type == GripperTypes.PARALLEL:
-            return isinstance(self.gripper, ParrallelGripper)
+        if gripper_type == GripperTypes.PINCH and isinstance(self.gripper, ParrallelGripper):
+            return [GripperTypes.PARALLEL]
+        elif gripper_type == GripperTypes.PARALLEL and isinstance(self.gripper, ParrallelGripper):
+            return [GripperTypes.PARALLEL]
         elif gripper_type == GripperTypes.SUCTION:
             return []
         else:
@@ -490,14 +490,14 @@ class Arm(RobotPart):
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
 
-    def selfreset(self, timeout=0.0):
+    def selfreset(self):
         """
         Put the arm into the 'reset' pose
 
         :param timeout: timeout in seconds
         :return: True or False
         """
-        return self.send_joint_goal('reset', timeout=timeout)
+        return self.send_joint_goal('reset', timeout=0.0)
 
     def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
         """
