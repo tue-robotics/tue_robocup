@@ -4,6 +4,7 @@ import time
 import rospy
 import std_msgs.msg
 import PyKDL as kdl
+import smach
 
 import visualization_msgs.msg
 from actionlib import GoalStatus
@@ -1053,7 +1054,11 @@ def collect_arm_requirements(state_machine):
                     if value not in arm_requirements[k]:
                         arm_requirements[k] += v
 
-    rospy.logerr(arm_requirements) # ToDo: remove or at least change
+        if isinstance(state, smach.StateMachine):
+            rospy.logerr("Deze state is statemachine {}".format(state))
+            arm_requirements.update(collect_arm_requirements(state))
+
+    rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
     return arm_requirements
 
 
