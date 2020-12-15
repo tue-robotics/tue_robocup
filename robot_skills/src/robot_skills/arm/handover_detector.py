@@ -7,7 +7,6 @@ from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 class HandoverDetector(RobotPart):
     def __init__(self, robot_name, tf_listener, side):
         super(Gripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self.robot_name = robot_name
         self.side = side
 
     def handover_to_human(self, timeout=10):
