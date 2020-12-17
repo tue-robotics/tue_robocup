@@ -1030,23 +1030,19 @@ class FakeArm(RobotPart):
         return "FakeArm(side='{side}')".format(side=self.side)
 
 
-# TODO: make recursive
-# ToDo: write a test for this
 def collect_arm_requirements(state_machine):
     """ Collects all requirements on the arm of this specific state machine
 
     :param state_machine: State machine for which the requirements need to be collected
     :return: All arm requirements of the state machine
     """
-    # Check arm requirements
-    arm_requirements = {}
-    for state in state_machine.get_children().itervalues():
+    def update_requirements(state):
+        """ Checks the input state for arm requirements and updates the current arm requirements if necessary
 
-        # If no arm properties defined: continue
-        if not hasattr(state, "REQUIRED_ARM_PROPERTIES"):
-            continue
-
-        for k, v in state.REQUIRED_ARM_PROPERTIES.iteritems():
+        :param state: Smach state of which arm requirements should be checked against the current arm requirements
+        :return: current arm requirements, updated (if necessary) given the input state
+        """
+        for k, v in state.iteritems():
             if k not in arm_requirements:
                 arm_requirements[k] = v
             else:
@@ -1054,9 +1050,21 @@ def collect_arm_requirements(state_machine):
                     if value not in arm_requirements[k]:
                         arm_requirements[k] += v
 
-        if isinstance(state, smach.StateMachine):
-            rospy.logerr("Deze state is statemachine {}".format(state))
-            arm_requirements.update(collect_arm_requirements(state))
+    # Check arm requirements
+    arm_requirements = {}
+
+    for child_state in state_machine.get_children().itervalues():
+
+        # Check if the child_state is a state_machine (must be done before checking for arm properties!)
+        if isinstance(child_state, smach.StateMachine):
+            child_sm_arm_requirements = collect_arm_requirements(child_state)
+            update_requirements(child_sm_arm_requirements)
+
+        # If no arm properties defined: continue
+        if not hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
+            continue
+
+        update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
 
     rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
     return arm_requirements

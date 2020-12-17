@@ -20,7 +20,8 @@ class FirstState(smach.State):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata):
+    @staticmethod
+    def execute():
         return 'succeeded'
 
 
@@ -35,7 +36,8 @@ class SecondState(smach.State):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata):
+    @staticmethod
+    def execute():
         return 'succeeded'
 
 
@@ -50,7 +52,8 @@ class ThirdState(smach.State):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata):
+    @staticmethod
+    def execute():
         return 'succeeded'
 
 
@@ -74,25 +77,39 @@ class SecondStateMachine(smach.StateMachine):
             smach.StateMachine.add('BAR', FirstStateMachine(robot), transitions={'succeeded': 'succeeded'})
 
 
+def compare_lists_in_dicts(reference, result):
+    """ Compares a reference dict with the result as produced by the system
+
+    :param reference: Ground truth dict (strings as keys and lists as values)
+    :param result: Dict according to the system
+    :return: reference and result dicts containing the non overlapping key, value pairs
+    """
+    for k in reference.keys():
+        if k in result.keys():
+            if len(reference[k]) == len(result[k]) and set(reference[k]) == set(result[k]):
+                del reference[k], result[k]
+
+
 class TestCollectArmRequirements(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.robot = get_robot('hero')
+        cls.robot = get_robot('mockbot')
 
     def test_collect_arm_requirements(self):
         requirements = collect_arm_requirements(FirstStateMachine(self.robot))
-        self.assertEqual(requirements, {'required_trajectories': ['prepare_grasp', 'prepare_place'],
-                                        'required_gripper_types': ['pseudo-gripper-type-any-grasping-will-do',
-                                                                   'gripper-type-pinch']})
+        reference = {'required_trajectories': ['prepare_grasp', 'prepare_place'],
+                     'required_gripper_types': ['pseudo-gripper-type-any-grasping-will-do',
+                                                'gripper-type-pinch']}
+        compare_lists_in_dicts(reference, requirements)
+        self.assertEqual(requirements, reference)
 
     def test_collect_arm_requirements_recursive(self):
         requirements = collect_arm_requirements(SecondStateMachine(self.robot))
-        rospy.logerr(requirements)
-        # {'required_trajectories': ['wave'], 'required_gripper_types': ['gripper-type-parallel']}
-
-        # self.assertEqual(requirements, {'required_trajectories': ['prepare_grasp', 'prepare_place', 'wave'],
-        #                                 'required_gripper_types': ['pseudo-gripper-type-any-grasping-will-do',
-        #                                                            'gripper-type-pinch', 'gripper-type-grasping']})
+        reference = {'required_trajectories': ['wave', 'prepare_grasp', 'prepare_place'],
+                     'required_gripper_types': ['gripper-type-parallel', 'pseudo-gripper-type-any-grasping-will-do',
+                                                'gripper-type-pinch']}
+        compare_lists_in_dicts(requirements, reference)
+        self.assertEqual(requirements, reference)
 
 
 if __name__ == "__main__":

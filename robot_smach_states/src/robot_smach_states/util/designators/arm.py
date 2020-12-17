@@ -18,7 +18,6 @@ __author__ = 'loy'
 
 
 class ResolveArm(smach.State):
-# Todo: Return to original cb state?
     def __init__(self, arm_designator, state_machine):
         """ Resolves, if possible, an arm for a state machine taking into account all the arm requirements
 
