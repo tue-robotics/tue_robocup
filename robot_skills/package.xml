@@ -11,7 +11,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>actionlib</depend>
-  <depend>amigo_msgs</depend>
   <depend>cb_base_navigation_msgs</depend>
   <depend>control_msgs</depend>
   <depend>cv_bridge</depend>
