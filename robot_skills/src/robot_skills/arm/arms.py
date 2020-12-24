@@ -191,6 +191,9 @@ class PublicArm(object):
     def reset(self):
         return self._arm.reset()
 
+    def selfreset(self):
+        return self._arm.selfreset()
+
     @property
     def base_offset(self):
         """
