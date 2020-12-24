@@ -93,20 +93,24 @@ class PublicArm(object):
         """
         Query the object currently held by the arm.
         """
+        rospy.logwarn("Deprecation Warning: publicarm.occupied_by is deprecated, use publicarm.gripper.occupied_by instead!")
         self._test_die(self._has_occupied_by, "occupied_by",
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
                        "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
-        return self._arm.occupied_by
+        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        return self._arm.gripper.occupied_by
 
     @occupied_by.setter
     def occupied_by(self, value):
         """
         Set the object currently held by the arm,
         """
+        rospy.logwarn("Deprecation Warning: publicarm.occupied_by is deprecated, use publicarm.gripper.occupied_by instead!")
         self._test_die(self._has_occupied_by, "occupied_by",
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
                        "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
-        self._arm.occupied_by = value
+        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        self._arm.gripper.occupied_by = value
 
     # Joint goals
     def has_joint_goal(self, configuration):
@@ -143,11 +147,13 @@ class PublicArm(object):
     # Gripper
     @property
     def gripper(self):
+        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
         return self._arm.gripper
 
     # handover
     @property
     def handover_detector(self):
+        self._test_die(self._arm.hasattr('handover_detector'), "This arm does not have a handover_detector")
         return self._arm.handover_detector
 
     def has_gripper_type(self, gripper_type=None):
@@ -173,6 +179,52 @@ class PublicArm(object):
         self._test_die(self.has_force_sensor, 'has_force_sensor=' + str(self.has_force_sensor),
                        "Specify get_arm(..., force_sensor_required=True)")
         return self._arm.move_down_until_force_sensor_edge_up(timeout=timeout, retract_distance=retract_distance)
+
+    # salvaged deprecated functionality
+    def send_gripper_goal(self, state, timeout=5.0, gripper_type=None, max_torque=0.1):
+        """
+        Tell the gripper to perform a motion.
+        :param state: New state of the gripper.
+        :type state: str (GripperState)
+        :param timeout: Amount of time available to reach the goal, default is 5
+        :type timeout: float
+        :param gripper_type: Optional type of gripper to perform the action.
+        :type gripper_type: str
+        :param max_torque: How much torque [Nm] to apply
+        :return: succes
+        :rtype: bool
+        """
+        rospy.logwarn("Deprication warning: publicarm.send_gripper_goal is deprecated, use publicarm.gripper.send_goal instead!")
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
+        # Specified type of gripper currently not used.
+        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        return self._arm.gripper.send_goal(state, timeout, max_torque=max_torque)
+
+    def handover_to_human(self, timeout=10, gripper_type=None):
+        rospy.logwarn(
+            "Deprication warning: publicarm.handover_to_human is deprecated, use publicarm.handover_detector.handover_to_human instead!")
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+                "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
+        self._test_die(self._arm.hasattr('handover_detector'), "This arm does not have a handover_detector")
+        return self._arm.handover_detector.handover_to_human(timeout)
+
+    def handover_to_robot(self, timeout=10, gripper_type=None):
+        rospy.logwarn(
+            "Deprication warning: publicarm.handover_to_robot is deprecated, use publicarm.handover_detector.handover_to_robot instead!")
+        if gripper_type is None:
+            gripper_type = self.default_gripper_type
+
+        self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
+               "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
+        self._test_die(self._arm.hasattr('handover_detector'), "This arm does not have a handover_detector")
+        return self._arm.handover_detector.handover_to_robot(timeout)
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
         # Provided gripper type currently ignored.
