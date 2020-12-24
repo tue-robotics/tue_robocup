@@ -15,14 +15,14 @@ class GripperState(object):
 
 class Gripper(RobotPart):
     """
-    TODO: add description
+    A gripper used for manipulating objects in the environment.
     """
     def __init__(self, robot_name, tf_listener):
         """
-        Todo: add docstring
-        Args:
-            robot_name:
-            tf_listener:
+        constructor
+
+        :param robot_name: robot_name
+        :param tf_listener: tf_server.TFClient()
         """
         super(Gripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.offset = None
@@ -60,10 +60,11 @@ class ParrallelGripper(Gripper):
     """
     def __init__(self, robot_name, tf_listener, gripper_name):
         """
-        Todo: add docstring
-        Args:
-            robot_name:
-            tf_listener:
+        constructor
+
+        :param robot_name: robot_name
+        :param tf_listener: tf_server.TFClient()
+        :param gripper_name: string to identify the gripper
         """
         super(ParrallelGripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.gripper_name = gripper_name

@@ -91,6 +91,7 @@ class PublicArm(object):
     @property
     def occupied_by(self):
         """
+        !Deprecated: use arm.gripper.occupied_by instead!
         Query the object currently held by the arm.
         """
         rospy.logwarn("Deprecation Warning: publicarm.occupied_by is deprecated, use publicarm.gripper.occupied_by instead!")
@@ -103,6 +104,7 @@ class PublicArm(object):
     @occupied_by.setter
     def occupied_by(self, value):
         """
+        !Deprecated: use arm.gripper.occupied_by instead!
         Set the object currently held by the arm,
         """
         rospy.logwarn("Deprecation Warning: publicarm.occupied_by is deprecated, use publicarm.gripper.occupied_by instead!")
@@ -277,9 +279,6 @@ class Arm(RobotPart):
     >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)  # doctest: +SKIP
     or Equivalently:
     >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')  # doctest: +SKIP
-
-    #To open left gripper
-    >>> left.send_gripper_goal_open(10)  # doctest: +SKIP
     """
     def __init__(self, robot_name, tf_listener, get_joint_states, side):
         """
@@ -549,7 +548,6 @@ class Arm(RobotPart):
         """
         Put the arm into the 'reset' pose
 
-        :param timeout: timeout in seconds
         :return: True or False
         """
         return self.send_joint_goal('reset', timeout=0.0)

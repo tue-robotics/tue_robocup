@@ -5,7 +5,17 @@ from robot_skills.robot_part import RobotPart
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 
 class HandoverDetector(RobotPart):
+    """
+    Sensor functionality to detect when a handover is taking place
+    """
     def __init__(self, robot_name, tf_listener, side):
+        """
+        constructor
+
+        :param robot_name: robot_name
+        :param tf_listener: tf_server.TFClient()
+        :param side: string used to identify the sensor
+        """
         super(HandoverDetector, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
 

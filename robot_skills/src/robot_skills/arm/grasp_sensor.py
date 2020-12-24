@@ -82,12 +82,16 @@ class GripperMeasurement(object):
                "is_empty: {}".format(self.distance, self.is_holding, self.is_unknown, self.is_empty)
 
 class GraspSensor(RobotPart):
+    """
+    Sensor to detect whether or not the robot is holding an object.
+    """
     def __init__(self, robot_name, tf_listener, side):
         """
-        Todo: add docstring
-        Args:
-            robot_name:
-            tf_listener:
+        constructor
+
+        :param robot_name: robot_name
+        :param tf_listener: tf_server.TFClient()
+        :param side: left or right arm of the robot.
         """
         super(GraspSensor, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         # Init grasp sensor subscriber
