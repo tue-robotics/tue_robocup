@@ -70,7 +70,7 @@ class HandOverTo(smach.State):
 
         attempt = 0
 
-        while not arm.handover_to_human(timeout=10) and attempt < 2:
+        while not arm.handover_detector.handover_to_human(timeout=10) and attempt < 2:
             self.robot.speech.speak("Please take it from my gripper.", block=False)
             attempt += 1
 
@@ -222,7 +222,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
                 rospy.logerr("No grabbed entity designator and no label for dummy entity given")
                 return "failed"
 
-        if arm.handover_to_robot(self.timeout):
+        if arm.handover_detector.handover_to_robot(self.timeout):
             arm.gripper.send_goal('close')
             rospy.sleep(2.0)
             return "succeeded"
