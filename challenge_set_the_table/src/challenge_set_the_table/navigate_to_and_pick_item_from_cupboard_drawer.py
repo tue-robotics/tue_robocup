@@ -37,7 +37,7 @@ class PickItemFromCupboardDrawer(StateMachine):
                 arm.wait_for_motion_done()
 
         def send_gripper_goal(open_close_string, max_torque=0.1):
-            arm.gripper.send_goal(open_close_string, max_torque=max_torque)
+            arm.send_gripper_goal(open_close_string, max_torque=max_torque)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         def show_image(package_name, path_to_image_in_package):

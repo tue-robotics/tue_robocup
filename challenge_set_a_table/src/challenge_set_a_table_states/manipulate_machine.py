@@ -136,7 +136,7 @@ class PlaceSingleItem(smach.State):
 
     def execute(self, userdata=None):
         # Try to place the object
-        item = ds.EdEntityDesignator(robot=self._robot, id=arm.gripper.occupied_by.id)
+        item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
         arm_designator = ds.OccupiedArmDesignator(self._robot,
                                                   arm_properties={
                                                       "required_trajectories": ["prepare_place"],

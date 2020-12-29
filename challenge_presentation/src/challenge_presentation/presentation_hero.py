@@ -120,8 +120,8 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
         function_list.append(partial(self.arm.send_joint_goal, "show_gripper"))
-        function_list.append(partial(self.arm.gripper.send_goal, "open"))
-        function_list.append(partial(self.arm.gripper.send_goal, "close"))
+        function_list.append(partial(self.arm.send_gripper_goal, "open"))
+        function_list.append(partial(self.arm.send_gripper_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
                                      voice=self.voice, block=True))
         function_list.append(partial(self.arm.reset))
@@ -179,7 +179,7 @@ class Presentation(smach.State):
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
                 self.arm.reset()
-                self.arm.gripper.send_goal("close")
+                self.arm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
                 self.arm.wait_for_motion_done()

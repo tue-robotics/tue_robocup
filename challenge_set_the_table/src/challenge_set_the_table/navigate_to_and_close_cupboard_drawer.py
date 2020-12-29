@@ -28,12 +28,12 @@ class CloseCupboard(StateMachine):
                 arm.wait_for_motion_done()
 
         def send_gripper_goal(open_close_string):
-            arm.gripper.send_goal(open_close_string)
+            arm.send_gripper_goal(open_close_string)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         @cb_interface(outcomes=['done'])
         def _pre_grab_handle(_):
-            arm.gripper.send_goal("open", timeout=0)
+            arm.send_gripper_goal("open", timeout=0)
             send_joint_goal([0, -0, 0, -1.57, 1.57])
             return 'done'
 

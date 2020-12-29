@@ -110,11 +110,11 @@ class Presentation(smach.State):
             if self.right_arm is not None:
                 function_list.append(partial(self.right_arm.send_joint_trajectory, "show_gripper"))
             if self.left_arm is not None:
-                function_list.append(partial(self.left_arm.gripper.send_goal, "open"))
-                function_list.append(partial(self.left_arm.gripper.send_goal, "close"))
+                function_list.append(partial(self.left_arm.send_gripper_goal, "open"))
+                function_list.append(partial(self.left_arm.send_gripper_goal, "close"))
             if self.right_arm is not None:
-                function_list.append(partial(self.right_arm.gripper.send_goal, "open"))
-                function_list.append(partial(self.right_arm.gripper.send_goal, "close"))
+                function_list.append(partial(self.right_arm.send_gripper_goal, "open"))
+                function_list.append(partial(self.right_arm.send_gripper_goal, "close"))
             if self.left_arm is not None:
                 function_list.append(partial(self.left_arm.reset))
             if self.right_arm is not None:
@@ -165,9 +165,9 @@ class Presentation(smach.State):
                 if self.right_arm is not None:
                     self.right_arm.reset()
                 if self.left_arm is not None:
-                    self.left_arm.gripper.send_goal("close")
+                    self.left_arm.send_gripper_goal("close")
                 if self.right_arm is not None:
-                    self.right_arm.gripper.send_goal("close")
+                    self.right_arm.send_gripper_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
 

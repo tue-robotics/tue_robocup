@@ -86,13 +86,13 @@ class SimplePickup(State):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
-            arm.gripper.send_goal('close', timeout=0.0)
+            arm.send_gripper_goal('close', timeout=0.0)
             return 'failed'
 
         # Close gripper
-        arm.gripper.send_goal('close')
+        arm.send_gripper_goal('close')
 
-        arm.gripper.occupied_by = None  # TODO: what to do if we don't have an entity
+        arm.occupied_by = None  # TODO: what to do if we don't have an entity
 
         # Lift
         rospy.loginfo('Start lifting')
@@ -142,7 +142,7 @@ class SimpleGrab(StateMachine):
         @cb_interface(outcomes=['succeeded'])
         def prepare_grasp(ud):
             # Open gripper (non-blocking)
-            arm.resolve().gripper.send_goal('open', timeout=0)
+            arm.resolve().send_gripper_goal('open', timeout=0)
 
             # Torso up (non-blocking)
             robot.torso.high()
@@ -151,7 +151,7 @@ class SimpleGrab(StateMachine):
             arm.resolve().send_joint_trajectory('prepare_grasp', timeout=0)
 
             # Open gripper
-            arm.resolve().gripper.send_goal('open', timeout=0.0)
+            arm.resolve().send_gripper_goal('open', timeout=0.0)
             return 'succeeded'
 
         with self:

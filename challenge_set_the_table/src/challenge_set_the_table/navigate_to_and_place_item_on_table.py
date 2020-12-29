@@ -91,7 +91,7 @@ class PlaceItemOnTable(StateMachine):
                 arm.wait_for_motion_done()
 
         def send_gripper_goal(open_close_string):
-            arm.gripper.send_goal(open_close_string)
+            arm.send_gripper_goal(open_close_string)
             rospy.sleep(1.0)  # Does not work with motion_done apparently
 
         @cb_interface(outcomes=['done'], input_keys=["item_picked"])
