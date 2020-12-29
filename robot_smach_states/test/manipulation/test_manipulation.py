@@ -65,7 +65,7 @@ class TestHandOverFromHuman(unittest.TestCase):
         self.robot.arms["rightArm"].send_joint_goal.assert_any_call('handover_to_human', max_joint_vel=mock.ANY,
                                                                     timeout=mock.ANY)
 
-        self.robot.arms["rightArm"].handover_to_robot.assert_called_once()
+        self.robot.arms["rightArm"].handover_detector.handover_to_robot.assert_called_once()
 
         self.robot.arms["rightArm"].gripper.send_goal.assert_any_call('open', mock.ANY, max_torque=mock.ANY)
         self.robot.arms["rightArm"].gripper.send_goal.assert_called_with('close', mock.ANY, max_torque=mock.ANY)
@@ -133,7 +133,7 @@ class TestCloseGripper(unittest.TestCase):
     def test_open_gripper(self):
         state = CloseGripperOnHandoverToRobot(self.robot, self.arm_ds, self.entity_label)
         self.assertEqual(state.execute(), "succeeded")
-        self.robot.arms["leftArm"].handover_to_robot.assert_called_once()
+        self.robot.arms["leftArm"].handover_detector.handover_to_robot.assert_called_once()
         self.assertEqual(self.robot.arms["leftArm"].gripper.occupied_by.id, self.entity_label)
 
 
@@ -150,7 +150,7 @@ class TestCloseGripperFail(unittest.TestCase):
         # no entity label or entity designator
         state = CloseGripperOnHandoverToRobot(self.robot, self.arm_ds)
         self.assertEqual(state.execute(), "failed")
-        self.robot.arms["leftArm"].handover_to_robot.assert_not_called()
+        self.robot.arms["leftArm"].handover_detector.handover_to_robot.assert_not_called()
 
 
 if __name__ == '__main__':
