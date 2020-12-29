@@ -98,7 +98,7 @@ class PublicArm(object):
         self._test_die(self._has_occupied_by, "occupied_by",
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
                        "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
-        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        self._test_die(hasattr(self._arm, 'gripper'), "This arm does not have a gripper")
         return self._arm.gripper.occupied_by
 
     @occupied_by.setter
@@ -111,7 +111,7 @@ class PublicArm(object):
         self._test_die(self._has_occupied_by, "occupied_by",
                        "Specify get_arm(..., required_objects=[PseudoObjects.EMPTY]) or get_arm(..., required_objects="
                        "[PseudoObjects.ANY]) or get_arm(..., required_objects=[Entity(...)])")
-        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        self._test_die(hasattr(self._arm, 'gripper'), "This arm does not have a gripper")
         self._arm.gripper.occupied_by = value
 
     # Joint goals
@@ -149,13 +149,13 @@ class PublicArm(object):
     # Gripper
     @property
     def gripper(self):
-        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        self._test_die(hasattr(self._arm, 'gripper'), "This arm does not have a gripper")
         return self._arm.gripper
 
     # handover
     @property
     def handover_detector(self):
-        self._test_die(self._arm.hasattr('handover_detector'), "This arm does not have a handover_detector")
+        self._test_die(hasattr(self._arm, 'handover_detector'), "This arm does not have a handover_detector")
         return self._arm.handover_detector
 
     def has_gripper_type(self, gripper_type=None):
@@ -203,7 +203,7 @@ class PublicArm(object):
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                 "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
         # Specified type of gripper currently not used.
-        self._test_die(self._arm.hasattr('gripper'), "This arm does not have a gripper")
+        self._test_die(hasattr(self._arm, 'gripper'), "This arm does not have a gripper")
         return self._arm.gripper.send_goal(state, timeout, max_torque=max_torque)
 
     def handover_to_human(self, timeout=10, gripper_type=None):
@@ -214,7 +214,7 @@ class PublicArm(object):
 
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                 "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        self._test_die(self._arm.hasattr('handover_detector'), "This arm does not have a handover_detector")
+        self._test_die(hasattr(self._arm, 'handover_detector'), "This arm does not have a handover_detector")
         return self._arm.handover_detector.handover_to_human(timeout)
 
     def handover_to_robot(self, timeout=10, gripper_type=None):
@@ -225,7 +225,7 @@ class PublicArm(object):
 
         self._test_die(gripper_type in self._available_gripper_types, 'gripper type ' + str(gripper_type),
                "Specify get_arm(..., required_gripper_types=[GripperTypes.X])")
-        self._test_die(self._arm.hasattr('handover_detector'), "This arm does not have a handover_detector")
+        self._test_die(hasattr(self._arm, 'handover_detector'), "This arm does not have a handover_detector")
         return self._arm.handover_detector.handover_to_robot(timeout)
 
     def wait_for_motion_done(self, timeout=10.0, cancel=False, gripper_type=None):
