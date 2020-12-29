@@ -99,10 +99,10 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> assert a.resolve()._arm == robot.arms['leftArm']
 
     >>> leftArm = robot.arms['leftArm']
-    >>> leftArm.occupied_by = None
+    >>> leftArm.gripper.occupied_by = None
 
     >>> rightArm = robot.arms['rightArm']
-    >>> rightArm.occupied_by = "entity3"
+    >>> rightArm.gripper.occupied_by = "entity3"
 
     >>> entity_designator = Designator("entity3")
     >>> holding_arm_designator = ArmHoldingEntityDesignator(robot, entity_designator, {})
@@ -110,7 +110,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> assert(arm_to_use_for_placing_entity3._arm == rightArm)
     >>>
     >>> # Place the object
-    >>> rightArm.occupied_by = None
+    >>> rightArm.gripper.occupied_by = None
     >>>
     >>> # After placing the item, there is no arm holding the item anymore
     >>> arm_to_use_for_second_place = holding_arm_designator.resolve()
