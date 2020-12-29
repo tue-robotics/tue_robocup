@@ -88,6 +88,10 @@ class Arm(MockedRobotPart):
         self._publish_marker = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
 
+        # add parts
+        self.gripper = Gripper(robot_name, tf_listener)
+        self.handover_detector = HandoverDetector(robot_name, tf_listener)
+
     def collect_gripper_types(self, gripper_type):
         return gripper_type
 
@@ -103,7 +107,7 @@ class Gripper(MockedRobotPart):
         self.send_goal = mock.MagicMock()
 
 class HandoverDetector(MockedRobotPart):
-    def __init__(self):
+    def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(HandoverDetector, self).__init__(robot_name, tf_listener)
         self.handover_to_human = mock.MagicMock()
         self.handover_to_robot = mock.MagicMock()
@@ -348,17 +352,8 @@ class Mockbot(robot.Robot):
         self.add_body_part('base', Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        # construct left arm
-        left_arm = Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
-        left_arm.add_part('gripper', Gripper(self.robot_name, self.tf_listener, 'left'))
-        left_arm.add_part('handover_detector', HandoverDetector(self.robot_name, self.tf_listener, 'left'))
-        self.add_arm_part('leftArm', left_arm)
-
-        # construct right arm
-        right_arm = Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
-        right_arm.add_part('gripper', Gripper(self.robot_name, self.tf_listener, 'right'))
-        right_arm.add_part('handover_detector', HandoverDetector(self.robot_name, self.tf_listener, 'right'))
-        self.add_arm_part('rightArm', right_arm)
+        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left"))
+        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right"))
 
         self.add_body_part('head', Head(self.robot_name, self.tf_listener))
 
