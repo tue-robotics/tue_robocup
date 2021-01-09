@@ -28,7 +28,6 @@ def arms_reach_constraint(pose_designator, arm, look=True):
 
     if isinstance(arm, Designator):
         arm = arm.resolve()
-        rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm))
         return None
 
     radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
