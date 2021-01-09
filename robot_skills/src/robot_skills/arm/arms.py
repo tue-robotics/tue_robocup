@@ -338,6 +338,7 @@ class Arm(RobotPart):
         :param gripper_type: Wanted type of the gripper. May be a pseudo gripper type.
         :return: Collection gripper types at the arm that meet the requirements.
         """
+        #TODO move this function outside of arms.py
         if gripper_type == GripperTypes.NONE:
             # There are no arms without a gripper.
             return []
@@ -353,8 +354,9 @@ class Arm(RobotPart):
         :param gripper_type: Type of gripper to check for. Must not be a pseudo gripper type.
         :return: Gripper types that match the requirement.
         """
+        #TODO move this function outside of arms.py
         if not hasattr(self, 'gripper'):
-            rospy.loginfo("This arm does not have a 'gripper' ")
+            rospy.logerr("This arm does not have a 'gripper' ")
 
         # TODO: Extend grippers to have knowledge about the gripper type that it has.
         if gripper_type == GripperTypes.PINCH and isinstance(self.gripper, ParrallelGripper):
