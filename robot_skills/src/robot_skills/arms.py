@@ -1060,11 +1060,8 @@ def collect_arm_requirements(state_machine):
             child_sm_arm_requirements = collect_arm_requirements(child_state)
             update_requirements(child_sm_arm_requirements)
 
-        # If no arm properties defined: continue
-        if not hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
-            continue
-
-        update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
+        if hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
+            update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
 
     rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
     return arm_requirements
