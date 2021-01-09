@@ -11,6 +11,7 @@ from std_msgs.msg import String, ColorRGBA, Header
 # TU/e
 from robot_skills.arm import arms
 from robot_skills.util import decorators
+from functionalities.add_functionalities import add_functionalities
 
 from collections import OrderedDict, Sequence
 
@@ -126,6 +127,7 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.items() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
+        add_functionalities(self) # at the end of robot construction add functionalities
         self.configured = True
 
     @decorators.deprecated_replace_with('robot.get_arm')

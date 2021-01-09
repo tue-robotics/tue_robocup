@@ -2,11 +2,26 @@ import functools
 import rospy
 import types
 
+from functionalities.robot_functionality import RobotFunc
+
+from robot_skills.arm.arms import Arm
+from robot_skills.arm.force_sensor import ForceSensor
+
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-def AddForceSensingArm(arm):
-    arm.move_down_until_force_sensor_edge_up = types.MethodType(move_down_until_force_sensor_edge_up, arm)
+class GuardedMotionFunc(RobotFunc):
+    def __init__(self):
+        super(GuardedMotionFunc).__init__("guarded_motion",
+                                          Arm,
+                                          {"move_down_until_force_sensor_edge_up" : move_down_until_force_sensor_edge_up})
+
+    def check_requirements(self, arm):
+        "Check that the arm has at least one force sensor"
+        for part in arm.parts:
+            if isinstance(arm.parts[part], ForceSensor):
+                return True
+        return False
 
 def move_down_until_force_sensor_edge_up(self, force_sensor=None, timeout=10, retract_distance=0.01):
     """
