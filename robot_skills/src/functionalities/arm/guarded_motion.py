@@ -12,9 +12,9 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 class GuardedMotionFunc(RobotFunc):
     def __init__(self):
-        super(GuardedMotionFunc).__init__("guarded_motion",
-                                          Arm,
-                                          {"move_down_until_force_sensor_edge_up" : move_down_until_force_sensor_edge_up})
+        super(GuardedMotionFunc, self).__init__("guarded_motion",
+                                                Arm,
+                                                {"move_down_until_force_sensor_edge_up" : move_down_until_force_sensor_edge_up})
 
     def check_requirements(self, arm):
         "Check that the arm has at least one force sensor"

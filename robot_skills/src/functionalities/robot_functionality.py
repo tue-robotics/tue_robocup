@@ -1,10 +1,10 @@
 import rospy
 
-class RobotFunc():
+class RobotFunc(object):
     def __init__(self, name, parttype, functions):
-        self._name = name,
-        self.parttype = parttype
-        self.functions = functions
+        self._name = name
+        self._parttype = parttype
+        self._functions = functions
 
     @property
     def name(self):
@@ -19,6 +19,6 @@ class RobotFunc():
 
     @property
     def functions(self):
-        return self.functions
+        return self._functions
 
 

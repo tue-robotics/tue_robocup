@@ -99,6 +99,7 @@ class Robot(object):
         """
         This should be run at the end of the constructor of a child class.
         """
+        add_functionalities(self)  # at the end of robot construction add functionalities
         # Wait for connections
         connected = False
         s = rospy.Time.now()
@@ -127,16 +128,8 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.items() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
-        add_functionalities(self) # at the end of robot construction add functionalities
+
         self.configured = True
-
-    @decorators.deprecated_replace_with('robot.get_arm')
-    def leftArm(self):
-        return self._arms.get('left')
-
-    @decorators.deprecated_replace_with('robot.get_arm')
-    def rightArm(self):
-        return self._arms.get('right')
 
     def reset(self):
         results = {}
