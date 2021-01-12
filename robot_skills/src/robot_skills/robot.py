@@ -128,7 +128,6 @@ class Robot(object):
             not_operational_parts = [name for name, part in self.parts.items() if not part.operational]
             rospy.logwarn("Not all hardware operational: {parts}".format(parts=not_operational_parts))
 
-
         self.configured = True
 
     def reset(self):
