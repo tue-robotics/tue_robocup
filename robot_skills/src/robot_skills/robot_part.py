@@ -26,6 +26,7 @@ class RobotPart(object):
 
         # Body parts
         self.parts = dict()
+        self.functionalities = []
 
         self.__ros_connections = {}
 
