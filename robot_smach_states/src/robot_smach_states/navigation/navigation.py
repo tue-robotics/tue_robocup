@@ -40,7 +40,7 @@ class AbortAnalyzer(smach.State):
 
 
 class getPlan(smach.State):
-    def __init__(self, robot, constraint_function, input_keys, output_keys, speak=True):
+    def __init__(self, robot, constraint_function, input_keys=[], output_keys=[], speak=True):
         smach.State.__init__(self,
                              input_keys=input_keys,
                              output_keys=output_keys,
