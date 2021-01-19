@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     item = ds.Designator(item)
 
-    arm = ds.UnoccupiedArmDesignator(robot, arm_properties={})
+    arm = ds.UnoccupiedArmDesignator(robot)
 
     grab_state = Grab(robot, item, arm)
     grab_state.execute()

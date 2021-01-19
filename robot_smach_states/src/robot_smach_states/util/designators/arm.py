@@ -76,7 +76,7 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
     >>> assert arm_to_use_for_third_grab is None
     """
-    def __init__(self, robot, arm_properties, name=None):
+    def __init__(self, robot, arm_properties={}, name=None):
         arm_properties['required_objects'] = [PseudoObjects.EMPTY]
         super(UnoccupiedArmDesignator, self).__init__(robot, arm_properties, name=name)
 
