@@ -398,7 +398,7 @@ def check_arm_requirements(state_machine, robot):
 def collect_arm_requirements(state_machine):
     """ Collects all requirements on the arm of this specific state machine
 
-    :param state_machine: State machine for which the requirements need to be collected
+    :param state_machine: State (machine) for which the requirements need to be collected
     :return: All arm requirements of the state machine
     """
     def update_requirements(state):
@@ -418,15 +418,20 @@ def collect_arm_requirements(state_machine):
     # Check arm requirements
     arm_requirements = {}
 
-    for child_state in state_machine.get_children().itervalues():
+    if isinstance(state_machine, smach.State):
+        if hasattr(state_machine, "REQUIRED_ARM_PROPERTIES"):
+            update_requirements(state_machine.REQUIRED_ARM_PROPERTIES)
 
-        # Check if the child_state is a state_machine (must be done before checking for arm properties!)
-        if isinstance(child_state, smach.StateMachine):
-            child_sm_arm_requirements = collect_arm_requirements(child_state)
-            update_requirements(child_sm_arm_requirements)
+    if isinstance(state_machine, smach.StateMachine):
+        for child_state in state_machine.get_children().itervalues():
 
-        if hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
-            update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
+            # Check if the child_state is a state_machine (must be done before checking for arm properties!)
+            if isinstance(child_state, smach.StateMachine):
+                child_sm_arm_requirements = collect_arm_requirements(child_state)
+                update_requirements(child_sm_arm_requirements)
+
+            if hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
+                update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
 
     rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
     return arm_requirements
