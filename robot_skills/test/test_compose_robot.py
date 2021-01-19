@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-PKG = 'robot_skills'
 
 import rospy
 import unittest
@@ -70,4 +69,4 @@ class TestComposeRobot(unittest.TestCase):
 
 if __name__ == '__main__':
     import rostest
-    rostest.rosrun(PKG, 'test_composable_robot_interface', TestComposeRobot)
+    rostest.rosrun('robot_skills', 'test_composable_robot_interface', TestComposeRobot)

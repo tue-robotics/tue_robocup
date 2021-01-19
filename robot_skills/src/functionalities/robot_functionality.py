@@ -1,5 +1,3 @@
-import rospy
-
 class RobotFunc(object):
     def __init__(self, name, parttype, functions):
         self._name = name

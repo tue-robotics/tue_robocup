@@ -1,4 +1,3 @@
-import rospy
 import types
 
 from .arm.guarded_motion import GuardedMotionFunc

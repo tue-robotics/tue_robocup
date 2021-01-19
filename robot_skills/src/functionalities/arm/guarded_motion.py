@@ -1,6 +1,3 @@
-import rospy
-import types
-
 from functionalities.robot_functionality import RobotFunc
 
 from robot_skills.arm.arms import Arm
