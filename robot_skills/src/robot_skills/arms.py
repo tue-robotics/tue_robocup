@@ -4,7 +4,6 @@ import time
 import rospy
 import std_msgs.msg
 import PyKDL as kdl
-import smach
 
 import visualization_msgs.msg
 from actionlib import GoalStatus
@@ -1030,55 +1029,3 @@ class FakeArm(RobotPart):
         return "FakeArm(side='{side}')".format(side=self.side)
 
 
-def collect_arm_requirements(state_machine):
-    """ Collects all requirements on the arm of this specific state machine
-
-    :param state_machine: State machine for which the requirements need to be collected
-    :return: All arm requirements of the state machine
-    """
-    def update_requirements(state):
-        """ Checks the input state for arm requirements and updates the current arm requirements if necessary
-
-        :param state: Smach state of which arm requirements should be checked against the current arm requirements
-        :return: current arm requirements, updated (if necessary) given the input state
-        """
-        for k, v in state.iteritems():
-            if k not in arm_requirements:
-                arm_requirements[k] = v
-            else:
-                for value in v:
-                    if value not in arm_requirements[k]:
-                        arm_requirements[k] += v
-
-    # Check arm requirements
-    arm_requirements = {}
-
-    for child_state in state_machine.get_children().itervalues():
-
-        # Check if the child_state is a state_machine (must be done before checking for arm properties!)
-        if isinstance(child_state, smach.StateMachine):
-            child_sm_arm_requirements = collect_arm_requirements(child_state)
-            update_requirements(child_sm_arm_requirements)
-
-        if hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
-            update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
-
-    rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
-    return arm_requirements
-
-
-def check_arm_requirements(state_machine, robot):
-    """
-    Checks if the robot has an arm that meets the requirements of all children states of this state machine
-
-    :param state_machine: The state machine for which the requirements have to be checked
-    :param robot: Robot to use
-    :return: Check whether an arm is available that satisfies the requirements of the state machine
-    """
-    arm_requirements = collect_arm_requirements(state_machine)
-    try:
-        assert robot.get_arm(**arm_requirements) is not None,\
-            "None of the available arms meets all this state machine's requirements: {}".format(arm_requirements)
-    except AssertionError as e:
-        rospy.logerr("Getting arm requirements failed, arm requirements: {}".format(arm_requirements))
-        raise

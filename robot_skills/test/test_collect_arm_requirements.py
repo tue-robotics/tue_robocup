@@ -6,7 +6,8 @@ import rospy
 
 # TU/e
 from robot_skills import get_robot
-from robot_skills.arms import GripperTypes, collect_arm_requirements
+from robot_skills.arms import GripperTypes
+from robot_smach_states.utility import collect_arm_requirements
 
 
 class FirstState(smach.State):

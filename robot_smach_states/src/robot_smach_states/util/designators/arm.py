@@ -9,7 +9,7 @@ import rospy
 # TU/e Robotics
 # import GripperTypes and PseudoObjects to make them available for the user of these designators.
 from robot_skills.arms import PublicArm, PseudoObjects
-from robot_skills.arms import collect_arm_requirements
+from robot_smach_states.utility import collect_arm_requirements
 from .core import Designator
 from .utility import LockingDesignator
 
