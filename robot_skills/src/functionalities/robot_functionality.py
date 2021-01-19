@@ -14,7 +14,7 @@ class RobotFunc(object):
     def parttype(self):
         return self._parttype
 
-    def check_requirements(self):
+    def check_requirements(self, part):
         raise NotImplementedError
 
     @property

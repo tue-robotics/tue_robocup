@@ -9,8 +9,10 @@ def add_functionality(part, functionality):
         setattr(part, funcname, types.MethodType(func, part))
     part.functionalities.append(functionality.name)
 
-def add_functionalities(robot):
-    known_functionalities = [GuardedMotionFunc()] #TODO magically collect all functionalities in a certain location
+def add_functionalities(robot, known_functionalities=None):
+    if known_functionalities is None:
+        known_functionalities = [GuardedMotionFunc()] #TODO magically collect all functionalities in a certain location
+
     for func in known_functionalities:
         target_part_type = func.parttype
         available_parts = [part for part in robot.parts.values() if isinstance(part, target_part_type)]
