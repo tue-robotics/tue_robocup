@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 PKG = 'robot_skills'
 
 import rospy
