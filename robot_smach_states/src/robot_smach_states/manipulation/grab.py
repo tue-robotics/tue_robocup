@@ -10,12 +10,12 @@ import tf2_ros
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
 from robot_skills.arms import PublicArm, GripperTypes
-from ..utility import check_arm_requirements, collect_arm_requirements
+from ..utility import check_arm_requirements, collect_arm_requirements, ResolveArm
 from robot_skills.robot import Robot
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
-from ..util.designators.arm import ArmDesignator, ResolveArm
+from ..util.designators.arm import ArmDesignator
 from ..util.designators.core import Designator
 
 
