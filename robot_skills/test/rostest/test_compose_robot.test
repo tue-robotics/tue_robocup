@@ -1,0 +1,4 @@
+<launch>
+  <param name="string" value="mystring"/>
+    <test test-name="test_compose_robot" pkg="robot_skills" type="rostest_compose_robot.py" />
+</launch>
