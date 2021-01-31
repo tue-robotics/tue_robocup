@@ -330,6 +330,59 @@ class GripperState(object):
     CLOSE = "close"
 
 
+class ArmHandover(object):
+    """
+    Handover part of the arm functionality.
+
+    :var robot_name: Name of the robot.
+    :var arm_name: Name of the arm (typically 'left' or 'right').
+    """
+    def __init__(self, robot_name, arm_name):
+        self.robot_name = robot_name
+        self.arm_name = arm_name
+
+    def handover_to_human(self, timeout=10):
+        # type: (float) -> bool
+        """
+        Handover an item from the gripper to a human.
+
+        Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
+        :param timeout: timeout in seconds
+        :return: True or False
+        """
+        return self._exchange_with_human(False, timeout)
+
+    def handover_to_robot(self, timeout=10):
+        # type: (float) -> bool
+        """
+        Handover an item from a human to the robot.
+
+        Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
+        :param timeout: timeout in seconds
+        :return: True or False
+        """
+        return self._exchange_with_human(True, timeout)
+
+    def _exchange_with_human(self, to_robot, timeout=10):
+        # type: (bool, float) -> bool
+        if to_robot:
+            topic = '/{}/handoverdetector_{}/toggle_human2robot'.format(self.robot_name, self.arm_name)
+        else:
+            topic = '/{}/handoverdetector_{}/toggle_robot2human'.format(self.robot_name, self.arm_name)
+
+        pub = rospy.Publisher(topic, std_msgs.msg.Bool, queue_size=1, latch=True)
+        pub.publish(std_msgs.msg.Bool(True))
+
+        result_topic = '/{}/handoverdetector_{}/result'.format(self.robot_name, self.arm_name)
+        try:
+            rospy.wait_for_message(result_topic, std_msgs.msg.Bool, timeout)
+            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
+            return True
+        except rospy.ROSException as e:
+            rospy.logerr(e)
+            return False
+
+
 class Arm(RobotPart):
     """
     A single arm can be either left or right, extends Arms:
@@ -403,6 +456,8 @@ class Arm(RobotPart):
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.get_joint_states = get_joint_states
+
+        self._handover = ArmHandover(self.robot_name, self.side)
 
     def collect_gripper_types(self, gripper_type):
         """
@@ -684,6 +739,7 @@ class Arm(RobotPart):
         return goal_status == GoalStatus.SUCCEEDED
 
     def handover_to_human(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from the gripper to a human.
 
@@ -691,20 +747,10 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
+        return self._handover.handover_to_human(timeout)
 
     def handover_to_robot(self, timeout=10):
+        # type: (float) -> bool
         """
         Handover an item from a human to the robot.
 
@@ -712,18 +758,7 @@ class Arm(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
-
-        try:
-            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool,
-                                   timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
+        self._handover.handover_to_robot(timeout)
 
     def _send_joint_trajectory(self, joints_references, max_joint_vel=0.7, timeout=rospy.Duration(5)):
         """
