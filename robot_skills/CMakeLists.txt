@@ -36,6 +36,6 @@ catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
-  add_rostest(test/rostest/test_compose_robot.test)
   catkin_add_nosetests(test/nosetest)
+  add_rostest(test/rostest/test_compose_robot.test)
 endif()
