@@ -45,14 +45,14 @@ for side, arm in robot._arms.items():
         failed_actions += [goal1]
     arm.wait_for_motion_done()
 
-    if arm.send_gripper_goal("open"):
+    if arm.gripper.send_goal("open"):
         robot.speech.speak("My {} hand is now open".format(side))
     else:
         robot.speech.speak("Could not open {} hand".format(side))
         failed_actions += ["open gripper"]
     arm.wait_for_motion_done()
 
-    if arm.send_gripper_goal("close"):
+    if arm.gripper.send_goal("close"):
         robot.speech.speak("Now my {} hand is closed".format(side))
     else:
         robot.speech.speak("Could not close {} hand".format(side))

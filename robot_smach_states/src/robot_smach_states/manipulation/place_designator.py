@@ -9,7 +9,7 @@ import PyKDL as kdl
 from visualization_msgs.msg import MarkerArray, Marker
 
 # TUe robotics
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from ..util.designators import Designator, check_resolve_type

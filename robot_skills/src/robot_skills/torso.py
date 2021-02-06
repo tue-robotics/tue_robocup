@@ -170,7 +170,7 @@ class Torso(RobotPart):
         """
         return self._send_goal(self.lower_limit)
 
-    def reset(self):
+    def selfreset(self):
         """
         Sends the torso to the reset pose
 

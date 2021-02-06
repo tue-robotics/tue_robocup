@@ -5,7 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_skills.classification_result import ClassificationResult
 
 from .manipulation.grab import Grab

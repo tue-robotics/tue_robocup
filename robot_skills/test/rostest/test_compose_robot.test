@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<launch>
+    <test test-name="test_compose_robot" pkg="robot_skills" type="test_compose_robot.py" />
+</launch>

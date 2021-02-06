@@ -9,7 +9,7 @@ from smach import cb_interface, CBState
 
 import robot_smach_states as states
 import robot_smach_states.manipulation as manipulation
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBin
 
@@ -354,7 +354,8 @@ class PickUpTrash(smach.StateMachine):
 if __name__ == '__main__':
     import os
     import robot_smach_states.util.designators as ds
-    from robot_skills import Hero, arms
+    from robot_skills import Hero
+    from robot_skills.arm import arms
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()

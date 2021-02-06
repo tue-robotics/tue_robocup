@@ -56,7 +56,7 @@ class LocalPlanner(RobotPart):
                 self._action_client.cancel_goal()
                 self.__setState("idle")
 
-    def reset(self):
+    def selfreset(self):
         self._action_client.cancel_all_goals()
         # cancel_all_goals doesn't return anything useful to check, so we just return True
         # https://docs.ros.org/kinetic/api/actionlib/html/simple__action__client_8py_source.html#l00192
@@ -312,7 +312,7 @@ class Base(RobotPart):
             r.sleep()
         return False
 
-    def reset(self):
+    def selfreset(self):
         loc = self.local_planner.reset()
         glob = self.global_planner.reset()
         return loc and glob

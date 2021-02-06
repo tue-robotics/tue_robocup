@@ -11,7 +11,7 @@ import rospy
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.get_robot import get_robot
 from robot_skills.util.entity import Entity
-from robot_skills import arms
+from robot_skills.arm import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds

@@ -6,8 +6,8 @@ import smach
 
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
-from robot_skills.arms import PublicArm
-from robot_skills.arms import GripperState
+from robot_skills.arm.arms import PublicArm
+from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
 from ..reset import ResetPart
 from ..utility import LockDesignator, UnlockDesignator

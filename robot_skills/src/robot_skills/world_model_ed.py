@@ -198,7 +198,7 @@ class ED(RobotPart):
     #                                             UPDATING
     # ----------------------------------------------------------------------------------------------------
 
-    def reset(self, keep_all_shapes=True):
+    def selfreset(self, keep_all_shapes=True):
         try:
             return self._ed_reset_srv(keep_all_shapes=keep_all_shapes)
         except rospy.ServiceException as e:
