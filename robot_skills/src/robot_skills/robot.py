@@ -130,6 +130,14 @@ class Robot(object):
 
         self.configured = True
 
+    @decorators.deprecated_replace_with('robot.get_arm')
+    def leftArm(self):
+        return self._arms.get('left')
+
+    @decorators.deprecated_replace_with('robot.get_arm')
+    def rightArm(self):
+        return self._arms.get('right')
+
     def reset(self):
         results = {}
         for partname, bodypart in self.parts.items():
