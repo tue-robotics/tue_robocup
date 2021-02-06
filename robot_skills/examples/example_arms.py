@@ -12,6 +12,9 @@ if len(sys.argv) < 2:
     sys.exit()
 
 robot_name = sys.argv[1]
+if robot_name != "amigo":
+    print("this example was made for amigo only!")
+    sys.exit()
 
 rospy.init_node("arm_test")
 
@@ -33,11 +36,7 @@ for side, arm in robot._arms.items():
         rospy.logerr("{} arm is not operational".format(side))
         sys.exit(-1)
 
-    # Notice the - for the right arm's Y position.
-    if arm == robot.leftArm:
-        goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
-    if arm == robot.rightArm:
-        goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342, -0.125, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+    goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):
