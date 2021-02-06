@@ -1,4 +1,4 @@
-from . import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from . import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed, battery
 from .arm import arms, force_sensor, gripper, handover_detector
 from .simulation import is_sim_mode, SimEButton
 
@@ -47,6 +47,9 @@ class Hero(robot.Robot):
         self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
                                              lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                              lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+
+        self.add_body_part('battery_hero1', battery.Battery(self.robot_name, self.tf_listener, "hero1"))
+        self.add_body_part('battery_hero2', battery.Battery(self.robot_name, self.tf_listener, "hero2"))
 
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
         self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_listener, topic="/hero/runstop_button"))
