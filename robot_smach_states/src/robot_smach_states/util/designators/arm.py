@@ -145,8 +145,8 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         if not entity:
             rospy.logdebug('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
             return None
-        const_resolve(ArmHoldingEntityDesignator, {'required_objects': [entity]})
-
+        self.arm_properties['required_objects'] = [entity]
+        return super(ArmHoldingEntityDesignator, self)._resolve()
 
 
 if __name__ == "__main__":
