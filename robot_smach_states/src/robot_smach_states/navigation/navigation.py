@@ -251,7 +251,7 @@ class NavigateTo(smach.StateMachine):
             smach.StateMachine.add('NAVIGATE', sm_nav,
                                    transitions={'arrived': 'STOP_ANALYSIS_SUCCEED',
                                                 'unreachable': 'STOP_ANALYSIS_UNREACHABLE',
-                                                'goal_not_defined': 'ABORT_ANALYSIS_NOT_DEFINED',
+                                                'goal_not_defined': 'ABORT_ANALYSIS',
                                                 'preempted': 'STOP_ANALYSIS_SUCCEED'})
 
             smach.StateMachine.add('STOP_ANALYSIS_SUCCEED', StopAnalyzer(self.robot, 'succeeded'),
@@ -260,7 +260,7 @@ class NavigateTo(smach.StateMachine):
             smach.StateMachine.add('STOP_ANALYSIS_UNREACHABLE', StopAnalyzer(self.robot, 'unreachable'),
                                    transitions={'done': 'unreachable'})
 
-            smach.StateMachine.add('ABORT_ANALYSIS_NOT_DEFINED', AbortAnalyzer(self.robot),
+            smach.StateMachine.add('ABORT_ANALYSIS', AbortAnalyzer(self.robot),
                                    transitions={'done': 'goal_not_defined'})
 
     def generateConstraint(self):
