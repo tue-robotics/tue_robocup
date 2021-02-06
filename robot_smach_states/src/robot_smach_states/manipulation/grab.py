@@ -23,6 +23,7 @@ class PrepareEdGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_trajectories": ["prepare_grasp"], }
 
+
     def __init__(self, robot, grab_entity):
         # type: (Robot, ArmDesignator, Designator) -> None
         """
