@@ -6,6 +6,7 @@ from random import choice
 # ROS
 import rospy
 import smach
+from robot_skills.battery import Battery
 
 
 class StartAnalyzer(smach.State):
@@ -36,6 +37,37 @@ class AbortAnalyzer(smach.State):
 
     def execute(self, userdata=None):
         self.robot.base.analyzer.abort_measurement()
+        return 'done'
+
+
+class PrepareDrive(smach.State):
+    """
+    Check if the robot is ready to start driving
+    """
+    def __init__(self, robot, timeout=10):
+        """
+        @param robot: robot interface
+        @param timeout:
+        """
+        smach.State.__init__(self,
+                             outcomes=['done', 'abort', 'preempted'])
+        self.robot = robot
+        self.timeout = timeout
+
+    def execute(self, userdata=None):
+        # keep track of the duration
+        tstart = rospy.Time.now()
+        for part in self.robot.parts.itervalues():
+            # ensure all batteries are unplugged
+            if isinstance(part, Battery):
+                while part.is_charging:
+                    if tstart - rospy.Time.now() < rospy.Duration.from_sec(self.timeout):
+                        return 'abort'
+                    if self.preempt_requested():
+                        return 'preempted'
+                    self.robot.speech.speak("I am still charging. Please unplug me.")
+                    rospy.sleep(1)
+                return 'abort'
         return 'done'
 
 
@@ -246,7 +278,11 @@ class NavigateTo(smach.StateMachine):
                                                     'free': 'EXECUTE_PLAN'})
 
             smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
-                                   transitions={'done': 'NAVIGATE'})
+                                   transitions={'done': 'PREPARE_NAVIGATE'})
+
+            smach.StateMachine.add('PREPARE_NAVIGATE', PrepareDrive(self.robot),
+                                   transitions={'done': 'NAVIGATE',
+                                                'abort': 'ABORT_ANALYSIS'})
 
             smach.StateMachine.add('NAVIGATE', sm_nav,
                                    transitions={'arrived': 'STOP_ANALYSIS_SUCCEED',
