@@ -16,7 +16,7 @@ class Battery(RobotPart):
         """
         super(Battery, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.location = location
-        self.battery_sub = rospy.Subscriber("battery", BatteryState, self.battery_callback)
+        self.battery_sub = self.create_subscriber("battery", BatteryState, self.battery_callback)
         self.recent_msg = None
 
     def battery_callback(self, battery_state_msg):
