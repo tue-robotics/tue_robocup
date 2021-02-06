@@ -36,7 +36,7 @@ def take_picture(robot, entity):
 
 
 def learn_objects(robot, location):
-    arm = robot.leftArm()
+    arm = robot.get_arm()
     if arm.has_joint_goal('arm_out_of_way'):
         rospy.loginfo('Getting arm out of the way')
         arm.send_joint_goal('arm_out_of_way')
