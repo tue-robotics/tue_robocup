@@ -6,12 +6,11 @@ import tf
 import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
-from std_msgs.msg import String, ColorRGBA, Header
+from std_msgs.msg import String
 
 # TU/e
-from robot_skills.arm import arms
-from robot_skills.util import decorators
-from functionalities.add_functionalities import add_functionalities
+from .arm import arms
+from .functionalities.add_functionalities import add_functionalities
 
 from collections import OrderedDict, Sequence
 
