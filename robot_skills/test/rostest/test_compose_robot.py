@@ -7,7 +7,7 @@ import unittest
 from robot_skills.robot import Robot
 from robot_skills.robot_part import RobotPart
 
-from functionalities import add_functionalities, RobotFunc
+from robot_skills.functionalities import add_functionalities, RobotFunc
 
 # robotpart subclass
 class TestPart(RobotPart):

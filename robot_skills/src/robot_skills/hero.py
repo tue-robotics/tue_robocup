@@ -1,6 +1,5 @@
-from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
-from robot_skills.arm import arms, force_sensor, gripper, handover_detector
-from functionalities.arm import guarded_motion
+from . import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
+from .arm import arms, force_sensor, gripper, handover_detector
 from .simulation import is_sim_mode, SimEButton
 
 import rospy
