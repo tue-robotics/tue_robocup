@@ -18,9 +18,11 @@ __author__ = 'loy'
 def const_resolve(arm_designator, additional_properties):
     """
     Resolves the designator after adding properties. Note that the state is not altered.
+
     :param arm_designator: ArmDesignator to which properties should be added.
     :param additional_properties: Dict with the additional properties that are to be added.
     :return: an arm with the desired properties and state
+
     """
 
     arm_designator_add_props = copy.copy(arm_designator)
@@ -32,6 +34,7 @@ def const_resolve(arm_designator, additional_properties):
         else:
             arm_designator_add_props.arm_properties[k] = v
     return arm_designator_add_props.resolve()
+
 
 class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.
