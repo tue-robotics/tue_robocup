@@ -311,10 +311,6 @@ class Arm(RobotPart):
         # listen to the hardware status to determine if the arm is available
         self.subscribe_hardware_status(self.side + '_arm')
 
-        # Init gripper actionlib
-        self._ac_gripper = self.create_simple_action_client(
-            "/" + robot_name + "/" + self.side + "_arm/gripper/action", GripperCommandAction)
-
         # Init grasp precompute actionlib
         self._ac_grasp_precompute = self.create_simple_action_client(
             "/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
@@ -405,7 +401,6 @@ class Arm(RobotPart):
             print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
                   format(self.side))
 
-        self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
 
@@ -652,16 +647,7 @@ class Arm(RobotPart):
                 if cancel:
                     rospy.loginfo("Arms: cancelling all goals (2)")
                     self.cancel_goals()
-
-        passed_time = (rospy.Time.now() - starttime).to_sec()
-        if passed_time > timeout:
-            return False
-
-        # rospy.loginfo('Waiting for ac_gripper')
-        if self._ac_gripper.gh:
-            rospy.logdebug('Not waiting for gripper action')
-            # return self._ac_gripper.wait_for_result(rospy.Duration(timeout - passed_time))
-            return True
+        return True
 
     @property
     def base_offset(self):
