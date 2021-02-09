@@ -1,4 +1,4 @@
-from robot_skills import robot, api, arms, base, ebutton, head, ears, lights, perception, speech, \
+from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, \
     sound_source_localisation, torso, world_model_ed
 from .simulation import is_sim_mode, SimEButton
 

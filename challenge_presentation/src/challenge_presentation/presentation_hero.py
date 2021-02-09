@@ -9,7 +9,7 @@ from functools import partial
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 from robot_smach_states.util.startup import startup
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_skills.util.kdl_conversions import VectorStamped
 
 class English(object):

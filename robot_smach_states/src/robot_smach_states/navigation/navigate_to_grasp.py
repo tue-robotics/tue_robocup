@@ -7,6 +7,7 @@ from .navigation import NavigateTo
 from .constraint_functions import arms_reach_constraint
 from ..util.designators import check_resolve_type, AttrDesignator
 
+
 class NavigateToGrasp(NavigateTo):
     """"
     Navigate so that the arm can easily grasp the entity

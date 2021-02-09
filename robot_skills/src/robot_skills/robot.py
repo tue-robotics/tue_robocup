@@ -9,8 +9,9 @@ from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String, ColorRGBA, Header
 
 # TU/e
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_skills.util import decorators
+from functionalities.add_functionalities import add_functionalities
 
 from collections import OrderedDict, Sequence
 
@@ -98,6 +99,7 @@ class Robot(object):
         """
         This should be run at the end of the constructor of a child class.
         """
+        add_functionalities(self)  # at the end of robot construction add functionalities
         # Wait for connections
         connected = False
         s = rospy.Time.now()
@@ -128,14 +130,6 @@ class Robot(object):
 
         self.configured = True
 
-    @decorators.deprecated_replace_with('robot.get_arm')
-    def leftArm(self):
-        return self._arms.get('left')
-
-    @decorators.deprecated_replace_with('robot.get_arm')
-    def rightArm(self):
-        return self._arms.get('right')
-
     def reset(self):
         results = {}
         for partname, bodypart in self.parts.items():
@@ -163,7 +157,7 @@ class Robot(object):
                     gripper_timeout = arm_timeout
                 arm.send_gripper_goal('close', timeout=gripper_timeout)
 
-            arm.reset(timeout=arm_timeout)
+            arm.selfreset()
 
     def standby(self):
         if not self.robot_name == 'amigo':
@@ -329,7 +323,7 @@ class Robot(object):
         if obj_collection is None:
             return True
 
-        cur_obj = arm.occupied_by
+        cur_obj = arm.gripper.occupied_by
         for obj in obj_collection:
             if obj == arms.PseudoObjects.ANY:  # Any object, but not empty.
                 if cur_obj is None:

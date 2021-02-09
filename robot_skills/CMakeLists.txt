@@ -34,5 +34,7 @@ catkin_python_setup()
 catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
-  catkin_add_nosetests(test)
+  find_package(rostest REQUIRED)
+  catkin_add_nosetests(test/nosetest)
+  add_rostest(test/rostest/test_compose_robot.test)
 endif()

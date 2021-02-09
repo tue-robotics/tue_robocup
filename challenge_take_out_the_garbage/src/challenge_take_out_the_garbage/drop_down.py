@@ -5,7 +5,7 @@ import rospy
 # TU/e
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills import arms
+from robot_skills.arm import arms
 from robocup_knowledge import load_knowledge
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 

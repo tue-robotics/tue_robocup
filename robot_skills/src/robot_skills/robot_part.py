@@ -24,6 +24,10 @@ class RobotPart(object):
         self.robot_name = robot_name
         self.tf_listener = tf_listener
 
+        # Body parts
+        self.parts = dict()
+        self.functionalities = []
+
         self.__ros_connections = {}
 
         self.__diagnostics_name = ""
@@ -31,6 +35,16 @@ class RobotPart(object):
         # This is set to False by subscribe_hardware_status, because then apparently there is a meaningful check
         # If no such check exists, then assume it's operational unless overridden in subclass
         self._operational = True
+
+    def add_part(self, partname, part):
+        """
+        Add a component part to the robot part. This is added to the parts dict and set as an attribute
+
+        :param partname: name of the bodypart
+        :param part: bodypart object
+        """
+        self.parts[partname] = part
+        setattr(self, partname, part)
 
     def load_param(self, param_name, default=None):
         """
@@ -210,9 +224,24 @@ class RobotPart(object):
 
     def reset(self):
         """
-        Reset body part. This should be implemented in the subclass. Should always return a bool.
+        Reset body part and all its components, this function should not be overwritten.
 
         :return: Succes
         :rtype: bool
+        """
+        results = {}
+        self.selfreset()
+        for partname, part in self.parts.items():
+            rospy.logdebug("Resetting {}".format(partname))
+            if self.robot_name == 'hero' and partname == 'torso': # Todo: get rid of this custom thing.
+                rospy.logwarn("Skipping reset of %s", partname)
+            else:
+                part.reset()
+        return all(results.values())
+
+    def selfreset(self):
+        """
+        Reset of the body part itself. This function may be overwritten.
+        Returns: bool
         """
         return True

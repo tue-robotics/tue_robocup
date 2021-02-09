@@ -8,7 +8,7 @@ import rospy
 from geometry_msgs.msg import Point
 
 # TU/e Robotics
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from ...util.designators import check_type, Designator
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 

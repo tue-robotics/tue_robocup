@@ -9,8 +9,8 @@ import tf2_ros
 # TU/e Robotics
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
-from robot_skills.arms import PublicArm, GripperTypes
-from ..utility import check_arm_requirements, collect_arm_requirements, ResolveArm
+from robot_skills.arm.arms import PublicArm, GripperTypes
+from ..utility import check_arm_requirements, ResolveArm
 from robot_skills.robot import Robot
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
@@ -22,7 +22,6 @@ from ..util.designators.core import Designator
 class PrepareEdGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_trajectories": ["prepare_grasp"], }
-
 
     def __init__(self, robot, grab_entity):
         # type: (Robot, ArmDesignator, Designator) -> None

@@ -9,7 +9,7 @@ from cb_base_navigation_msgs.msg import *
 from robot_skills.util.kdl_conversions import FrameStamped
 from .navigation import NavigateTo
 from .constraint_functions import arms_reach_constraint
-from ..util.designators import Designator, check_resolve_type
+from ..util.designators import ArmDesignator, check_resolve_type
 
 
 class NavigateToPlace(NavigateTo):
@@ -24,9 +24,9 @@ class NavigateToPlace(NavigateTo):
         check_resolve_type(place_pose_designator, FrameStamped)
 
         if not arm_designator:
-            rospy.logerr('NavigateToPlace: side should be determined by arm_designator.'
-                         'Please specify left or right, will default to left')
-            arm_designator = Designator(robot.leftArm)
+            rospy.logerr('NavigateToPlace: arm should be determined by arm_designator.'
+                         'Choosing a random arm now.')
+            arm_designator = ArmDesignator(robot, {})
 
         super(NavigateToPlace, self).__init__(robot, lambda userdata: arms_reach_constraint(place_pose_designator,
                                                                                             arm_designator, look=True))
