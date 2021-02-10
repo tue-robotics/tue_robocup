@@ -92,8 +92,10 @@ class AlteredMagicMock(mock.MagicMock):
         """
         # check args
         for i in range(len(expected[0])):
-           if expected[0][i] != actual[0][i]:
-               return False
+            if i >= len(actual[0]):
+                return False
+            if expected[0][i] != actual[0][i]:
+                return False
         # check kwargs
         for k in expected[1]:
             if k not in actual[1]:
