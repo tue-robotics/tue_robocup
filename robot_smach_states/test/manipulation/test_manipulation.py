@@ -11,17 +11,6 @@ from robot_smach_states.manipulation import CloseGripperOnHandoverToRobot, Hando
 from robot_smach_states.util import designators as ds
 
 
-def assert_any_first_argument(unit_test_case, calls, argument):
-    for call in calls:
-        if call[0][0] == argument:
-            return
-    raise AssertionError("no call in {} has first argument {}".format(calls, argument))
-
-
-def assert_first_argument(unit_test_case, call, argument):
-    unit_test_case.assertEqual(call[0][0], argument)
-
-
 class TestHandOverToHuman(unittest.TestCase):
 
     @classmethod
@@ -45,7 +34,7 @@ class TestHandOverToHuman(unittest.TestCase):
         self.robot.arms["leftArm"].send_joint_goal.assert_any_call('handover_to_human', max_joint_vel=mock.ANY, timeout=mock.ANY)
         self.robot.arms["leftArm"].send_joint_goal.assert_any_call('reset', max_joint_vel=mock.ANY, timeout=mock.ANY)
 
-        assert_any_first_argument(self, self.robot.arms["leftArm"].gripper.send_goal.call_args_list, 'open')
+        self.robot.arms["leftArm"].gripper.send_goal.assert_any_call('open', mock.ANY, max_torque=mock.ANY)
         self.assertIsNone(self.robot.arms["leftArm"].gripper.occupied_by)
 
 
@@ -78,8 +67,8 @@ class TestHandOverFromHuman(unittest.TestCase):
 
         self.robot.arms["rightArm"].handover_detector.handover_to_robot.assert_called_once()
 
-        assert_any_first_argument(self, self.robot.arms["rightArm"].gripper.send_goal.call_args_list, 'open')
-        assert_first_argument(self, self.robot.arms["rightArm"].gripper.send_goal.call_args, 'close')
+        self.robot.arms["rightArm"].gripper.send_goal.assert_any_call('open', mock.ANY, max_torque=mock.ANY)
+        self.robot.arms["rightArm"].gripper.send_goal.assert_called_with('close', mock.ANY, max_torque=mock.ANY)
         self.assertEqual(self.robot.arms["rightArm"].gripper.occupied_by, self.entity)
 
 
@@ -95,7 +84,7 @@ class TestSetGripperOpen(unittest.TestCase):
     def test_set_open(self):
         state = SetGripper(self.robot, self.arm_ds, 'open')
         self.assertEqual(state.execute(), "succeeded")
-        assert_first_argument(self, self.robot.arms["leftArm"].gripper.send_goal.call_args, 'open')
+        self.robot.arms["leftArm"].gripper.send_goal.assert_called_once_with('open', mock.ANY, max_torque=mock.ANY)
 
 
 class TestSetGripperClose(unittest.TestCase):
@@ -112,7 +101,7 @@ class TestSetGripperClose(unittest.TestCase):
     def test_set_close(self):
         state = SetGripper(self.robot, self.arm_ds, 'close', self.entity_ds)
         self.assertEqual(state.execute(), "succeeded")
-        assert_first_argument(self, self.robot.arms["leftArm"].gripper.send_goal.call_args, 'close')
+        self.robot.arms["leftArm"].gripper.send_goal.assert_called_once_with('close', mock.ANY, max_torque=mock.ANY)
         self.assertEqual(self.robot.arms["leftArm"].gripper.occupied_by, self.entity)
 
 
