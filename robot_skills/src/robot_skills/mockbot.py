@@ -7,6 +7,7 @@ from collections import defaultdict
 import mock
 import random
 import os
+import six
 
 # ROS
 import geometry_msgs
@@ -43,6 +44,63 @@ def mock_query(description, grammar, target, timeout):
 
 def old_query(spec, choices, timeout=10):
     raise Exception('robot.ears.recognize IS REMOVED. Use `robot.hmi.query`')
+
+
+class AlteredMagicMock(mock.MagicMock):
+    def assert_called_with(_mock_self, *args, **kwargs):
+        """assert that the mock was called with the specified arguments.
+
+        Raises an AssertionError if the args and keyword args passed in are
+        different to the last call to the mock."""
+        self = _mock_self
+        if self.call_args is None:
+            expected = self._format_mock_call_signature(args, kwargs)
+            raise AssertionError('Expected call: %s\nNot called' % (expected,))
+
+        def _error_message(cause):
+            msg = self._format_mock_failure_message(args, kwargs)
+            if six.PY2 and cause is not None:
+                # Tack on some diagnostics for Python without __cause__
+                msg = '%s\n%s' % (msg, str(cause))
+            return msg
+
+        expected = self._call_matcher((args, kwargs))
+        actual = self._call_matcher(self.call_args)
+        if not self.equal_or_more_arguments(expected, actual):
+            cause = expected if isinstance(expected, Exception) else None
+            six.raise_from(AssertionError(_error_message(cause)), cause)
+
+    def assert_any_call(self, *args, **kwargs):
+        """assert the mock has been called with the specified arguments.
+
+        The assert passes if the mock has *ever* been called, unlike
+        `assert_called_with` and `assert_called_once_with` that only pass if
+        the call is the most recent one."""
+        expected = self._call_matcher((args, kwargs))
+        actual = [self._call_matcher(c) for c in self.call_args_list]
+        if not any([self.equal_or_more_arguments(expected, c) for c in actual]):
+            cause = expected if isinstance(expected, Exception) else None
+            expected_string = self._format_mock_call_signature(args, kwargs)
+            six.raise_from(AssertionError(
+                '%s call not found' % expected_string
+            ), cause)
+
+    @staticmethod
+    def equal_or_more_arguments(expected, actual):
+        """ check whether the actual call contains at least the arguments and keyword arguments of the expected call.
+        But still return true if the actual call contains more (keyword) arguments than expected
+        """
+        # check args
+        for i in range(len(expected[0])):
+           if expected[0][i] != actual[0][i]:
+               return False
+        # check kwargs
+        for k in expected[1]:
+            if k not in actual[1]:
+                return False
+            if expected[1][k] != actual[1][k]:
+                return False
+        return True
 
 
 class MockedRobotPart(object):
