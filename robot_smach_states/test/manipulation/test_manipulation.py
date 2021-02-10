@@ -15,7 +15,7 @@ def assert_any_first_argument(unit_test_case, calls, argument):
     for call in calls:
         if call[0][0] == argument:
             return
-    raise AssertionError("co call in {} has first argument {}".format(calls, argument))
+    raise AssertionError("no call in {} has first argument {}".format(calls, argument))
 
 
 def assert_first_argument(unit_test_case, call, argument):
