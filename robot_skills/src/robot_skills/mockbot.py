@@ -84,9 +84,7 @@ class AlteredMagicMock(mock.MagicMock):
         if not any([self.equal_or_more_arguments(expected, c) for c in actual]):
             cause = expected if isinstance(expected, Exception) else None
             expected_string = self._format_mock_call_signature(args, kwargs)
-            six.raise_from(AssertionError(
-                '%s call not found' % expected_string
-            ), cause)
+            six.raise_from(AssertionError("'%s' call not found" % expected_string), cause)
 
     @staticmethod
     def equal_or_more_arguments(expected, actual):
