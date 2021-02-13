@@ -48,10 +48,12 @@ def old_query(spec, choices, timeout=10):
 
 class AlteredMagicMock(mock.MagicMock):
     def assert_called_with(_mock_self, *args, **kwargs):
-        """assert that the mock was called with the specified arguments.
+        """
+        Assert that the mock was called with the specified arguments.
 
         Raises an AssertionError if the args and keyword args passed in are
-        different to the last call to the mock."""
+        different to the last call to the mock.
+        """
         self = _mock_self
         if self.call_args is None:
             expected = self._format_mock_call_signature(args, kwargs)
@@ -71,11 +73,13 @@ class AlteredMagicMock(mock.MagicMock):
             six.raise_from(AssertionError(_error_message(cause)), cause)
 
     def assert_any_call(self, *args, **kwargs):
-        """assert the mock has been called with the specified arguments.
+        """
+        Assert the mock has been called with the specified arguments.
 
         The assert passes if the mock has *ever* been called, unlike
         `assert_called_with` and `assert_called_once_with` that only pass if
-        the call is the most recent one."""
+        the call is the most recent one.
+        """
         expected = self._call_matcher((args, kwargs))
         actual = [self._call_matcher(c) for c in self.call_args_list]
         if not any([self.equal_or_more_arguments(expected, c) for c in actual]):
@@ -87,7 +91,8 @@ class AlteredMagicMock(mock.MagicMock):
 
     @staticmethod
     def equal_or_more_arguments(expected, actual):
-        """ check whether the actual call contains at least the arguments and keyword arguments of the expected call.
+        """
+        Check whether the actual call contains at least the arguments and keyword arguments of the expected call.
         But still return true if the actual call contains more (keyword) arguments than expected
         """
         # check args
@@ -166,11 +171,13 @@ class Gripper(MockedRobotPart):
         self.occupied_by = None
         self.send_goal = AlteredMagicMock()
 
+
 class HandoverDetector(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(HandoverDetector, self).__init__(robot_name, tf_listener)
         self.handover_to_human = AlteredMagicMock()
         self.handover_to_robot = AlteredMagicMock()
+
 
 class Base(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
