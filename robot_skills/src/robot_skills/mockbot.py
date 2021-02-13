@@ -47,14 +47,13 @@ def old_query(spec, choices, timeout=10):
 
 
 class AlteredMagicMock(mock.MagicMock):
-    def assert_called_with(_mock_self, *args, **kwargs):
+    def assert_called_with(self, *args, **kwargs):
         """
         Assert that the mock was called with the specified arguments.
 
         Raises an AssertionError if the args and keyword args passed in are
         different to the last call to the mock.
         """
-        self = _mock_self
         if self.call_args is None:
             expected = self._format_mock_call_signature(args, kwargs)
             raise AssertionError('Expected call: %s\nNot called' % (expected,))
