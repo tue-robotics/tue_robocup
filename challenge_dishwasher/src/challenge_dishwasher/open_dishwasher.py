@@ -105,7 +105,7 @@ class OpenDishwasher(StateMachine):
 
         @cb_interface(outcomes=['done'])
         def _pre_grab_handle(ud):
-            robot.rightArm.send_gripper_goal("open", timeout=0)
+            robot.rightArm.gripper.send_goal("open", timeout=0)
             robot.rightArm._send_joint_trajectory([[0, 0.2519052373022729913, 0.7746500794619434, 1.3944848321343395,
                                                    -1.829999276180074, 0.6947045024700284, 0.1889253710114966]],
                                                  timeout=rospy.Duration(0))
@@ -118,7 +118,7 @@ class OpenDishwasher(StateMachine):
             robot.speech.speak('I hope this goes right!', block=False)
             fs = frame_stamped("dishwasher", 0.42, 0, 0.8, roll=math.pi / 2, pitch=0, yaw=math.pi)
             robot.rightArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_listener))
-            robot.rightArm.send_gripper_goal("close")
+            robot.rightArm.gripper.send_goal("close")
             return 'done'
 
         @cb_interface(outcomes=['done'])

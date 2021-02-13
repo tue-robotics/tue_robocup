@@ -7,6 +7,7 @@ from collections import defaultdict
 import mock
 import random
 import os
+import six
 
 # ROS
 import geometry_msgs
@@ -45,22 +46,83 @@ def old_query(spec, choices, timeout=10):
     raise Exception('robot.ears.recognize IS REMOVED. Use `robot.hmi.query`')
 
 
+class AlteredMagicMock(mock.MagicMock):
+    def assert_called_with(self, *args, **kwargs):
+        """
+        Assert that the mock was called with the specified arguments.
+
+        Raises an AssertionError if the args and keyword args passed in are
+        different to the last call to the mock.
+        """
+        if self.call_args is None:
+            expected = self._format_mock_call_signature(args, kwargs)
+            raise AssertionError('Expected call: %s\nNot called' % (expected,))
+
+        def _error_message(cause):
+            msg = self._format_mock_failure_message(args, kwargs)
+            if six.PY2 and cause is not None:
+                # Tack on some diagnostics for Python without __cause__
+                msg = '%s\n%s' % (msg, str(cause))
+            return msg
+
+        expected = self._call_matcher((args, kwargs))
+        actual = self._call_matcher(self.call_args)
+        if not self.equal_or_more_arguments(expected, actual):
+            cause = expected if isinstance(expected, Exception) else None
+            six.raise_from(AssertionError(_error_message(cause)), cause)
+
+    def assert_any_call(self, *args, **kwargs):
+        """
+        Assert the mock has been called with the specified arguments.
+
+        The assert passes if the mock has *ever* been called, unlike
+        `assert_called_with` and `assert_called_once_with` that only pass if
+        the call is the most recent one.
+        """
+        expected = self._call_matcher((args, kwargs))
+        actual = [self._call_matcher(c) for c in self.call_args_list]
+        if not any([self.equal_or_more_arguments(expected, c) for c in actual]):
+            cause = expected if isinstance(expected, Exception) else None
+            expected_string = self._format_mock_call_signature(args, kwargs)
+            six.raise_from(AssertionError("'%s' call not found" % expected_string), cause)
+
+    @staticmethod
+    def equal_or_more_arguments(expected, actual):
+        """
+        Check whether the actual call contains at least the arguments and keyword arguments of the expected call.
+        But still return true if the actual call contains more (keyword) arguments than expected
+        """
+        # check args
+        for i in range(len(expected[0])):
+            if i >= len(actual[0]):
+                return False
+            if expected[0][i] != actual[0][i]:
+                return False
+        # check kwargs
+        for k in expected[1]:
+            if k not in actual[1]:
+                return False
+            if expected[1][k] != actual[1][k]:
+                return False
+        return True
+
+
 class MockedRobotPart(object):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         self.robot_name = robot_name
         self.tf_listener = tf_listener
 
-        self.load_param = mock.MagicMock()
-        self.wait_for_connections = mock.MagicMock()
-        self.create_simple_action_client = mock.MagicMock()
-        self.create_service_client = mock.MagicMock()
-        self.create_subscriber = mock.MagicMock()
-        self._add_connection = mock.MagicMock()
-        self.operational = mock.MagicMock()
-        self.subscribe_hardware_status = mock.MagicMock()
-        self.unsubscribe_hardware_status = mock.MagicMock()
-        self.process_hardware_status = mock.MagicMock()
-        self.reset = mock.MagicMock()
+        self.load_param = AlteredMagicMock()
+        self.wait_for_connections = AlteredMagicMock()
+        self.create_simple_action_client = AlteredMagicMock()
+        self.create_service_client = AlteredMagicMock()
+        self.create_subscriber = AlteredMagicMock()
+        self._add_connection = AlteredMagicMock()
+        self.operational = AlteredMagicMock()
+        self.subscribe_hardware_status = AlteredMagicMock()
+        self.unsubscribe_hardware_status = AlteredMagicMock()
+        self.process_hardware_status = AlteredMagicMock()
+        self.reset = AlteredMagicMock()
 
 
 class Arm(MockedRobotPart):
@@ -74,19 +136,19 @@ class Arm(MockedRobotPart):
 
         self._base_offset = random_kdl_vector()
 
-        self.default_configurations = mock.MagicMock()
-        self.default_trajectories = mock.MagicMock()
-        self.has_joint_goal = mock.MagicMock()
-        self.has_joint_trajectory = mock.MagicMock()
-        self.cancel_goals = mock.MagicMock()
-        self.close = mock.MagicMock()
-        self.send_goal = mock.MagicMock()
-        self.send_joint_goal = mock.MagicMock()
-        self.send_joint_trajectory = mock.MagicMock()
-        self.reset = mock.MagicMock()
-        self._send_joint_trajectory = mock.MagicMock()
-        self._publish_marker = mock.MagicMock()
-        self.wait_for_motion_done = mock.MagicMock()
+        self.default_configurations = AlteredMagicMock()
+        self.default_trajectories = AlteredMagicMock()
+        self.has_joint_goal = AlteredMagicMock()
+        self.has_joint_trajectory = AlteredMagicMock()
+        self.cancel_goals = AlteredMagicMock()
+        self.close = AlteredMagicMock()
+        self.send_goal = AlteredMagicMock()
+        self.send_joint_goal = AlteredMagicMock()
+        self.send_joint_trajectory = AlteredMagicMock()
+        self.reset = AlteredMagicMock()
+        self._send_joint_trajectory = AlteredMagicMock()
+        self._publish_marker = AlteredMagicMock()
+        self.wait_for_motion_done = AlteredMagicMock()
 
         # add parts
         self.gripper = Gripper(robot_name, tf_listener)
@@ -104,29 +166,31 @@ class Gripper(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Gripper, self).__init__(robot_name, tf_listener)
         self.occupied_by = None
-        self.send_goal = mock.MagicMock()
+        self.send_goal = AlteredMagicMock()
+
 
 class HandoverDetector(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(HandoverDetector, self).__init__(robot_name, tf_listener)
-        self.handover_to_human = mock.MagicMock()
-        self.handover_to_robot = mock.MagicMock()
+        self.handover_to_human = AlteredMagicMock()
+        self.handover_to_robot = AlteredMagicMock()
+
 
 class Base(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Base, self).__init__(robot_name, tf_listener)
-        self.move = mock.MagicMock()
-        self.turn_towards = mock.MagicMock()
-        self.force_drive = mock.MagicMock()
+        self.move = AlteredMagicMock()
+        self.turn_towards = AlteredMagicMock()
+        self.force_drive = AlteredMagicMock()
         self.get_location = lambda: FrameStamped(random_kdl_frame(), "/map")
-        self.set_initial_pose = mock.MagicMock()
-        self.wait_for_motion_done = mock.MagicMock()
-        self.go = mock.MagicMock()
-        self.reset_costmap = mock.MagicMock()
-        self.cancel_goal = mock.MagicMock()
-        self.analyzer = mock.MagicMock()
-        self.global_planner = mock.MagicMock()
-        self.local_planner = mock.MagicMock()
+        self.set_initial_pose = AlteredMagicMock()
+        self.wait_for_motion_done = AlteredMagicMock()
+        self.go = AlteredMagicMock()
+        self.reset_costmap = AlteredMagicMock()
+        self.cancel_goal = AlteredMagicMock()
+        self.analyzer = AlteredMagicMock()
+        self.global_planner = AlteredMagicMock()
+        self.local_planner = AlteredMagicMock()
         self.local_planner.getStatus = mock.MagicMock(return_value="arrived")  # always arrive for now
         self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"])  # always arrive for now
 
@@ -136,73 +200,73 @@ class Hmi(MockedRobotPart):
         super(Hmi, self).__init__(robot_name, tf_listener)
 
         self.query = mock_query
-        self.show_image = mock.MagicMock()
-        self.show_image_from_msg = mock.MagicMock()
+        self.show_image = AlteredMagicMock()
+        self.show_image_from_msg = AlteredMagicMock()
         self.old_query = old_query
-        self.reset = mock.MagicMock()
-        self.restart_dragonfly = mock.MagicMock()
+        self.reset = AlteredMagicMock()
+        self.restart_dragonfly = AlteredMagicMock()
 
 
 class EButton(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(EButton, self).__init__(robot_name, tf_listener)
-        self.close = mock.MagicMock()
-        self._listen = mock.MagicMock()
-        self.read_ebutton = mock.MagicMock()
+        self.close = AlteredMagicMock()
+        self._listen = AlteredMagicMock()
+        self.read_ebutton = AlteredMagicMock()
 
 
 class Head(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Head, self).__init__(robot_name, tf_listener)
-        self.reset = mock.MagicMock()
-        self.close = mock.MagicMock()
-        self.set_pan_tilt = mock.MagicMock()
-        self.send_goal = mock.MagicMock()
-        self.cancel_goal = mock.MagicMock()
-        self.reset = mock.MagicMock()
-        self.look_at_hand = mock.MagicMock()
-        self.wait = mock.MagicMock()
-        self.getGoal = mock.MagicMock()
-        self.atGoal = mock.MagicMock()
-        self.look_at_standing_person = mock.MagicMock()
-        self.look_at_point = mock.MagicMock()
-        self.look_at_ground_in_front_of_robot = mock.MagicMock()  # TODO: Must return a EntityInfo
-        self.setPanTiltGoal = mock.MagicMock()
-        self.setLookAtGoal = mock.MagicMock()
-        self.cancelGoal = mock.MagicMock()
-        self.wait_for_motion_done = mock.MagicMock()
-        self._setHeadReferenceGoal = mock.MagicMock()
-        self.__feedbackCallback = mock.MagicMock()
-        self.__doneCallback = mock.MagicMock()
+        self.reset = AlteredMagicMock()
+        self.close = AlteredMagicMock()
+        self.set_pan_tilt = AlteredMagicMock()
+        self.send_goal = AlteredMagicMock()
+        self.cancel_goal = AlteredMagicMock()
+        self.reset = AlteredMagicMock()
+        self.look_at_hand = AlteredMagicMock()
+        self.wait = AlteredMagicMock()
+        self.getGoal = AlteredMagicMock()
+        self.atGoal = AlteredMagicMock()
+        self.look_at_standing_person = AlteredMagicMock()
+        self.look_at_point = AlteredMagicMock()
+        self.look_at_ground_in_front_of_robot = AlteredMagicMock()  # TODO: Must return a EntityInfo
+        self.setPanTiltGoal = AlteredMagicMock()
+        self.setLookAtGoal = AlteredMagicMock()
+        self.cancelGoal = AlteredMagicMock()
+        self.wait_for_motion_done = AlteredMagicMock()
+        self._setHeadReferenceGoal = AlteredMagicMock()
+        self.__feedbackCallback = AlteredMagicMock()
+        self.__doneCallback = AlteredMagicMock()
 
 
 class Perception(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Perception, self).__init__(robot_name, tf_listener)
-        self.reset = mock.MagicMock()
-        self.close = mock.MagicMock()
-        self.learn_person = mock.MagicMock()
-        self.detect_faces = mock.MagicMock()
-        self.get_best_face_recognition = mock.MagicMock()
-        self.get_rgb_depth_caminfo = mock.MagicMock()
+        self.reset = AlteredMagicMock()
+        self.close = AlteredMagicMock()
+        self.learn_person = AlteredMagicMock()
+        self.detect_faces = AlteredMagicMock()
+        self.get_best_face_recognition = AlteredMagicMock()
+        self.get_rgb_depth_caminfo = AlteredMagicMock()
         self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "/map")
 
 
 class Lights(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Lights, self).__init__(robot_name, tf_listener)
-        self.close = mock.MagicMock()
-        self.set_color = mock.MagicMock()
-        self.set_color_colorRGBA = mock.MagicMock()
-        self.on = mock.MagicMock()
-        self.off = mock.MagicMock()
+        self.close = AlteredMagicMock()
+        self.set_color = AlteredMagicMock()
+        self.set_color_colorRGBA = AlteredMagicMock()
+        self.on = AlteredMagicMock()
+        self.off = AlteredMagicMock()
 
 
 class Speech(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(Speech, self).__init__(robot_name, tf_listener)
-        self.close = mock.MagicMock()
-        self.speak = mock.MagicMock()
+        self.close = AlteredMagicMock()
+        self.speak = AlteredMagicMock()
 
 
 class Torso(MockedRobotPart):
@@ -211,18 +275,18 @@ class Torso(MockedRobotPart):
 
         self.get_joint_states = get_joint_states
 
-        self.close = mock.MagicMock()
-        self.send_goal = mock.MagicMock()
-        self._send_goal = mock.MagicMock()
-        self.high = mock.MagicMock()
-        self.medium = mock.MagicMock()
-        self.low = mock.MagicMock()
-        self.reset = mock.MagicMock()
-        self.wait = mock.MagicMock()
-        self.cancel_goal = mock.MagicMock()
-        self._receive_torso_measurement = mock.MagicMock()
-        self.get_position = mock.MagicMock()
-        self.wait_for_motion_done = mock.MagicMock()
+        self.close = AlteredMagicMock()
+        self.send_goal = AlteredMagicMock()
+        self._send_goal = AlteredMagicMock()
+        self.high = AlteredMagicMock()
+        self.medium = AlteredMagicMock()
+        self.low = AlteredMagicMock()
+        self.reset = AlteredMagicMock()
+        self.wait = AlteredMagicMock()
+        self.cancel_goal = AlteredMagicMock()
+        self._receive_torso_measurement = AlteredMagicMock()
+        self.get_position = AlteredMagicMock()
+        self.wait_for_motion_done = AlteredMagicMock()
 
 
 class ED(MockedRobotPart):
@@ -235,7 +299,7 @@ class ED(MockedRobotPart):
             else:
                 entity_info.id = id
             entity_info.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
-            # entity.data = mock.MagicMock()
+            # entity.data = AlteredMagicMock()
             entity_info.data = ""
 
             entity = from_entity_info(entity_info)
@@ -258,13 +322,13 @@ class ED(MockedRobotPart):
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None: self._entities[id]
         self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
-        self.navigation = mock.MagicMock()
-        self.navigation.get_position_constraint = mock.MagicMock()
-        self.update_entity = mock.MagicMock()
+        self.navigation = AlteredMagicMock()
+        self.navigation.get_position_constraint = AlteredMagicMock()
+        self.update_entity = AlteredMagicMock()
         self.get_closest_possible_person_entity = lambda *args, **kwargs: self.generate_random_entity()
         self.get_closest_laser_entity = lambda *args, **kwargs: self.generate_random_entity()
-        self.get_entity_info = mock.MagicMock()
-        self.wait_for_connections = mock.MagicMock()
+        self.get_entity_info = AlteredMagicMock()
+        self.wait_for_connections = AlteredMagicMock()
 
         self._person_names = []
 
@@ -341,10 +405,10 @@ class Mockbot(robot.Robot):
 
         super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_listener=MockedTfListener)
 
-        self.publish_target = mock.MagicMock()
-        self.tf_transform_pose = mock.MagicMock()
-        self.close = mock.MagicMock()
-        self.get_joint_states = mock.MagicMock()
+        self.publish_target = AlteredMagicMock()
+        self.tf_transform_pose = AlteredMagicMock()
+        self.close = AlteredMagicMock()
+        self.get_joint_states = AlteredMagicMock()
 
         self.add_body_part('hmi', Hmi(self.robot_name, self.tf_listener))
 
@@ -367,7 +431,7 @@ class Mockbot(robot.Robot):
         self.add_body_part('perception', Perception(self.robot_name, self.tf_listener))
 
         # Miscellaneous
-        self.pub_target = mock.MagicMock()
+        self.pub_target = AlteredMagicMock()
 
         # Grasp offsets
         # TODO: Don't hardcode, load from parameter server to make robot independent.
