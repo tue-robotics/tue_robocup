@@ -354,27 +354,30 @@ class ToggleBool(smach.State):
 
 
 class ResolveArm(smach.State):
-    def __init__(self, arm_designator, state_machine):
+    def __init__(self, arm, state_machine):
         """ Resolves, if possible, an arm for a state machine taking into account all the arm requirements
 
-        :param arm_designator: given arm designator
+        :param arm: given arm designator
         :param state_machine: used state machine
         """
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'],
-                             output_keys=["arm"]
-                             )
-        self.arm_designator = arm_designator
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.arm = arm
         self.state_machine = state_machine
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         arm_requirements = collect_arm_requirements(self.state_machine)
-        resolved_arm = const_resolve(self.arm_designator, arm_requirements)
-        if resolved_arm is None:
+        for k, v in arm_requirements.items():
+            if k in self.arm.arm_properties:
+                for val in arm_requirements[k]:
+                    if val not in arm_requirements[k]:
+                        self.arm.arm_properties[k] += val
+            else:
+                self.arm.arm_properties[k] = v
+        self.arm.lock()
+        if self.arm.resolve() is None:
             rospy.logerror("Didn't find an arm")  # ToDo: improve error message
             return "failed"
         else:
-            userdata.arm = resolved_arm
             return "succeeded"
 
 
@@ -435,25 +438,6 @@ def collect_arm_requirements(state_machine):
 
     rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
     return arm_requirements
-
-
-def const_resolve(arm_designator, additional_properties):
-    """
-    Resolves the designator after adding properties. Note that the state is not altered.
-    :param arm_designator: ArmDesignator to which properties should be added.
-    :param additional_properties: Dict with the additional properties that are to be added.
-    :return: an arm with the desired properties and state
-    """
-
-    arm_designator_add_props = copy.copy(arm_designator)
-    for k, v in additional_properties.items():
-        if k in arm_designator_add_props.arm_properties:
-            for val in additional_properties[k]:
-                if val not in additional_properties[k]:
-                    arm_designator_add_props.arm_properties[k] += val
-        else:
-            arm_designator_add_props.arm_properties[k] = v
-    return arm_designator_add_props.resolve()
 
 
 if __name__ == "__main__":
