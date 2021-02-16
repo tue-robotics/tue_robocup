@@ -312,7 +312,7 @@ class Arm(RobotPart):
 
         # Init grasp precompute actionlib
         self._ac_grasp_precompute = self.create_simple_action_client(
-            "/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
+            "/" + robot_name + "/" + self.arm_name + "/grasp_precompute", GraspPrecomputeAction)
 
         # Init joint trajectory action server
         self._ac_joint_traj = self.create_simple_action_client(
