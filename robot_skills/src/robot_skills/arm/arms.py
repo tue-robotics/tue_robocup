@@ -291,6 +291,10 @@ class Arm(RobotPart):
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
+        offset = self.load_param('skills/gripper/grasp_offset/')
+        self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
+                                kdl.Vector(offset["x"], offset["y"], offset["z"]))
+
         self.marker_to_grippoint_offset = self.load_param('skills/gripper/marker_to_grippoint')
 
         # Grasp offsets
