@@ -265,7 +265,7 @@ class PublicArm(object):
         """
         if not cond:
             msg = "get_arm for '{}' arm did not request '{}' access. Hint: {}"
-            raise AssertionError(msg.format(self._arm.side, feature, hint))
+            raise AssertionError(msg.format(self._arm.arm_name, feature, hint))
 
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
@@ -316,7 +316,7 @@ class Arm(RobotPart):
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
-            "/" + robot_name + "/" + self.side + "_arm/grasp_target",
+            "/" + robot_name + "/" + self.arm_name + "/grasp_target",  # TODO: update rviz config
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.get_joint_states = get_joint_states
@@ -684,4 +684,4 @@ class Arm(RobotPart):
         self._marker_publisher.publish(marker)
 
     def __repr__(self):
-        return "Arm(side='{side}')".format(side=self.side)
+        return "Arm(name='{}')".format(side=self.arm_name)
