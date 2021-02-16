@@ -68,7 +68,7 @@ class ParrallelGripper(Gripper):
         """
         super(ParrallelGripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.gripper_name = gripper_name
-        offset = self.load_param('skills/arm/' + self.gripper_name + '/grasp_offset/')
+        offset = self.load_param('skills/' + self.gripper_name + '/grasp_offset/')
         self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
                                         kdl.Vector(offset["x"], offset["y"], offset["z"]))
 
