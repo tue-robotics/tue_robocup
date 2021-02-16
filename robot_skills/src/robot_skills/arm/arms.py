@@ -286,6 +286,7 @@ class Arm(RobotPart):
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.side = side
+        self.arm_name = "arm_" + side
 
         self._operational = True  # In simulation, there will be no hardware cb
 
@@ -293,15 +294,14 @@ class Arm(RobotPart):
         self.marker_to_grippoint_offset = self.load_param('skills/gripper/marker_to_grippoint')
 
         # Grasp offsets
-        go = self.load_param('skills/arm/' + self.side + '/base_offset')
+        go = self.load_param('skills/' + self.arm_name + '/base_offset')
         self._base_offset = kdl.Vector(go["x"], go["y"], go["z"])
 
-        self.joint_names = self.load_param('skills/arm/joint_names')
-        self.joint_names = [name + "_" + self.side for name in self.joint_names]
+        self.joint_names = self.load_param('skills/' + self.arm_name + '/joint_names')
         self.torso_joint_names = self.load_param('skills/torso/joint_names')
 
-        self.default_configurations = self.load_param('skills/arm/default_configurations')
-        self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
+        self.default_configurations = self.load_param('skills/' + self.arm_name + '/default_configurations')
+        self.default_trajectories = self.load_param('skills/' + self.arm_name + '/default_trajectories')
 
         # listen to the hardware status to determine if the arm is available
         self.subscribe_hardware_status(self.side + '_arm')

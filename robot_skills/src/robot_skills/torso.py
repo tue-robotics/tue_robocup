@@ -22,7 +22,7 @@ class Torso(RobotPart):
         super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
         self.joint_names = self.load_param('skills/torso/joint_names')
-        self._arm_joint_names = self.load_param('skills/arm/joint_names')
+        self._arm_joint_names = self.load_param('skills/arm_left/joint_names')  #TODO make sure this is no longer needed
         self.default_configurations = self.load_param('skills/torso/default_configurations')
         self.default_tolerance = self.load_param('/skills/torso/default_tolerance')
         self.lower_limit = self.default_configurations['lower_limit']
