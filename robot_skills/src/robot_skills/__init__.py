@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # Robots
 from .amigo import Amigo
 from .hero import Hero
