@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>challenge_where_is_this</name>
   <version>0.0.1</version>
   <description>challenge_where_is_this</description>
@@ -10,9 +13,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>robot_skills</run_depend>
-  <run_depend>robot_smach_states</run_depend>
-  <run_depend>robocup_knowledge</run_depend>
-  <run_depend>rospy</run_depend>
+  <exec_depend>robot_skills</exec_depend>
+  <exec_depend>robot_smach_states</exec_depend>
+  <exec_depend>robocup_knowledge</exec_depend>
+  <exec_depend>rospy</exec_depend>
 
 </package>

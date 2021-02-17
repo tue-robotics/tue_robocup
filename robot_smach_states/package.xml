@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>robot_smach_states</name>
   <version>0.0.0</version>
   <description>No description available</description>
@@ -16,22 +19,27 @@
   <exec_depend>smach_ros</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>ed_msgs</exec_depend>
-  <exec_depend>python-docopt</exec_depend>
-  <exec_depend>python-mock</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-docopt</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-docopt</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-mock</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-mock</exec_depend>
   <exec_depend>ipython</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>actionlib</exec_depend>
   <exec_depend>cb_base_navigation_msgs</exec_depend>
   <exec_depend>python-graphviz-pip</exec_depend>
-  <exec_depend>python-psutil</exec_depend>
-  <exec_depend>python-numpy</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-psutil</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-psutil</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-numpy</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-numpy</exec_depend>
   <exec_depend>orocos_kdl</exec_depend>
   <exec_depend>python_orocos_kdl</exec_depend>
   <exec_depend>tf2_geometry_msgs</exec_depend>
 
   <test_depend>test_tools</test_depend>
 
-  <doc_depend>python-sphinx</doc_depend>
+  <doc_depend condition="$ROS_PYTHON_VERSION == 2">python-sphinx</doc_depend>
+  <doc_depend condition="$ROS_PYTHON_VERSION == 3">python3-sphinx</doc_depend>
   <doc_depend>python-sphinx-autoapi-pip</doc_depend>
   <doc_depend>python-sphinx-rtd-theme-pip</doc_depend>
 

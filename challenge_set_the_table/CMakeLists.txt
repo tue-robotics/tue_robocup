@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(challenge_set_the_table)
 
 find_package(catkin REQUIRED)
