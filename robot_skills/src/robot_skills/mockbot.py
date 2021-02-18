@@ -350,7 +350,9 @@ class ED(MockedRobotPart):
 
     @property
     def _entities(self):
-        return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())
+        entities = self._dynamic_entities.copy()
+        entities.update(self._static_entities)
+        return defaultdict(ED.generate_random_entity, entities.items())
 
     def segment_kinect(self, *args, **kwargs):
         self._dynamic_entities = {e.id: e for e in [ED.generate_random_entity() for _ in range(5)]}
