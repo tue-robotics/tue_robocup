@@ -290,21 +290,21 @@ class Torso(MockedRobotPart):
 
 class ED(MockedRobotPart):
     @staticmethod
-    def generate_random_entity(id=None, type=None):
+    def generate_random_entity(id_=None, type_=None):
             entity_info = EntityInfo()
 
-            if not id:
-                entity_info.id = str(hash(entity_info))
+            if not id_:
+                entity_info.id = str(id(entity_info))
             else:
-                entity_info.id = id
+                entity_info.id = id_
             entity_info.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             # entity.data = AlteredMagicMock()
             entity_info.data = ""
 
             entity = from_entity_info(entity_info)
             entity._pose = random_kdl_frame()
-            if type:
-                entity.type = type
+            if type_:
+                entity.type = type_
             return entity
 
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
@@ -312,11 +312,11 @@ class ED(MockedRobotPart):
         self._dynamic_entities = defaultdict(self.generate_random_entity,
                                      {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
-        self._dynamic_entities['john'] = self.generate_random_entity(id='john', type='person')
+        self._dynamic_entities['john'] = self.generate_random_entity(id_='john', type_='person')
         self._static_entities = defaultdict(self.generate_random_entity,
                                      {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
-        self._static_entities['test_waypoint_1'] = self.generate_random_entity(id='test_waypoint_1', type='waypoint')
-        self._static_entities['cabinet'] = self.generate_random_entity(id='cabinet')
+        self._static_entities['test_waypoint_1'] = self.generate_random_entity(id_='test_waypoint_1', type_='waypoint')
+        self._static_entities['cabinet'] = self.generate_random_entity(id_='cabinet')
 
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None: self._entities[id]
