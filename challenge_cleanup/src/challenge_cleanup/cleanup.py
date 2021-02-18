@@ -116,8 +116,7 @@ class AskWhichRoomToClean(smach.StateMachine):
         """
 
         hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
-        room_name_des = ds.FuncDesignator(ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode),
-                                          str, resolve_type=str)
+        room_name_des = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
 
         @smach.cb_interface(outcomes=['done'])
         def write_room(ud, des_read, des_write):
