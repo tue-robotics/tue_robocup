@@ -7,7 +7,7 @@ import rospy
 import std_msgs.msg as std
 import tf
 
-number = (int, long, float)
+number = (int, float)
 
 
 def Point(x=0, y=0, z=0):
