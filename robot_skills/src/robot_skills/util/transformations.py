@@ -22,7 +22,7 @@ def euler_z_to_quaternion(angle):
     orientation_goal = geometry_msgs.msg.Quaternion()
     try:
         quaternion = tf.transformations.quaternion_from_euler(0, 0, angle)
-    except TypeError, te:
+    except TypeError as te:
         rospy.logerr(str(angle) + " cannot be parsed as a float: {0}".format(te))
     orientation_goal.x = quaternion[0]
     orientation_goal.y = quaternion[1]
@@ -43,7 +43,7 @@ def euler_z_from_quaternion(quaternion):
     try:
         [rx,ry,rz] = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
 
-    except TypeError, te:
+    except TypeError as te:
         rospy.logerr("Quaternion {0} cannot be transformed to Euler".format(te))
         return None
 
