@@ -17,7 +17,7 @@ choices = re.findall("<([^<>]+)>", data.spec)
 
 # Parse the choices in the ending result :)
 for c in choices:
-    for k,v in data.choices.iteritems():
+    for k, v in data.choices.items():
         if k == c:
             value = random.choice(v)
 

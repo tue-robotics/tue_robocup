@@ -33,7 +33,7 @@ class StateViz(object):
         graph.node(self.get_node_identifier(), label=self.get_name())
 
     def get_name(self):
-        names = {v: k for k, v in self.parent.smach_obj.get_children().iteritems()}
+        names = {v: k for k, v in self.parent.smach_obj.get_children().items()}
         name = names[self.smach_obj]
         return name
 
@@ -134,7 +134,7 @@ class StateMachineViz(ContainerViz):
         #     outcomeviz = ContainerOutcomeViz(outcome, self)
         #     outcomeviz.add_to_graph(machine)
 
-        # for childname, child in self.smach_obj.get_children().iteritems():
+        # for childname, child in self.smach_obj.get_children().items():
         #     childviz = self.make_childviz(child)
 
         print(level*'\t' + "self.smach_obj._transitions = {}".format(self.smach_obj._transitions))
@@ -146,7 +146,7 @@ class StateMachineViz(ContainerViz):
             # childviz.add_to_graph(my_subgraph, level=level+1)
             element_viz_set.add(childviz)
 
-            for transition, to_name in self.smach_obj._transitions[childname].iteritems():
+            for transition, to_name in self.smach_obj._transitions[childname].items():
                 print(level*'\t' + "transition {} --{}--> {}".format(childname, transition, to_name))
                 if to_name not in self.smach_obj._outcomes:
                     # if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
@@ -177,7 +177,7 @@ class StateMachineViz(ContainerViz):
 
     def get_name(self):
         if self.parent:
-            names = {v:k for k,v  in self.parent.smach_obj.get_children().iteritems()}
+            names = {v:k for k, v  in self.parent.smach_obj.get_children().items()}
             name = names[self.smach_obj]
             return name
         else:
@@ -199,7 +199,7 @@ class IteratorViz(ContainerViz):
             outcomeviz = ContainerOutcomeViz(outcome, self)
             outcomeviz.add_to_graph(machine)
 
-        for childname, child in self.smach_obj.get_children().iteritems():
+        for childname, child in self.smach_obj.get_children().items():
             childviz = self.make_childviz(child)
 
             for transition, from_, to_name in self.smach_obj.get_internal_edges():

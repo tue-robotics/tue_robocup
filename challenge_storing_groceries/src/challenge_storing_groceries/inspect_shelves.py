@@ -30,7 +30,7 @@ class InspectShelves(smach.State):
 
         # Get the pose of all shelves
         shelves = []
-        for k, v in cabinet_entity.volumes.iteritems():
+        for k, v in cabinet_entity.volumes.items():
             if k in config.OBJECT_SHELVES:
                 rospy.loginfo("Adding {} to shelves".format(k))
                 vector = 0.5 * (v.min_corner + v.max_corner)

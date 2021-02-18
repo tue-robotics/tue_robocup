@@ -97,7 +97,7 @@ def _get_area(convex_hull):
 #         return vs
 #
 #     def _inspect_sides(self):
-#         for side, spec in self._sides.iteritems():
+#         for side, spec in self._sides.items():
 #             # Look at the side
 #             rospy.loginfo("looking at side %s" % side)
 #             vs = self._get_head_goal(spec)
@@ -161,7 +161,7 @@ def _get_area(convex_hull):
 #     def _get_best_side(self):
 #
 #         best_side = None
-#         for side, spec in self._sides.iteritems():
+#         for side, spec in self._sides.items():
 #             end_score = self._sides[side]["score"]["area_sum"] + \
 #                         self._sides[side]["score"]["min_distance"]
 #             rospy.loginfo("Side %s scoring (%f): %s" % (side, end_score, self._sides[side]["score"]))

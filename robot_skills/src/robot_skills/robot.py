@@ -150,7 +150,7 @@ class Robot(object):
         :param gripper_timeout: If specified and 'close_gripper' holds, timeout for closing the gripper.
             If not specified, gripper movement uses 'arm_timeout'.
         """
-        for arm in self._arms.itervalues():
+        for arm in self._arms.values():
             if close_gripper:
                 if gripper_timeout is None:
                     gripper_timeout = arm_timeout
@@ -235,7 +235,7 @@ class Robot(object):
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
-        for arm_name, arm in self._arms.iteritems():
+        for arm_name, arm in self._arms.items():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue

@@ -36,7 +36,7 @@ class Navigation(RobotPart):
     def get_position_constraint(self, entity_id_area_name_map):
         try:
             res = self._get_constraint_srv(entity_ids=[k for k in entity_id_area_name_map],
-                                           area_names=[v for k, v in entity_id_area_name_map.iteritems()])
+                                           area_names=[v for k, v in entity_id_area_name_map.items()])
         except Exception as e:
             rospy.logerr("Can't get position constraint: {}".format(e))
             return None
@@ -252,7 +252,7 @@ class ED(RobotPart):
                     if not isinstance(flag, dict):
                         print("update_entity - Error: flags need to be a list of dicts or a dict")
                         return False
-                    for k, v in flag.iteritems():
+                    for k, v in flag.items():
                         if not first:
                             json_entity += ','
                         json_entity += '{"%s":"%s"}' % (k, v)

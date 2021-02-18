@@ -58,7 +58,7 @@ class Speech(RobotPart):
         if hasattr(self._pre_hook, '__call__'):
             self._pre_hook()
 
-        for orig, replacement in replace.iteritems():
+        for orig, replacement in replace.items():
             sentence = sentence.replace(orig, replacement)
 
         result = False

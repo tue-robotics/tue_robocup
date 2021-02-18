@@ -220,7 +220,7 @@ def _publish_item_poses(robot, items):
     array_msg = visualization_msgs.msg.MarkerArray()
 
     marker_id = 1234
-    for k, posestamped in items.iteritems():
+    for k, posestamped in items.items():
         posestamped = posestamped  # type: PoseStamped
 
         marker_id += 1

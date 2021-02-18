@@ -67,7 +67,7 @@ if __name__ == '__main__':
         os.makedirs(name)
 
     # Copy files
-    for cat_name, glob_entries in GLOBS.iteritems():
+    for cat_name, glob_entries in GLOBS.items():
         dir_name = name + "/" + cat_name
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)

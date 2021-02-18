@@ -261,7 +261,7 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for name, volume in cabinet_entity.volumes.iteritems():
+        for name, volume in cabinet_entity.volumes.items():
             ''' See if the area is in the list of inspection areas '''
             if name in OBJECT_SHELVES:
                 center_point = volume.center_point
