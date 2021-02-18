@@ -13,9 +13,9 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.human_interaction import Say
 from robocup_knowledge import load_knowledge
 
-from challenge_hand_me_that.get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
-from challenge_hand_me_that.identify_object import IdentifyObject
-from challenge_hand_me_that.inspect_furniture_entity import InspectFurniture
+from .get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
+from .identify_object import IdentifyObject
+from .inspect_furniture_entity import InspectFurniture
 
 challenge_knowledge = load_knowledge('challenge_hand_me_that')
 
