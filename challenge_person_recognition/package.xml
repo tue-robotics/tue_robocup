@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>challenge_person_recognition</name>
   <version>1.0.0</version>
   <description>Person Recognition challenge from Robocup 2016 rulebook</description>
