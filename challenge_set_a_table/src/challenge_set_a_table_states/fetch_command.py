@@ -117,7 +117,7 @@ class GetBreakfastOrder(smach.State):
         for option in options.keys():
             self.grammar += "OPTIONS['{}'] -> {}\n".format(option, option)
 
-        print self.grammar
+        print(self.grammar)
         self.timeout = timeout
 
     def execute(self, userdata):

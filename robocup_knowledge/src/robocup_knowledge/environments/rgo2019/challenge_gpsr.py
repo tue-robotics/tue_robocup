@@ -183,8 +183,8 @@ V_BRING -> bring | deliver | give | hand over | hand | take
 
 grammar += """
 
-VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING OBJECT_CATEGORY[Z] to OPERATOR[Y]  
-VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING OPERATOR[Y] DET OBJECT_CATEGORY[Z]    
+VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING OBJECT_CATEGORY[Z] to OPERATOR[Y]
+VP[{"action": "hand-over", "target-location": Y, "category": Z}] -> V_BRING OPERATOR[Y] DET OBJECT_CATEGORY[Z]
 
 
 VP[{"action": "hand-over", "target-location": Y, "object": Z}] -> V_BRING OPERATOR[Y] DET NAMED_OBJECT[Z]
@@ -266,7 +266,7 @@ VP[{"action": "answer-question"}] -> V_ANSWER_QUESTION
 """
 
 if __name__ == "__main__":
-    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
 
     from grammar_parser.cfgparser import CFGParser
 
@@ -278,8 +278,8 @@ if __name__ == "__main__":
     else:
         sentence = grammar_parser.get_random_sentence("T")
 
-    print "Parsing sentence:\n\n{}\n\n".format(sentence)
+    print("Parsing sentence:\n\n{}\n\n".format(sentence))
 
     result = grammar_parser.parse("T", sentence)
 
-    print "Result:\n\n{}".format(result)
+    print("Result:\n\n{}".format(result))

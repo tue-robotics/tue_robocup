@@ -160,7 +160,7 @@ class StateMachineViz(ContainerViz):
 
                 element_viz_set.add(to_viz)
 
-                # print "TransitionViz({}, {}, {})".format(childviz, to_viz, transition)
+                # print("TransitionViz({}, {}, {})".format(childviz, to_viz, transition))
                 transitionviz = TransitionViz(childviz, to_viz, transition)
                 element_viz_set.add(transitionviz)
 

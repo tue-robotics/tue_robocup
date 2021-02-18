@@ -331,9 +331,9 @@ class InspectShelves(smach.State):
                 entity = self.robot.ed.get_entity(id=e.id)  # In simulation, the entity type is not yet updated...
                 DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
-            # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            # print("Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS))
             DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
-            # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            # print("Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS))
 
         if not DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
@@ -469,11 +469,11 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                                            arms.GripperTypes.GRASPING]},
                                                                       name="arm_with_item_designator")
 
-        # print "{0} = pick_shelf".format(self.pick_shelf)
-        # print "{0} = current_item".format(self.current_item)
-        # print "{0} = place_position".format(self.place_position)
-        # print "{0} = empty_arm_designator".format(self.empty_arm_designator)
-        # print "{0} = arm_with_item_designator".format(self.arm_with_item_designator)
+        # print("{0} = pick_shelf".format(self.pick_shelf))
+        # print("{0} = current_item".format(self.current_item))
+        # print("{0} = place_position".format(self.place_position))
+        # print("{0} = empty_arm_designator".format(self.empty_arm_designator))
+        # print("{0} = arm_with_item_designator".format(self.arm_with_item_designator))
 
         with self:
             # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",

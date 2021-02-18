@@ -1,4 +1,5 @@
 # COMMON KNOWLEDGE FILE ROBOTICS TESTLABS
+from __future__ import print_function
 
 female_names = ["anna", "beth", "carmen", "jennifer", "jessica", "kimberly", "kristina", "laura", "mary", "sarah"]
 male_names = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
@@ -146,13 +147,13 @@ def make_prints(name):
     prefix = bcolors.HEADER + name + bcolors.ENDC
 
     def printOk(sentence):
-        print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
+        print(prefix + bcolors.OKBLUE + sentence + bcolors.ENDC)
 
     def printError(sentence):
-        print prefix + bcolors.FAIL + sentence + bcolors.ENDC
+        print(prefix + bcolors.FAIL + sentence + bcolors.ENDC)
 
     def printWarning(sentence):
-        print prefix + bcolors.WARNING + sentence + bcolors.ENDC
+        print(prefix + bcolors.WARNING + sentence + bcolors.ENDC)
 
     return printOk, printError, printWarning
 
@@ -253,31 +254,31 @@ def get_object_category_location(obj_cat):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+
 if __name__ == "__main__":
-    print "\n-----------------------------------------------------------------------------"
+    print("\n-----------------------------------------------------------------------------")
     for obj in get_objects():
         cat = get_object_category(obj)
         (location, area_name) = get_object_category_location(cat)
-        print "object '{}'".format(obj)
-        print "    category: '{}'".format(cat)
-        print "    found '{} {}'".format(area_name, location)
+        print("object '{}'".format(obj))
+        print("    category: '{}'".format(cat))
+        print("    found '{} {}'".format(area_name, location))
 
-    print "\n-----------------------------------------------------------------------------"
+    print("\n-----------------------------------------------------------------------------")
     for loc in get_locations():
-        print "location '{}', room: '{}'".format(loc, get_room(loc))
+        print("location '{}', room: '{}'".format(loc, get_room(loc)))
 
-    print "\n-----------------------------------------------------------------------------"
-    print "Pick locations:"
+    print("\n-----------------------------------------------------------------------------")
+    print("Pick locations:")
     for loc in get_locations(pick_location=True):
-        print "    {}".format(loc)
+        print("    {}".format(loc))
 
-    print "\n-----------------------------------------------------------------------------"
-    print "Place locations:"
+    print("\n-----------------------------------------------------------------------------")
+    print("Place locations:")
     for loc in get_locations(place_location=True):
-        print "    {}".format(loc)
+        print("    {}".format(loc))
 
-
-    print "\n-----------------------------------------------------------------------------"
-    print "None-manipulation locations:"
+    print("\n-----------------------------------------------------------------------------")
+    print("None-manipulation locations:")
     for loc in get_locations(pick_location=False, place_location=False):
-        print "    {}".format(loc)
+        print("    {}".format(loc))

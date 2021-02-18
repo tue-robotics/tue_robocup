@@ -80,7 +80,7 @@ V_FIND -> find | locate | look for
 V_FIND_PERSON -> meet | V_FIND
 
 OBJECT_TO_BE_FOUND -> NAMED_OBJECT | OBJECT_CATEGORY
-PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | NAMED_PERSON | someone 
+PERSON_TO_BE_FOUND -> DET person | DET woman | DET man | NAMED_PERSON | someone
 
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] in the ROOM[Y]
 VP[{"action": "find", "object": X, "source-location": Y}] -> V_FIND DET OBJECT_TO_BE_FOUND[X] MANIPULATION_AREA_LOCATION[Y]
@@ -299,7 +299,7 @@ VP[{"object": {"id": Y}}] -> the NAMED_OBJECT[Z] is DET NAMED_OBJECT[Y] | the NA
 """
 
 if __name__ == "__main__":
-    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
 
     from grammar_parser.cfgparser import CFGParser
 
@@ -316,8 +316,8 @@ if __name__ == "__main__":
     else:
         sentence = grammar_parser.get_random_sentence("T")
 
-    print "Parsing sentence:\n\n{}\n\n".format(sentence)
+    print("Parsing sentence:\n\n{}\n\n".format(sentence))
 
     result = grammar_parser.parse("T", sentence)
 
-    print "Result:\n\n{}".format(result)
+    print("Result:\n\n{}".format(result))

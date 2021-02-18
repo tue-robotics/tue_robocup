@@ -429,7 +429,7 @@ class ContainerNode():
                                 shape.pen.fillcolor = child_fillcolor
                                 shape.pen.linewidth = child_linewidth
                     else:
-                        #print child_path+" NOT IN "+str(items.keys())
+                        #print(child_path+" NOT IN "+str(items.keys()))
                         pass
 
 class SmachViewerFrame(wx.Frame):

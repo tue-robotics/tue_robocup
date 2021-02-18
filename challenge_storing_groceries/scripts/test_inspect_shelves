@@ -12,5 +12,5 @@ if __name__ == '__main__':
     robot.ed.reset()
     s = InspectShelves(robot)
     result = s.execute(None)
-    print result
+    print(result)
 

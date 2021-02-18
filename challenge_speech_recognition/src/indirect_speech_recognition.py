@@ -54,11 +54,11 @@ class Turn(smach.State):
         while not operator:
             operator = self.robot.ed.get_closest_entity(self, radius=1.9,
                                                         center_point=self.robot.base.get_location().extractVectorStamped())
-            print operator
+            print(operator)
             if not operator:
                 vth = 0.5
                 th = 3.1415 / 10
-                print "Turning %f radians with force drive" % th
+                print("Turning %f radians with force drive" % th)
                 self.robot.base.force_drive(0, 0, vth, th / vth)
 
         self.robot.base.force_drive(0, 0, 0, 0.5)
@@ -82,7 +82,7 @@ class Turn(smach.State):
 
     def execute(self, userdata=None):
 
-        print "Last talker id: " + self.robot.hmi.last_talker_id
+        print("Last talker id: " + self.robot.hmi.last_talker_id)
 
         # Calculate params
         if "dragonfly_speech_recognition" not in self.robot.hmi.last_talker_id:
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
     else:
-        print "[CHALLENGE SPEECH RECOGNITION] Please provide robot name as argument."
+        print("[CHALLENGE SPEECH RECOGNITION] Please provide robot name as argument.")
         exit(1)
 
     states.util.startup(setup_statemachine, robot_name=robot_name)

@@ -125,9 +125,9 @@ if __name__ == "__main__":
     from robot_skills import get_robot
 
     if len(sys.argv) < 4:
-        print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
+        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",)
         sys.exit(1)
-    
+
     robot_name = sys.argv[1]
     room = sys.argv[2]
     seats_to_inspect = sys.argv[3:]

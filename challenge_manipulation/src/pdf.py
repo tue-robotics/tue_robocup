@@ -88,7 +88,7 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
     for entity in entities:
         if len(entity.id) == 32 and entity.type != "":
             image = save_entity_image_to_file(world_model_ed, entity.id)
-            print "Created entry for %s (%s)"%(entity.id, entity.type)
+            print("Created entry for %s (%s)"%(entity.id, entity.type))
             html += "<table border='1'><tr>"
             if image:
                 html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.id)

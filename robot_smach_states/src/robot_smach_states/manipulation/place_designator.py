@@ -138,7 +138,7 @@ class EmptySpotDesignator(Designator):
 
         if plan_to_poi:
             distance = len(plan_to_poi)
-            # print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
+            # print("Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p))
         else:
             distance = None
         return distance
@@ -246,7 +246,7 @@ class EmptySpotDesignator(Designator):
 
                 # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
                 # prevent the robot from hitting the cabinet edges
-                # print "Length: {}, edge score: {}".format(length, min(d, length-d))
+                # print("Length: {}, edge score: {}".format(length, min(d, length-d)))
                 setattr(fs, 'edge_score', min(d, length-d))
 
                 points += [fs]

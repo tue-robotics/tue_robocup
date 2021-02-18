@@ -15,7 +15,7 @@ if __name__ == "__main__":
         ids = [e.id for e in robot.ed.get_entities() if e.is_a("furniture")]
         random.shuffle(ids)
 
-    print "IDS:", ids
+    print("IDS:", ids)
 
     for id in ids:
 

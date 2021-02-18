@@ -25,7 +25,7 @@ for c in choices:
 
 # Check if result is clean
 if re.match(".*[<>\(\)\[\]]+.*", data.spec):
-    print "Not all choices could be resolved in the specification, residual result: '%s'"
+    print("Not all choices could be resolved in the specification, residual result: '%s'")
 else:
-    print "Question: " + data.spec
-    print "Answer: " + data.choice_answer_mapping[data.spec]
+    print("Question: " + data.spec)
+    print("Answer: " + data.choice_answer_mapping[data.spec])

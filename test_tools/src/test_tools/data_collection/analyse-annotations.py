@@ -51,16 +51,16 @@ def count_images(objects, path):
     ustats.sort(key=lambda tup: tup[1], reverse=True)
     for s in ustats:
         if s[1] > 0:
-            print "{}: {}".format(s[0], s[1])
+            print("{}: {}".format(s[0], s[1]))
         else:
-            print BColors.WARNING + "{}: {}".format(s[0], s[1]) + BColors.ENDC
+            print(BColors.WARNING + "{}: {}".format(s[0], s[1]) + BColors.ENDC)
 
     # Sanity check: try to identify mismatches between object names and annotated images
-    print BColors.BOLD + "\nPossible mismatches:" + BColors.ENDC
-    print "Annotated but not in knowledge"
+    print(BColors.BOLD + "\nPossible mismatches:" + BColors.ENDC)
+    print("Annotated but not in knowledge")
     for candidate in os.listdir(path):
         if candidate not in objects:
-            print BColors.WARNING + candidate + BColors.ENDC
+            print(BColors.WARNING + candidate + BColors.ENDC)
 
     print
 
@@ -81,14 +81,14 @@ if __name__ == "__main__":
         tensorflow_labels = [line.strip() for line in raw_labels_lines]
         tensorflow_set = set(tensorflow_labels)
 
-    print "objects that are present in objects_set but not in tensorflow_set\n"
+    print("objects that are present in objects_set but not in tensorflow_set\n")
     for o in objects_set.difference(tensorflow_set):
-        print o
+        print(o)
     print
 
-    print "objects that are present in tensorflow_set but not in objects_set\n"
+    print("objects that are present in tensorflow_set but not in objects_set\n")
     for t in tensorflow_set.difference(objects_set):
-        print t
+        print(t)
     print
 
     # Get the path to the folder where images are stored
@@ -97,5 +97,5 @@ if __name__ == "__main__":
     # Count both verified and unverified
     for v in ["verified", "unverified"]:
         tpath = os.path.join(path, v)
-        print BColors.HEADER + BColors.BOLD + v.upper() + BColors.ENDC + ':\n'
+        print(BColors.HEADER + BColors.BOLD + v.upper() + BColors.ENDC + ':\n')
         count_images(objects=objects, path=tpath)

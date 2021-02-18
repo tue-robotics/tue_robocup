@@ -50,8 +50,8 @@ if __name__ == '__main__':
     name = arguments["<name>"]
     remotes = arguments["<remotes>"]
 
-    print "I am going to collect data for '%s' on '%s'" % (name, remotes)
-    print "Datetime: [%s <--> %s]" % (start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M"))
+    print("I am going to collect data for '%s' on '%s'" % (name, remotes))
+    print("Datetime: [%s <--> %s]" % (start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M")))
 
     # Create dir if exist
     if not os.path.exists(name):
@@ -67,12 +67,12 @@ if __name__ == '__main__':
         remote_dir_name = "/tmp/%s" % now_str
 
         cmd = "rosrun test_tools data_collector.py %s %s %s --go" % (remote_dir_name, start.strftime("%H:%M"), end.strftime("%H:%M"))
-        print ">> %s" % cmd
+        print(">> %s" % cmd)
 
         os.system("ssh %s 'source ~/.tue/setup.bash && %s'" % (remote, cmd))
 
         cp_cmd = "scp -r %s:%s/* %s" % (remote, remote_dir_name, dir_name)
-        print ">> %s" % cp_cmd
+        print(">> %s" % cp_cmd)
 
         os.system(cp_cmd)
 

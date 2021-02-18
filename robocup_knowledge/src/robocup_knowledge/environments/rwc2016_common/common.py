@@ -1,4 +1,5 @@
 # COMMON KNOWLEDGE FILE RWC2016A
+from __future__ import print_function
 
 female_names = ["Emma", "Taylor", "Sophia", "Isabella", "Ava", "Robin", "Emily", "Angel", "Madison", "Charlotte"]
 male_names = ["Noah", "Liam", "Mason", "Jacob", "William", "Ethan", "Michael", "Alexander", "James", "Daniel"]
@@ -114,31 +115,30 @@ def get_object_category_location(obj_cat):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def test_knowledge():
-    print "\n-----------------------------------------------------------------------------"
+    print("\n-----------------------------------------------------------------------------")
     for obj in get_objects():
         cat = get_object_category(obj)
-        print "object '{}'".format(obj)
-        print "    category: '{}'".format(cat)
+        print("object '{}'".format(obj))
+        print("    category: '{}'".format(cat))
         (location, area_name) = get_object_category_location(cat)
-        print "    found '{} {}'".format(area_name, location)
+        print("    found '{} {}'".format(area_name, location))
 
-    print "\n-----------------------------------------------------------------------------"
+    print("\n-----------------------------------------------------------------------------")
     for loc in get_locations():
-        print "location '{}', room: '{}'".format(loc, get_room(loc))
+        print("location '{}', room: '{}'".format(loc, get_room(loc)))
 
-    print "\n-----------------------------------------------------------------------------"
-    print "Pick locations:"
+    print("\n-----------------------------------------------------------------------------")
+    print("Pick locations:")
     for loc in get_locations(pick_location=True):
-        print "    {}".format(loc)
+        print("    {}".format(loc))
 
-    print "\n-----------------------------------------------------------------------------"
-    print "Place locations:"
+    print("\n-----------------------------------------------------------------------------")
+    print("Place locations:")
     for loc in get_locations(place_location=True):
-        print "    {}".format(loc)
+        print("    {}".format(loc))
 
 
-    print "\n-----------------------------------------------------------------------------"
-    print "None-manipulation locations:"
+    print("\n-----------------------------------------------------------------------------")
+    print("None-manipulation locations:")
     for loc in get_locations(pick_location=False, place_location=False):
-        print "    {}".format(loc)
-    
+        print("    {}".format(loc))

@@ -198,4 +198,4 @@ COLOR['yellow'] -> yellow
 '''
 
 if __name__ == "__main__":
-    print "\n\n{}\n\n".format(grammar)
+    print("\n\n{}\n\n".format(grammar))

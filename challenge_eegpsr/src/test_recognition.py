@@ -13,7 +13,7 @@ from action_server.command_center import CommandCenter
 # ----------------------------------------------------------------------------------------------------
 
 def usage():
-    print """Usage:
+    print("""Usage:
 
     test_recognition <robot-name>
 
@@ -30,7 +30,7 @@ or
     test_recognition --from-file <filename>
 
         (feeds all sentences in <filename> and checks if they can be parsed)
-"""
+""")
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ def file_mode(filename):
             sentence = sentence.strip()
             res = command_center.parse_command(sentence)
             if not res:
-                print 'Could not understand: "{}"'.format(sentence)
+                print('Could not understand: "{}"'.format(sentence))
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -62,11 +62,11 @@ def sentence_mode(sentence):
     semantics = command_center.parse_command(sentence)
 
     if semantics:
-        print "---------------------------------------------------------------"
-        print "semantics: {}".format(semantics)
-        print "---------------------------------------------------------------"
+        print("---------------------------------------------------------------")
+        print("semantics: {}".format(semantics))
+        print("---------------------------------------------------------------")
     else:
-        print 'Could not understand: "{}"'.format(sentence)
+        print('Could not understand: "{}"'.format(sentence))
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -86,10 +86,10 @@ def speech_mode(robot):
 
             sentence = " ".join(words)
 
-            print "---------------------------------------------------------------"
-            print 'Sentence:  "%s"' % sentence
-            print 'Semantics: %s' % semantics
-            print "---------------------------------------------------------------"
+            print("---------------------------------------------------------------")
+            print('Sentence:  "%s"' % sentence)
+            print('Semantics: %s' % semantics)
+            print("---------------------------------------------------------------")
 
             robot.speech.speak("You want me to %s" % sentence.replace(" your", " my").replace(" me", " you"), block=True)
         else:

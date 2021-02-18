@@ -196,8 +196,9 @@ grammar += '\nSAY_SENTENCE["JOKE"] -> a joke'
 #
 ###############################################################################
 
+
 if __name__ == "__main__":
-    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
 
     from grammar_parser.cfgparser import CFGParser
 
@@ -214,8 +215,8 @@ if __name__ == "__main__":
     else:
         sentence = grammar_parser.get_random_sentence("T")
 
-    print "Parsing sentence:\n\n{}\n\n".format(sentence)
+    print("Parsing sentence:\n\n{}\n\n".format(sentence))
 
     result = grammar_parser.parse("T", sentence)
 
-    print "Result:\n\n{}".format(result)
+    print("Result:\n\n{}".format(result))

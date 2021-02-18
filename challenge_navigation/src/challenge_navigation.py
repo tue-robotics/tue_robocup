@@ -58,7 +58,7 @@ class Turn(smach.State):
         self.robot.head.close()
 
         vth = 1.0
-        print "Turning %f radians with force drive" % self.radians
+        print("Turning %f radians with force drive" % self.radians)
         self.robot.base.force_drive(0, 0, vth, self.radians / vth)
 
         return "turned"
@@ -85,8 +85,8 @@ class DetermineDoor(smach.State):
         while True:
             plan1 = self._robot.base.global_planner.getPlan(door_1_constraint)
             plan2 = self._robot.base.global_planner.getPlan(door_2_constraint)
-            print "Plan 1 length: %i" % len(plan1)
-            print "Plan 2 length: %i" % len(plan2)
+            print("Plan 1 length: %i" % len(plan1))
+            print("Plan 2 length: %i" % len(plan2))
             if len(plan1) < 3:
                 self._door_id_designator.writeable.write(challenge_knowledge.target_door_1)
                 return "door_found"

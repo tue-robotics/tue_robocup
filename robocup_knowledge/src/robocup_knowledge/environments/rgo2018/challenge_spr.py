@@ -57,7 +57,7 @@ grammar += '''
 
 
 Q["action" : "answer", "solution": "the scientific study of robot"] -> what is robotics
-Q["action" : "answer", "solution": "joseph engelberger"] -> who is considered as the father of industrial robot	
+Q["action" : "answer", "solution": "joseph engelberger"] -> who is considered as the father of industrial robot
 Q["action" : "answer", "solution": "a m l a manufacturing language"] -> give one example for a computer programming language that can be used for robot programming
 Q["action" : "answer", "solution": "heavy investment"] -> what is the major disadvantage of using a robot
 Q["action" : "answer", "solution": "lisp and prolog"] -> name the language used in expert system
@@ -73,7 +73,7 @@ Q["action" : "answer", "solution": "google"] -> orkut dot com is now owned by
 Q["action" : "answer", "solution": "google"] -> orkut com is now owned by
 Q["action" : "answer", "solution": "intel 4004"] -> worlds first microprocessor is
 Q["action" : "answer", "solution": "structured query language"] -> what is sql
-Q["action" : "answer", "solution": "short message service"] -> what is the expansion of sms	 
+Q["action" : "answer", "solution": "short message service"] -> what is the expansion of sms
 Q["action" : "answer", "solution": "i b m"] -> which it companys nickname is the big blue
 Q["action" : "answer", "solution": "institute of electric and electronic engineers"] -> what is the full form of ieee
 Q["action" : "answer", "solution": "raymond samuel tomlinson"] -> email was developed by
@@ -118,7 +118,7 @@ Q["action" : "answer", "solution": "0"] -> how many doors has the kitchen
 ##############################################################################
 
 grammar += '''
-ADJR -> smaller | bigger 
+ADJR -> smaller | bigger
 #| heavier | lighter
 
 Q["action" : "find_object", "entity" : O] -> where can i find DET OBJECT_NAMES[O]
@@ -181,4 +181,4 @@ COLOR['yellow'] -> yellow
 '''
 
 if __name__ == "__main__":
-    print grammar
+    print(grammar)

@@ -56,8 +56,8 @@ if __name__ == '__main__':
     start, end = parse_start_end(arguments, now)
     name = arguments["<name>"]
 
-    print "I am going to collect data for '%s'" % name
-    print "Datetime: [%s <--> %s]" % (start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M"))
+    print("I am going to collect data for '%s'" % name)
+    print("Datetime: [%s <--> %s]" % (start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M")))
 
     if not arguments["--go"]:
         raw_input("Press Enter to continue...")
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 # Check if modification date is between bounds (or unknown)
                 mod_date = get_modification_date(file_name)
                 if not mod_date or start < mod_date < end:
-                    print "Writing file '%s' to '%s'" % (file_name, dir_name)
+                    print("Writing file '%s' to '%s'" % (file_name, dir_name))
                     shutil.copy(file_name, dir_name)
 
     del_empty_dirs(name)

@@ -124,7 +124,7 @@ def main():
 
             base_loc = robot.base.get_location()
             base_pose = base_loc.frame
-            print base_pose
+            print(base_pose)
             location_id = "starting_point"
             robot.ed.update_entity(id=location_id, frame_stamped=FrameStamped(base_pose, "/map"),
                                          type="waypoint")
