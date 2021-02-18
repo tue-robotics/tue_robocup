@@ -8,7 +8,9 @@ import smach
 import hmi
 import robot_smach_states.util.designators as ds
 
-from robot_smach_states import Initialize, Say
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.utility import Initialize
+
 from robot_smach_states.util.startup import startup
 
 

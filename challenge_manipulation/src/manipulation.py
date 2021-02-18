@@ -29,13 +29,12 @@ from ed_robocup_msgs.srv import FitEntityInImage, FitEntityInImageRequest
 import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
-from robot_smach_states import Grab
-from robot_smach_states import Place
+from robot_smach_states.manipulation import Grab, Place
 from robot_skills.util.kdl_conversions import VectorStamped
 
 # Robot Skills
 from robot_skills.util.entity import Entity
-from robot_skills import arms
+from robot_skills.arm import arms
 
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge

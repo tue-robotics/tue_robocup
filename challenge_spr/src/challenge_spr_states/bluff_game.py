@@ -3,13 +3,11 @@
 import threading
 import rospy
 import smach
-import sys
 import math
-import time
 
 from robot_smach_states.util.startup import startup
 
-from robot_smach_states import Initialize
+from robot_smach_states.util import Initialize
 
 from riddle_game import hear, answer
 

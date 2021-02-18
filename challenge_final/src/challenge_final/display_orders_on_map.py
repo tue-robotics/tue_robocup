@@ -10,9 +10,6 @@ import smach
 import cv_bridge
 import rospkg
 
-# TU/e Robotics
-from robot_skills import get_robot_from_argv
-
 
 def color_map(N=256, normalized=False):
     """

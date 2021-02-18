@@ -1,15 +1,10 @@
 from cb_base_navigation_msgs.msg import PositionConstraint
 
-import math
+
 import rospy
 from robot_smach_states.util.designators import Designator
-import geometry_msgs.msg as gm
 from visualization_msgs.msg import MarkerArray, Marker
-import robot_skills.util.msg_constructors as msg_constructors
-from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame, kdl_frame_stamped_from_XYZRPY
-import PyKDL as kdl
-import copy
-
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_stamped_from_XYZRPY
 
 
 class EmptyShelfDesignator(Designator):

@@ -5,7 +5,9 @@ import smach
 import math
 
 from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
-from robot_smach_states import Initialize, Say, WaitForPersonInFront, ForceDrive, WaitTime
+from robot_smach_states.human_interaction import Say, WaitForPersonInFront
+from robot_smach_states.navigation import ForceDrive
+from robot_smach_states.utility import Initialize, WaitTime
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
 

@@ -1,15 +1,10 @@
 #!/usr/bin/python
 
-import math
-from operator import itemgetter
-
 import numpy as np
 import robot_smach_states as states
 import rospy
 import smach
-# from challenge_restaurant.srv import GetNormalScore
-from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdl_frame_to_pose_msg
-from robot_skills.util.shape import RightPrism
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_to_pose_msg
 from visualization_msgs.msg import Marker
 
 

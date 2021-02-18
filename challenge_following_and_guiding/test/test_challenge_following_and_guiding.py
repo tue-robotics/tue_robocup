@@ -1,9 +1,12 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('fast_simulator')
+
 import rospy
 
 from fast_simulator import client
-import sys, select, termios, tty
+import sys
+import select
+import termios
+import tty
 
 def getKey():
     tty.setraw(sys.stdin.fileno())

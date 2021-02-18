@@ -4,8 +4,6 @@ import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
 from robot_skills.util.entity import Entity
-from robot_skills.util.volume import Volume
-from robot_skills.classification_result import ClassificationResult
 
 
 class SeatsInRoomDesignator(ds.Designator):

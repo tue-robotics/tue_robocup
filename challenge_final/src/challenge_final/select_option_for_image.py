@@ -3,7 +3,6 @@ from __future__ import print_function
 import sys
 import cv2
 from threading import Event
-from collections import OrderedDict
 
 # ROS
 import rospy
@@ -13,11 +12,6 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 
 from telegram_ros.msg import Options
-
-# Robot skills
-from robot_smach_states import WaitTime
-from robot_smach_states.util.designators import EdEntityDesignator
-import robot_smach_states as states
 
 
 class SelectOptionForImage(smach.State):

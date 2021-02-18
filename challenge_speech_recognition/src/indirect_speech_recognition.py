@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib;
+
 import rospy
 import smach
 import sys
@@ -7,14 +7,12 @@ import random
 import math
 import time
 
-from robot_skills.util import transformations as tf
-from robot_skills.util import transformations, msg_constructors
 
 import robot_smach_states as states
-from robot_smach_states.util.designators import Designator, EdEntityDesignator
 
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_speech_recognition')
+
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(15)):
