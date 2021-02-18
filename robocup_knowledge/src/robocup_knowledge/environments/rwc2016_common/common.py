@@ -106,11 +106,10 @@ def get_object_category(obj):
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    if not obj_cat in category_locations:
-        return None
-    else:
-        (location, area_name) = category_locations[obj_cat]
-        return (location, area_name)
+    location = next(iter(category_locations[obj_cat].keys()))[0]
+    area_name = next(iter(category_locations[obj_cat].values()))[0]
+    return location, area_name
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

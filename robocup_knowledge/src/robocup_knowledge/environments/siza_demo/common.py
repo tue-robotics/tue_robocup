@@ -172,9 +172,9 @@ def get_object_color(obj):
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    location = category_locations[obj_cat].keys()[0]
-    area_name = category_locations[obj_cat].values()[0]
-    return (location, area_name)
+    location = next(iter(category_locations[obj_cat].keys()))[0]
+    area_name = next(iter(category_locations[obj_cat].values()))[0]
+    return location, area_name
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
