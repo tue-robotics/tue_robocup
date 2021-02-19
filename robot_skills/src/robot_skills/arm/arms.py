@@ -270,6 +270,7 @@ class PublicArm(object):
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
 
+
 class Arm(RobotPart):
     """
     A kinematic chain ending in an end_effector. Can be controlled using either joint goals or a goal to reach with
@@ -395,10 +396,10 @@ class Arm(RobotPart):
         :return: no return
         """
         try:
-            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
+            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.arm_name))
         except AttributeError:
             print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
-                  format(self.side))
+                  format(self.arm_name))
 
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
@@ -601,7 +602,7 @@ class Arm(RobotPart):
                                            points=ps)
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
-        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
+        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.arm_name, ps))
 
         import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
@@ -688,4 +689,4 @@ class Arm(RobotPart):
         self._marker_publisher.publish(marker)
 
     def __repr__(self):
-        return "Arm(name='{}')".format(side=self.arm_name)
+        return "Arm(name='{}')".format(self.arm_name)
