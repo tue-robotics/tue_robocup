@@ -276,18 +276,17 @@ class Arm(RobotPart):
     A kinematic chain ending in an end_effector. Can be controlled using either joint goals or a goal to reach with
     the end_effector described in carthesian coordinates.
     """
-    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, name):
         """
         constructor
 
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
         :param get_joint_states: get_joint_states function for getting the last joint states
-        :param side: left or right
+        :param name: string used to identify the arm
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self.side = side
-        self.arm_name = "arm_" + side
+        self.arm_name = name
 
         self._operational = True  # In simulation, there will be no hardware cb
 
