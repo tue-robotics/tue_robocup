@@ -1,8 +1,7 @@
 import rospy
-import PyKDL as kdl
+from std_msgs.msg import Bool
 
 from robot_skills.robot_part import RobotPart
-from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 
 
 class HandoverDetector(RobotPart):
@@ -29,18 +28,16 @@ class HandoverDetector(RobotPart):
         :return: True or False
         """
         pub = rospy.Publisher('/' + self.robot_name + '/handoverdetector_' + self.name + '/toggle_robot2human',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
+                              Bool, queue_size=1, latch=True)
+        pub.publish(Bool(True))
 
         try:
-            rospy.wait_for_message('/' + self.robot_name + '/handoverdetector_' + self.name + '/result', std_msgs.msg.Bool,
-                                   timeout)
+            rospy.wait_for_message('/' + self.robot_name + '/handoverdetector_' + self.name + '/result', Bool, timeout)
             # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
             return True
         except rospy.ROSException as e:
             rospy.logerr(e)
             return False
-
 
     def handover_to_robot(self, timeout=10):
         """
@@ -51,12 +48,11 @@ class HandoverDetector(RobotPart):
         :return: True or False
         """
         pub = rospy.Publisher('/' + self.robot_name + '/handoverdetector_' + self.name + '/toggle_human2robot',
-                              std_msgs.msg.Bool, queue_size=1, latch=True)
-        pub.publish(std_msgs.msg.Bool(True))
+                              Bool, queue_size=1, latch=True)
+        pub.publish(Bool(True))
 
         try:
-            rospy.wait_for_message('/' + self.robot_name + '/handoverdetector_' + self.name + '/result', std_msgs.msg.Bool,
-                                   timeout)
+            rospy.wait_for_message('/' + self.robot_name + '/handoverdetector_' + self.name + '/result', Bool, timeout)
             # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
             return True
         except rospy.ROSException as e:
