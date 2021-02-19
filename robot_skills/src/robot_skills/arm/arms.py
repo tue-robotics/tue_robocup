@@ -308,6 +308,8 @@ class Arm(RobotPart):
         self.default_configurations = self.load_param('skills/' + self.arm_name + '/default_configurations')
         self.default_trajectories = self.load_param('skills/' + self.arm_name + '/default_trajectories')
 
+        self.grasp_frame = self.load_param('skills/gripper/grasp_frame')  #TODO remove gripper specific parameters
+
         # listen to the hardware status to determine if the arm is available
         self.subscribe_hardware_status(self.arm_name)
 
@@ -493,7 +495,7 @@ class Arm(RobotPart):
             if result == GoalStatus.SUCCEEDED:
 
                 result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
-                                                               self.robot_name + "/grippoint_{}".format(self.side),
+                                                               self.robot_name + "/" + self.grasp_frame,
                                                                rospy.Time(0))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
                 dy = grasp_precompute_goal.goal.y - result_pose[0][1]
