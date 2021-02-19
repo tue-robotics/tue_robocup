@@ -27,13 +27,13 @@ class HandoverDetector(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/' + self.robot_name + '/handoverdetector_' + self.name + '/toggle_robot2human',
-                              Bool, queue_size=1, latch=True)
+        pub = rospy.Publisher('/' + self.robot_name + '/' + self.name + '/toggle_robot2human', Bool, queue_size=1,
+                              latch=True)
         pub.publish(Bool(True))
 
         try:
-            rospy.wait_for_message('/' + self.robot_name + '/handoverdetector_' + self.name + '/result', Bool, timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
+            rospy.wait_for_message('/' + self.robot_name + '/' + self.name + '/result', Bool, timeout)
+            # print('/'+self.robot_name+'/'+self.name+'/result')
             return True
         except rospy.ROSException as e:
             rospy.logerr(e)
@@ -47,13 +47,13 @@ class HandoverDetector(RobotPart):
         :param timeout: timeout in seconds
         :return: True or False
         """
-        pub = rospy.Publisher('/' + self.robot_name + '/handoverdetector_' + self.name + '/toggle_human2robot',
-                              Bool, queue_size=1, latch=True)
+        pub = rospy.Publisher('/' + self.robot_name + '/' + self.name + '/toggle_human2robot', Bool, queue_size=1,
+                              latch=True)
         pub.publish(Bool(True))
 
         try:
-            rospy.wait_for_message('/' + self.robot_name + '/handoverdetector_' + self.name + '/result', Bool, timeout)
-            # print('/'+self.robot_name+'/handoverdetector_'+self.side+'/result')
+            rospy.wait_for_message('/' + self.robot_name + '/' + self.name + '/result', Bool, timeout)
+            # print('/'+self.robot_name+'/'+self.name+'/result')
             return True
         except rospy.ROSException as e:
             rospy.logerr(e)
