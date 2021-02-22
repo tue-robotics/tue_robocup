@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(challenge_restaurant)
 
-set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+# Compile as C++14, supported in ROS Melodic and newer
+add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
