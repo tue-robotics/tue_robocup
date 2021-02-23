@@ -6,7 +6,7 @@ import rospy
 
 # TU/e
 from robot_skills import get_robot
-from robot_skills.arms import GripperTypes
+from robot_skills.arm.arms import GripperTypes
 from robot_smach_states.utility import collect_arm_requirements
 
 
@@ -116,4 +116,3 @@ class TestCollectArmRequirements(unittest.TestCase):
 if __name__ == "__main__":
     rospy.init_node("test_collect_requirements")
     unittest.main()
-
