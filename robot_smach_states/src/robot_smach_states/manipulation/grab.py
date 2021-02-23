@@ -341,20 +341,20 @@ class Grab(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
 
-            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, item),
+            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', PickUp(robot, item),
+            smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot),
+            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
         check_arm_requirements(self, robot)
