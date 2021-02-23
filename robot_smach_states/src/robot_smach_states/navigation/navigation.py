@@ -44,7 +44,7 @@ class PrepareDrive(smach.State):
     """
     Check if the robot is ready to start driving
     """
-    def __init__(self, robot, timeout=10):
+    def __init__(self, robot, timeout=10, reset_head=True):
         """
         @param robot: robot interface
         @param timeout:
@@ -53,10 +53,16 @@ class PrepareDrive(smach.State):
                              outcomes=['done', 'abort', 'preempted'])
         self.robot = robot
         self.timeout = timeout
+        self.reset_head = reset_head
 
     def execute(self, userdata=None):
         # keep track of the duration
         tstart = rospy.Time.now()
+
+        # Cancel head goal, we need it for navigation :)
+        if self.reset_head:
+            self.robot.head.close()
+
         for part in self.robot.parts.itervalues():
             # ensure all batteries are unplugged
             if isinstance(part, Battery):
@@ -113,13 +119,12 @@ class getPlan(smach.State):
 
 
 class executePlan(smach.State):
-    def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_head=True, reset_pose=True):
+    def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_pose=True):
         smach.State.__init__(self,outcomes=['succeeded','arrived','blocked','preempted'])
         self.robot = robot
         self.t_last_free = None
         self.blocked_timeout = blocked_timeout
         self.breakout_function = breakout_function
-        self.reset_head = reset_head
         self.reset_pose = reset_pose
 
     def execute(self, userdata=None):
@@ -131,10 +136,6 @@ class executePlan(smach.State):
         """
 
         self.t_last_free = rospy.Time.now()
-
-        # Cancel head goal, we need it for navigation :)
-        if self.reset_head:
-            self.robot.head.close()
 
         # Move the robot to a suitable driving pose
         if self.reset_pose and self.robot.base.global_planner.path_length > 0.5:
