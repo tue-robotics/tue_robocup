@@ -87,6 +87,9 @@ class VectorStamped(object):
         else:
             return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 def point_msg_to_kdl_vector(point):
     """
