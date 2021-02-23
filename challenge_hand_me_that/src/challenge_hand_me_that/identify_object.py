@@ -6,7 +6,7 @@ import tf2_ros
 
 # TU/e Robotics
 import robot_smach_states.util.designators as ds
-from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure, GripperTypes
+from robot_smach_states.manipulation import PrepareEdGrasp, ResetOnFailure
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
@@ -17,26 +17,22 @@ from robot_smach_states.utility import ResolveArm, check_arm_requirements
 class PointAt(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_goals": ["carrying_pose"], }
 
-    def __init__(self, robot, point_entity_designator):
+    def __init__(self, robot, arm, point_entity_designator):
         """
         Points at an item, similar to picking it up.
 
         :param robot: robot to execute this state with
+        :param arm: Designator that resolves to the arm to point at the entity with. E.g. UnoccupiedArmDesignator
         :param point_entity_designator: Designator that resolves to the entity to point at. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'],
-                             input_keys=["arm"],
-                             output_keys=["arm"])  # solely necessary to make arm mutable
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Assign member variables
         self.robot = robot
+        self.arm_des = arm
 
         ds.check_type(point_entity_designator, Entity)
         self.point_entity_designator = point_entity_designator
-        assert self.robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
 
@@ -45,8 +41,7 @@ class PointAt(smach.State):
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
-        arm = userdata.arm
-
+        arm = self.arm_des.resolve()
         goal_map = VectorStamped(0, 0, 0, frame_id=point_entity.id)
 
         try:
@@ -166,15 +161,15 @@ class IdentifyObject(smach.StateMachine):
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_POINT'})
 
-            smach.StateMachine.add('PREPARE_POINT', PrepareEdGrasp(robot, item),
+            smach.StateMachine.add('PREPARE_POINT', PrepareEdGrasp(robot, arm, item),
                                    transitions={'succeeded': 'POINT',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('POINT', PointAt(robot, item),
+            smach.StateMachine.add('POINT', PointAt(robot, arm, item),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot),
+            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
             check_arm_requirements(self, robot)
