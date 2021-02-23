@@ -40,10 +40,9 @@ class AbortAnalyzer(smach.State):
 
 
 class getPlan(smach.State):
-    def __init__(self, robot, arm, constraint_function, speak=True):
+    def __init__(self, robot, constraint_function, speak=True):
         smach.State.__init__(self, outcomes=['unreachable', 'goal_not_defined', 'goal_ok', 'preempted'])
         self.robot = robot
-        self.arm_designator = arm
         self.constraint_function = constraint_function
         self.speak = speak
 
@@ -56,7 +55,7 @@ class getPlan(smach.State):
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'
 
-        constraint = self.constraint_function(self.arm_designator)
+        constraint = self.constraint_function()
 
         # Perform some typechecks
         if not constraint:
@@ -216,7 +215,7 @@ class NavigateTo(smach.StateMachine):
     :param speak: Whether or not the robot should speak during navigation
     :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
     """
-    def __init__(self, robot, arm, constraint_function, reset_head=True, speak=True, reset_pose=True):
+    def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True):
         smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'])
         self.robot = robot
         self.speak = speak
@@ -228,7 +227,7 @@ class NavigateTo(smach.StateMachine):
 
             with sm_nav:
 
-                smach.StateMachine.add('GET_PLAN', getPlan(self.robot, arm, constraint_function, self.speak),
+                smach.StateMachine.add('GET_PLAN', getPlan(self.robot, constraint_function, self.speak),
                                        transitions={'unreachable': 'unreachable',
                                                     'goal_not_defined': 'goal_not_defined',
                                                     'goal_ok': 'EXECUTE_PLAN'})
