@@ -156,7 +156,7 @@ class IdentifyObject(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_POINT',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, item),
+            smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_POINT'})
