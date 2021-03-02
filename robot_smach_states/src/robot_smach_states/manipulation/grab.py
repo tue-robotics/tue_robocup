@@ -23,7 +23,7 @@ class PrepareEdGrasp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_trajectories": ["prepare_grasp"], }
 
-    def __init__(self, robot, grab_entity):
+    def __init__(self, robot, arm, grab_entity):
         # type: (Robot, ArmDesignator, Designator) -> None
         """
         Set the arm in the appropriate position before actually grabbing
@@ -31,22 +31,16 @@ class PrepareEdGrasp(smach.State):
         :param robot: robot to execute state with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'],
-                             input_keys=["arm"],
-                             output_keys=["arm"]        # solely necessary to make arm mutable
-                             )
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Assign member variables
         self.robot = robot
+        self.arm_designator = arm
         self.grab_entity_designator = grab_entity
 
         check_type(grab_entity, Entity)
-        assert self.robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         entity = self.grab_entity_designator.resolve()
         if not entity:
             rospy.logerr("Could not resolve grab_entity")
@@ -57,7 +51,11 @@ class PrepareEdGrasp(smach.State):
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
-        arm = userdata.arm
+        arm = self.arm_designator.resolve()
+
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
 
         # Torso up (non-blocking)
         self.robot.torso.reset()
@@ -67,7 +65,7 @@ class PrepareEdGrasp(smach.State):
         arm.wait_for_motion_done()
 
         # Open gripper
-        arm.send_gripper_goal('open', timeout=0.0)
+        arm.gripper.send_goal('open', timeout=0.0)
         arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
@@ -80,21 +78,18 @@ class PickUp(smach.State):
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING],
                                "required_goals": ["carrying_pose"], }
 
-    def __init__(self, robot, grab_entity, check_occupancy=False):
+    def __init__(self, robot, arm, grab_entity, check_occupancy=False):
         """
         Pick up an item given an arm and an entity to be picked up
 
         :param robot: robot to execute this state with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        smach.State.__init__(self,
-                             outcomes=['succeeded', 'failed'],
-                             input_keys=["arm"],
-                             output_keys=["arm"]  # solely necessary to make arm mutable
-                             )
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         # Assign member variables
         self.robot = robot
+        self.arm_designator = arm
         check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
@@ -104,14 +99,17 @@ class PickUp(smach.State):
             **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
                                              "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         grab_entity = self.grab_entity_designator.resolve()
         if not grab_entity:
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
-        arm = userdata.arm
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
 
         goal_map = VectorStamped(0, 0, 0, frame_id=grab_entity.id)
 
@@ -185,7 +183,7 @@ class PickUp(smach.State):
         #                      ):
         #     rospy.logerr('Pre-grasp failed:')
         #     arm.reset()
-        #     arm.send_gripper_goal('close', timeout=None)
+        #     arm.gripper.send_goal('close', timeout=None)
         #     return 'failed'
 
         # Grasp
@@ -194,13 +192,13 @@ class PickUp(smach.State):
             self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
-            arm.send_gripper_goal('close', timeout=0.0)
+            arm.gripper.send_goal('close', timeout=0.0)
             return 'failed'
 
         # Close gripper
-        arm.send_gripper_goal('close')
+        arm.gripper.send_goal('close')
 
-        arm.occupied_by = grab_entity
+        arm.gripper.occupied_by = grab_entity
 
         # Lift
         goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
@@ -239,19 +237,19 @@ class PickUp(smach.State):
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         result = 'succeeded'
-        if self._check_occupancy:
+        if self._check_occupancy and hasattr(arm.gripper, 'grasp_sensor'):
             # Check if the object is present in the gripper
-            if arm.object_in_gripper_measurement.is_empty:
+            if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_empty:
                 # If state is empty, grasp has failed
                 result = "failed"
                 rospy.logerr("Gripper is not holding an object")
                 self.robot.speech.speak("Whoops, something went terribly wrong")
-                arm.occupied_by = None  # Set the object the arm is holding to None
+                arm.gripper.occupied_by = None  # Set the object the arm is holding to None
             else:
                 # State is holding, grasp succeeded.
                 # If unknown: sensor not there, assume gripper is holding and hope for the best
                 result = "succeeded"
-                if arm.object_in_gripper_measurement.is_unknown:
+                if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_unknown:
                     rospy.logwarn("GripperMeasurement unknown")
 
         # Reset head
@@ -294,32 +292,27 @@ class ResetOnFailure(smach.StateMachine):
 
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
-    def __init__(self, robot):
+    def __init__(self, robot, arm):
         """
         Constructor
 
         :param robot: robot object
+        :param arm: arm designator
         """
-        smach.StateMachine.__init__(self,
-                                    outcomes=['done'],
-                                    input_keys=["arm"],
-                                    output_keys=["arm"]  # solely necessary to make arm mutable
-                                    )
+        smach.StateMachine.__init__(self, outcomes=['done'])
 
         self._robot = robot
-        assert self._robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
+        self.arm_designator = arm
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ Execute hook """
-        arm = userdata.arm
+        arm = self.arm_designator.resolve()
         arm.reset()
 
         if self._robot.robot_name == "amigo":
             self._robot.torso.reset()  # Move up to make resetting of the arm safer.
         if arm is not None:
-            arm.send_gripper_goal('close')
+            arm.gripper.send_goal('close')
         self._robot.head.reset()  # Sends a goal
         self._robot.head.cancel_goal()  # And cancels it...
         if arm is not None:
@@ -348,20 +341,20 @@ class Grab(smach.StateMachine):
                                    transitions={'succeeded': 'NAVIGATE_TO_GRAB',
                                                 'failed': 'failed'})
 
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
 
-            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, item),
+            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
                                    transitions={'succeeded': 'GRAB',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add('GRAB', PickUp(robot, item),
+            smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'RESET_FAILURE'})
 
-            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot),
+            smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
         check_arm_requirements(self, robot)

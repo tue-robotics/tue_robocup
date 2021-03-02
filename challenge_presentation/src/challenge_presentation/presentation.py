@@ -5,6 +5,8 @@ from functools import partial
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 import robot_skills.arm.arms as arms
+from robot_skills.util.kdl_conversions import VectorStamped
+
 
 class English(object):
     HI_MY_NAME_IS = "Hello, my name is {}"
@@ -110,11 +112,11 @@ class Presentation(smach.State):
             if self.right_arm is not None:
                 function_list.append(partial(self.right_arm.send_joint_trajectory, "show_gripper"))
             if self.left_arm is not None:
-                function_list.append(partial(self.left_arm.send_gripper_goal, "open"))
-                function_list.append(partial(self.left_arm.send_gripper_goal, "close"))
+                function_list.append(partial(self.left_arm.gripper.send_goal, "open"))
+                function_list.append(partial(self.left_arm.gripper.send_goal, "close"))
             if self.right_arm is not None:
-                function_list.append(partial(self.right_arm.send_gripper_goal, "open"))
-                function_list.append(partial(self.right_arm.send_gripper_goal, "close"))
+                function_list.append(partial(self.right_arm.gripper.send_goal, "open"))
+                function_list.append(partial(self.right_arm.gripper.send_goal, "close"))
             if self.left_arm is not None:
                 function_list.append(partial(self.left_arm.reset))
             if self.right_arm is not None:
@@ -134,9 +136,11 @@ class Presentation(smach.State):
         #Removed this part to increase the tempo of the presentation
         # function_list.append(partial(self.right_arm.send_joint_trajectory, "point_to_kinect"))
         function_list.append(partial(self.robot.speech.speak, self.trans.CAMERA, language=self.language, voice=self.voice, block=False))
-        function_list.append(partial(self.robot.head.look_at_hand, "right"))
+        function_list.append(partial(self.robot.head.look_at_point,
+                                     VectorStamped(1.0, 1.0, 1.5, frame_id="/"+self.robot.robot_name+"/base_link")))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
-        function_list.append(partial(self.robot.head.look_at_hand, "left"))
+        function_list.append(partial(self.robot.head.look_at_point,
+                                     VectorStamped(1.0, -1.0, 1.5, frame_id="/"+self.robot.robot_name+"/base_link")))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
         function_list.append(partial(self.robot.head.reset))
         function_list.append(partial(self.robot.head.wait_for_motion_done))
@@ -165,9 +169,9 @@ class Presentation(smach.State):
                 if self.right_arm is not None:
                     self.right_arm.reset()
                 if self.left_arm is not None:
-                    self.left_arm.send_gripper_goal("close")
+                    self.left_arm.gripper.send_goal("close")
                 if self.right_arm is not None:
-                    self.right_arm.send_gripper_goal("close")
+                    self.right_arm.gripper.send_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
 

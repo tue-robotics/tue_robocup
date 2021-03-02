@@ -40,6 +40,7 @@
   <exec_depend>python-mock</exec_depend>
 
   <test_depend>test_tools</test_depend>
+  <test_depend>python-six</test_depend>
 
   <doc_depend>python-sphinx</doc_depend>
   <doc_depend>python-sphinx-autoapi-pip</doc_depend>
