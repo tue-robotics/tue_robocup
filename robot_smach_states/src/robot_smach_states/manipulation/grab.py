@@ -29,6 +29,7 @@ class PrepareEdGrasp(smach.State):
         Set the arm in the appropriate position before actually grabbing
 
         :param robot: robot to execute state with
+        :param arm: Designator that resolves to the arm to grasp with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -83,6 +84,7 @@ class PickUp(smach.State):
         Pick up an item given an arm and an entity to be picked up
 
         :param robot: robot to execute this state with
+        :param arm: Designator that resolves to the arm to grasp with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])

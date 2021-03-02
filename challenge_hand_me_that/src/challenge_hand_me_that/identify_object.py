@@ -42,6 +42,11 @@ class PointAt(smach.State):
             return "failed"
 
         arm = self.arm_des.resolve()
+
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
         goal_map = VectorStamped(0, 0, 0, frame_id=point_entity.id)
 
         try:
