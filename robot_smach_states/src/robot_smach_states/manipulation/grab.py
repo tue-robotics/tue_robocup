@@ -285,7 +285,7 @@ class PickUp(smach.State):
         return e1.distance_to_3d(e2._pose.p)
 
 
-class ResetOnFailure(smach.StateMachine):
+class ResetOnFailure(smach.State):
     """ Class to reset the robot after a grab has failed """
 
     REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
@@ -296,7 +296,7 @@ class ResetOnFailure(smach.StateMachine):
 
         :param robot: robot object
         """
-        smach.StateMachine.__init__(self, outcomes=['done'])
+        smach.State.__init__(self, outcomes=['done'])
 
         self._robot = robot
         self.arm_designator = arm
