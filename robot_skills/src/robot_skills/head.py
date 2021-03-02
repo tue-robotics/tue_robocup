@@ -23,26 +23,13 @@ class Head(RobotPart):
 
     # -- Helpers --
 
-    def reset(self, timeout=0):
+    def selfreset(self, timeout=0):
         """
         Reset head position
         """
         reset_goal = VectorStamped(x=10, frame_id="/"+self.robot_name+"/base_link")
 
         return self.look_at_point(reset_goal, timeout=timeout)
-
-    def look_at_hand(self, side):
-        """
-        Look at the left or right hand, expects string "left" or "right"
-        Optionally, keep tracking can be disabled (keep_tracking=False)
-        """
-        if side == "left":
-            return self.look_at_point(VectorStamped(0, 0, 0, frame_id="/"+self.robot_name+"/grippoint_left"))
-        elif side == "right":
-            return self.look_at_point(VectorStamped(0, 0, 0, frame_id="/"+self.robot_name+"/grippoint_right"))
-        else:
-            rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
-            return False
 
     def look_at_ground_in_front_of_robot(self, distance=2):
         goal = VectorStamped(x=distance, frame_id="/"+self.robot_name+"/base_link")

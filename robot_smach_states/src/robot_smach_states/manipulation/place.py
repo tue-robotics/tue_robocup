@@ -5,7 +5,7 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from .place_designator import EmptySpotDesignator
@@ -149,18 +149,18 @@ class Put(smach.State):
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
-        place_entity = arm.occupied_by
+        place_entity = arm.gripper.occupied_by
         if not place_entity:
             rospy.logerr("Arm not holding an entity to place. This should never happen")
         else:
             self._robot.ed.update_entity(place_entity.id, frame_stamped=placement_fs)
-            arm.occupied_by = None
+            arm.gripper.occupied_by = None
 
         # Open gripper
         # Since we cannot reliably wait for the gripper, just set this timeout
-        arm.send_gripper_goal('open', timeout=2.0)
+        arm.gripper.send_goal('open', timeout=2.0)
 
-        arm.occupied_by = None
+        arm.gripper.occupied_by = None
 
         # Retract
         place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
@@ -179,7 +179,7 @@ class Put(smach.State):
             arm.cancel_goals()
 
         # Close gripper
-        arm.send_gripper_goal('close', timeout=0.0)
+        arm.gripper.send_goal('close', timeout=0.0)
 
         arm.reset()
         arm.wait_for_motion_done()
@@ -271,7 +271,7 @@ class Place(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    from robot_skills import arms
+    from robot_skills.arm import arms
     from robot_skills import get_robot_from_argv
     from robot_smach_states.util.designators import EdEntityDesignator, ArmDesignator
 

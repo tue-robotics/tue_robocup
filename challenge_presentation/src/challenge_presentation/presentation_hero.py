@@ -9,7 +9,7 @@ from functools import partial
 # TU/e Robotics
 from robot_smach_states.utility import Initialize
 from robot_smach_states.util.startup import startup
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_skills.util.kdl_conversions import VectorStamped
 
 class English(object):
@@ -120,8 +120,8 @@ class Presentation(smach.State):
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER, language=self.language,
                                      voice=self.voice, block=False))
         function_list.append(partial(self.arm.send_joint_goal, "show_gripper"))
-        function_list.append(partial(self.arm.send_gripper_goal, "open"))
-        function_list.append(partial(self.arm.send_gripper_goal, "close"))
+        function_list.append(partial(self.arm.gripper.send_goal, "open"))
+        function_list.append(partial(self.arm.gripper.send_goal, "close"))
         function_list.append(partial(self.robot.speech.speak, self.trans.GRIPPER_CAMERA, language=self.language,
                                      voice=self.voice, block=True))
         function_list.append(partial(self.arm.reset))
@@ -179,7 +179,7 @@ class Presentation(smach.State):
             if self.preempt_requested():
                 self.robot.speech.speak("Sorry, but I have to stop my introduction")
                 self.arm.reset()
-                self.arm.send_gripper_goal("close")
+                self.arm.gripper.send_goal("close")
                 self.robot.torso.reset()
                 self.robot.head.reset()
                 self.arm.wait_for_motion_done()

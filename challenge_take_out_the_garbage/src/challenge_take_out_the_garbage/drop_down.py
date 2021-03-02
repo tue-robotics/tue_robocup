@@ -5,7 +5,7 @@ import rospy
 # TU/e
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills import arms
+from robot_skills.arm import arms
 from robocup_knowledge import load_knowledge
 CHALLENGE_KNOWLEDGE = load_knowledge('challenge_take_out_the_garbage')
 
@@ -36,7 +36,7 @@ class DropTrash(smach.State):
         # Arm to position in a safe way
         arm.send_joint_goal('handover')
         arm.wait_for_motion_done()
-        arm.send_gripper_goal('open')
+        arm.gripper.send_goal('open')
         arm.wait_for_motion_done()
         arm._arm._send_joint_trajectory(
             [[0.4, -1.0, 0.0, -1.0, 0.0],[0.4, -1.0, 0.0, -1.57, 0.0], [0.4, -1.0, 0.0, -1.0, 0.0],
@@ -44,7 +44,7 @@ class DropTrash(smach.State):
         arm.wait_for_motion_done()
         arm.send_joint_goal('reset')
         arm.wait_for_motion_done()
-        # arm.send_gripper_goal('close')
+        # arm.gripper.send_goal('close')
         # arm.wait_for_motion_done()
         return "succeeded"
 

@@ -5,7 +5,7 @@ import rospy
 
 # TU/e Robotics
 from cb_base_navigation_msgs.msg import *
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import FrameStamped
 from .navigation import NavigateTo

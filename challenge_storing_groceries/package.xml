@@ -17,7 +17,7 @@
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>python-markdown</run_depend>
-  <run_depend>python-xhtml2pdf</run_depend>
+  <run_depend>python-xhtml2pdf-pip</run_depend>
   <run_depend>python-imaging</run_depend>
   <run_depend>python-numpy</run_depend>
 

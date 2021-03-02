@@ -6,7 +6,7 @@ import smach
 import robot_skills
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
-from robot_skills import arms
+from robot_skills.arm import arms
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
@@ -158,7 +158,7 @@ class PlaceSingleItem(smach.State):
 
     def execute(self, userdata=None):
         # Try to place the object
-        item = ds.EdEntityDesignator(robot=self._robot, id=arm.occupied_by.id)
+        item = ds.EdEntityDesignator(robot=self._robot, id=arm.gripper.occupied_by.id)
         arm_designator = ds.OccupiedArmDesignator(self._robot, {"required_goals": ["reset", "handover_to_human"],
                                                                 "required_gripper_types": [arms.GripperTypes.GRASPING]})
         resolved_arm = arm_designator.resolve()

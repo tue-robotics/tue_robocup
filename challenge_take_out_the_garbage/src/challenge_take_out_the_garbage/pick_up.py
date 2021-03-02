@@ -9,7 +9,7 @@ from smach import cb_interface, CBState
 
 import robot_smach_states as states
 import robot_smach_states.manipulation as manipulation
-from robot_skills.arms import PublicArm
+from robot_skills.arm.arms import PublicArm
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 from challenge_take_out_the_garbage.control_to_trash_bin import ControlToTrashBin
 
@@ -132,16 +132,16 @@ class GrabTrash(smach.State):
             # This opening and closing is to make sure that the gripper is empty and closed before measuring the forces
             # It is necessary to close the gripper since the gripper is also closed at the final measurement
 
-            # arm.send_gripper_goal('open')
+            # arm.gripper.send_goal('open')
             # arm.wait_for_motion_done()
-            # arm.send_gripper_goal('close', max_torque=1.0)
+            # arm.gripper.send_goal('close', max_torque=1.0)
             # arm.wait_for_motion_done()
 
             arm_weight = measure_force.get_force()
             rospy.loginfo("Empty weight %s", arm_weight)
 
             # Open gripper
-            arm.send_gripper_goal('open')
+            arm.gripper.send_goal('open')
             arm.wait_for_motion_done()
 
             # Go down and grab
@@ -154,7 +154,7 @@ class GrabTrash(smach.State):
             # self._robot.torso.send_goal("grab_trash_down")
             # self._robot.torso.wait_for_motion_done()
             # rospy.sleep(3)
-            arm.send_gripper_goal('close', max_torque=1.0)
+            arm.gripper.send_goal('close', max_torque=1.0)
             arm.wait_for_motion_done()
 
             # Go up and back to pre grasp position
@@ -182,7 +182,7 @@ class GrabTrash(smach.State):
 
         self._robot.speech.speak("Look at this I can pick up the trash!")
         handed_entity = EntityInfo(id="trash")
-        arm.occupied_by = handed_entity
+        arm.gripper.occupied_by = handed_entity
 
         return "succeeded"
 
@@ -354,7 +354,8 @@ class PickUpTrash(smach.StateMachine):
 if __name__ == '__main__':
     import os
     import robot_smach_states.util.designators as ds
-    from robot_skills import Hero, arms
+    from robot_skills import Hero
+    from robot_skills.arm import arms
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
     hero = Hero()

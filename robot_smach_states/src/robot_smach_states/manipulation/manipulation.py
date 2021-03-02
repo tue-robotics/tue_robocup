@@ -6,8 +6,8 @@ import smach
 
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
-from robot_skills.arms import PublicArm
-from robot_skills.arms import GripperState
+from robot_skills.arm.arms import PublicArm
+from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
 from ..reset import ResetPart
 from ..utility import LockDesignator, UnlockDesignator
@@ -62,7 +62,7 @@ class HandOverTo(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        object_in_arm = arm.occupied_by
+        object_in_arm = arm.gripper.occupied_by
         if not object_in_arm:
             rospy.logerr("Unoccupied arm sent to HandOverToHuman, arm should be occupied when entering this state.")
 
@@ -70,7 +70,7 @@ class HandOverTo(smach.State):
 
         attempt = 0
 
-        while not arm.handover_to_human(timeout=10) and attempt < 2:
+        while not arm.handover_detector.handover_to_human(timeout=10) and attempt < 2:
             self.robot.speech.speak("Please take it from my gripper.", block=False)
             attempt += 1
 
@@ -78,11 +78,11 @@ class HandOverTo(smach.State):
         self.robot.ed.update_entity(id=object_in_arm.id, action='remove')
 
         self.robot.speech.speak("I will open my gripper now.", block=False)
-        arm.send_gripper_goal('open')
+        arm.gripper.send_goal('open')
         arm.reset()
         arm.wait_for_motion_done()
 
-        arm.occupied_by = None
+        arm.gripper.occupied_by = None
 
         return 'succeeded'
 
@@ -213,22 +213,22 @@ class CloseGripperOnHandoverToRobot(smach.State):
             return "failed"
 
         if self.item_designator:
-            arm.occupied_by = self.item_designator.resolve()
+            arm.gripper.occupied_by = self.item_designator.resolve()
         else:
             if self.item_label != "":
                 handed_entity = EntityInfo(id=self.item_label)
-                arm.occupied_by = handed_entity
+                arm.gripper.occupied_by = handed_entity
             else:
                 rospy.logerr("No grabbed entity designator and no label for dummy entity given")
                 return "failed"
 
-        if arm.handover_to_robot(self.timeout):
-            arm.send_gripper_goal('close')
+        if arm.handover_detector.handover_to_robot(self.timeout):
+            arm.gripper.send_goal('close')
             rospy.sleep(2.0)
             return "succeeded"
         else:
             rospy.logwarn("Eventhough no force is felt the gripper will close")
-            arm.send_gripper_goal('close')
+            arm.gripper.send_goal('close')
             rospy.sleep(2.0)
             return "timeout"
 
@@ -266,9 +266,9 @@ class SetGripper(smach.State):
                 rospy.logerr("Could not resolve {0}".format(self.grab_entity_designator))
 
             if self.gripperstate != GripperState.OPEN:
-                arm.occupied_by = entity
+                arm.gripper.occupied_by = entity
 
-        if arm.send_gripper_goal(self.gripperstate, timeout=self.timeout):
+        if arm.gripper.send_goal(self.gripperstate, timeout=self.timeout):
             return 'succeeded'
         else:
             return 'failed'

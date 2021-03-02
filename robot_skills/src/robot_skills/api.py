@@ -98,7 +98,7 @@ class Api(RobotPart):
         rospy.logerr(msg)
         raise Exception(msg)
 
-    def reset(self):
+    def selfreset(self):
         self.restart_dragonfly()
         return True
 
