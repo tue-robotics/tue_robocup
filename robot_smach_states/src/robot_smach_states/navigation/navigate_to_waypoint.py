@@ -9,16 +9,16 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToWaypoint(NavigateTo):
-    """
-    Navigate to a waypoint in the world model
-
-    :param waypoint_designator: designator resolving to the waypoint
-    :param radius (default 0.15): allowed distance to the waypoint
-    :param look_at_designator: Entity the robot should face from the waypoint. If not specified the robot will adopt
-        the orientation of the waypoint
-    :param speak: Whether or not the robot should speak while driving.
-    """
     def __init__(self, robot, waypoint_designator, radius=0.15, look_at_designator=None, speak=True):
+        """
+        Navigate to a waypoint in the world model
+
+        :param waypoint_designator: designator resolving to the waypoint
+        :param radius (default 0.15): allowed distance to the waypoint
+        :param look_at_designator: Entity the robot should face from the waypoint. If not specified the robot will adopt
+            the orientation of the waypoint
+        :param speak: Whether or not the robot should speak while driving.
+        """
         check_resolve_type(waypoint_designator, Entity)
 
         if look_at_designator:
@@ -28,4 +28,4 @@ class NavigateToWaypoint(NavigateTo):
         else:
             constraints = [lambda: waypoint_constraint(waypoint_designator, radius, look=True)]
 
-        super(NavigateToWaypoint, self).__init__(robot, lambda userdata: combine_constraints(constraints), speak=speak)
+        super(NavigateToWaypoint, self).__init__(robot, lambda: combine_constraints(constraints), speak=speak)

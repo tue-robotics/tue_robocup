@@ -28,7 +28,7 @@ def setup_statemachine(robot):
 
     furniture_designator = ds.VariableDesignator(resolve_type=Entity)
     entity_designator = ds.VariableDesignator(resolve_type=Entity)
-    arm_designator = ds.UnoccupiedArmDesignator(robot, {})
+    arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
 
     with state_machine:
         # Intro

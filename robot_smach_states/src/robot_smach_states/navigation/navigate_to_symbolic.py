@@ -9,16 +9,16 @@ from ..util.designators import check_resolve_type
 
 
 class NavigateToSymbolic(NavigateTo):
-    """
-    Navigation class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
-
-    :param robot: robot object
-    :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
-        resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
-    :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
-        to compute the orientation constraint.
-    """
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
+        """
+        Navigation class to navigate to a semantically annotated goal, e.g., in front of the dinner table.
+
+        :param robot: robot object
+        :param entity_designator_area_name_map: dictionary mapping EdEntityDesignators to a string or designator
+            resolving to a string, representing the area, e.g., entity_designator_area_name_map[<EdEntity>] = 'in_front_of'.
+        :param entity_lookat_designator: EdEntityDesignator defining the entity the robot should look at. This is used
+            to compute the orientation constraint.
+        """
         # Check that the entity_designator_area_name_map's keys all resolve to EntityInfo's
         assert(all(entity_desig.resolve_type == Entity for entity_desig in entity_designator_area_name_map.keys()))
         check_resolve_type(entity_lookat_designator, Entity)
@@ -27,7 +27,7 @@ class NavigateToSymbolic(NavigateTo):
             lambda: symbolic_constraint(robot, entity_designator_area_name_map),
             lambda: look_at_constraint(entity_lookat_designator)
         ]
-        super(NavigateToSymbolic, self).__init__(robot, lambda userdata: combine_constraints(constraint_list))
+        super(NavigateToSymbolic, self).__init__(robot, lambda: combine_constraints(constraint_list))
 
 
 class NavigateToRoom(NavigateToSymbolic):

@@ -14,11 +14,11 @@ from ..util.designators import check_resolve_type
 class NavigateToExplore(NavigateTo):
     def __init__(self, robot, constraint_designator, breakout_designator, radius=0.7, exclude_radius=0.3):
         """
-        @param constraint_designator a Designator that resolves to the entity to explore
-        @param breakout_designator when this Designator successfully resolves, the state signals it is done.
+        :param constraint_designator a Designator that resolves to the entity to explore
+        :param breakout_designator when this Designator successfully resolves, the state signals it is done.
         For example, it could resolve to an item of a class you are looking for
         """
-        super(NavigateToExplore, self).__init__(robot, lambda userdata: self.generateConstraint())
+        super(NavigateToExplore, self).__init__(robot, self.generateConstraint)
 
         self.robot = robot
 
