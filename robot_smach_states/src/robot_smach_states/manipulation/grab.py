@@ -97,9 +97,8 @@ class PickUp(smach.State):
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
 
-        assert self.robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
+        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
+            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
 
