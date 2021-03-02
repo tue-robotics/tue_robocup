@@ -39,8 +39,6 @@ class PrepareEdGrasp(smach.State):
         self.grab_entity_designator = grab_entity
 
         check_type(grab_entity, Entity)
-        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
-            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
         entity = self.grab_entity_designator.resolve()
@@ -98,9 +96,6 @@ class PickUp(smach.State):
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
-
-        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
-            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
 
@@ -305,8 +300,6 @@ class ResetOnFailure(smach.StateMachine):
 
         self._robot = robot
         self.arm_designator = arm
-        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
-            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
         """ Execute hook """
