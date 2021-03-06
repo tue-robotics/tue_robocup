@@ -7,7 +7,7 @@ import rospy
 
 # TU/e Robotics
 # import GripperTypes and PseudoObjects to make them available for the user of these designators.
-from robot_skills.arm.arms import PublicArm, GripperTypes, PseudoObjects
+from robot_skills.arm.arms import PublicArm, PseudoObjects
 from .core import Designator
 from .utility import LockingDesignator
 
@@ -98,7 +98,9 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
     >>> assert arm_to_use_for_third_grab is None
     """
-    def __init__(self, robot, arm_properties, name=None):
+    def __init__(self, robot, arm_properties=None, name=None):
+        if arm_properties is None:
+            arm_properties = {}
         arm_properties['required_objects'] = [PseudoObjects.EMPTY]
         super(UnoccupiedArmDesignator, self).__init__(robot, arm_properties, name=name)
 
@@ -146,7 +148,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
-            rospy.logdebug('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
+            rospy.logerr('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
             return None
         self.arm_properties['required_objects'] = [entity]
         return super(ArmHoldingEntityDesignator, self)._resolve()

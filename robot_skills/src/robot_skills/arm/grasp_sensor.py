@@ -2,6 +2,7 @@ from robot_skills.robot_part import RobotPart
 from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
+
 class GripperMeasurement(object):
     """
     Class holding measurements from the distance sensor on the grippers
@@ -81,10 +82,12 @@ class GripperMeasurement(object):
         return "Distance: {}, is_holding: {}, is_unknown: {}, " \
                "is_empty: {}".format(self.distance, self.is_holding, self.is_unknown, self.is_empty)
 
+
 class GraspSensor(RobotPart):
     """
     Sensor to detect whether or not the robot is holding an object.
     """
+
     def __init__(self, robot_name, tf_listener, side):
         """
         constructor

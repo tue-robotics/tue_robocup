@@ -7,10 +7,11 @@ import smach
 import tf2_ros
 
 # TU/e Robotics
+from robot_skills.robot import Robot
 from robot_skills.util.kdl_conversions import VectorStamped
 from robot_skills.util.entity import Entity
 from robot_skills.arm.arms import PublicArm, GripperTypes
-from robot_skills.robot import Robot
+from ..utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
 from ..manipulation.grasp_point_determination import GraspPointDeterminant
@@ -28,7 +29,7 @@ class PrepareEdGrasp(smach.State):
         Set the arm in the appropriate position before actually grabbing
 
         :param robot: robot to execute state with
-        :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
+        :param arm: Designator that resolves to the arm to grasp with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -83,7 +84,7 @@ class PickUp(smach.State):
         Pick up an item given an arm and an entity to be picked up
 
         :param robot: robot to execute this state with
-        :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
+        :param arm: Designator that resolves to the arm to grasp with
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -91,11 +92,13 @@ class PickUp(smach.State):
         # Assign member variables
         self.robot = robot
         self.arm_designator = arm
-
         check_type(grab_entity, Entity)
         self.grab_entity_designator = grab_entity
         self._gpd = GraspPointDeterminant(robot)
         self._check_occupancy = check_occupancy
+
+        assert self.robot.get_arm(**self.REQUIRED_ARM_PROPERTIES) is not None,\
+            "None of the available arms meets all this class's requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
 
     def execute(self, userdata=None):
 
@@ -295,6 +298,7 @@ class ResetOnFailure(smach.State):
         Constructor
 
         :param robot: robot object
+        :param arm: arm designator
         """
         smach.State.__init__(self, outcomes=['done'])
 
@@ -334,7 +338,11 @@ class Grab(smach.StateMachine):
         check_type(arm, PublicArm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
+                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
+                                                'failed': 'failed'})
+
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_GRASP'})
@@ -349,3 +357,5 @@ class Grab(smach.StateMachine):
 
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
+
+        check_arm_requirements(self, robot)

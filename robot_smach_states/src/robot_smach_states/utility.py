@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 # ROS
+import copy
+
 import rospy
 import smach
 import std_msgs.msg
 
 # TU/e Robotics
-import robot_smach_states.util.designators as ds
+from .util.designators import check_type, is_writeable
 from .util.robocup_recorder import start_robocup_recorder
 
 
@@ -248,7 +250,7 @@ class SetTimeMarker(smach.State):
     def __init__(self, robot, designator):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
-        ds.is_writeable(designator)
+        is_writeable(designator)
         self.designator = designator
 
     def execute(self, userdata=None):
@@ -317,7 +319,7 @@ class CheckBool(smach.State):
         :param check_designator: designator resolving to True or False
         """
         super(CheckBool, self).__init__(outcomes=["true", "false"])
-        ds.check_type(check_designator, bool)
+        check_type(check_designator, bool)
         self._check_designator = check_designator
 
     def execute(self, userdata=None):
@@ -337,8 +339,8 @@ class ToggleBool(smach.State):
         :param check_designator: boolean designator to be toggled
         """
         super(ToggleBool, self).__init__(outcomes=["done"])
-        ds.is_writeable(check_designator)
-        ds.check_type(check_designator, bool)
+        is_writeable(check_designator)
+        check_type(check_designator, bool)
         self._check_designator = check_designator
 
     def execute(self, userdata=None):
@@ -349,6 +351,93 @@ class ToggleBool(smach.State):
             self._check_designator.write(True)
 
         return "done"
+
+
+class ResolveArm(smach.State):
+    def __init__(self, arm, state_machine):
+        """ Resolves, if possible, an arm for a state machine taking into account all the arm requirements
+
+        :param arm: given arm designator
+        :param state_machine: used state machine
+        """
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.arm = arm
+        self.state_machine = state_machine
+
+    def execute(self, userdata=None):
+        arm_requirements = collect_arm_requirements(self.state_machine)
+        for k, v in arm_requirements.items():
+            if k in self.arm.arm_properties:
+                for val in arm_requirements[k]:
+                    if val not in arm_requirements[k]:
+                        self.arm.arm_properties[k] += val
+            else:
+                self.arm.arm_properties[k] = v
+        self.arm.lock()
+        if self.arm.resolve() is None:
+            rospy.logerror("Didn't find an arm")  # ToDo: improve error message
+            return "failed"
+        else:
+            return "succeeded"
+
+
+def check_arm_requirements(state_machine, robot):
+    """
+    Checks if the robot has an arm that meets the requirements of all children states of this state machine
+
+    :param state_machine: The state machine for which the requirements have to be checked
+    :param robot: Robot to use
+    :return: Check whether an arm is available that satisfies the requirements of the state machine
+    """
+    arm_requirements = collect_arm_requirements(state_machine)
+    try:
+        assert robot.get_arm(**arm_requirements) is not None,\
+            "None of the available arms meets all this state machine's requirements: {}".format(arm_requirements)
+    except AssertionError as e:
+        rospy.logerr("Getting arm requirements failed, arm requirements: {}".format(arm_requirements))
+        raise
+
+
+def collect_arm_requirements(state_machine):
+    """ Collects all requirements on the arm of this specific state machine
+
+    :param state_machine: State (machine) for which the requirements need to be collected
+    :return: All arm requirements of the state machine
+    """
+    def update_requirements(state):
+        """ Checks the input state for arm requirements and updates the current arm requirements if necessary
+
+        :param state: Smach state of which arm requirements should be checked against the current arm requirements
+        :return: current arm requirements, updated (if necessary) given the input state
+        """
+        for k, v in state.iteritems():
+            if k not in arm_requirements:
+                arm_requirements[k] = v
+            else:
+                for value in v:
+                    if value not in arm_requirements[k]:
+                        arm_requirements[k] += v
+
+    # Check arm requirements
+    arm_requirements = {}
+
+    if isinstance(state_machine, smach.State):
+        if hasattr(state_machine, "REQUIRED_ARM_PROPERTIES"):
+            update_requirements(state_machine.REQUIRED_ARM_PROPERTIES)
+
+    if isinstance(state_machine, smach.StateMachine):
+        for child_state in state_machine.get_children().itervalues():
+
+            # Check if the child_state is a state_machine (must be done before checking for arm properties!)
+            if isinstance(child_state, smach.StateMachine):
+                child_sm_arm_requirements = collect_arm_requirements(child_state)
+                update_requirements(child_sm_arm_requirements)
+
+            if hasattr(child_state, "REQUIRED_ARM_PROPERTIES"):
+                update_requirements(child_state.REQUIRED_ARM_PROPERTIES)
+
+    rospy.logdebug("These are the collected arm requirements:{}".format(arm_requirements))
+    return arm_requirements
 
 
 if __name__ == "__main__":
