@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<launch>
+    <rosparam file="$(find hero_description)/custom/skills.yaml" command="load" ns='hero'/>
+    <test test-name="test_hero_interface" pkg="robot_skills" type="test_hero.py" />
+</launch>
