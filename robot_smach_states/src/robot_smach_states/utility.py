@@ -7,7 +7,7 @@ import smach
 import std_msgs.msg
 
 # TU/e Robotics
-from .util.designators import check_type, is_writeable
+from .util.designators import check_type, is_writeable, LockingDesignator
 from .util.robocup_recorder import start_robocup_recorder
 
 
@@ -357,22 +357,25 @@ class ResolveArm(smach.State):
     def __init__(self, arm, state_machine):
         """ Resolves, if possible, an arm for a state machine taking into account all the arm requirements
 
-        :param arm: given arm designator
+        :param arm: (lockable) arm designator
         :param state_machine: used state machine
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        if not isinstance(arm, LockingDesignator):
+            arm = arm.lockable()
         self.arm = arm
         self.state_machine = state_machine
 
     def execute(self, userdata=None):
         arm_requirements = collect_arm_requirements(self.state_machine)
         for k, v in arm_requirements.items():
-            if k in self.arm.arm_properties:
+            if k in self.arm.to_be_locked.arm_properties:
                 for val in arm_requirements[k]:
                     if val not in arm_requirements[k]:
-                        self.arm.arm_properties[k] += val
+                        self.arm.to_be_locked.arm_properties[k] += val
             else:
-                self.arm.arm_properties[k] = v
+                self.arm.to_be_locked.arm_properties[k] = v
         self.arm.lock()
         if self.arm.resolve() is None:
             rospy.logerror("Didn't find an arm")  # ToDo: improve error message

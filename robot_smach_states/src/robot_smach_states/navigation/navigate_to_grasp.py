@@ -23,5 +23,5 @@ class NavigateToGrasp(NavigateTo):
         super(NavigateToGrasp, self).__init__(robot,
                                               lambda: arms_reach_constraint(pose_designator=pose_designator,
                                                                             look=True,
-                                                                            arm=arm_designator),
+                                                                            arm_designator=arm_designator),
                                               reset_head=False)
