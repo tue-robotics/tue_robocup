@@ -13,16 +13,14 @@ try:
     ROBOTS["amigo"] = Amigo
 except ImportError:
     pass
-from .hero import Hero
+try:
+    from hero_skills import Hero
+    ROBOTS["hero"] = Hero
 from .mockbot import Mockbot
 from .sergio import Sergio
 
-
-ROBOTS = {
-    "hero": Hero,
-    "mockbot": Mockbot,
-    "sergio": Sergio
-}
+ROBOTS["mockbot"] = Mockbot
+ROBOTS["sergio"] = Sergio
 
 
 def get_robot_from_argv(index, default_robot_name="hero"):
