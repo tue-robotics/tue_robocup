@@ -1,5 +1,4 @@
 # Robots
-from .amigo import Amigo
 from .hero import Hero
 from .mockbot import Mockbot
 from .sergio import Sergio

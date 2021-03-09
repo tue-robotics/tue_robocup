@@ -6,14 +6,19 @@ import rospy
 
 # Robot skills
 from .robot import Robot
-from .amigo import Amigo
+
+ROBOTS = {}
+try:
+    from amigo_skills import Amigo
+    ROBOTS["amigo"] = Amigo
+except ImportError:
+    pass
 from .hero import Hero
 from .mockbot import Mockbot
 from .sergio import Sergio
 
 
 ROBOTS = {
-    "amigo": Amigo,
     "hero": Hero,
     "mockbot": Mockbot,
     "sergio": Sergio
