@@ -100,8 +100,8 @@ class AttrDesignator(Designator):
     >>> d = Designator(object(), resolve_type=object)
     >>> #Get the __doc__ attribute of the object that d resolves to. d is an object and d.__doc__ is 'The most base type'
     >>> wrapped = AttrDesignator(d, '__doc__', resolve_type=str)
-    >>> wrapped.resolve() == 'The most base type'
-    True
+    >>> wrapped.resolve()
+    'The most base type'
 
     >>> assert(issubclass(wrapped.resolve_type, str))
 
