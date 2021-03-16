@@ -357,13 +357,13 @@ class ResolveArm(smach.State):
     def __init__(self, arm, state_machine):
         """ Resolves, if possible, an arm for a state machine taking into account all the arm requirements
 
-        :param arm: (lockable) arm designator
+        :param arm: lockable arm designator
         :param state_machine: used state machine
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         if not isinstance(arm, LockingDesignator):
-            arm = arm.lockable()
+            rospy.logerr("%s is no locking arm designator, which is required", arm)
         self.arm = arm
         self.state_machine = state_machine
 
