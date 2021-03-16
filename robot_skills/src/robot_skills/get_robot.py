@@ -7,6 +7,7 @@ import rospy
 # Robot skills
 from .robot import Robot
 
+# ToDo: create a decent registration here
 ROBOTS = {}
 try:
     from amigo_skills import Amigo
@@ -16,11 +17,16 @@ except ImportError:
 try:
     from hero_skills import Hero
     ROBOTS["hero"] = Hero
-from .mockbot import Mockbot
-from .sergio import Sergio
+except ImportError:
+    pass
+try:
+    from sergio_skills import Sergio
+    ROBOTS["sergio"] = Sergio
+except ImportError:
+    pass
 
+from .mockbot import Mockbot
 ROBOTS["mockbot"] = Mockbot
-ROBOTS["sergio"] = Sergio
 
 
 def get_robot_from_argv(index, default_robot_name="hero"):
