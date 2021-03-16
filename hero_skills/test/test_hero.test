@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>
+    <!-- N.B.: test-name MUST be hero in order for namespacing to work -->
+    <test test-name="hero" pkg="hero_skills" type="test_hero.py">
+        <rosparam file="$(find hero_description)/custom/skills.yaml" command="load" />
+    </test>
+</launch>
