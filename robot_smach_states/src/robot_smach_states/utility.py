@@ -363,7 +363,7 @@ class ResolveArm(smach.State):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         if not isinstance(arm, LockingDesignator):
-            rospy.logerr("%s is no locking arm designator, which is required", arm)
+            raise TypeError("No locking arm designator is give, which is required")
         self.arm = arm
         self.state_machine = state_machine
 
