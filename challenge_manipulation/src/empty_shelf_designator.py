@@ -1,6 +1,4 @@
 from cb_base_navigation_msgs.msg import PositionConstraint
-
-
 import rospy
 from robot_smach_states.util.designators import Designator
 from visualization_msgs.msg import MarkerArray, Marker
@@ -200,7 +198,7 @@ class EmptyShelfDesignator(Designator):
     #     self.marker_array.markers = []
     #
     #     ch.append(ch[0])
-    #     for i in xrange(len(ch) - 1):
+    #     for i in range(len(ch) - 1):
     #             dx = ch[i+1].x() - ch[i].x()
     #             dy = ch[i+1].y() - ch[i].y()
     #             length = math.hypot(dx, dy)
