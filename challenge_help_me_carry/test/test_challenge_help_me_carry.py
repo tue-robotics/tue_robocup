@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('fast_simulator')
+
 import rospy
 
 from fast_simulator import client

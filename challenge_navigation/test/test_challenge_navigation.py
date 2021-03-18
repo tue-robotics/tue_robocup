@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from __future__ import print_function
 
-import roslib; roslib.load_manifest('fast_simulator')
 import rospy
 
 from fast_simulator import client

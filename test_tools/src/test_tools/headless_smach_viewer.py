@@ -30,7 +30,7 @@
 #
 # Author: Jonathan Bohren
 
-import roslib; roslib.load_manifest('smach_viewer')
+
 import rospy
 
 from smach_msgs.msg import SmachContainerStatus,SmachContainerInitialStatusCmd,SmachContainerStructure
