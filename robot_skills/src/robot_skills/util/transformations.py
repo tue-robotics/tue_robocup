@@ -13,11 +13,11 @@ def euler_z_to_quaternion(angle):
     """Calculate a quaternion based on a Z angle
 
     >>> from math import pi
-    >>> euler_z_to_quaternion(pi/2)
+    >>> euler_z_to_quaternion(pi/2)   # doctest: +ELLIPSIS
     x: 0.0
     y: 0.0
-    z: 0.707106781187
-    w: 0.707106781187
+    z: 0.70710678118...
+    w: 0.70710678118...
     """
     orientation_goal = geometry_msgs.msg.Quaternion()
     try:
