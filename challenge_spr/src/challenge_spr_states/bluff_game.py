@@ -52,7 +52,7 @@ class HearTurnAndAnswerQuestions(smach.State):
 
         self.robot.head.look_at_standing_person()
 
-        for _ in xrange(self.num_questions):
+        for _ in range(self.num_questions):
 
             t = threading.Thread(target=turn_to_closest_entity, args=(self.robot,self.num_operators))
             t.start()
