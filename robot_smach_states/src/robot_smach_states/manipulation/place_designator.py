@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from builtins import range
+
 # System
 import rospy
 import math
@@ -224,7 +226,7 @@ class EmptySpotDesignator(Designator):
         # Loop over hulls
         self.marker_array.markers = []
 
-        for i in xrange(len(ch)):
+        for i in range(len(ch)):
             j = (i + 1) % len(ch)
 
             dx = ch[j].x() - ch[i].x()
