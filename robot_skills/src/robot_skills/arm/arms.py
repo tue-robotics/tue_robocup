@@ -265,7 +265,7 @@ class PublicArm(object):
         """
         if not cond:
             msg = "get_arm for '{}' arm did not request '{}' access. Hint: {}"
-            raise AssertionError(msg.format(self._arm.arm_name, feature, hint))
+            raise AssertionError(msg.format(self._arm.name, feature, hint))
 
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
@@ -286,7 +286,7 @@ class Arm(RobotPart):
         :param name: string used to identify the arm
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self.arm_name = name
+        self.name = name
 
         self._operational = True  # In simulation, there will be no hardware cb
 
@@ -298,23 +298,23 @@ class Arm(RobotPart):
         self.marker_to_grippoint_offset = self.load_param('skills/gripper/marker_to_grippoint')
 
         # Grasp offsets
-        go = self.load_param('skills/' + self.arm_name + '/base_offset')
+        go = self.load_param('skills/' + self.name + '/base_offset')
         self._base_offset = kdl.Vector(go["x"], go["y"], go["z"])
 
-        self.joint_names = self.load_param('skills/' + self.arm_name + '/joint_names')
+        self.joint_names = self.load_param('skills/' + self.name + '/joint_names')
         self.torso_joint_names = self.load_param('skills/torso/joint_names')
 
-        self.default_configurations = self.load_param('skills/' + self.arm_name + '/default_configurations')
-        self.default_trajectories = self.load_param('skills/' + self.arm_name + '/default_trajectories')
+        self.default_configurations = self.load_param('skills/' + self.name + '/default_configurations')
+        self.default_trajectories = self.load_param('skills/' + self.name + '/default_trajectories')
 
         self.grasp_frame = self.load_param('skills/gripper/grasp_frame')  #TODO remove gripper specific parameters
 
         # listen to the hardware status to determine if the arm is available
-        self.subscribe_hardware_status(self.arm_name)
+        self.subscribe_hardware_status(self.name)
 
         # Init grasp precompute actionlib
         self._ac_grasp_precompute = self.create_simple_action_client(
-            "/" + robot_name + "/" + self.arm_name + "/grasp_precompute", GraspPrecomputeAction)
+            "/" + robot_name + "/" + self.name + "/grasp_precompute", GraspPrecomputeAction)
 
         # Init joint trajectory action server
         self._ac_joint_traj = self.create_simple_action_client(
@@ -322,7 +322,7 @@ class Arm(RobotPart):
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
-            "/" + robot_name + "/" + self.arm_name + "/grasp_target",  # TODO: update rviz config
+            "/" + robot_name + "/" + self.name + "/grasp_target",  # TODO: update rviz config
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.get_joint_states = get_joint_states
@@ -397,10 +397,10 @@ class Arm(RobotPart):
         :return: no return
         """
         try:
-            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.arm_name))
+            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.name))
         except AttributeError:
             print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
-                  format(self.arm_name))
+                  format(self.name))
 
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
@@ -603,7 +603,7 @@ class Arm(RobotPart):
                                            points=ps)
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
-        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.arm_name, ps))
+        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.name, ps))
 
         import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
@@ -690,4 +690,4 @@ class Arm(RobotPart):
         self._marker_publisher.publish(marker)
 
     def __repr__(self):
-        return "Arm(name='{}')".format(self.arm_name)
+        return "Arm(name='{}')".format(self.name)
