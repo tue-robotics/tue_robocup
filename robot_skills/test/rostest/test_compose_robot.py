@@ -39,11 +39,6 @@ def testfunction2(self):
 
 
 class TestComposeRobot(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        rospy.init_node('test_composable_robot_interface2')
-
     def test_compose_robot(self):
         robot = Robot("testbot")
         part = RobotPart("testbot", robot.tf_listener)
@@ -67,6 +62,8 @@ class TestComposeRobot(unittest.TestCase):
 
         self.assertFalse(hasattr(robot.special_part, 'testfunction2'))
 
+
 if __name__ == '__main__':
     import rostest
+    rospy.init_node('test_composable_robot_interface')
     rostest.rosrun('robot_skills', 'test_composable_robot_interface', TestComposeRobot)
