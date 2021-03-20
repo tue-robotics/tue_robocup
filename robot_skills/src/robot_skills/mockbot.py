@@ -224,7 +224,6 @@ class Head(MockedRobotPart):
         self.send_goal = AlteredMagicMock()
         self.cancel_goal = AlteredMagicMock()
         self.reset = AlteredMagicMock()
-        self.look_at_hand = AlteredMagicMock()
         self.wait = AlteredMagicMock()
         self.getGoal = AlteredMagicMock()
         self.atGoal = AlteredMagicMock()
