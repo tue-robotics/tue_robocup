@@ -322,7 +322,7 @@ class Arm(RobotPart):
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
-            "/" + robot_name + "/" + self.name + "/grasp_target",  # TODO: update rviz config
+            "/" + robot_name + "/" + self.name + "/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.get_joint_states = get_joint_states
