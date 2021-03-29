@@ -80,6 +80,7 @@ object_weight = list(set([ o["weight"] for o in objects ]))
 
 category_locations = {
     "food": {"bookcase": "on_top_of"},
+    "snack": {"bookcase": "on_top_of"},
     "container": {"flight_case": "in"},
     "drink": {"dinner_table": "on_top_of"},
     "cleaning_stuff": {"cabinet": "on_top_of"},
@@ -248,8 +249,7 @@ def get_object_weight(obj):
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    location = next(iter(category_locations[obj_cat].keys()))[0]
-    area_name = next(iter(category_locations[obj_cat].values()))[0]
+    location, area_name = next(iter(category_locations[obj_cat].items()))
     return location, area_name
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

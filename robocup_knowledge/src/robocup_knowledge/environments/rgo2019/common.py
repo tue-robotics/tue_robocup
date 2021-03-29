@@ -265,8 +265,7 @@ def get_object_weight(obj):
 
 # Returns (location, area_name)
 def get_object_category_location(obj_cat):
-    location = next(iter(category_locations[obj_cat].keys()))[0]
-    area_name = next(iter(category_locations[obj_cat].values()))[0]
+    location, area_name = next(iter(category_locations[obj_cat].items()))
     return location, area_name
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -216,8 +216,7 @@ def get_object_category(obj):
 
 def get_object_category_location(obj_cat):
     # Returns (location, area_name)
-    location = next(iter(category_locations[obj_cat].keys()))[0]
-    area_name = next(iter(category_locations[obj_cat].values()))[0]
+    location, area_name = next(iter(category_locations[obj_cat].items()))
     return location, area_name
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -250,5 +249,3 @@ if __name__ == "__main__":
     print("None-manipulation locations:")
     for loc in get_locations(pick_location=False, place_location=False):
         print("    {}".format(loc))
-
-
