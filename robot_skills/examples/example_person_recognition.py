@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 import sys
+
 import rospy
 
 from robot_skills.util.robot_constructor import robot_constructor

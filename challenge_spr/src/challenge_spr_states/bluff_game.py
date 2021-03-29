@@ -1,15 +1,14 @@
 #!/usr/bin/python
 
-import threading
-import rospy
-import smach
 import math
+import threading
 
-from robot_smach_states.util.startup import startup
+import rospy
+from riddle_game import answer, hear
 
+import smach
 from robot_smach_states.util import Initialize
-
-from riddle_game import hear, answer
+from robot_smach_states.util.startup import startup
 
 ##############################################################################
 #

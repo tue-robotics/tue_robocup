@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 from io import BytesIO
 import datetime
 import numpy as np

@@ -1,5 +1,7 @@
 # COMMON KNOWLEDGE FILE RGO2018
 
+from __future__ import print_function
+
 female_names = ["angie", "mary", "amy", "kimberley", "lisa", "melissa", "michelle", "jennifer", "elizabeth", "julie"]
 male_names = ["brian", "michael", "christopher", "william", "john", "david", "james", "robert", "scott", "richard"]
 names = female_names + male_names

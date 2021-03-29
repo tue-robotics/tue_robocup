@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+from __future__ import print_function
+
 import rospy
 
 from xhtml2pdf import pisa

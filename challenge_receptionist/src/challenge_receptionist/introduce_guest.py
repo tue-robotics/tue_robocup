@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import rospy
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds

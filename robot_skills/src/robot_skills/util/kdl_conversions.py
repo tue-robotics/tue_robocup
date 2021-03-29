@@ -1,9 +1,9 @@
 # System
 from copy import deepcopy
 
+import PyKDL as kdl
 # ROS
 import geometry_msgs.msg as gm
-import PyKDL as kdl
 import rospy
 
 

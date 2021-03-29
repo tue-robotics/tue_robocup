@@ -1,5 +1,6 @@
-from test_tools.doctest_unittest import _TestDocTests
 import unittest
+
+from test_tools.doctest_unittest import _TestDocTests
 
 
 class DocTestsRobotSkills(_TestDocTests):

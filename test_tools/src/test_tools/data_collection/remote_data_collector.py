@@ -16,12 +16,13 @@ Options:
   -h --help     Show this screen.
 
 """
-from docopt import docopt
-from datetime import datetime
-import sys
+
+from __future__ import print_function
+
 import os
-from glob import glob
-import shutil
+from datetime import datetime
+from docopt import docopt
+
 from util import parse_start_end
 
 

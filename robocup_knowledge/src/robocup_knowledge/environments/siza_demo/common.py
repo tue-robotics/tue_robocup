@@ -1,4 +1,7 @@
 # COMMON KNOWLEDGE FILE SIZA DEMO
+
+from __future__ import print_function
+
 names = ['peter', 'josja']
 # This dict holds all locations
 locations = [

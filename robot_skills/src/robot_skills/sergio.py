@@ -1,6 +1,6 @@
-from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, \
-    sound_source_localisation, torso, world_model_ed
-from .simulation import is_sim_mode, SimEButton
+from robot_skills import api, base, ears, ebutton, head, lights, perception, robot, sound_source_localisation, speech, \
+    torso, world_model_ed
+from .simulation import SimEButton, is_sim_mode
 
 
 class Sergio(robot.Robot):

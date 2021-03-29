@@ -4,22 +4,22 @@
 # By Matthijs van der Burgh, 2017
 # ------------------------------------------------------------------------------------------------------------------------
 
-import sys
-import rospy
-import random
+from __future__ import print_function
+
 import json
+import random
+import sys
 
-import hmi
-
+import rospy
 from action_server import Client as ActionClient
 
+import hmi
+from robocup_knowledge import load_knowledge
+from robot_skills.util.kdl_conversions import FrameStamped
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
-from robot_smach_states.utility import WaitForTrigger
 from robot_smach_states.util.designators import EntityByIdDesignator
-
-from robot_skills.util.kdl_conversions import FrameStamped
-from robocup_knowledge import load_knowledge
+from robot_smach_states.utility import WaitForTrigger
 
 
 def task_result_to_report(task_result):

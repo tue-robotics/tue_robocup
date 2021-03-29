@@ -5,17 +5,18 @@
 # \author Rein Appeldoorn
 import math
 import os
-
 import rospkg
+
 import rospy
 from dynamic_reconfigure.client import Client
 from geometry_msgs.msg import PoseStamped, Quaternion
+from tf.transformations import quaternion_from_euler
+
 from robot_skills import Hero
 from robot_smach_states import NavigateToSymbolic
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
-from smach import StateMachine, cb_interface, CBState
-from tf.transformations import quaternion_from_euler
+from smach import CBState, StateMachine, cb_interface
 
 
 class GrabRack(StateMachine):

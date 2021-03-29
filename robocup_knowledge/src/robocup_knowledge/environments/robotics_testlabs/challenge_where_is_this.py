@@ -1,5 +1,7 @@
 # WHERE IS THIS KNOWLEDGE FILE ROBOTICS TESTLABS
 
+from __future__ import print_function
+
 # System
 from collections import namedtuple
 

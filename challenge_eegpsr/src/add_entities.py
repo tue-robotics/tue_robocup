@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import rospy
 import itertools
 import os
 
+import rospy
 from fast_simulator import client
 
 if __name__ == "__main__":
@@ -52,7 +52,3 @@ if __name__ == "__main__":
         # People
         W.add_object("person-1", "loy", 4.196,  3.842, 0.0, 0, 0, 1)
         W.add_object("person-2", "loy", 1.416, -5.296, 0.0, 0, 0, 1)
-
-
-
-

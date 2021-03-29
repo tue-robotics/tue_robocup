@@ -1,30 +1,30 @@
+from __future__ import print_function
+
 # System
 import os
-import yaml
-from math import sqrt
-
 # ROS
 import rospkg
-import rospy
-import visualization_msgs.msg
+import yaml
 
 # TU/e
 import ed_msgs.srv
-from ed_msgs.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 import ed_sensor_integration_msgs.srv as ed_sensor_srv
+import rospy
+import visualization_msgs.msg
+from cb_base_navigation_msgs.msg import PositionConstraint
+from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
+from ed_msgs.srv import Configure, SimpleQuery, SimpleQueryRequest, UpdateSrv
+from ed_navigation_msgs.srv import GetGoalConstraint
 from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
-from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
-from ed_navigation_msgs.srv import GetGoalConstraint
-from cb_base_navigation_msgs.msg import PositionConstraint
 
+from robot_skills.classification_result import ClassificationResult
+from robot_skills.robot_part import RobotPart
 # Robot skills
 from robot_skills.util import transformations
 from robot_skills.util.decorators import deprecated
-from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
-from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from robot_skills.robot_part import RobotPart
+from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
 
 
 class Navigation(RobotPart):

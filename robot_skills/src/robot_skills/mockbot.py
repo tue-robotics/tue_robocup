@@ -1,30 +1,30 @@
 #! /usr/bin/env python
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
+import os
+import random
 # System
 from collections import defaultdict
-import mock
-import random
-import os
-import six
 
+import PyKDL as kdl
 # ROS
 import geometry_msgs
-import PyKDL as kdl
+import mock
 import rospy
+import six
 import std_msgs.msg
 import tf
-
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
+
+from hmi import HMIResult
+from hmi.common import parse_sentence, random_sentence
 from robot_skills import robot
-from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from hmi import HMIResult
-from hmi.common import random_sentence, parse_sentence
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 
 
 def random_kdl_vector():

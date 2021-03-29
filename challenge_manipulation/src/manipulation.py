@@ -19,6 +19,8 @@ Afterwards, a PDF report has to be made:
     - the bounding box of the object.'
 """
 
+from __future__ import print_function
+
 import rospy
 import smach
 

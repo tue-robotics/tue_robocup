@@ -1,9 +1,9 @@
 # ROS
 import rospy
+from text_to_speech.srv import Speak, SpeakRequest
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
-from text_to_speech.srv import Speak, SpeakRequest
 
 
 class Speech(RobotPart):

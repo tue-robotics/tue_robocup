@@ -1,14 +1,16 @@
 #! /usr/bin/python
 
+from __future__ import print_function
+
 import os
 import sys
+
 import rospy
+from action_server.command_center import CommandCenter
 
 from robocup_knowledge import load_knowledge
 from robot_skills import get_robot_from_argv
 
-import action_server
-from action_server.command_center import CommandCenter
 
 # ----------------------------------------------------------------------------------------------------
 

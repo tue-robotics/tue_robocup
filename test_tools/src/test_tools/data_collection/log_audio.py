@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
-import rospy
+from __future__ import print_function
 
-from datetime import datetime
+import json
 import os
+import time
+import wave
+from datetime import datetime
 
 import pyaudio
-import wave
-import json
-import time
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16

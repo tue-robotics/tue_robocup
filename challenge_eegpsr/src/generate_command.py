@@ -1,12 +1,13 @@
 #! /usr/bin/python
 from __future__ import print_function
 
-import sys
 import os
 import random
+import sys
 from datetime import datetime
 
 from robocup_knowledge import load_knowledge
+
 
 # ----------------------------------------------------------------------------------------------------
 

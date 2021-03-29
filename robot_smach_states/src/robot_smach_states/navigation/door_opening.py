@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # System
 import numpy as np
 from threading import Event
@@ -376,7 +378,7 @@ class WaypointOfDoorDesignator(ds.Designator):
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print do.execute();
+    door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print(do.execute());
     """
     def __init__(self, robot, door_start_wp_designator, door_dest_wp_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
         """

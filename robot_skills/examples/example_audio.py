@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 # System
 import random
 import time
@@ -9,7 +11,6 @@ import rospy
 
 # TU/e Robotics
 from robot_skills import get_robot_from_argv
-
 
 rospy.init_node("audio_test")
 robot = get_robot_from_argv(index=1)
@@ -66,6 +67,3 @@ while not rospy.is_shutdown():
 
     for i in range(0,4):
         ask("What can I get for you?", restaurant_grammar, "O")
-
-
-

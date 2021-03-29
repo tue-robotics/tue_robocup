@@ -1,5 +1,7 @@
 # COMMON KNOWLEDGE FILE RGO2019
 
+from __future__ import print_function
+
 # Names
 
 female_names = ["sophia","isabella","emma","olivia","ava","emily","abigail","madison","mia","chloe"]

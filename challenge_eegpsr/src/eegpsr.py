@@ -4,19 +4,19 @@
 # By Sjoerd van den Dries, 2016
 # ------------------------------------------------------------------------------------------------------------------------
 
+import argparse
 import os
 import sys
-import rospy
-import argparse
 import time
 
+import rospy
+from action_server.command_center import CommandCenter
+
+from robocup_knowledge import load_knowledge
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToWaypoint
-from robot_smach_states.util.designators import EntityByIdDesignator
-from robocup_knowledge import load_knowledge
 from robot_smach_states.startup import StartChallengeRobust
-
-from action_server.command_center import CommandCenter
+from robot_smach_states.util.designators import EntityByIdDesignator
 
 
 # ------------------------------------------------------------------------------------------------------------------------

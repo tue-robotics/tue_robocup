@@ -1,22 +1,16 @@
 #!/usr/bin/env python
 
-import sys
-import time
-import smach
-import math
 import random
+
 import rospy
+from image_recognition_msgs.msg import FaceProperties
+from tue_msgs.msg import People
 
 import robot_smach_states as states
-import robot_smach_states.util.designators as ds
-import robot_skills.util.msg_constructors as msgs
-
-from image_recognition_msgs.msg import FaceProperties
-from robot_smach_states.util.startup import startup
+import smach
+from robot_skills.util.image_operations import img_cutout, img_recognitions_to_rois
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_skills.util.image_operations import img_recognitions_to_rois, img_cutout
-from robocup_knowledge import load_knowledge
-from tue_msgs.msg import People
+from robot_smach_states.util.startup import startup
 
 timeout = 10
 

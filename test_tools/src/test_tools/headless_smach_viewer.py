@@ -30,21 +30,15 @@
 #
 # Author: Jonathan Bohren
 
+from __future__ import print_function
+
+import pickle
+import threading
+import wxversion
 
 import rospy
+from smach_msgs.msg import SmachContainerStatus, SmachContainerStructure
 
-from smach_msgs.msg import SmachContainerStatus,SmachContainerInitialStatusCmd,SmachContainerStructure
-
-import sys
-import os
-import threading
-import pickle
-import pprint
-import copy
-import StringIO
-import colorsys
-
-import wxversion
 wxversion.select("2.8")
 import wx
 import wx.richtext

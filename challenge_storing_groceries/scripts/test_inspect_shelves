@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 import rospy
 from robot_skills.amigo import Amigo
 from challenge_storing_groceries.inspect_shelves import InspectShelves

@@ -1,5 +1,7 @@
 # EEGPSR KNOWLEDGE FILE RGO2019
 
+from __future__ import print_function
+
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 

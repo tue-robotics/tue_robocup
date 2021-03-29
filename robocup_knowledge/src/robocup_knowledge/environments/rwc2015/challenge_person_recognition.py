@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 ''' colors from printing on screen '''
 class bcolors:
     HEADER = '\033[95m'

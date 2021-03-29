@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 # System
 import os
 
 # TU/e Robotics
 from robocup_knowledge import knowledge_loader
-
 
 """
 Counts the images in the subdirectories of

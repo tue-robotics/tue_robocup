@@ -1,11 +1,11 @@
 import argparse
 import pickle
+
 import rospy
+
 import smach
-from challenge_final import FindPeople
 from challenge_final.find_people import _filter_and_cluster_images
 from robot_skills import get_robot
-
 
 if __name__ == "__main__":
 

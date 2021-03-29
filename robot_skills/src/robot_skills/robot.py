@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 
+from collections import OrderedDict, Sequence
+
+import geometry_msgs
 # ROS
 import rospy
 import tf
-import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
@@ -11,8 +13,6 @@ from std_msgs.msg import String
 # TU/e
 from .arm import arms
 from .functionalities.add_functionalities import add_functionalities
-
-from collections import OrderedDict, Sequence
 
 CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 

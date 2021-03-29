@@ -1,9 +1,10 @@
-from . import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
-from .arm import arms, force_sensor, gripper, handover_detector
-from .simulation import is_sim_mode, SimEButton
+import math
 
 import rospy
-import math
+
+from . import api, base, ears, ebutton, head, lights, perception, robot, speech, torso, world_model_ed
+from .arm import arms, force_sensor, gripper, handover_detector
+from .simulation import SimEButton, is_sim_mode
 
 
 class Hero(robot.Robot):

@@ -16,13 +16,16 @@ Options:
   -h --help     Show this screen.
 
 """
-from docopt import docopt
-from datetime import datetime
-import sys
+
+from __future__ import print_function
+
 import os
-from glob import glob
 import shutil
-from util import parse_start_end, get_modification_date
+from datetime import datetime
+from docopt import docopt
+from glob import glob
+
+from util import get_modification_date, parse_start_end
 
 GLOBS = {
     "faces": ["/tmp/faces/*.jpeg"],

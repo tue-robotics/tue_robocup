@@ -2,11 +2,11 @@
 import cv2
 import rospy
 from cv_bridge import CvBridge
+# TU/e Robotics
+from hmi_msgs.msg import QueryAction
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Empty
 
-# TU/e Robotics
-from hmi_msgs.msg import QueryAction
 from hmi import Client, TimeoutException
 from robot_skills.robot_part import RobotPart
 
@@ -107,5 +107,3 @@ class Api(RobotPart):
             self.restart_srv()
         except rospy.ServiceException as e:
             rospy.logerr("Service call failed: {0}".format(e))
-
-

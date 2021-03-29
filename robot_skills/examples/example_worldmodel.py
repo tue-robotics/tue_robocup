@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 import sys
+
 import rospy
 
 import robot_skills.util.kdl_conversions as kdl_conversions
-import PyKDL as kdl
-
 from robot_skills.util.robot_constructor import robot_constructor
 
 if len(sys.argv) < 2:

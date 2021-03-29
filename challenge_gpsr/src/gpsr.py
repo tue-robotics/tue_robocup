@@ -4,22 +4,19 @@
 # By Rokus Ottervanger, 2017
 # ------------------------------------------------------------------------------------------------------------------------
 
-import sys
-import rospy
 import random
+import sys
 
-import hmi
-
+import rospy
 from action_server import Client as ActionClient
 
+import hmi
+from conversation_engine import ConversationEngine
+from robocup_knowledge import load_knowledge
 from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util.designators import EntityByIdDesignator
-
-from robocup_knowledge import load_knowledge
-
-from conversation_engine import ConversationEngine
 
 
 class ConversationEngineWithHmi(ConversationEngine):

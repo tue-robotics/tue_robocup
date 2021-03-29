@@ -1,5 +1,7 @@
 # COMMON KNOWLEDGE FILE RWC2018
 
+from __future__ import print_function
+
 female_names = ["alex", "charlie", "elizabeth", "francis", "jennifer", "linda", "mary", "patricia", "robin", "skyler"]
 male_names = ["alex", "charlie", "francis", "james", "john", "michael", "robert", "robin", "skyler", "william"]
 

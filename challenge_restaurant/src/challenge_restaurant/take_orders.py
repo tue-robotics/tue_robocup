@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 # System
 import random
 
@@ -164,7 +166,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("Please provide robot name as argument.")
         sys.exit(1)
-    
+
     robot_name = sys.argv[1]
 
     rospy.init_node('test_take_orders')
@@ -184,4 +186,4 @@ if __name__ == '__main__':
     sm.execute()
 
     rospy.loginfo("Orders {}".format(orders))
- 
+

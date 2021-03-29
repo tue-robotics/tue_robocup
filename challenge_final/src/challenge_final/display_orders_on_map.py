@@ -1,14 +1,17 @@
-import os
-import cv2
-import numpy as np
-from datetime import datetime
-import traceback
+from __future__ import print_function
 
+import os
+import rospkg
+import traceback
+from datetime import datetime
+
+import cv2
+import cv_bridge
+import numpy as np
 # ROS
 import rospy
+
 import smach
-import cv_bridge
-import rospkg
 
 
 def color_map(N=256, normalized=False):
@@ -181,5 +184,3 @@ if __name__ == "__main__":
 
     sm = DisplayOrdersOnMap(robot=_robot)
     print(sm.execute(user_data))
-
-

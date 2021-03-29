@@ -1,7 +1,8 @@
+from __future__ import print_function
+
 # ROS
 import rospy
 import smach
-
 
 # TU/e Robotics
 import robot_smach_states as states
@@ -177,5 +178,3 @@ if __name__ == "__main__":
     print(sm.execute(user_data))
 
     print([person_dict['selection'] for person_dict in user_data['detected_people']])
-
-
