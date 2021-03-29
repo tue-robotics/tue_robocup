@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.0.2)
 project(challenge_where_is_this)
 
 find_package(catkin REQUIRED COMPONENTS
-    rospy
-    robot_smach_states
-    robot_skills)
+  robot_skills
+  robot_smach_states
+  rospy
+)
 
 catkin_python_setup()
 
