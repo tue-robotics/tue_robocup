@@ -1,11 +1,13 @@
+from __future__ import print_function
+
 # System
 import time
 
-# ROS
-from actionlib_msgs.msg import GoalStatus
 import control_msgs.msg
 import rospy
 import trajectory_msgs.msg
+# ROS
+from actionlib_msgs.msg import GoalStatus
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart

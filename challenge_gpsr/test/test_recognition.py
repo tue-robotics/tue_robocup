@@ -1,11 +1,13 @@
 #! /usr/bin/python
 
-import sys
-import rospy
 import random
+import sys
 
-from robocup_knowledge import load_knowledge
+import rospy
+
 from hmi import TimeoutException
+from robocup_knowledge import load_knowledge
+
 knowledge = load_knowledge('challenge_gpsr')
 
 

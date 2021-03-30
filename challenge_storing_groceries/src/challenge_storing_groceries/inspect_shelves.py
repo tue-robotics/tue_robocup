@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # System
 import os
 
@@ -30,7 +32,7 @@ class InspectShelves(smach.State):
 
         # Get the pose of all shelves
         shelves = []
-        for k, v in cabinet_entity.volumes.iteritems():
+        for k, v in cabinet_entity.volumes.items():
             if k in config.OBJECT_SHELVES:
                 rospy.loginfo("Adding {} to shelves".format(k))
                 vector = 0.5 * (v.min_corner + v.max_corner)
@@ -64,17 +66,17 @@ class InspectShelves(smach.State):
 
             # Enable kinect segmentation plugin (only one image frame)
             segmented_entities = self.robot.ed.update_kinect("{} {}".format(shelf['name'], cabinet_entity.id))
-            # print "Segmented new entities: {}".format(segmented_entities.new_ids)
+            # print("Segmented new entities: {}".format(segmented_entities.new_ids))
 
             for id_ in segmented_entities.new_ids:
                 # In simulation, the entity type is not yet updated...
                 entity = self.robot.ed.get_entity(id=id_)
                 config.SEGMENTED_ENTITIES.append((entity, id_))
-            # print "Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES)
+            # print("Config.SEGMENTED_ENTITIES: {}".format(config.SEGMENTED_ENTITIES))
 
             # ToDo: classification threshold
             entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=config.OBJECT_TYPES)
-            # print "Types and probs: {}".format(entity_types_and_probs)
+            # print("Types and probs: {}".format(entity_types_and_probs))
 
             # Recite entities
             for etp in entity_types_and_probs:

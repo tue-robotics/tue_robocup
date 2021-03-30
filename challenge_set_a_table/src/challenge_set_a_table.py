@@ -15,7 +15,7 @@ from robocup_knowledge import load_knowledge
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.designators as ds
-from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, analyse_designators
+from robot_smach_states.util.designators import EntityByIdDesignator
 
 # Set the table
 from challenge_set_a_table_states.fetch_command import HearFetchCommand, GetBreakfastOrder

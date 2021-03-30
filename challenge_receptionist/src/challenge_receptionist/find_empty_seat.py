@@ -1,11 +1,12 @@
 #! /usr/bin/env python
+
+from __future__ import print_function
+
 import rospy
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 import smach
 from robot_skills.util.entity import Entity
-from robot_skills.util.volume import Volume
-from robot_skills.classification_result import ClassificationResult
 
 
 class SeatsInRoomDesignator(ds.Designator):
@@ -125,9 +126,9 @@ if __name__ == "__main__":
     from robot_skills import get_robot
 
     if len(sys.argv) < 4:
-        print "Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",
+        print("Please provide robot_name, room and seats_to_inspect as arguments. Eg. 'hero livingroom dinner_table bar dinnertable",)
         sys.exit(1)
-    
+
     robot_name = sys.argv[1]
     room = sys.argv[2]
     seats_to_inspect = sys.argv[3:]

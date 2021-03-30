@@ -5,9 +5,9 @@ import signal
 import subprocess
 import xml.etree.ElementTree as ET
 
+import PyKDL as kdl
 # ROS
 import nav_msgs.msg
-import PyKDL as kdl
 import rospy
 
 # TU/e Robotics
@@ -236,4 +236,3 @@ class NavAnalyzer:
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
-

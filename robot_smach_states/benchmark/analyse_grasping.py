@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 import argparse
 from dateutil.parser import parse as parse_date
 import matplotlib.pyplot as plt

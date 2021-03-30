@@ -1,5 +1,4 @@
 # TU/e
-from robot_skills.util.kdl_conversions import FrameStamped
 
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge

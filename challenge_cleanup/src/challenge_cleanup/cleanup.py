@@ -37,7 +37,7 @@ from robot_smach_states.designator_iterator import IterateDesignator
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.startup import StartChallengeRobust
 import robot_smach_states.util.designators as ds
-from clean_inspect import CleanInspect
+from .clean_inspect import CleanInspect
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_cleanup')
@@ -116,8 +116,7 @@ class AskWhichRoomToClean(smach.StateMachine):
         """
 
         hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
-        room_name_des = ds.FuncDesignator(ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode),
-                                          str, resolve_type=str)
+        room_name_des = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
 
         @smach.cb_interface(outcomes=['done'])
         def write_room(ud, des_read, des_write):

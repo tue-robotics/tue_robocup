@@ -1,16 +1,15 @@
 #!/usr/bin/python
-import roslib;
+
 import rospy
 import smach
-import sys
-import random
+
 
 import robot_smach_states as states
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator, analyse_designators
-from geometry_msgs.msg import PointStamped
+from robot_smach_states.util.designators import analyse_designators
 
 import direct_speech_recognition
 import indirect_speech_recognition
+
 
 def setup_statemachine(robot):
 

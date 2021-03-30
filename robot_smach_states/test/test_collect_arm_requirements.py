@@ -85,8 +85,8 @@ def compare_lists_in_dicts(reference, result):
     :param result: Dict according to the system
     :return: reference and result dicts containing the non overlapping key, value pairs
     """
-    for k in reference.keys():
-        if k in result.keys():
+    for k in list(reference.keys()):
+        if k in list(result.keys()):
             if len(reference[k]) == len(result[k]) and set(reference[k]) == set(result[k]):
                 del reference[k], result[k]
 

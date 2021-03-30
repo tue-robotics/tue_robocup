@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from builtins import range
+
 # System
 import math
 
@@ -56,7 +58,7 @@ class GraspPointDeterminant(object):
         robot_frame_inv = robot_frame.frame.Inverse()
 
         ''' Loop over lines of chull '''
-        for i in xrange(len(chull)):
+        for i in range(len(chull)):
             j = (i+1)%len(chull)
 
             dx = chull[j].x() - chull[i].x()

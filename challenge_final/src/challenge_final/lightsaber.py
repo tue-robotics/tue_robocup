@@ -1,12 +1,10 @@
 # ROS
 from threading import Event
 
-import message_filters
 import rospy
 import smach
 import std_msgs.msg
 from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import CameraInfo, Image
 
 # TU/e Robotics
 import robot_smach_states as states

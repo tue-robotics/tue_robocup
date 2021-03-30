@@ -4,19 +4,19 @@
 # By Sjoerd van den Dries, 2016
 # ------------------------------------------------------------------------------------------------------------------------
 
+import argparse
 import os
 import sys
-import rospy
-import argparse
 import time
 
-from robot_skills import get_robot
-from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint, NavigateToSymbolic
-from robot_smach_states.util.designators import EntityByIdDesignator
-from robocup_knowledge import load_knowledge
-from robot_smach_states import StartChallengeRobust
-
+import rospy
 from action_server.command_center import CommandCenter
+
+from robocup_knowledge import load_knowledge
+from robot_skills import get_robot
+from robot_smach_states.navigation import NavigateToWaypoint
+from robot_smach_states.startup import StartChallengeRobust
+from robot_smach_states.util.designators import EntityByIdDesignator
 
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ def main():
 
         # Move to the start location
         nwc = NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.starting_pose), radius = 0.3)
-        nwc.execute()    
+        nwc.execute()
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -105,7 +105,7 @@ def main():
                 sentences = ["Hello there! Welcome to the double E GPSR. You can give me an order, but wait for the ping."]
             else:
                 # Sentence robot says after completing a task
-                sentences = ["Hello there, you look lovely! I'm here to take a new order, but wait for the ping!"] 
+                sentences = ["Hello there, you look lovely! I'm here to take a new order, but wait for the ping!"]
 
             # These sentences are for when the first try fails
             # (Robot says "Do you want me to ...?", you say "No", then robot says sentence below)
@@ -115,9 +115,9 @@ def main():
                 "You and I have communication issues. Speak up! Tell me what you want, but wait for the ping"
                 ]
 
-            hey_robot_wait_forever(robot)                
+            hey_robot_wait_forever(robot)
 
-            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600, sentences=sentences)           
+            res = command_center.request_command(ask_confirmation=True, ask_missing_info=False, timeout=600, sentences=sentences)
 
             if not res:
                 continue

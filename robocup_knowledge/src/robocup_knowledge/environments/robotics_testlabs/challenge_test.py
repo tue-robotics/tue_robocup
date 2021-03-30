@@ -1,14 +1,14 @@
-
+from __future__ import print_function
 
 ''' printing shortcuts '''
 def printOk(sentence):
-    print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
+    print(prefix + bcolors.OKBLUE + sentence + bcolors.ENDC)
 
 def printError(sentence):
-    print prefix + bcolors.FAIL + sentence + bcolors.ENDC
+    print(prefix + bcolors.FAIL + sentence + bcolors.ENDC)
 
 def printWarning(sentence):
-    print prefix + bcolors.WARNING + sentence + bcolors.ENDC
+    print(prefix + bcolors.WARNING + sentence + bcolors.ENDC)
 
 prefix = bcolors.HEADER + "[Challenge Test] " + bcolors.ENDC
 

@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 
-from numpy import array as np_array
-from numpy.linalg import norm as np_norm
 import rospy
 from geometry_msgs.msg import WrenchStamped
-from robot_skills.util.exceptions import TimeOutException
+from numpy import array as np_array
+from numpy.linalg import norm as np_norm
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
+from robot_skills.util.exceptions import TimeOutException
 
 
 class ForceSensor(RobotPart):

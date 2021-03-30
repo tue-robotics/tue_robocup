@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-import cStringIO as StringIO
+from __future__ import print_function
+
+from io import BytesIO
 import datetime
 import numpy as np
 import os
@@ -15,7 +17,7 @@ import smach
 from robot_skills import world_model_ed
 
 # Challenge storing groceries
-from challenge_storing_groceries import config
+from . import config
 
 
 class WritePdf(smach.State):
@@ -128,7 +130,7 @@ def save_entity_image_to_file(world_model_ed, entity_id):
 
     try:
         byte_array = bytearray(info.measurement_image_unmasked)
-        stream = StringIO.StringIO(byte_array)
+        stream = BytesIO(byte_array)
         image = Image.open(stream)
     except Exception as e:
         rospy.logerr("Failed to load image from entity %s", entity_id)
@@ -183,7 +185,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
         image = item[2]
         if len(entity.id) == 32 and entity.type != "":
             # image = save_entity_image_to_file(world_model_ed, entity.id)
-            print "Created entry for %s (%s)" % (entity.id, entity.type)
+            print("Created entry for %s (%s)" % (entity.id, entity.type))
             html += "<table border='1'><tr>"
             if image:
                 html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.id)
@@ -208,7 +210,7 @@ def entities_to_pdf(items, name, directory="/home/amigo/usb"):
 
     try:
         html2pdf(html, "%s/%s" % (directory, filename))
-    except IOError, ioerror:
+    except IOError as ioerror:
         rospy.logerr(ioerror)
         rospy.logwarn("Writing to local file instead")
         html2pdf(html, "%s" % filename)
@@ -220,5 +222,5 @@ if __name__ == '__main__':
     rospy.init_node("testpdf")
     pisa.showLogging()
 
-    ed = world_model_ed.ED("amigo", "nbanana");
+    ed = world_model_ed.ED("amigo", "nbanana")
     entities_to_pdf(ed, ed.get_entities(), "all_entities")

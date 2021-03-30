@@ -7,7 +7,7 @@ import tf2_ros
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
 from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
-from robot_smach_states import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from robot_smach_states.util.geometry_helpers import wrap_angle_pi
 from smach import StateMachine, State, cb_interface, CBState

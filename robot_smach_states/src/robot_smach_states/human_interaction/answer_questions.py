@@ -253,7 +253,7 @@ class HearAndAnswerQuestions(smach.State):
 
         self.robot.head.look_at_standing_person()
 
-        for _ in xrange(self.num_questions):
+        for _ in range(self.num_questions):
 
             try:
                 res = self.robot.hmi.query('Question?', self.grammar, 'T', timeout=self.hear_time)

@@ -1,9 +1,10 @@
-from . import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed
-from .arm import arms, force_sensor, gripper, handover_detector
-from .simulation import is_sim_mode, SimEButton
+import math
 
 import rospy
-import math
+
+from . import api, base, ears, ebutton, head, lights, perception, robot, speech, torso, world_model_ed
+from .arm import arms, force_sensor, gripper, handover_detector
+from .simulation import SimEButton, is_sim_mode
 
 
 class Hero(robot.Robot):
@@ -55,7 +56,7 @@ class Hero(robot.Robot):
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
-        for part in self.parts.itervalues():
+        for part in self.parts.values():
             part.unsubscribe_hardware_status()
             part._operational = True
 

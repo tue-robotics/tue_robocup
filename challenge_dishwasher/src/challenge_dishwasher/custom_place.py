@@ -3,7 +3,7 @@ import tf2_geometry_msgs
 from challenge_dishwasher.open_dishwasher import ControlToPose, ControlParameters
 from geometry_msgs.msg import PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
-from robot_smach_states import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, Designator
 from smach import StateMachine, cb_interface, CBState
 from tf.transformations import quaternion_from_euler

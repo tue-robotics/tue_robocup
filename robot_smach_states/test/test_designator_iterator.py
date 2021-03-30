@@ -40,7 +40,7 @@ class IterateDesignatorTest(unittest.TestCase):
 
     def test_mismatching_resolve_type(self):
         self.assertRaises(AssertionError, IterateDesignator, self.collection_des,
-                          ds.VariableDesignator(resolve_type=unicode).writeable)
+                          ds.VariableDesignator(resolve_type=int).writeable)
 
 
 if __name__ == "__main__":

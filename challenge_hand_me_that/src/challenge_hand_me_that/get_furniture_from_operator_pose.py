@@ -11,7 +11,6 @@ from geometry_msgs.msg import PoseStamped
 from robot_skills import Hero
 from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators import is_writeable, VariableDesignator
-from rospy import ServiceException
 from smach import StateMachine, cb_interface, CBState
 from std_msgs.msg import Header
 

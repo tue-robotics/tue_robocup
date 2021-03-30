@@ -1,10 +1,11 @@
-import rospy
 import PyKDL as kdl
-
+import rospy
 from actionlib import GoalStatus
-from robot_skills.robot_part import RobotPart
-from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
+from tue_manipulation_msgs.msg import GripperCommandAction, GripperCommandGoal
 from tue_msgs.msg import GripperCommand
+
+from robot_skills.robot_part import RobotPart
+
 
 class GripperState(object):
     """

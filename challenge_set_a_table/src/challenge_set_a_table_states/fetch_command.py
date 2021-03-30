@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 # ROS
 import rospy
 import smach
@@ -8,7 +10,9 @@ import smach
 import hmi
 import robot_smach_states.util.designators as ds
 
-from robot_smach_states import Initialize, Say
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.utility import Initialize
+
 from robot_smach_states.util.startup import startup
 
 
@@ -117,7 +121,7 @@ class GetBreakfastOrder(smach.State):
         for option in options.keys():
             self.grammar += "OPTIONS['{}'] -> {}\n".format(option, option)
 
-        print self.grammar
+        print(self.grammar)
         self.timeout = timeout
 
     def execute(self, userdata):
