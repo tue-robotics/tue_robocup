@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 
-import rospy
 import unittest
 
+import rospy
+
+from robot_skills.functionalities import RobotFunc, add_functionalities
 # robot skills
 from robot_skills.robot import Robot
 from robot_skills.robot_part import RobotPart
 
-from robot_skills.functionalities import add_functionalities, RobotFunc
 
 # robotpart subclass
 class TestPart(RobotPart):

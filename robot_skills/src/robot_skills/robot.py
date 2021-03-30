@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 
+from collections import OrderedDict, Sequence
+
+import geometry_msgs
 # ROS
 import rospy
 import tf
-import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
@@ -11,8 +13,6 @@ from std_msgs.msg import String
 # TU/e
 from .arm import arms
 from .functionalities.add_functionalities import add_functionalities
-
-from collections import OrderedDict, Sequence
 
 CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 
@@ -150,7 +150,7 @@ class Robot(object):
         :param gripper_timeout: If specified and 'close_gripper' holds, timeout for closing the gripper.
             If not specified, gripper movement uses 'arm_timeout'.
         """
-        for arm in self._arms.itervalues():
+        for arm in self._arms.values():
             if close_gripper:
                 if gripper_timeout is None:
                     gripper_timeout = arm_timeout
@@ -235,7 +235,7 @@ class Robot(object):
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
-        for arm_name, arm in self._arms.iteritems():
+        for arm_name, arm in self._arms.items():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue

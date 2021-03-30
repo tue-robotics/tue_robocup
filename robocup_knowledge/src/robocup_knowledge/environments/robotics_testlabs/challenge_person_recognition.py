@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 ''' colors from printing on screen '''
 class bcolors:
     HEADER = '\033[95m'
@@ -21,13 +23,13 @@ class Gender:
 
 ''' printing shortcuts '''
 def printOk(sentence):
-    print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
+    print(prefix + bcolors.OKBLUE + sentence + bcolors.ENDC)
 
 def printError(sentence):
-    print prefix + bcolors.FAIL + sentence + bcolors.ENDC
+    print(prefix + bcolors.FAIL + sentence + bcolors.ENDC)
 
 def printWarning(sentence):
-    print prefix + bcolors.WARNING + sentence + bcolors.ENDC
+    print(prefix + bcolors.WARNING + sentence + bcolors.ENDC)
 
 prefix = bcolors.HEADER + "[Person Recognition] " + bcolors.ENDC
 

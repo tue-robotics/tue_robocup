@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 # System
 import collections
@@ -366,11 +366,9 @@ class Recovery(smach.State):
                                                                              center_point=operator_pos_kdl,
                                                                              ignore_z=True)
                 if recovered_operator:
-                    print
-                    "Found one!"
+                    print("Found one!")
                     self._operator_id = recovered_operator.id
-                    print
-                    "Recovered operator id: %s" % self._operator_id
+                    print("Recovered operator id: %s" % self._operator_id)
                     self._operator = recovered_operator
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again", block=False)
                     self._robot.head.close()
@@ -378,8 +376,7 @@ class Recovery(smach.State):
                     userdata.recovered_operator = recovered_operator
                     return 'follow'
                 else:
-                    print
-                    "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
+                    print("Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl))
 
         self._robot.head.close()
         return 'Failed'

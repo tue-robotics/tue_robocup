@@ -1,11 +1,11 @@
+import matplotlib.pyplot as plt
 import pickle
-from collections import defaultdict
 import pprint
+from collections import defaultdict
+from sklearn.cluster import KMeans
+
 import numpy as np
 
-import matplotlib.pyplot as plt
-
-from sklearn.cluster import KMeans
 
 # ToDo: replace with better algorithm
 

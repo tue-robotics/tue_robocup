@@ -8,7 +8,7 @@ from challenge_dishwasher.custom_find_cup import CustomFindCup
 from geometry_msgs.msg import PointStamped, Point
 from robot_skills.amigo import Amigo
 from robot_skills.util.kdl_conversions import frame_stamped
-from robot_smach_states import NavigateTo
+from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.util.designators import Designator
 from smach import StateMachine, State, cb_interface, CBState
 from tf2_ros import Header

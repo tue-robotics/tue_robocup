@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
@@ -226,7 +228,7 @@ VP["action": "find-out-and-report", "property": X, "object": {"type": Y}] -> tel
 """
 
 if __name__ == "__main__":
-    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
 
     from grammar_parser.cfgparser import CFGParser
 
@@ -243,11 +245,11 @@ if __name__ == "__main__":
     else:
         sentence = grammar_parser.get_random_sentence("T")
 
-    print "Parsing sentence:\n\n{}\n\n".format(sentence)
+    print("Parsing sentence:\n\n{}\n\n".format(sentence))
 
     result = grammar_parser.parse("T", sentence)
 
-    print "Result:\n\n{}".format(result)
+    print("Result:\n\n{}".format(result))
 
 
 ##############################################################################

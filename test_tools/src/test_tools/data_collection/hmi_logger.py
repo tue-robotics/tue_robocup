@@ -1,14 +1,12 @@
 #!/usr/bin/python
-
-import rospy
-from hmi_msgs.msg import QueryActionGoal, QueryActionResult
-
-from datetime import datetime
-import os
-
 # import pyaudio
 # import wave
 import json
+import os
+from datetime import datetime
+
+import rospy
+from hmi_msgs.msg import QueryActionGoal, QueryActionResult
 
 # CHUNK = 1024
 # FORMAT = pyaudio.paInt16

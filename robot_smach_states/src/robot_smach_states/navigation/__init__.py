@@ -1,6 +1,8 @@
 from __future__ import absolute_import
-from .navigation import *
 
+from . import constraint_functions
+
+from .navigation import *
 from .navigate_to_explore import *
 from .navigate_to_grasp import *
 from .navigate_to_place import *

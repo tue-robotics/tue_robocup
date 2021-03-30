@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import rospy
+
 from test_tools import odometer
 
 rospy.init_node("odometer")

@@ -7,7 +7,7 @@ import rospy
 import std_msgs.msg as std
 import tf
 
-number = (int, long, float)
+number = (int, float)
 
 
 def Point(x=0, y=0, z=0):
@@ -59,7 +59,7 @@ def Quaternion(x=0, y=0, z=0, w=0, roll=0, pitch=0, yaw=0):
 def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
     """
     >>> pose = Pose(yaw=0.5)
-    >>> pose  # doctest: +NORMALIZE_WHITESPACE
+    >>> pose  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     position:
       x: 0
       y: 0
@@ -67,8 +67,8 @@ def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
     orientation:
       x: 0.0
       y: 0.0
-      z: 0.247403959255
-      w: 0.968912421711
+      z: 0.24740395925...
+      w: 0.96891242171...
     """
     if phi:
       rospy.logerr("Please specify yaw instead of phi. Phi will be removed!!!")
@@ -88,7 +88,7 @@ def PoseStamped(x=0, y=0, z=0, phi=0,
     """Build a geometry_msgs.msgs.PoseStamped from any number of arguments.
     Each value defaults to 0
     >>> ps = PoseStamped(yaw=0.5)  # doctest: +SKIP
-    >>> ps.pose  # doctest: +SKIP
+    >>> ps.pose  # doctest: +ELLIPSIS, +SKIP
     position:
       x: 0
       y: 0
@@ -96,8 +96,8 @@ def PoseStamped(x=0, y=0, z=0, phi=0,
     orientation:
       x: 0.0
       y: 0.0
-      z: 0.247403959255
-      w: 0.968912421711
+      z: 0.24740395925...
+      w: 0.96891242171...
     """
     if not stamp:
         stamp = rospy.get_rostime()

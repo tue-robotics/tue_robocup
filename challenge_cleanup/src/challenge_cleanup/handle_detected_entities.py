@@ -4,7 +4,7 @@ from robot_smach_states.util.designators import EntityByIdDesignator
 import robot_skills.util.kdl_conversions as kdl
 from robot_skills.util.entity import Entity
 
-from self_cleanup import SelfCleanup  # , SelfCleanup2
+from .self_cleanup import SelfCleanup  # , SelfCleanup2
 
 
 def _loginfo_color(text):

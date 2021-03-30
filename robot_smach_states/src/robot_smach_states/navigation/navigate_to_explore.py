@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from builtins import range
+
 # ROS
 from geometry_msgs.msg import *
 import rospy
@@ -55,7 +57,7 @@ class NavigateToExplore(NavigateTo):
         pci = ""
 
         # Loop over convex hull and add to constraint
-        for i in xrange(len(ch) - 1):
+        for i in range(len(ch) - 1):
             dx = ch[i+1].x - ch[i].x
             dy = ch[i+1].y - ch[i].y
 

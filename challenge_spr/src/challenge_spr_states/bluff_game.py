@@ -1,17 +1,14 @@
 #!/usr/bin/python
 
-import threading
-import rospy
-import smach
-import sys
 import math
-import time
+import threading
 
+import rospy
+from riddle_game import answer, hear
+
+import smach
+from robot_smach_states.util import Initialize
 from robot_smach_states.util.startup import startup
-
-from robot_smach_states import Initialize
-
-from riddle_game import hear, answer
 
 ##############################################################################
 #
@@ -54,7 +51,7 @@ class HearTurnAndAnswerQuestions(smach.State):
 
         self.robot.head.look_at_standing_person()
 
-        for _ in xrange(self.num_questions):
+        for _ in range(self.num_questions):
 
             t = threading.Thread(target=turn_to_closest_entity, args=(self.robot,self.num_operators))
             t.start()

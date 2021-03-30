@@ -15,7 +15,7 @@ def symbolic_constraint(robot, entity_designator_area_name_map):
     :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
     entity_id_area_name_map = {}
-    for desig, area_name in entity_designator_area_name_map.iteritems():
+    for desig, area_name in entity_designator_area_name_map.items():
         entity = desig.resolve()
         if hasattr(area_name, "resolve"):
             area_name = area_name.resolve()

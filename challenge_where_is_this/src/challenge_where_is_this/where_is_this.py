@@ -32,8 +32,7 @@ class WhereIsThis(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted"])
 
         hmi_result_des = ds.VariableDesignator(resolve_type=HMIResult)
-        information_point_id_designator = ds.FuncDesignator(
-            ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode), str, resolve_type=str)
+        information_point_id_designator = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
         information_point_designator = ds.EdEntityDesignator(robot, id_designator=information_point_id_designator)
 
         with self:

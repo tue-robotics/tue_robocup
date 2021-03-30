@@ -203,8 +203,7 @@ class AskWhichCategory(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
         hmi_result_des = ds.VariableDesignator(resolve_type=hmi.HMIResult, name="hmi_result_des")
-        category_des = ds.FuncDesignator(ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=unicode),
-                                         str, resolve_type=str)
+        category_des = ds.AttrDesignator(hmi_result_des, "semantics", resolve_type=str)
 
         @smach.cb_interface(outcomes=['done'])
         def write_category(ud, des_read, des_write):

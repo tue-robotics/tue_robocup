@@ -3,9 +3,12 @@
 """Data collector
 
 """
+import os
+import subprocess
+
 import rospy
-import subprocess, os
 from std_srvs.srv import Trigger, TriggerResponse
+
 
 class Recorder():
     def __init__(self):

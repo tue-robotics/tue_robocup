@@ -1,11 +1,12 @@
 #!/usr/bin/python
-import roslib;
+
+from __future__ import print_function
+
 import rospy
 import smach
 import sys
 
 import robot_smach_states as states
-from robot_smach_states.util.designators import Designator, EdEntityDesignator
 
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_speech_recognition')
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
     else:
-        print "[CHALLENGE SPEECH RECOGNITION] Please provide robot name as argument."
+        print("[CHALLENGE SPEECH RECOGNITION] Please provide robot name as argument.")
         exit(1)
 
     states.util.startup(setup_statemachine, robot_name=robot_name)

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from builtins import range
+
 import math
 
 # ROS
@@ -39,7 +41,7 @@ def radius_constraint(entity, radius, margin):
     if len(ch) > 0:  # If a convex hull is present, use this to create the position constraint
         pci = ""  # Create an empty position constraint
 
-        for i in xrange(len(ch)):  # Iterate over the convex hull
+        for i in range(len(ch)):  # Iterate over the convex hull
             j = (i + 1) % len(ch)
             dx = ch[j].x() - ch[i].x()
             dy = ch[j].y() - ch[i].y()

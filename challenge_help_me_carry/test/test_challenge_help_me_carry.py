@@ -1,5 +1,7 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('fast_simulator')
+
+from __future__ import print_function
+
 import rospy
 
 from fast_simulator import client
@@ -26,11 +28,11 @@ class door(object):
         if self.dooropen:
             self.door.set_position(self.x, self.y, 0.0, 0.0, 0.0, self.th)
             self.dooropen = False
-            print "Door " + self.id + " is closed"
+            print("Door " + self.id + " is closed")
         else:
             self.door.set_position(self.x, self.y,-3.0, 0.0, 0.0, self.th ) # TODO: make door swing open instead of move down by 3 meters
             self.dooropen = True
-            print "Door " + self.id + " is opened"
+            print("Door " + self.id + " is opened")
 
 
 if __name__ == "__main__":
@@ -44,11 +46,11 @@ if __name__ == "__main__":
     door2 = door(W, "2", 1.5, 3.1, 0.0 )
     door3 = door(W, "3",-0.4,-0.5, 1.57)
 
-    print "Dynamic door simulator"
-    print "Usage: press keys 1, 2 or 3 to open or close doors one two and three, respectively"
-    print "door 1: arena entrance"
-    print "door 2: living room entrance"
-    print "door 3: living room exit"
+    print("Dynamic door simulator")
+    print("Usage: press keys 1, 2 or 3 to open or close doors one two and three, respectively")
+    print("door 1: arena entrance")
+    print("door 2: living room entrance")
+    print("door 3: living room exit")
 
     while not rospy.is_shutdown():
 

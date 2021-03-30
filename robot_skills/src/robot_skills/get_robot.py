@@ -4,13 +4,12 @@ import sys
 # ROS
 import rospy
 
-# Robot skills
-from .robot import Robot
 from .amigo import Amigo
 from .hero import Hero
 from .mockbot import Mockbot
+# Robot skills
+from .robot import Robot
 from .sergio import Sergio
-
 
 ROBOTS = {
     "amigo": Amigo,

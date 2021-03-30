@@ -3,9 +3,9 @@
 # System
 import os
 
+import actionlib
 # ROS
 import rospy
-import actionlib
 
 # Determine simulation mode
 SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"

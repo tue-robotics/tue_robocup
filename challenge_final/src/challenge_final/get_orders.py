@@ -1,19 +1,12 @@
-import os
-import cv2
-import numpy as np
-from datetime import datetime
+from __future__ import print_function
 
 # ROS
 import rospy
 import smach
-import cv_bridge
-import rospkg
 
 # TU/e Robotics
 import robot_smach_states as states
-from robot_skills import get_robot_from_argv
 from challenge_final.select_option_for_image import SelectOptionForImage
-from challenge_final.display_orders_on_map import DisplayOrdersOnMap
 
 DRINK_OPTIONS = ['beer', 'coke', 'water', 'energy']
 DEFAULT_ORDER = 'beer'
@@ -185,5 +178,3 @@ if __name__ == "__main__":
     print(sm.execute(user_data))
 
     print([person_dict['selection'] for person_dict in user_data['detected_people']])
-
-

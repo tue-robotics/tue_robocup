@@ -2,16 +2,16 @@
 
 from __future__ import print_function
 
+import csv
 import os
 import socket
 import time
-import csv
 from fnmatch import fnmatch
-import rospy
-from math import sqrt, pow, pi
-from tf.transformations import euler_from_quaternion
+from math import pi, pow, sqrt
 
+import rospy
 from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion
 
 DEFAULT_PATH = "~/odometer"
 DEFAULT_FILENAME = 'odometer'

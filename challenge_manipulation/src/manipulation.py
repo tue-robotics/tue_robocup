@@ -19,6 +19,8 @@ Afterwards, a PDF report has to be made:
     - the bounding box of the object.'
 """
 
+from __future__ import print_function
+
 import rospy
 import smach
 
@@ -29,13 +31,12 @@ from ed_robocup_msgs.srv import FitEntityInImage, FitEntityInImageRequest
 import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
-from robot_smach_states import Grab
-from robot_smach_states import Place
+from robot_smach_states.manipulation import Grab, Place
 from robot_skills.util.kdl_conversions import VectorStamped
 
 # Robot Skills
 from robot_skills.util.entity import Entity
-from robot_skills import arms
+from robot_skills.arm import arms
 
 # RoboCup knowledge
 from robocup_knowledge import load_knowledge
@@ -261,7 +262,7 @@ class InspectShelves(smach.State):
 
         ''' Get the pose of all shelves '''
         shelves = []
-        for name, volume in cabinet_entity.volumes.iteritems():
+        for name, volume in cabinet_entity.volumes.items():
             ''' See if the area is in the list of inspection areas '''
             if name in OBJECT_SHELVES:
                 center_point = volume.center_point
@@ -331,9 +332,9 @@ class InspectShelves(smach.State):
                 entity = self.robot.ed.get_entity(id=e.id)  # In simulation, the entity type is not yet updated...
                 DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
 
-            # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            # print("Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS))
             DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
-            # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+            # print("Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS))
 
         if not DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
@@ -469,11 +470,11 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                                            arms.GripperTypes.GRASPING]},
                                                                       name="arm_with_item_designator")
 
-        # print "{0} = pick_shelf".format(self.pick_shelf)
-        # print "{0} = current_item".format(self.current_item)
-        # print "{0} = place_position".format(self.place_position)
-        # print "{0} = empty_arm_designator".format(self.empty_arm_designator)
-        # print "{0} = arm_with_item_designator".format(self.arm_with_item_designator)
+        # print("{0} = pick_shelf".format(self.pick_shelf))
+        # print("{0} = current_item".format(self.current_item))
+        # print("{0} = place_position".format(self.place_position))
+        # print("{0} = empty_arm_designator".format(self.empty_arm_designator))
+        # print("{0} = arm_with_item_designator".format(self.arm_with_item_designator))
 
         with self:
             # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",

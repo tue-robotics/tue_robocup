@@ -1,30 +1,30 @@
+from __future__ import print_function
+
 # System
 import os
-import yaml
-from math import sqrt
-
 # ROS
 import rospkg
-import rospy
-import visualization_msgs.msg
+import yaml
 
 # TU/e
 import ed_msgs.srv
-from ed_msgs.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 import ed_sensor_integration_msgs.srv as ed_sensor_srv
+import rospy
+import visualization_msgs.msg
+from cb_base_navigation_msgs.msg import PositionConstraint
+from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
+from ed_msgs.srv import Configure, SimpleQuery, SimpleQueryRequest, UpdateSrv
+from ed_navigation_msgs.srv import GetGoalConstraint
 from ed_people_recognition_msgs.srv import EdRecognizePeople
 from ed_perception_msgs.srv import Classify
-from ed_gui_server_msgs.srv import GetEntityInfo, GetEntityInfoResponse
-from ed_navigation_msgs.srv import GetGoalConstraint
-from cb_base_navigation_msgs.msg import PositionConstraint
 
+from robot_skills.classification_result import ClassificationResult
+from robot_skills.robot_part import RobotPart
 # Robot skills
 from robot_skills.util import transformations
 from robot_skills.util.decorators import deprecated
-from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
-from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from robot_skills.robot_part import RobotPart
+from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_to_point_msg
 
 
 class Navigation(RobotPart):
@@ -36,7 +36,7 @@ class Navigation(RobotPart):
     def get_position_constraint(self, entity_id_area_name_map):
         try:
             res = self._get_constraint_srv(entity_ids=[k for k in entity_id_area_name_map],
-                                           area_names=[v for k, v in entity_id_area_name_map.iteritems()])
+                                           area_names=[v for k, v in entity_id_area_name_map.items()])
         except Exception as e:
             rospy.logerr("Can't get position constraint: {}".format(e))
             return None
@@ -252,7 +252,7 @@ class ED(RobotPart):
                     if not isinstance(flag, dict):
                         print("update_entity - Error: flags need to be a list of dicts or a dict")
                         return False
-                    for k, v in flag.iteritems():
+                    for k, v in flag.items():
                         if not first:
                             json_entity += ','
                         json_entity += '{"%s":"%s"}' % (k, v)

@@ -30,21 +30,15 @@
 #
 # Author: Jonathan Bohren
 
-import roslib; roslib.load_manifest('smach_viewer')
-import rospy
+from __future__ import print_function
 
-from smach_msgs.msg import SmachContainerStatus,SmachContainerInitialStatusCmd,SmachContainerStructure
-
-import sys
-import os
-import threading
 import pickle
-import pprint
-import copy
-import StringIO
-import colorsys
-
+import threading
 import wxversion
+
+import rospy
+from smach_msgs.msg import SmachContainerStatus, SmachContainerStructure
+
 wxversion.select("2.8")
 import wx
 import wx.richtext
@@ -58,12 +52,12 @@ import smach_ros
 ### Helper Functions
 def graph_attr_string(attrs):
     """Generate an xdot graph attribute string."""
-    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k,v in attrs.iteritems()]
+    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k, v in attrs.items()]
     return ';\n'.join(attrs_strs)+';\n'
 
 def attr_string(attrs):
     """Generate an xdot node attribute string."""
-    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k,v in attrs.iteritems()]
+    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k, v in attrs.items()]
     return ' ['+(', '.join(attrs_strs))+']'
 
 def get_parent_path(path):
@@ -429,7 +423,7 @@ class ContainerNode():
                                 shape.pen.fillcolor = child_fillcolor
                                 shape.pen.linewidth = child_linewidth
                     else:
-                        #print child_path+" NOT IN "+str(items.keys())
+                        #print(child_path+" NOT IN "+str(items.keys()))
                         pass
 
 class SmachViewerFrame(wx.Frame):
@@ -691,7 +685,7 @@ class SmachViewerFrame(wx.Frame):
 
                 # Generate the userdata string
                 ud_str = ''
-                for (k,v) in container._local_data._data.iteritems():
+                for k, v in container._local_data._data.items():
                     ud_str += str(k)+": "
                     vstr = str(v)
                     # Add a line break if this is a multiline value
@@ -832,7 +826,7 @@ class SmachViewerFrame(wx.Frame):
 
                     # Generate the rest of the graph
                     # TODO: Only re-generate dotcode for containers that have changed
-                    for path,tc in containers_to_update.iteritems():
+                    for path,tc in containers_to_update.items():
                         dotstr += tc.get_dotcode(
                                 self._selected_paths,[],
                                 0,self._max_depth,
@@ -849,7 +843,7 @@ class SmachViewerFrame(wx.Frame):
                     self._structure_changed = False
 
                 # Update the styles for the graph if there are any updates
-                for path,tc in containers_to_update.iteritems():
+                for path,tc in containers_to_update.items():
                     tc.set_styles(
                             self._selected_paths,
                             0,self._max_depth,
@@ -883,7 +877,7 @@ class SmachViewerFrame(wx.Frame):
                 self._update_cond.wait()
                 self.tree.DeleteAllItems()
                 self._tree_nodes = {}
-                for path,tc in self._top_containers.iteritems():
+                for path,tc in self._top_containers.items():
                     self.add_to_tree(path, None)
 
     def add_to_tree(self, path, parent):
