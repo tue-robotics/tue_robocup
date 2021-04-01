@@ -56,7 +56,7 @@ waypoint_living_room_3 = "person_rec_living_room_3"
 
 
 ''' point in the center of the living room, to filter location of humans '''
-room_center = {'x':1.365, 'y':0.978, 'z':0.0, 'frame_id':"/map"}
+room_center = {'x':1.365, 'y':0.978, 'z':0.0, 'frame_id':"map"}
 
 
 '''Object types that can be recognized'''

@@ -24,7 +24,7 @@ class dropPoseDesignator(Designator):
 
         frame.p.z(self._drop_height)
 
-        return FrameStamped(frame, "/map")
+        return FrameStamped(frame, "map")
 
 
 class ArmFree(smach.State):

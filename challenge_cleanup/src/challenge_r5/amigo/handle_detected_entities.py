@@ -76,7 +76,7 @@ class DetermineAction(smach.State):
         if selected_entity.type == "" or selected_entity.type == "unknown":
             # Make sure the head looks at the entity
             pos = selected_entity.pose.frame.p
-            self._robot.head.look_at_point(msgs.PointStamped(pos.x(), pos.y(), 0.8, "/map"), timeout=10)
+            self._robot.head.look_at_point(msgs.PointStamped(pos.x(), pos.y(), 0.8, "map"), timeout=10)
 
             # This is needed because the head is not entirely still when the look_at_point function finishes
             rospy.sleep(1)

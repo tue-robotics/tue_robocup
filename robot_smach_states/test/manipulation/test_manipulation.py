@@ -18,7 +18,7 @@ class TestHandOverToHuman(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        entity = Entity("12345", "dummy", "/map", None, None, {}, None, 0)
+        entity = Entity("12345", "dummy", "map", None, None, {}, None, 0)
         self.robot.arms["leftArm"].gripper.occupied_by = entity
         self.arm_ds = ds.OccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human', 'reset'],
                                                             "required_gripper_types": [arms.GripperTypes.GRASPING]})
@@ -45,12 +45,12 @@ class TestHandOverFromHuman(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        entity = Entity("123", "dummy", "/map",
+        entity = Entity("123", "dummy", "map",
                         None, None, {}, None, 0)
         self.robot.arms["leftArm"].gripper.occupied_by = entity
         self.arm_ds = ds.UnoccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human'],
                                                               "required_gripper_types": [arms.GripperTypes.GRASPING]})
-        self.entity = Entity("456", "dummy", "/map",
+        self.entity = Entity("456", "dummy", "map",
                              None, None, {}, None, 0)
 
     def test_handover_from_human(self):
@@ -95,7 +95,7 @@ class TestSetGripperClose(unittest.TestCase):
     def setUp(self):
         self.arm_ds = ds.ArmDesignator(self.robot, {'required_arm_name': 'leftArm',
                                                     "required_gripper_types": [arms.GripperTypes.GRASPING]})
-        self.entity = Entity("12345", "dummy", "/map", None, None, {}, None, 0)
+        self.entity = Entity("12345", "dummy", "map", None, None, {}, None, 0)
         self.entity_ds = ds.VariableDesignator(self.entity)
 
     def test_set_close(self):

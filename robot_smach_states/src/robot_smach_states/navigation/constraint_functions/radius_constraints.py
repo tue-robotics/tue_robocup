@@ -64,6 +64,6 @@ def radius_constraint(entity, radius, margin):
         ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, inner_radius)
         pci = ri + " and " + ro
 
-    pc = PositionConstraint(constraint=pci, frame="/map")  # Create the position constraint from the string
+    pc = PositionConstraint(constraint=pci, frame="map")  # Create the position constraint from the string
     oc = None
     return pc, oc

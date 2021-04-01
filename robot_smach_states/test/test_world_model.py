@@ -16,7 +16,7 @@ class MockDesignator(ds.EntityByIdDesignator):
         return Entity(
             identifier="foo",
             object_type=None,
-            frame_id="/map",
+            frame_id="map",
             pose=kdl.Frame(),
             shape=None,
             volumes={"on_top_of": BoxVolume(

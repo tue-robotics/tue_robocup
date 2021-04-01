@@ -51,7 +51,7 @@ robot.speech.speak("There are {count} {type}s within {radius} meters of my base"
 #######################
 
 # TODO: center_point should also be a VectorStamped
-closest = robot.ed.get_closest_entity(center_point=kdl_conversions.VectorStamped(), radius=2.0)  # This is implicitly in /map
+closest = robot.ed.get_closest_entity(center_point=kdl_conversions.VectorStamped(), radius=2.0)  # This is implicitly in map
 robot.speech.speak("The closest entity to the center of the arena is {id}, of type {type}"
                    .format(id=closest.id[:10], type=closest.type))
 

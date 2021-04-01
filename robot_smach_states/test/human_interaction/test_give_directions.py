@@ -22,17 +22,17 @@ class TestGetRoom(unittest.TestCase):
         box1 = BoxVolume(kdl.Vector(0, 0, 0),
                          kdl.Vector(1, 1, 3))
 
-        entity1 = Entity("kitchen", "room", "/map",
+        entity1 = Entity("kitchen", "room", "map",
                          kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                    kdl.Vector(0, 0, 0)),
                          None, {"in": box1}, None, 0)
 
-        entity2 = Entity("living_room", "room", "/map",
+        entity2 = Entity("living_room", "room", "map",
                          kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                    kdl.Vector(1, 0, 0)),
                          None, {"in": box1}, None, 0)
 
-        entity3 = Entity("hallway", "room", "/map",
+        entity3 = Entity("hallway", "room", "map",
                          kdl.Frame(kdl.Rotation.RPY(0, 0, 0),
                                    kdl.Vector(2, 0, 0)),
                          None, {"in": box1}, None, 0)

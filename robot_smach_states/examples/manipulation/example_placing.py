@@ -33,7 +33,7 @@ if __name__ == "__main__":
     robot = get_robot(args.robot)
 
     pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(args.x, args.y, args.z)),
-                        frame_id="/map")
+                        frame_id="map")
     item = Entity("dummy_id", "dummy_type", None, None, None, None, None, None)
 
     arm = ds.ArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_place"],

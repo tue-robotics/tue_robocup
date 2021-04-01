@@ -17,7 +17,7 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         z_coordinate = 0
-        frame_id = "/map"
+        frame_id = "map"
 
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
@@ -48,7 +48,7 @@ class TestArmsReachConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         z_coordinate = 0
-        frame_id = "/map"
+        frame_id = "map"
 
         robot = Mockbot()
         arm = ArmDesignator(robot, {}, name="arm_designator")
