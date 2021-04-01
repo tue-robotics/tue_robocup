@@ -111,7 +111,7 @@ class ED(RobotPart):
 
         try:
             entity_infos = self._ed_simple_query_srv(query).entities
-            entities = map(from_entity_info, entity_infos)
+            entities = list(map(from_entity_info, entity_infos))
         except Exception as e:
             rospy.logerr("ERROR: robot.ed.get_entities(id={}, type={}, center_point={}, radius={}, ignore_z={})".format(
                 id, type, str(center_point), str(radius), ignore_z))
