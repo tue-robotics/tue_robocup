@@ -199,10 +199,10 @@ class FindPeople(smach.StateMachine):
                                     if person.face.roi.width > 0 and person.face.roi.height > 0:
                                         try:
                                             person_detections.append({
-                                                "map_ps": robot.tf_listener.transformPoint("map", PointStamped(
+                                                "map_ps": robot.tf_buffer.transform(PointStamped(
                                                     header=rgb.header,
                                                     point=person.position
-                                                )),
+                                                ), "map"),
                                                 "person_detection": person,
                                                 "rgb": rgb
                                             })

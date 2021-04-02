@@ -8,7 +8,7 @@ import math
 
 import geometry_msgs.msg
 import rospy
-import tf
+import tf2_ros
 # ROS
 from actionlib_msgs.msg import GoalStatus
 # TU/e Robotics
@@ -22,8 +22,8 @@ from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stampe
 
 
 class LocalPlanner(RobotPart):
-    def __init__(self, robot_name, tf_listener, analyzer):
-        super(LocalPlanner, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer, analyzer):
+        super(LocalPlanner, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.analyzer = analyzer
         self._action_client = self.create_simple_action_client('/' + robot_name + '/local_planner/action_server',
                                                                LocalPlannerAction)
@@ -94,8 +94,8 @@ class LocalPlanner(RobotPart):
 
 
 class GlobalPlanner(RobotPart):
-    def __init__(self, robot_name, tf_listener, analyzer):
-        super(GlobalPlanner, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer, analyzer):
+        super(GlobalPlanner, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.analyzer = analyzer
         self._position_constraint = None
         self._get_plan_client = self.create_service_client("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
@@ -156,8 +156,8 @@ class GlobalPlanner(RobotPart):
 
 
 class Base(RobotPart):
-    def __init__(self, robot_name, tf_listener, cmd_vel_topic=None, initial_pose_topic=None):
-        super(Base, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer, cmd_vel_topic=None, initial_pose_topic=None):
+        super(Base, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         if cmd_vel_topic is None:
             cmd_vel_topic = '/' + robot_name + '/base/references'
         if initial_pose_topic is None:
@@ -169,8 +169,8 @@ class Base(RobotPart):
         self.analyzer = nav_analyzer.NavAnalyzer(robot_name)
 
         # The planners
-        self.global_planner = GlobalPlanner(robot_name, tf_listener, self.analyzer)
-        self.local_planner = LocalPlanner(robot_name, tf_listener, self.analyzer)
+        self.global_planner = GlobalPlanner(robot_name, tf_buffer, self.analyzer)
+        self.local_planner = LocalPlanner(robot_name, tf_buffer, self.analyzer)
 
         self.subscribe_hardware_status('base')
 
@@ -261,7 +261,7 @@ class Base(RobotPart):
 
         :return: FrameStamped with robot pose
         """
-        return get_location(self.robot_name, self.tf_listener)
+        return get_location(self.robot_name, self.tf_buffer)
 
     def set_initial_pose(self, x, y, phi):
 
@@ -337,32 +337,24 @@ class Base(RobotPart):
     ########################################################
 
 
-def get_location(robot_name, tf_listener):
+def get_location(robot_name, tf_buffer):
 
     try:
         time = rospy.Time.now()
-        tf_listener.waitForTransform("map", robot_name + "/base_link", time, rospy.Duration(20.0))
-        (ro_trans, ro_rot) = tf_listener.lookupTransform("map", robot_name + "/base_link", time)
+        tf_buffer.can_transform("map", robot_name + "/base_link", time, rospy.Duration(20.0))
+        target_transform = tf_buffer.lookup_transform("map", robot_name + "/base_link", time)
+        target_pose = geometry_msgs.msg.PoseStamped()
+        target_pose.header = target_transform.header
+        target_pose.pose.position = target_transform.transform.translation
+        target_pose.pose.orientation = target_transform.transform.rotation
 
-        position = geometry_msgs.msg.Point()
-        orientation = geometry_msgs.msg.Quaternion()
-
-        position.x = ro_trans[0]
-        position.y = ro_trans[1]
-        orientation.x = ro_rot[0]
-        orientation.y = ro_rot[1]
-        orientation.z = ro_rot[2]
-        orientation.w = ro_rot[3]
-
-        target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-        target_pose.header.frame_id = "map"
-        target_pose.header.stamp = time
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
-    except (tf.LookupException, tf.ConnectivityException) as e:
-        rospy.logerr("tf request failed!, {}".format(e))
-        target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+    except (tf2_ros.LookupException, tf2_ros.ConnectivityException) as e:
+        rospy.logerr("tf2 request failed!, {}".format(e))
+        target_pose = geometry_msgs.msg.PoseStamped()
         target_pose.header.frame_id = "map"
+        target_pose.header.stamp = time
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
 

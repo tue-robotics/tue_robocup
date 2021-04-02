@@ -15,14 +15,14 @@ class Lights(RobotPart):
     """
     Interface to amigo's lights.
     """
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_buffer):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Lights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand,
                                       queue_size=10)
 

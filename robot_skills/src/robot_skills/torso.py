@@ -14,14 +14,14 @@ from robot_skills.robot_part import RobotPart
 
 
 class Torso(RobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states, arm_joint_names=None):
+    def __init__(self, robot_name, tf_buffer, get_joint_states, arm_joint_names=None):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Torso, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
         self.joint_names = self.load_param('skills/torso/joint_names')
         self.default_configurations = self.load_param('skills/torso/default_configurations')

@@ -16,9 +16,12 @@
   <buildtool_depend condition="$ROS_PYTHON_VERSION == 2">python-setuptools</buildtool_depend>
   <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
 
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>rospy</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-docopt</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-docopt</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-rospkg</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-rospkg</exec_depend>
+  <exec_depend>tf_conversions</exec_depend>
 
 </package>

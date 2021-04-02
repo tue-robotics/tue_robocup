@@ -10,10 +10,10 @@ import rospkg
 import rospy
 from dynamic_reconfigure.client import Client
 from geometry_msgs.msg import PoseStamped, Quaternion
-from tf.transformations import quaternion_from_euler
+from tf_conversions import transformations
 
 from robot_skills import get_robot
-from robot_smach_states import NavigateToSymbolic
+from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import CBState, StateMachine, cb_interface
@@ -69,7 +69,7 @@ class GrabRack(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = rack_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 0.45
             goal_pose.pose.position.y = 0.09
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.05)).execute({})
@@ -100,7 +100,7 @@ class GrabRack(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = rack_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, - math.pi / 2))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, - math.pi / 2))
             goal_pose.pose.position.x = 0.55
             goal_pose.pose.position.y = -0.1
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})

@@ -66,13 +66,13 @@ class LightSaber(smach.State):
                     person = persons[0]
                     if "is_pointing" in person.tags:
                         try:
-                            map_pose = self._robot.tf_listener.transformPose("map", PoseStamped(
+                            map_pose = self._robot.tf_buffer.transform(PoseStamped(
                                 header=std_msgs.msg.Header(
                                     frame_id=rgb.header.frame_id,
                                     stamp=rospy.Time.now() - rospy.Duration.from_sec(0.5)
                                 ),
                                 pose=person.pointing_pose
-                            ))
+                            ), "map")
                             result = self._robot.ed.ray_trace(map_pose)  # type: RayTraceResponse
                         except Exception as e:
                             rospy.logerr("Could not get ray trace from closest person: {}".format(e))

@@ -51,7 +51,7 @@ class PointAt(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_listener)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_buffer=self.robot.tf_buffer)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -130,7 +130,7 @@ class PointAt(smach.State):
         :return: (FrameStamped)
         """
         # Compute the frame w.r.t. base link
-        fs_robot = point_entity.pose.projectToFrame(self.robot.base_link_frame, self.robot.tf_listener)
+        fs_robot = point_entity.pose.projectToFrame(self.robot.base_link_frame, self.robot.tf_buffer)
 
         # Set the orientation to unity
         fs_robot.frame.M = kdl.Rotation()

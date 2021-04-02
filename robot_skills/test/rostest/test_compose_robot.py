@@ -47,7 +47,7 @@ def testfunction2(self):
 class TestComposeRobot(unittest.TestCase):
     def test_compose_robot(self):
         robot = Robot("testbot")
-        part = RobotPart("testbot", robot.tf_listener)
+        part = RobotPart("testbot", robot.tf_buffer)
 
         robot.add_body_part('mypart', part)
         self.assertTrue(hasattr(robot, 'mypart'))
@@ -55,8 +55,8 @@ class TestComposeRobot(unittest.TestCase):
 
     def test_compose_functionality(self):
         robot = Robot("testbot")
-        part = RobotPart("testbot", robot.tf_listener)
-        specialpart = TestPart("testbot", robot.tf_listener)
+        part = RobotPart("testbot", robot.tf_buffer)
+        specialpart = TestPart("testbot", robot.tf_buffer)
 
         robot.add_body_part('regular_part', part)
         robot.add_body_part('special_part', specialpart)

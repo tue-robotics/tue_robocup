@@ -438,7 +438,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
             # TODO: return x coordinate of entity.center_point in base_link frame
-            epose = entity.pose.projectToFrame(robot.robot_name+"/base_link", robot.tf_listener)  # Get position in base_link
+            epose = entity.pose.projectToFrame(robot.robot_name+"/base_link", robot.tf_buffer)  # Get position in base_link
             p = epose.frame.p
             return p.x()**2
 

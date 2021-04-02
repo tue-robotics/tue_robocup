@@ -10,15 +10,15 @@ class HandoverDetector(RobotPart):
     """
     Sensor functionality to detect when a handover is taking place
     """
-    def __init__(self, robot_name, tf_listener, name):
+    def __init__(self, robot_name, tf_buffer, name):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         :param name: string used to identify the sensor
         """
-        super(HandoverDetector, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(HandoverDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.name = name
 
     def handover_to_human(self, timeout=10):

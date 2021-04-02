@@ -6,7 +6,7 @@ import math
 # ROS
 import geometry_msgs.msg
 import rospy
-import tf
+import tf_conversions
 
 
 def euler_z_to_quaternion(angle):
@@ -21,7 +21,7 @@ def euler_z_to_quaternion(angle):
     """
     orientation_goal = geometry_msgs.msg.Quaternion()
     try:
-        quaternion = tf.transformations.quaternion_from_euler(0, 0, angle)
+        quaternion = tf_conversions.transformations.quaternion_from_euler(0, 0, angle)
     except TypeError as te:
         rospy.logerr(str(angle) + " cannot be parsed as a float: {0}".format(te))
     orientation_goal.x = quaternion[0]
@@ -41,7 +41,7 @@ def euler_z_from_quaternion(quaternion):
     0.0
     """
     try:
-        [rx,ry,rz] = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
+        _, _, rz = tf_conversions.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
 
     except TypeError as te:
         rospy.logerr("Quaternion {0} cannot be transformed to Euler".format(te))
@@ -53,7 +53,7 @@ def euler_z_from_quaternion(quaternion):
 def compute_relative_angle(absolute_angle, robot_orientation):
 
     robot_rotation=[robot_orientation.x,robot_orientation.y,robot_orientation.z,robot_orientation.w]
-    robot_absolute_angle = tf.transformations.euler_from_quaternion(robot_rotation,'sxyz')
+    robot_absolute_angle = tf_conversions.transformations.euler_from_quaternion(robot_rotation, 'sxyz')
 
     relative_angle = absolute_angle - robot_absolute_angle[2]
 
@@ -110,7 +110,7 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
         """
 
 
-def tf_transform(coordinates, inputframe, outputframe, tf_listener):
+def tf_transform(coordinates, inputframe, outputframe, tf):
     # Should probably be called transform_point
 
     if isinstance(coordinates, geometry_msgs.msg.Point):
@@ -126,7 +126,7 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener):
         ps.header.frame_id = inputframe
         ps.header.stamp = rospy.Time()
 
-    output_coordinates = tf_listener.transformPoint(outputframe, ps)
+    output_coordinates = tf.transform(ps, outputframe)
     return output_coordinates.point
 
 

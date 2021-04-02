@@ -18,14 +18,14 @@ class Gripper(RobotPart):
     """
     A gripper used for manipulating objects in the environment.
     """
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_buffer):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(Gripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Gripper, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.offset = None
         # TODO: remove occupied by, an interface should be stateless. Store this information elsewhere.
         self._occupied_by = None
@@ -59,15 +59,15 @@ class ParrallelGripper(Gripper):
     """
     A gripper with two fingers which closes by pressing the fingers together
     """
-    def __init__(self, robot_name, tf_listener, gripper_name):
+    def __init__(self, robot_name, tf_buffer, gripper_name):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         :param gripper_name: string to identify the gripper
         """
-        super(ParrallelGripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(ParrallelGripper, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.gripper_name = gripper_name
         offset = self.load_param('skills/' + self.gripper_name + '/grasp_offset/')
         self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),

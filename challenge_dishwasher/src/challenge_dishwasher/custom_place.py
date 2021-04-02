@@ -1,14 +1,11 @@
 import rospy
-import tf2_geometry_msgs
 from challenge_dishwasher.open_dishwasher import ControlToPose, ControlParameters
 from geometry_msgs.msg import PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator, Designator
 from smach import StateMachine, cb_interface, CBState
-from tf.transformations import quaternion_from_euler
-
-_ = tf2_geometry_msgs
+from tf_conversions import transformations
 
 
 class CustomPlace(StateMachine):
@@ -26,7 +23,7 @@ class CustomPlace(StateMachine):
             goal_pose.header.frame_id = 'map'
             goal_pose.pose.position.x = -4.55638664735
             goal_pose.pose.position.y = 4.99959353359
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, 0.395625992))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, 0.395625992))
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.01, 0.1)).execute({})
 
             robot.torso.wait_for_motion_done()
@@ -36,7 +33,7 @@ class CustomPlace(StateMachine):
                                                  timeout=rospy.Duration(0))
             arm.resolve().wait_for_motion_done()
 
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, 1.9656259917))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, 1.9656259917))
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.01, 0.1)).execute({})
 
             arm.resolve().wait_for_motion_done()

@@ -4,7 +4,7 @@ import math
 
 import PyKDL as kdl
 import rospy
-import tf
+import tf2_ros
 from geometry_msgs.msg import PoseStamped
 
 from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame
@@ -19,10 +19,13 @@ def callback(msg):
     kdl_frame.M = kdl.Rotation.RPY(rx, ry, kdl_frame.MZ)
     ed.update_entity(entity_id, frame_stamped=FrameStamped(kdl_frame, msg.header.frame_id))
 
+
 if __name__ == "__main__":
     rospy.init_node("update_ed_entity_pose")
     entity_id = rospy.get_param("~entity_id")
     sub = rospy.Subscriber("update_entity_pose", PoseStamped, callback)
-    ed = ED(rospy.get_param("~robot_name"), tf.TransformListener())
+    tf_buffer = tf2_ros.Buffer()
+    tf_listener = tf2_ros.TransformListener(tf_buffer)
+    ed = ED(rospy.get_param("~robot_name"), tf_buffer)
     rospy.loginfo("Listening on topic {}".format(sub.name))
     rospy.spin()

@@ -5,7 +5,9 @@ from collections import OrderedDict, Sequence
 import geometry_msgs
 # ROS
 import rospy
-import tf
+import tf2_ros
+import tf2_geometry_msgs
+import tf2_kdl
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
@@ -16,12 +18,15 @@ from .functionalities.add_functionalities import add_functionalities
 
 CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 
+_ = tf2_geometry_msgs
+__ = tf2_kdl
+
 
 class Robot(object):
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", wait_services=False, tf_listener=None):
+    def __init__(self, robot_name="", wait_services=False, tf_buffer=None):
         """
         Constructor
 
@@ -29,15 +34,19 @@ class Robot(object):
         :type robot_name: str
         :param wait_services: Not used anymore
         :type wait_services: bool
-        :param tf_listener: tf_listener object
-        :type tf_listener: Optional[tf.TransformListener]
+        :param tf_buffer: tf2_ros.Buffer object
+        :type tf_buffer: Optional[tf2_ros.Buffer]
         """
 
         if wait_services:
             rospy.logwarn("(Robot) wait_services is not used anymore and will be removed in the future")
 
         self.robot_name = robot_name
-        self.tf_listener = tf.TransformListener() if tf_listener is None else tf_listener
+        if tf_buffer is None:
+            self.tf_buffer = tf2_ros.Buffer()
+            self._tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        else:
+            self.tf_buffer = tf_buffer
 
         self.configured = False
 
@@ -52,7 +61,7 @@ class Robot(object):
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
-        self.base_link_frame = "/"+self.robot_name+"/base_link"
+        self.base_link_frame = self.robot_name+"/base_link"
 
         self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
         self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
@@ -174,8 +183,8 @@ class Robot(object):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
     def tf_transform_pose(self, ps, frame):
-        self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
-        output_pose = self.tf_listener.transformPose(frame, ps)
+        self.tf_buffer.can_transform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
+        output_pose = self.tf_buffer.transform(ps, frame)
         return output_pose
 
     def get_arm(self, required_gripper_types=None, desired_gripper_types=None,

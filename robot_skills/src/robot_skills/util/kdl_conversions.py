@@ -24,16 +24,16 @@ class FrameStamped(object):
         rpy = "(r={x}, p={y}, y={z})".format(x=r, y=p, z=y)
         return "FrameStamped(pos:{pos}, rot:{rot} @ {fid})".format(pos=xyz, rot=rpy, fid=self.frame_id)
 
-    def projectToFrame(self, frame_id, tf_listener):
+    def projectToFrame(self, frame_id, tf_buffer):
         """
         Computes a new FrameStamped from this frame in the requested frame ID
 
         :param frame_id: (str) frame id of the new FrameStamped
-        :param tf_listener: (TF Listener) tf listener used for the computation of the transformation
+        :param tf_buffer: (tf2_ros.Buffer) used for the computation of the transformation
         :return: (FrameStamped) with provided frame id
         """
-        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
-        transformed_pose = tf_listener.transformPose(frame_id, kdl_frame_stamped_to_pose_stamped_msg(self))
+        tf_buffer.can_transform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
+        transformed_pose = tf_buffer.transformPose(frame_id, kdl_frame_stamped_to_pose_stamped_msg(self))
         return kdl_frame_stamped_from_pose_stamped_msg(transformed_pose)
 
     def extractVectorStamped(self):
@@ -75,9 +75,9 @@ class VectorStamped(object):
     def __repr__(self):
         return "VectorStamped({vector} @ {fid})".format(vector=self.vector, fid=self.frame_id)
 
-    def projectToFrame(self, frame_id, tf_listener):
-        tf_listener.waitForTransform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
-        transformed_point = tf_listener.transformPoint(frame_id, kdl_vector_stamped_to_point_stamped(self))
+    def projectToFrame(self, frame_id, tf_buffer):
+        tf_buffer.can_transform(self.frame_id, frame_id, time=rospy.Time(0), timeout=rospy.Duration(1))
+        transformed_point = tf_buffer.transform(kdl_vector_stamped_to_point_stamped(self), frame_id)
         return kdl_vector_stamped_from_point_stamped_msg(transformed_point)
 
     def __eq__(self, other):

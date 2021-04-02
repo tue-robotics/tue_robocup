@@ -11,15 +11,11 @@ from collections import namedtuple
 from geometry_msgs.msg import PoseStamped
 import rospy
 import smach
-import tf2_geometry_msgs
-import tf2_ros
-from tf.transformations import euler_from_quaternion
+from tf_conversions import transformations
 
 # TU/e Robotics
 from ..util.geometry_helpers import wrap_angle_pi
 from ..util.designators.checks import check_type
-
-_ = tf2_geometry_msgs  # tf2_geometry_msgs must be declared here for it to be imported
 
 
 def _clamp(abs_value, value):
@@ -34,7 +30,7 @@ def _get_yaw_from_quaternion_msg(msg):
     :return: (float) Yaw angle in rad
     """
     orientation_list = [msg.x, msg.y, msg.z, msg.w]
-    _, _, yaw = euler_from_quaternion(orientation_list)
+    _, _, yaw = transformations.euler_from_quaternion(orientation_list)
     return yaw
 
 
@@ -79,9 +75,6 @@ class ControlToPose(smach.State):
 
         self._rate = rate
 
-        self._tf_buffer = tf2_ros.Buffer()
-        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
-
     def execute(self, userdata=None):
         goal_pose = self.goal_pose.resolve() if hasattr(self.goal_pose, "resolve") else self.goal_pose
         if self._goal_reached(*self._get_target_delta_in_robot_frame(goal_pose)):
@@ -120,7 +113,7 @@ class ControlToPose(smach.State):
                  (float) yaw of goal in robot frame
         """
         goal_pose.header.stamp = rospy.Time.now()
-        pose = self._tf_buffer.transform(goal_pose, self.robot.base_link_frame, rospy.Duration(1.0))
+        pose = self.robot.tf_buffer.transform(goal_pose, self.robot.base_link_frame, rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 

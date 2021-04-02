@@ -273,16 +273,16 @@ class Arm(RobotPart):
     A kinematic chain ending in an end_effector. Can be controlled using either joint goals or a goal to reach with
     the end_effector described in carthesian coordinates.
     """
-    def __init__(self, robot_name, tf_listener, get_joint_states, name):
+    def __init__(self, robot_name, tf_buffer, get_joint_states, name):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         :param get_joint_states: get_joint_states function for getting the last joint states
         :param name: string used to identify the arm
         """
-        super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Arm, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.name = name
 
         self._operational = True  # In simulation, there will be no hardware cb
@@ -431,7 +431,7 @@ class Arm(RobotPart):
             rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
 
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
-        frame_in_baselink = frameStamped.projectToFrame(self.robot_name + "/base_link", self.tf_listener)
+        frame_in_baselink = frameStamped.projectToFrame(self.robot_name + "/base_link", self.tf_buffer)
 
         # TODO: Get rid of this custom message type
         # Create goal:
@@ -489,13 +489,12 @@ class Arm(RobotPart):
                 grasp_precompute_goal,
                 execute_timeout=rospy.Duration(timeout))
             if result == GoalStatus.SUCCEEDED:
-
-                result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
-                                                               self.grasp_frame,
-                                                               rospy.Time(0))
-                dx = grasp_precompute_goal.goal.x - result_pose[0][0]
-                dy = grasp_precompute_goal.goal.y - result_pose[0][1]
-                dz = grasp_precompute_goal.goal.z - result_pose[0][2]
+                result_pose = self.tf_buffer.lookup_transform(self.robot_name + "/base_link",
+                                                              self.grasp_frame,
+                                                              rospy.Time(0))
+                dx = grasp_precompute_goal.goal.x - result_pose.transform.translation.x
+                dy = grasp_precompute_goal.goal.y - result_pose.transform.translation.y
+                dz = grasp_precompute_goal.goal.z - result_pose.transform.translation.z
 
                 if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
                     rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(

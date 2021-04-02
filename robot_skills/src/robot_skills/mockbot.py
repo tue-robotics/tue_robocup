@@ -14,7 +14,7 @@ import mock
 import rospy
 import six
 import std_msgs.msg
-import tf
+import tf_conversions
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
@@ -108,9 +108,9 @@ class AlteredMagicMock(mock.MagicMock):
 
 
 class MockedRobotPart(object):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
         self.robot_name = robot_name
-        self.tf_listener = tf_listener
+        self.tf_buffer = tf_buffer
 
         self.load_param = AlteredMagicMock()
         self.wait_for_connections = AlteredMagicMock()
@@ -126,8 +126,8 @@ class MockedRobotPart(object):
 
 
 class Arm(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states, name):
-        super(Arm, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, get_joint_states, name):
+        super(Arm, self).__init__(robot_name, tf_buffer)
 
         self.arm_name = name
         self.get_joint_states = get_joint_states
@@ -151,8 +151,8 @@ class Arm(MockedRobotPart):
         self.wait_for_motion_done = AlteredMagicMock()
 
         # add parts
-        self.gripper = Gripper(robot_name, tf_listener)
-        self.handover_detector = HandoverDetector(robot_name, tf_listener)
+        self.gripper = Gripper(robot_name, tf_buffer)
+        self.handover_detector = HandoverDetector(robot_name, tf_buffer)
 
     def collect_gripper_types(self, gripper_type):
         return gripper_type
@@ -163,22 +163,22 @@ class Arm(MockedRobotPart):
 
 
 class Gripper(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Gripper, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Gripper, self).__init__(robot_name, tf_buffer)
         self.occupied_by = None
         self.send_goal = AlteredMagicMock()
 
 
 class HandoverDetector(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(HandoverDetector, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(HandoverDetector, self).__init__(robot_name, tf_buffer)
         self.handover_to_human = AlteredMagicMock()
         self.handover_to_robot = AlteredMagicMock()
 
 
 class Base(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Base, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Base, self).__init__(robot_name, tf_buffer)
         self.move = AlteredMagicMock()
         self.turn_towards = AlteredMagicMock()
         self.force_drive = AlteredMagicMock()
@@ -196,8 +196,8 @@ class Base(MockedRobotPart):
 
 
 class Hmi(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Hmi, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Hmi, self).__init__(robot_name, tf_buffer)
 
         self.query = mock_query
         self.show_image = AlteredMagicMock()
@@ -208,16 +208,16 @@ class Hmi(MockedRobotPart):
 
 
 class EButton(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(EButton, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(EButton, self).__init__(robot_name, tf_buffer)
         self.close = AlteredMagicMock()
         self._listen = AlteredMagicMock()
         self.read_ebutton = AlteredMagicMock()
 
 
 class Head(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Head, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Head, self).__init__(robot_name, tf_buffer)
         self.reset = AlteredMagicMock()
         self.close = AlteredMagicMock()
         self.set_pan_tilt = AlteredMagicMock()
@@ -240,8 +240,8 @@ class Head(MockedRobotPart):
 
 
 class Perception(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Perception, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Perception, self).__init__(robot_name, tf_buffer)
         self.reset = AlteredMagicMock()
         self.close = AlteredMagicMock()
         self.learn_person = AlteredMagicMock()
@@ -252,8 +252,8 @@ class Perception(MockedRobotPart):
 
 
 class Lights(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Lights, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Lights, self).__init__(robot_name, tf_buffer)
         self.close = AlteredMagicMock()
         self.set_color = AlteredMagicMock()
         self.set_color_colorRGBA = AlteredMagicMock()
@@ -262,15 +262,15 @@ class Lights(MockedRobotPart):
 
 
 class Speech(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(Speech, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(Speech, self).__init__(robot_name, tf_buffer)
         self.close = AlteredMagicMock()
         self.speak = AlteredMagicMock()
 
 
 class Torso(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states, *args, **kwargs):
-        super(Torso, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, get_joint_states, *args, **kwargs):
+        super(Torso, self).__init__(robot_name, tf_buffer)
 
         self.get_joint_states = get_joint_states
 
@@ -307,8 +307,8 @@ class ED(MockedRobotPart):
                 entity.type = type_
             return entity
 
-    def __init__(self, robot_name, tf_listener, *args, **kwargs):
-        super(ED, self).__init__(robot_name, tf_listener)
+    def __init__(self, robot_name, tf_buffer, *args, **kwargs):
+        super(ED, self).__init__(robot_name, tf_buffer)
         self._dynamic_entities = defaultdict(self.generate_random_entity,
                                              {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
@@ -333,7 +333,7 @@ class ED(MockedRobotPart):
 
     def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", ignore_z=False):
 
-        center_point_in_map = center_point.projectToFrame("map", self.tf_listener)
+        center_point_in_map = center_point.projectToFrame("map", self.tf_buffer)
 
         entities = self._entities.values()
         if type:
@@ -376,16 +376,16 @@ class ED(MockedRobotPart):
         return True, [self._dynamic_entities['operator'].id]
 
 
-class MockedTfListener(mock.MagicMock):
+class MockedTfBuffer(mock.MagicMock):
     def __init__(self):
-        super(MockedTfListener, self).__init__()
+        super(MockedTfBuffer, self).__init__()
 
     @staticmethod
-    def waitForTransform(*args, **kwargs):
+    def can_transform(*args, **kwargs):
         return True
 
     @staticmethod
-    def transformPoint(frame_id, point_stamped):
+    def transform(point_stamped, frame_id):
         point_stamped.header.frame_id = frame_id
         return point_stamped
 
@@ -404,32 +404,32 @@ class Mockbot(robot.Robot):
     def __init__(self, *args, **kwargs):
         robot_name = "mockbot"
 
-        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_listener=MockedTfListener)
+        super(Mockbot, self).__init__(robot_name=robot_name, wait_services=False, tf_buffer=MockedTfBuffer())
 
         self.publish_target = AlteredMagicMock()
-        self.tf_transform_pose = AlteredMagicMock()
+        self.tf_buffer_transform_pose = AlteredMagicMock()
         self.close = AlteredMagicMock()
         self.get_joint_states = AlteredMagicMock()
 
-        self.add_body_part('hmi', Hmi(self.robot_name, self.tf_listener))
+        self.add_body_part('hmi', Hmi(self.robot_name, self.tf_buffer))
 
         # Body parts
-        self.add_body_part('base', Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', Torso(self.robot_name, self.tf_listener, self.get_joint_states))
+        self.add_body_part('base', Base(self.robot_name, self.tf_buffer))
+        self.add_body_part('torso', Torso(self.robot_name, self.tf_buffer, self.get_joint_states))
 
-        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_left"))
-        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_right"))
+        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_left"))
+        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_right"))
 
-        self.add_body_part('head', Head(self.robot_name, self.tf_listener))
+        self.add_body_part('head', Head(self.robot_name, self.tf_buffer))
 
         # Human Robot Interaction
-        self.add_body_part('speech', Speech(self.robot_name, self.tf_listener))
-        self.add_body_part('ebutton', EButton(self.robot_name, self.tf_listener))
-        self.add_body_part('lights', Lights(self.robot_name, self.tf_listener))
+        self.add_body_part('speech', Speech(self.robot_name, self.tf_buffer))
+        self.add_body_part('ebutton', EButton(self.robot_name, self.tf_buffer))
+        self.add_body_part('lights', Lights(self.robot_name, self.tf_buffer))
 
         # Reasoning/world modeling
-        self.add_body_part('ed', ED(self.robot_name, self.tf_listener))
-        self.add_body_part('perception', Perception(self.robot_name, self.tf_listener))
+        self.add_body_part('ed', ED(self.robot_name, self.tf_buffer))
+        self.add_body_part('perception', Perception(self.robot_name, self.tf_buffer))
 
         # Miscellaneous
         self.pub_target = AlteredMagicMock()
@@ -482,22 +482,22 @@ if __name__ == "__main__":
 
     mapgo = mockbot.base.go
 
-    def basego(x,y,phi):
-        return mockbot.base.go(x,y,phi,frame="/mockbot/base_link")
+    def basego(x, y, phi):
+        return mockbot.base.go(x, y, phi, frame="/mockbot/base_link")
 
-    def insert_object(x,y,z):
+    def insert_object(x, y, z):
         from test_tools.WorldFaker import WorldFaker
         wf = WorldFaker()
-        wf.insert({"position":(x,y,z)})
+        wf.insert({"position": (x, y, z)})
 
     # Useful for making location-files
     def get_pose_2d():
-       posestamped = mockbot.base.location
-       loc,rot = posestamped.pose.point, posestamped.pose.orientation
-       rot_array = [rot.w, rot.x, rot.y, rot.z]
-       rot3 = tf.transformations.euler_from_quaternion(rot_array)
-       print('x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0]))
-       return loc.x, loc.y, rot3[0]
+        posestamped = mockbot.base.location
+        loc, rot = posestamped.pose.point, posestamped.pose.orientation
+        rot_array = [rot.w, rot.x, rot.y, rot.z]
+        rot3 = tf_conversions.transformations.euler_from_quaternion(rot_array)
+        print('x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0]))
+        return loc.x, loc.y, rot3[0]
 
     def hear(text):
         pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)
@@ -517,7 +517,7 @@ if __name__ == "__main__":
         OKGREEN = '\033[92m'
         ENDC = '\033[0m'
 
-        mockbot.speech.speak("Please say: continue when I turn green", block=True) #definitely block here, otherwise we hear ourselves
+        mockbot.speech.speak("Please say: continue when I turn green", block=True)  # definitely block here, otherwise we hear ourselves
 
         result = mockbot.ears.ask_user("continue")
         rospy.loginfo("test_audio result: {0}".format(result))

@@ -156,7 +156,7 @@ class DetermineObject(smach.State):
 
         block_is_person = False
         for person in persons:
-#            pose_base_link = self._robot.tf_listener.transformPose(target_frame=self._robot.robot_name+'/base_link',
+#            pose_base_link = self._robot.tf_buffer.transform(target_frame=self._robot.base_link_frame,
 #                                                                   pose=person.pose)
 #
 #            x = pose_base_link.pose.position.x
