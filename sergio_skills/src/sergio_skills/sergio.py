@@ -20,7 +20,7 @@ class Sergio(robot.Robot):
         self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.joint_states))
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
         # Add arms (replace the '[[arm_name]]' and '[[side_name]]' strings with actual arm names.)
         # self.add_arm_part('[[arm name]]', arms.Arm(self.robot_name, self.tf_listener, side='[[side name]]'))
