@@ -149,7 +149,7 @@ if __name__ == "__main__":
     entity_designator = ds.VariableDesignator(resolve_type=Entity)
 
     ps = geometry_msgs.msg.PointStamped()
-    ps.header.frame_id = "/map"
+    ps.header.frame_id = "map"
     ps.point.x = 2.0
     ps.point.y = -1.0
     ps.point.z = 1.0

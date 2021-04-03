@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # get an armdesignator and a pose designator
     arm_designator = ArmDesignator(robot, {}, name="arm_designator")
-    pose = frame_stamped("/map", 0, 0, 1.3)
+    pose = frame_stamped("map", 0, 0, 1.3)
     pose_designator = Designator(pose, name="frame designator")
 
     # basic functionality
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     rospy.loginfo("oc becomes : {}".format(oc))
 
     # Use an entity
-    entity = Entity("dummy_entity", "dummy_type", "/map", pose.frame, None, None, None, None)
+    entity = Entity("dummy_entity", "dummy_type", "map", pose.frame, None, None, None, None)
     entity_designator = Designator(entity)
 
     rospy.loginfo("When you have an entity rather than a pose, consider wrapping it in an attribute designator")

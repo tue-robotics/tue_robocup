@@ -18,7 +18,7 @@ wp_test_nav = "wp_test_nav1"
 
 
 ''' point in the center of the living room, to filter location of humans '''
-# room_center = {'x':1.365, 'y':0.978, 'z':0.0, 'frame_id':"/map"}
+# room_center = {'x':1.365, 'y':0.978, 'z':0.0, 'frame_id':"map"}
 
 ''' entity to inspect '''
 INSPECT_ENTITY_ID = "cabinet"

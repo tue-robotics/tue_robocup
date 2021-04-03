@@ -50,7 +50,7 @@ def look_at_segmentation_area(robot, entity, volume=None):
         z = pos.z() + entity.shape.z_max
 
     # Point the head at the right direction
-    robot.head.look_at_point(VectorStamped(x, y, z, "/map"), timeout=0)
+    robot.head.look_at_point(VectorStamped(x, y, z, "map"), timeout=0)
 
     # Make sure the spindle is at the appropriate height if we are AMIGO
     if robot.robot_name == "amigo":

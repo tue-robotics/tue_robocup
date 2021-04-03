@@ -21,7 +21,7 @@ def Point(x=0, y=0, z=0):
     return gm.Point(x, y, z)
 
 
-def Header(frame_id="/map", stamp=None):
+def Header(frame_id="map", stamp=None):
     """
     Make a Header
     >>> h = Header("/base_link")  # doctest: +SKIP
@@ -33,7 +33,7 @@ def Header(frame_id="/map", stamp=None):
     return std.Header(stamp=stamp, frame_id=frame_id)
 
 
-def PointStamped(x=0, y=0, z=0, frame_id="/map", stamp=None, point=None):
+def PointStamped(x=0, y=0, z=0, frame_id="map", stamp=None, point=None):
     if not stamp:
         stamp = rospy.get_rostime()
     if not point:
@@ -84,7 +84,7 @@ def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
 
 def PoseStamped(x=0, y=0, z=0, phi=0,
                 roll=0, pitch=0, yaw=0,
-                frame_id="/map", stamp=None, pointstamped=None):
+                frame_id="map", stamp=None, pointstamped=None):
     """Build a geometry_msgs.msgs.PoseStamped from any number of arguments.
     Each value defaults to 0
     >>> ps = PoseStamped(yaw=0.5)  # doctest: +SKIP

@@ -128,7 +128,7 @@ class ForceDriveToTouchDoor(smach.State):
         footprint = footprint[0]
 
         posestampeds = [PoseStamped(footprint.header, Pose(position=point)) for point in footprint.polygon.points]
-        in_baselink = [self.robot.tf_transform_pose(ps, '{}/base_link'.format(self.robot.robot_name)) for ps in posestampeds]
+        in_baselink = [self.robot.tf_transform_pose(ps, self.robot.base_link_frame) for ps in posestampeds]
 
         X = [ps.pose.position.x for ps in in_baselink]
         Y = [ps.pose.position.y for ps in in_baselink]
@@ -165,7 +165,7 @@ class ForceDriveToTouchDoor(smach.State):
         Y = scan.ranges * np.sin(angles)
 
         posestampeds = [PoseStamped(scan.header, Pose(position=Point(x,y, 0))) for (x, y) in zip(X, Y)]
-        in_baselink = [self.robot.tf_transform_pose(ps, '{}/base_link'.format(self.robot.robot_name)) for ps in posestampeds]
+        in_baselink = [self.robot.tf_transform_pose(ps, self.robot.base_link_frame) for ps in posestampeds]
 
         Xb = [ps.pose.position.x for ps in in_baselink]
         Yb = [ps.pose.position.y for ps in in_baselink]
@@ -250,7 +250,7 @@ class ForceDriveToTouchDoor(smach.State):
         fp.pose.position.x,fp.pose.position.y, fp.pose.position.z = footprint_point[0], footprint_point[1], 0
         fp.scale.x, fp.scale.y, fp.scale.z = scale, scale, scale
         fp.color.r, fp.color.g, fp.color.b, fp.color.a = (0, 0, 1, 1)
-        fp.header.frame_id = "{}/base_link".format(self.robot.robot_name)
+        fp.header.frame_id = self.robot.base_link_frame
         fp.frame_locked = True
         fp.action = fp.ADD
         fp.ns = "door_opening"
@@ -263,7 +263,7 @@ class ForceDriveToTouchDoor(smach.State):
         sp.pose.position.x,sp.pose.position.y, sp.pose.position.z = scan_point[0], scan_point[1], 0
         sp.scale.x, sp.scale.y, sp.scale.z = scale, scale, scale
         sp.color.r, sp.color.g, sp.color.b, sp.color.a = (1, 0, 0, 1)
-        sp.header.frame_id = "{}/base_link".format(self.robot.robot_name)
+        sp.header.frame_id = self.robot.base_link_frame
         sp.frame_locked = False
         sp.action = sp.ADD
         sp.ns = "door_opening"
@@ -335,7 +335,7 @@ class CheckDoorPassable(smach.State):
         except:
             return None
 
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="/map")
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, 0.5), frame="map")
         plan = self.robot.base.global_planner.getPlan(pc)
 
         if plan and len(plan) < 3 and computePathLength(plan) < 3.0:

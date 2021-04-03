@@ -267,7 +267,7 @@ class Base(RobotPart):
 
         initial_pose = geometry_msgs.msg.PoseWithCovarianceStamped()
 
-        initial_pose.header.frame_id = "/map"
+        initial_pose.header.frame_id = "map"
 
         initial_pose.pose.pose.position.x = x
         initial_pose.pose.pose.position.y = y
@@ -320,7 +320,7 @@ class Base(RobotPart):
     ########################################################
     ###### Are the following functions deprecated ??? ######
     ########################################################
-    def go(self, x, y, phi, frame="/map", timeout=0):
+    def go(self, x, y, phi, frame="map", timeout=0):
         rospy.logwarn("[base.py] Function 'go' of 'Base' is obsolete.")
         return True
 
@@ -341,8 +341,8 @@ def get_location(robot_name, tf_listener):
 
     try:
         time = rospy.Time.now()
-        tf_listener.waitForTransform("/map", "/" + robot_name + "/base_link", time, rospy.Duration(20.0))
-        (ro_trans, ro_rot) = tf_listener.lookupTransform("/map", "/" + robot_name + "/base_link", time)
+        tf_listener.waitForTransform("map", robot_name + "/base_link", time, rospy.Duration(20.0))
+        (ro_trans, ro_rot) = tf_listener.lookupTransform("map", robot_name + "/base_link", time)
 
         position = geometry_msgs.msg.Point()
         orientation = geometry_msgs.msg.Quaternion()
@@ -355,14 +355,14 @@ def get_location(robot_name, tf_listener):
         orientation.w = ro_rot[3]
 
         target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-        target_pose.header.frame_id = "/map"
+        target_pose.header.frame_id = "map"
         target_pose.header.stamp = time
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
     except (tf.LookupException, tf.ConnectivityException) as e:
         rospy.logerr("tf request failed!, {}".format(e))
         target_pose = geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-        target_pose.header.frame_id = "/map"
+        target_pose.header.frame_id = "map"
         return kdl_frame_stamped_from_pose_stamped_msg(target_pose)
 
 

@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # get an entitydesignator
     pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(1, 2, 0))
-    e = Entity("dummy_waypoint", "dummy_type", "/map", pose, None, None, None, None)
+    e = Entity("dummy_waypoint", "dummy_type", "map", pose, None, None, None, None)
     waypoint= Designator(e, name="entity designator")
 
     # waypoint example

@@ -53,7 +53,7 @@ class TakeOrder(smach.State):
     def execute(self, userdata=None):
         person = self._entity_designator.resolve()
         if person:
-            self._robot.head.look_at_point(VectorStamped(vector=person.pose.frame.p, frame_id="/map"), timeout=0.0)
+            self._robot.head.look_at_point(VectorStamped(vector=person.pose.frame.p, frame_id="map"), timeout=0.0)
         else:
             rospy.logwarn("Could not resolve person, looking down ..")
             self._robot.head.look_at_ground_in_front_of_robot(3)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     pose.position.y = 1.0
     pose.position.z = 1.6
     customer_entity = Entity('random_id', 'person',
-                             '/map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
+                             'map', # FrameID can only be map frame unfortunately, Our KDL wrapper doesn't do well with PoseStampeds etc.
                              'dummy', # Only pose and frame_id are used
                              'shape', 'volumes', 'super_types', 'last_update_time')
     customer_entity.pose = pose  # This takes care of the conversion to KDL for us

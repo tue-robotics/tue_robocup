@@ -48,7 +48,7 @@ class PrepareEdGrasp(smach.State):
             return "failed"
 
         self.robot.move_to_inspect_pose(entity._pose.p)
-        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
+        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="map"), timeout=0.0)
         self.robot.head.wait_for_motion_done()
         segm_res = self.robot.ed.update_kinect("%s" % entity.id)
 
@@ -70,7 +70,7 @@ class PrepareEdGrasp(smach.State):
         arm.wait_for_motion_done()
 
         # Make sure the head looks at the entity
-        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="/map"), timeout=0.0)
+        self.robot.head.look_at_point(VectorStamped(vector=entity._pose.p, frame_id="map"), timeout=0.0)
         self.robot.head.wait_for_motion_done()
         return 'succeeded'
 
@@ -116,7 +116,7 @@ class PickUp(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.robot_name+'/base_link', tf_listener=self.robot.tf_listener)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_listener)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -157,7 +157,7 @@ class PickUp(smach.State):
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
-            goal_bl = goal_map.projectToFrame(self.robot.robot_name + '/base_link', tf_listener=self.robot.tf_listener)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_listener)
             if goal_bl is None:
                 return 'failed'
             else:
@@ -165,10 +165,10 @@ class PickUp(smach.State):
         else:
             # We do have a grasp pose, given as a kdl frame in map
             try:
-                self.robot.tf_listener.waitForTransform("/map", self.robot.robot_name + "/base_link", rospy.Time(0),
+                self.robot.tf_listener.waitForTransform("map", self.robot.base_link_frame, rospy.Time(0),
                                                         rospy.Duration(10))
                 # Transform to base link frame
-                goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
+                goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
                                                             tf_listener=self.robot.tf_listener)
                 if goal_bl is None:
                     return 'failed'
@@ -179,7 +179,7 @@ class PickUp(smach.State):
         # Pre-grasp --> this is only necessary when using visual servoing
         # rospy.loginfo('Starting Pre-grasp')
         # if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-        #                      frame_id='/'+self.robot.robot_name+'/base_link',
+        #                      frame_id=self.robot.base_link_frame',
         #                      timeout=20, pre_grasp=True, first_joint_pos_only=True
         #                      ):
         #     rospy.logerr('Pre-grasp failed:')
@@ -202,7 +202,7 @@ class PickUp(smach.State):
         arm.gripper.occupied_by = grab_entity
 
         # Lift
-        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + "/base_link",
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
                                                     tf_listener=self.robot.tf_listener)
         rospy.loginfo('Start lifting')
         roll = 0.0
@@ -214,7 +214,7 @@ class PickUp(smach.State):
             rospy.logerr('Failed lift')
 
         # Retract
-        goal_bl = grasp_framestamped.projectToFrame(self.robot.robot_name + '/base_link',
+        goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
                                                     tf_listener=self.robot.tf_listener)
         rospy.loginfo('Start retracting')
         roll = 0.0

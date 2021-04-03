@@ -87,7 +87,7 @@ class WaitForCustomer(smach.State):
         target_pose = kitchen_entity._pose
         head_target_kdl = target_pose * kdl.Vector(20.0, 0.0, 0.0)
         head_target = VectorStamped(x=head_target_kdl.x(), y=head_target_kdl.y(), z=head_target_kdl.z(),
-                                    frame_id="/map")
+                                    frame_id="map")
         # pose = kitchen_entity.pose.extractVectorStamped()
         # pose.vector[2] = 1.5
 
