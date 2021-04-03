@@ -58,7 +58,9 @@ class Robot(object):
         self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
 
         # Check hardware status
-        self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
+        self._hardware_status_sub = rospy.Subscriber(
+            "/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status
+        )
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
@@ -172,7 +174,6 @@ class Robot(object):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
     def tf_transform_pose(self, ps, frame):
-        output_pose = geometry_msgs.msg.PointStamped
         self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
@@ -352,11 +353,11 @@ class Robot(object):
         """
         hardware_status callback to determine if the bodypart is operational
 
-        :param msg: diagnostic_msgs.msg.DiagnosticArray
+        :param diagnostic_array: diagnostic_msgs.msg.DiagnosticArray
         :return: no return
         """
 
-        diagnostic_dict = {diagnostic_status.name:diagnostic_status for diagnostic_status in diagnostic_array.status}
+        diagnostic_dict = {diagnostic_status.name: diagnostic_status for diagnostic_status in diagnostic_array.status}
 
         for name, part in self.parts.items():
             # Pass a dict mapping the name to the item.
