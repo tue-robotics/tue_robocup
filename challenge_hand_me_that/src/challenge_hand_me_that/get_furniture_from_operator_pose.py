@@ -8,7 +8,7 @@ import os
 
 import rospy
 from geometry_msgs.msg import PoseStamped
-from robot_skills import Hero
+from robot_skills import get_robot, robot
 from robot_skills.util.entity import Entity
 from robot_smach_states.util.designators import is_writeable, VariableDesignator
 from smach import StateMachine, cb_interface, CBState
@@ -31,7 +31,7 @@ all_possible_furniture = ['kitchen_cabinet',
 
 class GetFurnitureFromOperatorPose(StateMachine):
     def __init__(self, robot, furniture_designator):
-        # type: (Hero, VariableDesignator) -> None
+        # type: (robot.Robot, VariableDesignator) -> None
         StateMachine.__init__(self, outcomes=['done'], output_keys=["laser_dot"])
 
         is_writeable(furniture_designator)
@@ -166,8 +166,8 @@ class GetFurnitureFromOperatorPose(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    furniture_designator = VariableDesignator(resolve_type=Entity)
-    hero = Hero()
-    hero.reset()
+    furniture_designator_ = VariableDesignator(resolve_type=Entity)
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
     while not rospy.is_shutdown():
-        GetFurnitureFromOperatorPose(hero, furniture_designator.writeable).execute()
+        GetFurnitureFromOperatorPose(robot_instance, furniture_designator_.writeable).execute()
