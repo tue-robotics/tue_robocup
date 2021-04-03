@@ -60,4 +60,8 @@ def get_robot(name):
     if robot_class is not None:
         return robot_class()
     else:
-        raise RuntimeError("Don't know which robot to construct with name {}".format(name))
+        error_msg = "Cannot construct robot '{}'\n".format(name)
+        error_msg += "Available robots:\n\t{}\n".format("\n\t".join(list(ROBOTS.keys())))
+        error_msg += "To install, try: 'tue-get install {}_skills'".format(name)
+        rospy.logerr(error_msg)
+        raise RuntimeError(error_msg)
