@@ -3,7 +3,7 @@ import os
 
 import rospy
 from geometry_msgs.msg import Quaternion, Pose, Point, PoseStamped
-from robot_skills import Hero
+from robot_skills import get_robot
 from robot_smach_states.navigation.control_to_pose import ControlToPose, ControlParameters
 from smach import cb_interface, StateMachine, CBState
 from std_msgs.msg import Header
@@ -53,7 +53,7 @@ class ControlToTrashBin(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    hero = Hero()
-    hero.reset()
-    ControlToTrashBin(hero, 'trash_bin', 0.45, -0.2).execute()
-    hero.leftArm().send_joint_goal('grab_trash_bag')
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
+    ControlToTrashBin(robot_instance, 'trash_bin', 0.45, -0.2).execute()
+    robot_instance.leftArm().send_joint_goal('grab_trash_bag')

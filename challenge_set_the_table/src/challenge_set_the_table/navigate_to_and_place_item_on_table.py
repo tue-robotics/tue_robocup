@@ -15,7 +15,7 @@ import PyKDL
 import rospy
 import visualization_msgs.msg
 from geometry_msgs.msg import PoseStamped, Vector3
-from robot_skills import Hero
+from robot_skills import get_robot
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.navigation import NavigateToSymbolic, ForceDrive
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
@@ -79,15 +79,18 @@ def item_frame_to_pose(item_frame, frame_id):
 class PlaceItemOnTable(StateMachine):
     def __init__(self, robot, table_id, placement_height):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], input_keys=["item_picked"])
+        # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
         self.placement_height = placement_height
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
+            # noinspection PyProtectedMember
             arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
 
         def send_joint_trajectory(goal_array, wait_for_motion_done=True):
+            # noinspection PyProtectedMember
             arm._send_joint_trajectory(goal_array, timeout=rospy.Duration(0))
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
@@ -130,7 +133,6 @@ class PlaceItemOnTable(StateMachine):
             if item_name in ['plate', 'napkin']:
                 # TODO: Do a different joint goal/trajectory
                 send_joint_goal(pleg)
- #               send_joint_goal(pweg)
             else:
                 send_joint_goal([self.placement_height, -1.57, 0, -1.57, 0])
 
@@ -168,7 +170,6 @@ class PlaceItemOnTable(StateMachine):
             self.add_auto('PRE_PLACE', CBState(_pre_place), ['done'])
             self.add_auto('ALIGN_WITH_TABLE', CBState(_align_with_table), ['done'])
             self.add('PLACE_AND_RETRACT', CBState(_place_and_retract), transitions={'done': 'succeeded'})
-            # self.add('ASK_USER', PLACE_AND_RETRACT(_ask_user), transitions={'done': 'succeeded'})
 
 
 class NavigateToAndPlaceItemOnTable(StateMachine):
@@ -178,12 +179,6 @@ class NavigateToAndPlaceItemOnTable(StateMachine):
         table = EdEntityDesignator(robot=robot, id=table_id)
 
         with self:
-            # StateMachine.add("NAVIGATE_TO_TABLE",
-            #                  NavigateToSymbolic(robot, {table: table_navigation_area}, table),
-            #                  transitions={'arrived': 'NAVIGATE_TO_TABLE_CLOSE',
-            #                               'unreachable': 'failed',
-            #                               'goal_not_defined': 'failed'})
-
             StateMachine.add("NAVIGATE_TO_TABLE_CLOSE",
                              NavigateToSymbolic(robot, {table: table_close_navigation_area}, table),
                              transitions={'arrived': 'PLACE_ITEM_ON_TABLE',
@@ -253,23 +248,25 @@ def _publish_item_poses(robot, items):
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
 
-    item_frames = {k:item_vector_to_item_frame(v) for k, v in item_vector_dict.items()}
+    item_frames = {k: item_vector_to_item_frame(v) for k, v in item_vector_dict.items()}
     import pprint
     print('Item frames:')
     pprint.pprint(item_frames)
 
-    item_poses = {k:item_frame_to_pose(v, 'kitchen_table') for k, v in item_frames.items()}
+    item_poses = {k: item_frame_to_pose(v, 'kitchen_table') for k, v in item_frames.items()}
     print('Item poses:')
     pprint.pprint(item_poses)
 
-    hero = Hero()
-    _publish_item_poses(hero, item_poses)
-    hero.reset()
+    robot_instance = get_robot("hero")
+    _publish_item_poses(robot_instance, item_poses)
+    robot_instance.reset()
     try:
-        placement_height = float(sys.argv[2])
+        placement_height_ = float(sys.argv[2])
     except IndexError:
         rospy.logwarn("You can specify height as a optional parameter")
-        placement_height = 0.7
-    state_machine = NavigateToAndPlaceItemOnTable(hero, 'kitchen_table', 'right_of', 'right_of_close', placement_height)
+        placement_height_ = 0.7
+    state_machine = NavigateToAndPlaceItemOnTable(
+        robot_instance, 'kitchen_table', 'right_of', 'right_of_close', placement_height_
+    )
     state_machine.userdata['item_picked'] = sys.argv[1]
     state_machine.execute()
