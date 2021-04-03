@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from cv_bridge import CvBridge, CvBridgeError
+from cv_bridge import CvBridge
 
 
 def img_recognitions_to_rois(recognitions):

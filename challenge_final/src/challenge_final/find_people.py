@@ -3,12 +3,11 @@ import datetime
 import math
 import os
 import pickle
-
-import numpy as np
 import time
 from collections import deque
 
 # ROS
+import numpy as np
 import PyKDL as kdl
 import rospy
 import smach
@@ -18,7 +17,6 @@ from geometry_msgs.msg import PointStamped
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_skills.util import kdl_conversions
-
 from .clustering import cluster_people
 
 WAYPOINT_ID = "find_people_waypoint"

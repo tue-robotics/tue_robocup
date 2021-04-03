@@ -1,16 +1,39 @@
 from __future__ import absolute_import
 
+import copy
+
 # ROS
 import rospy
 
 # TU/e Robotics
 # import GripperTypes and PseudoObjects to make them available for the user of these designators.
-from robot_skills.arm.arms import PublicArm, GripperTypes, PseudoObjects
+from robot_skills.arm.arms import PublicArm, PseudoObjects
 from .core import Designator
 from .utility import LockingDesignator
 
 
 __author__ = 'loy'
+
+
+def const_resolve(arm_designator, additional_properties):
+    """
+    Resolves the designator after adding properties. Note that the state is not altered.
+
+    :param arm_designator: ArmDesignator to which properties should be added.
+    :param additional_properties: Dict with the additional properties that are to be added.
+    :return: an arm with the desired properties and state
+
+    """
+
+    arm_designator_add_props = copy.copy(arm_designator)
+    for k, v in additional_properties.items():
+        if k in arm_designator_add_props.arm_properties:
+            for val in additional_properties[k]:
+                if val not in additional_properties[k]:
+                    arm_designator_add_props.arm_properties[k] += val
+        else:
+            arm_designator_add_props.arm_properties[k] = v
+    return arm_designator_add_props.resolve()
 
 
 class ArmDesignator(Designator):
@@ -75,7 +98,9 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
     >>> assert arm_to_use_for_third_grab is None
     """
-    def __init__(self, robot, arm_properties, name=None):
+    def __init__(self, robot, arm_properties=None, name=None):
+        if arm_properties is None:
+            arm_properties = {}
         arm_properties['required_objects'] = [PseudoObjects.EMPTY]
         super(UnoccupiedArmDesignator, self).__init__(robot, arm_properties, name=name)
 
@@ -123,7 +148,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
-            rospy.logdebug('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
+            rospy.logerr('ArmHoldingEntityDesignator: Entity to find in the arm does not exist')
             return None
         self.arm_properties['required_objects'] = [entity]
         return super(ArmHoldingEntityDesignator, self)._resolve()

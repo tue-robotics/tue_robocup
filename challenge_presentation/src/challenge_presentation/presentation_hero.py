@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 # ROS
 import rospy
 import smach
@@ -221,7 +223,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
     else:
-        print "Please provide robot name as argument."
+        print("Please provide robot name as argument.")
         exit(1)
 
     rospy.init_node('test_presentation')

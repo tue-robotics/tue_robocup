@@ -97,7 +97,7 @@ def format_designator(desig):
 
 def flatten(tree, parentname=None, sep="."):
     flat = []
-    for branch_name, branch in tree.get_children().iteritems():
+    for branch_name, branch in tree.get_children().items():
         this_name = parentname + sep + branch_name if parentname else branch_name
         if isinstance(branch, smach.StateMachine) or isinstance(branch, smach.Iterator):
             flat += [(this_name, branch)]
@@ -141,13 +141,13 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
     label2state = dict(flatten(statemachine, sep="\\n."))
     states = label2state.values()
 
-    state2label = {state: label for label, state in label2state.iteritems()}
+    state2label = {state: label for label, state in label2state.items()}
 
     usages = []
 
     for state in states:
         state_label = state2label.get(state, state)  # Get the label of state but default to ugly __repr__
-        for designator_role, designator in state.__dict__.iteritems():  # Iterate the self.xxx members of each state
+        for designator_role, designator in state.__dict__.items():  # Iterate the self.xxx members of each state
             # If the member is also a designator, then process it.
             # This check is espcially added to catch sets before checked if they are in the weaksets, which will raise
             # a TypeError.
@@ -162,7 +162,7 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
 
     for parent_designator in designators:
         # Iterate the self.xxx members of each designator
-        for child_role, child_designator in parent_designator.__dict__.iteritems():
+        for child_role, child_designator in parent_designator.__dict__.items():
             # If the member is also a designator, then process it.
             if child_designator in designators:
                 usages += [DesignatorUsedInDesignator(parent_designator, child_designator, child_role)]

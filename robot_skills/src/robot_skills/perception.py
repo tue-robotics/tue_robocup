@@ -1,20 +1,20 @@
 # System
 from threading import Condition, Event
 
+import message_filters
 # ROS
 import rospy
-from people_recognition_msgs.srv import RecognizePeople3D
-from sensor_msgs.msg import Image, CameraInfo
-from std_srvs.srv import Empty
-import message_filters
-
-# TU/e Robotics
-from image_recognition_msgs.srv import Annotate, Recognize, RecognizeResponse, GetFaceProperties
 from image_recognition_msgs.msg import Annotation
+# TU/e Robotics
+from image_recognition_msgs.srv import Annotate, GetFaceProperties, Recognize, RecognizeResponse
+from people_recognition_msgs.srv import RecognizePeople3D
 from rgbd_msgs.srv import Project2DTo3D
+from sensor_msgs.msg import CameraInfo, Image
+from std_srvs.srv import Empty
+
 from robot_skills.robot_part import RobotPart
+from robot_skills.util.image_operations import img_cutout, img_recognitions_to_rois
 from robot_skills.util.kdl_conversions import VectorStamped
-from robot_skills.util.image_operations import img_recognitions_to_rois, img_cutout
 
 
 class Perception(RobotPart):

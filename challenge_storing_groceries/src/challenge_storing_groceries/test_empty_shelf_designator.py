@@ -4,7 +4,7 @@ from robocup_knowledge import load_knowledge
 from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import EntityByIdDesignator
 
-from empty_shelf_designator import EmptyShelfDesignator
+from .empty_shelf_designator import EmptyShelfDesignator
 
 challenge_knowledge = load_knowledge('challenge_storing_groceries')
 

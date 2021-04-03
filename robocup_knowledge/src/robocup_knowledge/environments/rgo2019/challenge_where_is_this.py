@@ -1,5 +1,7 @@
 # RIPS KNOWLEDGE FILE RGO2019
 
+from __future__ import print_function
+
 # TU/e Robotics
 from robocup_knowledge import knowledge_loader
 

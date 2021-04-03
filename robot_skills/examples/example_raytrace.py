@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+import rospy
 from ed_sensor_integration.srv import RayTrace
 from geometry_msgs.msg import PoseStamped
-from robot_skills import perception
-import rospy
 from std_msgs.msg import Header
 from tf import TransformListener
+
+from robot_skills import perception
 
 rospy.init_node('ray_trace_example')
 

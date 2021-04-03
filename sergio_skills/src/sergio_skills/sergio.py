@@ -1,5 +1,6 @@
-from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, \
-    sound_source_localisation, torso, world_model_ed
+# TU/e Robotics
+from robot_skills import api, base, ears, ebutton, head, lights, perception, robot, sound_source_localisation, speech, \
+    torso, world_model_ed
 from robot_skills.simulation import is_sim_mode, SimEButton
 
 

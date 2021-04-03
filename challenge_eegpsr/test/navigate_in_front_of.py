@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-import rospy, sys, robot_smach_states, random
+from __future__ import print_function
+
+import random
+import robot_smach_states
+import rospy
+import sys
+
 from robot_skills import get_robot_from_argv
 
 if __name__ == "__main__":
@@ -15,7 +21,7 @@ if __name__ == "__main__":
         ids = [e.id for e in robot.ed.get_entities() if e.is_a("furniture")]
         random.shuffle(ids)
 
-    print "IDS:", ids
+    print("IDS:", ids)
 
     for id in ids:
 
@@ -46,6 +52,3 @@ if __name__ == "__main__":
                 robot.speech.speak(segmented_entities.error_msg)
 
         robot.head.close()
-
-
-

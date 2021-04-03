@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('fast_simulator')
+
 import rospy
 
 from fast_simulator import client
@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    # person at the door 
+    # person at the door
     person = W.add_object("loy-1", "loy", 1.5, 0, 0, 0, 0, 0.7)
 
     rospy.sleep(5)

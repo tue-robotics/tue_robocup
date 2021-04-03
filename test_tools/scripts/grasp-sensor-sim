@@ -2,19 +2,16 @@
 
 # System
 import os
+# ROS
+import rospkg
 import sys
 
+import rospy
+import std_msgs.msg
 # Qt
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QTimer
-from python_qt_binding.QtWidgets import QApplication
-from python_qt_binding.QtWidgets import QWidget
-
-# ROS
-import rospkg
-import rospy
-import std_msgs.msg
-
+from python_qt_binding.QtWidgets import QApplication, QWidget
 
 SENSOR_RANGE = (5, 500)  # Range in mm
 

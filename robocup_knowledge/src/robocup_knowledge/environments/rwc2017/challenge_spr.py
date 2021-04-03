@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
@@ -207,4 +209,4 @@ COLOR['yellow'] -> yellow
 '''
 
 if __name__ == "__main__":
-    print "\n\n{}\n\n".format(grammar)
+    print("\n\n{}\n\n".format(grammar))

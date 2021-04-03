@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
-import sys
-import rospy
+from __future__ import print_function
 
+import sys
+
+import rospy
 from sensor_msgs.msg import RegionOfInterest
 
 from robot_skills.util.robot_constructor import robot_constructor

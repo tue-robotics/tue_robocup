@@ -1,11 +1,15 @@
+from __future__ import print_function
+
+import os
+import sys
 from datetime import datetime
-import os, sys
+
 
 def get_modification_date(file_name):
     try:
         mtime = os.path.getmtime(file_name)
     except OSError:
-        print '\033[91mCannot get modification date from %s \033[0m' % file_name
+        print('\033[91mCannot get modification date from %s \033[0m' % file_name)
         return None
 
     return datetime.fromtimestamp(mtime)
@@ -29,7 +33,7 @@ def parse_start_end(args, current):
             raise ValueError("Specified start is larger than end!")
 
     except ValueError as e:
-        print '\033[91mInvalid input: %s \033[0m' % e
+        print('\033[91mInvalid input: %s \033[0m' % e)
         sys.exit(1)
 
     return start_combined, end_combined

@@ -1,8 +1,9 @@
+from __future__ import print_function
+
 import rospy
-import PyKDL as kdl
 
 from robot_skills.robot_part import RobotPart
-from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
+
 
 class HandoverDetector(RobotPart):
     """

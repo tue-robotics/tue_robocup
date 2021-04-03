@@ -1,4 +1,4 @@
-# List of states/state machines that are to be exposed externally
+from __future__ import absolute_import
 
-from presentation import PresentationMachine
-from presentation_hero import PresentationMachineHero
+from .presentation import PresentationMachine
+from .presentation_hero import PresentationMachineHero

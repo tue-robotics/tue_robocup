@@ -1,11 +1,9 @@
-import smach
-import robot_smach_states
 import random
 
+import robot_smach_states
+import smach
 from robot_skills.util.kdl_conversions import FrameStamped
-from robot_smach_states.util.designators import UnoccupiedArmDesignator, OccupiedArmDesignator, Designator
-
-from PyKDL import Frame
+from robot_smach_states.util.designators import Designator, OccupiedArmDesignator, UnoccupiedArmDesignator
 
 
 class dropPoseDesignator(Designator):
@@ -114,9 +112,9 @@ class SelfCleanup(smach.StateMachine):
             smach.StateMachine.add('CHECK_ARM_OCCUPIED', ArmOccupied(robot), transitions={"yes": "PLACE", "no": "done"})
 
             smach.StateMachine.add('PLACE',
-                                   robot_smach_states.Place(robot, 
-                                                            selected_entity_designator, 
-                                                            place_pose, 
+                                   robot_smach_states.Place(robot,
+                                                            selected_entity_designator,
+                                                            place_pose,
                                                             OccupiedArmDesignator(robot.arms,
                                                                                   robot.rightArm,
                                                                                   name="occupied_arm_designator")),

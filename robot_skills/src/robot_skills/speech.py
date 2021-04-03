@@ -1,9 +1,9 @@
 # ROS
 import rospy
+from text_to_speech.srv import Speak, SpeakRequest
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
-from text_to_speech.srv import Speak, SpeakRequest
 
 
 class Speech(RobotPart):
@@ -58,7 +58,7 @@ class Speech(RobotPart):
         if hasattr(self._pre_hook, '__call__'):
             self._pre_hook()
 
-        for orig, replacement in replace.iteritems():
+        for orig, replacement in replace.items():
             sentence = sentence.replace(orig, replacement)
 
         result = False

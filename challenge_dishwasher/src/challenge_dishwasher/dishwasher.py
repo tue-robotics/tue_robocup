@@ -5,7 +5,9 @@ from challenge_dishwasher.open_dishwasher import OpenDishwasher
 from challenge_dishwasher.simple_grab import FindAndGrab
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import Entity
-from robot_smach_states import StartChallengeRobust, NavigateToWaypoint, Say, NavigateToSymbolic
+from robot_smach_states.human_interaction import Say
+from robot_smach_states.navigation import NavigateToWaypoint, NavigateToSymbolic
+from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.util import startup
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, EntityByIdDesignator, Designator
 from robot_smach_states.world_model import Inspect

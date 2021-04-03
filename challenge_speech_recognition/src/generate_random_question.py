@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 import re
 import random
 
@@ -17,7 +19,7 @@ choices = re.findall("<([^<>]+)>", data.spec)
 
 # Parse the choices in the ending result :)
 for c in choices:
-    for k,v in data.choices.iteritems():
+    for k, v in data.choices.items():
         if k == c:
             value = random.choice(v)
 
@@ -25,7 +27,7 @@ for c in choices:
 
 # Check if result is clean
 if re.match(".*[<>\(\)\[\]]+.*", data.spec):
-    print "Not all choices could be resolved in the specification, residual result: '%s'"
+    print("Not all choices could be resolved in the specification, residual result: '%s'")
 else:
-    print "Question: " + data.spec
-    print "Answer: " + data.choice_answer_mapping[data.spec]
+    print("Question: " + data.spec)
+    print("Answer: " + data.choice_answer_mapping[data.spec])

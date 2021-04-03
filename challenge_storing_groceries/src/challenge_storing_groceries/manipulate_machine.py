@@ -11,7 +11,6 @@ from robot_smach_states.manipulation.place_designator import EmptySpotDesignator
 
 # Challenge storing groceries
 from entity_description_designator import EntityDescriptionDesignator
-# from config import TABLE, GRAB_SURFACE, DEFAULT_PLACE_ENTITY, DEFAULT_PLACE_AREA, CABINET
 from config import GRAB_SURFACE
 from config import MIN_GRAB_OBJECT_HEIGHT, MAX_GRAB_OBJECT_WIDTH
 

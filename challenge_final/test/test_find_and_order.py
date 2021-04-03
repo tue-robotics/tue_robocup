@@ -1,7 +1,8 @@
 import argparse
-import rospy
-import smach
 
+import rospy
+
+import smach
 from challenge_final import FindPeople, GetOrders
 from robot_skills import get_robot
 

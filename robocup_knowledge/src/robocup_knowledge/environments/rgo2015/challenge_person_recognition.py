@@ -1,4 +1,5 @@
 # PERSON RECOGNITION RGO2015
+from __future__ import print_function
 
 names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah","Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
 
@@ -21,14 +22,14 @@ class Pose:
 class Gender:
     Male = 0
     Female = 1
-    
+
 prefix = bcolors.HEADER + "[Person Recognition] " + bcolors.ENDC
 
 def printOk(sentence):
-    print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
-    
+    print(prefix + bcolors.OKBLUE + sentence + bcolors.ENDC)
+
 def printError(sentence):
-    print prefix + bcolors.FAIL + sentence + bcolors.ENDC
-    
+    print(prefix + bcolors.FAIL + sentence + bcolors.ENDC)
+
 def printWarning(sentence):
-    print prefix + bcolors.WARNING + sentence + bcolors.ENDC
+    print(prefix + bcolors.WARNING + sentence + bcolors.ENDC)

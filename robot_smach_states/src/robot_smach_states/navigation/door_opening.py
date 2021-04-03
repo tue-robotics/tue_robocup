@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # System
 import numpy as np
 from threading import Event
@@ -114,7 +116,7 @@ class ForceDriveToTouchDoor(smach.State):
 
         footprint = [None]
         def get_footprint(fp):
-            # print "Received footprint"
+            # print("Received footprint")
             footprint[0] = fp
             received.set()
 
@@ -220,7 +222,7 @@ class ForceDriveToTouchDoor(smach.State):
         def calc(forward_travel):
             shifted_points = self.add_delta_to_points(footprint_points, delta=np.array([forward_travel, 0]))
             fp, distance, sp = self.distance_between_footprint_and_scan(shifted_points, scan_points)
-            # print "If I drive {0:.3f}, distance will be {2} between {1} and {3}".format(forward_travel, fp, distance, sp)
+            # print("If I drive {0:.3f}, distance will be {2} between {1} and {3}".format(forward_travel, fp, distance, sp))
 
             original_fp = self.add_delta_to_points(fp, delta=np.array([-forward_travel, 0]))
             return original_fp, distance, sp
@@ -376,7 +378,7 @@ class WaypointOfDoorDesignator(ds.Designator):
 class OpenDoorByPushing(smach.StateMachine):
     """
     Test in amigo-console with
-    door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print do.execute();
+    door = ds.EdEntityDesignator(amigo, id='door1'); do = state_machine.OpenDoorByPushing(amigo, door); print(do.execute());
     """
     def __init__(self, robot, door_start_wp_designator, door_dest_wp_designator, approach_speed=0.1, push_speed=0.05, attempts=10):
         """

@@ -1,23 +1,20 @@
+from __future__ import print_function
+
 import time
 
+import PyKDL as kdl
 # ROS
 import rospy
-import std_msgs.msg
-import PyKDL as kdl
-
 import visualization_msgs.msg
 from actionlib import GoalStatus
-from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
-from robot_skills.arm.force_sensor import ForceSensor
-from robot_skills.arm.gripper import ParrallelGripper
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-
 # TU/e Robotics
-from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
-from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
-from tue_msgs.msg import GripperCommand
+from tue_manipulation_msgs.msg import GraspPrecomputeAction, GraspPrecomputeGoal
 
+from robot_skills.arm.gripper import ParrallelGripper
 from robot_skills.robot_part import RobotPart
+
 
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).

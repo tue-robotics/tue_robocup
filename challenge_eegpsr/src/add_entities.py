@@ -1,9 +1,9 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('fast_simulator')
-import rospy
+
 import itertools
 import os
 
+import rospy
 from fast_simulator import client
 
 if __name__ == "__main__":
@@ -44,15 +44,11 @@ if __name__ == "__main__":
         W.add_object("coke-2", "sim-coke",  4.923, 2.274, 1.1)
 
         # TV stand
-        W.add_object("coke-3", "sim-coke",  3.295, -1.491, 0.55)       
+        W.add_object("coke-3", "sim-coke",  3.295, -1.491, 0.55)
 
         # Dinner table
-        W.add_object("coke-4", "sim-coke",  3.104, -5.163, 0.85)       
+        W.add_object("coke-4", "sim-coke",  3.104, -5.163, 0.85)
 
         # People
         W.add_object("person-1", "loy", 4.196,  3.842, 0.0, 0, 0, 1)
         W.add_object("person-2", "loy", 1.416, -5.296, 0.0, 0, 0, 1)
-
-
-
-

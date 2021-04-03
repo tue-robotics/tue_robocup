@@ -84,8 +84,10 @@ class TestTourGuide(unittest.TestCase):
         self.tour_guide.initialize()
         self.assertListEqual(self.tour_guide._passed_room_ids, [self._kitchen.id])
         self.assertListEqual(self.tour_guide._passed_furniture_ids, [self._cabinet.id])
-        self.assertListEqual(sorted(self.tour_guide._furniture_entities), sorted([self._cabinet, self._bookcase]))
-        self.assertListEqual(sorted(self.tour_guide._room_entities), sorted([self._kitchen, self._bedroom]))
+        self.assertListEqual(sorted(self.tour_guide._furniture_entities, key=lambda x: getattr(x, 'id')),
+                             sorted([self._cabinet, self._bookcase], key=lambda x: getattr(x, 'id')))
+        self.assertListEqual(sorted(self.tour_guide._room_entities, key=lambda x: getattr(x, 'id')),
+                             sorted([self._kitchen, self._bedroom], key=lambda x: getattr(x, 'id')))
         self.assertDictEqual(self.tour_guide._furniture_entities_room, {self._kitchen: [self._cabinet],
                                                                         self._bedroom: [self._bookcase]})
 
@@ -114,5 +116,3 @@ class TestTourGuide(unittest.TestCase):
         self.assertEqual("We now enter the bedroom", self.tour_guide.describe_near_objects())
         self.assertEqual("On our right you can see the bookcase", self.tour_guide.describe_near_objects())
         self.assertEqual("", self.tour_guide.describe_near_objects())
-
-

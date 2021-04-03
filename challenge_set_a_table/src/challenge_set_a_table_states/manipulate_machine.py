@@ -4,7 +4,7 @@ import smach
 
 # TU/e
 import robot_skills
-from robot_skills import arms
+from robot_skills.arm import arms
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.manipulation.place_designator import EmptySpotDesignator

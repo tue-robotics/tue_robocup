@@ -1,10 +1,10 @@
 # System
 import math
 
-# ROS
-from geometry_msgs.msg import PoseStamped
 import rospy
 import tf
+# ROS
+from geometry_msgs.msg import PoseStamped
 
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
