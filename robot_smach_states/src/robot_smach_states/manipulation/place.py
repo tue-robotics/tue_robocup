@@ -107,7 +107,7 @@ class Put(smach.State):
         rospy.loginfo("Placing")
 
         # placement_pose is a PyKDL.Frame
-        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
                                                     tf_listener=self._robot.tf_listener)
 
         # Wait for torso and arm to finish their motions
@@ -123,7 +123,7 @@ class Put(smach.State):
         if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.15, 0.0, 0.0, 0.0,
-                                                           frame_id="/{0}/base_link".format(self._robot.robot_name)),
+                                                           frame_id=self._robot.base_link_frame),
                              timeout=10,
                              pre_grasp=True):
             # If we can't place, try a little closer
@@ -133,19 +133,19 @@ class Put(smach.State):
             if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                                place_pose_bl.frame.p.y(),
                                                                height+0.15, 0.0, 0.0, 0.0,
-                                                               frame_id="/{0}/base_link".format(self._robot.robot_name)
+                                                               frame_id=self._robot.base_link_frame
                                                                ), timeout=10, pre_grasp=True):
                 rospy.logwarn("Cannot pre-place the object")
                 arm.cancel_goals()
                 return 'failed'
 
         # Place
-        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
                                                     tf_listener=self._robot.tf_listener)
         if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.1, 0.0, 0.0, 0.0,
-                                                           frame_id="/{0}/base_link".format(self._robot.robot_name)),
+                                                           frame_id=self._robot.base_link_frame),
                              timeout=10, pre_grasp=False):
             rospy.logwarn("Cannot place the object, dropping it...")
 
@@ -163,12 +163,12 @@ class Put(smach.State):
         arm.gripper.occupied_by = None
 
         # Retract
-        place_pose_bl = placement_fs.projectToFrame(self._robot.robot_name+'/base_link',
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
                                                     tf_listener=self._robot.tf_listener)
         arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x() - 0.1,
                                                     place_pose_bl.frame.p.y(),
                                                     place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
-                                                    frame_id='/'+self._robot.robot_name+'/base_link'),
+                                                    frame_id=self._robot.base_link_frame),
                       timeout=0.0)
 
         arm.wait_for_motion_done()

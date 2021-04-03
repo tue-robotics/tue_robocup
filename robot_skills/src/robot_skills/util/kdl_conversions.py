@@ -40,9 +40,9 @@ class FrameStamped(object):
         """Extract only the position of this FrameStamped, without the orientation but with the frame_id metadata
 
         :return: VectorStamped
-        >>> fs = FrameStamped(kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3)), "/map")
+        >>> fs = FrameStamped(kdl.Frame(kdl.Rotation.Quaternion(1, 0, 0, 0), kdl.Vector(1, 2, 3)), "map")
         >>> fs.extractVectorStamped()
-        VectorStamped([           1,           2,           3] @ /map)
+        VectorStamped([           1,           2,           3] @ map)
         """
         return deepcopy(VectorStamped(frame_id=self.frame_id, vector=self.frame.p))
 
@@ -65,7 +65,7 @@ def frame_stamped(frame_id, x, y, z, roll=0, pitch=0, yaw=0):
 
 
 class VectorStamped(object):
-    def __init__(self, x=0, y=0, z=0, frame_id="/map", vector=None):
+    def __init__(self, x=0, y=0, z=0, frame_id="map", vector=None):
         if vector:
             self.vector = vector
         else:
@@ -247,7 +247,7 @@ def kdl_frame_stamped_from_pose_stamped_msg(pose_stamped):
                         frame_id=pose_stamped.header.frame_id,
                         stamp=pose_stamped.header.stamp)
 
-def kdl_frame_stamped_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="/map"):
+def kdl_frame_stamped_from_XYZRPY(x=0, y=0, z=0, roll=0, pitch=0, yaw=0, frame_id="map"):
     """
     Create a FrameStamped from raw scalars
 

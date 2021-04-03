@@ -222,7 +222,7 @@ def from_entity_info(e):
     assert isinstance(e, EntityInfo)
     identifier = e.id
     object_type = e.type
-    frame_id = "/map"  # ED has all poses in map
+    frame_id = "map"  # ED has all poses in map
     pose = pose_msg_to_kdl_frame(e.pose)
     shape = shape_from_entity_info(e)
 

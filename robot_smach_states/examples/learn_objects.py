@@ -26,7 +26,7 @@ def look_at_entity(robot, location_des):
     y = lookat_pos_map.y()
     z = lookat_pos_map.z()
 
-    robot.head.look_at_point(VectorStamped(x, y, z, "/map"), timeout=0)
+    robot.head.look_at_point(VectorStamped(x, y, z, "map"), timeout=0)
     rospy.loginfo("Looking at position ({}, {}, {})".format(x, y, z))
     robot.head.wait_for_motion_done()
 

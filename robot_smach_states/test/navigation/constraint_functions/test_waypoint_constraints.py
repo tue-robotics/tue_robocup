@@ -17,7 +17,7 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         z_coordinate = 0
         radius = 0.3
         yaw = 1.57
-        frame_id = "/map"
+        frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
         e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
@@ -43,7 +43,7 @@ class TestWaypointConstraintFunction(unittest.TestCase):
         z_coordinate = 0
         radius = 0.3
         yaw = 1.57
-        frame_id = "/map"
+        frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
         e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)

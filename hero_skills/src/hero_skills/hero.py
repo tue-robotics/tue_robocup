@@ -106,7 +106,7 @@ class Hero(robot.Robot):
         # noinspection PyProtectedMember
         arm._arm._send_joint_trajectory([pose])
 
-        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
+        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "map", 1.57)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True
@@ -153,7 +153,7 @@ class Hero(robot.Robot):
         arm._arm._send_joint_trajectory(pose)
 
         angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)
+        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "map", angle_offset)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True

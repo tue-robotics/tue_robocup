@@ -11,7 +11,7 @@ class TestPoseConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         radius = 0.15
-        frame_id = "/map"
+        frame_id = "map"
 
         pc, oc = pose_constraints(x_coordinate, y_coordinate, rz=None, radius=radius, frame_id=frame_id)
 
@@ -34,7 +34,7 @@ class TestPoseConstraintFunction(unittest.TestCase):
         y_coordinate = 3.7
         rz_orientation = 1.57
         radius = 0.15
-        frame_id = "/map"
+        frame_id = "map"
 
         pc, oc = pose_constraints(x_coordinate, y_coordinate, rz=rz_orientation, radius=radius, frame_id=frame_id)
 

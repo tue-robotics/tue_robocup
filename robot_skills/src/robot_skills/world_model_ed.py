@@ -45,7 +45,7 @@ class Navigation(RobotPart):
             rospy.logerr(res.error_msg)
             return None
 
-        return PositionConstraint(constraint=res.position_constraint_map_frame, frame="/map")
+        return PositionConstraint(constraint=res.position_constraint_map_frame, frame="map")
 
 
 class ED(RobotPart):
@@ -105,13 +105,13 @@ class ED(RobotPart):
         """
         self._publish_marker(center_point, radius)
 
-        center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
+        center_point_in_map = center_point.projectToFrame("map", self.tf_listener)
         query = SimpleQueryRequest(id=id, type=type, center_point=kdl_vector_to_point_msg(center_point_in_map.vector),
                                    radius=radius, ignore_z=ignore_z)
 
         try:
             entity_infos = self._ed_simple_query_srv(query).entities
-            entities = map(from_entity_info, entity_infos)
+            entities = list(map(from_entity_info, entity_infos))
         except Exception as e:
             rospy.logerr("ERROR: robot.ed.get_entities(id={}, type={}, center_point={}, radius={}, ignore_z={})".format(
                 id, type, str(center_point), str(radius), ignore_z))
@@ -122,7 +122,7 @@ class ED(RobotPart):
 
     def get_closest_entity(self, type="", center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name + "/base_link")
 
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
@@ -134,7 +134,7 @@ class ED(RobotPart):
 
         # Sort by distance
         try:
-            center_in_map = center_point.projectToFrame("/map", self.tf_listener)
+            center_in_map = center_point.projectToFrame("map", self.tf_listener)
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(center_in_map.vector))
         except Exception as e:
             rospy.logerr("Failed to sort entities: {}".format(e))
@@ -231,9 +231,9 @@ class ED(RobotPart):
             json_entity += ', "action": "%s"' % action
 
         if frame_stamped:
-            if frame_stamped.frame_id != "/map":
+            if frame_stamped.frame_id != "/map" and frame_stamped.frame_id != "map" :
                 rospy.loginfo('update_entity: frame not in map, transforming')
-                frame_stamped = frame_stamped.projectToFrame("/map", self.tf_listener)
+                frame_stamped = frame_stamped.projectToFrame("map", self.tf_listener)
 
             Z, Y, X = frame_stamped.frame.M.GetEulerZYX()
             t = frame_stamped.frame.p
@@ -444,7 +444,7 @@ class ED(RobotPart):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def _transform_center_point_to_map(self, pointstamped):
-        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map",
+        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "map",
                                                     self.tf_listener)
         return point_in_map
 

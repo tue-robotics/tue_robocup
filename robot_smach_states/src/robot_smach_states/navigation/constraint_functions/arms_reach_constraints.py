@@ -46,11 +46,11 @@ def arms_reach_constraint(pose_designator, arm_designator, look=True):
     # Outer radius
     ro = "(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius + 0.075)
     ri = "(x-%f)^2+(y-%f)^2 > %f^2" % (x, y, radius - 0.075)
-    pc = PositionConstraint(constraint=ri + " and " + ro, frame="/map")
+    pc = PositionConstraint(constraint=ri + " and " + ro, frame="map")
 
     oc = None
     if look:
         angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="map", angle_offset=angle_offset)
 
     return pc, oc

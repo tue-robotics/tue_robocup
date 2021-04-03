@@ -214,7 +214,7 @@ class StoreWaypoint(smach.State):
         rospy.set_param("/restaurant_locations/{name}".format(name=self._location_id), loc_dict)
 
         self._visualize_location(base_pose, self._location_id)
-        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, "/map"),
+        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, "map"),
                                      type="waypoint")
 
         return "done"
