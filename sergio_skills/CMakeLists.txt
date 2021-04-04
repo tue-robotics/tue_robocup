@@ -11,5 +11,6 @@ catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+  find_package(sergio_description REQUIRED)
   add_rostest(test/test_sergio.test)
 endif()

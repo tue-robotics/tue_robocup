@@ -1,7 +1,7 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <launch>
     <!-- N.B.: test-name MUST be amigo in order for namespacing to work -->
     <test test-name="amigo" pkg="amigo_skills" type="test_amigo.py">
-        <rosparam file="$(find amigo_description)/custom/skills.yaml" command="load" />
+        <rosparam file="$(find amigo_description)/custom/skills.yaml" command="load"/>
     </test>
 </launch>
