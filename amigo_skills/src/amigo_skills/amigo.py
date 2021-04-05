@@ -3,22 +3,19 @@ from __future__ import print_function
 from robot_skills import api, base, ears, ebutton, head, lights, perception, robot, sound_source_localisation, speech, \
     torso, world_model_ed
 from robot_skills.arm import arms, gripper, handover_detector
-from .simulation import SimEButton, is_sim_mode
+from robot_skills.simulation import is_sim_mode, SimEButton
 
 
 class Amigo(robot.Robot):
     """
     Amigo
     """
-    def __init__(self, dontInclude=None, wait_services=False):
+    def __init__(self, wait_services=False):
         """
         Constructor
 
-        :param dontInclude: Not supported anymore
         :param wait_services: Not supported anymore by robot class
         """
-        if dontInclude is None:
-            dontInclude = []
         super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
@@ -35,7 +32,7 @@ class Amigo(robot.Robot):
         right_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
         right_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'right'))
         right_arm.add_part('handover_detector',
-                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'right'))
+                           handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'right'))
         self.add_arm_part('rightArm', right_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
@@ -70,6 +67,5 @@ class Amigo(robot.Robot):
         :param grasp_target: kdl.Frame with the pose of the entity to be grasped.
         :return: boolean, false if something went wrong.
         """
-
         arm.send_joint_trajectory('prepare_grasp', timeout=0)
         return True

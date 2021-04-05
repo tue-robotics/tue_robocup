@@ -18,7 +18,7 @@ import rospkg
 import rospy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import PointStamped
-from robot_skills import Hero
+from robot_skills import get_robot
 from robot_skills.util import kdl_conversions
 from smach import StateMachine, cb_interface, CBState
 from challenge_find_my_mates.cluster import cluster_people
@@ -228,6 +228,6 @@ class LocatePeople(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    hero = Hero()
-    hero.reset()
-    LocatePeople(hero, 'living_room').execute()
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
+    LocatePeople(robot_instance, 'living_room').execute()

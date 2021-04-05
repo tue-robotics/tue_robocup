@@ -9,7 +9,7 @@ import os
 
 import rospy
 from geometry_msgs.msg import PoseStamped, Quaternion
-from robot_skills import Hero
+from robot_skills import get_robot
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
@@ -107,6 +107,6 @@ class NavigateToAndCloseCupboard(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    hero = Hero()
-    hero.reset()
-    NavigateToAndCloseCupboard(hero, 'cabinet', 'in_front_of').execute()
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
+    NavigateToAndCloseCupboard(robot_instance, 'cabinet', 'in_front_of').execute()

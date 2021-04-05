@@ -4,19 +4,29 @@ import sys
 # ROS
 import rospy
 
-from .amigo import Amigo
-from .hero import Hero
-from .mockbot import Mockbot
 # Robot skills
 from .robot import Robot
-from .sergio import Sergio
 
-ROBOTS = {
-    "amigo": Amigo,
-    "hero": Hero,
-    "mockbot": Mockbot,
-    "sergio": Sergio
-}
+# ToDo: create a decent registration here
+ROBOTS = {}
+try:
+    from amigo_skills import Amigo
+    ROBOTS["amigo"] = Amigo
+except ImportError:
+    pass
+try:
+    from hero_skills import Hero
+    ROBOTS["hero"] = Hero
+except ImportError:
+    pass
+try:
+    from sergio_skills import Sergio
+    ROBOTS["sergio"] = Sergio
+except ImportError:
+    pass
+
+from .mockbot import Mockbot
+ROBOTS["mockbot"] = Mockbot
 
 
 def get_robot_from_argv(index, default_robot_name="hero"):
@@ -50,4 +60,8 @@ def get_robot(name):
     if robot_class is not None:
         return robot_class()
     else:
-        raise RuntimeError("Don't know which robot to construct with name {}".format(name))
+        error_msg = "Cannot construct robot '{}'\n".format(name)
+        error_msg += "Available robots:\n\t{}\n".format("\n\t".join(list(ROBOTS.keys())))
+        error_msg += "To install, try: 'tue-get install {}_skills'".format(name)
+        rospy.logerr(error_msg)
+        raise RuntimeError(error_msg)
