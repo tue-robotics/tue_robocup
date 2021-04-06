@@ -100,7 +100,7 @@ class GraspSensor(RobotPart):
         super(GraspSensor, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         # Init grasp sensor subscriber
         self._grasp_sensor_state = GripperMeasurement(0.0)
-        rospy.Subscriber("/" + robot_name + "/" + sensor_topic, Float32MultiArray, self._grasp_sensor_callback)
+        rospy.Subscriber(sensor_topic, Float32MultiArray, self._grasp_sensor_callback)
 
     @property
     def object_in_gripper_measurement(self):
