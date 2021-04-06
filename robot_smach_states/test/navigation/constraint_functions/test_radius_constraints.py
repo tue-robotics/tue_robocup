@@ -18,7 +18,7 @@ class TestRadiusConstraintFunction(unittest.TestCase):
         z_coordinate = 0
         radius = 0.7
         margin = 0.3
-        frame_id = "/map"
+        frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
         e = Entity("dummy", "dummy_type", frame_id, pose, Shape(), None, None, None)

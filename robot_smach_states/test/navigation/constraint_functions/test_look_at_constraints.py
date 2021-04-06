@@ -14,7 +14,7 @@ class TestLookAtConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         z_coordinate = 0
-        frame_id = "/map"
+        frame_id = "map"
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))
         e = Entity("dummy", "dummy_type", frame_id, pose, None, None, None, None)
@@ -37,7 +37,7 @@ class TestLookAtConstraintFunction(unittest.TestCase):
         x_coordinate = 2.1
         y_coordinate = 3.7
         z_coordinate = 0
-        frame_id = "/map"
+        frame_id = "map"
         offset = 1.57
 
         pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(x_coordinate, y_coordinate, z_coordinate))

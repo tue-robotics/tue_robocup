@@ -27,9 +27,9 @@ class Initialize(smach.State):
     def execute(self, userdata=None):
         self.robot.reset()
 
-        # Check if TF link between /map and /base_link is set
+        # Check if TF link between map and base_link is set
         # If not error at initialize in stead of during first navigate execution
-        rospy.loginfo("TF link between /map and /base_link is checked. "
+        rospy.loginfo("TF link between map and base_link is checked. "
                       "If it takes longer than a second, probably an error. Do a restart!!!")
         self.robot.base.get_location().frame
 

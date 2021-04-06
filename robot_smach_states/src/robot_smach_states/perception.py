@@ -28,11 +28,11 @@ class LookAtEntity(State):
         if not entity:
             return 'failed'
 
-        # Entities define their own frame, so there is no need to transform the pose to /map.
+        # Entities define their own frame, so there is no need to transform the pose to map.
         # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         # The added benefit is that the entity's frame actually moves because the entity is tracked.
         # This makes the head track the entity
-        vs = VectorStamped(frame_id="/"+entity.id)
+        vs = VectorStamped(frame_id=entity.id)
         rospy.loginfo('Look at %s' % (repr(vs)))
         robot.head.look_at_point(vs)
         rospy.sleep(rospy.Duration(waittime))
@@ -61,11 +61,11 @@ class LookAtArea(State):
         if not entity:
             return 'failed'
 
-        # Entities define their own frame, so there is no need to transform the pose to /map.
+        # Entities define their own frame, so there is no need to transform the pose to map.
         # That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
         # The added benefit is that the entity's frame actually moves because the entity is tracked.
         # This makes the head track the entity
-        frame_id = "/"+entity.id
+        frame_id = entity.id
 
         if area in entity.volumes:
             cp = entity.volumes[area].center_point

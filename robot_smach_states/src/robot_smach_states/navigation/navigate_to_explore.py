@@ -80,8 +80,8 @@ class NavigateToExplore(NavigateTo):
             pci = pci + ' and '
             pci = pci + "(x-%f)^2+(y-%f)^2 > %f^2"%(xe, ye, self.exclude_radius)
 
-        pc = PositionConstraint(constraint=pci, frame="/map")
-        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map")
+        pc = PositionConstraint(constraint=pci, frame="map")
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="map")
 
         return pc, oc
 

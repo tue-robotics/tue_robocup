@@ -7,7 +7,7 @@ from geometry_msgs.msg import Point
 from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstraint
 
 
-def pose_constraints(x, y, rz=None, radius=0.15, frame_id="/map"):
+def pose_constraints(x, y, rz=None, radius=0.15, frame_id="map"):
     """
     Generate navigation constraints for a radius from a pose
 

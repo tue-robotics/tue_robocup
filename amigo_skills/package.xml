@@ -1,0 +1,21 @@
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>amigo_skills</name>
+  <version>0.0.0</version>
+  <description>Contains the AMIGO-specific Python interface connecting the robot smach states to the ROS environment
+  </description>
+
+  <maintainer email="PetervDooren@outlook.com">Peter van Dooren</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>robot_skills</depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>amigo_description</test_depend>
+
+</package>

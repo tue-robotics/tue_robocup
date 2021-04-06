@@ -1,10 +1,13 @@
+# System
 import math
 
+# Third party
 import rospy
 
-from . import api, base, ears, ebutton, head, lights, perception, robot, speech, torso, world_model_ed
-from .arm import arms, force_sensor, gripper, handover_detector
-from .simulation import SimEButton, is_sim_mode
+# TU/e Robotics
+from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, torso, world_model_ed
+from robot_skills.arm import arms, force_sensor, gripper, handover_detector
+from robot_skills.simulation import is_sim_mode, SimEButton
 
 
 class Hero(robot.Robot):
@@ -35,7 +38,6 @@ class Hero(robot.Robot):
                                                                "/hero/head_rgbd_sensor/rgb/image_raw",
                                                                "/hero/head_rgbd_sensor/project_2d_to_3d",
                                                                camera_base_ns='hero/head_rgbd_sensor'))
-        # self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
         self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
@@ -91,11 +93,13 @@ class Hero(robot.Robot):
 
         arm = self.get_arm(required_goals=['arm_out_of_way'])
 
+        # noinspection PyProtectedMember
         pose = arm._arm.default_configurations['arm_out_of_way']
         pose[0] = z_arm
+        # noinspection PyProtectedMember
         arm._arm._send_joint_trajectory([pose])
 
-        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
+        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "map", 1.57)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True
@@ -135,12 +139,14 @@ class Hero(robot.Robot):
         z_arm = (z_head - self.z_hh) * self.torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))
 
+        # noinspection PyProtectedMember
         pose = arm._arm.default_trajectories['prepare_grasp']
         pose[1][0] = z_arm
+        # noinspection PyProtectedMember
         arm._arm._send_joint_trajectory(pose)
 
         angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)
+        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "map", angle_offset)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True

@@ -204,7 +204,7 @@ rosrun challenge_example challenge_example
 ```
 
 ### Exercise 1
-Now it is time to add a state to the state machine. We want the robot to navigate to the position `x=0.8`, `y=0.27` in the "/map" frame, with rotation `rz=-1.57`. To do so, follow the steps described above and run the script:
+Now it is time to add a state to the state machine. We want the robot to navigate to the position `x=0.8`, `y=0.27` in the "map" frame, with rotation `rz=-1.57`. To do so, follow the steps described above and run the script:
 * locate the `NavigateToPose` in the `robot_smach_states` package and inspect the API (Application Programming Interface). Specifically look for the arguments that must be provided to the `__init__` method. As you can see, the `NavigateToPose` class inherits from the `NavigateTo` class: to identify the outcomes of this Smach state, inspect the latter class as well.
 * Add the `NavigateToPose` state to your state machine
 * Reconnect all the transitions (if necessary)

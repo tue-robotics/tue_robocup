@@ -8,7 +8,7 @@ import os
 
 import rospy
 import rospkg
-from robot_skills import Hero
+from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
@@ -25,13 +25,16 @@ item_img_dict = {
 
 plate_handover = [0.4, -0.2, 0.0, -1.37, -1.5]
 
+
 class PickItemFromCupboardDrawer(StateMachine):
     def __init__(self, robot, cupboard_id, required_items):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'], output_keys=["item_picked"])
+        # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
         picked_items = []
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
+            # noinspection PyProtectedMember
             arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
@@ -58,7 +61,6 @@ class PickItemFromCupboardDrawer(StateMachine):
             if not leftover_items:
                 robot.speech.speak("We picked 'm all apparently")
                 return 'failed'
-
 
             item_name = leftover_items[0]
 
@@ -110,6 +112,6 @@ class NavigateToAndPickItemFromCupboardDrawer(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    hero = Hero()
-    hero.reset()
-    NavigateToAndPickItemFromCupboardDrawer(hero, 'cupboard', 'aside_of').execute()
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
+    NavigateToAndPickItemFromCupboardDrawer(robot_instance, 'cupboard', 'aside_of').execute()

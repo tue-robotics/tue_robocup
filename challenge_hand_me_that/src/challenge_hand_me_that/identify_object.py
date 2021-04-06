@@ -188,7 +188,7 @@ if __name__ == "__main__":
     robot = get_robot_from_argv(index=1)
 
     entity_id = "test_item"
-    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), frame_id="/map")
+    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), frame_id="map")
 
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
 

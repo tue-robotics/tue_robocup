@@ -21,7 +21,7 @@ class TestLookAtEntity(unittest.TestCase):
         cls.robot = Mockbot()
 
     def setUp(self):
-        self.entity = Entity("12345", "dummy", "/map",
+        self.entity = Entity("12345", "dummy", "map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
                              None, {}, None, 0)
@@ -34,7 +34,7 @@ class TestLookAtEntity(unittest.TestCase):
 
         state.execute()
 
-        vs = VectorStamped(0, 0, 0, "/12345")
+        vs = VectorStamped(0, 0, 0, "12345")
 
         self.robot.head.look_at_point.assert_called_with(vs)
 
@@ -49,7 +49,7 @@ class TestLookAtArea(unittest.TestCase):
         box = BoxVolume(kdl.Vector(0, 0, 0),
                         kdl.Vector(1, 1, 1))
 
-        self.entity = Entity("12345", "dummy", "/map",
+        self.entity = Entity("12345", "dummy", "map",
                              kdl.Frame(kdl.Rotation.RPY(1, 0, 0),
                                        kdl.Vector(3, 3, 3)),
                              None, {"dummy_volume": box}, None, 0)
@@ -65,7 +65,7 @@ class TestLookAtArea(unittest.TestCase):
 
         state.execute()
 
-        vs = VectorStamped(0.5, 0.5, 0.5, "/12345")
+        vs = VectorStamped(0.5, 0.5, 0.5, "12345")
 
         self.robot.head.look_at_point.assert_called_with(vs, timeout=0)
 

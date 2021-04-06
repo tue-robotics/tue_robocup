@@ -35,8 +35,8 @@ def waypoint_constraint(waypoint_designator, radius, look=True):
         rospy.logerr(e)
         return None
 
-    pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius), frame="/map")
+    pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius), frame="map")
     oc = None
     if look:
-        oc = OrientationConstraint(look_at=Point(x + 10, y, 0.0), angle_offset=rz, frame="/map")
+        oc = OrientationConstraint(look_at=Point(x + 10, y, 0.0), angle_offset=rz, frame="map")
     return pc, oc

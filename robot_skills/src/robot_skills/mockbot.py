@@ -182,7 +182,7 @@ class Base(MockedRobotPart):
         self.move = AlteredMagicMock()
         self.turn_towards = AlteredMagicMock()
         self.force_drive = AlteredMagicMock()
-        self.get_location = lambda: FrameStamped(random_kdl_frame(), "/map")
+        self.get_location = lambda: FrameStamped(random_kdl_frame(), "map")
         self.set_initial_pose = AlteredMagicMock()
         self.wait_for_motion_done = AlteredMagicMock()
         self.go = AlteredMagicMock()
@@ -248,7 +248,7 @@ class Perception(MockedRobotPart):
         self.detect_faces = AlteredMagicMock()
         self.get_best_face_recognition = AlteredMagicMock()
         self.get_rgb_depth_caminfo = AlteredMagicMock()
-        self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "/map")
+        self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "map")
 
 
 class Lights(MockedRobotPart):
@@ -310,7 +310,7 @@ class ED(MockedRobotPart):
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(ED, self).__init__(robot_name, tf_listener)
         self._dynamic_entities = defaultdict(self.generate_random_entity,
-                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
+                                             {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
         self._dynamic_entities['john'] = self.generate_random_entity(id_='john', type_='person')
         self._static_entities = defaultdict(self.generate_random_entity,
@@ -333,7 +333,7 @@ class ED(MockedRobotPart):
 
     def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", ignore_z=False):
 
-        center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
+        center_point_in_map = center_point.projectToFrame("map", self.tf_listener)
 
         entities = self._entities.values()
         if type:
