@@ -47,7 +47,6 @@
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-mock</exec_depend>
 
   <test_depend>test_tools</test_depend>
-  <test_depend>hero_description</test_depend>
   <test_depend condition="$ROS_PYTHON_VERSION == 2">python-six</test_depend>
   <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-six</test_depend>
 
