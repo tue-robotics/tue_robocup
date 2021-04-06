@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import rospy
 from std_msgs.msg import Bool
-
 from robot_skills.robot_part import RobotPart
 
 

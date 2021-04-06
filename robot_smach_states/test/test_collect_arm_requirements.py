@@ -59,6 +59,8 @@ class ThirdState(smach.State):
 
 
 class FirstStateMachine(smach.StateMachine):
+    REQUIRED_ARM_PROPERTIES = {"required_goals": ["reset"], }
+
     def __init__(self, robot):
 
         smach.StateMachine.__init__(self, outcomes=['succeeded'])
@@ -100,7 +102,8 @@ class TestCollectArmRequirements(unittest.TestCase):
         requirements = collect_arm_requirements(FirstStateMachine(self.robot))
         reference = {'required_trajectories': ['prepare_grasp', 'prepare_place'],
                      'required_gripper_types': ['pseudo-gripper-type-any-grasping-will-do',
-                                                'gripper-type-pinch']}
+                                                'gripper-type-pinch'],
+                     "required_goals": ["reset"]}
         compare_lists_in_dicts(reference, requirements)
         self.assertEqual(requirements, reference)
 
@@ -108,7 +111,8 @@ class TestCollectArmRequirements(unittest.TestCase):
         requirements = collect_arm_requirements(SecondStateMachine(self.robot))
         reference = {'required_trajectories': ['wave', 'prepare_grasp', 'prepare_place'],
                      'required_gripper_types': ['gripper-type-parallel', 'pseudo-gripper-type-any-grasping-will-do',
-                                                'gripper-type-pinch']}
+                                                'gripper-type-pinch'],
+                     "required_goals": ["reset"]}
         compare_lists_in_dicts(requirements, reference)
         self.assertEqual(requirements, reference)
 

@@ -410,7 +410,7 @@ def collect_arm_requirements(state_machine):
     def update_requirements(state):
         """ Checks the input state for arm requirements and updates the current arm requirements if necessary
 
-        :param state: Smach state of which arm requirements should be checked against the current arm requirements
+        :param state: Smach.state of which arm requirements should be checked against the current arm requirements
         :return: current arm requirements, updated (if necessary) given the input state
         """
         for k, v in state.items():
@@ -429,6 +429,9 @@ def collect_arm_requirements(state_machine):
             update_requirements(state_machine.REQUIRED_ARM_PROPERTIES)
 
     if isinstance(state_machine, smach.StateMachine):
+        if hasattr(state_machine, "REQUIRED_ARM_PROPERTIES"):
+            update_requirements(state_machine.REQUIRED_ARM_PROPERTIES)
+
         for child_state in state_machine.get_children().values():
 
             # Check if the child_state is a state_machine (must be done before checking for arm properties!)
