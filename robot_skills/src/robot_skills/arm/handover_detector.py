@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import rospy
+import std_msgs
 
 from robot_skills.robot_part import RobotPart
 
