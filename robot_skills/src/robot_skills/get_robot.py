@@ -84,6 +84,6 @@ def get_robot(name):
     else:
         error_msg = "Cannot construct robot '{}'\n".format(name)
         error_msg += "Available robots:\n\t{}\n".format("\n\t".join(list(ROBOTS.keys())))
-        error_msg += "To install, try: 'tue-get install {}_skills'".format(name)
+        error_msg += "Make sure the {}_skills package is installed, workspace is build and sourced".format(name.lower())
         rospy.logerr(error_msg)
         raise RuntimeError(error_msg)
