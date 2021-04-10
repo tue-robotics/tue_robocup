@@ -266,15 +266,11 @@ class SelfCleanup(smach.StateMachine):
             smach.StateMachine.add("GRAB",
                                    Grab(robot, selected_entity_designator,
                                         ds.UnoccupiedArmDesignator(robot,
-                                            arm_properties={"required_trajectories": ["prepare_grasp"],
-                                                             "required_goals": ["carrying_pose"],
-                                                             "required_gripper_types": [arms.GripperTypes.GRASPING]},
                                                                    name="empty_arm_designator").lockable()),
                                    transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
 
             smach.StateMachine.add("ARM_RESET", ArmToJointConfig(robot,
                 ds.UnoccupiedArmDesignator(robot,
-                                           arm_properties={"required_goals": ["reset"]},
                                            name="empty_arm_designator"), "reset"),
                                    transitions={"succeeded": "SAY_GRAB_FAILED", "failed": "SAY_GRAB_FAILED"})
 
@@ -331,17 +327,14 @@ class SelfCleanup(smach.StateMachine):
                                    transitions={"done": "PLACE_IN_TRASH",
                                                 "failed": "SAY_PLACE_FAILED"})
 
-            arm_properties_place = {"required_trajectories": ["prepare_place"],
-                                    "required_gripper_types": [arms.GripperTypes.GRASPING]}
-            arm_designator_place = ds.OccupiedArmDesignator(robot, arm_properties_place, name="occupied_arm_designator")
+            arm_designator_place = ds.OccupiedArmDesignator(robot, name="occupied_arm_designator").lockable()
 
             smach.StateMachine.add('PLACE_IN_TRASH',
                                    Place(robot, selected_entity_designator, trash_place_pose, arm_designator_place),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
 
-            arm_designator_place_store = ds.OccupiedArmDesignator(robot, arm_properties_place,
-                                                                  name="occupied_arm_designator")
+            arm_designator_place_store = ds.OccupiedArmDesignator(robot, name="occupied_arm_designator").lockable()
             smach.StateMachine.add('PLACE_TO_STORE',
                                    Place(robot, selected_entity_designator, store_entity_des,
                                          arm_designator_place_store, "on_top_of"),
