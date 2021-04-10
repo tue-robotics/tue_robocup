@@ -47,7 +47,7 @@ class TestHandOverFromHuman(unittest.TestCase):
         entity = Entity("123", "dummy", "map",
                         None, None, {}, None, 0)
         self.robot.arms["leftArm"].gripper.occupied_by = entity
-        self.arm_ds = ds.OccupiedArmDesignator(self.robot).lockable()
+        self.arm_ds = ds.UnoccupiedArmDesignator(self.robot).lockable()
         self.entity = Entity("456", "dummy", "map",
                              None, None, {}, None, 0)
 
