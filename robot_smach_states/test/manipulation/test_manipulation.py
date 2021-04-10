@@ -20,8 +20,7 @@ class TestHandOverToHuman(unittest.TestCase):
     def setUp(self):
         entity = Entity("12345", "dummy", "map", None, None, {}, None, 0)
         self.robot.arms["leftArm"].gripper.occupied_by = entity
-        self.arm_ds = ds.OccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human', 'reset'],
-                                                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
+        self.arm_ds = ds.OccupiedArmDesignator(self.robot).lockable()
 
     def test_handover_to_human(self):
         state = HandoverToHuman(self.robot, self.arm_ds)
@@ -48,8 +47,7 @@ class TestHandOverFromHuman(unittest.TestCase):
         entity = Entity("123", "dummy", "map",
                         None, None, {}, None, 0)
         self.robot.arms["leftArm"].gripper.occupied_by = entity
-        self.arm_ds = ds.UnoccupiedArmDesignator(self.robot, {"required_goals": ['handover_to_human'],
-                                                              "required_gripper_types": [arms.GripperTypes.GRASPING]})
+        self.arm_ds = ds.OccupiedArmDesignator(self.robot).lockable()
         self.entity = Entity("456", "dummy", "map",
                              None, None, {}, None, 0)
 
