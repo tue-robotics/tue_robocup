@@ -4,11 +4,11 @@
 
 Usage:
   robot-console <robot>...
-  robot-console <robot>... [--part=<parts>]
+  robot-console <robot>...
 
 Examples:
   robot-console amigo
-  robot-console sergio --part=arms,head
+  robot-console sergio
   robot-console amigo sergio
 """
 
@@ -16,13 +16,13 @@ from __future__ import absolute_import, print_function
 
 # System
 from docopt import docopt, DocoptExit
-import importlib
 import traceback
 
 # ROS
 import rospy
 
 # TU/e Robotics
+from robot_skills import get_robot
 
 # Load convenient data types (DO NOT REMOVE)
 import PyKDL as kdl
@@ -38,32 +38,19 @@ class bcolors:
     ENDC = '\033[0m'
 
 
-def load_robot(robot_name, parts=None):
-    modules = [robot_name] if not parts else parts
+def load_robot(robot_name,):
 
-    loaded = []
-    for name in modules:
-        try:
-            print(bcolors.OKBLUE + '\tloading %s' % name + bcolors.ENDC)
-            module = importlib.import_module('robot_skills.' + name)
-            constructor = module.__getattribute__(name.title())
+    try:
+        print(bcolors.OKBLUE + '\tloading {}'.format(robot_name) + bcolors.ENDC)
+        robot = get_robot(robot_name)
 
-            if parts:
-                instance = constructor(robot_name, wait_services=True)
-            else:
-                instance = constructor(wait_services=False)
-
-            loaded.append(instance)
-            # register as global
-            globals()[name] = instance
-            print(bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC)
-        except:
-            msg = '\n"%s" could not be found!!!\n' % name
-            print(bcolors.WARNING + msg + bcolors.ENDC)
-            traceback.print_exc()
-
-    if not len(loaded):
-        raise DocoptExit("error: no robots or parts loaded")
+        # register as global
+        globals()[robot_name] = robot
+        print(bcolors.OKGREEN+'\tSuccesfully loaded "{}"'.format(robot_name) + bcolors.ENDC)
+    except Exception:
+        msg = '\n"{}" Could not be found.\n'.format(robot_name)
+        print(bcolors.WARNING + msg + bcolors.ENDC)
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
@@ -81,11 +68,9 @@ if __name__ == '__main__':
         print('\t"import robot_smach_states.util.designators as ds"')
         print('\t"import robot_smach_states as states"\n')
 
-        parts = arguments['--part']
-        parts = parts.split(',') if parts else None
         for robot in arguments['<robot>']:
-            load_robot(robot, parts=parts)
+            load_robot(robot)
 
     except DocoptExit as e:
         print(bcolors.FAIL + str(e) + bcolors.ENDC)
-        exit() # quit ipython
+        exit()  # quit ipython
