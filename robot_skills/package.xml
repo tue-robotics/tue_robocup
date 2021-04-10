@@ -32,6 +32,8 @@
   <depend>hmi_msgs</depend>
   <depend>people_recognition_msgs</depend>
   <depend>python_orocos_kdl</depend>
+  <depend condition="$ROS_PYTHON_VERSION == 2">python-rospkg</depend>
+  <depend condition="$ROS_PYTHON_VERSION == 3">python3-rospkg</depend>
   <depend>rgbd_msgs</depend>
   <depend>rospy</depend>
   <depend>smach</depend>
