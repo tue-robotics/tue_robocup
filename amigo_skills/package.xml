@@ -18,4 +18,8 @@
   <test_depend>rostest</test_depend>
   <test_depend>amigo_description</test_depend>
 
+  <export>
+    <robot_skills robot="amigo_skills.amigo.Amigo" />
+  </export>
+
 </package>
