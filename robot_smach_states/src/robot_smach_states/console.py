@@ -23,6 +23,7 @@ import traceback
 import rospy
 
 # TU/e Robotics
+from robot_skills.get_robot import get_robot
 
 # Load convenient data types (DO NOT REMOVE)
 import PyKDL as kdl
@@ -45,13 +46,12 @@ def load_robot(robot_name, parts=None):
     for name in modules:
         try:
             print(bcolors.OKBLUE + '\tloading %s' % name + bcolors.ENDC)
-            module = importlib.import_module('robot_skills.' + name)
-            constructor = module.__getattribute__(name.title())
-
             if parts:
+                module = importlib.import_module('robot_skills.' + name)
+                constructor = module.__getattribute__(name.title())
                 instance = constructor(robot_name, wait_services=True)
             else:
-                instance = constructor(wait_services=False)
+                instance = get_robot(name)
 
             loaded.append(instance)
             # register as global
