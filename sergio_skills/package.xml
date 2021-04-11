@@ -4,7 +4,7 @@
 <package format="3">
   <name>sergio_skills</name>
   <version>0.0.0</version>
-  <description>Contains the AMIGO-specific Python interface connecting the robot smach states to the ROS environment
+  <description>Contains the SERGIO-specific Python interface connecting the robot smach states to the ROS environment
   </description>
 
   <maintainer email="PetervDooren@outlook.com">Peter van Dooren</maintainer>
@@ -17,5 +17,9 @@
 
   <test_depend>rostest</test_depend>
   <test_depend>sergio_description</test_depend>
+
+  <export>
+    <robot_skills robot="sergio_skills.sergio.Sergio" />
+  </export>
 
 </package>

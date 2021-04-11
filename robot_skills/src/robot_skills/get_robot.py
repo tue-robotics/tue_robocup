@@ -1,32 +1,54 @@
 # System
+import importlib
+import os.path
 import sys
 
 # ROS
 import rospy
+import rospkg
 
 # Robot skills
 from .robot import Robot
 
-# ToDo: create a decent registration here
-ROBOTS = {}
-try:
-    from amigo_skills import Amigo
-    ROBOTS["amigo"] = Amigo
-except ImportError:
-    pass
-try:
-    from hero_skills import Hero
-    ROBOTS["hero"] = Hero
-except ImportError:
-    pass
-try:
-    from sergio_skills import Sergio
-    ROBOTS["sergio"] = Sergio
-except ImportError:
-    pass
 
-from .mockbot import Mockbot
-ROBOTS["mockbot"] = Mockbot
+ROBOTS = {}
+
+
+def load_robots():
+    """
+    Register the robots, which are export via package.xml 'export' tag
+    """
+    rospack = rospkg.RosPack()
+    to_check = rospack.get_depends_on('robot_skills', implicit=False)
+    to_check.append("robot_skills")  # also check for robots in robot_skills
+
+    for pkg in to_check:
+        m = rospack.get_manifest(pkg)
+        robots = m.get_export('robot_skills', 'robot')
+        if not robots:
+            continue
+        for robot in robots:
+            try:
+                # import the specified plugin module
+                robot_splitted = robot.split('.')
+                robot_mod = ".".join(robot_splitted[:-1])
+                robot_name = robot_splitted[-1]
+
+                mod = importlib.import_module(robot_mod)
+                robot_class = getattr(mod, robot_name)
+
+                ROBOTS[robot_name.lower()] = robot_class
+
+                rospy.logdebug("Loaded robot: {} to {}".format(robot, robot_name.lower))
+
+            except Exception as e:
+                rospy.logerr("Unable to load robot '{}' from package '{}'. Exception thrown: '{}'".format(robot,
+                                                                                                          pkg,
+                                                                                                          e))
+
+
+# Register the robots
+load_robots()
 
 
 def get_robot_from_argv(index, default_robot_name="hero"):
@@ -62,6 +84,6 @@ def get_robot(name):
     else:
         error_msg = "Cannot construct robot '{}'\n".format(name)
         error_msg += "Available robots:\n\t{}\n".format("\n\t".join(list(ROBOTS.keys())))
-        error_msg += "To install, try: 'tue-get install {}_skills'".format(name)
+        error_msg += "Make sure the {}_skills package is installed, workspace is build and sourced".format(name.lower())
         rospy.logerr(error_msg)
         raise RuntimeError(error_msg)
