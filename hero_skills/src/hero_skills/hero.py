@@ -23,7 +23,9 @@ class Hero(robot.Robot):
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
+
+        arm_joint_names = rospy.get_param('/' + self.robot_name + '/skills/arm_center/joint_names')
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states, arm_joint_names))
 
         # add hero's arm
         hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_center")

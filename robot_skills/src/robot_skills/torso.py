@@ -14,7 +14,7 @@ from robot_skills.robot_part import RobotPart
 
 
 class Torso(RobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states):
+    def __init__(self, robot_name, tf_listener, get_joint_states, arm_joint_names=[]):
         """
         constructor
 
@@ -29,10 +29,7 @@ class Torso(RobotPart):
         self.lower_limit = self.default_configurations['lower_limit']
         self.upper_limit = self.default_configurations['upper_limit']
 
-        try:  # TODO make sure this is no longer needed
-            self._arm_joint_names = self.load_param('skills/arm_center/joint_names')
-        except KeyError:
-            self._arm_joint_names = []
+        self._arm_joint_names = arm_joint_names  #TODO make sure this is no longer needed
 
         # Init action client
         self.ac_move_torso = self.create_simple_action_client('/' + self.robot_name + '/body/joint_trajectory_action',
