@@ -20,42 +20,52 @@ class HandoverDetector(RobotPart):
         super(HandoverDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.name = name
 
-    def handover_to_human(self, timeout=10):
+    def _generic_handover(self, direction, timeout=10):
         """
-        Handover an item from the gripper to a human.
-
+        Handover an item to/from the gripper from/to a human.
         Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
+
+        :param direction: direction of handover
+        :type direction: str
         :param timeout: timeout in seconds
-        :return: True or False
+        :type timeout: float
+        :return: Success
+        :rtype: bool
         """
-        pub = rospy.Publisher('/' + self.robot_name + '/' + self.name + '/toggle_robot2human', Bool, queue_size=1,
-                              latch=True)
-        pub.publish(Bool(True))
+
+        pub = rospy.Publisher('/{}/handoverdetector_{}/toggle_{}'.format(self.robot_name, self.side, direction),
+                              std_msgs.msg.Bool, queue_size=1, latch=True)
+        pub.publish(True)
 
         try:
-            rospy.wait_for_message('/' + self.robot_name + '/' + self.name + '/result', Bool, timeout)
-            # print('/'+self.robot_name+'/'+self.name+'/result')
+            rospy.wait_for_message('/{}/handoverdetector_{}/result'.format(self.robot_name, self.side),
+                                   std_msgs.msg.Bool, timeout)
             return True
         except rospy.ROSException as e:
             rospy.logerr(e)
             return False
+
+    def handover_to_human(self, timeout=10):
+        """
+        Handover an item from the gripper to a human.
+        Feels if user slightly pushes/pulls an item in the gripper. On timeout, it will return False.
+
+        :param timeout: timeout in seconds
+        :type timeout: float
+        :return: Success
+        :rtype: bool
+        """
+        return self._generic_handover('robot2human', timeout)
 
     def handover_to_robot(self, timeout=10):
         """
         Handover an item from a human to the robot.
+        Feels if user slightly pushes/pulls an item in the gripper. On timeout, it will return False.
 
-        Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
         :param timeout: timeout in seconds
-        :return: True or False
+        :type timeout: float
+        :return: Success
+        :rtype: bool
         """
-        pub = rospy.Publisher('/' + self.robot_name + '/' + self.name + '/toggle_human2robot', Bool, queue_size=1,
-                              latch=True)
-        pub.publish(Bool(True))
+        return self._generic_handover('human2robot', timeout)
 
-        try:
-            rospy.wait_for_message('/' + self.robot_name + '/' + self.name + '/result', Bool, timeout)
-            # print('/'+self.robot_name+'/'+self.name+'/result')
-            return True
-        except rospy.ROSException as e:
-            rospy.logerr(e)
-            return False
