@@ -434,9 +434,6 @@ def collect_arm_requirements(state_machine):
             update_requirements(state_machine.REQUIRED_ARM_PROPERTIES)
 
     if isinstance(state_machine, smach.StateMachine):
-        if hasattr(state_machine, "REQUIRED_ARM_PROPERTIES"):
-            update_requirements(state_machine.REQUIRED_ARM_PROPERTIES)
-
         for child_state in state_machine.get_children().values():
 
             # Check if the child_state is a state_machine (must be done before checking for arm properties!)

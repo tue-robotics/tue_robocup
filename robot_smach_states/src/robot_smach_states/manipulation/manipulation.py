@@ -15,6 +15,8 @@ from ..util.designators import check_type, LockingDesignator
 
 
 class ArmToJointConfig(smach.State):
+    # REQUIRED_ARM_PROPERTIES is defined in constructor because it is dynamic
+
     def __init__(self, robot, arm_designator, configuration):
         """
         Put arm of robot in some joint configuration
@@ -28,6 +30,7 @@ class ArmToJointConfig(smach.State):
         self.robot = robot
         check_type(arm_designator, PublicArm)
         self.arm_designator = arm_designator
+        self.REQUIRED_ARM_PROPERTIES = {'required_goals': [configuration]}
         self.configuration = configuration
 
     def execute(self, userdata=None):
@@ -90,8 +93,6 @@ class HandOverTo(smach.State):
 
 
 class HandoverFromHuman(smach.StateMachine):
-    REQUIRED_ARM_PROPERTIES = {"required_goals": ["handover_to_human"], }
-
     """
     State that enables low level grab reflex. Besides a robot object, needs
     an arm and an entity to grab, which is either one from ed through the
@@ -145,8 +146,6 @@ class HandoverFromHuman(smach.StateMachine):
 
 
 class HandoverToHuman(smach.StateMachine):
-    REQUIRED_ARM_PROPERTIES = {"required_goals": ["handover_to_human", "reset"], }
-
     def __init__(self, robot, arm_designator, timeout=10):
         """
         State to hand over the object in the arm to a human operator
