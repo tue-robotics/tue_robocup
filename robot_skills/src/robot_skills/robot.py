@@ -1,6 +1,12 @@
 #! /usr/bin/env python
 
-from collections import OrderedDict, Sequence
+from collections import OrderedDict
+try:
+    # Python 3
+    from collections.abc import Collection
+except ImportError:
+    # Python 2
+    from collections import Collection
 
 import geometry_msgs
 # ROS
@@ -225,7 +231,7 @@ class Robot(object):
         # Check that collection arguments are really a collection of objects, but not strings.
         # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
         def seq_or_none(obj):
-            return not isinstance(obj, str) and (isinstance(obj, Sequence) or obj is None)
+            return not isinstance(obj, str) and (isinstance(obj, Collection) or obj is None)
         assert seq_or_none(required_gripper_types)
         assert seq_or_none(desired_gripper_types)
         assert seq_or_none(required_goals)

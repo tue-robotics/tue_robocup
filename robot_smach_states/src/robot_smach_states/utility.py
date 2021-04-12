@@ -1,7 +1,6 @@
 from __future__ import absolute_import
-# ROS
-import copy
 
+# ROS
 import rospy
 import smach
 import std_msgs.msg
@@ -412,16 +411,20 @@ def collect_arm_requirements(state_machine):
         """
         Checks the input state for arm requirements and updates the current arm requirements if necessary
 
-        :param update_dict: New arm requirements which should be checked against the current arm requirements
+        :param update_dict: New arm requirements which should be checked against the current arm requirements.
+            Dict can only contain lists or sets as values
+        :type update_dict: dict
         :return: current arm requirements, updated (if necessary) given the update
         """
+
+        # Update scheme for 1 level dict of sets
         for k, v in update_dict.items():
+            if not isinstance(v, list) and not isinstance(v, set):
+                raise ValueError("Key: {}, has a value which isn't a list or set.  Value: {}".format(k, v))
             if k not in arm_requirements:
-                arm_requirements[k] = v
-            else:
-                for value in v:
-                    if value not in arm_requirements[k]:
-                        arm_requirements[k] += v
+                arm_requirements[k] = set()
+
+            arm_requirements[k].update(v)
 
     # Check arm requirements
     arm_requirements = {}

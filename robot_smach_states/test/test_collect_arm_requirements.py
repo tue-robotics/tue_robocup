@@ -80,19 +80,6 @@ class SecondStateMachine(smach.StateMachine):
             smach.StateMachine.add('BAR', FirstStateMachine(robot), transitions={'succeeded': 'succeeded'})
 
 
-def compare_lists_in_dicts(reference, result):
-    """ Compares a reference dict with the result as produced by the system
-
-    :param reference: Ground truth dict (strings as keys and lists as values)
-    :param result: Dict according to the system
-    :return: reference and result dicts containing the non overlapping key, value pairs
-    """
-    for k in list(reference.keys()):
-        if k in list(result.keys()):
-            if len(reference[k]) == len(result[k]) and set(reference[k]) == set(result[k]):
-                del reference[k], result[k]
-
-
 class TestCollectArmRequirements(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -100,20 +87,17 @@ class TestCollectArmRequirements(unittest.TestCase):
 
     def test_collect_arm_requirements(self):
         requirements = collect_arm_requirements(FirstStateMachine(self.robot))
-        reference = {'required_trajectories': ['prepare_grasp', 'prepare_place'],
-                     'required_gripper_types': ['pseudo-gripper-type-any-grasping-will-do',
-                                                'gripper-type-pinch'],
-                     "required_goals": ["reset"]}
-        compare_lists_in_dicts(reference, requirements)
+        reference = {'required_trajectories': set(['prepare_grasp', 'prepare_place']),
+                     'required_gripper_types': set(['pseudo-gripper-type-any-grasping-will-do', 'gripper-type-pinch']),
+                     "required_goals": set(["reset"])}
         self.assertEqual(requirements, reference)
 
     def test_collect_arm_requirements_recursive(self):
         requirements = collect_arm_requirements(SecondStateMachine(self.robot))
-        reference = {'required_trajectories': ['wave', 'prepare_grasp', 'prepare_place'],
-                     'required_gripper_types': ['gripper-type-parallel', 'pseudo-gripper-type-any-grasping-will-do',
-                                                'gripper-type-pinch'],
-                     "required_goals": ["reset"]}
-        compare_lists_in_dicts(requirements, reference)
+        reference = {'required_trajectories': set(['wave', 'prepare_grasp', 'prepare_place']),
+                     'required_gripper_types': set(['gripper-type-parallel', 'pseudo-gripper-type-any-grasping-will-do',
+                                                    'gripper-type-pinch']),
+                     "required_goals": set(["reset"])}
         self.assertEqual(requirements, reference)
 
 
