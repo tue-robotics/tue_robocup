@@ -402,18 +402,20 @@ def check_arm_requirements(state_machine, robot):
 
 
 def collect_arm_requirements(state_machine):
-    """ Collects all requirements on the arm of this specific state machine
+    """
+    Collects all requirements on the arm of this specific state machine
 
     :param state_machine: State (machine) for which the requirements need to be collected
     :return: All arm requirements of the state machine
     """
-    def update_requirements(state):
-        """ Checks the input state for arm requirements and updates the current arm requirements if necessary
-
-        :param state: Smach.state of which arm requirements should be checked against the current arm requirements
-        :return: current arm requirements, updated (if necessary) given the input state
+    def update_requirements(update_dict):
         """
-        for k, v in state.items():
+        Checks the input state for arm requirements and updates the current arm requirements if necessary
+
+        :param update_dict: New arm requirements which should be checked against the current arm requirements
+        :return: current arm requirements, updated (if necessary) given the update
+        """
+        for k, v in update_dict.items():
             if k not in arm_requirements:
                 arm_requirements[k] = v
             else:
