@@ -3,13 +3,13 @@
 from collections import OrderedDict
 try:
     # Python 3
-    from collections.abc import Collection
+    from collections.abc import Sequence, Set
 except ImportError:
     # Python 2
-    from collections import Collection
+    from collections import Sequence, Set
 
-import geometry_msgs
 # ROS
+import geometry_msgs
 import rospy
 import tf
 from diagnostic_msgs.msg import DiagnosticArray
@@ -230,17 +230,17 @@ class Robot(object):
 
         # Check that collection arguments are really a collection of objects, but not strings.
         # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
-        def seq_or_none(obj):
-            return not isinstance(obj, str) and (isinstance(obj, Collection) or obj is None)
-        assert seq_or_none(required_gripper_types)
-        assert seq_or_none(desired_gripper_types)
-        assert seq_or_none(required_goals)
-        assert seq_or_none(desired_goals)
-        assert seq_or_none(required_trajectories)
-        assert seq_or_none(desired_trajectories)
+        def seq_set_or_none(obj):
+            return not isinstance(obj, str) and (isinstance(obj, Sequence) or isinstance(obj, Set) or obj is None)
+        assert seq_set_or_none(required_gripper_types)
+        assert seq_set_or_none(desired_gripper_types)
+        assert seq_set_or_none(required_goals)
+        assert seq_set_or_none(desired_goals)
+        assert seq_set_or_none(required_trajectories)
+        assert seq_set_or_none(desired_trajectories)
         assert isinstance(force_sensor_required, bool)
-        assert seq_or_none(required_objects)
-        assert seq_or_none(desired_objects)
+        assert seq_set_or_none(required_objects)
+        assert seq_set_or_none(desired_objects)
 
         for arm_name, arm in self._arms.items():
             if not arm.operational:
