@@ -42,9 +42,9 @@ def load_robots():
                 rospy.logdebug("Loaded robot: {} to {}".format(robot, robot_name.lower))
 
             except Exception as e:
-                rospy.logerr("Unable to load robot '{}' from package '{}'. Exception thrown: '{}'".format(robot,
-                                                                                                          pkg,
-                                                                                                          e))
+                rospy.logerr(
+                    "Unable to load robot '{}' from package '{}'. Exception thrown: '{}'".format(robot, pkg, e)
+                )
 
 
 # Register the robots
