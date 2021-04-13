@@ -37,9 +37,11 @@ def load_robots():
                 mod = importlib.import_module(robot_mod)
                 robot_class = getattr(mod, robot_name)
 
-                ROBOTS[robot_name.lower()] = robot_class
+                robot_name = robot_name.lower()
+                assert robot_name not in ROBOTS, "A robot with the name '{}' is already registered".format(robot_name)
+                ROBOTS[robot_name] = robot_class
 
-                rospy.logdebug("Loaded robot: {} to {}".format(robot, robot_name.lower))
+                rospy.logdebug("Loaded robot: {} to {}".format(robot, robot_name))
 
             except Exception as e:
                 rospy.logerr(
