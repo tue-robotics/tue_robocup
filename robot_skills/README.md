@@ -11,7 +11,7 @@ This package contains a [`mockbot`](src/robot_skills/mockbot.py), which expose a
 To implement your own robot, create a robot specific skills package. To register your robot add the following to the `package.xml` of your package:
 ```xml
 <export>
-  <robot_skills robot="bla_skills.bla.Bla" />
+  <robot_skills robot="foo_skills.foo.Foo"/>
 </export>
 ```
 The value of the robot attribute has to be of the format: `<package_name>.<sub_module>.<class_name>`.
