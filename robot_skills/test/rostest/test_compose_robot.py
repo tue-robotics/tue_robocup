@@ -5,7 +5,6 @@ import unittest
 import rospy
 
 from robot_skills.functionalities import RobotFunc, add_functionalities
-# robot skills
 from robot_skills.robot import Robot
 from robot_skills.robot_part import RobotPart
 
@@ -15,25 +14,31 @@ class TestPart(RobotPart):
     def some_function(self):
         pass
 
+
 # functionality which can be added to the subclass
 class TestFunc1(RobotFunc):
     def __init__(self):
         super(TestFunc1, self).__init__("extra_functionality",
                                         TestPart,
                                         {"testfunction1": testfunction1})
+
     def check_requirements(self, part):
         return True
+
 
 class TestFunc2(RobotFunc):
     def __init__(self):
         super(TestFunc2, self).__init__("extra_functionality_with_harsh_requirements",
                                         TestPart,
                                         {"testfunction2": testfunction2})
+
     def check_requirements(self, part):
         return False
 
+
 def testfunction1(self):
     return 'test 1 called'
+
 
 def testfunction2(self):
     return 'test 2 called'
