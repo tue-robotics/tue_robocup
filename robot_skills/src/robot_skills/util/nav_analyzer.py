@@ -150,7 +150,7 @@ class NavAnalyzer:
             # Writing is not done using tree.write: this will overwrite this. It is also possible to
             # load the tree from the datafile and put this item in the tree, but this will probably become inefficient
             # if the file grows
-            datafile.write(ET.tostring(self.logitem, encoding='UTF-8', method="xml"))
+            datafile.write(ET.tostring(self.logitem, encoding='unicode', method="xml"))
 
         rospy.logdebug(
             "\n\nNavigation summary:\nCovered {0} meters in {1} seconds ({2}) m/s avg.\n"
