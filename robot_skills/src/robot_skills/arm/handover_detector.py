@@ -23,7 +23,7 @@ class HandoverDetector(RobotPart):
 
     def _generic_handover(self, direction, timeout=10):
         """
-        Handover an item to/from the gripper from/to a human.
+        Detect a handover an item to/from the gripper from/to a human.
         Feels if user slightly pulls or pushes (the item in) the arm. On timeout, it will return False.
 
         :param direction: direction of handover
