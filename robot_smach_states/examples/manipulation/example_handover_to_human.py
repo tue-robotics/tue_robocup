@@ -8,7 +8,7 @@ from robot_skills.arm import arms
 
 # Robot Smach States
 import robot_smach_states.util.designators as ds
-from robot_smach_states.manipulation import HandoverFromHuman, HandoverToHuman, LockDesignator
+from robot_smach_states.manipulation import HandoverFromHuman, HandoverToHuman
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test handover to human state")
