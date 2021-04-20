@@ -40,7 +40,7 @@ class Amigo(robot.Robot):
         self.add_body_part('ssl', sound_source_localisation.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
-        self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
+        self.add_body_part('lights', lights.TueLights(self.robot_name, self.tf_listener))
         self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_listener,
                                                    lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
                                                    lambda: self.lights.set_color_rgba_msg(lights.RESET)))

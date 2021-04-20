@@ -44,7 +44,11 @@ class Hero(robot.Robot):
                                                                camera_base_ns='hero/head_rgbd_sensor'))
 
         # Human Robot Interaction
-        self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
+        self.add_body_part(
+            'lights', lights.Lights(
+                self.robot_name, self.tf_listener, '/' + self.robot_name + '/rgb_lights_manager/user_set_rgb_lights'
+            )
+        )
         self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_listener,
                                                    lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
                                                    lambda: self.lights.set_color_rgba_msg(lights.RESET)))
