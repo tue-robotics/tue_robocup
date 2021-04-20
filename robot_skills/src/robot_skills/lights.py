@@ -138,7 +138,7 @@ class Lights(LightsInterface):
         :param topic: topic where to publish the messages
         """
         super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._publisher = rospy.publisher(topic, ColorRGBA, queue_size=1)
+        self._publisher = rospy.Publisher(topic, ColorRGBA, queue_size=1)
 
     def _send_color_msg(self, rgba_msg):
         """
