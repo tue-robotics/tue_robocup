@@ -39,9 +39,9 @@ class Lights(RobotPart):
         :param a: alpha value 0.0-1.0
         :return: no return
         """
-        self.set_color_colorRGBA(ColorRGBA(r, g, b, a))
+        self.set_color_rgba_msg(ColorRGBA(r, g, b, a))
 
-    def set_color_colorRGBA(self, rgba):
+    def set_color_rgba_msg(self, rgba):
         """
         Set the color of the robot by a std_msgs.msg.ColorRGBA
 
@@ -58,7 +58,7 @@ class Lights(RobotPart):
 
         :return: no return
         """
-        self.set_color_colorRGBA(RESET)
+        self.set_color_rgba_msg(RESET)
         return True
 
     def on(self):

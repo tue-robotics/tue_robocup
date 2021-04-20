@@ -42,14 +42,14 @@ class Amigo(robot.Robot):
         # Human Robot Interaction
         self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
         self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_listener,
-                                                   lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
-                                                   lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+                                                   lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
+                                                   lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
-                                          lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                          lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+                                          lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
+                                          lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
-                                             lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
-                                             lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+                                             lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
+                                             lambda: self.lights.set_color_rgba_msg(lights.RESET)))
 
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
         self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_listener))
