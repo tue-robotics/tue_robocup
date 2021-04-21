@@ -542,7 +542,7 @@ class Arm(RobotPart):
     def selfreset(self):
         """
         Put the arm into the 'reset' pose
-
+        
         :return: True or False
         """
         return self.send_joint_goal('reset', timeout=0.0)
