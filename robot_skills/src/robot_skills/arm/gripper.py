@@ -69,13 +69,13 @@ class ParrallelGripper(Gripper):
         """
         super(ParrallelGripper, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self.gripper_name = gripper_name
-        offset = self.load_param('skills/arm/' + self.gripper_name + '/grasp_offset/')
+        offset = self.load_param('skills/' + self.gripper_name + '/grasp_offset/')
         self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
                                         kdl.Vector(offset["x"], offset["y"], offset["z"]))
 
         # Init gripper actionlib
-        self._ac_gripper = self.create_simple_action_client(
-            "/" + robot_name + "/" + self.gripper_name + "_arm/gripper/action", GripperCommandAction)
+        ac_name = self.load_param('skills/' + self.gripper_name + '/ac_gripper')
+        self._ac_gripper = self.create_simple_action_client(ac_name, GripperCommandAction)
 
     def send_goal(self, state, timeout=5.0, max_torque=0.1): #Todo: should send goal be universal for all grippers?
         """

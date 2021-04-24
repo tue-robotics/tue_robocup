@@ -126,10 +126,10 @@ class MockedRobotPart(object):
 
 
 class Arm(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, name):
         super(Arm, self).__init__(robot_name, tf_listener)
 
-        self.side = side
+        self.arm_name = name
         self.get_joint_states = get_joint_states
 
         self._operational = True
@@ -417,8 +417,8 @@ class Mockbot(robot.Robot):
         self.add_body_part('base', Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left"))
-        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right"))
+        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_left"))
+        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_right"))
 
         self.add_body_part('head', Head(self.robot_name, self.tf_listener))
 

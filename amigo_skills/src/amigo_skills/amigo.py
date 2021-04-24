@@ -22,17 +22,17 @@ class Amigo(robot.Robot):
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
         # construct left arm
-        left_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
-        left_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
+        left_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_left")
+        left_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'gripper_left'))
         left_arm.add_part('handover_detector',
-                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'left'))
+                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'handoverdetector_left'))
         self.add_arm_part('leftArm', left_arm)
 
         # construct right arm
-        right_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
-        right_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'right'))
+        right_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_right")
+        right_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'gripper_right'))
         right_arm.add_part('handover_detector',
-                           handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'right'))
+                           handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'handoverdetector_right'))
         self.add_arm_part('rightArm', right_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))

@@ -14,7 +14,7 @@ from robot_skills.robot_part import RobotPart
 
 
 class Torso(RobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states):
+    def __init__(self, robot_name, tf_listener, get_joint_states, arm_joint_names=None):
         """
         constructor
 
@@ -24,11 +24,12 @@ class Torso(RobotPart):
         super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
 
         self.joint_names = self.load_param('skills/torso/joint_names')
-        self._arm_joint_names = self.load_param('skills/arm/joint_names')
         self.default_configurations = self.load_param('skills/torso/default_configurations')
         self.default_tolerance = self.load_param('/skills/torso/default_tolerance')
         self.lower_limit = self.default_configurations['lower_limit']
         self.upper_limit = self.default_configurations['upper_limit']
+
+        self._arm_joint_names = [] if arm_joint_names is None else arm_joint_names  #TODO make sure this is no longer needed
 
         # Init action client
         self.ac_move_torso = self.create_simple_action_client('/' + self.robot_name + '/body/joint_trajectory_action',

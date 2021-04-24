@@ -23,17 +23,15 @@ class Hero(robot.Robot):
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
+
+        arm_joint_names = rospy.get_param('/' + self.robot_name + '/skills/arm_center/joint_names')
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states, arm_joint_names))
 
         # add hero's arm
-        hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
-        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(
-            self.robot_name, self.tf_listener, self.robot_name + "/wrist_wrench/raw"
-        ))
-        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
-        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(
-            self.robot_name, self.tf_listener, 'left'
-        ))
+        hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_center")
+        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_listener, "/" + self.robot_name + "/wrist_wrench/raw"))
+        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'gripper'))
+        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'handover_detector'))
 
         self.add_arm_part('leftArm', hero_arm)
 
@@ -60,9 +58,6 @@ class Hero(robot.Robot):
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
-
-        # Rename joint names
-        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for part in self.parts.values():
