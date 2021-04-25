@@ -33,7 +33,7 @@ class Hero(robot.Robot):
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'gripper'))
         hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'handover_detector'))
 
-        self.add_arm_part('leftArm', hero_arm)
+        self.add_arm_part('arm_center', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
@@ -65,7 +65,7 @@ class Hero(robot.Robot):
             part._operational = True
 
         # verify joint goal required for posing
-        assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
+        assert 'arm_out_of_way' in self.parts['arm_center'].default_configurations,\
             "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
         # parameters for posing
         self.z_over = 0.4  # height the robot should look over the surface
