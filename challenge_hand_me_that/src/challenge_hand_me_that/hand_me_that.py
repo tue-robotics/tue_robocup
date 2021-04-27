@@ -13,9 +13,9 @@ from robot_smach_states.startup import StartChallengeRobust
 from robot_smach_states.human_interaction import Say
 from robocup_knowledge import load_knowledge
 
-from get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
-from identify_object import IdentifyObject
-from inspect_furniture_entity import InspectFurniture
+from .get_furniture_from_operator_pose import GetFurnitureFromOperatorPose
+from .identify_object import IdentifyObject
+from .inspect_furniture_entity import InspectFurniture
 
 challenge_knowledge = load_knowledge('challenge_hand_me_that')
 
@@ -28,7 +28,7 @@ def setup_statemachine(robot):
 
     furniture_designator = ds.VariableDesignator(resolve_type=Entity)
     entity_designator = ds.VariableDesignator(resolve_type=Entity)
-    arm_designator = ds.UnoccupiedArmDesignator(robot, {})
+    arm_designator = ds.UnoccupiedArmDesignator(robot).lockable()
 
     with state_machine:
         # Intro

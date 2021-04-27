@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from robocup_knowledge import knowledge_loader
 common = knowledge_loader.load_knowledge("common")
 
@@ -169,7 +171,7 @@ BRING_TARGET[X] -> BRING_PERSON[X] | the BRING_LOCATION[X]
 
 OBJECT_TO_BE_BROUGHT -> NAMED_OBJECT | DET NAMED_OBJECT | PPN_OBJECT
 
-V_BRING -> bring | deliver | give | hand 
+V_BRING -> bring | deliver | give | hand
 """
 
 # (give | bring | deliver | hand) it to <person>
@@ -204,7 +206,7 @@ VP["action": "bring", "object": {"type": Z}, "target-location": Y] -> V_PLACE OB
 ##############################################################################
 
 grammar += """
-V_SAY -> tell | say 
+V_SAY -> tell | say
 
 VP["action": "say", "sentence": X] -> V_SAY SAY_SENTENCE[X]
 VP["action": "say", "sentence": X, "target-person": Y] -> V_SAY SAY_SENTENCE[X] to BRING_PERSON_AT_LOCATION[Y]
@@ -236,7 +238,7 @@ VP["action": "answer-question"] -> answer a question
 
 
 if __name__ == "__main__":
-    print "GPSR Grammar:\n\n{}\n\n".format(grammar)
+    print("GPSR Grammar:\n\n{}\n\n".format(grammar))
 
     from grammar_parser.cfgparser import CFGParser
 
@@ -244,11 +246,11 @@ if __name__ == "__main__":
 
     sentence = grammar_parser.get_random_sentence("T")
 
-    print "Parsing sentence:\n\n{}\n\n".format(sentence)
+    print("Parsing sentence:\n\n{}\n\n".format(sentence))
 
     result = grammar_parser.parse("T", sentence)
 
-    print "Result:\n\n{}".format(result)
+    print("Result:\n\n{}".format(result))
 
 
 ##############################################################################

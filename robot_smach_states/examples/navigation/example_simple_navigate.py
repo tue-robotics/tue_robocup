@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('robot_smach_states')
+
 import rospy
 import sys
 

@@ -125,7 +125,7 @@ class FindPeople(smach.State):
         head_goals = [kdl_conversions.VectorStamped(x=self._look_distance * math.cos(angle),
                                                     y=self._look_distance * math.sin(angle),
                                                     z=1.5,
-                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+                                                    frame_id=self._robot.base_link_frame)
                       for angle in self._look_angles]
 
         i = 0

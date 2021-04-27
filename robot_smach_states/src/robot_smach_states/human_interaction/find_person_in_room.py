@@ -75,7 +75,7 @@ class FindPerson(smach.State):
         look_distance = 2.0  # magic number 4
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
                                                     y=look_distance * math.sin(angle), z=1.3,
-                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+                                                    frame_id=self._robot.base_link_frame)
                       for angle in self._look_angles]
 
         i = 0
@@ -241,5 +241,3 @@ if __name__ == "__main__":
     else:
         print("Please provide robot name as argument.")
         exit(1)
-
-

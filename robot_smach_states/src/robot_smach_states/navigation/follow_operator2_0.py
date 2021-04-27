@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 # System
 import collections
@@ -251,7 +251,7 @@ class FollowBread(smach.State):
         buffer_msg = Marker()
         buffer_msg.type = Marker.POINTS
         buffer_msg.header.stamp = rospy.get_rostime()
-        buffer_msg.header.frame_id = "/map"
+        buffer_msg.header.frame_id = "map"
         buffer_msg.id = 0
         buffer_msg.action = Marker.DELETEALL
         self._breadcrumb_pub.publish(buffer_msg)
@@ -261,7 +261,7 @@ class FollowBread(smach.State):
         buffer_msg.scale.x = 0.05
         buffer_msg.scale.y = 0.05
         buffer_msg.header.stamp = rospy.get_rostime()
-        buffer_msg.header.frame_id = "/map"
+        buffer_msg.header.frame_id = "map"
         buffer_msg.color.a = 1
         buffer_msg.color.r = 1
         buffer_msg.color.g = 0
@@ -278,7 +278,7 @@ class FollowBread(smach.State):
         # line_strip = Marker()
         # line_strip.type = Marker.LINE_STRIP
         # line_strip.scale.x = 0.05
-        # line_strip.header.frame_id = "/map"
+        # line_strip.header.frame_id = "map"
         # line_strip.header.stamp = rospy.Time.now()
         # line_strip.color.a = 1
         # line_strip.color.r = 0
@@ -335,7 +335,7 @@ class Recovery(smach.State):
                        -math.pi / 2.3]
         head_goals = [kdl_conversions.VectorStamped(x=look_distance * math.cos(angle),
                                                     y=look_distance * math.sin(angle), z=1.7,
-                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+                                                    frame_id=self._robot.base_link_frame)
                       for angle in look_angles]
 
         i = 0
@@ -366,11 +366,9 @@ class Recovery(smach.State):
                                                                              center_point=operator_pos_kdl,
                                                                              ignore_z=True)
                 if recovered_operator:
-                    print
-                    "Found one!"
+                    print("Found one!")
                     self._operator_id = recovered_operator.id
-                    print
-                    "Recovered operator id: %s" % self._operator_id
+                    print("Recovered operator id: %s" % self._operator_id)
                     self._operator = recovered_operator
                     self._robot.speech.speak("There you are! Go ahead, I'll follow you again", block=False)
                     self._robot.head.close()
@@ -378,8 +376,7 @@ class Recovery(smach.State):
                     userdata.recovered_operator = recovered_operator
                     return 'follow'
                 else:
-                    print
-                    "Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl)
+                    print("Could not find an entity {} meter near {}".format(self._lost_distance, operator_pos_kdl))
 
         self._robot.head.close()
         return 'Failed'

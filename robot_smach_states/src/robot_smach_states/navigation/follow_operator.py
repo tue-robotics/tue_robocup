@@ -102,7 +102,7 @@ class FollowOperator(smach.State):
         if not self._operator:
             return False
 
-        operator_current_fs = kdl_conversions.FrameStamped(self._operator._pose, "/map", stamp=rospy.Time.now())
+        operator_current_fs = kdl_conversions.FrameStamped(self._operator._pose, "map", stamp=rospy.Time.now())
         # rospy.loginfo("Operator position: %s" % self._operator.pose.position)
 
         if not self._last_operator_fs:
@@ -184,7 +184,7 @@ class FollowOperator(smach.State):
                         operator = self._robot.ed.get_closest_laser_entity(
                             radius=0.5,
                             center_point=kdl_conversions.VectorStamped(x=1.0, y=0, z=1,
-                                                                       frame_id="/%s/base_link" % self._robot.robot_name))
+                                                                       frame_id=self._robot.base_link_frame))
                         rospy.loginfo("Operator: {op}".format(op=operator))
                         if not operator:
                             self._robot.speech.speak("Please stand in front of me")
@@ -211,7 +211,7 @@ class FollowOperator(smach.State):
                 operator = self._robot.ed.get_closest_laser_entity(
                     radius=1,
                     center_point=kdl_conversions.VectorStamped(x=1.5, y=0, z=1,
-                                                               frame_id="/%s/base_link" % self._robot.robot_name))
+                                                               frame_id=self._robot.base_link_frame))
                 if not operator:
                     rospy.sleep(1)
 
@@ -262,7 +262,7 @@ class FollowOperator(smach.State):
         self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                  center_point=kdl_conversions.VectorStamped(
                                                                      x=1.5, y=0, z=1,
-                                                                     frame_id="/%s/base_link" % self._robot.robot_name))
+                                                                     frame_id=self._robot.base_link_frame))
         if self._operator:
             return True
         else:
@@ -270,7 +270,7 @@ class FollowOperator(smach.State):
             self._operator = self._robot.ed.get_closest_laser_entity(radius=1,
                                                                      center_point=kdl_conversions.VectorStamped(
                                                                          x=1.5, y=0, z=1,
-                                                                         frame_id="/%s/base_link" % self._robot.robot_name))
+                                                                         frame_id=self._robot.base_link_frame))
 
         if self._operator:
             return True
@@ -349,7 +349,7 @@ class FollowOperator(smach.State):
         breadcrumbs_msg.type = Marker.POINTS
         breadcrumbs_msg.scale.x = 0.05
         breadcrumbs_msg.header.stamp = rospy.get_rostime()
-        breadcrumbs_msg.header.frame_id = "/map"
+        breadcrumbs_msg.header.frame_id = "map"
         breadcrumbs_msg.color.a = 1
         breadcrumbs_msg.color.r = 0
         breadcrumbs_msg.color.g = 1
@@ -367,7 +367,7 @@ class FollowOperator(smach.State):
         line_strip = Marker()
         line_strip.type = Marker.LINE_STRIP
         line_strip.scale.x = 0.05
-        line_strip.header.frame_id = "/map"
+        line_strip.header.frame_id = "map"
         line_strip.header.stamp = rospy.Time.now()
         line_strip.color.a = 1
         line_strip.color.r = 0
@@ -470,7 +470,7 @@ class FollowOperator(smach.State):
                        -math.pi/2.3]
         head_goals = [kdl_conversions.VectorStamped(x=look_distance*math.cos(angle),
                                                     y=look_distance*math.sin(angle), z=1.7,
-                                                    frame_id="/%s/base_link" % self._robot.robot_name)
+                                                    frame_id=self._robot.base_link_frame)
                       for angle in look_angles]
 
         i = 0
@@ -549,7 +549,7 @@ class FollowOperator(smach.State):
         yaw = math.atan2(dy, dx)
         # ToDo: make nice!
         pose = geometry_msgs.msg.PoseStamped()
-        pose.header.frame_id = "/map"
+        pose.header.frame_id = "map"
         pose.header.stamp = rospy.Time.now()
         pose.pose.position.x = robot_position.x()
         pose.pose.position.y = robot_position.y()

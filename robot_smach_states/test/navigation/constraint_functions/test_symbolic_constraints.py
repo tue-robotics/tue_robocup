@@ -16,7 +16,7 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
 
     def test_base(self):
         dummy_id = "dummy"
-        e = Entity(dummy_id, "dummy_type", "/map", None, None, None, None, None)
+        e = Entity(dummy_id, "dummy_type", "map", None, None, None, None, None)
         entity = Designator(e, name="entity designator")
         area_name = "area"
 
@@ -29,12 +29,12 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
 
     def test_base_multiple_entries(self):
         dummy_id_1 = "dummy1"
-        e1 = Entity(dummy_id_1, "dummy_type", "/map", None, None, None, None, None)
+        e1 = Entity(dummy_id_1, "dummy_type", "map", None, None, None, None, None)
         entity1 = Designator(e1, name="entity designator")
         area_name1 = "area1"
 
         dummy_id_2 = "dummy2"
-        e2 = Entity(dummy_id_2, "dummy_type", "/map", None, None, None, None, None)
+        e2 = Entity(dummy_id_2, "dummy_type", "map", None, None, None, None, None)
         entity2 = Designator(e2, name="entity designator")
         area_name2 = "area2"
 
@@ -47,7 +47,7 @@ class TestSymbolicConstraintFunction(unittest.TestCase):
 
     def test_room(self):
         dummy_id = "dummy_room"
-        r = Entity(dummy_id, "dummy_type", "/map", None, None, None, None, None)
+        r = Entity(dummy_id, "dummy_type", "map", None, None, None, None, None)
         room = Designator(r, name="room designator")
 
         pc, oc = room_constraint(self.robot, room)

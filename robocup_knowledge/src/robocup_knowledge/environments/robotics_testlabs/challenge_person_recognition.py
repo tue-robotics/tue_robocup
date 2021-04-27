@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 ''' colors from printing on screen '''
 class bcolors:
     HEADER = '\033[95m'
@@ -21,13 +23,13 @@ class Gender:
 
 ''' printing shortcuts '''
 def printOk(sentence):
-    print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
+    print(prefix + bcolors.OKBLUE + sentence + bcolors.ENDC)
 
 def printError(sentence):
-    print prefix + bcolors.FAIL + sentence + bcolors.ENDC
+    print(prefix + bcolors.FAIL + sentence + bcolors.ENDC)
 
 def printWarning(sentence):
-    print prefix + bcolors.WARNING + sentence + bcolors.ENDC
+    print(prefix + bcolors.WARNING + sentence + bcolors.ENDC)
 
 prefix = bcolors.HEADER + "[Person Recognition] " + bcolors.ENDC
 
@@ -52,7 +54,7 @@ waypoint_living_room_3 = "person_rec_living_room_3"
 
 
 ''' point in the center of the living room, to filter location of humans '''
-room_center = {'x':1.365, 'y':0.978, 'z':0.0, 'frame_id':"/map"}
+room_center = {'x':1.365, 'y':0.978, 'z':0.0, 'frame_id':"map"}
 
 
 '''Object types that can be recognized'''

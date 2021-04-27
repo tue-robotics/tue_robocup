@@ -8,8 +8,8 @@ from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstrain
 
 
 def dummy_constraint(name="test"):
-    pc = PositionConstraint(constraint="constraint_"+name, frame="/map")
-    oc = OrientationConstraint(look_at=Point(0, 0, 0), frame="/map")
+    pc = PositionConstraint(constraint="constraint_"+name, frame="map")
+    oc = OrientationConstraint(look_at=Point(0, 0, 0), frame="map")
     return pc, oc
 
 

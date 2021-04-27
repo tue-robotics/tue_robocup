@@ -1,23 +1,20 @@
+from __future__ import print_function
+
 import time
 
+import PyKDL as kdl
 # ROS
 import rospy
-import std_msgs.msg
-import PyKDL as kdl
-
 import visualization_msgs.msg
 from actionlib import GoalStatus
-from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
-from robot_skills.arm.force_sensor import ForceSensor
-from robot_skills.arm.gripper import ParrallelGripper
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-
 # TU/e Robotics
-from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
-from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
-from tue_msgs.msg import GripperCommand
+from tue_manipulation_msgs.msg import GraspPrecomputeAction, GraspPrecomputeGoal
 
+from robot_skills.arm.gripper import ParrallelGripper
 from robot_skills.robot_part import RobotPart
+
 
 # Constants for arm requirements. Note that "don't care at all" is not here, as
 # it can be expressed by not imposing a requirement (set it to None).
@@ -265,59 +262,56 @@ class PublicArm(object):
         """
         if not cond:
             msg = "get_arm for '{}' arm did not request '{}' access. Hint: {}"
-            raise AssertionError(msg.format(self._arm.side, feature, hint))
+            raise AssertionError(msg.format(self._arm.name, feature, hint))
 
     def __repr__(self):
         return "PublicArm(arm={arm})".format(arm=self._arm)
 
+
 class Arm(RobotPart):
     """
-    A single arm can be either left or right, extends Arms:
-    Use left or right to get arm while running from the python console
-
-    Examples:
-    >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)  # doctest: +SKIP
-    or Equivalently:
-    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')  # doctest: +SKIP
+    A kinematic chain ending in an end_effector. Can be controlled using either joint goals or a goal to reach with
+    the end_effector described in carthesian coordinates.
     """
-    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, name):
         """
         constructor
 
         :param robot_name: robot_name
         :param tf_listener: tf_server.TFClient()
         :param get_joint_states: get_joint_states function for getting the last joint states
-        :param side: left or right
+        :param name: string used to identify the arm
         """
         super(Arm, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self.side = side
+        self.name = name
 
         self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
-        offset = self.load_param('skills/arm/' + self.side + '/grasp_offset/')
+        offset = self.load_param('skills/gripper/grasp_offset/')
         self.offset = kdl.Frame(kdl.Rotation.RPY(offset["roll"], offset["pitch"], offset["yaw"]),
                                 kdl.Vector(offset["x"], offset["y"], offset["z"]))
 
-        self.marker_to_grippoint_offset = self.load_param('skills/arm/' + self.side + '/marker_to_grippoint')
+        self.marker_to_grippoint_offset = self.load_param('skills/gripper/marker_to_grippoint')
 
         # Grasp offsets
-        go = self.load_param('skills/arm/' + self.side + '/base_offset')
+        go = self.load_param('skills/' + self.name + '/base_offset')
         self._base_offset = kdl.Vector(go["x"], go["y"], go["z"])
 
-        self.joint_names = self.load_param('skills/arm/joint_names')
-        self.joint_names = [name + "_" + self.side for name in self.joint_names]
+        self.joint_names = self.load_param('skills/' + self.name + '/joint_names')
         self.torso_joint_names = self.load_param('skills/torso/joint_names')
 
-        self.default_configurations = self.load_param('skills/arm/default_configurations')
-        self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
+        self.default_configurations = self.load_param('skills/' + self.name + '/default_configurations')
+        self.default_trajectories = self.load_param('skills/' + self.name + '/default_trajectories')
+
+        self.grasp_frame = self.load_param('skills/gripper/grasp_frame')  #TODO remove gripper specific parameters
 
         # listen to the hardware status to determine if the arm is available
-        self.subscribe_hardware_status(self.side + '_arm')
+        self.subscribe_hardware_status(self.name)
 
         # Init grasp precompute actionlib
         self._ac_grasp_precompute = self.create_simple_action_client(
-            "/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
+            "/" + robot_name + "/" + self.name + "/grasp_precompute", GraspPrecomputeAction)
 
         # Init joint trajectory action server
         self._ac_joint_traj = self.create_simple_action_client(
@@ -325,7 +319,7 @@ class Arm(RobotPart):
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
-            "/" + robot_name + "/" + self.side + "_arm/grasp_target",
+            "/" + robot_name + "/" + self.name + "/grasp_target",
             visualization_msgs.msg.Marker, queue_size=10)
 
         self.get_joint_states = get_joint_states
@@ -400,10 +394,10 @@ class Arm(RobotPart):
         :return: no return
         """
         try:
-            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.side))
+            rospy.loginfo("{0} arm cancelling all goals on all arm-related ACs on close".format(self.name))
         except AttributeError:
             print("{0} arm cancelling all goals on all arm-related ACs on close. rospy is already deleted.".
-                  format(self.side))
+                  format(self.name))
 
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
@@ -433,11 +427,11 @@ class Arm(RobotPart):
 
         # If necessary, prefix frame_id
         if frameStamped.frame_id.find(self.robot_name) < 0:
-            frameStamped.frame_id = "/"+self.robot_name+"/"+frameStamped.frame_id
+            frameStamped.frame_id = self.robot_name + "/" + frameStamped.frame_id
             rospy.loginfo("Grasp precompute frame id = {0}".format(frameStamped.frame_id))
 
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
-        frame_in_baselink = frameStamped.projectToFrame("/"+self.robot_name+"/base_link", self.tf_listener)
+        frame_in_baselink = frameStamped.projectToFrame(self.robot_name + "/base_link", self.tf_listener)
 
         # TODO: Get rid of this custom message type
         # Create goal:
@@ -497,7 +491,7 @@ class Arm(RobotPart):
             if result == GoalStatus.SUCCEEDED:
 
                 result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
-                                                               self.robot_name + "/grippoint_{}".format(self.side),
+                                                               self.robot_name + "/" + self.grasp_frame,
                                                                rospy.Time(0))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
                 dy = grasp_precompute_goal.goal.y - result_pose[0][1]
@@ -606,7 +600,7 @@ class Arm(RobotPart):
                                            points=ps)
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
-        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
+        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.name, ps))
 
         import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
                                         # to only have a queue size of 1 and runs at 1000 hz. This
@@ -693,4 +687,4 @@ class Arm(RobotPart):
         self._marker_publisher.publish(marker)
 
     def __repr__(self):
-        return "Arm(side='{side}')".format(side=self.side)
+        return "Arm(name='{}')".format(self.name)

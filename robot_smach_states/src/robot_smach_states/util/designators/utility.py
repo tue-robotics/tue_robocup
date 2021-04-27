@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 # ROS
 import rospy
@@ -8,7 +8,7 @@ import rospy
 import operator
 
 # TU/e Robotics
-from .core import Designator, VariableDesignator
+from robot_smach_states.util.designators.core import Designator, VariableDesignator
 
 __author__ = 'loy'
 
@@ -97,18 +97,27 @@ class AttrDesignator(Designator):
     This can be recursive, so you can specify a chain of nested attributes like <resolved_object>.foo.bar
 
     For example:
-    >>> d = Designator(object(), resolve_type=object)
+    >>> d = Designator(bool, resolve_type=object)
     >>> #Get the __doc__ attribute of the object that d resolves to. d is an object and d.__doc__ is 'The most base type'
     >>> wrapped = AttrDesignator(d, '__doc__', resolve_type=str)
-    >>> wrapped.resolve() == 'The most base type'
-    True
+    >>> print(wrapped.resolve())
+    bool(x) -> bool
+    <BLANKLINE>
+    Returns True when the argument x is true, False otherwise.
+    The builtins True and False are the only two instances of the class bool.
+    The class bool is a subclass of the class int, and cannot be subclassed.
 
     >>> assert(issubclass(wrapped.resolve_type, str))
 
     >>> d2 = Designator("banana", resolve_type=str)
-    >>> wrapped2 = AttrDesignator(d2, '__class__.__class__', resolve_type=type)
-    >>> wrapped2.resolve()
-    <type 'type'>
+    >>> wrapped2 = AttrDesignator(d2, 'endswith.__doc__', resolve_type=str)
+    >>> print(wrapped2.resolve())
+    S.endswith(suffix[, start[, end]]) -> bool
+    <BLANKLINE>
+    Return True if S ends with the specified suffix, False otherwise.
+    With optional start, test S beginning at that position.
+    With optional end, stop comparing S at that position.
+    suffix can also be a tuple of strings to try.
 
     >>> from collections import namedtuple
     >>> A = namedtuple("A", ['foo'])

@@ -2,8 +2,9 @@ from __future__ import absolute_import
 
 # ROS
 import PyKDL as kdl
-from .kdl_conversions import point_msg_to_kdl_vector
 from numpy import abs
+
+from .kdl_conversions import point_msg_to_kdl_vector
 
 
 class Volume(object):
@@ -137,8 +138,9 @@ class CompositeBoxVolume(Volume):
         assert len(boxes) > 0
         assert isinstance(boxes[0], tuple)
 
-        self._min_corners = zip(*boxes)[0]
-        self._max_corners = zip(*boxes)[1]
+        zipped_corners = list(zip(*boxes))
+        self._min_corners = zipped_corners[0]
+        self._max_corners = zipped_corners[1]
 
     def _calc_center_point(self):
         """Calculate where the center of the box is located

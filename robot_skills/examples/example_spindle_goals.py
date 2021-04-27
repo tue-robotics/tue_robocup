@@ -1,10 +1,10 @@
 #! /usr/bin/env python
+import random
+import time
+
 import rospy
 
 import robot_skills.amigo
-
-import random
-import time
 
 if __name__ == "__main__":
     rospy.init_node('amigo_skills_test_full')
@@ -16,5 +16,3 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         amigo.torso._send_goal([random.random()])
         rospy.sleep(rospy.Duration(0.1))
-
-

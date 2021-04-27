@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # to test the decorator, let's define a designator with it
     @FunctionDesignator
     def FormattedSentenceDesignator(fmt, **kwargs):
-        kwargs_resolved = {key: value.resolve() for key, value in kwargs.iteritems()}
+        kwargs_resolved = {key: value.resolve() for key, value in kwargs.items()}
         return fmt.format(**kwargs_resolved)
 
     print("creating the designator")

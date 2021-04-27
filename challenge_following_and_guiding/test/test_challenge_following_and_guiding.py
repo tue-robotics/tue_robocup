@@ -1,9 +1,14 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('fast_simulator')
+
+from __future__ import print_function
+
 import rospy
 
 from fast_simulator import client
-import sys, select, termios, tty
+import sys
+import select
+import termios
+import tty
 
 def getKey():
     tty.setraw(sys.stdin.fileno())
@@ -32,12 +37,12 @@ class Person(object):
             self.z = -3.0
             self.awake = False
             self.updatePosition()
-            print "Operator fell back asleep"
+            print("Operator fell back asleep")
         else:
             self.z = 0.0
             self.awake = True
             self.updatePosition()
-            print "Operator woke up"
+            print("Operator woke up")
 
     def changePosition(self):
         self.position += 1
@@ -48,7 +53,7 @@ class Person(object):
         self.x = self.positions[self.position][0]
         self.y = self.positions[self.position][1]
         self.updatePosition()
-        print "Operator changed to position {}".format(self.position)
+        print("Operator changed to position {}".format(self.position))
 
     def move(self, key):
         dx = 0
@@ -84,7 +89,7 @@ class Person(object):
         elif key == '-':
             dz = -1
         else:
-            print "Don't do that"
+            print("Don't do that")
 
         self.x = self.x + dx * self.delta
         self.y = self.y + dy * self.delta
@@ -125,11 +130,11 @@ if __name__ == "__main__":
     # W.add_object("papaya_milk", "sim-papaya_milk", 3.10+dx*7, -1.25, 0.85, 0.0, 0.0 )
     # #W.add_object("fruit8", "coke", 3.15+dx*8, -1.05, 0.85, 0.0, 0.0 )
     # W.add_object("papaya_milk", "sim-papaya_milk", 3.20+dx*9, -1.25, 0.85, 0.0, 0.0 )
-    
 
-    print "Dynamic wake me up simulator"
-    print "Usage: press 5 to make the person in the bed wake up"
-    print "       use the numpad keys to move the thing around"
+
+    print("Dynamic wake me up simulator")
+    print("Usage: press 5 to make the person in the bed wake up")
+    print("       use the numpad keys to move the thing around")
 
     while not rospy.is_shutdown():
 

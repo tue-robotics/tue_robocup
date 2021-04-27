@@ -1,4 +1,6 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import range
 
 # System
 import rospy
@@ -64,7 +66,7 @@ class EmptySpotDesignator(Designator):
         :returns: FrameStamped
         """
         place_location = self.place_location_designator.resolve()
-        place_frame = FrameStamped(frame=place_location._pose, frame_id="/map")
+        place_frame = FrameStamped(frame=place_location._pose, frame_id="map")
 
         # points_of_interest = []
         if self._area:
@@ -138,7 +140,7 @@ class EmptySpotDesignator(Designator):
 
         if plan_to_poi:
             distance = len(plan_to_poi)
-            # print "Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p)
+            # print("Distance to {fs}: {dist}".format(dist=distance, fs=frame_stamped.frame.p))
         else:
             distance = None
         return distance
@@ -147,7 +149,7 @@ class EmptySpotDesignator(Designator):
         marker = Marker()
         marker.id = len(self.marker_array.markers)
         marker.type = 2
-        marker.header.frame_id = "/map"
+        marker.header.frame_id = "map"
         marker.header.stamp = rospy.Time.now()
         marker.pose.position.x = x
         marker.pose.position.y = y
@@ -224,7 +226,7 @@ class EmptySpotDesignator(Designator):
         # Loop over hulls
         self.marker_array.markers = []
 
-        for i in xrange(len(ch)):
+        for i in range(len(ch)):
             j = (i + 1) % len(ch)
 
             dx = ch[j].x() - ch[i].x()
@@ -242,11 +244,11 @@ class EmptySpotDesignator(Designator):
                 fs = kdl_frame_stamped_from_XYZRPY(x=xs - dy / length * self._edge_distance,
                                                    y=ys + dx / length * self._edge_distance,
                                                    z=center_frame.p.z() + z_max,
-                                                   frame_id="/map")
+                                                   frame_id="map")
 
                 # It's nice to put an object on the middle of a long edge. In case of a cabinet, e.g., this might
                 # prevent the robot from hitting the cabinet edges
-                # print "Length: {}, edge score: {}".format(length, min(d, length-d))
+                # print("Length: {}, edge score: {}".format(length, min(d, length-d)))
                 setattr(fs, 'edge_score', min(d, length-d))
 
                 points += [fs]

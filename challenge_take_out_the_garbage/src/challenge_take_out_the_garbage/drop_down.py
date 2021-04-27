@@ -77,7 +77,7 @@ class DropTrash(smach.State):
 #
 #         frame.p.z(self._drop_height)
 #
-#         return FrameStamped(frame, "/map")
+#         return FrameStamped(frame, "map")
 
 
 class DropDownTrash(smach.StateMachine):

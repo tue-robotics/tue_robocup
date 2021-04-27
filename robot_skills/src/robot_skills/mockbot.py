@@ -1,30 +1,30 @@
 #! /usr/bin/env python
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
+import os
+import random
 # System
 from collections import defaultdict
-import mock
-import random
-import os
-import six
 
+import PyKDL as kdl
 # ROS
 import geometry_msgs
-import PyKDL as kdl
+import mock
 import rospy
+import six
 import std_msgs.msg
 import tf
-
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 from ed_sensor_integration_msgs.srv import UpdateResponse
+
+from hmi import HMIResult
+from hmi.common import parse_sentence, random_sentence
 from robot_skills import robot
-from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from hmi import HMIResult
-from hmi.common import random_sentence, parse_sentence
+from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 
 
 def random_kdl_vector():
@@ -126,10 +126,10 @@ class MockedRobotPart(object):
 
 
 class Arm(MockedRobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states, side):
+    def __init__(self, robot_name, tf_listener, get_joint_states, name):
         super(Arm, self).__init__(robot_name, tf_listener)
 
-        self.side = side
+        self.arm_name = name
         self.get_joint_states = get_joint_states
 
         self._operational = True
@@ -182,7 +182,7 @@ class Base(MockedRobotPart):
         self.move = AlteredMagicMock()
         self.turn_towards = AlteredMagicMock()
         self.force_drive = AlteredMagicMock()
-        self.get_location = lambda: FrameStamped(random_kdl_frame(), "/map")
+        self.get_location = lambda: FrameStamped(random_kdl_frame(), "map")
         self.set_initial_pose = AlteredMagicMock()
         self.wait_for_motion_done = AlteredMagicMock()
         self.go = AlteredMagicMock()
@@ -248,7 +248,7 @@ class Perception(MockedRobotPart):
         self.detect_faces = AlteredMagicMock()
         self.get_best_face_recognition = AlteredMagicMock()
         self.get_rgb_depth_caminfo = AlteredMagicMock()
-        self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "/map")
+        self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "map")
 
 
 class Lights(MockedRobotPart):
@@ -290,33 +290,33 @@ class Torso(MockedRobotPart):
 
 class ED(MockedRobotPart):
     @staticmethod
-    def generate_random_entity(id=None, type=None):
+    def generate_random_entity(id_=None, type_=None):
             entity_info = EntityInfo()
 
-            if not id:
-                entity_info.id = str(hash(entity_info))
+            if not id_:
+                entity_info.id = str(id(entity_info))
             else:
-                entity_info.id = id
+                entity_info.id = id_
             entity_info.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             # entity.data = AlteredMagicMock()
             entity_info.data = ""
 
             entity = from_entity_info(entity_info)
             entity._pose = random_kdl_frame()
-            if type:
-                entity.type = type
+            if type_:
+                entity.type = type_
             return entity
 
     def __init__(self, robot_name, tf_listener, *args, **kwargs):
         super(ED, self).__init__(robot_name, tf_listener)
         self._dynamic_entities = defaultdict(self.generate_random_entity,
-                                     {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
+                                             {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
 
-        self._dynamic_entities['john'] = self.generate_random_entity(id='john', type='person')
+        self._dynamic_entities['john'] = self.generate_random_entity(id_='john', type_='person')
         self._static_entities = defaultdict(self.generate_random_entity,
                                      {e.id: e for e in [self.generate_random_entity() for _ in range(5)]})
-        self._static_entities['test_waypoint_1'] = self.generate_random_entity(id='test_waypoint_1', type='waypoint')
-        self._static_entities['cabinet'] = self.generate_random_entity(id='cabinet')
+        self._static_entities['test_waypoint_1'] = self.generate_random_entity(id_='test_waypoint_1', type_='waypoint')
+        self._static_entities['cabinet'] = self.generate_random_entity(id_='cabinet')
 
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None: self._entities[id]
@@ -333,7 +333,7 @@ class ED(MockedRobotPart):
 
     def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", ignore_z=False):
 
-        center_point_in_map = center_point.projectToFrame("/map", self.tf_listener)
+        center_point_in_map = center_point.projectToFrame("map", self.tf_listener)
 
         entities = self._entities.values()
         if type:
@@ -350,7 +350,9 @@ class ED(MockedRobotPart):
 
     @property
     def _entities(self):
-        return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())
+        entities = self._dynamic_entities.copy()
+        entities.update(self._static_entities)
+        return defaultdict(ED.generate_random_entity, entities.items())
 
     def segment_kinect(self, *args, **kwargs):
         self._dynamic_entities = {e.id: e for e in [ED.generate_random_entity() for _ in range(5)]}
@@ -415,8 +417,8 @@ class Mockbot(robot.Robot):
         self.add_body_part('base', Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left"))
-        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right"))
+        self.add_arm_part('leftArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_left"))
+        self.add_arm_part('rightArm', Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_right"))
 
         self.add_body_part('head', Head(self.robot_name, self.tf_listener))
 

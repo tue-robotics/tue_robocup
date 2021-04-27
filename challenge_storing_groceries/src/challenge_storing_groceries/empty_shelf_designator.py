@@ -58,7 +58,7 @@ class EmptyShelfDesignator(Designator):
             return ret
 
 
-    def create_marker(self, x, y, z, frame_id="/map"):
+    def create_marker(self, x, y, z, frame_id="map"):
         marker = Marker()
         marker.id = len(self.marker_array.markers)
         marker.type = 2

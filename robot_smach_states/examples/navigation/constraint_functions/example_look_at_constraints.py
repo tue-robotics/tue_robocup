@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # get an entitydesignator
     pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector(1, 2, 1.3))
-    e = Entity("dummy", "dummy_type", "/map", pose, None, None, None, None)
+    e = Entity("dummy", "dummy_type", "map", pose, None, None, None, None)
     entity = Designator(e, name="entity designator")
 
     # example base function

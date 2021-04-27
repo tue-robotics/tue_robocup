@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from builtins import range
+
 # System
 import math
 
@@ -56,7 +58,7 @@ class GraspPointDeterminant(object):
         robot_frame_inv = robot_frame.frame.Inverse()
 
         ''' Loop over lines of chull '''
-        for i in xrange(len(chull)):
+        for i in range(len(chull)):
             j = (i+1)%len(chull)
 
             dx = chull[j].x() - chull[i].x()
@@ -108,11 +110,11 @@ class GraspPointDeterminant(object):
              # * kdl.Vector(0.5 * (wmin+wmax, 0, 0)
             tvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
                                 kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.frame.p.z())),
-                                frame_id="/map") # Helper frame
+                                frame_id="map") # Helper frame
 
             cvec = FrameStamped(kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
                                 tvec.frame * kdl.Vector(0, -0.5 * (wmin+wmax), 0)),
-                                frame_id="/map")
+                                frame_id="map")
 
             ''' Optimize over yaw offset w.r.t. robot '''
             # robot_in_map * entity_in_robot = entity_in_map

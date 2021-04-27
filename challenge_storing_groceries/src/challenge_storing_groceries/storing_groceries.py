@@ -1,22 +1,18 @@
 #!/usr/bin/python
 
 # ROS
-import rospy
-import PyKDL as kdl
 import smach
 
 # TU/e Robotics
-from robot_skills.util.kdl_conversions import FrameStamped
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.geometry_helpers import *
 
 # Challenge storing groceries
-from config import *
-from inspect_shelves import InspectShelves
-from manipulate_machine import ManipulateMachine
-from open_door import OpenDoorMachine
-from pdf import WritePdf
+from .config import *
+from .manipulate_machine import ManipulateMachine
+from .open_door import OpenDoorMachine
+from .pdf import WritePdf
 
 
 class StoringGroceries(smach.StateMachine):

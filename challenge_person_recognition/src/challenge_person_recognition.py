@@ -3,7 +3,6 @@
 import rospy
 import smach
 import robot_smach_states as states
-import time
 import os
 import datetime
 

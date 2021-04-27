@@ -16,13 +16,16 @@ Options:
   -h --help     Show this screen.
 
 """
-from docopt import docopt
-from datetime import datetime
-import sys
+
+from __future__ import print_function
+
 import os
-from glob import glob
 import shutil
-from util import parse_start_end, get_modification_date
+from datetime import datetime
+from docopt import docopt
+from glob import glob
+
+from util import get_modification_date, parse_start_end
 
 GLOBS = {
     "faces": ["/tmp/faces/*.jpeg"],
@@ -56,8 +59,8 @@ if __name__ == '__main__':
     start, end = parse_start_end(arguments, now)
     name = arguments["<name>"]
 
-    print "I am going to collect data for '%s'" % name
-    print "Datetime: [%s <--> %s]" % (start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M"))
+    print("I am going to collect data for '%s'" % name)
+    print("Datetime: [%s <--> %s]" % (start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M")))
 
     if not arguments["--go"]:
         raw_input("Press Enter to continue...")
@@ -67,7 +70,7 @@ if __name__ == '__main__':
         os.makedirs(name)
 
     # Copy files
-    for cat_name, glob_entries in GLOBS.iteritems():
+    for cat_name, glob_entries in GLOBS.items():
         dir_name = name + "/" + cat_name
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
@@ -77,7 +80,7 @@ if __name__ == '__main__':
                 # Check if modification date is between bounds (or unknown)
                 mod_date = get_modification_date(file_name)
                 if not mod_date or start < mod_date < end:
-                    print "Writing file '%s' to '%s'" % (file_name, dir_name)
+                    print("Writing file '%s' to '%s'" % (file_name, dir_name))
                     shutil.copy(file_name, dir_name)
 
     del_empty_dirs(name)

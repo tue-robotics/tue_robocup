@@ -1,18 +1,19 @@
 #! /usr/bin/env python
 
-import rospy
 import unittest
 
-# robot skills
+import rospy
+
+from robot_skills.functionalities import RobotFunc, add_functionalities
 from robot_skills.robot import Robot
 from robot_skills.robot_part import RobotPart
 
-from robot_skills.functionalities import add_functionalities, RobotFunc
 
 # robotpart subclass
 class TestPart(RobotPart):
     def some_function(self):
         pass
+
 
 # functionality which can be added to the subclass
 class TestFunc1(RobotFunc):
@@ -20,30 +21,30 @@ class TestFunc1(RobotFunc):
         super(TestFunc1, self).__init__("extra_functionality",
                                         TestPart,
                                         {"testfunction1": testfunction1})
+
     def check_requirements(self, part):
         return True
+
 
 class TestFunc2(RobotFunc):
     def __init__(self):
         super(TestFunc2, self).__init__("extra_functionality_with_harsh_requirements",
                                         TestPart,
                                         {"testfunction2": testfunction2})
+
     def check_requirements(self, part):
         return False
 
+
 def testfunction1(self):
     return 'test 1 called'
+
 
 def testfunction2(self):
     return 'test 2 called'
 
 
 class TestComposeRobot(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        rospy.init_node('test_composable_robot_interface2')
-
     def test_compose_robot(self):
         robot = Robot("testbot")
         part = RobotPart("testbot", robot.tf_listener)
@@ -67,6 +68,8 @@ class TestComposeRobot(unittest.TestCase):
 
         self.assertFalse(hasattr(robot.special_part, 'testfunction2'))
 
+
 if __name__ == '__main__':
     import rostest
+    rospy.init_node('test_composable_robot_interface')
     rostest.rosrun('robot_skills', 'test_composable_robot_interface', TestComposeRobot)

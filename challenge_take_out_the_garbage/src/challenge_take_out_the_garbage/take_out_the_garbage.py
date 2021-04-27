@@ -5,7 +5,6 @@ import rospy
 # Robot smach states
 import robot_smach_states as states
 from robocup_knowledge import load_knowledge
-import robot_smach_states.util.designators as ds
 from robot_skills.arm import arms
 from challenge_take_out_the_garbage.pick_up import PickUpTrash
 from challenge_take_out_the_garbage.drop_down import DropDownTrash, DropTrash
@@ -124,9 +123,9 @@ class TestDummy(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed", ])
 
         # Create designators
-        dummy_trashbin_designator = ds.EdEntityDesignator(dummy_robot,
-                                                    id=CHALLENGE_KNOWLEDGE.trashbin_id2,
-                                                    name='trashbin_designator')
+        dummy_trashbin_designator = ds.EdEntityDesignator(
+            dummy_robot, id=CHALLENGE_KNOWLEDGE.trashbin_id2, name='trashbin_designator'
+        )
         dummy_arm_designator_un = ds.UnoccupiedArmDesignator(
             dummy_robot,
             {"required_goals": ["handover", "reset", "handover_to_human"], "force_sensor_required": True,
@@ -150,16 +149,14 @@ class TestDummy(smach.StateMachine):
                                    transitions={"succeeded": "succeeded",
                                                 "failed": "failed"})
 
+
 if __name__ == '__main__':
     import os
     import robot_smach_states.util.designators as ds
-    from robot_skills import Hero
+    from robot_skills import get_robot
 
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    hero = Hero()
-    hero.reset()
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
 
-    TestDummy(hero).execute()
-
-
-
+    TestDummy(robot_instance).execute()

@@ -10,7 +10,7 @@ import os
 import rospy
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from geometry_msgs.msg import PoseStamped, Quaternion
-from robot_skills import Hero
+from robot_skills import get_robot
 from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
@@ -20,9 +20,11 @@ from tf.transformations import quaternion_from_euler
 class OpenCupboard(StateMachine):
     def __init__(self, robot, cupboard_id):
         StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+        # noinspection PyProtectedMember
         arm = robot.get_arm()._arm
 
         def send_joint_goal(position_array, wait_for_motion_done=True):
+            # noinspection PyProtectedMember
             arm._send_joint_trajectory([position_array], timeout=rospy.Duration(0))
             if wait_for_motion_done:
                 arm.wait_for_motion_done()
@@ -96,6 +98,6 @@ class NavigateToAndOpenCupboard(StateMachine):
 
 if __name__ == '__main__':
     rospy.init_node(os.path.splitext("test_" + os.path.basename(__file__))[0])
-    hero = Hero()
-    hero.reset()
-    NavigateToAndOpenCupboard(hero, 'cabinet', 'in_front_of').execute()
+    robot_instance = get_robot("hero")
+    robot_instance.reset()
+    NavigateToAndOpenCupboard(robot_instance, 'cabinet', 'in_front_of').execute()

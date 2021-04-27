@@ -1,5 +1,9 @@
 #! /usr/bin/env python
+
+from __future__ import print_function
+
 import rospy
+
 from robot_skills import get_robot_from_argv
 
 rospy.init_node("audio_test")

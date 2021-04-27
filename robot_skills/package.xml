@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>robot_skills</name>
   <version>0.0.0</version>
   <description>No description available</description>
@@ -9,6 +12,9 @@
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+
+  <buildtool_depend condition="$ROS_PYTHON_VERSION == 2">python-setuptools</buildtool_depend>
+  <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
 
   <depend>actionlib</depend>
   <depend>cb_base_navigation_msgs</depend>
@@ -26,6 +32,8 @@
   <depend>hmi_msgs</depend>
   <depend>people_recognition_msgs</depend>
   <depend>python_orocos_kdl</depend>
+  <depend condition="$ROS_PYTHON_VERSION == 2">python-rospkg</depend>
+  <depend condition="$ROS_PYTHON_VERSION == 3">python3-rospkg</depend>
   <depend>rgbd_msgs</depend>
   <depend>rospy</depend>
   <depend>smach</depend>
@@ -37,16 +45,20 @@
   <depend>tue_msgs</depend>
   <depend>visualization_msgs</depend>
 
-  <exec_depend>python-mock</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-mock</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-mock</exec_depend>
 
   <test_depend>test_tools</test_depend>
-  <test_depend>python-six</test_depend>
+  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-six</test_depend>
+  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-six</test_depend>
 
-  <doc_depend>python-sphinx</doc_depend>
+  <doc_depend condition="$ROS_PYTHON_VERSION == 2">python-sphinx</doc_depend>
+  <doc_depend condition="$ROS_PYTHON_VERSION == 3">python3-sphinx</doc_depend>
   <doc_depend>python-sphinx-autoapi-pip</doc_depend>
   <doc_depend>python-sphinx-rtd-theme-pip</doc_depend>
 
   <export>
+    <robot_skills robot="robot_skills.mockbot.Mockbot" />
     <rosdoc config="rosdoc.yaml" />
   </export>
 

@@ -34,16 +34,14 @@ if __name__ == "__main__":
 
     entity_id = "test_item"
     pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(args.x, args.y, args.z)),
-                        frame_id="/map")
+                        frame_id="map")
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
     shape = RightPrism([kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)], -0.1, 0.1)
     item = Entity(entity_id, "test_type", pose.frame_id, pose.frame, shape, None, None, None)
 
     item = ds.Designator(item)
 
-    arm = ds.UnoccupiedArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_grasp"],
-                                                            "required_goals": ["carrying_pose"],
-                                                            "required_gripper_types": [arms.GripperTypes.GRASPING]})
+    arm = ds.UnoccupiedArmDesignator(robot).lockable()
 
     grab_state = Grab(robot, item, arm)
     grab_state.execute()

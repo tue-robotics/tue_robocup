@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 
+from collections import OrderedDict, Sequence
+
+import geometry_msgs
 # ROS
 import rospy
 import tf
-import geometry_msgs
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
@@ -11,8 +13,6 @@ from std_msgs.msg import String
 # TU/e
 from .arm import arms
 from .functionalities.add_functionalities import add_functionalities
-
-from collections import OrderedDict, Sequence
 
 CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
 
@@ -58,7 +58,9 @@ class Robot(object):
         self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
 
         # Check hardware status
-        self._hardware_status_sub = rospy.Subscriber("/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status)
+        self._hardware_status_sub = rospy.Subscriber(
+            "/" + self.robot_name + "/hardware_status", DiagnosticArray, self.handle_hardware_status
+        )
 
         self.laser_topic = "/"+self.robot_name+"/base_laser/scan"
 
@@ -150,7 +152,7 @@ class Robot(object):
         :param gripper_timeout: If specified and 'close_gripper' holds, timeout for closing the gripper.
             If not specified, gripper movement uses 'arm_timeout'.
         """
-        for arm in self._arms.itervalues():
+        for arm in self._arms.values():
             if close_gripper:
                 if gripper_timeout is None:
                     gripper_timeout = arm_timeout
@@ -172,7 +174,6 @@ class Robot(object):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
     def tf_transform_pose(self, ps, frame):
-        output_pose = geometry_msgs.msg.PointStamped
         self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
@@ -235,7 +236,7 @@ class Robot(object):
         assert seq_or_none(required_objects)
         assert seq_or_none(desired_objects)
 
-        for arm_name, arm in self._arms.iteritems():
+        for arm_name, arm in self._arms.items():
             if not arm.operational:
                 discarded_reasons.append((arm_name, "not operational"))
                 continue
@@ -352,11 +353,11 @@ class Robot(object):
         """
         hardware_status callback to determine if the bodypart is operational
 
-        :param msg: diagnostic_msgs.msg.DiagnosticArray
+        :param diagnostic_array: diagnostic_msgs.msg.DiagnosticArray
         :return: no return
         """
 
-        diagnostic_dict = {diagnostic_status.name:diagnostic_status for diagnostic_status in diagnostic_array.status}
+        diagnostic_dict = {diagnostic_status.name: diagnostic_status for diagnostic_status in diagnostic_array.status}
 
         for name, part in self.parts.items():
             # Pass a dict mapping the name to the item.

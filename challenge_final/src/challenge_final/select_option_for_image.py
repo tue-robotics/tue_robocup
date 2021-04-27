@@ -1,21 +1,16 @@
+from __future__ import print_function
+
 import sys
-import cv2
 from threading import Event
-from collections import OrderedDict
 
-# ROS
-import rospy
-import smach
+import cv2
 import cv_bridge
-from std_msgs.msg import String
+import rospy
 from sensor_msgs.msg import Image
-
+from std_msgs.msg import String
 from telegram_ros.msg import Options
 
-# Robot skills
-from robot_smach_states import WaitTime
-from robot_smach_states.util.designators import EdEntityDesignator
-import robot_smach_states as states
+import smach
 
 
 class SelectOptionForImage(smach.State):
@@ -124,7 +119,6 @@ class SelectOptionForImage(smach.State):
 
 
 if __name__ == '__main__':
-    from robot_skills import get_robot
 
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
@@ -156,7 +150,5 @@ if __name__ == '__main__':
 
         rospy.loginfo(ud['selection'])
     else:
-        print "Please provide robot name as argument."
+        print("Please provide robot name as argument.")
         exit(1)
-
-

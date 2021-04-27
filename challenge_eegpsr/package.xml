@@ -1,12 +1,15 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>challenge_eegpsr</name>
   <version>0.0.0</version>
   <description>The challenge eegpsr package</description>
 
   <maintainer email="amigo@tue.nl">Rokus Ottervanger</maintainer>
 
-  
+
   <license>BSD</license>
 
 
@@ -16,8 +19,8 @@
   <build_depend>robot_smach_states</build_depend>
   <build_depend>rospy</build_depend>
 
-  <run_depend>robot_skills</run_depend>
-  <run_depend>robot_smach_states</run_depend>
-  <run_depend>rospy</run_depend>
+  <exec_depend>robot_skills</exec_depend>
+  <exec_depend>robot_smach_states</exec_depend>
+  <exec_depend>rospy</exec_depend>
 
 </package>

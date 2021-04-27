@@ -11,9 +11,12 @@ from robot_smach_states.navigation import NavigateToGrasp
 from robot_skills.arm.arms import PublicArm
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import VectorStamped, FrameStamped
+from robot_smach_states.utility import ResolveArm, check_arm_requirements
 
 
 class PointAt(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_goals": ["carrying_pose"], }
+
     def __init__(self, robot, arm, point_entity_designator):
         """
         Points at an item, similar to picking it up.
@@ -26,7 +29,7 @@ class PointAt(smach.State):
 
         # Assign member variables
         self.robot = robot
-        self.arm_designator = arm
+        self.arm_des = arm
 
         ds.check_type(point_entity_designator, Entity)
         self.point_entity_designator = point_entity_designator
@@ -38,7 +41,8 @@ class PointAt(smach.State):
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
 
-        arm = self.arm_designator.resolve()
+        arm = self.arm_des.resolve()
+
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
@@ -153,7 +157,11 @@ class IdentifyObject(smach.StateMachine):
         ds.check_type(arm, PublicArm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, item, arm),
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
+                                   transitions={'succeeded': 'NAVIGATE_TO_POINT',
+                                                'failed': 'failed'})
+
+            smach.StateMachine.add('NAVIGATE_TO_POINT', NavigateToGrasp(robot, arm, item),
                                    transitions={'unreachable': 'RESET_FAILURE',
                                                 'goal_not_defined': 'RESET_FAILURE',
                                                 'arrived': 'PREPARE_POINT'})
@@ -169,6 +177,8 @@ class IdentifyObject(smach.StateMachine):
             smach.StateMachine.add("RESET_FAILURE", ResetOnFailure(robot, arm),
                                    transitions={'done': 'failed'})
 
+            check_arm_requirements(self, robot)
+
 
 if __name__ == "__main__":
     from robot_skills import get_robot_from_argv
@@ -178,7 +188,7 @@ if __name__ == "__main__":
     robot = get_robot_from_argv(index=1)
 
     entity_id = "test_item"
-    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), frame_id="/map")
+    pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0, 0, -1.57), kdl.Vector(2.6, -0.95, 0.8)), frame_id="map")
 
     robot.ed.update_entity(id=entity_id, frame_stamped=pose)
 

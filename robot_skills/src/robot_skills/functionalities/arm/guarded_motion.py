@@ -1,12 +1,10 @@
-from robot_skills.functionalities import RobotFunc
-
-from robot_skills.arm.arms import Arm
-from robot_skills.arm.force_sensor import ForceSensor
-
+import rospy
 from control_msgs.msg import FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-import rospy
+from robot_skills.arm.arms import Arm
+from robot_skills.arm.force_sensor import ForceSensor
+from robot_skills.functionalities import RobotFunc
 
 
 class GuardedMotionFunc(RobotFunc):

@@ -9,13 +9,10 @@ import tf2_ros
 import tf2_geometry_msgs  # required for transforms
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
-# TU/e
-from robot_skills.util.kdl_conversions import VectorStamped
+
 
 # Challenge storing groceries
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-
-import config
 
 import robot_smach_states as states
 

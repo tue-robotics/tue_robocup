@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from builtins import range
+
 # System
 import math
 
@@ -52,7 +54,7 @@ def isPointInsideHull(p, chull):
     ch = list(chull)
 
     ''' Loop over lines of chull '''
-    for i in xrange(len(ch)):
+    for i in range(len(ch)):
         j = (i+1)%len(ch)
         ''' Check whether the point is left of the line '''
         if not isLeftOfLine(p, [ch[i], ch[j]]):

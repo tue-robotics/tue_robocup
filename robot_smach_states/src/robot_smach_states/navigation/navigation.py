@@ -11,7 +11,7 @@ from robot_skills.battery import Battery
 
 class StartAnalyzer(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['done'])
+        smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
     def execute(self, userdata=None):
@@ -21,8 +21,8 @@ class StartAnalyzer(smach.State):
 
 class StopAnalyzer(smach.State):
     def __init__(self, robot, result):
-        smach.State.__init__(self,outcomes=['done'])
-        self.robot  = robot
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
         self.result = result
 
     def execute(self, userdata=None):
@@ -32,7 +32,7 @@ class StopAnalyzer(smach.State):
 
 class AbortAnalyzer(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['done'])
+        smach.State.__init__(self, outcomes=['done'])
         self.robot  = robot
 
     def execute(self, userdata=None):
@@ -79,8 +79,7 @@ class PrepareDrive(smach.State):
 
 class getPlan(smach.State):
     def __init__(self, robot, constraint_function, speak=True):
-        smach.State.__init__(self,
-            outcomes=['unreachable','goal_not_defined','goal_ok','preempted'])
+        smach.State.__init__(self, outcomes=['unreachable', 'goal_not_defined', 'goal_ok', 'preempted'])
         self.robot = robot
         self.constraint_function = constraint_function
         self.speak = speak
@@ -197,7 +196,7 @@ class executePlan(smach.State):
 
 class planBlocked(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['blocked', 'free'])
+        smach.State.__init__(self, outcomes=['blocked', 'free'])
         self.robot = robot
 
     def execute(self, userdata=None):
@@ -211,7 +210,7 @@ class planBlocked(smach.State):
             rospy.sleep(0.5)
 
             # Look at the entity
-            # ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
+            # ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="map")
             # self.robot.head.look_at_point(kdl_vector_stamped_from_point_stamped_msg(ps))
 
             if not self.robot.base.local_planner.getStatus() == "blocked":
@@ -249,9 +248,8 @@ class NavigateTo(smach.StateMachine):
     :param speak: Whether or not the robot should speak during navigation
     :param reset_pose: Whether or not the robot is allowed to change its pose for navigation.
     """
-    def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True, input_keys=[], output_keys=[]):
-        smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'],
-                                    input_keys=input_keys, output_keys=output_keys)
+    def __init__(self, robot, constraint_function, reset_head=True, speak=True, reset_pose=True):
+        smach.StateMachine.__init__(self, outcomes=['arrived', 'unreachable', 'goal_not_defined'])
         self.robot = robot
         self.speak = speak
 

@@ -1,9 +1,13 @@
-from . import robot, api, base, ebutton, head, ears, lights, perception, speech, torso, world_model_ed, battery
-from .arm import arms, force_sensor, gripper, handover_detector
-from .simulation import is_sim_mode, SimEButton
-
-import rospy
+# System
 import math
+
+# Third party
+import rospy
+
+# TU/e Robotics
+from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, torso, world_model_ed, battery
+from robot_skills.arm import arms, force_sensor, gripper, handover_detector
+from robot_skills.simulation import is_sim_mode, SimEButton
 
 
 class Hero(robot.Robot):
@@ -19,22 +23,23 @@ class Hero(robot.Robot):
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
+
+        arm_joint_names = rospy.get_param('/' + self.robot_name + '/skills/arm_center/joint_names')
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states, arm_joint_names))
 
         # add hero's arm
-        hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
+        hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_center")
         hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_listener, "/" + self.robot_name + "/wrist_wrench/raw"))
-        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
-        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'left'))
+        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'gripper'))
+        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'handover_detector'))
 
-        self.add_arm_part('leftArm', hero_arm)
+        self.add_arm_part('arm_center', hero_arm)
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
                                                                "/hero/head_rgbd_sensor/rgb/image_raw",
                                                                "/hero/head_rgbd_sensor/project_2d_to_3d",
                                                                camera_base_ns='hero/head_rgbd_sensor'))
-        # self.add_body_part('ssl', ssl.SSL(self.robot_name, self.tf_listener))
 
         # Human Robot Interaction
         self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
@@ -57,16 +62,13 @@ class Hero(robot.Robot):
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
 
-        #rename joint names
-        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
-
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
-        for part in self.parts.itervalues():
+        for part in self.parts.values():
             part.unsubscribe_hardware_status()
             part._operational = True
 
         # verify joint goal required for posing
-        assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
+        assert 'arm_out_of_way' in self.parts['arm_center'].default_configurations,\
             "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
         # parameters for posing
         self.z_over = 0.4  # height the robot should look over the surface
@@ -96,11 +98,13 @@ class Hero(robot.Robot):
 
         arm = self.get_arm(required_goals=['arm_out_of_way'])
 
+        # noinspection PyProtectedMember
         pose = arm._arm.default_configurations['arm_out_of_way']
         pose[0] = z_arm
+        # noinspection PyProtectedMember
         arm._arm._send_joint_trajectory([pose])
 
-        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "/map", 1.57)
+        self.base.turn_towards(inspect_target.x(), inspect_target.y(), "map", 1.57)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True
@@ -140,12 +144,14 @@ class Hero(robot.Robot):
         z_arm = (z_head - self.z_hh) * self.torso_to_arm_ratio
         z_arm = min(0.69, max(z_arm, 0.0))
 
+        # noinspection PyProtectedMember
         pose = arm._arm.default_trajectories['prepare_grasp']
         pose[1][0] = z_arm
+        # noinspection PyProtectedMember
         arm._arm._send_joint_trajectory(pose)
 
         angle_offset = -math.atan2(arm.base_offset.y(), arm.base_offset.x())
-        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "/map", angle_offset)
+        self.base.turn_towards(grasp_target.x(), grasp_target.y(), "map", angle_offset)
         arm.wait_for_motion_done()
         self.base.wait_for_motion_done()
         return True

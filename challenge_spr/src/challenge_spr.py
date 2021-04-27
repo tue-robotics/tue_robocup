@@ -1,18 +1,19 @@
 #! /usr/bin/env python
 
-import rospy
-import smach
 import math
 
-from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
-from robot_smach_states import Initialize, Say, WaitForPersonInFront, ForceDrive, WaitTime
-from robot_smach_states.util.startup import startup
+import rospy
+
 import robot_smach_states.util.designators as ds
-
-from challenge_spr_states import detect
-from challenge_spr_states import bluff_game
-
+import smach
+from challenge_spr_states import bluff_game, detect
 from robocup_knowledge import load_knowledge
+from robot_smach_states.human_interaction import Say, WaitForPersonInFront
+from robot_smach_states.human_interaction.answer_questions import HearAndAnswerQuestions
+from robot_smach_states.navigation import ForceDrive
+from robot_smach_states.util.startup import startup
+from robot_smach_states.utility import Initialize, WaitTime
+
 knowledge = load_knowledge('challenge_spr')
 common_knowledge = load_knowledge('common')
 

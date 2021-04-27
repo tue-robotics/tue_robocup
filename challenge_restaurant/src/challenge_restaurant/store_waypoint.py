@@ -1,15 +1,10 @@
 #!/usr/bin/python
 
-import math
-from operator import itemgetter
-
 import numpy as np
 import robot_smach_states as states
 import rospy
 import smach
-# from challenge_restaurant.srv import GetNormalScore
-from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped, kdl_frame_to_pose_msg
-from robot_skills.util.shape import RightPrism
+from robot_skills.util.kdl_conversions import FrameStamped, kdl_frame_to_pose_msg
 from visualization_msgs.msg import Marker
 
 
@@ -97,7 +92,7 @@ def _get_area(convex_hull):
 #         return vs
 #
 #     def _inspect_sides(self):
-#         for side, spec in self._sides.iteritems():
+#         for side, spec in self._sides.items():
 #             # Look at the side
 #             rospy.loginfo("looking at side %s" % side)
 #             vs = self._get_head_goal(spec)
@@ -161,7 +156,7 @@ def _get_area(convex_hull):
 #     def _get_best_side(self):
 #
 #         best_side = None
-#         for side, spec in self._sides.iteritems():
+#         for side, spec in self._sides.items():
 #             end_score = self._sides[side]["score"]["area_sum"] + \
 #                         self._sides[side]["score"]["min_distance"]
 #             rospy.loginfo("Side %s scoring (%f): %s" % (side, end_score, self._sides[side]["score"]))
@@ -219,7 +214,7 @@ class StoreWaypoint(smach.State):
         rospy.set_param("/restaurant_locations/{name}".format(name=self._location_id), loc_dict)
 
         self._visualize_location(base_pose, self._location_id)
-        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, "/map"),
+        self._robot.ed.update_entity(id=self._location_id, frame_stamped=FrameStamped(base_pose, "map"),
                                      type="waypoint")
 
         return "done"

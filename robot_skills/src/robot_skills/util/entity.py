@@ -1,13 +1,13 @@
 # System
 import yaml
 
+import PyKDL as kdl
 # ROS
 import rospy
-import PyKDL as kdl
-
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
-from robot_skills.util.kdl_conversions import pose_msg_to_kdl_frame, FrameStamped
+
+from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame
 from robot_skills.util.shape import shape_from_entity_info
 from robot_skills.util.volume import volumes_from_entity_volumes_msg
 
@@ -222,7 +222,7 @@ def from_entity_info(e):
     assert isinstance(e, EntityInfo)
     identifier = e.id
     object_type = e.type
-    frame_id = "/map"  # ED has all poses in map
+    frame_id = "map"  # ED has all poses in map
     pose = pose_msg_to_kdl_frame(e.pose)
     shape = shape_from_entity_info(e)
 

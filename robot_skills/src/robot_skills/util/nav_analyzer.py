@@ -5,9 +5,9 @@ import signal
 import subprocess
 import xml.etree.ElementTree as ET
 
+import PyKDL as kdl
 # ROS
 import nav_msgs.msg
-import PyKDL as kdl
 import rospy
 
 # TU/e Robotics
@@ -22,7 +22,7 @@ class NavAnalyzer:
         self.rosbag = False
         rospy.logdebug("Nav_analyser: Bagging = {0}".format(self.rosbag))
 
-        ''' Path '''
+        # Path
         # ToDo: make easier
         date = datetime.datetime.now()
         datestr = "{0}".format(date.year)
@@ -33,156 +33,135 @@ class NavAnalyzer:
             datestr += "0"
         datestr += "{0}".format(date.day)
 
-        self.path = os.environ["HOME"]+"/ros/data/private/recorded/rosbags/nav_data/"+datestr
+        self.path = os.path.join(os.environ["HOME"], "ros/data/private/recorded/rosbags/nav_data", datestr)
         if not os.path.isdir(self.path):
             os.makedirs(self.path)
 
-        self.filename = self.path+'/Summary.xml'
+        self.filename = os.path.join(self.path, "Summary.xml")
 
-        ''' Odometry subscriber '''
-        self.odom_sub = rospy.Subscriber("/"+self._robot_name+"/base/measurements", nav_msgs.msg.Odometry, self.odomCallback)
+        # Initialize XML element
+        self.logitem = ET.Element("item")
 
-        ''' Indicates whether measuring or not '''
+        # Subprocess
+        self.pro = None
+
+        # Odometry subscriber
+        self.odom_sub = rospy.Subscriber("/{}/base/measurements".format(self._robot_name), nav_msgs.msg.Odometry,
+                                         self.odomCallback)
+
+        # Indicates whether measuring or not
         self.active = False
 
-        ''' Bag topics '''
+        # Bag topics
         if self.rosbag:
             topics = ["/tf",
-                      "/"+self._robot_name+"/base/references",
-                      "/"+self._robot_name+"/base/measurements",
-                      "/"+self._robot_name+"/initialpose",
-                      "/"+self._robot_name+"/joint_states",
-                      "/amcl_pose",
-                      "/"+self._robot_name+"/base_laser/scan",
-                      "/"+self._robot_name+"/base_laser/scan_raw",
-                      "/"+self._robot_name+"/torso_laser/scan",
-                      "/"+self._robot_name+"/torso_laser/scan_raw",
-                      "/"+self._robot_name+"/top_kinect/rgbd",
-                      "/ed/gui/entities",
-                      "/ed/profile/ed",
-                      "/cb_base_navigation/local_planner_interface/visualization/markers/goal_pose_marker",
-                      "/cb_base_navigation/global_planner_interface/visualization/markers/global_plan",
-                      "/cb_base_navigation/local_planner_interface/DWAPlannerROS/local_traj",
-                      "/cb_base_navigation/local_planner_interface/dwa_planner/cost_cloud",
-                      "/cb_base_navigation/local_planner_interface/action_server/goal"]
+                      "/tf_static"
+                      "/{}/base/references",
+                      "/{}/base/measurements",
+                      "/{}/initialpose",
+                      "/{}/joint_states",
+                      "/{}/base_laser/scan",
+                      "/{}/base_laser/scan_raw",
+                      "/{}/torso_laser/scan",
+                      "/{}/torso_laser/scan_raw",
+                      "/{}/top_kinect/rgbd",
+                      "/{}/ed/gui/entities",
+                      "/{}/ed/profile/ed",
+                      "/{}/local_planner/visualization/markers/goal_pose_marker",
+                      "/{}/global_planner/visualization/markers/global_plan",
+                      "/{}/local_planner/DWAPlannerROS/local_traj",
+                      "/{}/local_planner/dwa_planner/cost_cloud",
+                      "/{}/local_planner/action_server/goal"]
 
-            #plantopic = "/move_base"
-            #if os.environ["AMIGO_NAV"] == "3d":
-            #    plantopic += "_3d"
-            #plantopic += "/AStarPlannerROS/plan"
-            #topics.append(plantopic)
-
-            self.base_cmd = "rosbag record "
+            self.base_cmd = ["rosbag", "record"]
             for topic in topics:
-                self.base_cmd += (topic + " ")
+                self.base_cmd.append(topic.format(self._robot_name))
 
-        ''' Initialize variables '''
+        # Initialize variables
         self.previous_position = kdl.Vector(0.0, 0.0, 0.0)
-        self.distance_traveled   = 0.0
-        self.nr_plan             = 0
-        self.nr_clear_costmap    = 0
-        self.nr_reset_costmap    = 0
+        self.distance_traveled = 0.0
+        self.nr_plan = 0
+        self.nr_clear_costmap = 0
+        self.nr_reset_costmap = 0
         self.starttime = rospy.Time.now()
 
     def start_measurement(self, startpose):
-
-        ''' The distance traveled concerns this specific goal '''
+        # The distance traveled concerns this specific goal
         self.distance_traveled = 0.0
-        self.nr_plan             = 0
-        self.nr_clear_costmap    = 0
-        self.nr_reset_costmap    = 0
+        self.nr_plan = 0
+        self.nr_clear_costmap = 0
+        self.nr_reset_costmap = 0
 
-        ''' Set time stamp '''
+        # Set time stamp
         self.starttime = rospy.Time.now()
-        stamp          = self.getTimeStamp()
+        stamp = self.getTimeStamp()
 
-        ''' Initialize XML element '''
-        self.logitem = ET.Element("item")
+        # Fill XML element
         self.logitem.set("stamp", stamp)
-        self.planitems = ET.SubElement(self.logitem, "plans")
-        self.clearitems= ET.SubElement(self.logitem, "clears")
-        self.resetitems= ET.SubElement(self.logitem, "resets")
+        ET.SubElement(self.logitem, "plans")
+        ET.SubElement(self.logitem, "clears")
+        ET.SubElement(self.logitem, "resets")
 
-        ''' Log startpose '''
+        # Log startpose
         startposeitem = ET.SubElement(self.logitem, "startpose")
         self.kdl_frame_to_sub_element(startpose, startposeitem)
 
-        ''' Start bagging '''
+        # Start bagging
         # The os.setsid() is passed in the argument preexec_fn so
         # it's run after the fork() and before  exec() to run the shell.
-        #cmd = self.base_cmd + "-O ~/ros/data/recorded/rosbags/nav_data/" + "{0}".format(stamp)
+        # cmd = self.base_cmd
+        # cmd.extend(["-O", "~/ros/data/recorded/rosbags/nav_data/{0}".format(stamp)])
         if self.rosbag:
-            cmd = self.base_cmd + "-O " + self.path + "/" + stamp
+            cmd = self.base_cmd
+            cmd.extend(["-O", self.path + "/" + stamp])
             self.pro = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
             rospy.logwarn("Logging with PID {0}".format(self.pro.pid))
 
-        ''' Make active '''
+        # Make active
         self.active = True
 
     def stop_measurement(self, endpose, result):
 
-        ''' Stop rosbagging '''
+        # Stop rosbagging
         if self.rosbag:
             os.killpg(self.pro.pid, signal.SIGINT)  # Send the signal to all the process groups
 
-        ''' Compute duration '''
+        # Compute duration
         endtime = rospy.Time.now()
         duration = endtime.to_sec() - self.starttime.to_sec()
 
-        ''' Log endpose '''
+        # Log endpose
         endposeitem = ET.SubElement(self.logitem, "endpose")
         self.kdl_frame_to_sub_element(endpose, endposeitem)
 
-        ''' Make inactive '''
+        # Make inactive
         self.active = False
 
-        ''' Write data to file '''
-        datafile = open(self.filename, 'a')
-
-        ''' With data string '''
-        #datastring = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n".format(self.stamp,
-        #                                                       duration,
-        #                                                        self.distance_traveled,
-        #                                                        result,
-        #                                                        self.nr_plan,
-        #                                                        self.nr_clear_costmap,
-        #                                                        self.nr_reset_costmap)
-        #datafile.write(datastring)
-
-        ''' Alternative: xml '''
         self.logitem.set("duration", "{0}".format(duration))
-        #duritem = ET.SubElement(self.logitem, "duration")
-        #duritem.text = "{0}".format(duration)
 
         self.logitem.set("distance", "{0}".format(self.distance_traveled))
-        #distitem = ET.SubElement(self.logitem, "distance")
-        #distitem.text = "{0}".format(self.distance_traveled)
 
         self.logitem.set("result", "{0}".format(result))
-        #resultitem = ET.SubElement(self.logitem, "result")
-        #resultitem.text = "{0}".format(result)
 
         self.indent(self.logitem)
-        #tree = ET.ElementTree(self.logitem)
-        #tree.write(self.filename)
 
-        ''' Writing is not done using tree.write: this will overwrite this. It is also possible to
-        load the tree from the datafile and put this item in the tree, but this will probably become inefficient
-        if the file grows '''
-        datafile.write(ET.tostring(self.logitem, 'utf-8', method="xml"))
-        #open(self.filename, 'a') as output
-        #output.write(tree)
+        # Write data to file
+        with open(self.filename, 'a') as datafile:
+            # Writing is not done using tree.write: this will overwrite this. It is also possible to
+            # load the tree from the datafile and put this item in the tree, but this will probably become inefficient
+            # if the file grows
+            datafile.write(ET.tostring(self.logitem, encoding='unicode', method="xml"))
 
-        ''' Display results '''
-        rospy.logdebug("\n\nNavigation summary:\nCovered {0} meters in {1} seconds ({2}) m/s avg.\nResult = {3} with {4} plans, {5} clears and {6} resets\n\n".format(self.distance_traveled,
-        duration,
-        self.distance_traveled/duration,
-        result,
-        self.nr_plan,
-        self.nr_clear_costmap,
-        self.nr_reset_costmap))
-
-        datafile.close()
+        rospy.logdebug(
+            "\n\nNavigation summary:\nCovered {0} meters in {1} seconds ({2}) m/s avg.\n"
+            "Result = {3} with {4} plans, {5} clears and {6} resets\n\n".format(
+                self.distance_traveled,
+                duration,
+                self.distance_traveled/duration,
+                result,
+                self.nr_plan,
+                self.nr_clear_costmap,
+                self.nr_reset_costmap))
 
     def abort_measurement(self):
         self.active = False
@@ -195,8 +174,8 @@ class NavAnalyzer:
         self.previous_position = current_position
 
     def kdl_frame_to_sub_element(self, kdl_frame, element):
-        x   = kdl_frame.p.x()
-        y   = kdl_frame.p.y()
+        x = kdl_frame.p.x()
+        y = kdl_frame.p.y()
         phi = kdl_frame.M.GetRPY()[2]  # Get the yaw
         element.set("x", "{0}".format(x))
         element.set("y", "{0}".format(y))
@@ -236,4 +215,3 @@ class NavAnalyzer:
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
-

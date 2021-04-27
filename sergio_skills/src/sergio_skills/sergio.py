@@ -1,42 +1,29 @@
-from __future__ import print_function
-
-from robot_skills import robot, api, base, ebutton, head, ears, lights, perception, speech, \
-    sound_source_localisation, torso, world_model_ed
-from robot_skills.arm import arms, gripper, handover_detector
-from .simulation import is_sim_mode, SimEButton
+# TU/e Robotics
+from robot_skills import api, base, ears, ebutton, head, lights, perception, robot, sound_source_localisation, speech, \
+    torso, world_model_ed
+from robot_skills.simulation import is_sim_mode, SimEButton
 
 
-class Amigo(robot.Robot):
+class Sergio(robot.Robot):
     """
-    Amigo
+    Sergio
     """
-    def __init__(self, dontInclude=None, wait_services=False):
+    # noinspection PyUnresolvedReferences
+    def __init__(self, wait_services=False):
         """
         Constructor
 
-        :param dontInclude: Not supported anymore
         :param wait_services: Not supported anymore by robot class
         """
-        if dontInclude is None:
-            dontInclude = []
-        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)
+        super(Sergio, self).__init__(robot_name="sergio", wait_services=wait_services)
+
+        self._ignored_parts = ["leftArm", "rightArm", "torso", "spindle", "head"]
 
         self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
         self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
 
-        # construct left arm
-        left_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
-        left_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
-        left_arm.add_part('handover_detector',
-                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'left'))
-        self.add_arm_part('leftArm', left_arm)
-
-        # construct right arm
-        right_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "right")
-        right_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'right'))
-        right_arm.add_part('handover_detector',
-                          handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'right'))
-        self.add_arm_part('rightArm', right_arm)
+        # Add arms (replace the '[[arm_name]]' and '[[side_name]]' strings with actual arm names.)
+        # self.add_arm_part('[[arm name]]', arms.Arm(self.robot_name, self.tf_listener, side='[[side name]]'))
 
         self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
         self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener))
@@ -67,7 +54,7 @@ class Amigo(robot.Robot):
         This poses the robot for an inspect.
 
         :param arm: PublicArm with an available joint_trajectory 'prepare_grasp' to use for grasping the target
-        :param grasp_target: kdl.Frame with the pose of the entity to be grasped.
+        :param grasp_target: kdl.Frame with the pose of the entity to be grasp.
         :return: boolean, false if something went wrong.
         """
 
