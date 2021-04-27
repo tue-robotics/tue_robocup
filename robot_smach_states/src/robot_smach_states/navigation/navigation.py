@@ -71,8 +71,10 @@ class PrepareDrive(smach.State):
                         return 'abort'
                     if self.preempt_requested():
                         return 'preempted'
+                    rospy.logwarn("Robot is charging. Please unplug")
                     self.robot.speech.speak("I am still charging. Please unplug me.")
                     rospy.sleep(1)
+                rospy.logerr("Robot is charging, aborting navigation")
                 return 'abort'
         return 'done'
 
