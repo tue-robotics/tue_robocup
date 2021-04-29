@@ -491,7 +491,7 @@ class Arm(RobotPart):
             if result == GoalStatus.SUCCEEDED:
 
                 result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
-                                                               self.robot_name + "/" + self.grasp_frame,
+                                                               self.grasp_frame,
                                                                rospy.Time(0))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
                 dy = grasp_precompute_goal.goal.y - result_pose[0][1]
