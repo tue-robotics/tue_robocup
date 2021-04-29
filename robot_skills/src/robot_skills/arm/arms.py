@@ -490,7 +490,7 @@ class Arm(RobotPart):
                 execute_timeout=rospy.Duration(timeout))
             if result == GoalStatus.SUCCEEDED:
 
-                result_pose = self.tf_listener.lookupTransform("base_link",
+                result_pose = self.tf_listener.lookupTransform(self.robot_name + "/base_link",
                                                                self.grasp_frame,
                                                                rospy.Time(0))
                 dx = grasp_precompute_goal.goal.x - result_pose[0][0]
