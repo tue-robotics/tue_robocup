@@ -87,7 +87,7 @@ class Torso(RobotPart):
 
         ''' Check limits '''
         for i in range(0, len(self.joint_names)):
-            if torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit:
+            if torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit[i]:
                 rospy.logwarn("Desired position {0} for joint {1} exceeds limits [{2}, {3}]".format(torso_pos[i],
                                                                                                     self.joint_names[i],
                                                                                                     self.lower_limit[i],
