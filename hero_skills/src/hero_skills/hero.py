@@ -22,42 +22,42 @@ class Hero(robot.Robot):
 
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
-        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
+        self.add_body_part('base', base.Base(self.robot_name, self.tf_buffer))
 
         arm_joint_names = rospy.get_param('/' + self.robot_name + '/skills/arm_center/joint_names')
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states, arm_joint_names))
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_buffer, self.get_joint_states, arm_joint_names))
 
         # add hero's arm
-        hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "arm_center")
-        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_listener, "/" + self.robot_name + "/wrist_wrench/raw"))
-        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'gripper'))
-        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_listener, 'handover_detector'))
+        hero_arm = arms.Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_center")
+        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
+        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
+        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'handover_detector'))
 
         self.add_arm_part('arm_center', hero_arm)
 
-        self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
-        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
+        self.add_body_part('head', head.Head(self.robot_name, self.tf_buffer))
+        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_buffer,
                                                                "/hero/head_rgbd_sensor/rgb/image_raw",
                                                                "/hero/head_rgbd_sensor/project_2d_to_3d",
                                                                camera_base_ns='hero/head_rgbd_sensor'))
 
         # Human Robot Interaction
-        self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_listener))
-        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_listener,
+        self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_buffer))
+        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_buffer,
                                                    lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
                                                    lambda: self.lights.set_color_colorRGBA(lights.RESET)))
-        self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
+        self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
                                           lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                           lambda: self.lights.set_color_colorRGBA(lights.RESET)))
-        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
+        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_buffer,
                                              lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
                                              lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
-        self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_listener, topic="/hero/runstop_button"))
+        self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_buffer, topic="/hero/runstop_button"))
 
         # Reasoning/world modeling
-        self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
+        self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_buffer))
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for part in self.parts.values():

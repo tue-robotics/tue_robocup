@@ -6,7 +6,8 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <depth_image_proc/depth_conversions.h>
-#include <tf/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/features/normal_3d.h>
@@ -16,6 +17,8 @@
 #include <visualization_msgs/Marker.h>
 
 #include <challenge_restaurant/GetNormalScore.h>
+
+#include <memory>
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -79,10 +82,12 @@ public:
   GetNormalScoreNode(double timeout, size_t normal_estimation_num_neighbours)
     : timeout_(timeout)
     , visualization_publisher_(nh_.advertise<visualization_msgs::Marker>("normal_visualization", 1))
+    , tf_listener_(nullptr)
     , tree_(new pcl::search::KdTree<pcl::PointXYZ> ())
     , normal_estimation_num_neighbours_(normal_estimation_num_neighbours)
   {
     ROS_INFO("GetNormalCountNode initialized");
+    tf_listener_ = std::make_unique<tf2_ros::TransformListener>(tf_buffer_);
     srv_ = nh_.advertiseService("get_normal_score", &GetNormalScoreNode::srvCallback, this);
   }
 
@@ -135,7 +140,8 @@ private:
   double timeout_;
   ros::Publisher visualization_publisher_;
 
-  tf::TransformListener tf_listener_;
+  tf2_ros::Buffer tf_buffer_;
+  std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
 
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_;
   size_t normal_estimation_num_neighbours_;

@@ -12,16 +12,16 @@ from robot_skills.robot_part import RobotPart
 
 
 class Api(RobotPart):
-    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
+    def __init__(self, robot_name, tf_buffer, pre_hook=None, post_hook=None):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         :param pre_hook: callable function to execute before a query call, i.e. to set light color
         :param post_hook: callable function to execute after a query call
         """
-        super(Api, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Api, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 

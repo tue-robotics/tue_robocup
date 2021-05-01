@@ -9,8 +9,8 @@ from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_stamped_
 
 
 class Head(RobotPart):
-    def __init__(self, robot_name, tf_listener):
-        super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer):
+        super(Head, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
         self._goal = None

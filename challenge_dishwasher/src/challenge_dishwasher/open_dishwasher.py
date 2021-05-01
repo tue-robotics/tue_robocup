@@ -2,8 +2,6 @@ import math
 from collections import namedtuple
 
 import rospy
-import tf2_geometry_msgs
-import tf2_ros
 from geometry_msgs.msg import Twist, Vector3, PoseStamped, Quaternion
 from robot_skills.amigo import Amigo
 from robot_skills.util.kdl_conversions import frame_stamped, VectorStamped
@@ -11,9 +9,7 @@ from robot_smach_states.navigation import NavigateToSymbolic
 from robot_smach_states.util.designators import EdEntityDesignator
 from robot_smach_states.util.geometry_helpers import wrap_angle_pi
 from smach import StateMachine, State, cb_interface, CBState
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
-
-_ = tf2_geometry_msgs
+from tf_conversions import transformations
 
 
 def _clamp(abs_value, value):
@@ -28,7 +24,7 @@ def _get_yaw_from_quaternion_msg(msg):
     :return: Yaw angle
     """
     orientation_list = [msg.x, msg.y, msg.z, msg.w]
-    _, _, yaw = euler_from_quaternion(orientation_list)
+    _, _, yaw = transformations.euler_from_quaternion(orientation_list)
     return yaw
 
 
@@ -53,8 +49,6 @@ class ControlToPose(State):
 
         self._rate = rospy.Rate(10)
 
-        self._tf_buffer = tf2_ros.Buffer()
-        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
         self._cmd_vel_publisher = rospy.Publisher("/" + self.robot.robot_name + "/base/references", Twist, queue_size=1)
         rospy.sleep(0.5)
 
@@ -86,7 +80,7 @@ class ControlToPose(State):
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
         goal_pose.header.stamp = rospy.Time.now()
-        pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
+        pose = self.robot.tf_buffer.transform(goal_pose, self.robot.base_link_frame, rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
@@ -117,7 +111,7 @@ class OpenDishwasher(StateMachine):
             robot.rightArm.wait_for_motion_done()
             robot.speech.speak('I hope this goes right!', block=False)
             fs = frame_stamped("dishwasher", 0.42, 0, 0.8, roll=math.pi / 2, pitch=0, yaw=math.pi)
-            robot.rightArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_listener))
+            robot.rightArm.send_goal(fs.projectToFrame(robot.robot_name + "/base_link", robot.tf_buffer))
             robot.rightArm.gripper.send_goal("close")
             return 'done'
 
@@ -126,7 +120,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 0.85
             goal_pose.pose.position.y = base_y_position_door
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.01, 0.1)).execute({})
@@ -138,7 +132,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 1.4
             goal_pose.pose.position.y = base_y_position_door
             robot.torso.low()
@@ -154,7 +148,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, - math.pi / 2))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, - math.pi / 2))
             goal_pose.pose.position.x = 1.4
             goal_pose.pose.position.y = base_y_position_door
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.5, 0.5, 0.5, 0.05, 0.1)).execute({})
@@ -180,7 +174,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, - math.pi / 2))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, - math.pi / 2))
             goal_pose.pose.position.x = 1.9
             goal_pose.pose.position.y = base_y_position_door
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.1, 0.1, 0.1, 0.05, 0.1)).execute({})
@@ -198,7 +192,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 1.4
             goal_pose.pose.position.y = base_y_position_rack - 0.15
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.1, 0.1, 0.1, 0.02, 0.2)).execute({})
@@ -211,7 +205,7 @@ class OpenDishwasher(StateMachine):
             # Drive aside the open door, with arm in the dishwasher
             goal_pose.pose.position.x = 0.8
             goal_pose.pose.position.y = base_y_position_rack2
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, base_yaw_position_rack))
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 0.5, 0.1, 0.1, 0.1, 0.02, 0.2)).execute({})
             return 'done'
 
@@ -227,7 +221,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, base_yaw_position_rack))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, base_yaw_position_rack))
             goal_pose.pose.position.x = 1.25
             goal_pose.pose.position.y = base_y_position_rack2
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.2)).execute({})
@@ -242,7 +236,7 @@ class OpenDishwasher(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = dishwasher_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, 0.9 * math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, 0.9 * math.pi))
             goal_pose.pose.position.x = 1.25
             goal_pose.pose.position.y = base_y_position_rack2
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.4, 0.1, 0.2)).execute({})

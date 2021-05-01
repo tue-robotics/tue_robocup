@@ -142,7 +142,7 @@ class RecognizePersons(smach.State):
         self.robot.speech.speak("The operator is a %s" % gender)
         self.robot.speech.speak("The operator is %s" % pose_str)
 
-        pose_base_link = operator.pose.projectToFrame(self.robot.robot_name + '/base_link', self.robot.tf_listener)
+        pose_base_link = operator.pose.projectToFrame(self.robot.robot_name + '/base_link', self.robot.tf_buffer)
         x = pose_base_link.pose.frame.p.x()
         y = pose_base_link.pose.frame.p.y()
 

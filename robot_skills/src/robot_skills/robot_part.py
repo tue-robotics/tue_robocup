@@ -14,15 +14,15 @@ SIM_MODE = os.environ.get("ROBOT_REAL", "false").lower() != "true"
 class RobotPart(object):
     """ Base class for robot parts """
 
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_buffer):
         """
         Constructor
 
         :param robot_name: string with robot name
-        :param tf_listener: tf listener object
+        :param tf_buffer: tf buffer object
         """
         self.robot_name = robot_name
-        self.tf_listener = tf_listener
+        self.tf_buffer = tf_buffer
 
         # Body parts
         self.parts = dict()

@@ -6,7 +6,7 @@ import math
 from threading import Event
 
 # ROS
-from geometry_msgs.msg import Quaternion, PolygonStamped
+from geometry_msgs.msg import PolygonStamped
 import rospy
 from sensor_msgs.msg import LaserScan
 import smach
@@ -175,11 +175,10 @@ class WaitForDoorOpen(smach.State):
 
     def execute(self, userdata=None):
         rospy.loginfo("Waiting for door...")
-        r = Quaternion()
-        _, (r.x, r.y, r.z, r.w) = self._robot.tf_listener.lookupTransform(self._robot.base_link_frame,
-                                                                          self._robot.robot_name + '/base_laser',
-                                                                          rospy.Time(0))
-        laser_rotation = quaternion_msg_to_kdl_rotation(r)
+        transorm_stamped = self._robot.tf_buffer.lookup_transform(self._robot.base_link_frame,
+                                                           self._robot.robot_name + '/base_laser',
+                                                           rospy.Time(0))
+        laser_rotation = quaternion_msg_to_kdl_rotation(transorm_stamped.transform.rotation)
         laser_upside_down = -math.copysign(1, math.cos(laser_rotation.GetRPY()[0]))  # -1 normal, 1 upside down
         laser_yaw = laser_rotation.GetRPY()[2]
 

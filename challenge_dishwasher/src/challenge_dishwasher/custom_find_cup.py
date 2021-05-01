@@ -2,16 +2,11 @@ import math
 
 import numpy as np
 import rospy
-import tf2_geometry_msgs
 from geometry_msgs.msg import PointStamped, Point
 from robot_skills.amigo import Amigo
 from sensor_msgs.msg import LaserScan
 from smach import StateMachine, State
-from tf import TransformListener
-from tf2_ros import Buffer
 from visualization_msgs.msg import MarkerArray, Marker
-
-_ = tf2_geometry_msgs
 
 
 class CustomFindCup(State):
@@ -23,9 +18,6 @@ class CustomFindCup(State):
         self._box_offset_x = box_offset_x
         self._box_size_y = box_size_y
         self._box_size_x = box_size_x
-
-        self.tf_buffer = Buffer()
-        self.listener = TransformListener(self.tf_buffer)
 
     @staticmethod
     def _get_points_from_scan_msg(msg):
@@ -186,7 +178,7 @@ class CustomFindCup(State):
         if point is None:
             return 'failed'
 
-        ud.position = self._robot.tf_listener.transformPoint('/map', point)
+        ud.position = self._robot.tf_buffer.transform(point, "map")
         return 'succeeded'
 
 
