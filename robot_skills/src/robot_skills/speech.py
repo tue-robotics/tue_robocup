@@ -6,19 +6,24 @@ from text_to_speech.srv import Speak, SpeakRequest
 from robot_skills.robot_part import RobotPart
 
 
-class Speech(RobotPart):
-    """Interface to TTS-module"""
-
+class SpeechInterface(RobotPart):
     def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
-        super(Speech, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._speech_service = self.create_service_client('/%s/text_to_speech/speak' % robot_name, Speak)
+        """
+        Interface to text-to-speech module of the robot
+
+        :param robot_name: name of the robot
+        :param tf_listener: tf listener object
+        :param pre_hook: method that is executed before speaking
+        :param post_hook: method that is executed after speaking
+        """
+        super(SpeechInterface, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 
-        self._default_language  = self.load_param('text_to_speech/language', 'us')
-        self._default_voice     = self.load_param('text_to_speech/voice', 'kyle')
+        self._default_language = self.load_param('text_to_speech/language', 'us')
+        self._default_voice = self.load_param('text_to_speech/voice', 'kyle')
         self._default_character = self.load_param('text_to_speech/character', 'default')
-        self._default_emotion   = self.load_param('text_to_speech/emotion', 'neutral')
+        self._default_emotion = self.load_param('text_to_speech/emotion', 'neutral')
 
     def close(self):
         pass
@@ -44,24 +49,83 @@ class Speech(RobotPart):
         :param replace: dictionary with replacement stuff
         """
         # ToDo: replace personality by character and mood by emotion. Furthermore, change the order of the arguments.
-        if not language:
-            language = self._default_language
-        if not voice:
-            voice = self._default_voice
-        if not personality:
-            personality = self._default_character
-        if not mood:
-            mood = self._default_emotion
-        if replace is None:
-            replace = {"_": " "}
+        language = language or self._default_language
+        voice = voice or self._default_voice
+        personality = personality or self._default_character
+        mood = mood or self._default_emotion
+        replace = replace or {"_": " "}
 
-        if hasattr(self._pre_hook, '__call__'):
+        if callable(self._pre_hook):
             self._pre_hook()
 
         for orig, replacement in replace.items():
             sentence = sentence.replace(orig, replacement)
 
-        result = False
+        result = self.speak_impl(
+            sentence=sentence, language=language, personality=personality, voice=voice, mood=mood, block=block
+        )
+
+        if callable(self._post_hook):
+            self._post_hook()
+
+        return result
+
+    def speak_impl(self, sentence, language, personality, voice, mood, block):
+        # type: (string, string, string, string, string, bool) -> bool
+        """
+        Send a sentence to the text to speech module.
+
+        When block=False, this method returns immediately.
+        With the replace-dictionary, you can specify which characters to replace with what. By default, it replace
+        underscores with spaces.
+
+        :param sentence: string with sentence to pronounce
+        :param language: string with language to speak.
+        :param personality: string indicating the personality.
+        :param voice: string indicating the voice to speak with.
+        :param mood: string indicating the emotion.
+        :param block: bool to indicate whether this function should return immediately or if it should block until the
+            sentence has been spoken
+        """
+        raise NotImplementedError("speak_impl not implemented for {}".format(self.__class__.__name__))
+
+
+class TueSpeech(SpeechInterface):
+    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
+        """
+        Speech interface to the TU/e text-to-speech node. If present, this uses Philips TTS; otherwise, it defaults to
+        espeak
+
+        :param robot_name: name of the robot
+        :param tf_listener: tf listener object
+        :param pre_hook: method that is executed before speaking
+        :param post_hook: method that is executed after speaking
+        """
+        super(TueSpeech, self).__init__(
+            robot_name=robot_name, tf_listener=tf_listener, pre_hook=pre_hook, post_hook=post_hook,
+        )
+        self._speech_service = self.create_service_client('/%s/text_to_speech/speak' % robot_name, Speak)
+
+    def speak_impl(self, sentence, language, personality, voice, mood, block):
+        # type: (string, string, string, string, string, bool) -> bool
+        """
+        Send a sentence to the text to speech module.
+
+        When block=False, this method returns immediately.
+        With the replace-dictionary, you can specify which characters to replace with what. By default, it replace
+        underscores with spaces.
+
+        :param sentence: string with sentence to pronounce
+        :param language: string with language to speak. Philips TTS supports English (us) Dutch (nl)
+        :param personality: string indicating the personality. Supported are Default, Man, OldMan, OldWoman, Boy,
+            YoungGirl, Robot, Giant, Dwarf, Alien
+        :param voice: string indicating the voice to speak with. In English, "kyle" (default), "gregory" (French
+            accent) and "carlos" (Spanish accent) are supported. The Dutch voices are "david" and "marjolijn"
+        :param mood: string indicating the emotion. Supported are: Neutral, Friendly, Angry, Furious, Drill, Scared,
+            Emotional, Weepy, Excited, Surprised, Sad, Disgusted, Whisper.
+        :param block: bool to indicate whether this function should return immediately or if it should block until the
+            sentence has been spoken
+        """
         try:
             # ToDo: test this. This just seems utterly wrong
             if language == 'nl' and not (personality in ['david', 'marjolijn']):
@@ -70,23 +134,18 @@ class Speech(RobotPart):
             # The funny stuff around sentence is for coloring the output text in the console
 
             req = SpeakRequest()
-            req.language      = language
-            req.voice         = voice
-            req.character     = personality
-            req.emotion       = mood
-            req.sentence      = sentence
+            req.language = language
+            req.voice = voice
+            req.character = personality
+            req.emotion = mood
+            req.sentence = sentence
             req.blocking_call = block
             resp1 = self._speech_service(req)
-            result = resp1.error_msg == ""
+            return resp1.error_msg == ""
 
         except rospy.ServiceException as e:
             rospy.logerr("Service call failed: {0}".format(e))
-            result = False
+            return False
         except Exception as e:
             rospy.logerr("Something went seriously wrong: {}".format(e))
-            result = False
-
-        if hasattr(self._post_hook, '__call__'):
-            self._post_hook()
-
-        return result
+            return False
