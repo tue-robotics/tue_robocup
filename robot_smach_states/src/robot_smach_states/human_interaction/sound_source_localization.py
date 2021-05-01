@@ -27,7 +27,7 @@ class SSLLookatAndRotate(smach.State):
                 y=look_distance * math.sin(yaw),
                 z=height,
                 frame_id=self._robot.base_link_frame
-            ).projectToFrame("map", self._robot.tf_listener)
+            ).projectToFrame("map", self._robot.tf_buffer)
 
             self._robot.head.look_at_point(lookat_vector, pan_vel=2.0)
 

@@ -12,8 +12,8 @@ class Ears(RobotPart):
 
     Function listen explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
     """
-    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
-        super(Ears, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer, pre_hook=None, post_hook=None):
+        super(Ears, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 

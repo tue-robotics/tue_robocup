@@ -5,7 +5,7 @@
 import geometry_msgs.msg as gm
 import rospy
 import std_msgs.msg as std
-import tf
+import tf_conversions
 
 number = (int, float)
 
@@ -24,7 +24,7 @@ def Point(x=0, y=0, z=0):
 def Header(frame_id="map", stamp=None):
     """
     Make a Header
-    >>> h = Header("/base_link")  # doctest: +SKIP
+    >>> h = Header("base_link")  # doctest: +SKIP
     >>> assert h.stamp.secs > 0  # doctest: +SKIP
     >>> assert h.stamp.nsecs > 0  # doctest: +SKIP
     """
@@ -49,7 +49,7 @@ def Quaternion(x=0, y=0, z=0, w=0, roll=0, pitch=0, yaw=0):
     if x or y or z or w:
         return gm.Quaternion(x, y, z, w)
     elif roll or pitch or yaw:
-        quat_parts = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        quat_parts = tf_conversions.transformations.quaternion_from_euler(roll, pitch, yaw)
         return Quaternion(*quat_parts)
     else:
         # Assume unit quaternion

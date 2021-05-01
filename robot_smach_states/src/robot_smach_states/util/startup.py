@@ -25,10 +25,10 @@ import rospy
 import smach_ros
 
 # TU/e Robotics
-from robot_skills.util.robot_constructor import robot_constructor
+from robot_skills.get_robot import get_robot, ROBOTS
 
 
-def startup(statemachine_creator, statemachine_args = (), initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
+def startup(statemachine_creator, statemachine_args=(), initial_state=None, robot_name='', challenge_name=None, argv=sys.argv):
     """
     :param statemachine_creator: a function that outputs a statemachine.
         The function should take a robot as its first input.
@@ -37,6 +37,11 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
     :param initial_state: the state to start the state machine in.
         Can be supplied as command line argument
     :param robot_name: name of the robot to pass to the state machine
+    :type robot_name: str
+    :param challenge_name: name of the challenge
+    :type challenge_name: str
+    :param argv: argument values
+    :type argv: list
     """
     t_start = time.time()
     if initial_state or robot_name:
@@ -44,7 +49,7 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
                       "is not needed and deprecated. "
                       "This is inferred by startup from the command line")
 
-    available_robots = ['amigo', 'sergio', 'hero', 'mockbot']
+    available_robots = ROBOTS.keys()
     arguments = docopt(__doc__.format(robot='|'.join(available_robots),
                                       challenge_name=challenge_name if challenge_name else "xxx"),
                        argv=[v for v in argv[1:] if not v.startswith("_")],
@@ -55,7 +60,7 @@ def startup(statemachine_creator, statemachine_args = (), initial_state=None, ro
     enable_debug = arguments["--debug"]
     no_execute = arguments["--no-execute"]
 
-    robot = robot_constructor(robot_name)
+    robot = get_robot(robot_name)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
 

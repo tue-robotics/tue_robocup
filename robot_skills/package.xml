@@ -39,7 +39,10 @@
   <depend>smach</depend>
   <depend>std_srvs</depend>
   <depend>text_to_speech</depend>
-  <depend>tf</depend>
+  <depend>tf_conversions</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_kdl</depend>
+  <depend>tf2_ros</depend>
   <depend>trajectory_msgs</depend>
   <depend>tue_manipulation_msgs</depend>
   <depend>tue_msgs</depend>

@@ -12,14 +12,14 @@ RESET = ColorRGBA(0, 0, 1, 1)
 
 
 class LightsInterface(RobotPart):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_buffer):
         """
         Interface to the robot's lights. To use this, a deriving class needs to be defined that implements _send_color_msg.
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(LightsInterface, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(LightsInterface, self).__init__(robot_name=robot_name, tf_buffer=tf_listener)
 
     def close(self):
         pass

@@ -2,7 +2,7 @@
 import math
 
 import rospy
-import tf
+import tf_conversions
 # ROS
 from geometry_msgs.msg import PoseStamped
 
@@ -20,14 +20,14 @@ class SSL(RobotPart):
 
     :param topic: Incoming PoseStamped
     """
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_buffer):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(SSL, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(SSL, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._sub = self.create_subscriber('/{}/ssl/direction_of_arrival'.format(self.robot_name), PoseStamped, self._callback, queue_size=1)
         self._last_msg = None
         self._last_received_time = rospy.Time(0)
@@ -57,4 +57,4 @@ class SSL(RobotPart):
         if not self._last_msg or rospy.Time.now() - self._last_received_time > rospy.Duration(max_age_seconds):
             return None
         q = self._last_msg.pose.orientation
-        return tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])[2] + math.pi
+        return tf_conversions.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])[2] + math.pi

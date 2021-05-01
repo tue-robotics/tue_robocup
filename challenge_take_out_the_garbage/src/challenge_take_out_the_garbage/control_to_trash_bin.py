@@ -7,7 +7,7 @@ from robot_skills import get_robot
 from robot_smach_states.navigation.control_to_pose import ControlToPose, ControlParameters
 from smach import cb_interface, StateMachine, CBState
 from std_msgs.msg import Header
-from tf.transformations import quaternion_from_euler
+from tf_conversions import transformations
 
 
 class ControlToTrashBin(StateMachine):
@@ -37,7 +37,7 @@ class ControlToTrashBin(StateMachine):
                         y=desired_base_position.y()
                     ),
                     orientation=Quaternion(
-                        *quaternion_from_euler(
+                        *transformations.quaternion_from_euler(
                             0, 0, math.atan2(trash_bin_to_base_vector.y(),
                                              trash_bin_to_base_vector.x()) - math.pi + yaw_offset
                         )

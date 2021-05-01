@@ -12,7 +12,7 @@ from robot_skills.amigo import Amigo
 
 
 # Challenge storing groceries
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from tf_conversions import transformations
 
 import robot_smach_states as states
 
@@ -39,9 +39,8 @@ def _get_yaw_from_quaternion_msg(msg):
     :return: Yaw angle
     """
     orientation_list = [msg.x, msg.y, msg.z, msg.w]
-    _, _, yaw = euler_from_quaternion(orientation_list)
+    _, _, yaw = transformations.euler_from_quaternion(orientation_list)
     return yaw
-
 
 
 class UpdateCabinetPose(smach.State):
@@ -74,13 +73,11 @@ class OpenDoor(smach.State):
         self._goal_position_tolerance = 0.01
         self._goal_rotation_tolerance = 0.1
 
-        self._tf_buffer = tf2_ros.Buffer()
-        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer)
         self._cmd_vel_publisher = rospy.Publisher("/" + robot.robot_name + "/base/references", Twist, queue_size=1)
 
     def _get_target_delta_in_robot_frame(self, goal_pose):
         goal_pose.header.stamp = rospy.Time.now()
-        pose = self._tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
+        pose = self.robot.tf_buffer.transform(goal_pose, self.robot.robot_name + '/base_link', rospy.Duration(1.0))
         yaw = _get_yaw_from_quaternion_msg(pose.pose.orientation)
         return pose.pose.position.x, pose.pose.position.y, wrap_angle_pi(yaw)
 
@@ -117,7 +114,7 @@ class OpenDoor(smach.State):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.id_
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.05))
+        goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi - 0.05))
         goal_pose.pose.position.x = 0.6
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.3, 0.3, 0.3)
 
@@ -125,7 +122,7 @@ class OpenDoor(smach.State):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.id_
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+        goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
         goal_pose.pose.position.x = 1.0
         self._control_to_pose(goal_pose, 0.5, 1.0, 0.5, 0.5, 0.5)
 
@@ -139,7 +136,7 @@ class OpenDoor(smach.State):
         goal_pose = PoseStamped()
         goal_pose.header.stamp = rospy.Time.now()
         goal_pose.header.frame_id = self.cabinet.id_
-        goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi - 0.8))
+        goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi - 0.8))
         goal_pose.pose.position.x = 0.75
         goal_pose.pose.position.y = -0.02
         self._control_to_pose(goal_pose, 1.0, 1.0, 0.15, 0.075, 0.1)
