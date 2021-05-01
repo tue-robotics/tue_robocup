@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import rospy
-from std_msgs.msg import Bool
+import std_msgs
 from robot_skills.robot_part import RobotPart
 
 
@@ -32,7 +32,6 @@ class HandoverDetector(RobotPart):
         :return: Success
         :rtype: bool
         """
-
         pub = rospy.Publisher('/{}/handoverdetector_{}/toggle_{}'.format(self.robot_name, self.side, direction),
                               std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(True)
