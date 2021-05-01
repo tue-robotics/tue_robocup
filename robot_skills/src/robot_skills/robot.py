@@ -6,7 +6,9 @@ import geometry_msgs
 # ROS
 import rospy
 import tf2_ros
+# noinspection PyUnresolvedReferences
 import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
 import tf2_kdl
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
@@ -17,9 +19,6 @@ from .arm import arms
 from .functionalities.add_functionalities import add_functionalities
 
 CONNECTION_TIMEOUT = 10.0  # Timeout: all ROS connections must be alive within this duration
-
-_ = tf2_geometry_msgs
-__ = tf2_kdl
 
 
 class Robot(object):
