@@ -21,7 +21,7 @@ class RiseForHMI(smach.State):
     def execute(self, userdata=None):
         # Get position to look at. Transform the position to map frame since taking the hmi pose may move base link
         goal = VectorStamped(1.0, 0.0, 1.6, frame_id=self._robot.base_link_frame)
-        tf_goal = goal.projectToFrame('map', self._robot.tf_listener)
+        tf_goal = goal.projectToFrame('map', self._robot.tf_buffer)
 
         self._robot.move_to_hmi_pose()
 

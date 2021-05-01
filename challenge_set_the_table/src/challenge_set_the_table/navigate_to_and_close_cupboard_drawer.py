@@ -14,7 +14,7 @@ from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymboli
 from robot_smach_states.navigation.control_to_pose import ControlParameters, ControlToPose
 from robot_smach_states.util.designators import EdEntityDesignator
 from smach import StateMachine, cb_interface, CBState
-from tf.transformations import quaternion_from_euler
+from tf_conversions import transformations
 
 
 class CloseCupboard(StateMachine):
@@ -42,7 +42,7 @@ class CloseCupboard(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = cupboard_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 1.1
             goal_pose.pose.position.y = 0
             ControlToPose(robot, goal_pose, ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.02, 0.1)).execute({})
@@ -60,7 +60,7 @@ class CloseCupboard(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = cupboard_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 0.8
             goal_pose.pose.position.y = 0
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.5)).execute({})
@@ -72,7 +72,7 @@ class CloseCupboard(StateMachine):
             goal_pose = PoseStamped()
             goal_pose.header.stamp = rospy.Time.now()
             goal_pose.header.frame_id = cupboard_id
-            goal_pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, math.pi))
+            goal_pose.pose.orientation = Quaternion(*transformations.quaternion_from_euler(0, 0, math.pi))
             goal_pose.pose.position.x = 1.0
             goal_pose.pose.position.y = 0
             ControlToPose(robot, goal_pose, ControlParameters(0.8, 1.0, 0.15, 0.1, 0.1, 0.05, 0.5)).execute({})

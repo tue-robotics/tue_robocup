@@ -125,13 +125,13 @@ class GetFurnitureFromOperatorPose(StateMachine):
                 result = None
                 while not rospy.is_shutdown() and result is None:
                     try:
-                        map_pose = robot.tf_listener.transformPose("map", PoseStamped(
+                        map_pose = robot.tf_buffer.transform(PoseStamped(
                             header=Header(
                                 frame_id=OPERATOR.header.frame_id,
                                 stamp=rospy.Time.now() - rospy.Duration.from_sec(0.5)
                             ),
                             pose=OPERATOR.pointing_pose
-                        ))
+                        ), "map")
                         result = robot.ed.ray_trace(map_pose)
                     except Exception as e:
                         rospy.logerr("Could not get ray trace from closest person: {}".format(e))

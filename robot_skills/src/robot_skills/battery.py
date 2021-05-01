@@ -7,13 +7,13 @@ class Battery(RobotPart):
     """
     Interface to a battery. This implementation assumes a recent measurement to be available
     """
-    def __init__(self, robot_name, tf_listener, location):
+    def __init__(self, robot_name, tf_buffer, location):
         """
         @param robot_name: name of the robot
-        @param tf_listener: tf_listener of the robot (needed because it is a robot part)
+        @param tf_buffer: tf_buffer of the robot (needed because it is a robot part)
         @param location: string indicating the location of the battery
         """
-        super(Battery, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Battery, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self.location = location
         self.battery_sub = self.create_subscriber("battery", BatteryState, self.battery_callback)
         self.recent_msg = None

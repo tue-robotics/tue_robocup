@@ -11,17 +11,17 @@ from robot_skills.speech import SpeechInterface
 
 
 class TmcSpeech(SpeechInterface):
-    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
+    def __init__(self, robot_name, tf_buffer, pre_hook=None, post_hook=None):
         """
         Speech interface to the TMC text-to-speech node.
 
         :param robot_name: name of the robot
-        :param tf_listener: tf listener object
+        :param tf_buffer: tf buffer object
         :param pre_hook: method that is executed before speaking
         :param post_hook: method that is executed after speaking
         """
         super(TmcSpeech, self).__init__(
-            robot_name=robot_name, tf_listener=tf_listener, pre_hook=pre_hook, post_hook=post_hook,
+            robot_name=robot_name, tf_buffer=tf_buffer, pre_hook=pre_hook, post_hook=post_hook,
         )
 
         # Big question: how do we handle speech requests published on a topic (e.g., from the UI)?

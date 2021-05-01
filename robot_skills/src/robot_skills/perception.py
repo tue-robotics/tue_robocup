@@ -18,8 +18,8 @@ from robot_skills.util.kdl_conversions import VectorStamped
 
 
 class Perception(RobotPart):
-    def __init__(self, robot_name, tf_listener, image_topic=None, projection_srv=None, camera_base_ns=''):
-        super(Perception, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer, image_topic=None, projection_srv=None, camera_base_ns=''):
+        super(Perception, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         if image_topic is None:
             self.image_topic = "/" + self.robot_name + "/top_kinect/rgb/image"
         else:
@@ -107,7 +107,7 @@ class Perception(RobotPart):
         # If necessary, transform the point
         if frame_id is not None:
             rospy.loginfo("Transforming roi to {}".format(frame_id))
-            result = result.projectToFrame(frame_id=frame_id, tf_listener=self.tf_listener)
+            result = result.projectToFrame(frame_id=frame_id, tf_buffer=self.tf_buffer)
 
         # Return the result
         return result

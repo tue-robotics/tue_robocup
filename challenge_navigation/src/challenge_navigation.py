@@ -156,14 +156,6 @@ class DetermineObject(smach.State):
 
         block_is_person = False
         for person in persons:
-#            pose_base_link = self._robot.tf_listener.transformPose(target_frame=self._robot.robot_name+'/base_link',
-#                                                                   pose=person.pose)
-#
-#            x = pose_base_link.pose.position.x
-#            y = pose_base_link.pose.position.y
-
-#            r = self.obstacle_radius  # Distance from the robot's base link in the x-direction
-#            if (x - r)*(x - r) + y*y < r*r:
             block_is_person = True
             break
 

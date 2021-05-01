@@ -7,16 +7,16 @@ from robot_skills.robot_part import RobotPart
 
 
 class SpeechInterface(RobotPart):
-    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
+    def __init__(self, robot_name, tf_buffer, pre_hook=None, post_hook=None):
         """
         Interface to text-to-speech module of the robot
 
         :param robot_name: name of the robot
-        :param tf_listener: tf listener object
+        :param tf_buffer: tf listener object
         :param pre_hook: method that is executed before speaking
         :param post_hook: method that is executed after speaking
         """
-        super(SpeechInterface, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(SpeechInterface, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
 
@@ -91,18 +91,18 @@ class SpeechInterface(RobotPart):
 
 
 class TueSpeech(SpeechInterface):
-    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
+    def __init__(self, robot_name, tf_buffer, pre_hook=None, post_hook=None):
         """
         Speech interface to the TU/e text-to-speech node. If present, this uses Philips TTS; otherwise, it defaults to
         espeak
 
         :param robot_name: name of the robot
-        :param tf_listener: tf listener object
+        :param tf_buffer: tf listener object
         :param pre_hook: method that is executed before speaking
         :param post_hook: method that is executed after speaking
         """
         super(TueSpeech, self).__init__(
-            robot_name=robot_name, tf_listener=tf_listener, pre_hook=pre_hook, post_hook=post_hook,
+            robot_name=robot_name, tf_buffer=tf_listener, pre_hook=pre_hook, post_hook=post_hook,
         )
         self._speech_service = self.create_service_client('/%s/text_to_speech/speak' % robot_name, Speak)
 

@@ -11,16 +11,16 @@ from robot_skills.util.exceptions import TimeOutException
 
 
 class ForceSensor(RobotPart):
-    def __init__(self, robot_name, tf_listener, topic, force_norm_threshold=2.5):
+    def __init__(self, robot_name, tf_buffer, topic, force_norm_threshold=2.5):
         """
         Class for conveniently using a force sensor
 
         :param robot_name: Which robot is this part of?
-        :param tf_listener: tf_server.TFClient for  use in RobotPart
+        :param tf_buffer: tf2_ros.Buffer for use in RobotPart
         :param topic: Topic to use for WrenchStamped measurement
         :param force_norm_threshold: Edge up if norm exceeds this value [N] (defaults to 2.5N)
         """
-        super(ForceSensor, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(ForceSensor, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._topic = topic
 
         self._calibrated_msg = None

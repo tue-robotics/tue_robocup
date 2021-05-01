@@ -25,23 +25,21 @@ class Hero(robot.Robot):
 
         self._ignored_parts = ["leftArm", "torso", "spindle", "head"]
 
-        self.add_body_part('base', base.Base(self.robot_name, self.tf_listener))
-        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_listener, self.get_joint_states))
+        self.add_body_part('base', base.Base(self.robot_name, self.tf_buffer))
+
+        arm_joint_names = rospy.get_param('/' + self.robot_name + '/skills/arm_center/joint_names')
+        self.add_body_part('torso', torso.Torso(self.robot_name, self.tf_buffer, self.get_joint_states, arm_joint_names))
 
         # add hero's arm
-        hero_arm = arms.Arm(self.robot_name, self.tf_listener, self.get_joint_states, "left")
-        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(
-            self.robot_name, self.tf_listener, self.robot_name + "/wrist_wrench/raw"
-        ))
-        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_listener, 'left'))
-        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(
-            self.robot_name, self.tf_listener, 'left'
-        ))
+        hero_arm = arms.Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_center")
+        hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
+        hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
+        hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'handover_detector'))
 
-        self.add_arm_part('leftArm', hero_arm)
+        self.add_arm_part('arm_center', hero_arm)
 
-        self.add_body_part('head', head.Head(self.robot_name, self.tf_listener))
-        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_listener,
+        self.add_body_part('head', head.Head(self.robot_name, self.tf_buffer))
+        self.add_body_part('perception', perception.Perception(self.robot_name, self.tf_buffer,
                                                                "/hero/head_rgbd_sensor/rgb/image_raw",
                                                                "/hero/head_rgbd_sensor/project_2d_to_3d",
                                                                camera_base_ns='hero/head_rgbd_sensor'))
@@ -49,27 +47,41 @@ class Hero(robot.Robot):
         # Human Robot Interaction
         self.add_body_part(
             'lights', lights.Lights(
-                self.robot_name, self.tf_listener, '/' + self.robot_name + '/rgb_lights_manager/user_set_rgb_lights'
+                self.robot_name, self.tf_buffer, '/' + self.robot_name + '/rgb_lights_manager/user_set_rgb_lights'
             )
         )
+<<<<<<< HEAD
         self.add_body_part('speech', TmcSpeech(self.robot_name, self.tf_listener,
                                                lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
                                                lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
+=======
+        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_buffer,
+                                                   lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
+                                                   lambda: self.lights.set_color_rgba_msg(lights.RESET)))
+        self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
+>>>>>>> feature/remove-lights-from-bridge
                                           lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                           lambda: self.lights.set_color_rgba_msg(lights.RESET)))
-        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_listener,
+        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_buffer,
                                              lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                              lambda: self.lights.set_color_rgba_msg(lights.RESET)))
+        self.add_body_part('lights', lights.Lights(self.robot_name, self.tf_buffer))
+        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_buffer,
+                                                   lambda: self.lights.set_color_colorRGBA(lights.SPEAKING),
+                                                   lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+        self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
+                                          lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                          lambda: self.lights.set_color_colorRGBA(lights.RESET)))
+        self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_buffer,
+                                             lambda: self.lights.set_color_colorRGBA(lights.LISTENING),
+                                             lambda: self.lights.set_color_colorRGBA(lights.RESET)))
 
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
-        self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_listener, topic="/hero/runstop_button"))
+        self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_buffer, topic="/hero/runstop_button"))
 
         # Reasoning/world modeling
-        self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_listener))
-
-        # Rename joint names
-        self.parts['leftArm'].joint_names = self.parts['leftArm'].load_param('skills/arm/joint_names')
+        self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_buffer))
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for part in self.parts.values():
@@ -77,7 +89,7 @@ class Hero(robot.Robot):
             part._operational = True
 
         # verify joint goal required for posing
-        assert 'arm_out_of_way' in self.parts['leftArm'].default_configurations,\
+        assert 'arm_out_of_way' in self.parts['arm_center'].default_configurations,\
             "arm_out_of_way joint goal is not defined in {}_describtion skills.yaml".format(self.robot_name)
         # parameters for posing
         self.z_over = 0.4  # height the robot should look over the surface

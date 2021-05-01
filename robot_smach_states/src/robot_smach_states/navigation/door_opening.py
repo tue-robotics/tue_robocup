@@ -128,7 +128,7 @@ class ForceDriveToTouchDoor(smach.State):
         footprint = footprint[0]
 
         posestampeds = [PoseStamped(footprint.header, Pose(position=point)) for point in footprint.polygon.points]
-        in_baselink = [self.robot.tf_transform_pose(ps, self.robot.base_link_frame) for ps in posestampeds]
+        in_baselink = [self.robot.tf_buffer_transform_pose(ps, self.robot.base_link_frame) for ps in posestampeds]
 
         X = [ps.pose.position.x for ps in in_baselink]
         Y = [ps.pose.position.y for ps in in_baselink]
@@ -165,7 +165,7 @@ class ForceDriveToTouchDoor(smach.State):
         Y = scan.ranges * np.sin(angles)
 
         posestampeds = [PoseStamped(scan.header, Pose(position=Point(x,y, 0))) for (x, y) in zip(X, Y)]
-        in_baselink = [self.robot.tf_transform_pose(ps, self.robot.base_link_frame) for ps in posestampeds]
+        in_baselink = [self.robot.tf_buffer_transform_pose(ps, self.robot.base_link_frame) for ps in posestampeds]
 
         Xb = [ps.pose.position.x for ps in in_baselink]
         Yb = [ps.pose.position.y for ps in in_baselink]

@@ -14,21 +14,22 @@ from robot_skills.robot_part import RobotPart
 
 
 class Torso(RobotPart):
-    def __init__(self, robot_name, tf_listener, get_joint_states):
+    def __init__(self, robot_name, tf_buffer, get_joint_states, arm_joint_names=None):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(Torso, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Torso, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
         self.joint_names = self.load_param('skills/torso/joint_names')
-        self._arm_joint_names = self.load_param('skills/arm/joint_names')
         self.default_configurations = self.load_param('skills/torso/default_configurations')
         self.default_tolerance = self.load_param('/skills/torso/default_tolerance')
         self.lower_limit = self.default_configurations['lower_limit']
         self.upper_limit = self.default_configurations['upper_limit']
+
+        self._arm_joint_names = [] if arm_joint_names is None else arm_joint_names  #TODO make sure this is no longer needed
 
         # Init action client
         self.ac_move_torso = self.create_simple_action_client('/' + self.robot_name + '/body/joint_trajectory_action',
@@ -86,7 +87,7 @@ class Torso(RobotPart):
 
         ''' Check limits '''
         for i in range(0, len(self.joint_names)):
-            if torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit:
+            if torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit[i]:
                 rospy.logwarn("Desired position {0} for joint {1} exceeds limits [{2}, {3}]".format(torso_pos[i],
                                                                                                     self.joint_names[i],
                                                                                                     self.lower_limit[i],
