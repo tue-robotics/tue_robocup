@@ -102,7 +102,7 @@ class TueSpeech(SpeechInterface):
         :param post_hook: method that is executed after speaking
         """
         super(TueSpeech, self).__init__(
-            robot_name=robot_name, tf_buffer=tf_listener, pre_hook=pre_hook, post_hook=post_hook,
+            robot_name=robot_name, tf_buffer=tf_buffer, pre_hook=pre_hook, post_hook=post_hook,
         )
         self._speech_service = self.create_service_client('/%s/text_to_speech/speak' % robot_name, Speak)
 
