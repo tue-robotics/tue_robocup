@@ -44,7 +44,7 @@ class ArmDesignator(Designator):
     >>> assert a.resolve()._arm == robot.arms['leftArm']
     """
 
-    def __init__(self, robot, arm_properties, name=None):
+    def __init__(self, robot, arm_properties=None, name=None):
         """
         Initialize a new ArmDesignator for a robot, with the desired properties of the arm.
 
@@ -56,6 +56,8 @@ class ArmDesignator(Designator):
 
         :param name: Optional name of the arm designator.
         """
+        if arm_properties is None:
+            arm_properties = {}
         super(ArmDesignator, self).__init__(resolve_type=PublicArm, name=name)
         self.robot = robot
         self.arm_properties = arm_properties
@@ -109,7 +111,9 @@ class OccupiedArmDesignator(ArmDesignator):
     """An OccupiedArmDesignator resolves to an arm that is occupied by an entity.
     .resolve() returns None when no such arm can be found
     """
-    def __init__(self, robot, arm_properties, name=None):
+    def __init__(self, robot, arm_properties=None, name=None):
+        if arm_properties is None:
+            arm_properties = {}
         arm_properties['required_objects'] = [PseudoObjects.ANY]
         super(OccupiedArmDesignator, self).__init__(robot, arm_properties, name=name)
 
@@ -141,7 +145,9 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> arm_to_use_for_second_place = holding_arm_designator.resolve()
     >>> assert arm_to_use_for_second_place is None
     """
-    def __init__(self, robot, entity_designator, arm_properties, name=None):
+    def __init__(self, robot, entity_designator, arm_properties=None, name=None):
+        if arm_properties is None:
+            arm_properties = {}
         super(ArmHoldingEntityDesignator, self).__init__(robot, arm_properties, name=name)
         self.entity_designator = entity_designator
 
