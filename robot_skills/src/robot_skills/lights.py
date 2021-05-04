@@ -74,7 +74,7 @@ class TueLights(LightsInterface):
         """
         super(TueLights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
         self._publisher = rospy.Publisher(
-            '/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand, queue_size=10
+            '/{}/rgb_lights_manager/user_set_rgb_lights'.format(robot_name), RGBLightCommand, queue_size=10
         )
 
     def _send_color_msg(self, rgba_msg):
