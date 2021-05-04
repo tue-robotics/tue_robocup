@@ -19,7 +19,7 @@ class LightsInterface(RobotPart):
         :param robot_name: robot_name
         :param tf_buffer: tf2_ros.Buffer
         """
-        super(LightsInterface, self).__init__(robot_name=robot_name, tf_buffer=tf_listener)
+        super(LightsInterface, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
     def close(self):
         pass
@@ -65,16 +65,16 @@ class LightsInterface(RobotPart):
 
 
 class TueLights(LightsInterface):
-    def __init__(self, robot_name, tf_listener):
+    def __init__(self, robot_name, tf_buffer):
         """
         Interface to the robot's lights. This uses the TU/e-specific RGBLightCommand message type.
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf_server.TFClient()
         """
-        super(TueLights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(TueLights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._publisher = rospy.Publisher(
-            '/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand, queue_size=10
+            '/{}/rgb_lights_manager/user_set_rgb_lights'.format(robot_name), RGBLightCommand, queue_size=10
         )
 
     def _send_color_msg(self, rgba_msg):
@@ -129,15 +129,15 @@ class TueLights(LightsInterface):
 
 
 class Lights(LightsInterface):
-    def __init__(self, robot_name, tf_listener, topic):
+    def __init__(self, robot_name, tf_buffer, topic):
         """
         Interface to the robot's lights. This uses the TU/e-specific RGBLightCommand message type.
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf_server.TFClient()
         :param topic: topic where to publish the messages
         """
-        super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(Lights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._publisher = rospy.Publisher(topic, ColorRGBA, queue_size=1)
 
     def _send_color_msg(self, rgba_msg):
