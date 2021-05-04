@@ -50,17 +50,10 @@ class Hero(robot.Robot):
                 self.robot_name, self.tf_buffer, '/' + self.robot_name + '/rgb_lights_manager/user_set_rgb_lights'
             )
         )
-<<<<<<< HEAD
-        self.add_body_part('speech', TmcSpeech(self.robot_name, self.tf_listener,
+        self.add_body_part('speech', TmcSpeech(self.robot_name, self.tf_buffer,
                                                lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
                                                lambda: self.lights.set_color_rgba_msg(lights.RESET)))
-        self.add_body_part('hmi', api.Api(self.robot_name, self.tf_listener,
-=======
-        self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_buffer,
-                                                   lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
-                                                   lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
->>>>>>> feature/remove-lights-from-bridge
                                           lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                           lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('ears', ears.Ears(self.robot_name, self.tf_buffer,
