@@ -1,7 +1,6 @@
 # ROS
 import actionlib
 import rospy
-from std_msgs.msg import String
 
 # TMC
 from tmc_msgs.msg import TalkRequestAction, TalkRequestGoal, Voice
@@ -24,12 +23,6 @@ class TmcSpeech(SpeechInterface):
             robot_name=robot_name, tf_buffer=tf_buffer, pre_hook=pre_hook, post_hook=post_hook,
         )
 
-        # Big question: how do we handle speech requests published on a topic (e.g., from the UI)?
-        # Tiny question: soundboard is currently not implemented, is that desired?
-
-        # Publish the sentence for other interfaces
-        self.sentence_pub = rospy.Publisher("{}/output".format(robot_name), String, queue_size=1)
-
         # Client
         self.speech_client = self.create_simple_action_client("/talk_request_action", TalkRequestAction)
 
@@ -51,8 +44,6 @@ class TmcSpeech(SpeechInterface):
         :param block: bool to indicate whether this function should return immediately or if it should block until the
             sentence has been spoken
         """
-        str_msg = String(sentence)
-        self.sentence_pub.publish(sentence)
         request = TalkRequestGoal()
         request.data.interrupting = False
         request.data.queueing = True
