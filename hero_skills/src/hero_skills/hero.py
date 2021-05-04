@@ -5,7 +5,7 @@ import math
 import rospy
 
 # TU/e Robotics
-from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, torso, world_model_ed
+from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, torso, world_model_ed
 from robot_skills.arm import arms, force_sensor, gripper, handover_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
 
@@ -50,9 +50,14 @@ class Hero(robot.Robot):
                 self.robot_name, self.tf_buffer, '/' + self.robot_name + '/rgb_lights_manager/user_set_rgb_lights'
             )
         )
-        self.add_body_part('speech', TmcSpeech(self.robot_name, self.tf_buffer,
-                                               lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
-                                               lambda: self.lights.set_color_rgba_msg(lights.RESET)))
+        if is_sim_mode():
+            self.add_body_part('speech', speech.TueSpeech(self.robot_name, self.tf_buffer,
+                                                          lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
+                                                          lambda: self.lights.set_color_rgba_msg(lights.RESET)))
+        else:
+            self.add_body_part('speech', TmcSpeech(self.robot_name, self.tf_buffer,
+                                                   lambda: self.lights.set_color_rgba_msg(lights.SPEAKING),
+                                                   lambda: self.lights.set_color_rgba_msg(lights.RESET)))
         self.add_body_part('hmi', api.Api(self.robot_name, self.tf_buffer,
                                           lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                           lambda: self.lights.set_color_rgba_msg(lights.RESET)))
