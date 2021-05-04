@@ -67,15 +67,13 @@ class PrepareDrive(smach.State):
             # ensure all batteries are unplugged
             if isinstance(part, Battery):
                 while part.is_charging:
-                    if tstart - rospy.Time.now() < rospy.Duration.from_sec(self.timeout):
+                    if rospy.Time.now() > tstart + self.timeout:
                         return 'abort'
                     if self.preempt_requested():
                         return 'preempted'
                     rospy.logwarn("Robot is charging. Please unplug")
                     self.robot.speech.speak("I am still charging. Please unplug me.")
                     rospy.sleep(1)
-                rospy.logerr("Robot is charging, aborting navigation")
-                return 'abort'
         return 'done'
 
 
@@ -120,8 +118,8 @@ class getPlan(smach.State):
 
 
 class executePlan(smach.State):
-    def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_pose=True):
-        smach.State.__init__(self,outcomes=['succeeded','arrived','blocked','preempted'])
+    def __init__(self, robot, breakout_function, blocked_timeout=4, reset_pose=True):
+        smach.State.__init__(self, outcomes=['succeeded', 'arrived', 'blocked', 'preempted'])
         self.robot = robot
         self.t_last_free = None
         self.blocked_timeout = blocked_timeout
