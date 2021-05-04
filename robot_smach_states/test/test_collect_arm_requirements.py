@@ -7,7 +7,7 @@ import rospy
 # TU/e
 from robot_skills import get_robot
 from robot_skills.arm.arms import GripperTypes
-from robot_smach_states.utility import collect_arm_requirements
+from robot_smach_states.utility import check_arm_requirements, collect_arm_requirements
 
 
 class FirstState(smach.State):
@@ -17,9 +17,7 @@ class FirstState(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded'])
 
-        assert robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
+        check_arm_requirements(self, robot)
 
     @staticmethod
     def execute():
@@ -33,9 +31,7 @@ class SecondState(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded'])
 
-        assert robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
+        check_arm_requirements(self, robot)
 
     @staticmethod
     def execute():
@@ -49,9 +45,20 @@ class ThirdState(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded'])
 
-        assert robot.get_arm(
-            **self.REQUIRED_ARM_PROPERTIES), "None of the available arms meets all this class's" \
-                                             "requirements: {}".format(self.REQUIRED_ARM_PROPERTIES)
+        check_arm_requirements(self, robot)
+
+    @staticmethod
+    def execute():
+        return 'succeeded'
+
+
+class DynamicConfigState(smach.State):
+    def __init__(self, robot, configuration):
+        smach.State.__init__(self, outcomes=['succeeded'])
+
+        self.REQUIRED_ARM_PROPERTIES = {'required_goals': [configuration]}
+
+        check_arm_requirements(self, robot)
 
     @staticmethod
     def execute():
@@ -78,17 +85,28 @@ class SecondStateMachine(smach.StateMachine):
             smach.StateMachine.add('BAR', FirstStateMachine(robot), transitions={'succeeded': 'succeeded'})
 
 
-def compare_lists_in_dicts(reference, result):
-    """ Compares a reference dict with the result as produced by the system
+class ThirdStateMachine(smach.StateMachine):
+    def __init__(self, robot):
 
-    :param reference: Ground truth dict (strings as keys and lists as values)
-    :param result: Dict according to the system
-    :return: reference and result dicts containing the non overlapping key, value pairs
-    """
-    for k in list(reference.keys()):
-        if k in list(result.keys()):
-            if len(reference[k]) == len(result[k]) and set(reference[k]) == set(result[k]):
-                del reference[k], result[k]
+        smach.StateMachine.__init__(self, outcomes=['succeeded'])
+
+        with self:
+            smach.StateMachine.add('FOO', FirstState(robot), transitions={'succeeded': 'DYNAMIC1'})
+            smach.StateMachine.add('DYNAMIC1', DynamicConfigState(robot, 'config1'),
+                                   transitions={'succeeded': 'succeeded'})
+
+
+class FourthStateMachine(smach.StateMachine):
+    def __init__(self, robot):
+
+        smach.StateMachine.__init__(self, outcomes=['succeeded'])
+
+        with self:
+            smach.StateMachine.add('FOO', FirstState(robot), transitions={'succeeded': 'DYNAMIC1'})
+            smach.StateMachine.add('DYNAMIC1', DynamicConfigState(robot, 'config1'),
+                                   transitions={'succeeded': 'DYNAMIC2'})
+            smach.StateMachine.add('DYNAMIC2', DynamicConfigState(robot, 'config2'),
+                                   transitions={'succeeded': 'succeeded'})
 
 
 class TestCollectArmRequirements(unittest.TestCase):
@@ -98,18 +116,28 @@ class TestCollectArmRequirements(unittest.TestCase):
 
     def test_collect_arm_requirements(self):
         requirements = collect_arm_requirements(FirstStateMachine(self.robot))
-        reference = {'required_trajectories': ['prepare_grasp', 'prepare_place'],
-                     'required_gripper_types': ['pseudo-gripper-type-any-grasping-will-do',
-                                                'gripper-type-pinch']}
-        compare_lists_in_dicts(reference, requirements)
+        reference = {'required_trajectories': set(['prepare_grasp', 'prepare_place']),
+                     'required_gripper_types': set([GripperTypes.GRASPING, 'gripper-type-pinch'])}
         self.assertEqual(requirements, reference)
 
     def test_collect_arm_requirements_recursive(self):
         requirements = collect_arm_requirements(SecondStateMachine(self.robot))
-        reference = {'required_trajectories': ['wave', 'prepare_grasp', 'prepare_place'],
-                     'required_gripper_types': ['gripper-type-parallel', 'pseudo-gripper-type-any-grasping-will-do',
-                                                'gripper-type-pinch']}
-        compare_lists_in_dicts(requirements, reference)
+        reference = {'required_trajectories': set(['wave', 'prepare_grasp', 'prepare_place']),
+                     'required_gripper_types': set([GripperTypes.PARALLEL, GripperTypes.GRASPING, GripperTypes.PINCH])}
+        self.assertEqual(requirements, reference)
+
+    def test_collect_arm_requirements_dynamic1(self):
+        requirements = collect_arm_requirements(ThirdStateMachine(self.robot))
+        reference = {'required_goals': set(['config1']),
+                     'required_trajectories': set(['prepare_grasp']),
+                     'required_gripper_types': set([GripperTypes.GRASPING])}
+        self.assertEqual(requirements, reference)
+
+    def test_collect_arm_requirements_dynamic2(self):
+        requirements = collect_arm_requirements(FourthStateMachine(self.robot))
+        reference = {'required_goals': set(['config1', 'config2']),
+                     'required_trajectories': set(['prepare_grasp']),
+                     'required_gripper_types': set([GripperTypes.GRASPING])}
         self.assertEqual(requirements, reference)
 
 

@@ -6,15 +6,17 @@ import smach
 
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
-from robot_skills.arm.arms import PublicArm
+from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.arm.gripper import GripperState
 from ..human_interaction.human_interaction import Say
 from ..reset import ResetPart
-from ..utility import LockDesignator, UnlockDesignator
+from ..utility import ResolveArm, check_arm_requirements
 from ..util.designators import check_type, LockingDesignator
 
 
 class ArmToJointConfig(smach.State):
+    # REQUIRED_ARM_PROPERTIES is defined in constructor because it is dynamic
+
     def __init__(self, robot, arm_designator, configuration):
         """
         Put arm of robot in some joint configuration
@@ -28,6 +30,7 @@ class ArmToJointConfig(smach.State):
         self.robot = robot
         check_type(arm_designator, PublicArm)
         self.arm_designator = arm_designator
+        self.REQUIRED_ARM_PROPERTIES = {'required_goals': [configuration]}
         self.configuration = configuration
 
     def execute(self, userdata=None):
@@ -41,6 +44,8 @@ class ArmToJointConfig(smach.State):
 
 
 class HandOverTo(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
+
     def __init__(self, robot, arm_designator, timeout=10):
         """
         Handover the object in arm to a human.
@@ -114,6 +119,10 @@ class HandoverFromHuman(smach.StateMachine):
             rospy.logerr("No grabbed entity label or grabbed entity designator given")
 
         with self:
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm_designator, self),
+                                   transitions={'succeeded': 'POSE',
+                                                'failed': 'failed'})
+
             smach.StateMachine.add('POSE', ArmToJointConfig(robot, arm_designator, arm_configuration),
                                    transitions={'succeeded': 'OPEN_BEFORE_INSERT', 'failed': 'OPEN_BEFORE_INSERT'})
 
@@ -133,6 +142,7 @@ class HandoverFromHuman(smach.StateMachine):
                                    transitions={'succeeded': 'succeeded',
                                                 'timeout': 'timeout',
                                                 'failed': 'failed'})
+            check_arm_requirements(self, robot)
 
 
 class HandoverToHuman(smach.StateMachine):
@@ -148,16 +158,16 @@ class HandoverToHuman(smach.StateMachine):
 
         # A designator can resolve to a different item every time its resolved. We don't want that here, so lock
         check_type(arm_designator, PublicArm)
-        locked_arm = LockingDesignator(arm_designator)
 
         with self:
-            smach.StateMachine.add("LOCK_ARM", LockDesignator(locked_arm),
-                                   transitions={'locked': 'SPINDLE_MEDIUM'})
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm_designator, self),
+                                   transitions={'succeeded': 'SPINDLE_MEDIUM',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add("SPINDLE_MEDIUM", ResetPart(robot, robot.torso),
                                    transitions={'done': 'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
 
-            smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL", ArmToJointConfig(robot, locked_arm,
+            smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL", ArmToJointConfig(robot, arm_designator,
                                                                                       'handover_to_human'),
                                    transitions={'succeeded': 'SAY_DETECT_HANDOVER',
                                                 'failed': 'SAY_DETECT_HANDOVER'})
@@ -166,27 +176,27 @@ class HandoverToHuman(smach.StateMachine):
                                                                       "Please take it from my gripper."]),
                                    transitions={'spoken': 'DETECT_HANDOVER'})
 
-            smach.StateMachine.add("DETECT_HANDOVER", HandOverTo(robot, locked_arm),
+            smach.StateMachine.add("DETECT_HANDOVER", HandOverTo(robot, arm_designator),
                                    transitions={'succeeded': 'SAY_CLOSE_NOW_GRIPPER',
                                                 'failed': 'SAY_CLOSE_NOW_GRIPPER'})
 
             smach.StateMachine.add("SAY_CLOSE_NOW_GRIPPER", Say(robot, ["I will close my gripper now"]),
                                    transitions={'spoken': 'CLOSE_GRIPPER_HANDOVER'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm,
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, arm_designator,
                                                                         gripperstate=GripperState.CLOSE, timeout=0),
                                    transitions={'succeeded': 'RESET_ARM',
                                                 'failed': 'RESET_ARM'})
 
-            smach.StateMachine.add('RESET_ARM', ArmToJointConfig(robot, locked_arm, 'reset'),
-                                   transitions={'succeeded': 'UNLOCK_ARM',
-                                                'failed': 'UNLOCK_ARM'})
-
-            smach.StateMachine.add("UNLOCK_ARM", UnlockDesignator(locked_arm),
-                                   transitions={'unlocked': 'succeeded'})
+            smach.StateMachine.add('RESET_ARM', ArmToJointConfig(robot, arm_designator, 'reset'),
+                                   transitions={'succeeded': 'succeeded',
+                                                'failed': 'failed'})
+            check_arm_requirements(self, robot)
 
 
 class CloseGripperOnHandoverToRobot(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
+
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
         """
         State to wait until the operator pushes an object into the gripper
@@ -234,6 +244,8 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
 
 class SetGripper(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
+
     def __init__(self, robot, arm_designator, gripperstate=GripperState.OPEN, grab_entity_designator=None, timeout=10):
         """
         Instruct the gripper
