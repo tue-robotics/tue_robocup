@@ -435,6 +435,8 @@ class Arm(RobotPart):
 
         self._publish_marker(frameStamped, [1, 0, 0], "grasp_point")
 
+        end_effector_frame = frame_in_baselink * self.offset
+
         # TODO: Get rid of this custom message type
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
@@ -446,30 +448,14 @@ class Arm(RobotPart):
 
         grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
 
-        grasp_precompute_goal.goal.x = frame_in_baselink.frame.p.x()
-        grasp_precompute_goal.goal.y = frame_in_baselink.frame.p.y()
-        grasp_precompute_goal.goal.z = frame_in_baselink.frame.p.z()
+        grasp_precompute_goal.goal.x = end_effector_frame.p.x()
+        grasp_precompute_goal.goal.y = end_effector_frame.p.y()
+        grasp_precompute_goal.goal.z = end_effector_frame.p.z()
 
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
+        roll, pitch, yaw = end_effector_frame.M.GetRPY()
+        grasp_precompute_goal.goal.roll = roll
         grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
-        self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
-
-        # Add tunable parameters
-        offset_frame = frame_in_baselink.frame * self.offset
-
-        grasp_precompute_goal.goal.x = offset_frame.p.x()
-        grasp_precompute_goal.goal.y = offset_frame.p.y()
-        grasp_precompute_goal.goal.z = offset_frame.p.z()
-
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
-        # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
+        grasp_precompute_goal.goal.yaw = yaw
 
         time.sleep(0.001)   # This is necessary: the rtt_actionlib in the hardware seems
                             # to only have a queue size of 1 and runs at 1000 hz. This
@@ -492,9 +478,9 @@ class Arm(RobotPart):
                 result_pose = self.tf_buffer.lookup_transform(self.robot_name + "/base_link",
                                                               self.grasp_frame,
                                                               rospy.Time(0))
-                dx = grasp_precompute_goal.goal.x - result_pose.transform.translation.x
-                dy = grasp_precompute_goal.goal.y - result_pose.transform.translation.y
-                dz = grasp_precompute_goal.goal.z - result_pose.transform.translation.z
+                dx = frame_in_baselink.p.x() - result_pose.transform.translation.x
+                dy = frame_in_baselink.p.y() - result_pose.transform.translation.y
+                dz = frame_in_baselink.p.z() - result_pose.transform.translation.z
 
                 if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
                     rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(
