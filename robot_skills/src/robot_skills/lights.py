@@ -70,7 +70,7 @@ class TueLights(LightsInterface):
         Interface to the robot's lights. This uses the TU/e-specific RGBLightCommand message type.
 
         :param robot_name: robot_name
-        :param tf_buffer: tf_server.TFClient()
+        :param tf_buffer: tf buffer object
         """
         super(TueLights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._publisher = rospy.Publisher(
@@ -134,7 +134,7 @@ class Lights(LightsInterface):
         Interface to the robot's lights. This uses the TU/e-specific RGBLightCommand message type.
 
         :param robot_name: robot_name
-        :param tf_buffer: tf_server.TFClient()
+        :param tf_buffer: tf buffer object
         :param topic: topic where to publish the messages
         """
         super(Lights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
