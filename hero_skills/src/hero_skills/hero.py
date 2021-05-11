@@ -44,7 +44,7 @@ class Hero(robot.Robot):
         # Human Robot Interaction
         self.add_body_part(
             'lights', lights.Lights(
-                self.robot_name, self.tf_buffer, '/' + self.robot_name + '/rgb_lights_manager/user_set_rgb_lights'
+                self.robot_name, self.tf_buffer, '/hero/command_status_led_rgb'
             )
         )
         self.add_body_part('speech', speech.Speech(self.robot_name, self.tf_buffer,
