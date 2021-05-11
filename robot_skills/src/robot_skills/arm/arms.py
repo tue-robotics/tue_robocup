@@ -435,7 +435,7 @@ class Arm(RobotPart):
 
         self._publish_marker(frameStamped, [1, 0, 0], "grasp_point")
 
-        end_effector_frame = frame_in_baselink * self.offset
+        end_effector_frame = frame_in_baselink.frame * self.offset
 
         # TODO: Get rid of this custom message type
         # Create goal:
