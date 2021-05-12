@@ -7,12 +7,12 @@ from std_msgs.msg import Bool
 from robot_skills.get_robot import get_robot
 
 
-class BumperThing:
+class BumperSetup:
     def __init__(self, robot):
         self.robot = robot
         self.front_bumper_sub = rospy.Subscriber("hero/base_f_bumper_sensor", Bool, self.front_callback)
         self.front_bumper_active = False
-        self.back_bumper_sub = rospy.Subscriber("hero/base_b_bumper_sensor", Bool, self.front_callback)
+        self.back_bumper_sub = rospy.Subscriber("hero/base_b_bumper_sensor", Bool, self.back_callback)
         self.back_bumper_active = False
 
     def front_callback(self, msg):
@@ -24,7 +24,7 @@ class BumperThing:
         self.back_bumper_active = msg.data
 
     def motion(self):
-        if self.front_bumper_active and self.back_bumper_active :
+        if self.front_bumper_active and self.back_bumper_active:
             rospy.loginfo("robot_stuck")
             self.robot.base.force_drive(0, 0, 0, 1)
         elif self.front_bumper_active:
@@ -38,7 +38,7 @@ class BumperThing:
 if __name__ == "__main__":
     rospy.init_node("test_grasping")
     robot = get_robot("hero")
-    bt = BumperThing(robot)
+    bt = BumperSetup(robot)
     while not rospy.is_shutdown():
         bt.motion()
         rospy.sleep(0.1)
