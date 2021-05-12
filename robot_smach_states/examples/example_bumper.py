@@ -33,28 +33,34 @@ class BumperSetup:
             v.linear.y = 0.0
             v.angular.z = 0.0
             self._cmd_vel.publish(v)
- #           self.robot.base.force_drive(0, 0, 0, 1)
+
         elif self.front_bumper_active:
             rospy.loginfo("driving_back")
             v.linear.x = -0.1
             v.linear.y = 0.0
             v.angular.z = 0.0
             self._cmd_vel.publish(v)
- #           self.robot.base.force_drive(-0.1, 0, 0, 0.2, stop=False)
+
         elif self.back_bumper_active:
             rospy.loginfo("driving_forward")
             v.linear.x = 0.1
             v.linear.y = 0.0
             v.angular.z = 0.0
             self._cmd_vel.publish(v)
- #           self.robot.base.force_drive(0.1, 0, 0, 0.2, stop=False)
+
+        else:
+            rospy.loginfo("Free")
+            v.linear.x = 0.0
+            v.linear.y = 0.0
+            v.angular.z = 0.0
+            self._cmd_vel.publish(v)
 
 
 if __name__ == "__main__":
     rospy.init_node("test_grasping")
     robot = get_robot("hero")
     bt = BumperSetup(robot)
-    r = rospy.Rate(10)
+    r = rospy.Rate(30)
     while not rospy.is_shutdown():
         bt.motion()
         r.sleep()
