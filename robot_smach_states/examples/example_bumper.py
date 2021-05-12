@@ -29,10 +29,10 @@ class BumperSetup:
             self.robot.base.force_drive(0, 0, 0, 1)
         elif self.front_bumper_active:
             rospy.loginfo("driving_back")
-            self.robot.base.force_drive(-0.1, 0, 0, 1)
+            self.robot.base.force_drive(-0.1, 0, 0, 0.1, stop=False)
         elif self.back_bumper_active:
             rospy.loginfo("driving_forward")
-            self.robot.base.force_drive(0.1, 0, 0, 1)
+            self.robot.base.force_drive(0.1, 0, 0, 0.1, stop=False)
 
 
 if __name__ == "__main__":
