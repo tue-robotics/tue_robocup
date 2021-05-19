@@ -6,17 +6,17 @@ import time
 
 def callback(data):
     rospy.loginfo("I felt: \n %.s", data.wrench)
-    threshold_torque_y = 0.1  # Threshold for the torque around y axis in [Nm]
+    threshold_torque_y = -0.1  # Threshold for the torque around y axis in [Nm]
     object_present1 = False
     object_present2 = False
 
-    if data.wrench.torque.y >= threshold_torque_y:
+    if data.wrench.torque.y <= threshold_torque_y:
         object_present1 = True
         print('Initial grasp: SUCCESSFUL')
 
         time.sleep(2)
 
-        if data.wrench.torque.y >= threshold_torque_y and object_present1 == True:
+        if data.wrench.torque.y <= threshold_torque_y:
             object_present2 = True
             print('Total grasp: SUCCESSFUL')
         else:
