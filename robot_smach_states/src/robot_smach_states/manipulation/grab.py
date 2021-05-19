@@ -116,7 +116,7 @@ class PickUp(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_buffer)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, self.robot.tf_buffer)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -157,7 +157,7 @@ class PickUp(smach.State):
 
         # In case grasp point determination didn't work
         if not grasp_framestamped:
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_buffer)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, self.robot.tf_buffer)
             if goal_bl is None:
                 return 'failed'
             else:
@@ -203,7 +203,7 @@ class PickUp(smach.State):
 
         # Lift
         goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
-                                                    tf_listener=self.robot.tf_buffer)
+                                                    self.robot.tf_buffer)
         rospy.loginfo('Start lifting')
         roll = 0.0
 
@@ -215,7 +215,7 @@ class PickUp(smach.State):
 
         # Retract
         goal_bl = grasp_framestamped.projectToFrame(self.robot.base_link_frame,
-                                                    tf_listener=self.robot.tf_buffer)
+                                                    self.robot.tf_buffer)
         rospy.loginfo('Start retracting')
         roll = 0.0
 
