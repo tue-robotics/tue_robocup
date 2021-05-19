@@ -433,6 +433,10 @@ class Arm(RobotPart):
         # Convert to baselink, which is needed because the offset is defined in the base_link frame
         frame_in_baselink = frameStamped.projectToFrame(self.robot_name + "/base_link", self.tf_buffer)
 
+        self._publish_marker(frameStamped, [1, 0, 0], "grasp_point")
+
+        end_effector_frame = frame_in_baselink.frame * self.offset
+
         # TODO: Get rid of this custom message type
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
@@ -444,32 +448,14 @@ class Arm(RobotPart):
 
         grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
 
-        grasp_precompute_goal.goal.x = frame_in_baselink.frame.p.x()
-        grasp_precompute_goal.goal.y = frame_in_baselink.frame.p.y()
-        grasp_precompute_goal.goal.z = frame_in_baselink.frame.p.z()
+        grasp_precompute_goal.goal.x = end_effector_frame.p.x()
+        grasp_precompute_goal.goal.y = end_effector_frame.p.y()
+        grasp_precompute_goal.goal.z = end_effector_frame.p.z()
 
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
+        roll, pitch, yaw = end_effector_frame.M.GetRPY()
+        grasp_precompute_goal.goal.roll = roll
         grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
-        self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
-
-        # Add tunable parameters
-        offset_frame = frame_in_baselink.frame * self.offset
-
-        grasp_precompute_goal.goal.x = offset_frame.p.x()
-        grasp_precompute_goal.goal.y = offset_frame.p.y()
-        grasp_precompute_goal.goal.z = offset_frame.p.z()
-
-        roll, pitch, yaw = frame_in_baselink.frame.M.GetRPY()
-        grasp_precompute_goal.goal.roll  = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw   = yaw
-
-        # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
-
-        self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
+        grasp_precompute_goal.goal.yaw = yaw
 
         time.sleep(0.001)   # This is necessary: the rtt_actionlib in the hardware seems
                             # to only have a queue size of 1 and runs at 1000 hz. This
@@ -492,9 +478,9 @@ class Arm(RobotPart):
                 result_pose = self.tf_buffer.lookup_transform(self.robot_name + "/base_link",
                                                               self.grasp_frame,
                                                               rospy.Time(0))
-                dx = grasp_precompute_goal.goal.x - result_pose.transform.translation.x
-                dy = grasp_precompute_goal.goal.y - result_pose.transform.translation.y
-                dz = grasp_precompute_goal.goal.z - result_pose.transform.translation.z
+                dx = frame_in_baselink.p.x() - result_pose.transform.translation.x
+                dy = frame_in_baselink.p.y() - result_pose.transform.translation.y
+                dz = frame_in_baselink.p.z() - result_pose.transform.translation.z
 
                 if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
                     rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(
@@ -660,18 +646,18 @@ class Arm(RobotPart):
     def _publish_marker(self, goal, color, ns=""):
         """
         Publish markers for visualisation
-        :param goal: tue_manipulation_msgs.msg.GraspPrecomputeGoal
+        :param goal: frame_stamped
         :param color: list of rgb colors (0.0-1.0)
         :param ns: namespace
         :return: no return
         """
         marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = goal.goal.header.frame_id
+        marker.header.frame_id = goal.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.type = 2
-        marker.pose.position.x = goal.goal.x
-        marker.pose.position.y = goal.goal.y
-        marker.pose.position.z = goal.goal.z
+        marker.pose.position.x = goal.frame.p.x()
+        marker.pose.position.y = goal.frame.p.y()
+        marker.pose.position.z = goal.frame.p.z()
         marker.lifetime = rospy.Duration(20.0)
         marker.scale.x = 0.05
         marker.scale.y = 0.05

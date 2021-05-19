@@ -36,8 +36,7 @@ if __name__ == "__main__":
                         frame_id="map")
     item = Entity("dummy_id", "dummy_type", None, None, None, None, None, None)
 
-    arm = ds.ArmDesignator(robot, arm_properties={"required_trajectories": ["prepare_place"],
-                                                  "required_gripper_types": [arms.GripperTypes.GRASPING]})
+    arm = ds.ArmDesignator(robot).lockable()
 
     place_state = Place(robot, ds.Designator(item), ds.Designator(pose), arm)
     place_state.execute()

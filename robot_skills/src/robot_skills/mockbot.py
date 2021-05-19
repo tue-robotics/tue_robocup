@@ -256,7 +256,7 @@ class Lights(MockedRobotPart):
         super(Lights, self).__init__(robot_name, tf_buffer)
         self.close = AlteredMagicMock()
         self.set_color = AlteredMagicMock()
-        self.set_color_colorRGBA = AlteredMagicMock()
+        self.set_color_rgba_msg = AlteredMagicMock()
         self.on = AlteredMagicMock()
         self.off = AlteredMagicMock()
 
