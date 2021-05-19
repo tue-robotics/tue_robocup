@@ -14,5 +14,7 @@ catkin_python_setup()
 catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
   catkin_add_nosetests(test)
+  add_rostest(test/rostest/test_grab.test)
 endif()

@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<launch>
+    <test test-name="test_grab" pkg="robot_smach_states" type="test_grab.py" />
+</launch>
