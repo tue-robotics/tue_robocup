@@ -24,7 +24,6 @@ class TestPickUp(unittest.TestCase):
         entity_id = "test_item"
         pose = FrameStamped(frame=kdl.Frame(kdl.Rotation.RPY(0.0, 0.0, 0.0), kdl.Vector(0.0, 0.0, 0.0)),
                             frame_id="map")
-        self.robot.ed.update_entity(id=entity_id, frame_stamped=pose)
         shape = RightPrism(
             [kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)], -0.1, 0.1)
         item = Entity(entity_id, "test_type", pose.frame_id, pose.frame, shape, None, None, None)
