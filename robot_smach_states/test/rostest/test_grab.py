@@ -32,7 +32,7 @@ class TestPickUp(unittest.TestCase):
         arm = ds.UnoccupiedArmDesignator(self.robot).lockable()
 
         state = Grab(self.robot, itemdes, arm)
-        self.assertEqual(state.execute(), "succeeded")
+        self.assertEqual(state.execute(), "done")
 
 
 if __name__ == '__main__':
