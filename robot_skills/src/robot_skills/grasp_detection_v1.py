@@ -1,12 +1,18 @@
 import rospy
 from geometry_msgs.msg import WrenchStamped
-
+from .robot_smach_states.manipulation.grab import execute, PickUp
 import time
 
 
 def callback(data):
     rospy.loginfo("I felt: \n %.s", data.wrench)
-    threshold_torque_y = -0.1  # Threshold for the torque around y axis in [Nm]
+
+    # Threshold for the torque around y axis in [Nm]
+    threshold_torque_y = -0.1
+
+    # Start the measuring of torque_y
+    start_measuring = 
+
     object_present1 = False
     object_present2 = False
 
