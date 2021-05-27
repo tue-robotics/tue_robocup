@@ -32,12 +32,12 @@ class HandoverDetector(RobotPart):
         :return: Success
         :rtype: bool
         """
-        pub = rospy.Publisher('/{}/handoverdetector_{}/toggle_{}'.format(self.robot_name, self.side, direction),
+        pub = rospy.Publisher('/{}/handoverdetector_{}/toggle_{}'.format(self.robot_name, self.name, direction),
                               std_msgs.msg.Bool, queue_size=1, latch=True)
         pub.publish(True)
 
         try:
-            rospy.wait_for_message('/{}/handoverdetector_{}/result'.format(self.robot_name, self.side),
+            rospy.wait_for_message('/{}/handoverdetector_{}/result'.format(self.robot_name, self.name),
                                    std_msgs.msg.Bool, timeout)
             return True
         except rospy.ROSException as e:
