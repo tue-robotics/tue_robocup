@@ -7,7 +7,7 @@ def callback(data):
     rospy.loginfo("I felt: \n %.s", data.wrench)
 
     # Threshold for the torque around y axis in [Nm]
-    threshold_torque_y = -0.5 # MUST BE CHECKED
+    threshold_torque_y = -0.5  # MUST BE CHECKED
 
     torque_y_matrix = []
 
