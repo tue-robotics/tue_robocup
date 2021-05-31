@@ -22,8 +22,8 @@ class GraspDetector(RobotPart):
         self._topic = wrench_topic
         self.latest_msg = None
         self.msg_list = []
-        self.threshold_torque_y = -0.45
-        self.measuring_for = 15
+        self.threshold_torque_y = -0.45  # Nm
+        self.measuring_for = 15  # seconds
         self.start_time = rospy.Time.now()
         self.wrench_sub = self.create_subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
 
@@ -32,7 +32,7 @@ class GraspDetector(RobotPart):
         callback method that will be executed every time a new wrench message is received.
         :param msg: incoming wrench message
         """
-        self.latest_msg = msg
+        self.latest_msg = msg.wrench.torque.y
 
         if not rospy.Time.now() > (self.start_time + rospy.Duration(self.measuring_for)):
             self.msg_list.append(msg)
