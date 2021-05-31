@@ -3,8 +3,6 @@ from __future__ import absolute_import
 import rospy
 from geometry_msgs.msg import WrenchStamped
 
-from statistics import mean
-
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
 
@@ -32,10 +30,11 @@ class GraspDetector(RobotPart):
         callback method that will be executed every time a new wrench message is received.
         :param msg: incoming wrench message
         """
-        self.latest_msg = msg.wrench.torque.y
+        self.latest_msg = msg
+        self.torque_y = self.latest_msg.wrench.torque.y
 
         if not rospy.Time.now() > (self.start_time + rospy.Duration(self.measuring_for)):
-            self.msg_list.append(msg)
+            self.msg_list.append(self.torque_y)
 
 
     def detect(self):
@@ -44,7 +43,7 @@ class GraspDetector(RobotPart):
         :return: True if we are holding something
                  False if we are not.
         """
-        if mean(self.msg_list) < self.threshold_torque_y:
-            return True, "Grasp successful"
+        if not sum(self.msg_list)/len(self.msg_list) < self.threshold_torque_y:
+            return False, self.msg_list , self.threshold_torque_y
         else:
-            return False, "Grasp failed"
+            return True, self.msg_list, self.threshold_torque_y
