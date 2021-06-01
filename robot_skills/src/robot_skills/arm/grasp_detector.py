@@ -43,7 +43,7 @@ class GraspDetector(RobotPart):
         :return: True if we are holding something
                  False if we are not.
         """
-        if not sum(self.msg_list)/len(self.msg_list) < self.threshold_torque_y:
-            return False, self.msg_list , self.threshold_torque_y
+        if not (sum(self.msg_list)/len(self.msg_list)) < self.threshold_torque_y:
+            return False
         else:
-            return True, self.msg_list, self.threshold_torque_y
+            return True
