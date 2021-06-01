@@ -34,7 +34,7 @@ for side, arm in robot._arms.items():
         rospy.logerr("{} arm is not operational".format(side))
         sys.exit(-1)
 
-    goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0, 0.748, 0, 0, 0, "base_link")
+    goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0, 0.748, 0, 0, 0, robot.base_link_frame)
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):
