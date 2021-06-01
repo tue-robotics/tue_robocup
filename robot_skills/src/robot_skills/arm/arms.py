@@ -478,9 +478,9 @@ class Arm(RobotPart):
                 result_pose = self.tf_buffer.lookup_transform(self.robot_name + "/base_link",
                                                               self.grasp_frame,
                                                               rospy.Time(0))
-                dx = frame_in_baselink.p.x() - result_pose.transform.translation.x
-                dy = frame_in_baselink.p.y() - result_pose.transform.translation.y
-                dz = frame_in_baselink.p.z() - result_pose.transform.translation.z
+                dx = frame_in_baselink.frame.p.x() - result_pose.transform.translation.x
+                dy = frame_in_baselink.frame.p.y() - result_pose.transform.translation.y
+                dz = frame_in_baselink.frame.p.z() - result_pose.transform.translation.z
 
                 if abs(dx) > 0.005 or abs(dy) > 0.005 or abs(dz) > 0.005:
                     rospy.logwarn("Grasp-precompute error too large: [{}, {}, {}]".format(
