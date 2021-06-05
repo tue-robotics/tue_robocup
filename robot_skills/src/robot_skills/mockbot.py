@@ -193,6 +193,7 @@ class Base(MockedRobotPart):
         self.local_planner = AlteredMagicMock()
         self.local_planner.getStatus = mock.MagicMock(return_value="arrived")  # always arrive for now
         self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"])  # always arrive for now
+        self.global_planner.path_length = 0.0 
 
 
 class Hmi(MockedRobotPart):
