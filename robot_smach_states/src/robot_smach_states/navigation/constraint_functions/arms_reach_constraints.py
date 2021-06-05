@@ -15,9 +15,9 @@ from cb_base_navigation_msgs.msg import OrientationConstraint, PositionConstrain
 from ...util.designators import check_type, ArmDesignator, AttrDesignator, Designator
 
 
-def determine_offsets(self):
+def determine_offsets(pose_designator, arm_designator):
     # type: (pose_designator, arm_designator) -> Tuple[FrameStamped, float, float]
-    arm = self.arm_designator.resolve()
+    arm = arm_designator.resolve()
     if not arm:
         rospy.logerr("Could not resolve arm")
         return None
@@ -30,16 +30,9 @@ def determine_offsets(self):
         rospy.logerr("No such place_pose, Designator {} did not resolve".format(pose_designator))
         return None
 
-    entity = self.entity_designator.resolve()
-    rospy.loginfo("Grasp entity id:{0}".format(entity.id))
-
-    if not entity:
-        raise RuntimeError("No such entity")
-
-    try:
-        pose = entity.pose  # TODO Janno: Not all entities have pose information
-    except KeyError as ke:
-        raise RuntimeError("Could not determine pose: {}".format(ke))
+    pose = pose_designator.resolve()
+    if not pose:
+        raise RuntimeError("Could not resolve pose to determine offsets")
 
     return pose, radius, angle_offset
 

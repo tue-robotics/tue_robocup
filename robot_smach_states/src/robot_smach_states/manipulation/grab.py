@@ -121,7 +121,7 @@ class PickUp(smach.State):
 
         try:
             # Transform to base link frame
-            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_listener=self.robot.tf_buffer)
+            goal_bl = goal_map.projectToFrame(self.robot.base_link_frame, tf_buffer=self.robot.tf_buffer)
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
@@ -344,7 +344,7 @@ class Grab(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
-                                   transitions={'succeeded': 'NAVIGATE_TO_GRAB',
+                                   transitions={'succeeded': 'MOVE_TO_GRAB',
                                                 'failed': 'failed'})
 
             smach.StateMachine.add('MOVE_TO_GRAB', MoveToGrasp(robot, item, arm),

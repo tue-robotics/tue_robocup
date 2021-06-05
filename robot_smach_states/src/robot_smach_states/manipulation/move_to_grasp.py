@@ -15,8 +15,9 @@ from robot_skills.util.kdl_conversions import kdl_frame_to_pose_msg, FrameStampe
 
 # Robot smach states
 from robot_smach_states.navigation import NavigateToGrasp
+from robot_smach_states.navigation.constraint_functions.arms_reach_constraints import determine_offsets
 from robot_smach_states.navigation.control_to_pose import ControlToPose, ControlParameters
-from robot_smach_states.util.designators import ArmDesignator, Designator, check_type
+from robot_smach_states.util.designators import ArmDesignator, AttrDesignator, Designator, check_type
 
 
 class _GoalPoseDesignator(Designator):
@@ -99,7 +100,7 @@ class MoveToGrasp(smach.StateMachine):
         check_type(arm, PublicArm)
 
         goal_pose_designator = _GoalPoseDesignator()
-        navigate_state = NavigateToGrasp(robot, item, arm)
+        navigate_state = NavigateToGrasp(robot, arm, item)
         control_parameters = ControlParameters(0.5, 1.0, 0.3, 0.3, 0.3, 0.05, 0.1)
         distance_threshold = 0.5  # The plan must be valid and we don't want to 'ForceDrive' more than a this distance
 
@@ -108,7 +109,10 @@ class MoveToGrasp(smach.StateMachine):
             @smach.cb_interface(input_keys=[], output_keys=[], outcomes=["control", "navigate"])
             def determine_approach(_=None):
                 try:
-                    entity_pose, radius, angle_offset = navigate_state.determine_offsets()
+                    entity_pose, radius, angle_offset = determine_offsets(
+                        AttrDesignator(item, 'pose', resolve_type=FrameStamped),
+                        arm,
+                    )
                     rospy.loginfo("Entity pose: {}, radius: {}, offset: {}".format(entity_pose, radius, angle_offset))
                 except RuntimeError as e:
                     rospy.logwarn("Cannot compute offsets: {}. Will try to navigate.".format(e.message))
