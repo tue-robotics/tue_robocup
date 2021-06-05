@@ -47,24 +47,6 @@ def arms_reach_constraint(pose_designator, arm_designator, look=True):
     :return: navigation constraints, if a designator does not resolve None is returned
     :rtype: tuple(PositionConstraint, OrientationConstraint)
     """
-    # arm = arm_designator.resolve()
-    # if not arm:
-    #     rospy.logerr("Could not resolve arm, Designator {} did not resolve".format(arm_designator))
-    #     return None
-    #
-    # radius = math.hypot(arm.base_offset.x(), arm.base_offset.y())
-    #
-    # pose = pose_designator.resolve()
-    # if not pose:
-    #     rospy.logerr("No such place_pose, Designator {} did not resolve".format(pose_designator))
-    #     return None
-    #
-    # try:
-    #     x = pose.frame.p.x()
-    #     y = pose.frame.p.y()
-    # except KeyError as ke:
-    #     rospy.logerr("Could not determine pose: ".format(ke))
-    #     return None
     # ToDo: what do we do with the 'look' parameter?
     try:
         pose, radius, angle_offset = determine_offsets(pose_designator, arm_designator)
