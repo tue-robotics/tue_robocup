@@ -122,7 +122,7 @@ class ED(RobotPart):
 
     def get_closest_entity(self, type="", center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name + "/base_link")
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name+"/base_link")
 
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
 
@@ -144,7 +144,7 @@ class ED(RobotPart):
 
     def get_closest_room(self, center_point=None, radius=float('inf')):
         if not center_point:
-            center_point = VectorStamped(x=0, y=0, z=0, frame_id="/" + self.robot_name + "/base_link")
+            center_point = VectorStamped(x=0, y=0, z=0, frame_id=self.robot_name+"/base_link")
 
         return self.get_closest_entity(type="room", center_point=center_point, radius=radius)
 
@@ -171,7 +171,7 @@ class ED(RobotPart):
         # Sort by distance
         try:
             entities = sorted(entities, key=lambda entity: entity.distance_to_2d(
-                center_point.projectToFrame("/%s/base_link" % self.robot_name,
+                center_point.projectToFrame(self.robot_name+"/base_link",
                                             self.tf_buffer).vector))  # TODO: adjust for robot
         except Exception as e:
             rospy.logerr("Failed to sort entities: {}".format(e))
@@ -231,7 +231,7 @@ class ED(RobotPart):
             json_entity += ', "action": "%s"' % action
 
         if frame_stamped:
-            if frame_stamped.frame_id != "/map" and frame_stamped.frame_id != "map" :
+            if frame_stamped.frame_id != "/map" and frame_stamped.frame_id != "map":
                 rospy.loginfo('update_entity: frame not in map, transforming')
                 frame_stamped = frame_stamped.projectToFrame("map", self.tf_buffer)
 
