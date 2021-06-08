@@ -11,6 +11,7 @@ import tf2_ros
 from ed.entity import Entity
 from robot_skills.robot import Robot
 from robot_skills.arm.arms import PublicArm, GripperTypes
+from robot_skills.arm.grasp_detector import GraspDetector
 from ..utility import check_arm_requirements, ResolveArm
 from ..util.designators import check_type
 from ..navigation.navigate_to_grasp import NavigateToGrasp
@@ -234,21 +235,32 @@ class PickUp(smach.State):
         # rospy.loginfo('start moving to carrying pose')
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
-        result = 'succeeded'
-        if self._check_occupancy and hasattr(arm.gripper, 'grasp_sensor'):
-            # Check if the object is present in the gripper
-            if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_empty:
-                # If state is empty, grasp has failed
-                result = "failed"
-                rospy.logerr("Gripper is not holding an object")
-                self.robot.speech.speak("Whoops, something went terribly wrong")
-                arm.gripper.occupied_by = None  # Set the object the arm is holding to None
-            else:
-                # State is holding, grasp succeeded.
-                # If unknown: sensor not there, assume gripper is holding and hope for the best
-                result = "succeeded"
-                if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_unknown:
-                    rospy.logwarn("GripperMeasurement unknown")
+        # Object detection in the gripper
+        wrench_topic = "/hero/wrist_wrench/raw"  # topic to listen to
+        if not GraspDetector("Hero", None, wrench_topic).detect():
+            rospy.logerr('Gripper not holding an object')
+            result = "failed"
+        else:
+            rospy.loginfo('Grasp successful')
+            result = "succeeded"
+
+        # If I'm correct, the following lines don't apply to HERO, so these are commented out:
+        # Jeroen^
+        # result = 'succeeded'
+        # if self._check_occupancy and hasattr(arm.gripper, 'grasp_sensor'):
+        #     # Check if the object is present in the gripper
+        #     if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_empty:
+        #         # If state is empty, grasp has failed
+        #         result = "failed"
+        #         rospy.logerr("Gripper is not holding an object")
+        #         self.robot.speech.speak("Whoops, something went terribly wrong")
+        #         arm.gripper.occupied_by = None  # Set the object the arm is holding to None
+        #     else:
+        #         # State is holding, grasp succeeded.
+        #         # If unknown: sensor not there, assume gripper is holding and hope for the best
+        #         result = "succeeded"
+        #         if arm.gripper.grasp_sensor.object_in_gripper_measurement.is_unknown:
+        #             rospy.logwarn("GripperMeasurement unknown")
 
         # Reset head
         self.robot.head.cancel_goal()
