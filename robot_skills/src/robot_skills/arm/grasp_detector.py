@@ -20,8 +20,8 @@ class GraspDetector(RobotPart):
         self._topic = wrench_topic
         self.latest_msg = None
         self.msg_list = []
-        self.threshold_torque_y = -0.45  # Nm
-        self.measuring_for = 1.5  # seconds
+        self.threshold_torque_y = -0.46  # Nm
+        self.measuring_for = 2.5  # seconds
         self.start_time = rospy.Time.now()
         self.wrench_sub = self.create_subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
 
@@ -43,7 +43,8 @@ class GraspDetector(RobotPart):
         :return: True if we are holding something
                  False if we are not.
         """
-        if not (sum(self.msg_list)/len(self.msg_list)) < self.threshold_torque_y:
-            return False
-        else:
-            return True
+        if rospy.Time.now() > (self.start_time + rospy.Duration(self.measuring_for)):
+            if not sum(self.msg_list)/len(self.msg_list) < self.threshold_torque_y:
+                return False
+            else:
+                return True
