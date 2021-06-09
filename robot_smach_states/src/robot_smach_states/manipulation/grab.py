@@ -212,6 +212,8 @@ class PickUp(smach.State):
         if not arm.send_goal(goal_bl, timeout=20, allowed_touch_objects=[grab_entity.uuid]):
             rospy.logerr('Failed lift')
 
+        self.robot.grasp_detector.detect() # start detection for an object in the gripper
+
         # Retract
         goal_bl = self.robot.tf_buffer.transform(grasp_framestamped, self.robot.base_link_frame)
         rospy.loginfo('Start retracting')
@@ -236,8 +238,7 @@ class PickUp(smach.State):
         arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         # Object detection in the gripper
-        wrench_topic = "/hero/wrist_wrench/raw"  # topic to listen to
-        if not GraspDetector("Hero", None, wrench_topic).detect():
+        if not self.robot.grasp_detector.detect():
             rospy.logerr('Gripper not holding an object')
             result = "failed"
         else:
