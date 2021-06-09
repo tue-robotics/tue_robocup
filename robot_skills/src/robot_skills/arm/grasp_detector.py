@@ -19,6 +19,8 @@ class GraspDetector(RobotPart):
         super(GraspDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._topic = wrench_topic
         self.latest_msg = None
+        self.start_time = None
+        self.msg_list = []
         self.threshold_torque_y = -0.46  # Nm
         self.measuring_for = rospy.Duration(2.5)  # seconds
         self.wrench_sub = self.create_subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
