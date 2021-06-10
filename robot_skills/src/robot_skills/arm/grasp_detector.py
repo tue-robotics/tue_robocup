@@ -27,6 +27,17 @@ class GraspDetector(RobotPart):
         self.torque_list = []
         self.record = True
 
+    def _wrench_callback(self, msg):
+        """
+        callback method that will be executed every time a new wrench message is received.
+        :param msg: incoming wrench message
+        """
+        if self.record:
+            self.torque_list.append(msg.wrench.torque.y)
+
+        if rospy.Time.now() > (self.start_time + self.measuring_max):
+            self.record = False  # stop recording messages
+            rospy.logwarn('Stopped recording: too much time elapsed before reading torque_list')
 
     def start_recording(self):
         """"
@@ -42,18 +53,6 @@ class GraspDetector(RobotPart):
         self.torque_list = []
 
         self.record = True  # set flag to start recording
-
-
-    def _wrench_callback(self, msg):
-        """
-        callback method that will be executed every time a new wrench message is received.
-        :param msg: incoming wrench message
-        """
-        if self.record:
-            self.torque_list.append(msg.wrench.torque.y)
-        if rospy.Time.now() > self.start_time + self.measuring_max:
-            self.record = False  # stop recording messages
-            rospy.logwarn('Stopped recording: too much time elapsed before reading torque_list')
 
 
     def detect(self):
