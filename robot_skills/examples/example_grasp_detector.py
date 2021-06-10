@@ -10,6 +10,6 @@ gd = GraspDetector("Hero", None, wrench_topic)
 while not rospy.is_shutdown():
     input("Press enter to query the grasp detector")
     if gd.detect():
-        print("robot is currently holding something!!!", "Last T_y: {}".format(gd.msg_list[-1]))
+        print("robot is currently holding something!!!", "Last T_y: {}".format(gd.torque_list[-1]))
     else:
-        print("Not holding anything :(", "Last T_y: {}".format(gd.msg_list[-1]))
+        print("Not holding anything :(", "Last T_y: {}".format(gd.torque_list[-1]))
