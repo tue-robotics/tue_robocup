@@ -238,7 +238,7 @@ class PickUp(smach.State):
 
         # Object detection in the gripper
         if not arm.grasp_detector.detect():
-            rospy.logerr('Gripper not holding an object')
+            rospy.logwarn('Gripper not holding an object')
             result = "failed"
         else:
             rospy.loginfo('Grasp successful')
