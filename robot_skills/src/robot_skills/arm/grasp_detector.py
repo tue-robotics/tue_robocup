@@ -25,14 +25,16 @@ class GraspDetector(RobotPart):
         self.measuring_for = rospy.Duration(2.5)  # seconds
         self.wrench_sub = self.create_subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
 
+        self.torque_list = []
+        self.record = True
+
     def _wrench_callback(self, msg):
         """
         callback method that will be executed every time a new wrench message is received.
         :param msg: incoming wrench message
         """
-        self.latest_msg = msg
-        self.torque_y = self.latest_msg.wrench.torque.y
-
+        if self.record:
+            self.torque_list.append(msg.wrench.torque.y)
 
     def detect(self):
         """
@@ -45,14 +47,17 @@ class GraspDetector(RobotPart):
         # Set the end time for the measurement
         end_time = self.start_time + self.measuring_for
         # Reset the list of torque y for every detection period
-        self.msg_list = []
+        self.torque_list = []
+        self.record = True # set flag to start recording
 
-        # Create a list of all measured torques around y-axis
-        while rospy.Time.now() < end_time:
-            self.msg_list.append(self.torque_y)
+        # Wait until measurement time has elapsed
+        while rospy.Time.now() < end_time and not rospy.is_shutdown():
+            rospy.sleep(0.1)
+
+        self.record = False  # stop recoding messages
 
         # Check whether the mean of the torque in the measured period is below the threshold
-        if sum(self.msg_list)/len(self.msg_list) < self.threshold_torque_y:
+        if sum(self.torque_list)/len(self.torque_list) < self.threshold_torque_y:
             return True
         else:
             return False
