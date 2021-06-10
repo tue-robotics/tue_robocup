@@ -18,11 +18,10 @@ class GraspDetector(RobotPart):
     def __init__(self, robot_name, tf_buffer, wrench_topic):
         super(GraspDetector, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._topic = wrench_topic
-        self.latest_msg = None
         self.start_time = None
-        self.msg_list = []
         self.threshold_torque_y = -0.46  # Nm
-        self.measuring_for = rospy.Duration(2.5)  # seconds
+        self.measuring_ideal = rospy.Duration(2.5)  # seconds
+        self.measuring_max = rospy.Duration(10.0) # seconds
         self.wrench_sub = self.create_subscriber(self._topic, WrenchStamped, self._wrench_callback, queue_size=1)
 
         self.torque_list = []
@@ -35,6 +34,25 @@ class GraspDetector(RobotPart):
         """
         if self.record:
             self.torque_list.append(msg.wrench.torque.y)
+        if rospy.Time.now() > self.start_time + self.measuring_max:
+            self.record = False  # stop recording messages
+            rospy.logwarn('Stopped recording: too much time elapsed before reading torque_list')
+
+    def start_recording(self):
+        """"
+        Function that allows the start of recording the torque data.
+        :return: True in order to start the recording
+        """
+        rospy.loginfo('Start recording')
+
+        # Reset starting time
+        self.start_time = rospy.Time.now()
+
+        # Reset the list of torque y
+        self.torque_list = []
+
+        self.record = True  # set flag to start recording
+
 
     def detect(self):
         """
@@ -42,19 +60,16 @@ class GraspDetector(RobotPart):
         :return: True if we are holding something
                  False if we are not.
         """
-        # Reset starting time
-        self.start_time = rospy.Time.now()
         # Set the end time for the measurement
-        end_time = self.start_time + self.measuring_for
-        # Reset the list of torque y for every detection period
-        self.torque_list = []
-        self.record = True # set flag to start recording
+        end_time = self.start_time + self.measuring_ideal
 
         # Wait until measurement time has elapsed
         while rospy.Time.now() < end_time and not rospy.is_shutdown():
             rospy.sleep(0.1)
 
-        self.record = False  # stop recoding messages
+        self.record = False  # stop recording messages
+
+        rospy.loginfo('Stopped recording')
 
         # Check whether the mean of the torque in the measured period is below the threshold
         if sum(self.torque_list)/len(self.torque_list) < self.threshold_torque_y:
