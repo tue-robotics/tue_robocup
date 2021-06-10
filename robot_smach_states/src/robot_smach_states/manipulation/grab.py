@@ -241,7 +241,7 @@ class PickUp(smach.State):
             rospy.logwarn('Gripper not holding an object')
             result = "failed"
         else:
-            rospy.loginfo('Grasp successful')
+            rospy.logwarn('Grasp successful')
             result = "succeeded"
 
         # If I'm correct, the following lines don't apply to HERO, so these are commented out:
