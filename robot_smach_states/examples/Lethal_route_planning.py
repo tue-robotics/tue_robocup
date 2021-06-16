@@ -64,27 +64,37 @@ class Lethal_Zone:
         x_grid, y_grid = self.start_value(x, y)
         # Grid coordinates of HERO's start position
 
-        x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
-        # Get grid coordinates of the free space from the free_space_finder function
+        if self.costmap_data[x_grid, y_grid] == 253:
 
-        x_free = (x_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.x
-        y_free = (y_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.y
-        # Convert grid coordinates to regular coordinates
+            x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
+            # Get grid coordinates of the free space from the free_space_finder function
 
-        d_max = (d_max_grid ^ 0.5) * self.costmap_info.resolution
-        # Convert the value of d_max_grid to the actual distance to the free space in meters
+            if x_free_grid is not None:
 
-        _, _, theta_H = robot_frame.frame.M.GetRPY()
-        # Get rotation of HERO with respect to the world coordinate system
+                x_free = (x_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.x
+                y_free = (y_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.y
+                # Convert grid coordinates to regular coordinates
 
-        vx = (math.cos(theta_H)*(x_free+x)+math.sin(theta_H)*(y_free+y))*0.1/d_max
-        vy = (math.cos(theta_H)*(y_free+y)-math.sin(theta_H)*(x_free+x))*0.1/d_max
-        vth = 0
-        # Calculate the velocities in the x and y with respect to HERO's coordinate system
+                d_max = (d_max_grid ^ 0.5) * self.costmap_info.resolution
+                # Convert the value of d_max_grid to the actual distance to the free space in meters
 
-        duration = d_max / 0.1
-        self.robot.base.force_drive(vx, vy, vth, duration)
-        # Use force_drive to move HERO towards the free space
+                _, _, theta_H = robot_frame.frame.M.GetRPY()
+                # Get rotation of HERO with respect to the world coordinate system
+
+                vx = (math.cos(theta_H)*(x_free+x)+math.sin(theta_H)*(y_free+y))*0.1/d_max
+                vy = (math.cos(theta_H)*(y_free+y)-math.sin(theta_H)*(x_free+x))*0.1/d_max
+                vth = 0
+                # Calculate the velocities in the x and y with respect to HERO's coordinate system
+
+                duration = d_max / 0.1
+                self.robot.base.force_drive(vx, vy, vth, duration)
+                # Use force_drive to move HERO towards the free space
+            else:
+
+                rospy.loginfo("No free space found")
+        else:
+
+            rospy.loginfo("HERO already in free space")
 
 
 if __name__ == "__main__":
