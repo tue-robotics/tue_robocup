@@ -17,44 +17,44 @@ class Lethal_Zone:
         self.front_bumper_active = False
         self.back_bumper_sub = rospy.Subscriber("hero/base_b_bumper_sensor", Bool, self.back_callback)
         self.back_bumper_active = False
-#        self._cmd_vel = rospy.Publisher("hero/base/references", Twist)
-        self.global_costmap_sub = rospy.Subscriber("/hero/global_planner/global_costmap/costmap", OccupancyGrid, self.global_costmap_callback)
+        #        self._cmd_vel = rospy.Publisher("hero/base/references", Twist)
+        self.global_costmap_sub = rospy.Subscriber("/hero/global_planner/global_costmap/costmap", OccupancyGrid,
+                                                   self.global_costmap_callback)
         self.costmap_info = None
         self.costmap_data = None
 
     def front_callback(self, msg):
-#        rospy.loginfo(msg)
+        # rospy.loginfo(msg)
         self.front_bumper_active = msg.data
 
     def back_callback(self, msg):
-#        rospy.loginfo(msg)
+        # rospy.loginfo(msg)
         self.back_bumper_active = msg.data
 
     def global_costmap_callback(self, msg):
-#        rospy.loginfo(msg)
+        # rospy.loginfo(msg)
         self.costmap_info = msg.info
         self.costmap_data = msg.data
 
     def start_value(self, x, y):
-        x_grid = (x - self.costmap_info.origin.position.x) / self.costmap_info.resolution
-        y_grid = (y - self.costmap_info.origin.position.y) / self.costmap_info.resolution
+        x_grid = round((x - self.costmap_info.origin.position.x) / self.costmap_info.resolution)
+        y_grid = round((y - self.costmap_info.origin.position.y) / self.costmap_info.resolution)
         return x_grid, y_grid
 
     def free_space_finder(self, x, y):
-        search_range = 0.24 + 0.2 - 0.5 * 0.05
-        d_max_grid = (x+4)^2 + (y+4)^2
+        search_range = round((0.24 + 0.2 - 0.5 * 0.05) / (2 * self.costmap_info.resolution))
+        d_max_grid = (x + search_range) ^ 2 + (y + search_range) ^ 2
         x_free_grid = None
         y_free_grid = None
-        for i in range(x-3, x+4):
-            for j in range(y-3, y+4):
+        for i in range(x - search_range, x + search_range + 1):
+            for j in range(y - 3, y + 4):
                 if self.costmap_data[i, j] < 253:
-                    d = (i-x) ^ 2 + (j-y) ^ 2
+                    d = (i - x) ^ 2 + (j - y) ^ 2
                     if d < d_max_grid:
                         d_max_grid = d
-                        x_free_grid = round(i)
-                        y_free_grid = round(j)
+                        x_free_grid = i
+                        y_free_grid = j
         return x_free_grid, y_free_grid, d_max_grid
-
 
     def motion(self):
         robot_frame = self.robot.base.get_location()
@@ -65,7 +65,8 @@ class Lethal_Zone:
         x_grid, y_grid = self.start_value(x, y)
         # Grid coordinates of HERO's start position
         rospy.loginfo("x_grid: {}, y_grid: {}".format(x_grid, y_grid))
-        if self.costmap_data[x_grid, y_grid] == 253:
+        i_data = x_grid + y_grid * self.costmap_info.width
+        if self.costmap_data[i_data] == 253:
 
             x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
             # Get grid coordinates of the free space from the free_space_finder function
@@ -78,11 +79,11 @@ class Lethal_Zone:
                 d_max = (d_max_grid ^ 0.5) * self.costmap_info.resolution
                 # Convert the value of d_max_grid to the actual distance to the free space in meters
 
-                _, _, theta_H = robot_frame.frame.M.GetRPY()
+                _, _, theta_h = robot_frame.frame.M.GetRPY()
                 # Get rotation of HERO with respect to the world coordinate system
 
-                vx = (math.cos(theta_H)*(x_free+x)+math.sin(theta_H)*(y_free+y))*0.1/d_max
-                vy = (math.cos(theta_H)*(y_free+y)-math.sin(theta_H)*(x_free+x))*0.1/d_max
+                vx = (math.cos(theta_h) * (x_free + x) + math.sin(theta_h) * (y_free + y)) * 0.1 / d_max
+                vy = (math.cos(theta_h) * (y_free + y) - math.sin(theta_h) * (x_free + x)) * 0.1 / d_max
                 vth = 0
                 # Calculate the velocities in the x and y with respect to HERO's coordinate system
 
@@ -102,4 +103,3 @@ if __name__ == "__main__":
     robot = get_robot("hero")
     bt = Lethal_Zone(robot)
     bt.motion()
-
