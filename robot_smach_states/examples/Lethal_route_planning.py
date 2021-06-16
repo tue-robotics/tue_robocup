@@ -3,7 +3,7 @@ import PyKDL as kdl
 import rospy
 import math
 from std_msgs.msg import Bool
-from geometry_msgs.msg import Twist
+# from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
 
 # TU/e Robotics
@@ -17,7 +17,7 @@ class Lethal_Zone:
         self.front_bumper_active = False
         self.back_bumper_sub = rospy.Subscriber("hero/base_b_bumper_sensor", Bool, self.back_callback)
         self.back_bumper_active = False
-        self._cmd_vel = rospy.Publisher("hero/base/references", Twist)
+#        self._cmd_vel = rospy.Publisher("hero/base/references", Twist)
         self.global_costmap_sub = rospy.Subscriber("/hero/global_planner/global_costmap/costmap", OccupancyGrid, self.global_costmap_callback)
         self.costmap_info = None
         self.costmap_data = None
