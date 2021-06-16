@@ -61,15 +61,14 @@ class Lethal_Zone:
         x = robot_frame.frame.p.x()
         y = robot_frame.frame.p.y()
         # Get coordinates from HERO's current location
-
+        rospy.loginfo("x: {}, y: {}".format(x, y))
         x_grid, y_grid = self.start_value(x, y)
         # Grid coordinates of HERO's start position
-
+        rospy.loginfo("x_grid: {}, y_grid: {}".format(x_grid, y_grid))
         if self.costmap_data[x_grid, y_grid] == 253:
 
             x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
             # Get grid coordinates of the free space from the free_space_finder function
-
             if x_free_grid is not None:
 
                 x_free = (x_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.x
