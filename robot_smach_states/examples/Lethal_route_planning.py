@@ -67,6 +67,7 @@ class Lethal_Zone:
         rospy.loginfo("x_grid: {}, y_grid: {}".format(x_grid, y_grid))
         i_data = x_grid + y_grid * self.costmap_info.height
         rospy.loginfo("i_data: {}".format(self.costmap_data[i_data]))
+        rospy.loginfo("i_data: {}".format(self.costmap_data[0]))
         if self.costmap_data[i_data] == 253:
 
             x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
