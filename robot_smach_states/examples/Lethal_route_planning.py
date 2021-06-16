@@ -31,6 +31,9 @@ class Lethal_Zone:
         # rospy.loginfo(msg)
         self.back_bumper_active = msg.data
 
+    def get_costmap_at(self, x, y):
+        return self.costmap_data[x + y * self.costmap_info.width]
+
     def global_costmap_callback(self, msg):
         # rospy.loginfo(msg)
         self.costmap_info = msg.info
@@ -48,8 +51,8 @@ class Lethal_Zone:
         y_free_grid = None
         for i in range(x - search_range, x + search_range + 1):
             for j in range(y - 3, y + 4):
-                if self.costmap_data[i, j] < 253:
-                    d = (i - x) ^ 2 + (j - y) ^ 2
+                if self.get_costmap_at(i, j) < 99:
+                    d = (i - x) ** 2 + (j - y) ** 2
                     if d < d_max_grid:
                         d_max_grid = d
                         x_free_grid = i
@@ -65,10 +68,10 @@ class Lethal_Zone:
         x_grid, y_grid = self.start_value(x, y)
         # Grid coordinates of HERO's start position
         rospy.loginfo("x_grid: {}, y_grid: {}".format(x_grid, y_grid))
-        i_data = x_grid * self.costmap_info.width + y_grid
+        i_data = x_grid + y_grid * self.costmap_info.width
         rospy.loginfo("i_data: {}".format(self.costmap_data[i_data]))
         rospy.loginfo("i_data: {}".format(self.costmap_data[0]))
-        if self.costmap_data[i_data] == 253:
+        if self.costmap_data[i_data] > 98:
 
             x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
             # Get grid coordinates of the free space from the free_space_finder function
@@ -78,7 +81,7 @@ class Lethal_Zone:
                 y_free = (y_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.y
                 # Convert grid coordinates to regular coordinates
 
-                d_max = (d_max_grid ^ 0.5) * self.costmap_info.resolution
+                d_max = math.sqrt(d_max_grid) * self.costmap_info.resolution
                 # Convert the value of d_max_grid to the actual distance to the free space in meters
 
                 _, _, theta_h = robot_frame.frame.M.GetRPY()
