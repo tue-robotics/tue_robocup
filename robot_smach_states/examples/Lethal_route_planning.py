@@ -36,8 +36,8 @@ class Lethal_Zone:
         self.costmap_data = msg.data
 
     def start_value(self, x, y):
-        x_grid = (x - self.costmap_info.origin.position.x()) / self.costmap_info.resolution
-        y_grid = (y - self.costmap_info.origin.position.y()) / self.costmap_info.resolution
+        x_grid = (x - self.costmap_info.origin.position.x) / self.costmap_info.resolution
+        y_grid = (y - self.costmap_info.origin.position.y) / self.costmap_info.resolution
         return x_grid, y_grid
 
     def free_space_finder(self, x, y):
@@ -58,8 +58,8 @@ class Lethal_Zone:
 
     def motion(self):
         robot_frame = self.robot.base.get_location()
-        x = robot_frame.frame.p.x
-        y = robot_frame.frame.p.y
+        x = robot_frame.frame.p.x()
+        y = robot_frame.frame.p.y()
         # Get coordinates from HERO's current location
 
         x_grid, y_grid = self.start_value(x, y)
