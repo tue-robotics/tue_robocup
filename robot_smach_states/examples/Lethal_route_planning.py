@@ -74,6 +74,7 @@ class Lethal_Zone:
         if self.costmap_data[i_data] > 98:
 
             x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
+            rospy.loginfo("grid: x_free: {}, y_free: {}, at d {}".format(x_free_grid, y_free_grid, d_max_grid))
             # Get grid coordinates of the free space from the free_space_finder function
             if x_free_grid is not None:
 
@@ -87,12 +88,12 @@ class Lethal_Zone:
                 _, _, theta_h = robot_frame.frame.M.GetRPY()
                 # Get rotation of HERO with respect to the world coordinate system
 
-                vx = (math.cos(theta_h) * (x_free + x) + math.sin(theta_h) * (y_free + y)) * 0.1 / d_max
-                vy = (math.cos(theta_h) * (y_free + y) - math.sin(theta_h) * (x_free + x)) * 0.1 / d_max
+                vx = (math.cos(theta_h) * (x_free - x) + math.sin(theta_h) * (y_free - y)) * 0.1 / d_max
+                vy = (math.cos(theta_h) * (y_free - y) - math.sin(theta_h) * (x_free - x)) * 0.1 / d_max
                 vth = 0
                 # Calculate the velocities in the x and y with respect to HERO's coordinate system
-
                 duration = d_max / 0.1
+                rospy.loginfo("vx: {}, vy {}, time{}".format(vx, vy, duration))
                 self.robot.base.force_drive(vx, vy, vth, duration)
                 # Use force_drive to move HERO towards the free space
             else:
