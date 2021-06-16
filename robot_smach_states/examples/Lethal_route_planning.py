@@ -36,11 +36,12 @@ class Lethal_Zone:
         self.costmap_data = msg.data
 
     def start_value(self, x, y):
-        x_grid = (x - self.costmap_info.origin.position.x) / self.costmap_info.resolution
-        y_grid = (y - self.costmap_info.origin.position.y) / self.costmap_info.resolution
+        x_grid = (x - self.costmap_info.origin.position.x()) / self.costmap_info.resolution
+        y_grid = (y - self.costmap_info.origin.position.y()) / self.costmap_info.resolution
         return x_grid, y_grid
 
     def free_space_finder(self, x, y):
+        search_range = 0.24 + 0.2 - 0.5 * 0.05
         d_max_grid = (x+4)^2 + (y+4)^2
         x_free_grid = None
         y_free_grid = None
