@@ -23,59 +23,73 @@ class Lethal_Zone:
         self.costmap_data = None
 
     def front_callback(self, msg):
-        rospy.loginfo(msg)
+#        rospy.loginfo(msg)
         self.front_bumper_active = msg.data
 
     def back_callback(self, msg):
-        rospy.loginfo(msg)
+#        rospy.loginfo(msg)
         self.back_bumper_active = msg.data
 
     def global_costmap_callback(self, msg):
-        rospy.loginfo(msg)
+#        rospy.loginfo(msg)
         self.costmap_info = msg.info
         self.costmap_data = msg.data
 
     def start_value(self, x, y):
-        x = (x - self.costmap_info.origin.position.x) / self.costmap_info.resolution
-        y = (y - self.costmap_info.origin.position.y) / self.costmap_info.resolution
-        start = self.costmap_data[x, y]
-        return start
+        x_grid = (x - self.costmap_info.origin.position.x) / self.costmap_info.resolution
+        y_grid = (y - self.costmap_info.origin.position.y) / self.costmap_info.resolution
+        return x_grid, y_grid
 
     def free_space_finder(self, x, y):
-        d_max = (x+4)^2 + (y+4)^2
-        x_free = None
-        y_free = None
+        d_max_grid = (x+4)^2 + (y+4)^2
+        x_free_grid = None
+        y_free_grid = None
         for i in range(x-3, x+4):
             for j in range(y-3, y+4):
                 if self.costmap_data[i, j] < 253:
                     d = (i-x) ^ 2 + (j-y) ^ 2
-                    if d < d_max:
-                        d_max = d
-                        x_free = i
-                        y_free = j
-        return x_free, y_free, d_max
+                    if d < d_max_grid:
+                        d_max_grid = d
+                        x_free_grid = i
+                        y_free_grid = j
+        return x_free_grid, y_free_grid, d_max_grid
 
 
     def motion(self):
         robot_frame = self.robot.base.get_location()
         x = robot_frame.frame.p.x
         y = robot_frame.frame.p.y
-        theta_H = robot_frame.frame.orientation
-        x_free, y_free, d_max = self.free_space_finder(x, y)
-        vx = math.cos(theta_H)*(x_free+x)+math.sin(theta_H)*(y_free+y)
-        vy = math.cos(theta_H)*(y_free+y)-math.sin(theta_H)*(x_free+x)
+        # Get coordinates from HERO's current location
+
+        x_grid, y_grid = self.start_value(x, y)
+        # Grid coordinates of HERO's start position
+
+        x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
+        # Get grid coordinates of the free space from the free_space_finder function
+
+        x_free = (x_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.x
+        y_free = (y_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.y
+        # Convert grid coordinates to regular coordinates
+
+        d_max = (d_max_grid ^ 0.5) * self.costmap_info.resolution
+        # Convert the value of d_max_grid to the actual distance to the free space in meters
+
+        _, _, theta_H = robot_frame.frame.M.GetRPY()
+        # Get rotation of HERO with respect to the world coordinate system
+
+        vx = (math.cos(theta_H)*(x_free+x)+math.sin(theta_H)*(y_free+y))*0.1/d_max
+        vy = (math.cos(theta_H)*(y_free+y)-math.sin(theta_H)*(x_free+x))*0.1/d_max
         vth = 0
+        # Calculate the velocities in the x and y with respect to HERO's coordinate system
+
         duration = d_max / 0.1
         self.robot.base.force_drive(vx, vy, vth, duration)
-
+        # Use force_drive to move HERO towards the free space
 
 
 if __name__ == "__main__":
     rospy.init_node("test_grasping")
     robot = get_robot("hero")
     bt = Lethal_Zone(robot)
-    r = rospy.Rate(30)
-    while not rospy.is_shutdown():
-        bt.motion()
-        r.sleep()
+    bt.motion()
 
