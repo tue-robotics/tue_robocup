@@ -51,8 +51,8 @@ class Lethal_Zone:
                     d = (i-x) ^ 2 + (j-y) ^ 2
                     if d < d_max_grid:
                         d_max_grid = d
-                        x_free_grid = i
-                        y_free_grid = j
+                        x_free_grid = round(i)
+                        y_free_grid = round(j)
         return x_free_grid, y_free_grid, d_max_grid
 
 
