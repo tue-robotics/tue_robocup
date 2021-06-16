@@ -66,6 +66,7 @@ class Lethal_Zone:
         # Grid coordinates of HERO's start position
         rospy.loginfo("x_grid: {}, y_grid: {}".format(x_grid, y_grid))
         i_data = x_grid * self.costmap_info.width + y_grid
+        rospy.loginfo("i_data: {}".format(self.costmap_data[i_data]))
         if self.costmap_data[i_data] == 253:
 
             x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
