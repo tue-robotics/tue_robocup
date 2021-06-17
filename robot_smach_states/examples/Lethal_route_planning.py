@@ -3,7 +3,6 @@ import PyKDL as kdl
 import rospy
 import math
 from std_msgs.msg import Bool
-# from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
 
 # TU/e Robotics
@@ -17,43 +16,51 @@ class Lethal_Zone:
         self.front_bumper_active = False
         self.back_bumper_sub = rospy.Subscriber("hero/base_b_bumper_sensor", Bool, self.back_callback)
         self.back_bumper_active = False
-        #        self._cmd_vel = rospy.Publisher("hero/base/references", Twist)
         self.global_costmap_sub = rospy.Subscriber("/hero/global_planner/global_costmap/costmap", OccupancyGrid,
                                                    self.global_costmap_callback)
         self.costmap_info = None
         self.costmap_data = None
 
     def front_callback(self, msg):
-        # rospy.loginfo(msg)
         self.front_bumper_active = msg.data
 
     def back_callback(self, msg):
-        # rospy.loginfo(msg)
         self.back_bumper_active = msg.data
 
     def get_costmap_at(self, x, y):
         return self.costmap_data[x + y * self.costmap_info.width]
 
     def global_costmap_callback(self, msg):
-        # rospy.loginfo(msg)
         self.costmap_info = msg.info
         self.costmap_data = msg.data
 
     def start_value(self, x, y):
         x_grid = round((x - self.costmap_info.origin.position.x) / self.costmap_info.resolution)
         y_grid = round((y - self.costmap_info.origin.position.y) / self.costmap_info.resolution)
+        # Calculate the x and y grid coordinates by 
+        # first subtracting the x and y coordinates of the origin 
+        # from the x and y coordinates of HERO's start position.
+        # Then that value is divided by the resolution of the costmap.
+        # Lastly the value is rounded down to get an integer value of the grid coordinates.
         return x_grid, y_grid
 
     def free_space_finder(self, x, y):
         search_range = round((0.24 + 0.2 - 0.5 * 0.05) / (2 * self.costmap_info.resolution))
-        d_max_grid = (x + search_range) ^ 2 + (y + search_range) ^ 2
+        d_max_grid = (x + search_range) ** 2 + (y + search_range) ** 2
         x_free_grid = None
         y_free_grid = None
         for i in range(x - search_range, x + search_range + 1):
-            for j in range(y - 3, y + 4):
-                if self.get_costmap_at(i, j) < 99:
+            for j in range(y - search_range, y + search_range + 1):
+                if self.get_costmap_at(i, j) == 0:
+                    # We are looking for an free space which corresponds with a value of 0
+                    # A value of 65 corresponds with the border of the lethal zone
+                    # A value of 99 corresponds with cells in the lethal zone
+                    # A value of 100 corresponds with a cell that contains a object
                     d = (i - x) ** 2 + (j - y) ** 2
+                    # Distance between the free grid cell and HERO's is calculated
                     if d < d_max_grid:
+                        # If the calculated distance is smaller than the previously
+                        # calculated distance the grid coordinates are saved
                         d_max_grid = d
                         x_free_grid = i
                         y_free_grid = j
