@@ -31,7 +31,9 @@ class TestPlace(unittest.TestCase):
         itemdes = ds.Designator(item)
         arm = ds.ArmDesignator(self.robot).lockable()
 
-        state = Place(self.robot, itemdes, pose, arm)
+        posedes = ds.Designator(pose)
+
+        state = Place(self.robot, itemdes, posedes, arm)
         self.assertEqual(state.execute(), "done")
 
 
