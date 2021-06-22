@@ -6,6 +6,9 @@ from random import choice
 # ROS
 import rospy
 import smach
+import math
+from std_msgs.msg import Bool
+from nav_msgs.msg import OccupancyGrid
 
 
 class StartAnalyzer(smach.State):
@@ -17,6 +20,120 @@ class StartAnalyzer(smach.State):
         self.robot.base.analyzer.start_measurement(self.robot.base.get_location().frame)
         return 'done'
 
+class LethalPlanner(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['in_free_space', 'in_lethal_zone'])
+        self.robot = robot
+        self.LethalRoutePlanner = Lethal_Zone(robot)
+
+    def execute(self, userdata=None):
+        self.LethalRoutePlanner.motion()
+        return 'in_free_space'
+
+
+class Lethal_Zone:
+    def __init__(self, robot):
+        self.robot = robot
+        self.front_bumper_sub = rospy.Subscriber("hero/base_f_bumper_sensor", Bool, self.front_callback)
+        self.front_bumper_active = False
+        self.back_bumper_sub = rospy.Subscriber("hero/base_b_bumper_sensor", Bool, self.back_callback)
+        self.back_bumper_active = False
+        self.global_costmap_sub = rospy.Subscriber("/hero/global_planner/global_costmap/costmap", OccupancyGrid,
+                                                   self.global_costmap_callback)
+        self.costmap_info = None
+        self.costmap_data = None
+
+    def front_callback(self, msg):
+        self.front_bumper_active = msg.data
+
+    def back_callback(self, msg):
+        self.back_bumper_active = msg.data
+
+    def get_costmap_at(self, x, y):
+        return self.costmap_data[x + y * self.costmap_info.width]
+
+    def global_costmap_callback(self, msg):
+        self.costmap_info = msg.info
+        self.costmap_data = msg.data
+
+    def start_value(self, x, y):
+        x_grid = round((x - self.costmap_info.origin.position.x) / self.costmap_info.resolution)
+        y_grid = round((y - self.costmap_info.origin.position.y) / self.costmap_info.resolution)
+        # Calculate the x and y grid coordinates by
+        # first subtracting the x and y coordinates of the origin
+        # from the x and y coordinates of HERO's start position.
+        # Then that value is divided by the resolution of the costmap.
+        # Lastly the value is rounded down to get an integer value of the grid coordinates.
+        return x_grid, y_grid
+
+    def free_space_finder(self, x, y):
+        search_range = round((0.24 + 0.2 - 0.5 * 0.05) / (2 * self.costmap_info.resolution))
+        d_max_grid = (x + search_range) ** 2 + (y + search_range) ** 2
+        x_free_grid = None
+        y_free_grid = None
+        for i in range(x - search_range, x + search_range + 1):
+            for j in range(y - search_range, y + search_range + 1):
+                if self.get_costmap_at(i, j) == 0:
+                    # We are looking for an free space which corresponds with a value of 0
+                    # A value of 65 corresponds with the border of the lethal zone
+                    # A value of 99 corresponds with cells in the lethal zone
+                    # A value of 100 corresponds with a cell that contains a object
+                    d = (i - x) ** 2 + (j - y) ** 2
+                    # Distance between the free grid cell and HERO's is calculated
+                    if d < d_max_grid:
+                        # If the calculated distance is smaller than the previously
+                        # calculated distance the grid coordinates are saved
+                        d_max_grid = d
+                        x_free_grid = i
+                        y_free_grid = j
+        return x_free_grid, y_free_grid, d_max_grid
+
+    def motion(self):
+        robot_frame = self.robot.base.get_location()
+        x = robot_frame.frame.p.x()
+        y = robot_frame.frame.p.y()
+        # Get coordinates from HERO's current location
+        rospy.loginfo("x: {}, y: {}".format(x, y))
+        x_grid, y_grid = self.start_value(x, y)
+        # Grid coordinates of HERO's start position
+        rospy.loginfo("x_grid: {}, y_grid: {}".format(x_grid, y_grid))
+        i_data = x_grid + y_grid * self.costmap_info.width
+        rospy.loginfo("i_data: {}".format(self.costmap_data[i_data]))
+        rospy.loginfo("i_data: {}".format(self.costmap_data[0]))
+        if self.costmap_data[i_data] > 98:
+
+            x_free_grid, y_free_grid, d_max_grid = self.free_space_finder(x_grid, y_grid)
+            rospy.loginfo("grid: x_free: {}, y_free: {}, at d {}".format(x_free_grid, y_free_grid, d_max_grid))
+            # Get grid coordinates of the free space from the free_space_finder function
+            if x_free_grid is not None:
+
+                x_free = (x_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.x
+                y_free = (y_free_grid * self.costmap_info.resolution) + self.costmap_info.origin.position.y
+                # Convert grid coordinates to regular coordinates
+
+                d_max = math.sqrt(d_max_grid) * self.costmap_info.resolution
+                # Convert the value of d_max_grid to the actual distance to the free space in meters
+
+                _, _, theta_h = robot_frame.frame.M.GetRPY()
+                # Get rotation of HERO with respect to the world coordinate system
+
+                vx = (math.cos(theta_h) * (x_free - x) + math.sin(theta_h) * (y_free - y)) * 0.1 / d_max
+                vy = (math.cos(theta_h) * (y_free - y) - math.sin(theta_h) * (x_free - x)) * 0.1 / d_max
+                vth = 0
+                # Calculate the velocities in the x and y with respect to HERO's coordinate system
+                duration = d_max / 0.1
+                rospy.loginfo("vx: {}, vy {}, time{}".format(vx, vy, duration))
+                self.robot.base.force_drive(vx, vy, vth, duration)
+                # Use force_drive to move HERO towards the free space
+                rospy.loginfo('in_free_space')
+            else:
+
+                rospy.loginfo("No free space found")
+                rospy.loginfo('in_lethal_zone')
+        else:
+
+            rospy.loginfo("HERO already in free space")
+            rospy.loginfo('in_free_space')
 
 class StopAnalyzer(smach.State):
     def __init__(self, robot, result):
@@ -226,6 +343,10 @@ class NavigateTo(smach.StateMachine):
             sm_nav = smach.StateMachine(outcomes=['arrived', 'unreachable', 'goal_not_defined', 'preempted'])
 
             with sm_nav:
+
+                smach.StateMachine.add('LETHAL_ROUTE_PLANNING_ACTIVATE', LethalPlanner(self.robot),
+                                       transitions={'in_free_space': 'GET_PLAN',
+                                                    'in_lethal_zone': 'unreachable'})
 
                 smach.StateMachine.add('GET_PLAN', getPlan(self.robot, constraint_function, self.speak),
                                        transitions={'unreachable': 'unreachable',
