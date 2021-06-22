@@ -28,12 +28,12 @@ class TestPlace(unittest.TestCase):
             [kdl.Vector(0, 0, 0), kdl.Vector(0, 0.05, 0), kdl.Vector(0.05, 0.05, 0), kdl.Vector(0.05, 0, 0)], -0.1, 0.1)
         item = Entity(entity_id, "test_type", None, None, shape, None, None, None)
 
-        itemdes = ds.Designator(item)
+        item_des = ds.Designator(item)
         arm = ds.ArmDesignator(self.robot).lockable()
 
-        posedes = ds.Designator(pose)
+        pose_des = ds.Designator(pose)
 
-        state = Place(self.robot, itemdes, posedes, arm)
+        state = Place(self.robot, item_des, pose_des, arm)
         self.assertEqual(state.execute(), "done")
 
 
