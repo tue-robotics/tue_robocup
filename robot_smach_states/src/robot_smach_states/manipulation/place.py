@@ -110,8 +110,7 @@ class Put(smach.State):
         rospy.loginfo("Placing")
 
         # placement_pose is a PyKDL.Frame
-        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
-                                                    tf_buffer=self._robot.tf_buffer)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
 
         # Wait for torso and arm to finish their motions
         self._robot.torso.wait_for_motion_done()
@@ -143,8 +142,7 @@ class Put(smach.State):
                 return 'failed'
 
         # Place
-        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
-                                                    tf_buffer=self._robot.tf_buffer)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
         if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.1, 0.0, 0.0, 0.0,
@@ -166,8 +164,7 @@ class Put(smach.State):
         arm.gripper.occupied_by = None
 
         # Retract
-        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
-                                                    tf_listener=self._robot.tf_buffer)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
         arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x() - 0.1,
                                                     place_pose_bl.frame.p.y(),
                                                     place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
