@@ -9,6 +9,7 @@ import smach
 import math
 from std_msgs.msg import Bool
 from nav_msgs.msg import OccupancyGrid
+from geometry_msgs.msg import Twist
 
 
 class StartAnalyzer(smach.State):
@@ -31,6 +32,7 @@ class LethalPlanner(smach.State):
         self.back_bumper_active = False
         self.global_costmap_sub = rospy.Subscriber("/hero/global_planner/global_costmap/costmap", OccupancyGrid,
                                                    self.global_costmap_callback)
+        self._cmd_vel = rospy.Publisher("/hero/base/references", Twist)
         self.costmap_info = None
         self.costmap_data = None
 
@@ -80,6 +82,8 @@ class LethalPlanner(smach.State):
         return x_free_grid, y_free_grid, d_max_grid
 
     def execute(self, userdata=None):
+        while self.costmap_data is None:
+            rospy.sleep(0.1)
         robot_frame = self.robot.base.get_location()
         x = robot_frame.frame.p.x()
         y = robot_frame.frame.p.y()
@@ -113,8 +117,45 @@ class LethalPlanner(smach.State):
                 # Calculate the velocities in the x and y with respect to HERO's coordinate system
                 duration = d_max / 0.1
                 rospy.loginfo("vx: {}, vy {}, time{}".format(vx, vy, duration))
-                self.robot.base.force_drive(vx, vy, vth, duration)
-                # Use force_drive to move HERO towards the free space
+
+                # start driving
+                # Cancel the local planner goal
+                self.robot.base.local_planner.cancelCurrentPlan()
+
+                v = Twist()  # Initialize velocity
+                t_start = rospy.Time.now()
+                t_end = t_start + rospy.Duration.from_sec(duration)
+
+                # Define loop parameters
+                loop_rate = 30  # publish rate for velocities
+                rate = rospy.Rate(loop_rate)
+
+                x_current = x
+                y_current = y
+                theta_current = theta_h
+                xi_current = x_grid
+                yi_current = y_grid
+
+                # Loop while publishing velocities.
+                # in this example loop will continue driving until we have gone past a certain time. If you want to
+                #change that you can change the condition in the while statement: e.g. while self.costmap[xi_current, yi_current] will wait until the robot is at a free space.
+
+                while rospy.Time.now() < t_end:  # e.g. while self.get_costmap_at(xi_current, yi_current):
+                    # retrieve robot position
+                    robot_frame_current = self.robot.base.get_location()
+                    x_current = robot_frame_current.frame.p.x() # position in [m] in map frame
+                    y_current = robot_frame_current.frame.p.y() # position in [m] in map frame
+                    _, _, theta_current = robot_frame_current.frame.M.GetRPY()
+                    xi_current = round((x_current * self.costmap_info.resolution) + self.costmap_info.origin.position.x) # position in grids in gridmap frame
+                    yi_current = round((y_current * self.costmap_info.resolution) + self.costmap_info.origin.position.y) # position in grids in gridmap frame
+
+                    v.linear.x = vx
+                    v.linear.y = vy
+                    v.angular.z = vth
+                    self._cmd_vel.publish(v)
+                    rate.sleep()
+
+                # driving done
                 return 'in_free_space'
             else:
 
