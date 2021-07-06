@@ -50,8 +50,8 @@ class LethalPlanner(smach.State):
         self.costmap_data = msg.data
 
     def start_value(self, x, y):
-        x_grid = round((x - self.costmap_info.origin.position.x) / self.costmap_info.resolution)
-        y_grid = round((y - self.costmap_info.origin.position.y) / self.costmap_info.resolution)
+        x_grid = math.floor((x - self.costmap_info.origin.position.x) / self.costmap_info.resolution)
+        y_grid = math.floor((y - self.costmap_info.origin.position.y) / self.costmap_info.resolution)
         # Calculate the x and y grid coordinates by
         # first subtracting the x and y coordinates of the origin
         # from the x and y coordinates of HERO's start position.
