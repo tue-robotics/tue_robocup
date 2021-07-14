@@ -60,7 +60,7 @@ class LethalPlanner(smach.State):
         return int(x_grid), int(y_grid)
 
     def free_space_finder(self, x, y):
-        search_range = int(round((0.24 + 0.2 - 0.5 * 0.05) / (2 * self.costmap_info.resolution)))
+        search_range = int(round((0.24 + 0.2 - 0.5 * 0.05) / (self.costmap_info.resolution)))
         d_max_grid = (x + search_range) ** 2 + (y + search_range) ** 2
         x_free_grid = None
         y_free_grid = None
