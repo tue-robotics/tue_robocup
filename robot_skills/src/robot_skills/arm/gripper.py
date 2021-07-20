@@ -47,7 +47,7 @@ class Gripper(RobotPart):
     @occupied_by.setter
     def occupied_by(self, value):
         """
-        Set the entity which occupies the arm.
+        Set the entity which occupies the Gripper.
 
         :param value: robot_skills.util.entity, ED entity
         :return: no return
