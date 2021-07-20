@@ -8,6 +8,7 @@ import rospy
 from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, torso, world_model_ed
 from robot_skills.arm import arms, force_sensor, gripper, handover_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
+from hero_skills import Suction_cup
 
 
 class Hero(robot.Robot):
@@ -31,6 +32,7 @@ class Hero(robot.Robot):
         hero_arm = arms.Arm(self.robot_name, self.tf_buffer, self.get_joint_states, "arm_center")
         hero_arm.add_part('force_sensor', force_sensor.ForceSensor(self.robot_name, self.tf_buffer, "/" + self.robot_name + "/wrist_wrench/raw"))
         hero_arm.add_part('gripper', gripper.ParrallelGripper(self.robot_name, self.tf_buffer, 'gripper'))
+        hero_arm.add_part('suction_gripper', Suction_cup.SuctionGripper(self.robot_name, self.tf_buffer, 'Suction_gripper'))
         hero_arm.add_part('handover_detector', handover_detector.HandoverDetector(self.robot_name, self.tf_buffer, 'handover_detector'))
 
         self.add_arm_part('arm_center', hero_arm)
