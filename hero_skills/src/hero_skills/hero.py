@@ -57,8 +57,8 @@ class Hero(robot.Robot):
                                              lambda: self.lights.set_color_rgba_msg(lights.LISTENING),
                                              lambda: self.lights.set_color_rgba_msg(lights.RESET)))
 
-        self.add_body_part('battery_hero1', battery.Battery(self.robot_name, self.tf_listener, "hero1"))
-        self.add_body_part('battery_hero2', battery.Battery(self.robot_name, self.tf_listener, "hero2"))
+        self.add_body_part('battery_hero1', battery.Battery(self.robot_name, self.tf_buffer, "hero1"))
+        self.add_body_part('battery_hero2', battery.Battery(self.robot_name, self.tf_buffer, "hero2"))
 
         ebutton_class = SimEButton if is_sim_mode() else ebutton.EButton
         self.add_body_part('ebutton', ebutton_class(self.robot_name, self.tf_buffer, topic="/hero/runstop_button"))
