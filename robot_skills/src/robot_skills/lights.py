@@ -11,20 +11,15 @@ SPEAKING = ColorRGBA(1, 0, 0, 1)
 RESET = ColorRGBA(0, 0, 1, 1)
 
 
-class Lights(RobotPart):
-    """
-    Interface to amigo's lights.
-    """
-    def __init__(self, robot_name, tf_listener):
+class LightsInterface(RobotPart):
+    def __init__(self, robot_name, tf_buffer):
         """
-        constructor
+        Interface to the robot's lights. To use this, a deriving class needs to be defined that implements _send_color_msg.
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         """
-        super(Lights, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
-        self._topic = rospy.Publisher('/'+robot_name+'/rgb_lights_manager/user_set_rgb_lights', RGBLightCommand,
-                                      queue_size=10)
+        super(LightsInterface, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
     def close(self):
         pass
@@ -39,18 +34,25 @@ class Lights(RobotPart):
         :param a: alpha value 0.0-1.0
         :return: no return
         """
-        self.set_color_colorRGBA(ColorRGBA(r, g, b, a))
+        self.set_color_rgba_msg(ColorRGBA(r, g, b, a))
 
-    def set_color_colorRGBA(self, rgba):
+    def set_color_rgba_msg(self, rgba):
         """
         Set the color of the robot by a std_msgs.msg.ColorRGBA
 
         :param rgba: std_msgs.msg.ColorRGBA
         :return: no return
         """
-        rgb_msg = RGBLightCommand(color=rgba)
-        rgb_msg.show_color.data = True
-        self._topic.publish(rgb_msg)
+        self._send_color_msg(rgba_msg=rgba)
+
+    def _send_color_msg(self, rgba_msg):
+        """
+        Sends the color message to the robot hardware. This function needs to be implemented by deriving classes.
+
+        :param rgba_msg: message to send
+        """
+        # ToDo: replace by fstring (after going to Python3)
+        raise NotImplementedError("_send_color_msg is not implemented for {}".format(self.__class__.__name__))
 
     def selfreset(self):
         """
@@ -58,26 +60,32 @@ class Lights(RobotPart):
 
         :return: no return
         """
-        self.set_color_colorRGBA(RESET)
+        self.set_color_rgba_msg(RESET)
         return True
 
-    def on(self):
-        """
-        Set the lights of the robot ON
 
-        :return: no return
+class TueLights(LightsInterface):
+    def __init__(self, robot_name, tf_buffer):
         """
-        rgb_msg = RGBLightCommand(show_color=True)
-        self._topic.publish(rgb_msg)
+        Interface to the robot's lights. This uses the TU/e-specific RGBLightCommand message type.
 
-    def off(self):
+        :param robot_name: robot_name
+        :param tf_buffer: tf buffer object
         """
-        Set the lights of the robot OFF
+        super(TueLights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
+        self._publisher = rospy.Publisher(
+            '/{}/rgb_lights_manager/user_set_rgb_lights'.format(robot_name), RGBLightCommand, queue_size=10
+        )
 
-        :return: no return
+    def _send_color_msg(self, rgba_msg):
         """
-        rgb_msg = RGBLightCommand(show_color=False)
-        self._topic.publish(rgb_msg)
+        Sends the color message to the robot hardware. This uses the RGBLightCommand message
+
+        :param rgba_msg: message to send
+        """
+        rgb_msg = RGBLightCommand(color=rgba)
+        rgb_msg.show_color.data = True
+        self._publisher.publish(rgb_msg)
 
     def taste_the_rainbow(self, duration=5.0):
         """
@@ -86,9 +94,9 @@ class Lights(RobotPart):
         :param duration: (float) Indicates the total duration of the rainbow
         """
 
-        # rood: \_
-        # groen: /\
-        # blauw: _/
+        # red: \_
+        # green: /\
+        # blue: _/
 
         def red(t):
             if t < duration / 2.0:
@@ -118,3 +126,24 @@ class Lights(RobotPart):
             r, g, b = (red(time_after_start), green(time_after_start), blue(time_after_start))
             self.set_color(r, g, b)
             rate.sleep()
+
+
+class Lights(LightsInterface):
+    def __init__(self, robot_name, tf_buffer, topic):
+        """
+        Interface to the robot's lights. This uses the TU/e-specific RGBLightCommand message type.
+
+        :param robot_name: robot_name
+        :param tf_buffer: tf buffer object
+        :param topic: topic where to publish the messages
+        """
+        super(Lights, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
+        self._publisher = rospy.Publisher(topic, ColorRGBA, queue_size=1)
+
+    def _send_color_msg(self, rgba_msg):
+        """
+        Sends the color message to the robot hardware. This uses the RGBLightCommand message
+
+        :param rgba_msg: message to send
+        """
+        self._publisher.publish(rgba_msg)

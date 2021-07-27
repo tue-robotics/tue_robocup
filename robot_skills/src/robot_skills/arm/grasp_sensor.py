@@ -89,15 +89,15 @@ class GraspSensor(RobotPart):
     """
     Sensor to detect whether or not the robot is holding an object.
     """
-    def __init__(self, robot_name, tf_listener, sensor_topic):
+    def __init__(self, robot_name, tf_buffer, sensor_topic):
         """
         constructor
 
         :param robot_name: robot_name
-        :param tf_listener: tf_server.TFClient()
+        :param tf_buffer: tf2_ros.Buffer
         :param sensor_topic: name of the topic where measurements are published
         """
-        super(GraspSensor, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+        super(GraspSensor, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         # Init grasp sensor subscriber
         self._grasp_sensor_state = GripperMeasurement(0.0)
         rospy.Subscriber(sensor_topic, Float32MultiArray, self._grasp_sensor_callback)

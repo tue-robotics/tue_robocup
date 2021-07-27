@@ -38,6 +38,27 @@ class TestRobot(unittest.TestCase):
     to be loaded on the parameter server.
     """
     def test_robot(self):
+        """
+        Top level test method. Calls other functions in this class
+        """
         rospy.init_node("test_robot")
-        # noinspection PyUnresolvedReferences
         robot = self.ROBOT_CLASS()
+        self.lights(robot)
+
+    def part_commons(self, part):
+        self.assert_has_attr(part, "close")
+        self.assert_has_attr(part, "selfreset")
+
+    def lights(self, robot):
+        self.assert_has_attr(robot, "lights")
+        self.part_commons(robot.lights)
+        self.assert_has_attr(robot.lights, "set_color")
+        self.assert_has_attr(robot.lights, "set_color_rgba_msg")
+
+    def assert_has_attr(self, obj, intended_attr):
+        test_bool = hasattr(obj, intended_attr)
+
+        # self.assertTrue(test_bool, msg=f"{obj} lacks attribute {intended_attr}")  # Python3
+        self.assertTrue(test_bool, msg="{} lacks attribute {}".format(obj, intended_attr))
+
+

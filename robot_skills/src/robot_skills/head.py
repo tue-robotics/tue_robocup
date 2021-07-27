@@ -9,8 +9,8 @@ from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_stamped_
 
 
 class Head(RobotPart):
-    def __init__(self, robot_name, tf_listener):
-        super(Head, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer):
+        super(Head, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._ac_head_ref_action = self.create_simple_action_client("/"+robot_name+"/head_ref/action_server",
                                                                     HeadReferenceAction)
         self._goal = None
@@ -27,12 +27,12 @@ class Head(RobotPart):
         """
         Reset head position
         """
-        reset_goal = VectorStamped(x=10, frame_id="/"+self.robot_name+"/base_link")
+        reset_goal = VectorStamped(x=10, frame_id=self.robot_name+"/base_link")
 
         return self.look_at_point(reset_goal, timeout=timeout)
 
     def look_at_ground_in_front_of_robot(self, distance=2):
-        goal = VectorStamped(x=distance, frame_id="/"+self.robot_name+"/base_link")
+        goal = VectorStamped(x=distance, frame_id=self.robot_name+"/base_link")
 
         return self.look_at_point(goal)
 
@@ -40,7 +40,7 @@ class Head(RobotPart):
         """
         Gives a target at z = 1.0 at 1 m in front of the robot
         """
-        goal = VectorStamped(1, 0, 0.5, frame_id="/"+self.robot_name+"/base_link")
+        goal = VectorStamped(1, 0, 0.5, frame_id=self.robot_name+"/base_link")
 
         return self.look_at_point(goal, timeout=timeout)
 
@@ -48,7 +48,7 @@ class Head(RobotPart):
         """
         Gives a target at z = 1.0 at 1 m in front of the robot
         """
-        goal = VectorStamped(0.2, 0.0, 4.5, frame_id="/"+self.robot_name+"/base_link")
+        goal = VectorStamped(0.2, 0.0, 4.5, frame_id=self.robot_name+"/base_link")
 
         return self.look_at_point(goal, timeout=timeout)
 
@@ -56,7 +56,7 @@ class Head(RobotPart):
         """
         Gives a target at z = 1.75 at 1 m in front of the robot
         """
-        goal = VectorStamped(1.0, 0.0, 1.6, frame_id="/" + self.robot_name + "/base_link")
+        goal = VectorStamped(1.0, 0.0, 1.6, frame_id=self.robot_name + "/base_link")
 
         return self.look_at_point(goal, timeout=timeout)
 

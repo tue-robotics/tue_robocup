@@ -73,7 +73,7 @@ class SimplePickup(State):
 
         # Take the last available, not at detection timestamp
         ud.position.header.stamp = rospy.Time(0)
-        goal_point_base_link = self.robot.tf_listener.transformPoint(self.robot.base_link_frame, ud.position)
+        goal_point_base_link = self.robot.tf_buffer.transform(ud.position, self.robot.base_link_frame)
 
         x = goal_point_base_link.point.x
         y = goal_point_base_link.point.y

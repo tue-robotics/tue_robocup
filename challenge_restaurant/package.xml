@@ -18,6 +18,7 @@
 
   <depend>depth_image_proc</depend>
   <depend>roscpp</depend>
+  <depend>tf2_ros</depend>
 
   <build_depend>pcl_ros</build_depend>
 

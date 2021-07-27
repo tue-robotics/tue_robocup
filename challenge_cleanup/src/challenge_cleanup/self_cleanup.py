@@ -9,10 +9,10 @@ from robot_smach_states.utility import WaitTime
 from robot_smach_states.world_model import Inspect
 from robot_skills.util.kdl_conversions import FrameStamped
 from robot_skills.util.entity import Entity
-from robot_skills.arm import arms
 import robot_smach_states.util.designators as ds
-
 from robocup_knowledge import load_knowledge
+from robot_smach_states.utility import ResolveArm
+
 challenge_knowledge = load_knowledge('challenge_cleanup')
 
 # ToDo: Location for trash depends on the room chosen: trash_bin (living) or trash_can (kitchen). Not handled yet.
@@ -258,24 +258,22 @@ class SelfCleanup(smach.StateMachine):
 
         category_des = ds.VariableDesignator(resolve_type=str, name="category_des")
 
+        arm_designator = ds.UnoccupiedArmDesignator(robot, name="arm_designator").lockable()
+
         with self:
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm_designator, self),
+                                   transitions={'succeeded': 'SPEAK',
+                                                'failed': 'failed'})
+
             smach.StateMachine.add("SPEAK", Say(robot, ["I will pick-up the {object}", "Let's move the {object}"],
                                                 object=selected_entity_type_des, block=True),
                                    transitions={"spoken": "GRAB"})
 
             smach.StateMachine.add("GRAB",
-                                   Grab(robot, selected_entity_designator,
-                                        ds.UnoccupiedArmDesignator(robot,
-                                            arm_properties={"required_trajectories": ["prepare_grasp"],
-                                                             "required_goals": ["carrying_pose"],
-                                                             "required_gripper_types": [arms.GripperTypes.GRASPING]},
-                                                                   name="empty_arm_designator").lockable()),
+                                   Grab(robot, selected_entity_designator, arm_designator),
                                    transitions={"done": "SAY_GRAB_SUCCESS", "failed": "ARM_RESET"})
 
-            smach.StateMachine.add("ARM_RESET", ArmToJointConfig(robot,
-                ds.UnoccupiedArmDesignator(robot,
-                                           arm_properties={"required_goals": ["reset"]},
-                                           name="empty_arm_designator"), "reset"),
+            smach.StateMachine.add("ARM_RESET", ArmToJointConfig(robot, arm_designator, "reset"),
                                    transitions={"succeeded": "SAY_GRAB_FAILED", "failed": "SAY_GRAB_FAILED"})
 
             smach.StateMachine.add('SAY_GRAB_SUCCESS',
@@ -319,9 +317,7 @@ class SelfCleanup(smach.StateMachine):
                                                 "failed": "NAVIGATE_TO_TRASH"})
 
             smach.StateMachine.add('NAVIGATE_TO_TRASH',
-                                   NavigateToPlace(robot, trash_place_pose,
-                                                   ds.OccupiedArmDesignator(robot, {},
-                                                   name="occupied_arm_designator")),
+                                   NavigateToPlace(robot, trash_place_pose, arm_designator),
                                    transitions={"arrived": "PLACE_IN_TRASH",
                                                 "unreachable": "SAY_PLACE_FAILED",
                                                 "goal_not_defined": "SAY_PLACE_FAILED"})
@@ -331,20 +327,14 @@ class SelfCleanup(smach.StateMachine):
                                    transitions={"done": "PLACE_IN_TRASH",
                                                 "failed": "SAY_PLACE_FAILED"})
 
-            arm_properties_place = {"required_trajectories": ["prepare_place"],
-                                    "required_gripper_types": [arms.GripperTypes.GRASPING]}
-            arm_designator_place = ds.OccupiedArmDesignator(robot, arm_properties_place, name="occupied_arm_designator")
-
             smach.StateMachine.add('PLACE_IN_TRASH',
-                                   Place(robot, selected_entity_designator, trash_place_pose, arm_designator_place),
+                                   Place(robot, selected_entity_designator, trash_place_pose, arm_designator),
                                    transitions={"done": "SAY_PLACE_SUCCESS",
                                                 "failed": "SAY_PLACE_FAILED"})
 
-            arm_designator_place_store = ds.OccupiedArmDesignator(robot, arm_properties_place,
-                                                                  name="occupied_arm_designator")
             smach.StateMachine.add('PLACE_TO_STORE',
                                    Place(robot, selected_entity_designator, store_entity_des,
-                                         arm_designator_place_store, "on_top_of"),
+                                         arm_designator, "on_top_of"),
                                    transitions={"done": "SAY_PLACE_SUCCESS", "failed": "SAY_PLACE_FAILED"})
 
             smach.StateMachine.add('SAY_PLACE_SUCCESS',

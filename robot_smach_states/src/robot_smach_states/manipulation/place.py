@@ -5,24 +5,26 @@ import rospy
 import smach
 
 # TU/e Robotics
-from robot_skills.arm.arms import PublicArm
+from robot_skills.arm.arms import PublicArm, GripperTypes
 from robot_skills.util.entity import Entity
 from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_XYZRPY, FrameStamped
 from .place_designator import EmptySpotDesignator
 from ..navigation.navigate_to_place import NavigateToPlace
-from ..utility import LockDesignator
+from ..utility import LockDesignator, ResolveArm, check_arm_requirements
 from ..util.designators import check_type
 from ..util.designators.utility import LockingDesignator
 from ..world_model import Inspect
 
 
 class PreparePlace(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_trajectories": ["prepare_place"], }
+
     def __init__(self, robot, arm):
         """
         Drive the robot back a little and move the designated arm to place the designated item at the designated pose
 
         :param robot: Robot to execute state with
-        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
+        :param locked arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
         ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -63,6 +65,7 @@ class PreparePlace(smach.State):
 
 
 class Put(smach.State):
+    REQUIRED_ARM_PROPERTIES = {"required_gripper_types": [GripperTypes.GRASPING], }
 
     def __init__(self, robot, item_to_place, placement_pose, arm):
         """
@@ -71,7 +74,7 @@ class Put(smach.State):
         :param robot: Robot to execute state with
         :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
         :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
-        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
+        :param locked arm: Locked arm designator -> arm to place with, so Arm that holds entity_to_place, e.g. via
             ArmHoldingEntityDesignator
         """
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -107,8 +110,7 @@ class Put(smach.State):
         rospy.loginfo("Placing")
 
         # placement_pose is a PyKDL.Frame
-        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
-                                                    tf_listener=self._robot.tf_listener)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
 
         # Wait for torso and arm to finish their motions
         self._robot.torso.wait_for_motion_done()
@@ -140,8 +142,7 @@ class Put(smach.State):
                 return 'failed'
 
         # Place
-        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
-                                                    tf_listener=self._robot.tf_listener)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
         if not arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x(),
                                                            place_pose_bl.frame.p.y(),
                                                            height+0.1, 0.0, 0.0, 0.0,
@@ -163,8 +164,7 @@ class Put(smach.State):
         arm.gripper.occupied_by = None
 
         # Retract
-        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame,
-                                                    tf_listener=self._robot.tf_listener)
+        place_pose_bl = placement_fs.projectToFrame(self._robot.base_link_frame, self._robot.tf_buffer)
         arm.send_goal(kdl_frame_stamped_from_XYZRPY(place_pose_bl.frame.p.x() - 0.1,
                                                     place_pose_bl.frame.p.y(),
                                                     place_pose_bl.frame.p.z() + 0.15, 0.0, 0.0, 0.0,
@@ -249,9 +249,12 @@ class Place(smach.StateMachine):
             if furniture_designator is not None:
                 smach.StateMachine.add('INSPECT',
                                        Inspect(robot, furniture_designator, navigation_area="in_front_of"),
-                                       transitions={'done': 'PREPARE_PLACE',
+                                       transitions={'done': 'RESOLVE_ARM',
                                                     'failed': 'failed'}
                                        )
+            smach.StateMachine.add('RESOLVE_ARM', ResolveArm(arm, self),
+                                   transitions={'succeeded': 'PREPARE_PLACE',
+                                                'failed': 'failed'})
 
             smach.StateMachine.add('PREPARE_PLACE', PreparePlace(robot, arm),
                                    transitions={'succeeded': 'LOCK_DESIGNATOR',
@@ -268,6 +271,8 @@ class Place(smach.StateMachine):
             smach.StateMachine.add('PUT', Put(robot, item_to_place, locking_place_designator, arm),
                                    transitions={'succeeded': 'done',
                                                 'failed': 'failed'})
+
+            check_arm_requirements(self, robot)
 
 
 if __name__ == "__main__":

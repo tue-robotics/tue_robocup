@@ -6,21 +6,17 @@ import sys
 
 import rospy
 
+from robot_skills.get_robot import get_robot
 import robot_skills.util.kdl_conversions as kdl_conversions
-from robot_skills.util.robot_constructor import robot_constructor
 
 if len(sys.argv) < 2:
     print("Please specify a robot name")
     sys.exit()
 
 robot_name = sys.argv[1]
-if robot_name != "amigo":
-    print("this example was made for amigo only!")
-    sys.exit()
-
 rospy.init_node("arm_test")
 
-robot = robot_constructor(robot_name)
+robot = get_robot(robot_name)
 
 # Keep track of which errors occur per arm, so we can report them at the end
 failed_actions_per_arm = {}
@@ -38,7 +34,7 @@ for side, arm in robot._arms.items():
         rospy.logerr("{} arm is not operational".format(side))
         sys.exit(-1)
 
-    goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0, 0.748, 0, 0, 0, "/"+robot.robot_name+"/base_link")
+    goal1 = kdl_conversions.kdl_frame_stamped_from_XYZRPY(0.342,  0, 0.748, 0, 0, 0, robot.base_link_frame)
 
     robot.speech.speak("Moving {} arm to dummy goal pose".format(side))
     if not arm.send_goal(goal1):

@@ -1,11 +1,21 @@
 #! /usr/bin/env python
 
-from collections import OrderedDict, Sequence
+from collections import OrderedDict
+try:
+    # Python 3
+    from collections.abc import Sequence, Set
+except ImportError:
+    # Python 2
+    from collections import Sequence, Set
 
-import geometry_msgs
 # ROS
+import geometry_msgs
 import rospy
-import tf
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_kdl
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
@@ -21,7 +31,7 @@ class Robot(object):
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", wait_services=False, tf_listener=None):
+    def __init__(self, robot_name="", wait_services=False, tf_buffer=None):
         """
         Constructor
 
@@ -29,15 +39,19 @@ class Robot(object):
         :type robot_name: str
         :param wait_services: Not used anymore
         :type wait_services: bool
-        :param tf_listener: tf_listener object
-        :type tf_listener: Optional[tf.TransformListener]
+        :param tf_buffer: tf2_ros.Buffer object
+        :type tf_buffer: Optional[tf2_ros.Buffer]
         """
 
         if wait_services:
             rospy.logwarn("(Robot) wait_services is not used anymore and will be removed in the future")
 
         self.robot_name = robot_name
-        self.tf_listener = tf.TransformListener() if tf_listener is None else tf_listener
+        if tf_buffer is None:
+            self.tf_buffer = tf2_ros.Buffer()
+            self._tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        else:
+            self.tf_buffer = tf_buffer
 
         self.configured = False
 
@@ -52,7 +66,7 @@ class Robot(object):
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
-        self.base_link_frame = "/"+self.robot_name+"/base_link"
+        self.base_link_frame = self.robot_name+"/base_link"
 
         self.image_pub = rospy.Publisher("/" + self.robot_name + '/image_from_ros', Image, queue_size=1)
         self.message_pub = rospy.Publisher("/" + self.robot_name + '/message_from_ros', String, queue_size=1)
@@ -174,8 +188,8 @@ class Robot(object):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
     def tf_transform_pose(self, ps, frame):
-        self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
-        output_pose = self.tf_listener.transformPose(frame, ps)
+        self.tf_buffer.can_transform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
+        output_pose = self.tf_buffer.transform(ps, frame)
         return output_pose
 
     def get_arm(self, required_gripper_types=None, desired_gripper_types=None,
@@ -224,17 +238,17 @@ class Robot(object):
 
         # Check that collection arguments are really a collection of objects, but not strings.
         # Because then you might accidentally pass a GripperType instead of a [GripperType], which is a List
-        def seq_or_none(obj):
-            return not isinstance(obj, str) and (isinstance(obj, Sequence) or obj is None)
-        assert seq_or_none(required_gripper_types)
-        assert seq_or_none(desired_gripper_types)
-        assert seq_or_none(required_goals)
-        assert seq_or_none(desired_goals)
-        assert seq_or_none(required_trajectories)
-        assert seq_or_none(desired_trajectories)
+        def seq_set_or_none(obj):
+            return not isinstance(obj, str) and (isinstance(obj, Sequence) or isinstance(obj, Set) or obj is None)
+        assert seq_set_or_none(required_gripper_types)
+        assert seq_set_or_none(desired_gripper_types)
+        assert seq_set_or_none(required_goals)
+        assert seq_set_or_none(desired_goals)
+        assert seq_set_or_none(required_trajectories)
+        assert seq_set_or_none(desired_trajectories)
         assert isinstance(force_sensor_required, bool)
-        assert seq_or_none(required_objects)
-        assert seq_or_none(desired_objects)
+        assert seq_set_or_none(required_objects)
+        assert seq_set_or_none(desired_objects)
 
         for arm_name, arm in self._arms.items():
             if not arm.operational:

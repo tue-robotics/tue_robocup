@@ -11,7 +11,7 @@ from math import pi, pow, sqrt
 
 import rospy
 from nav_msgs.msg import Odometry
-from tf.transformations import euler_from_quaternion
+from tf_conversions import transformations
 
 DEFAULT_PATH = "~/odometer"
 DEFAULT_FILENAME = 'odometer'
@@ -188,14 +188,14 @@ class Odometer:
 
                 new_orientation = new_pose.orientation
                 old_orientation = self.last_pose.orientation
-                new_rotation = euler_from_quaternion([new_orientation.x,
-                                                      new_orientation.y,
-                                                      new_orientation.z,
-                                                      new_orientation.w])
-                old_rotation = euler_from_quaternion([old_orientation.x,
-                                                      old_orientation.y,
-                                                      old_orientation.z,
-                                                      old_orientation.w])
+                new_rotation = transformations.euler_from_quaternion([new_orientation.x,
+                                                                      new_orientation.y,
+                                                                      new_orientation.z,
+                                                                      new_orientation.w])
+                old_rotation = transformations.euler_from_quaternion([old_orientation.x,
+                                                                      old_orientation.y,
+                                                                      old_orientation.z,
+                                                                      old_orientation.w])
                 rotation_delta = new_rotation[2] - old_rotation[2]
                 if rotation_delta >= pi:
                     rotation_delta -= 2*pi

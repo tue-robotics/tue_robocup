@@ -9,8 +9,8 @@ from robot_skills.robot_part import RobotPart
 class Speech(RobotPart):
     """Interface to TTS-module"""
 
-    def __init__(self, robot_name, tf_listener, pre_hook=None, post_hook=None):
-        super(Speech, self).__init__(robot_name=robot_name, tf_listener=tf_listener)
+    def __init__(self, robot_name, tf_buffer, pre_hook=None, post_hook=None):
+        super(Speech, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
         self._speech_service = self.create_service_client('/%s/text_to_speech/speak' % robot_name, Speak)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
