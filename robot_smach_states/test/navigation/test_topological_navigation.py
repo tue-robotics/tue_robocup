@@ -46,10 +46,28 @@ class TestTopologicalNavigation(unittest.TestCase):
         self.assertTrue(isinstance(actions[0], NavigateToWaypoint), "Action should be a 'NavigateToWaypoint' action")
 
     def test_open_door(self):
-        pass
+        msg = Edge()
+        msg.action_type = Edge.ACTION_OPEN_DOOR
+        origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
+        msg.origin = origin_node
+        destination_node = Node()
+        destination_node.entity = DESTINATION_NODE_ID
+        msg.destination = destination_node
+        actions = convert_msgs_to_actions(ROBOT, [msg])
+        self.assertEquals(len(actions), 1, "Result should contain exactly one action")
+        self.assertTrue(isinstance(actions[0], OpenDoor), "Action should be a 'OpenDoor' action")
 
     def test_push_object(self):
-        pass
+        msg = Edge()
+        msg.action_type = Edge.ACTION_PUSH_OBJECT
+        origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
+        msg.origin = origin_node
+        destination_node = Node()
+        destination_node.entity = DESTINATION_NODE_ID
+        msg.destination = destination_node
+        actions = convert_msgs_to_actions(ROBOT, [msg])
+        self.assertEquals(len(actions), 1, "Result should contain exactly one action")
+        self.assertTrue(isinstance(actions[0], PushObject), "Action should be a 'PushObject' action")
 
     def test_invalid_action(self):
         msg = Edge()
