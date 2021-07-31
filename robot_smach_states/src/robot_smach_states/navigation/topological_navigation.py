@@ -20,6 +20,10 @@ from .navigation import NavigateTo
 # ToDo: can we apply the 'open-closed principle'? I.e., refactor it such that we can add conversions 'from the outside'?
 
 
+class TopologicalPlannerException(Exception):
+    pass
+
+
 def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.List[smach.State]:
     """
     Converts a list of 'Edge' messages (typically the result of a call to the planner to a list of smach states to
@@ -33,6 +37,8 @@ def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.Lis
     for msg in msgs:
         if msg.action_type == Edge.ACTION_DRIVE:
             result.append(convert_drive_msg_to_action(robot, msg))
+        else:
+            raise TopologicalPlannerException(f"Do not have action for type {msg.action_type}")
     return result
 
 
@@ -76,7 +82,11 @@ class GetNavigationActionPlan(smach.State):
         area = self.area_designator.resolve() if self.area_designator is not None else ""
         action_msgs = self.robot.topological_planner.get_plan(entity_id=entity_id, area=area)
         rospy.loginfo(f"Actions: {action_msgs}")
-        actions = convert_msgs_to_actions(self.robot, action_msgs)
+        try:
+            actions = convert_msgs_to_actions(self.robot, action_msgs)
+        except TopologicalPlannerException as e:
+            rospy.logerr(e.message)
+            return "unreachable"
         userdata.action_plan = actions
         return "goal_ok"
 
