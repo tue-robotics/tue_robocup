@@ -21,6 +21,9 @@ from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import String
 
 # TU/e
+from topological_action_planner.srv import Plan
+
+# Robot skills
 from .arm import arms
 from .functionalities.add_functionalities import add_functionalities
 

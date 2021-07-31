@@ -5,7 +5,8 @@ import math
 import rospy
 
 # TU/e Robotics
-from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, torso, world_model_ed
+from robot_skills import api, base, ebutton, head, ears, lights, perception, robot, speech, \
+    topological_planner, torso, world_model_ed
 from robot_skills.arm import arms, force_sensor, gripper, handover_detector
 from robot_skills.simulation import is_sim_mode, SimEButton
 
@@ -62,6 +63,11 @@ class Hero(robot.Robot):
 
         # Reasoning/world modeling
         self.add_body_part('ed', world_model_ed.ED(self.robot_name, self.tf_buffer))
+
+        # Action planning
+        self.add_body_part(
+            'topological_planner', topological_planner.TopologicalPlanner(self.robot_name, self.tf_buffer)
+        )
 
         # These don't work for HSR because (then) Toyota's diagnostics aggregator makes the robot go into error somehow
         for part in self.parts.values():
