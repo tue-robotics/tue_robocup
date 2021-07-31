@@ -6,7 +6,7 @@ import smach
 
 # TU/e Robotics
 from robot_skills.robot import Robot
-from topological_action_planner.msg import Edge, Node
+from topological_action_planner_msgs.msg import Edge, Node
 
 # Robor Smach States
 from robot_smach_states.util.designators import EntityByIdDesignator
@@ -16,16 +16,6 @@ from .navigation import NavigateTo
 # ToDo: integrate with ROS Service to planner node/plugin
 # ToDo: add checks on succeeded/fails
 # ToDo: can we apply the 'open-closed principle'? I.e., refactor it such that we can add conversions 'from the outside'?
-
-
-def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
-    destination_entity_designator = EntityByIdDesignator(robot, msg.v.entity)
-    look_at_designator = EntityByIdDesignator(robot, msg.v.entity)
-    return NavigateToSymbolic(
-        robot=robot,
-        entity_designator_area_name_map={destination_entity_designator: msg.v.area},
-        entity_lookat_designator=look_at_designator,
-    )
 
 
 def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.List[smach.State]:
@@ -42,6 +32,16 @@ def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.Lis
         if msg.action_type == Edge.ACTION_DRIVE:
             result.append(convert_drive_msg_to_action(robot, msg))
     return result
+
+
+def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
+    destination_entity_designator = EntityByIdDesignator(robot, msg.destination.entity)
+    look_at_designator = EntityByIdDesignator(robot, msg.destination.entity)
+    return NavigateToSymbolic(
+        robot=robot,
+        entity_designator_area_name_map={destination_entity_designator: msg.destination.area},
+        entity_lookat_designator=look_at_designator,
+    )
 
 
 class GetNavigationActionPlan(smach.State):
