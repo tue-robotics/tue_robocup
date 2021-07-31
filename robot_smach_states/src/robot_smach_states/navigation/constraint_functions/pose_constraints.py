@@ -21,6 +21,6 @@ def pose_constraints(x, y, rz=None, radius=0.15, frame_id="map"):
     pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2" % (x, y, radius),
                             frame=frame_id)
     oc = None
-    if rz:
+    if rz is not None:
         oc = OrientationConstraint(look_at=Point(x + 1, y, 0.0), angle_offset=rz, frame=frame_id)
     return pc, oc
