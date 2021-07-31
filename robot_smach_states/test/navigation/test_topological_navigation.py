@@ -26,10 +26,8 @@ class TestTopologicalNavigation(unittest.TestCase):
     def test_drive(self):
         msg = Edge()
         msg.action_type = Edge.ACTION_DRIVE
-        origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
-        msg.origin = origin_node
-        destination_node = Node(DESTINATION_NODE_ID, DESTINATION_NODE_AREA)
-        msg.destination = destination_node
+        msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
+        msg.destination = Node(DESTINATION_NODE_ID, DESTINATION_NODE_AREA)
         actions = convert_msgs_to_actions(ROBOT, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], NavigateToSymbolic), "Action should be a 'NavigateToSymbolic' action")
@@ -37,11 +35,8 @@ class TestTopologicalNavigation(unittest.TestCase):
     def test_drive_waypoint(self):
         msg = Edge()
         msg.action_type = Edge.ACTION_DRIVE
-        origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
-        msg.origin = origin_node
-        destination_node = Node()
-        destination_node.entity = DESTINATION_NODE_ID
-        msg.destination = destination_node
+        msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
+        msg.destination.entity = DESTINATION_NODE_ID
         actions = convert_msgs_to_actions(ROBOT, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], NavigateToWaypoint), "Action should be a 'NavigateToWaypoint' action")
@@ -50,10 +45,8 @@ class TestTopologicalNavigation(unittest.TestCase):
         msg = Edge()
         msg.action_type = Edge.ACTION_OPEN_DOOR
         entity_id = "door"
-        origin_node = Node(entity_id, SOURCE_NODE_AREA)
-        msg.origin = origin_node
-        destination_node = Node(entity_id, DESTINATION_NODE_AREA)
-        msg.destination = destination_node
+        msg.origin = Node(entity_id, SOURCE_NODE_AREA)
+        msg.destination = Node(entity_id, DESTINATION_NODE_AREA)
         actions = convert_msgs_to_actions(ROBOT, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], PassDoor), "Action should be a 'OpenDoor' action")
@@ -61,11 +54,8 @@ class TestTopologicalNavigation(unittest.TestCase):
     def test_push_object(self):
         msg = Edge()
         msg.action_type = Edge.ACTION_PUSH_OBJECT
-        origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
-        msg.origin = origin_node
-        destination_node = Node()
-        destination_node.entity = DESTINATION_NODE_ID
-        msg.destination = destination_node
+        msg.origin = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
+        msg.destination.entity = DESTINATION_NODE_ID
         actions = convert_msgs_to_actions(ROBOT, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], PushObject), "Action should be a 'PushObject' action")
