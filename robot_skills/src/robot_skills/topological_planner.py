@@ -6,7 +6,7 @@ import tf2_ros
 
 # TU/e Robotics
 from topological_action_planner_msgs.srv import Plan, PlanRequest, PlanResponse
-from topological_action_planner_msgs.msg import Edge
+from topological_action_planner_msgs.msg import Edge, Node
 
 # Robot skills
 from .robot_part import RobotPart
@@ -28,12 +28,16 @@ class TopologicalPlanner(RobotPart):
             Plan,
         )
 
-    def get_plan(self) -> typing.List[Edge]:  # ToDo: add request argument
+    def get_plan(self, entity_id: str, area: str = None) -> typing.List[Edge]:  # ToDo: add request argument
         """
         Gets a plan from the topological action server
 
+        :param entity_id: string identifying the entity
+        :param area: string identifying the area. If this is not defined, the result may be, e.g., a waypoint
         :return: a list of actions to take
         """
         request = PlanRequest()
+        request.origin = Node("bar", area)  # ToDo: remove!!!
+        request.destination = Node(entity_id, area)
         response = self._planner_srv(request)
         return response.edges
