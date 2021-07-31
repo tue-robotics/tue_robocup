@@ -4,6 +4,9 @@ import smach
 # TU/e Robotics
 from robot_skills.robot import Robot
 
+# ToDo: integrate with ROS Service to planner node/plugin
+# ToDo: add checks on succeeded/fails
+
 
 class GetNavigationActionPlan(smach.State):
     def __init__(self, robot: Robot, constraint_function: callable):
@@ -29,6 +32,8 @@ class GetNavigationActionPlan(smach.State):
             NavigateToPose(self.robot, 0.0, 4.5, 0.0),
         ]
         userdata.action_plan = plan
+        actions = self.robot.topological_planner.get_plan()
+        print(f"Actions: {actions}")
         return "goal_ok"
 
 
