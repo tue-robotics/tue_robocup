@@ -6,10 +6,11 @@ import unittest
 from topological_action_planner_msgs.msg import Edge, Node
 
 # Robot Smach States
+from robot_smach_states.manipulation.open_door import PassDoor
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation.navigation import NavigateTo
-from robot_smach_states.navigation.topological_navigation import TopologicalPlannerException, convert_msgs_to_actions
+from robot_smach_states.topological_navigation import TopologicalPlannerException, convert_msgs_to_actions
 
 SOURCE_NODE_ID = "SOURCE_NODE"
 SOURCE_NODE_AREA = "IN_FRONT_OF"
@@ -48,14 +49,14 @@ class TestTopologicalNavigation(unittest.TestCase):
     def test_open_door(self):
         msg = Edge()
         msg.action_type = Edge.ACTION_OPEN_DOOR
-        origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
+        entity_id = "door"
+        origin_node = Node(entity_id, SOURCE_NODE_AREA)
         msg.origin = origin_node
-        destination_node = Node()
-        destination_node.entity = DESTINATION_NODE_ID
+        destination_node = Node(entity_id, DESTINATION_NODE_AREA)
         msg.destination = destination_node
         actions = convert_msgs_to_actions(ROBOT, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
-        self.assertTrue(isinstance(actions[0], OpenDoor), "Action should be a 'OpenDoor' action")
+        self.assertTrue(isinstance(actions[0], PassDoor), "Action should be a 'OpenDoor' action")
 
     def test_push_object(self):
         msg = Edge()
