@@ -3,7 +3,7 @@ import mock
 import unittest
 
 # TU/e Robotics
-from topological_action_planner.msg import Edge, Node
+from topological_action_planner_msgs.msg import Edge, Node
 
 # Robot Smach States
 from robot_smach_states.navigation.navigation import NavigateTo
@@ -24,9 +24,9 @@ class TestTopologicalNavigation(unittest.TestCase):
         msg = Edge()
         msg.action_type = Edge.ACTION_DRIVE
         origin_node = Node(SOURCE_NODE_ID, SOURCE_NODE_AREA)
-        msg.u = origin_node
+        msg.origin = origin_node
         destination_node = Node(DESTINATION_NODE_ID, DESTINATION_NODE_AREA)
-        msg.v = destination_node
+        msg.destination = destination_node
         actions = convert_msgs_to_actions(ROBOT, [msg])
         self.assertEquals(len(actions), 1, "Result should contain exactly one action")
         self.assertTrue(isinstance(actions[0], NavigateTo), "Action should be a 'NavigateTo' action")
