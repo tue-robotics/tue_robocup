@@ -11,6 +11,7 @@ from topological_action_planner_msgs.msg import Edge, Node
 # Robor Smach States
 from robot_smach_states.util.designators import EntityByIdDesignator
 from .navigate_to_symbolic import NavigateToSymbolic
+from .navigate_to_waypoint import NavigateToWaypoint
 from .navigation import NavigateTo
 
 # ToDo: integrate with ROS Service to planner node/plugin
@@ -35,13 +36,20 @@ def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.Lis
 
 
 def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
-    destination_entity_designator = EntityByIdDesignator(robot, msg.destination.entity)
-    look_at_designator = EntityByIdDesignator(robot, msg.destination.entity)
-    return NavigateToSymbolic(
-        robot=robot,
-        entity_designator_area_name_map={destination_entity_designator: msg.destination.area},
-        entity_lookat_designator=look_at_designator,
-    )
+    if msg.destination.area:
+        destination_entity_designator = EntityByIdDesignator(robot, msg.destination.entity)
+        look_at_designator = EntityByIdDesignator(robot, msg.destination.entity)
+        return NavigateToSymbolic(
+            robot=robot,
+            entity_designator_area_name_map={destination_entity_designator: msg.destination.area},
+            entity_lookat_designator=look_at_designator,
+        )
+    else:  # Assume the robot has to navigate to a waypoint
+        waypoint_designator = EntityByIdDesignator(robot, msg.destination.entity)
+        return NavigateToWaypoint(
+            robot=robot,
+            waypoint_designator=waypoint_designator,
+        )
 
 
 class GetNavigationActionPlan(smach.State):
