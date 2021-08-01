@@ -144,7 +144,12 @@ class ExecuteNavigationActionPlan(smach.State):
 
     def execute(self, userdata: smach.UserData) -> str:
         for action in userdata.action_plan:
-            action.execute()  # ToDo: process result
+            result = action.execute()  # ToDo: process result
+            if result not in ['succeeded', 'done', 'arrived']:
+                rospy.loginfo("action: {} had result {}".format(action, result))
+                if result == "preempted":
+                    return "preempted"
+                return "blocked"
         return "succeeded"
 
 
