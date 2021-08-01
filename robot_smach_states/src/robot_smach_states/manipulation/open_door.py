@@ -3,6 +3,7 @@ import rospy
 import smach
 import actionlib
 import math
+import numpy
 import PyKDL as kdl
 from geometry_msgs.msg import PointStamped, Point
 
@@ -144,9 +145,9 @@ class LocateHandleVision(smach.State):
             # self._door.handle.edge_points["value"] = [edge_p_1, edge_p_2]
             handle_loc = PointStamped()
             handle_loc.header.frame_id = result.handle_edge_point1.header.frame_id
-            handle_loc.point.x = average([result.handle_edge_point1.point.x, result.handle_edge_point2.point.x])
-            handle_loc.point.y = average([result.handle_edge_point1.point.y, result.handle_edge_point2.point.y])
-            handle_loc.point.z = average([result.handle_edge_point1.point.z, result.handle_edge_point2.point.z])
+            handle_loc.point.x = numpy.average([result.handle_edge_point1.point.x, result.handle_edge_point2.point.x])
+            handle_loc.point.y = numpy.average([result.handle_edge_point1.point.y, result.handle_edge_point2.point.y])
+            handle_loc.point.z = numpy.average([result.handle_edge_point1.point.z, result.handle_edge_point2.point.z])
             handle_loc_map = self._robot.tf_buffer.transform(handle_loc, "map")
             self._door._handle.location = handle_loc
 
@@ -276,7 +277,7 @@ class UnlatchHandle(smach.State):
 
         current_pose = self._robot.tf_buffer.lookup_transform('hero/base_link', 'grippoint', rospy.Time(0))
 
-        orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y, current_pose.transform.rotation.z, current_pose.transform.rotation.w)                           
+        orientation = kdl.Rotation.Quaternion(current_pose.transform.rotation.x, current_pose.transform.rotation.y, current_pose.transform.rotation.z, current_pose.transform.rotation.w)
         (curr_r, curr_p, curr_y) = orientation.GetRPY()
         # curr_r, curr_p, curr_y = euler_from_quaternion(current_pose[1])
         if self._door.handle.direction["value"] == "down":
