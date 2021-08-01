@@ -12,6 +12,7 @@ from topological_action_planner_msgs.msg import Edge, Node
 # Robor Smach States
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator
 from robot_smach_states.manipulation.open_door import PassDoor
+from robot_smach_states.push_object import PushObject
 from .navigation.navigate_to_symbolic import NavigateToSymbolic
 from .navigation.navigate_to_waypoint import NavigateToWaypoint
 from .navigation.navigation import NavigateTo
@@ -40,6 +41,8 @@ def convert_msgs_to_actions(robot: Robot, msgs: typing.List[Edge]) -> typing.Lis
             result.append(convert_drive_msg_to_action(robot, msg))
         elif msg.action_type == Edge.ACTION_OPEN_DOOR:
             result.append(convert_open_door_msg_to_action(robot, msg))
+        elif msg.action_type == Edge.ACTION_PUSH_OBJECT:
+            result.append(convert_push_object_msg_to_action(robot, msg))
         else:
             raise TopologicalPlannerException(f"Do not have action for type {msg.action_type}")
     return result
@@ -80,6 +83,18 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> PassDoor:
         door_designator=door_designator,
         before_area=before_area,
         behind_area=behind_area,
+    )
+
+
+def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
+    if not msg.origin.area:
+        raise TopologicalPlannerException(f"PushObject: 'before' area is empty")
+    entity_designator = EntityByIdDesignator(robot, msg.destination.entity)
+    before_area = Designator(msg.origin.area, str)
+    return PushObject(
+        robot=Robot,
+        entity_designator=entity_designator,
+        before_area=before_area,
     )
 
 

@@ -7,6 +7,7 @@ from topological_action_planner_msgs.msg import Edge, Node
 
 # Robot Smach States
 from robot_smach_states.manipulation.open_door import PassDoor
+from robot_smach_states.push_object import PushObject
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.navigation.navigate_to_waypoint import NavigateToWaypoint
 from robot_smach_states.navigation.navigation import NavigateTo
