@@ -28,15 +28,6 @@ class TopologicalPlanner(RobotPart):
             Plan,
         )
 
-<<<<<<< HEAD
-    def get_plan(self) -> typing.List[Edge]:  # ToDo: add request argument
-        """
-        Gets a plan from the topological action server
-
-        :return: a list of actions to take
-        """
-        request = PlanRequest()
-=======
     def get_plan(self, entity_id: str, area: str = None) -> typing.List[Edge]:  # ToDo: add request argument
         """
         Gets a plan from the topological action server
@@ -48,6 +39,5 @@ class TopologicalPlanner(RobotPart):
         request = PlanRequest()
         request.origin = Node("bar", area)  # ToDo: remove!!!
         request.destination = Node(entity_id, area)
->>>>>>> biestheuvel
         response = self._planner_srv(request)
         return response.edges
