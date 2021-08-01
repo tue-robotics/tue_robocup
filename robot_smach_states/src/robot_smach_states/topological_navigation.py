@@ -96,8 +96,8 @@ def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
         robot=robot,
         x=entity.frame.pose.position.x(),
         y=entity.frame.pose.position.y(),
-        dx=dx,
-        dy=dy,
+        gdx=dx,
+        gdy=dy,
     )
 
 
