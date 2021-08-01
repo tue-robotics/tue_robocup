@@ -8,14 +8,14 @@ import rospy
 from robot_skills import get_robot
 
 # Robot Smach States
-from robot_smach_states.navigation.topological_navigation import TopologicalNavigateTo
+from robot_smach_states.topological_navigation import TopologicalNavigateTo
 from robot_smach_states.util.designators import Designator, EntityByIdDesignator
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Test the topological navigation state")
     parser.add_argument("-r", "--robot", default="hero", help="Robot name (amigo, hero, sergio)")
-    parser.add_argument("-e", "--entity", default="couch", help="ID of the entity to navigate to")
+    parser.add_argument("-e", "--entity", default="door", help="ID of the entity to navigate to")
     parser.add_argument("-a", "--area", default="", help="Area of the entity to navigate to")
     args = parser.parse_args()
 
