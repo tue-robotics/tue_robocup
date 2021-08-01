@@ -18,7 +18,7 @@ from numpy import sign
 
 from robot_skills.robot_part import RobotPart
 from robot_skills.util import nav_analyzer, transformations
-from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg
+from robot_skills.util.kdl_conversions import kdl_frame_stamped_from_pose_stamped_msg, kdl_frame_stamped_to_pose_stamped_msg
 
 
 class LocalPlanner(RobotPart):
@@ -114,9 +114,10 @@ class GlobalPlanner(RobotPart):
         pcs = [position_constraint]
 
         start_time = rospy.Time.now()
+        start_pose = kdl_frame_stamped_to_pose_stamped_msg(get_location(self.robot_name, self.tf_buffer))
 
         try:
-            resp = self._get_plan_client(pcs)
+            resp = self._get_plan_client(start_pose, pcs)
         except Exception as e:
             rospy.logerr("Could not get plan from global planner via service call: {}".format(e))
             return None
