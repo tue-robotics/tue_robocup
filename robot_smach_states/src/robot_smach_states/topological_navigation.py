@@ -121,6 +121,10 @@ class GetNavigationActionPlan(smach.State):
         area = self.area_designator.resolve() if self.area_designator is not None else ""
         action_msgs = self.robot.topological_planner.get_plan(entity_id=entity_id, area=area)
         rospy.loginfo(f"Actions: {action_msgs}")
+
+        # action_msgs = self.robot.topological_planner.collapse_plan(action_msgs)
+        # rospy.loginfo(f"After plan simplification: {action_msgs}")
+
         try:
             actions = convert_msgs_to_actions(self.robot, action_msgs)
         except TopologicalPlannerException as e:
