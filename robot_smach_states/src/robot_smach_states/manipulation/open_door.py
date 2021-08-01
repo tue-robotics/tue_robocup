@@ -165,14 +165,12 @@ class GraspHandleMotionPlanningSkill(smach.State):
         :param robot: robot object
         :param timeout: timeout for waiting till the door is opened
         """
-        smach.State.__init__(self, outcomes=["done"], output_keys=["action_out"])
+        smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
         self._door = door
         self._arm_des = arm_des
 
-    def execute(self, userdata):
-        tmp = {"action": "grasp_handle_motion_planning", "success": False, "output": None}
-
+    def execute(self, userdata=None):
         arm = self._arm_des.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
@@ -321,14 +319,14 @@ class OpenDoorAndDrive(smach.State):
         :param robot: robot object
         :param timeout: timeout for waiting till the door is opened
         """
-        smach.State.__init__(self, outcomes=["done"], output_keys=["action_out"])
+        smach.State.__init__(self, outcomes=["done"])
 
         self._move_dist = 0.15
         self._robot = robot
         self._door = door
         self._arm_des = arm_des
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
         arm = self._arm_des.resolve()
         if not arm:
@@ -399,6 +397,8 @@ class OpenDoorAndDrive(smach.State):
             # next_x, next_y, next_z = tuple(map(operator.sub, current_pose[0], move_vector))
         else:
             rospy.logerr("Door direction ({}) not recognized.".format(self._door.handle.direction["value"]))
+            arm.reset()
+            self._robot.head.reset()
             return "done"
 
         if result:
@@ -407,13 +407,19 @@ class OpenDoorAndDrive(smach.State):
             elif self._door.hinge_direction["value"] == "right":
                 th_vel = 0.2
             else:
+                arm.reset()
+                self._robot.head.reset()
                 return "done"
             self._robot.base.force_drive(0.0, 0.0, th_vel, 2.0)
             rospy.sleep(2.0)
+            arm.reset()
+            self._robot.head.reset()
             rospy.loginfo("Successfully executed action.")
 
             return "done"
         rospy.loginfo("Failed action.")
+        arm.reset()
+        self._robot.head.reset()
         return "done"
 
 
