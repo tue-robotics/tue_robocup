@@ -37,7 +37,7 @@ class TopologicalPlanner(RobotPart):
         :return: a list of actions to take
         """
         request = PlanRequest()
-        request.origin = Node("bar", area)  # ToDo: remove!!!
+        request.origin = Node("", "")  # ToDo: remove!!!
         request.destination = Node(entity_id, area)
         response = self._planner_srv(request)
         return response.edges

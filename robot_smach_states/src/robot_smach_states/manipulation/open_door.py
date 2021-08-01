@@ -33,7 +33,7 @@ class PassDoor(smach.StateMachine):
                     door_designator,
                 ),
                 transitions={
-                    "arrived": "SAY_PASSING",
+                    "arrived": "SAY_DOOR_OPEN",
                     "unreachable": "failed",
                     "goal_not_defined": "failed",
                 }

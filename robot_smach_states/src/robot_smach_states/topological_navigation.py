@@ -79,7 +79,7 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> PassDoor:
     before_area = Designator(msg.origin.area, str)
     behind_area = Designator(msg.destination.area, str)
     return PassDoor(
-        robot=Robot,
+        robot=robot,
         door_designator=door_designator,
         before_area=before_area,
         behind_area=behind_area,
