@@ -51,7 +51,7 @@ class MoveObstacles(smach.StateMachine):
 
         with self:
             self.add("DRIVE_TO_OBSTACLE",
-                     NavigateToPose(self.robot, x, y, 0),
+                     NavigateToPose(self.robot, x - gdx, y - gdy, 0),
                      transitions={"arrived": "MOVE_TO_GRASPING_POSITION",
                                   "unreachable": "FAIL_AT_ORIGINAL_POSE",
                                   "goal_not_defined": "FAIL_AT_ORIGINAL_POSE"}
