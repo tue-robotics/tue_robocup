@@ -4,8 +4,9 @@ import rospy
 
 import smach
 from robot_smach_states.navigation import NavigateToPose, ForceDrive
-from robot_smach_states.manipulation import SetGripper
+from robot_smach_states.manipulation import SetGripper, ArmToJointConfig
 from robot_skills.arm.gripper import GripperState
+from robot_smach_states.util.designators import ArmDesignator
 
 
 class SetArmPose(smach.State):
@@ -19,7 +20,7 @@ class SetArmPose(smach.State):
         self._arm = self._robot.get_arm()
 
     def execute(self, userdate=None):
-        status = self.arm._arm._send_joint_trajectory([self._joints])
+        status = self._arm._arm._send_joint_trajectory([self._joints])
         if status:
             return "Done"
 
@@ -40,7 +41,7 @@ class MoveObstacles(smach.StateMachine):
         """
         super().__init__(outcomes=["succeeded", "failed", "abort"])
         self.robot = robot
-        self.arm = self.robot.get_arm()
+        self.arm = ArmDesignator(self.robot)
         self.original_pose_frame = self.robot.base.get_location().frame
 
         self.op_x = self.original_pose_frame.p[0]
@@ -49,9 +50,10 @@ class MoveObstacles(smach.StateMachine):
 
         self.obstacle_clearance_joint_positions = [0.3, -2.3, 0, 0.9, -1.57]
 
+        print(x, y, gdx, gdy)
         with self:
             self.add("DRIVE_TO_OBSTACLE",
-                     NavigateToPose(self.robot, x - gdx, y - gdy, 0),
+                     NavigateToPose(self.robot, x - gdx, y - gdy, 3.14),
                      transitions={"arrived": "MOVE_TO_GRASPING_POSITION",
                                   "unreachable": "FAIL_AT_ORIGINAL_POSE",
                                   "goal_not_defined": "FAIL_AT_ORIGINAL_POSE"}
@@ -88,8 +90,19 @@ class MoveObstacles(smach.StateMachine):
 
             self.add("OPEN_GRIPPER_FOR_RELEASE",
                      SetGripper(self.robot, self.arm, gripperstate=GripperState.OPEN),
-                     transitions={"succeeded": "SUCCEED_AT_ORIGINAL_POSE",
+                     transitions={"succeeded": "MOVE_AWAY_FROM_OBSTACLE",
                                   "failed": "FAIL_AT_ORIGINAL_POSE"}
+                     )
+
+            self.add("MOVE_AWAY_FROM_OBSTACLE",
+                     ForceDrive(self.robot, -0.1, 0.0, 0.0, 2),
+                     transitions={"done": "RESET_ARM_POSE"}
+                     )
+
+            self.add("RESET_ARM_POSE",
+                     SetArmPose(self.robot, [0, 0, 0, 0, 0]),
+                     transitions={"Done": "SUCCEED_AT_ORIGINAL_POSE",
+                                  "Failed": "FAIL_AT_ORIGINAL_POSE"}
                      )
 
             self.add("FAIL_AT_ORIGINAL_POSE",
@@ -107,4 +120,3 @@ class MoveObstacles(smach.StateMachine):
                                   "unreachable": "failed",
                                   "goal_not_defined": "failed"}
                      )
-
