@@ -11,7 +11,7 @@ from topological_action_planner_msgs.msg import Edge, Node
 
 # Robor Smach States
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, EntityByIdDesignator
-from robot_smach_states.manipulation.open_door import PassDoor
+from robot_smach_states.manipulation import OpenDoor
 from robot_smach_states.push_object import PushObject
 from .navigation.navigate_to_symbolic import NavigateToSymbolic
 from .navigation.navigate_to_waypoint import NavigateToWaypoint
@@ -65,25 +65,21 @@ def convert_drive_msg_to_action(robot: Robot, msg: Edge) -> NavigateTo:
         )
 
 
-def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> PassDoor:
-    if msg.origin.entity != msg.destination.entity:
-        raise TopologicalPlannerException(
-            f"OpenDoor action: origin entity ({msg.origin.entity}) "
-            f"does not match destination entity ({msg.destination.entity})"
-        )
-    if not msg.origin.area:
-        raise TopologicalPlannerException(f"OpenDoor: 'before' area is empty")
-    if not msg.destination.area:
-        raise TopologicalPlannerException(f"OpenDoor: 'behind' area is empty")
-    door_designator = EntityByIdDesignator(robot, msg.destination.entity)
-    before_area = Designator(msg.origin.area, str)
-    behind_area = Designator(msg.destination.area, str)
-    return PassDoor(
-        robot=robot,
-        door_designator=door_designator,
-        before_area=before_area,
-        behind_area=behind_area,
-    )
+def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> OpenDoor:
+    rospy.loginfo("entered function")
+    return OpenDoor(robot=robot)
+       # if msg.origin.entity != msg.destination.entity:
+       #     raise TopologicalPlannerException(
+       #         f"OpenDoor action: origin entity ({msg.origin.entity}) "
+       #         f"does not match destination entity ({msg.destination.entity})"
+       #     )
+       # if not msg.origin.area:
+       #     raise TopologicalPlannerException(f"OpenDoor: 'before' area is empty")
+       # if not msg.destination.area:
+       #     raise TopologicalPlannerException(f"OpenDoor: 'behind' area is empty")
+       # door_designator = EntityByIdDesignator(robot, msg.destination.entity)
+       # before_area = Designator(msg.origin.area, str)
+       # behind_area = Designator(msg.destination.area, str)
 
 
 def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
