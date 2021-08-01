@@ -3,99 +3,108 @@
 import rospy
 
 import smach
-from robocup_knowledge import load_knowledge
-from robot_smach_states.human_interaction import AskContinue, Say
-from robot_smach_states.navigation import NavigateToWaypoint
-from robot_smach_states.reset import ResetED
-from robot_smach_states.startup import StartChallengeRobust
-from robot_smach_states.util.designators import EntityByIdDesignator, analyse_designators
-from robot_smach_states.util.startup import startup
-
-challenge_knowledge = load_knowledge('challenge_rips')
-
-STARTING_POINT = challenge_knowledge.starting_point
-INTERMEDIATE_1 = challenge_knowledge.intermediate_1
-INTERMEDIATE_2 = challenge_knowledge.intermediate_2
-INTERMEDIATE_3 = challenge_knowledge.intermediate_3
-EXIT_1 = challenge_knowledge.exit_1
-EXIT_2 = challenge_knowledge.exit_2
-EXIT_3 = challenge_knowledge.exit_3
+from robot_smach_states.navigation import NavigateToPose, ForceDrive
+from robot_smach_states.manipulation import SetGripper
+from robot_skills.arm.gripper import GripperState
 
 
-def setup_statemachine(robot):
-    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+class SetArmPose(smach.State):
+    """Set Arm Pose"""
+    def __init__(self, robot, joint_positions):
+        super().__init__(outcomes=["Done", "Failed"])
 
-    with sm:
-        # Start challenge via StartChallengeRobust
-        smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                               StartChallengeRobust(robot, STARTING_POINT),
-                               transitions={"Done": "GO_TO_INTERMEDIATE_WAYPOINT",
-                                            "Aborted": "GO_TO_INTERMEDIATE_WAYPOINT",
-                                            "Failed": "GO_TO_INTERMEDIATE_WAYPOINT"})
-        # There is no transition to Failed in StartChallengeRobust (28 May)
+        self._robot = robot
+        self._joints = joint_positions
 
-        smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_1), radius=0.5),
-                               transitions={'arrived': 'ASK_CONTINUE',
-                                            'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                                            'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1'})
+        self._arm = self._robot.get_arm()
 
-        smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP1',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_2), radius=0.5),
-                               transitions={'arrived': 'ASK_CONTINUE',
-                                            'unreachable': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
-                                            'goal_not_defined': 'GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2'})
+    def execute(self, userdate=None):
+        status = self.arm._arm._send_joint_trajectory([self._joints])
+        if status:
+            return "Done"
 
-        smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_BACKUP2',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=INTERMEDIATE_3), radius=0.5),
-                               transitions={'arrived': 'ASK_CONTINUE',
-                                            'unreachable': 'ASK_CONTINUE',
-                                            'goal_not_defined': 'ASK_CONTINUE'})
-
-        smach.StateMachine.add("ASK_CONTINUE",
-                               AskContinue(robot, 30),
-                               transitions={'continue': 'SAY_CONTINUEING',
-                                            'no_response': 'SAY_CONTINUEING'})
-
-        smach.StateMachine.add('SAY_CONTINUEING',
-                               Say(robot,
-                                          ["I heard continue, so I will move to the exit now. See you guys later!"],
-                                          block=False),
-                               transitions={'spoken': 'GO_TO_EXIT'})
-
-        # Amigo goes to the exit (waypoint stated in knowledge base)
-        smach.StateMachine.add('GO_TO_EXIT',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_1), radius=0.7),
-                               transitions={'arrived': 'AT_END',
-                                            'unreachable': 'GO_TO_EXIT_2',
-                                            'goal_not_defined': 'GO_TO_EXIT_2'})
-
-        smach.StateMachine.add('GO_TO_EXIT_2',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_2), radius=0.5),
-                               transitions={'arrived': 'AT_END',
-                                            'unreachable': 'GO_TO_EXIT_3',
-                                            'goal_not_defined': 'GO_TO_EXIT_3'})
-
-        smach.StateMachine.add('GO_TO_EXIT_3',
-                               NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=EXIT_3), radius=0.5),
-                               transitions={'arrived': 'AT_END',
-                                            'unreachable': 'RESET_ED_TARGET',
-                                            'goal_not_defined': 'AT_END'})
-
-        smach.StateMachine.add('RESET_ED_TARGET',
-                               ResetED(robot),
-                               transitions={'done': 'GO_TO_EXIT'})
-
-        # Finally amigo will stop and says 'goodbye' to show that he's done.
-        smach.StateMachine.add('AT_END',
-                               Say(robot, "Goodbye"),
-                               transitions={'spoken': 'Done'})
-
-    analyse_designators(sm, "rips")
-    return sm
+        return "Failed"
 
 
-if __name__ == '__main__':
-    rospy.init_node('move_obstacles_exec')
+class MoveObstacles(smach.StateMachine):
+    """MoveObstacles StateMachine"""
+    def __init__(self, robot: str, x: float, y: float, gdx: float = 0.0, gdy: float = 0.0):
+        """
+        Initialize MoveObstacles state machine
 
-    startup(setup_statemachine, challenge_name="move_obstacles")
+        :param robot: robot api object
+        :param x: x component of obstacle position
+        :param y: y component of obstacle position
+        :param gdx: grasping pose x distance from obstacles
+        :param gdy: grasping pose y distance from obstacles
+        """
+        super().__init__(outcomes=["succeeded", "failed", "abort"])
+        self.robot = robot
+        self.arm = self.robot.get_arm()
+        self.original_pose_frame = self.robot.base.get_location().frame
+
+        self.op_x = self.original_pose_frame.p[0]
+        self.op_y = self.original_pose_frame.p[1]
+        self.op_theta = self.original_pose_frame.M.GetRPY()[2]
+
+        self.obstacle_clearance_joint_positions = [0.3, -2.3, 0, 0.9, -1.57]
+
+        with self:
+            self.add("DRIVE_TO_OBSTACLE",
+                     NavigateToPose(self.robot, x, y, 0),
+                     transitions={"arrived": "MOVE_TO_GRASPING_POSITION",
+                                  "unreachable": "FAIL_AT_ORIGINAL_POSE",
+                                  "goal_not_defined": "FAIL_AT_ORIGINAL_POSE"}
+                     )
+
+            self.add("MOVE_TO_GRASPING_POSITION",
+                     SetArmPose(
+                         self.robot, self.obstacle_clearance_joint_positions),
+                     transitions={"Done": "OPEN_GRIPPER_FOR_GRASP_TOUCH",
+                                  "Failed": "FAIL_AT_ORIGINAL_POSE"}
+                     )
+
+            self.add("OPEN_GRIPPER_FOR_GRASP_TOUCH",
+                     SetGripper(self.robot, self.arm, gripperstate=GripperState.OPEN),
+                     transitions={"succeeded": "GRASP_TOUCH_OBSTACLE",
+                                  "failed": "FAIL_AT_ORIGINAL_POSE"}
+                     )
+
+            self.add("GRASP_TOUCH_OBSTACLE",
+                     ForceDrive(self.robot, 0.14, 0, 0, 2),
+                     transitions={"done": "CLOSE_GRIPPER_FOR_GRASP_TOUCH"}
+                     )
+
+            self.add("CLOSE_GRIPPER_FOR_GRASP_TOUCH",
+                     SetGripper(self.robot, self.arm, gripperstate=GripperState.CLOSE),
+                     transitions={"succeeded": "MOVE_OBSTACLE",
+                                  "failed": "FAIL_AT_ORIGINAL_POSE"}
+                     )
+
+            self.add("MOVE_OBSTACLE",
+                     ForceDrive(self.robot, 0.05, 0.1, 0.05, 2),
+                     transitions={"done": "OPEN_GRIPPER_FOR_RELEASE"}
+                     )
+
+            self.add("OPEN_GRIPPER_FOR_RELEASE",
+                     SetGripper(self.robot, self.arm, gripperstate=GripperState.OPEN),
+                     transitions={"succeeded": "SUCCEED_AT_ORIGINAL_POSE",
+                                  "failed": "FAIL_AT_ORIGINAL_POSE"}
+                     )
+
+            self.add("FAIL_AT_ORIGINAL_POSE",
+                     NavigateToPose(self.robot, self.op_x,
+                                    self.op_y, self.op_theta),
+                     transitions={"arrived": "failed",
+                                  "unreachable": "failed",
+                                  "goal_not_defined": "failed"}
+                     )
+
+            self.add("SUCCEED_AT_ORIGINAL_POSE",
+                     NavigateToPose(self.robot, self.op_x,
+                                    self.op_y, self.op_theta),
+                     transitions={"arrived": "succeeded",
+                                  "unreachable": "failed",
+                                  "goal_not_defined": "failed"}
+                     )
+
