@@ -1,5 +1,5 @@
 # System
-import typing
+from typing import List
 
 # ROS
 import tf2_ros
@@ -28,7 +28,7 @@ class TopologicalPlanner(RobotPart):
             Plan,
         )
 
-    def get_plan(self, entity_id: str, area: str = None) -> typing.List[Edge]:  # ToDo: add request argument
+    def get_plan(self, entity_id: str, area: str = None) -> List[Edge]:  # ToDo: add request argument
         """
         Gets a plan from the topological action server
 
@@ -41,3 +41,19 @@ class TopologicalPlanner(RobotPart):
         request.destination = Node(entity_id, area)
         response = self._planner_srv(request)
         return response.edges
+
+    def collapse_plan(self, plan: List[Edge]) -> List[Edge]:
+        """
+        If a plan consists of just driving, there is no need to travel along all of the waypoints
+        Only if there is an action like opening a door that we really
+            need to go to the place from where a door needs to be opened, for example.
+        If consecutive edges can all be driven via, we might as well use normal navigation.
+        """
+        simple = []
+        for edge in plan:
+            if simple and simple[-1].action_type == Edge.ACTION_DRIVE == edge.action_type:
+                simple[-1][1] = edge[1]
+            else:
+                simple += [list(edge)]
+        return simple
+
