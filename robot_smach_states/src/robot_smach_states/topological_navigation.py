@@ -87,14 +87,17 @@ def convert_open_door_msg_to_action(robot: Robot, msg: Edge) -> PassDoor:
 
 
 def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
-    if not msg.origin.area:
-        raise TopologicalPlannerException(f"PushObject: 'before' area is empty")
-    entity_designator = EntityByIdDesignator(robot, msg.destination.entity)
-    before_area = Designator(msg.origin.area, str)
+    #if not msg.origin.area:
+    #    raise TopologicalPlannerException(f"PushObject: 'before' area is empty")
+    entity = robot.ed.get_entity(msg.destination.entity)
+    dx = 1  # TODO hardcoded diff
+    dy = 0  # TODO hardcoded diff
     return PushObject(
         robot=robot,
-        entity_designator=entity_designator,
-        before_area=before_area,
+        x=entity.frame.pose.position.x(),
+        y=entity.frame.pose.position.y(),
+        dx=dx,
+        dy=dy,
     )
 
 
