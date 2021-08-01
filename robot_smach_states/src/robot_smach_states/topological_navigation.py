@@ -18,7 +18,7 @@ from .navigation.navigate_to_waypoint import NavigateToWaypoint
 from .navigation.navigation import NavigateTo
 
 # ToDo: allow preemption and continuing to next nav waypoint without stopping
-# ToDo: add checks on succeeded/fails
+# ToDo: add recovery behaviour on fails
 # ToDo: can we apply the 'open-closed principle'? I.e., refactor it such that we can add conversions 'from the outside'?
 
 
@@ -142,7 +142,7 @@ class ExecuteNavigationActionPlan(smach.State):
         :param robot: robot API object
         """
         smach.State.__init__(
-            self, outcomes=["succeeded", "arrived", "blocked", "preempted"], input_keys=["action_plan"])
+            self, outcomes=["succeeded", "arrived", "blocked", "preempted"], input_keys=["action_plan"], output_keys=["failing_edge"])
         self.robot = robot
         # ToDo: convert to CB state?
 
@@ -153,8 +153,25 @@ class ExecuteNavigationActionPlan(smach.State):
                 rospy.loginfo("action: {} had result {}".format(action, result))
                 if result == "preempted":
                     return "preempted"
+                userdata.failing_edge = action
                 return "blocked"
         return "succeeded"
+
+
+class UpdateNavigationGraph(smach.State):
+    def __init__(self, robot: Robot):
+        """
+        Executes the action plan
+
+        :param robot: robot API object
+        """
+        smach.State.__init__(
+            self, outcomes=["done"], input_keys=["failing_edge"])
+        self.robot = robot
+
+    def execute(self, userdata: smach.UserData) -> str:
+        self.robot.topological_planner.update_edge_cost(userdata.failing_edge, 50)  # TODO magic number
+        return "done"
 
 
 class TopologicalNavigateTo(smach.StateMachine):
@@ -192,7 +209,15 @@ class TopologicalNavigateTo(smach.StateMachine):
                 transitions={
                     "succeeded": "arrived",
                     "arrived": "arrived",
-                    "blocked": "unreachable",
+                    "blocked": "UPDATE_GRAPH",
                     "preempted": "unreachable",  # N.B.: NavigateTo does not support 'preempted'
+                }
+            )
+
+            smach.StateMachine.add(
+                "UPDATE_GRAPH",
+                UpdateNavigationGraph(robot),
+                transitions={
+                    "done": "GET_PLAN",
                 }
             )

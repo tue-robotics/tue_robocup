@@ -57,3 +57,12 @@ class TopologicalPlanner(RobotPart):
                 simple += [list(edge)]
         return simple
 
+    def update_edge_cost(self, edge: Edge, cost: float):
+        """
+        Updates the cost of an edge in the topological planner
+
+        :param edge: Edge which must be updated
+        :param cost: new value of the edge
+        """
+        return
+
