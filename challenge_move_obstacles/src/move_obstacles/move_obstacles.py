@@ -84,7 +84,7 @@ class MoveObstacles(smach.StateMachine):
                      )
 
             self.add("MOVE_OBSTACLE",
-                     ForceDrive(self.robot, 0.05, 0.1, 0.05, 2),
+                     ForceDrive(self.robot, -0.05, 0.15, 0.05, 5),
                      transitions={"done": "OPEN_GRIPPER_FOR_RELEASE"}
                      )
 
