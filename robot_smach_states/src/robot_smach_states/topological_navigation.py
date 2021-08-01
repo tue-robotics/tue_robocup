@@ -92,7 +92,7 @@ def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
     entity_designator = EntityByIdDesignator(robot, msg.destination.entity)
     before_area = Designator(msg.origin.area, str)
     return PushObject(
-        robot=Robot,
+        robot=robot,
         entity_designator=entity_designator,
         before_area=before_area,
     )
