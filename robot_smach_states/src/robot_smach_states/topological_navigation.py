@@ -86,12 +86,12 @@ def convert_push_object_msg_to_action(robot: Robot, msg: Edge) -> PushObject:
     #if not msg.origin.area:
     #    raise TopologicalPlannerException(f"PushObject: 'before' area is empty")
     entity = robot.ed.get_entity(msg.destination.entity)
-    dx = 1  # TODO hardcoded diff
+    dx = -0.8  # TODO hardcoded diff
     dy = 0  # TODO hardcoded diff
     return PushObject(
         robot=robot,
-        x=entity.frame.pose.position.x(),
-        y=entity.frame.pose.position.y(),
+        x=entity._pose.p.x(),
+        y=entity._pose.p.y(),
         gdx=dx,
         gdy=dy,
     )
@@ -154,6 +154,7 @@ class ExecuteNavigationActionPlan(smach.State):
                     return "preempted"
                 userdata.failing_edge = action
                 return "blocked"
+            rospy.sleep(1.0)
         return "succeeded"
 
 
@@ -208,7 +209,7 @@ class TopologicalNavigateTo(smach.StateMachine):
                 transitions={
                     "succeeded": "arrived",
                     "arrived": "arrived",
-                    "blocked": "UPDATE_GRAPH",
+                    "blocked": "unreachable",
                     "preempted": "unreachable",  # N.B.: NavigateTo does not support 'preempted'
                 }
             )
