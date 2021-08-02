@@ -1,7 +1,10 @@
-# Robot skills
 import PyKDL as kdl
 
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
+from geometry_msgs.msg import Point
+
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_kdl
 
 
 class Shape(object):
@@ -139,7 +142,7 @@ def shape_from_entity_info(e):
     if not e.convex_hull:
         return Shape()
 
-    return RightPrism(convex_hull=[point_msg_to_kdl_vector(p) for p in e.convex_hull],
+    return RightPrism(convex_hull=[tf2_ros.convert(p, Point) for p in e.convex_hull],
                       z_min=e.z_min,
                       z_max=e.z_max)
 

@@ -17,12 +17,17 @@ find_package(catkin REQUIRED COMPONENTS
   hmi
   hmi_msgs
   people_recognition_msgs
+  pykdl_ros
   rgbd_msgs
   rospy
   smach
   std_srvs
   text_to_speech
-  tf
+  tf_conversions
+  tf2_geometry_msgs
+  tf2_kdl
+  tf2_pykdl_ros
+  tf2_ros
   trajectory_msgs
   tue_manipulation_msgs
   tue_msgs

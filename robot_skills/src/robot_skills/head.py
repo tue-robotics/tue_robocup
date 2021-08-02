@@ -1,11 +1,19 @@
 # ROS
+import PyKDL as kdl
 import rospy
 from geometry_msgs.msg import PointStamped
 from head_ref_msgs.msg import HeadReferenceAction, HeadReferenceGoal
 
+from pykdl_ros import VectorStamped
+
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_geometry_msgs
+# noinspection PyUnresolvedReferences
+import tf2_pykdl_ros
+
 # TU/e Robotics
 from robot_skills.robot_part import RobotPart
-from robot_skills.util.kdl_conversions import VectorStamped, kdl_vector_stamped_to_point_stamped
 
 
 class Head(RobotPart):
@@ -27,7 +35,7 @@ class Head(RobotPart):
         """
         Reset head position
         """
-        reset_goal = VectorStamped(x=10, frame_id=self.robot_name+"/base_link")
+        reset_goal = VectorStamped.from_xyz(10, 0, 0, stamp=rospy.Time.now(), frame_id=self.robot_name+"/base_link")
 
         return self.look_at_point(reset_goal, timeout=timeout)
 
@@ -64,7 +72,7 @@ class Head(RobotPart):
 
     def look_at_point(self, vector_stamped, end_time=0, pan_vel=1.0, tilt_vel=0.8, timeout=0):
         assert isinstance(vector_stamped, VectorStamped)
-        point_stamped = kdl_vector_stamped_to_point_stamped(vector_stamped)
+        point_stamped = tf2_ros.convert(vector_stamped, PointStamped)
         self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, timeout=timeout)
 
     def cancel_goal(self):

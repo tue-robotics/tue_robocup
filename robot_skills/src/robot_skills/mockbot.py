@@ -21,10 +21,10 @@ from ed_sensor_integration_msgs.srv import UpdateResponse
 
 from hmi import HMIResult
 from hmi.common import parse_sentence, random_sentence
+from pykdl_ros import FrameStamped, VectorStamped
 from robot_skills import robot
 from robot_skills.classification_result import ClassificationResult
 from robot_skills.util.entity import from_entity_info
-from robot_skills.util.kdl_conversions import FrameStamped, VectorStamped
 
 
 def random_kdl_vector():
@@ -182,7 +182,7 @@ class Base(MockedRobotPart):
         self.move = AlteredMagicMock()
         self.turn_towards = AlteredMagicMock()
         self.force_drive = AlteredMagicMock()
-        self.get_location = lambda: FrameStamped(random_kdl_frame(), "map")
+        self.get_location = lambda: FrameStamped(random_kdl_frame(), rospy.Time(), "map")
         self.set_initial_pose = AlteredMagicMock()
         self.wait_for_motion_done = AlteredMagicMock()
         self.go = AlteredMagicMock()
@@ -249,7 +249,7 @@ class Perception(MockedRobotPart):
         self.detect_faces = AlteredMagicMock()
         self.get_best_face_recognition = AlteredMagicMock()
         self.get_rgb_depth_caminfo = AlteredMagicMock()
-        self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "map")
+        self.project_roi = lambda *args, **kwargs: VectorStamped(random_kdl_frame(), rospy.Time(), "map")
         self.locate_handle_client = AlteredMagicMock()
 
 
@@ -333,9 +333,10 @@ class ED(MockedRobotPart):
 
         self._person_names = []
 
-    def get_entities(self, type="", center_point=VectorStamped(), radius=0, id="", ignore_z=False):
+    def get_entities(self, type="", center_point=VectorStamped(kdl.Vector(), rospy.Time(), "map"), radius=0, id="",
+                     ignore_z=False):
 
-        center_point_in_map = center_point.projectToFrame("map", self.tf_buffer)
+        center_point_in_map = self.tf_buffer.transform(center_point, "map")
 
         entities = self._entities.values()
         if type:
@@ -480,7 +481,7 @@ if __name__ == "__main__":
     left_open = lambda: mockbot._arms['leftArm'].send_gripper_goal_open()
     speak = lambda sentence: mockbot.speech.speak(sentence, block=False)
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
-    look_at_point = lambda x, y, z: mockbot.head.look_at_point(VectorStamped(x, y, z, frame_id="/mockbot/base_link"))
+    look_at_point = lambda x, y, z: mockbot.head.look_at_point(VectorStamped.from_xyz(x, y, z, rospy.Time(), "/mockbot/base_link"))
 
     mapgo = mockbot.base.go
 

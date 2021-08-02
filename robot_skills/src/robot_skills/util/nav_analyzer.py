@@ -10,8 +10,9 @@ import PyKDL as kdl
 import nav_msgs.msg
 import rospy
 
-# TU/e Robotics
-from robot_skills.util.kdl_conversions import point_msg_to_kdl_vector
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_kdl
 
 
 class NavAnalyzer:
@@ -167,7 +168,7 @@ class NavAnalyzer:
         self.active = False
 
     def odomCallback(self, odom_msg):
-        current_position = point_msg_to_kdl_vector(odom_msg.pose.pose.position)
+        current_position = tf2_ros.convert(odom_msg.pose.pose.position, kdl.Vector)
         if self.active:
             self.distance_traveled += kdl.diff(current_position, self.previous_position).Norm()
 

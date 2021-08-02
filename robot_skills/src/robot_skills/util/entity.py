@@ -1,4 +1,5 @@
 # System
+from geometry_msgs.msg import Pose
 import yaml
 
 import PyKDL as kdl
@@ -7,7 +8,12 @@ import rospy
 # TU/e Robotics
 from ed_msgs.msg import EntityInfo
 
-from robot_skills.util.kdl_conversions import FrameStamped, pose_msg_to_kdl_frame
+from pykdl_ros import VectorStamped, FrameStamped
+
+import tf2_ros
+# noinspection PyUnresolvedReferences
+import tf2_kdl
+
 from robot_skills.util.shape import shape_from_entity_info
 from robot_skills.util.volume import volumes_from_entity_volumes_msg
 
@@ -80,7 +86,7 @@ class Entity(object):
         :rtype: List[Entities]
         """
 
-        entities = [e for e in entities if self.in_volume(e.pose.extractVectorStamped(), volume_id)]
+        entities = [e for e in entities if self.in_volume(VectorStamped.from_FrameStamped(e.pose), volume_id)]
 
         return entities
 
@@ -143,7 +149,7 @@ class Entity(object):
     @pose.setter
     def pose(self, pose):
         """ Setter """
-        self._pose = pose_msg_to_kdl_frame(pose)
+        self._pose = tf2_ros.convert(pose, Pose)
 
     @property
     def person_properties(self):
