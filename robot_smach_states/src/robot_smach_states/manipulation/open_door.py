@@ -31,21 +31,21 @@ class OpenDoor(smach.StateMachine):
         self._door = Door()
         point1 = PointStamped()
         point1.header.frame_id = "map"
-        point1.point.x = 1.16
-        point1.point.y = -1.0
+        point1.point.x = 2.14
+        point1.point.y = -0.9
         point1.point.z = 0.0
         point2 = PointStamped()
         point2.header.frame_id = "map"
-        point2.point.x = 1.16
-        point2.point.y = -1.85
+        point2.point.x = 2.14
+        point2.point.y = -1.7
         point2.point.z = 0.0
         self._door.frame_points = [point1, point2]
         self._door.direction = "outward"
 
         handle_loc = PointStamped()
         handle_loc.header.frame_id = "map"
-        handle_loc.point.x = 1.3
-        handle_loc.point.y = -1.06
+        handle_loc.point.x = 2.28
+        handle_loc.point.y = -0.96
         handle_loc.point.z = 1.065
         self._door._handle.location = handle_loc
         self._door._handle.direction = 'down'
@@ -174,7 +174,6 @@ class GraspHandleMotionPlanningSkill(smach.State):
         arm = self._arm_des.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
-            userdata.action_out = tmp
             return "done"
 
         arm.send_gripper_goal("open")
@@ -231,12 +230,9 @@ class GraspHandleMotionPlanningSkill(smach.State):
         if result or felt_edge:
             rospy.loginfo("Successfully executed action.")
             arm.send_gripper_goal('close', max_torque=1.0)
-            tmp["success"] = True
-            userdata.action_out = tmp
             return "done"
         else:
             rospy.loginfo("Failed action.")
-            userdata.action_out = tmp
             return "done"
 
 
@@ -259,8 +255,6 @@ class UnlatchHandle(smach.State):
         self._arm_des = arm_des
 
     def execute(self, userdata):
-        tmp = {"action": "unlatch_handle", "success": False, "output": None}
-
         arm = self._arm_des.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
@@ -303,11 +297,8 @@ class UnlatchHandle(smach.State):
         result = arm.send_goal(next_pose)
         if result:
             rospy.loginfo("Successfully executed action.")
-            tmp["success"] = True
-            userdata.action_out = tmp
             return "done"
         rospy.loginfo("Failed action.")
-        userdata.action_out = tmp
         return "done"
 
 
