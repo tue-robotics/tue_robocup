@@ -19,6 +19,13 @@ jobs:
     condition: and(succeeded(), not(canceled()))
     steps:
       - task: Bash@3
+        displayName: 'printenv'
+        name: printenv
+        inputs:
+          targetType: 'inline'
+          script: |
+            printenv
+      - task: Bash@3
         displayName: 'Determine packages to be build'
         name: matrix
         inputs:
