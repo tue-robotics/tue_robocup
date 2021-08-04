@@ -54,13 +54,22 @@ jobs:
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
           wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/test-package.sh
+          wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/set-branch.sh
       displayName: 'Get CI scripts'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
       inputs:
         targetType: 'inline'
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}} --commit=${BUILD_SOURCEVERSION} --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
+          bash set-branch.sh --repo=$BUILD_REPOSITORY_ID --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}
+          echo "##vso[task.setvariable variable=branch]${BRANCH#*/}"
+      displayName: 'Set Branch'
+      condition: and(succeeded(), not(canceled()))
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          bash install-package.sh --package=$PACKAGE --branch=$BRANCH --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
       displayName: 'Install'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
