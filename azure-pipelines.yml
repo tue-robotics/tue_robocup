@@ -62,7 +62,7 @@ jobs:
       inputs:
         targetType: 'inline'
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=$BRANCH --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
+          bash install-package.sh --package=$PACKAGE --branch=$(BRANCH) --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
       displayName: 'Install'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
