@@ -55,14 +55,14 @@ jobs:
         targetType: 'inline'
         script: |
           bash set-branch.sh --branch=${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCH#refs/heads/}}
-          echo "##vso[task.setvariable variable=BRANCH]$BRANCH"
+          echo "##vso[task.setvariable variable=BRANCH_BLA]$BRANCH"
       displayName: 'Set Branch'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
       inputs:
         targetType: 'inline'
         script: |
-          bash install-package.sh --package=$PACKAGE --branch=$(BRANCH) --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
+          bash install-package.sh --package=$PACKAGE --branch=$BRANCH_BLA --commit=$BUILD_SOURCEVERSION --pullrequest=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-false} --image="tuerobotics/tue-env"
       displayName: 'Install'
       condition: and(succeeded(), not(canceled()))
     - task: Bash@3
