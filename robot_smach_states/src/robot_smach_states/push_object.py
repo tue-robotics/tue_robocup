@@ -4,13 +4,11 @@ import smach
 # TU/e Robotics
 from robot_skills.robot import Robot
 from robot_skills.arm.gripper import GripperState
-import robot_smach_states.util.designators as ds
-
-# Robot Smach States
 from robot_smach_states.human_interaction.human_interaction import Say
 from robot_smach_states.navigation import NavigateToPose, ForceDrive, NavigateToWaypoint
 from robot_smach_states.manipulation import SetGripper
 from robot_smach_states.util.designators import ArmDesignator
+from robot_smach_states.util.designators.ed_designators import EntityByIdDesignator
 
 
 class SetArmPose(smach.State):
@@ -53,7 +51,7 @@ class PushObject(smach.StateMachine):
         self.op_x = self.original_pose_frame.p[0]
         self.op_y = self.original_pose_frame.p[1]
         self.op_theta = self.original_pose_frame.M.GetRPY()[2]
-        self.waypoint = ds.EntityByIdDesignator(self.robot, final_waypoint)
+        self.waypoint = EntityByIdDesignator(self.robot, final_waypoint)
 
         # TODO: Retrieve joint positions using world model and MoveIt!
         self.obstacle_clearance_joint_positions = [0.3, -2.3, 0, 0.9, -1.57]
