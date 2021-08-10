@@ -18,7 +18,8 @@ from robot_smach_states.navigation import NavigateTo
 from robot_smach_states.human_interaction.human_interaction import Say
 from robot_smach_states.navigation.navigate_to_symbolic import NavigateToSymbolic
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, UnoccupiedArmDesignator
-from tue_msgs.msg import LocateDoorHandleAction, LocateDoorHandleGoal
+from tue_msgs.msg import LocateDoorHandleGoal
+
 
 class OpenDoor(smach.StateMachine):
     def __init__(self, robot):
@@ -47,6 +48,7 @@ class OpenDoor(smach.StateMachine):
         handle_loc.point.x = 2.28
         handle_loc.point.y = -0.96
         handle_loc.point.z = 1.065
+        # ToDO: remove hardcoded door
         self._door._handle.location = handle_loc
         self._door._handle.direction = 'down'
         self._door._handle.grasp_orientation = "horizontal"
@@ -120,8 +122,6 @@ class LocateHandleVision(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
         self._door = door
-        self._locate_handle_client = actionlib.SimpleActionClient('/locate_handle', LocateDoorHandleAction)
-        self._locate_handle_client.wait_for_server()
 
     def execute(self, userdata=None):
         handle_p = self._door._handle.location["value"]
@@ -133,11 +133,11 @@ class LocateHandleVision(smach.State):
         goal.door_frame_point1 = self._door._handle.location["value"]
         goal.door_frame_point2 = self._door.frame_points["value"][1]
         rospy.loginfo("Goal is {}".format(goal))
-        self._locate_handle_client.send_goal(goal)
-        self._locate_handle_client.wait_for_result(rospy.Duration.from_sec(5.0))
-        state = self._locate_handle_client.get_state()
+        self.robot.perception.locate_handle_client.send_goal(goal)
+        self.robot.perception.locate_handle_client.wait_for_result(rospy.Duration.from_sec(5.0))
+        state = self.robot.perception.locate_handle_client.get_state()
         if state == actionlib.GoalStatus.SUCCEEDED:
-            result = self._locate_handle_client.get_result()
+            result = self.robot.perception.locate_handle_client.get_result()
             rospy.loginfo("Result is {}".format(result))
             rospy.loginfo("Successfully executed perception action.")
             # edge_p_1 = self._robot.tf_buffer.transform(result.handle_edge_point1, "map")
