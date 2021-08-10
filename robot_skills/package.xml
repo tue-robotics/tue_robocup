@@ -43,6 +43,7 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_kdl</depend>
   <depend>tf2_ros</depend>
+  <depend>topological_action_planner_msgs</depend>
   <depend>trajectory_msgs</depend>
   <depend>tue_manipulation_msgs</depend>
   <depend>tue_msgs</depend>
