@@ -17,8 +17,8 @@ class TopologicalPlanner(RobotPart):
         """
         Interface to the topological planner.
 
-        :param robot_name:
-        :param tf_buffer:
+        :param robot_name: name of the robot (for namespacing)
+        :param tf_buffer: tf buffer
         """
         super(TopologicalPlanner, self).__init__(robot_name=robot_name, tf_buffer=tf_buffer)
 
@@ -28,7 +28,7 @@ class TopologicalPlanner(RobotPart):
             Plan,
         )
 
-    def get_plan(self, entity_id: str, area: str = None) -> List[Edge]:  # ToDo: add request argument
+    def get_plan(self, entity_id: str, area: str = None) -> List[Edge]:
         """
         Gets a plan from the topological action server
 
@@ -42,13 +42,17 @@ class TopologicalPlanner(RobotPart):
         response = self._planner_srv(request)
         return response.edges
 
-    def collapse_plan(self, plan: List[Edge]) -> List[Edge]:
+    @staticmethod
+    def collapse_plan(plan: List[Edge]) -> List[Edge]:
         """
-        If a plan consists of just driving, there is no need to travel along all of the waypoints
-        Only if there is an action like opening a door that we really
-            need to go to the place from where a door needs to be opened, for example.
-        If consecutive edges can all be driven via, we might as well use normal navigation.
+        If a plan consists of just driving, there is no need to travel along all of the waypoints Only if there is an
+        action like opening a door that we really need to go to the place from where a door needs to be opened, for
+        example. If consecutive edges can all be driven via, we might as well use normal navigation.
+
+        :param plan: input plan
+        :return: plan with simplified edges
         """
+        # ToDo: do we really want this? If the topological graph returned this path for a reason, why shortcut it?
         simple = []
         for edge in plan:
             if simple and simple[-1].action_type == Edge.ACTION_DRIVE == edge.action_type:
@@ -64,5 +68,5 @@ class TopologicalPlanner(RobotPart):
         :param edge: Edge which must be updated
         :param cost: new value of the edge
         """
+        # ToDo: this doesn't do anything
         return
-
