@@ -193,7 +193,7 @@ class Base(MockedRobotPart):
         self.local_planner = AlteredMagicMock()
         self.local_planner.getStatus = mock.MagicMock(return_value="arrived")  # always arrive for now
         self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"])  # always arrive for now
-        self.global_planner.path_length = 0.0 
+        self.global_planner.path_length = 0.0
 
 
 class Hmi(MockedRobotPart):
@@ -250,6 +250,7 @@ class Perception(MockedRobotPart):
         self.get_best_face_recognition = AlteredMagicMock()
         self.get_rgb_depth_caminfo = AlteredMagicMock()
         self.project_roi = lambda *args, **kwargs: VectorStamped(random.random(), random.random(), random.random(), "map")
+        self.locate_handle_client = AlteredMagicMock()
 
 
 class Lights(MockedRobotPart):
